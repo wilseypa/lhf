@@ -2,7 +2,7 @@
 # Process with autoconf to produce configuration script
 
 AC_PREREQ([2.69])
-AC_INIT([TDA_CPlusPlus], [0.0.1], [malottno@mail.uc.edu])
+AC_INIT([LHF], [0.0.1], [wilseypa@mail.uc.edu])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/main.cpp])
 AC_CONFIG_HEADERS([config.h])
