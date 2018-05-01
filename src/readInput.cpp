@@ -34,8 +34,12 @@ readInput::readInput(){
 std::vector<std::vector<double>> readInput::readCSV(std::string filename){
 	std::vector<std::vector<double>> result;
 	
-	std::ifstream file;
-	file.open(filename);
+	std::ifstream file(filename);
+	
+	if(!file){
+		std::cout << "Failed to open file: " << filename << std::endl;
+		return result;
+	}
 	
 	// We are going to iterate through each line of the file until we reach the end
 	while(!file.eof()){
