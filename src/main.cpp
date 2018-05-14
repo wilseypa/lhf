@@ -5,26 +5,30 @@
 #include "readInput.hpp"
 #include "argParser.hpp"
 #include "basePipe.hpp"
+#include "writeOutput.hpp"
+#include "pipePacket.hpp"
 
 using namespace std;
 
 int main(int argc, char* argv[]){
     auto *rs = new readInput();
     auto *ap = new argParser();
+    auto *ws = new writeOutput();
+    auto *wD = new pipePacket();
     
     auto args = ap->parse(argc, argv);
 	
 	
 	
-    auto result = rs->readCSV(args["inputFile"]);
+    wD->workData.originalData = rs->readCSV(args["inputFile"]);
 
 
-	if(result.size() > 0){
+	if(wD->workData.originalData.size() > 0){
 		cout << "_________CSV RESULTS__________" << endl;
 		
-		for(unsigned i = 0; i < result.size(); i++){
-			for(unsigned j = 0; j < result[i].size(); j++){
-				cout << result[i][j] << "\t";
+		for(unsigned i = 0; i < wD->workData.originalData.size(); i++){
+			for(unsigned j = 0; j < wD->workData.originalData[i].size(); j++){
+				cout << wD->workData.originalData[i][j] << "\t";
 			}
 			cout << endl;
 		}
@@ -47,7 +51,7 @@ int main(int argc, char* argv[]){
 				bp = bp->newPipe(curFunct);
 				cout << typeid(bp).name() << endl;
 				if(bp->configPipe(args)){
-					result = bp->runPipe(result);
+					bp->runPipe(wD);
 				} else {
 					cout << "Failed to configure pipeline: " << args["pipeline"] << endl;
 				}
@@ -57,6 +61,16 @@ int main(int argc, char* argv[]){
 			cout << "Failed to find a suitable pipeline, exiting..." << endl;
 			return 1;
 		}
+		
+		pipe = args.find("outputFile");
+		if(pipe != args.end()){
+			cout << "Writing output...." << std::endl;
+			if (args["outputFile"] == "console"){
+				ws->writeConsole(wD);
+			
+			}
+		}
+		
 	}
     return 0;
 }

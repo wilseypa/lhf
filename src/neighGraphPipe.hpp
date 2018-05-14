@@ -1,13 +1,14 @@
 #pragma once
 
-// Header file for distMatrixPipe class - see distMatrixPipe.cpp for descriptions
+// Header file for neighGraphPipe class - see neighGraphPipe.cpp for descriptions
 #include <map>
 #include "basePipe.hpp"
 
-class distMatrixPipe : public basePipe {
+class neighGraphPipe : public basePipe {
   private:
+	double epsilon;
   public:
-    distMatrixPipe();
+    neighGraphPipe();
     pipePacket runPipe(pipePacket inData);
     bool configPipe(std::map<std::string, std::string> configMap);
 };

@@ -2,6 +2,7 @@
 
 // Header file for basePipe class - see basePipe.cpp for descriptions
 #include <map>
+#include "pipePacket.hpp"
 
 class basePipe {
   private:
@@ -9,7 +10,7 @@ class basePipe {
 	std::string pipeType;
     basePipe();
     basePipe* newPipe(const std::string&);
-    virtual std::vector<std::vector<double>> runPipe(std::vector<std::vector<double>> inData);
+    virtual bool runPipe(pipePacket* inData);
     virtual bool configPipe(std::map<std::string, std::string> configMap);
 };
 

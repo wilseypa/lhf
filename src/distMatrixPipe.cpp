@@ -16,9 +16,12 @@ distMatrixPipe::distMatrixPipe(){
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
-std::vector<std::vector<double>> distMatrixPipe::runPipe(std::vector<std::vector<double>> inData){
-	
+pipePacket distMatrixPipe::runPipe(pipePacket inData){
+		
 	std::cout << "Made it to distMatrixPipe::runPipe" << std::endl;
+	
+	//inDat = std::sqrt(std::inner_product(inData.begin(), inData.end(), enddata.begin,
+	
 	return inData;
 }
 

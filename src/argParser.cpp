@@ -10,8 +10,8 @@
 #include "argParser.hpp"
 
 
-std::map<std::string, std::string> argMap = { {"dimensions","d"},{"iterations","r"},{"pipeline","p"},{"inputFile","i"},{"outputFile","o"} };
-std::map<std::string, std::string> defaultMap = { {"dimensions","3"},{"iterations","1000"},{"pipeline","default"},{"inputFile","None"},{"outputFile","None"} };
+std::map<std::string, std::string> argMap = { {"dimensions","d"},{"iterations","r"},{"pipeline","p"},{"inputFile","i"},{"outputFile","o"},{"epsilon","e"} };
+std::map<std::string, std::string> defaultMap = { {"dimensions","3"},{"iterations","1000"},{"pipeline","default"},{"inputFile","None"},{"outputFile","console"},{"epsilon","0.5"} };
 
 // argParse constructor, currently no needed information for the class constructor
 argParser::argParser(){

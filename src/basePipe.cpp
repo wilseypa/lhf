@@ -9,6 +9,7 @@
 #include <vector>
 #include "basePipe.hpp"
 #include "distMatrixPipe.hpp"
+#include "neighGraphPipe.hpp"
 
 // basePipe constructor
 basePipe::basePipe(){
@@ -23,17 +24,20 @@ basePipe* basePipe::newPipe(const std::string &pipeT){
 	if(pipeType == "distMatrix"){
 		std::cout << "test" << std::endl;
 		return new distMatrixPipe();
+	} else if (pipeType == "neighGraph"){
+		std::cout << "neigh" << std::endl;
+		return new neighGraphPipe();
 	}
 	
 	return 0;
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
-std::vector<std::vector<double>> basePipe::runPipe(std::vector<std::vector<double>> inData){
+bool basePipe::runPipe(pipePacket* inData){
 	
 	std::cout << "No run function defined for: " << pipeType << std::endl;
 	
-	return inData;
+	return true;
 }
 
 
