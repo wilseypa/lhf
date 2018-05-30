@@ -10,7 +10,7 @@ class basePipe {
 	std::string pipeType;
     basePipe();
     basePipe* newPipe(const std::string&);
-    virtual bool runPipe(pipePacket* inData);
+    virtual pipePacket runPipe(pipePacket inData);
     virtual bool configPipe(std::map<std::string, std::string> configMap);
 };
 

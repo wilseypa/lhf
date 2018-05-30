@@ -39,8 +39,8 @@ double vectors_distance(const std::vector<double>& a, const std::vector<double>&
 pipePacket neighGraphPipe::runPipe(pipePacket inData){	
 	
 	//Store our nodes, edges, and weights
-	std::vector<int> nodeIndex(inData.workData.workingData.size()-1);
-	std::vector<std::vector<int>> edges;
+	std::vector<unsigned> nodeIndex(inData.workData.workingData.size()-1);
+	std::vector<std::vector<unsigned>> edges;
 	std::vector<double> weights;
 	 
 	 
@@ -56,7 +56,7 @@ pipePacket neighGraphPipe::runPipe(pipePacket inData){
 	
 				//Filter distances <= epsilon, > 0 (same point)
 				if(dist <= epsilon && dist > 0){
-					std::vector<int> edge = {i,j};
+					std::vector<unsigned> edge = {i,j};
 					edges.push_back(edge);
 					weights.push_back(dist);
 				}
@@ -64,15 +64,21 @@ pipePacket neighGraphPipe::runPipe(pipePacket inData){
 		
 		}
 	}
+	inData.workData.edges = edges;
+	inData.workData.weights = weights;
 	
-	//std::cout << nodeIndex.size() << "\t" << edges.size() << "\t" << weights.size() << std::endl;
-	//td::cout << std::endl << std::endl;
-	//for(unsigned i = 0; i < edges.size(); i++){
-	//	for (unsigned j = 0; j < edges[1].size(); j++){
-	//		std::cout << edges[i][j] << "\t";
-	//	}
-	//	std::cout << weights[i] << std::endl;		
-	//}
+	/*
+	
+	std::cout << nodeIndex.size() << "\t" << edges.size() << "\t" << weights.size() << std::endl << std::endl << std::endl;
+	std::cout << std::endl << std::endl;
+	for(unsigned i = 0; i < edges.size(); i++){
+		for (unsigned j = 0; j < edges[1].size(); j++){
+			std::cout << edges[i][j] << "\t";
+		}
+		std::cout << weights[i] << std::endl;		
+	}
+	
+	*/
 	
 	return inData;
 }

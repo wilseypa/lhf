@@ -19,13 +19,11 @@ basePipe::basePipe(){
 }
 
 basePipe* basePipe::newPipe(const std::string &pipeT){
-	std::cout << "Building pipeline: " << pipeT << std::endl;
+	std::cout << "Building pipeline: " << pipeT << std::endl << std::endl;
 	pipeType = pipeT;
 	if(pipeType == "distMatrix"){
-		std::cout << "test" << std::endl;
 		return new distMatrixPipe();
 	} else if (pipeType == "neighGraph"){
-		std::cout << "neigh" << std::endl;
 		return new neighGraphPipe();
 	}
 	
@@ -33,13 +31,12 @@ basePipe* basePipe::newPipe(const std::string &pipeT){
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
-bool basePipe::runPipe(pipePacket* inData){
+pipePacket basePipe::runPipe(pipePacket inData){
 	
 	std::cout << "No run function defined for: " << pipeType << std::endl;
 	
-	return true;
-}
-
+	return inData;
+}	
 
 // configPipe -> configure the function settings of this pipeline segment
 bool basePipe::configPipe(std::map<std::string, std::string> configMap){

@@ -7,6 +7,12 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <cmath>
+#include <iterator>
+#include <algorithm>
+#include <numeric>
+#include <functional>
+#include <algorithm>
 #include "distMatrixPipe.hpp"
 
 // basePipe constructor
@@ -15,12 +21,56 @@ distMatrixPipe::distMatrixPipe(){
 	return;
 }
 
+double vectors_distance(const std::vector<double>& a, const std::vector<double>& b)
+{
+		
+		std::vector<double> temp;
+		
+		if(b.size() == 0)
+			return 0;
+		
+		std::transform(a.begin(), a.end(), b.begin(), std::back_inserter(temp),[](double e1, double e2) {return pow((e1-e2),2);});
+	
+		return sqrt(std::accumulate(temp.begin(), temp.end(), 0.0));
+}
+
+
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket distMatrixPipe::runPipe(pipePacket inData){
-		
-	std::cout << "Made it to distMatrixPipe::runPipe" << std::endl;
 	
-	//inDat = std::sqrt(std::inner_product(inData.begin(), inData.end(), enddata.begin,
+	//Store our nodes, edges, and weights
+	std::vector<std::vector<double>> distMatrix;
+	 
+	//Iterate through each vector
+	for(unsigned i = 0; i < inData.workData.workingData.size()-1; i++){
+		//Grab a second vector to compare to 
+		std::vector<double> temp;
+		for(unsigned j = 0; j < inData.workData.workingData.size()-1; j++){
+
+				//Calculate vector distance 
+				auto dist = vectors_distance(inData.workData.workingData[i],inData.workData.workingData[j]);
+	
+				temp.push_back(dist);		
+				
+				
+		}
+		distMatrix.push_back(temp);
+	}
+	inData.workData.workingData = distMatrix;
+	
+	/*
+	
+	for(unsigned i = 0; i < distMatrix.size(); i++){
+		for(unsigned j = 0; j < distMatrix[0].size(); j++){
+			
+		std::cout << distMatrix[i][j] << "\t";	
+			
+		}
+		std::cout << "\n";
+	}
+	
+	*/
+		
 	
 	return inData;
 }
@@ -29,7 +79,6 @@ pipePacket distMatrixPipe::runPipe(pipePacket inData){
 // configPipe -> configure the function settings of this pipeline segment
 bool distMatrixPipe::configPipe(std::map<std::string, std::string> configMap){
 	
-	std::cout << "Made it to distMatrixPipe::configPipe" << std::endl;
 	return true;
 }
 
