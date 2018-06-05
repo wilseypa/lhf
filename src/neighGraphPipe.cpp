@@ -53,7 +53,7 @@ pipePacket neighGraphPipe::runPipe(pipePacket inData){
 				
 				//Calculate vector distance 
 				auto dist = vectors_distance(inData.workData.workingData[i],inData.workData.workingData[j]);
-	
+				
 				//Filter distances <= epsilon, > 0 (same point)
 				if(dist <= epsilon && dist > 0){
 					std::vector<unsigned> edge = {i,j};
@@ -68,17 +68,17 @@ pipePacket neighGraphPipe::runPipe(pipePacket inData){
 	inData.workData.weights = weights;
 	
 	/*
-	
+	std::cout << "test\t" << inData.workData.workingData[0].size() << std::endl;
 	std::cout << nodeIndex.size() << "\t" << edges.size() << "\t" << weights.size() << std::endl << std::endl << std::endl;
 	std::cout << std::endl << std::endl;
 	for(unsigned i = 0; i < edges.size(); i++){
-		for (unsigned j = 0; j < edges[1].size(); j++){
+		for (unsigned j = 0; j < edges[i].size(); j++){
 			std::cout << edges[i][j] << "\t";
 		}
 		std::cout << weights[i] << std::endl;		
 	}
-	
 	*/
+	
 	
 	return inData;
 }

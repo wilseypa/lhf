@@ -117,7 +117,7 @@ bool writeOutput::writeMAT(std::string filename, std::vector<std::vector<double>
 bool writeOutput::writeConsole(pipePacket* workData){
 	std::vector<std::vector<double>> result;
 	
-	std::cout << "_________OUTPUT__________" << std::endl;
+	std::cout << "_________workingData OUTPUT__________" << std::endl;
 		
 	for(unsigned i = 0; i < workData->workData.workingData.size(); i++){
 		for(unsigned j = 0; j < workData->workData.workingData[i].size(); j++){

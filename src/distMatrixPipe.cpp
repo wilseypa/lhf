@@ -21,16 +21,15 @@ distMatrixPipe::distMatrixPipe(){
 	return;
 }
 
-double vectors_distance(const std::vector<double>& a, const std::vector<double>& b)
-{
-		
+
+// Calculate the euclidean distance between two vectors
+double vectors_distance(const std::vector<double>& a, const std::vector<double>& b){
 		std::vector<double> temp;
 		
 		if(b.size() == 0)
 			return 0;
 		
-		std::transform(a.begin(), a.end(), b.begin(), std::back_inserter(temp),[](double e1, double e2) {return pow((e1-e2),2);});
-	
+		std::transform(a.begin(), a.end(), b.begin(), std::back_inserter(temp),[](double e1, double e2) {return pow((e1-e2),2);});	
 		return sqrt(std::accumulate(temp.begin(), temp.end(), 0.0));
 }
 
@@ -38,7 +37,7 @@ double vectors_distance(const std::vector<double>& a, const std::vector<double>&
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket distMatrixPipe::runPipe(pipePacket inData){
 	
-	//Store our nodes, edges, and weights
+	//Store our distance matrix
 	std::vector<std::vector<double>> distMatrix;
 	 
 	//Iterate through each vector
@@ -50,27 +49,13 @@ pipePacket distMatrixPipe::runPipe(pipePacket inData){
 				//Calculate vector distance 
 				auto dist = vectors_distance(inData.workData.workingData[i],inData.workData.workingData[j]);
 	
-				temp.push_back(dist);		
-				
-				
+				temp.push_back(dist);	
 		}
 		distMatrix.push_back(temp);
 	}
+	
+	//Assign to the pipePacket
 	inData.workData.workingData = distMatrix;
-	
-	/*
-	
-	for(unsigned i = 0; i < distMatrix.size(); i++){
-		for(unsigned j = 0; j < distMatrix[0].size(); j++){
-			
-		std::cout << distMatrix[i][j] << "\t";	
-			
-		}
-		std::cout << "\n";
-	}
-	
-	*/
-		
 	
 	return inData;
 }

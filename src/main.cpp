@@ -18,24 +18,19 @@ int main(int argc, char* argv[]){
     
     auto args = ap->parse(argc, argv);
 	
+	
+	//Read data from inputFile CSV
     wD->workData.originalData = rs->readCSV(args["inputFile"]);
 
 
 	if(wD->workData.originalData.size() > 0){
-		cout << "_________CSV INPUT__________" << endl;
 		
-		for(unsigned i = 0; i < wD->workData.originalData.size(); i++){
-			for(unsigned j = 0; j < wD->workData.originalData[i].size(); j++){
-				cout << wD->workData.originalData[i][j] << "\t";
-			}
-			cout << endl;
-		}
-		
+		//Add data to our pipePacket
 		wD->workData.workingData = wD->workData.originalData;
 	
 		// Begin processing parts of the pipeline
 		// DataInput -> A -> B -> ... -> DataOutput
-		// Parsed by "." -> i.e. DataInput.A.B.DataOutput
+		// Parsed by "." -> i.e. A.B.C.D
 		auto pipe = args.find("pipeline");
 		if(pipe != args.end()){
 			auto pipeFuncts = std::string(args["pipeline"]);
@@ -49,7 +44,7 @@ int main(int argc, char* argv[]){
 				//Build the pipe component, configure and run
 				auto *bp = new basePipe();
 				auto *cp = bp->newPipe(curFunct);
-				//cout << typeid(bp).name() << endl;
+				
 				if(cp->configPipe(args)){
 					*wD = cp->runPipe(*wD);
 				} else {
@@ -63,12 +58,12 @@ int main(int argc, char* argv[]){
 		}
 		
 		pipe = args.find("outputFile");
-		if(pipe != args.end()){
+		/*if(pipe != args.end()){
 			if (args["outputFile"] == "console"){
 				ws->writeConsole(wD);
 			
 			}
-		}
+		}*/
 		
 	}
     return 0;

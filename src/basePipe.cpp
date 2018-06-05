@@ -10,6 +10,8 @@
 #include "basePipe.hpp"
 #include "distMatrixPipe.hpp"
 #include "neighGraphPipe.hpp"
+#include "bettiPipe.hpp"
+#include "ripsPipe.hpp"
 
 // basePipe constructor
 basePipe::basePipe(){
@@ -25,6 +27,10 @@ basePipe* basePipe::newPipe(const std::string &pipeT){
 		return new distMatrixPipe();
 	} else if (pipeType == "neighGraph"){
 		return new neighGraphPipe();
+	} else if (pipeType == "betti"){
+		return new bettiPipe();
+	} else if (pipeType == "rips"){
+		return new ripsPipe();
 	}
 	
 	return 0;
