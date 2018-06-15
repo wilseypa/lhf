@@ -4,9 +4,9 @@ AM_CXXFLAGS = -fpic -Wall -Wextra -std=c++17
 
 bin_PROGRAMS = TDA_Cplusplus
 TDA_Cplusplus_SOURCES = main.cpp
-TDA_Cplusplus_LDADD = libPipePacket.la libReadInput.la libWriteOutput.la libArgParser.la libBasePipe.la libDistMatrixPipe.la libNeighGraphPipe.la libBettiPipe.la libRipsPipe.la
+TDA_Cplusplus_LDADD = libPipePacket.la libReadInput.la libWriteOutput.la libArgParser.la libBasePipe.la libDistMatrixPipe.la libNeighGraphPipe.la libBettiPipe.la libRipsPipe.la libUtils.la
 
-lib_LTLIBRARIES = libPipePacket.la libReadInput.la libWriteOutput.la libArgParser.la libBasePipe.la libDistMatrixPipe.la libNeighGraphPipe.la libBettiPipe.la libRipsPipe.la
+lib_LTLIBRARIES = libPipePacket.la libReadInput.la libWriteOutput.la libArgParser.la libBasePipe.la libDistMatrixPipe.la libNeighGraphPipe.la libBettiPipe.la libRipsPipe.la libUtils.la
 libPipePacket_la_LDFLAGS = -version-info 0:0:0
 libPipePacket_la_SOURCES = pipePacket.cpp pipePacket.hpp
 
@@ -33,3 +33,6 @@ libBettiPipe_la_SOURCES = bettiPipe.cpp bettiPipe.hpp
 
 libRipsPipe_la_LDFLAGS = -version-info 0:0:0
 libRipsPipe_la_SOURCES = ripsPipe.cpp ripsPipe.hpp
+
+libUtils_la_LDFLAGS = -version-info 0:0:0
+libUtils_la_SOURCES = utils.cpp utils.hpp

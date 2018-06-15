@@ -45,8 +45,8 @@ int main(int argc, char* argv[]){
 				auto *bp = new basePipe();
 				auto *cp = bp->newPipe(curFunct);
 				
-				if(cp->configPipe(args)){
-					*wD = cp->runPipe(*wD);
+				if(cp != 0 && cp->configPipe(args)){
+					*wD = cp->runPipeWrapper(*wD);
 				} else {
 					cout << "Failed to configure pipeline: " << args["pipeline"] << endl;
 				}

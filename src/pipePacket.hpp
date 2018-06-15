@@ -14,5 +14,7 @@ class pipePacket {
 		std::vector<double> weights;
 	} workData;
 	
+	
+	double getSize();	
 };
 

@@ -18,7 +18,7 @@
 
 // basePipe constructor
 ripsPipe::ripsPipe(){
-
+	pipeType = "Vietoris Rips (inductive)";
 	return;
 }
 
@@ -26,8 +26,8 @@ ripsPipe::ripsPipe(){
 std::vector<unsigned> intersect(std::vector<unsigned> v1, std::vector<unsigned> v2){
 	std::vector<unsigned> ret;
 	
-	//sort(v1.begin(), v1.end());
-	//sort(v2.begin(), v2.end());
+	sort(v1.begin(), v1.end());
+	sort(v2.begin(), v2.end());
 	
 	set_intersection(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(ret));
 	
@@ -49,24 +49,44 @@ pipePacket ripsPipe::runPipe(pipePacket inData){
 	}
 	 
 	//Iterate up to max dimension of simplex
-	for(unsigned i = 2; i < dim; i++){
+	for(unsigned i = 1; i < dim; i++){
 		std::vector<std::vector<unsigned>> test;
 		
 		
 		//Iterate through each element in the previous dimension's edges
 		for(unsigned j = 0; j < temp.size(); j++){
-			std::vector<unsigned> tempSimplex = temp[j];
 			std::vector<std::vector<unsigned>> tempIntersections;
 			
 			//First search for intersections of the current element
-			for(unsigned t = 0; t < j; t++){
-				auto simp = intersect(tempSimplex, temp[t]);
+			for(unsigned t = j+1; t < temp.size(); t++){
+				auto simp = intersect(temp[j], temp[t]);
 
-				if (simp.size() > 0)
+				//This point intersects; potential candidate for a higher-level simplice
+				if (simp.size() > 0){
 					tempIntersections.push_back(temp[t]);
+					
+					//Loop through the current tempIntersections list
+					for(unsigned z = 0; z < tempIntersections.size(); z++){
+						simp = intersect(tempIntersections[z], temp[t]);
+						
+						if(simp.size() > 0){
+							//Copy the tested simplex into the new intersection
+							for(auto e : temp[j])
+								simp.push_back(e);
+								
+							//remove any duplicates
+							std::set<unsigned> s(simp.begin(), simp.end());
+							simp.assign(s.begin(), s.end());
+					
+							test.push_back(simp);
+						}
+					
+					
+					}
+				}
 			}		
 			
-			//Search for intersections of elements that already intersected the current
+			/*//Search for intersections of elements that already intersected the current
 			for(unsigned t = 0; t < tempIntersections.size(); t++){
 				for(unsigned z = 0; z < t; z++){
 					auto simp = intersect(tempIntersections[t],tempIntersections[z]);
@@ -74,14 +94,9 @@ pipePacket ripsPipe::runPipe(pipePacket inData){
 					for(auto e : tempSimplex)
 						simp.push_back(e);		
 					
-					std::set<unsigned> s(simp.begin(), simp.end());
-					simp.assign(s.begin(), s.end());
 					
-					if(simp.size() > tempSimplex.size()){
-						test.push_back(simp);
-					}
 				}
-			}	
+			}	*/
 		}		
 		
 		//Filter any duplicate simplices
@@ -93,7 +108,6 @@ pipePacket ripsPipe::runPipe(pipePacket inData){
 			inData.workData.edges.push_back(n);
 			temp.push_back(n);
 		}
-		
 		std::cout << "\t" << i << "-Dimensional Simplices: " << temp.size() << std::endl;
 		
 	}

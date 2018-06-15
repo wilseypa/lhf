@@ -22,7 +22,7 @@ std::vector<int> nRanks;
 
 // basePipe constructor
 bettiPipe::bettiPipe(){
-
+	pipeType = "Betti";
 	return;
 }
 
@@ -31,8 +31,8 @@ bettiPipe::bettiPipe(){
 std::vector<unsigned> intersect(std::vector<unsigned> v1, std::vector<unsigned> v2){
 	std::vector<unsigned> ret;
 	
-	sort(v1.begin(), v1.end());
-	sort(v2.begin(), v2.end());
+	//sort(v1.begin(), v1.end());
+	//sort(v2.begin(), v2.end());
 	
 	set_intersection(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(ret));
 	
@@ -107,8 +107,8 @@ std::vector<std::vector<int>> boundaryMatrix(std::vector<std::vector<unsigned>> 
 	std::vector<std::vector<int>> ret;
 	std::vector<std::vector<int>> boundary;	
 	
-	if(dim <= 1)
-		return {{0}};
+	//if(dim <= 1)
+	//	return {{0}};
 	
 	//Create the boundary matrix from chains
 	std::vector<std::vector<unsigned>> nChain = nSimplices(dim, edges);
