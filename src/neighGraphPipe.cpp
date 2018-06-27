@@ -71,11 +71,11 @@ pipePacket neighGraphPipe::runPipe(pipePacket inData){
 
 // configPipe -> configure the function settings of this pipeline segment
 bool neighGraphPipe::configPipe(std::map<std::string, std::string> configMap){
-	
 	auto pipe = configMap.find("epsilon");
 	if(pipe != configMap.end())
 		epsilon = std::atof(configMap["epsilon"].c_str());
 	else return false;
+	
 	pipe = configMap.find("debug");
 	if(pipe != configMap.end())
 		debug = std::atoi(configMap["debug"].c_str());

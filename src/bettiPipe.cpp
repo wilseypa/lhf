@@ -15,28 +15,17 @@
 #include <algorithm>
 #include <set>
 #include "bettiPipe.hpp"
+#include "utils.hpp"
 
 
 std::vector<int> ranks;
 std::vector<int> nRanks;
+utils ut;
 
 // basePipe constructor
 bettiPipe::bettiPipe(){
 	pipeType = "Betti";
 	return;
-}
-
-
-// Find the intersect of two vectors
-std::vector<unsigned> intersect(std::vector<unsigned> v1, std::vector<unsigned> v2){
-	std::vector<unsigned> ret;
-	
-	//sort(v1.begin(), v1.end());
-	//sort(v2.begin(), v2.end());
-	
-	set_intersection(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(ret));
-	
-	return ret;
 }
 
 //Filter and return simplices of a specified dimension
@@ -55,8 +44,11 @@ std::vector<std::vector<unsigned>> nSimplices(unsigned n, std::vector<std::vecto
 int checkFace(std::vector<unsigned> face, std::vector<unsigned> simplex){
 	if(simplex.size() == 0)
 		return 1;
-	else if(intersect(face,simplex).size() == face.size())
+	else if(ut.intersect(face,simplex,false).size() == face.size()){
+		ut.print1DVector(face);
+		ut.print1DVector(simplex);
 		return 1;
+	}
 	else
 		return 0;
 }
@@ -111,9 +103,11 @@ std::vector<std::vector<int>> boundaryMatrix(std::vector<std::vector<unsigned>> 
 	//	return {{0}};
 	
 	//Create the boundary matrix from chains
-	std::vector<std::vector<unsigned>> nChain = nSimplices(dim, edges);
-	std::vector<std::vector<unsigned>> pChain = nSimplices(dim-1, edges);
+	std::vector<std::vector<unsigned>> nChain = nSimplices(dim+2, edges);
+	std::vector<std::vector<unsigned>> pChain = nSimplices(dim+1, edges);
 	std::vector<int> bDim;
+	
+	std::cout << dim << "-dimensional simplices: " << edges.size() << std::endl;
 	
 	std::cout << "pre: " << nChain.size() << " " << pChain.size() << std::endl;
 	
@@ -156,21 +150,21 @@ pipePacket bettiPipe::runPipe(pipePacket inData){
 		allBoundaries.push_back(boundary);
 	}
 	
-	
-	
-	
 	return inData;
 }
 
 
 // configPipe -> configure the function settings of this pipeline segment
 bool bettiPipe::configPipe(std::map<std::string, std::string> configMap){
-	
-	
 	auto pipe = configMap.find("dimensions");
-	if(pipe != configMap.end()){
+	if(pipe != configMap.end())
 		dim = std::atoi(configMap["dimensions"].c_str());
-	}
+	else return false;
+	
+	pipe = configMap.find("debug");
+	if(pipe != configMap.end())
+		debug = std::atoi(configMap["debug"].c_str());
+	else return false;
 	
 	return true;
 }

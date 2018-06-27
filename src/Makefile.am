@@ -4,9 +4,9 @@ AM_CXXFLAGS = -fpic -Wall -Wextra -std=c++17
 
 bin_PROGRAMS = TDA_Cplusplus
 TDA_Cplusplus_SOURCES = main.cpp
-TDA_Cplusplus_LDADD = libPipePacket.la libReadInput.la libWriteOutput.la libArgParser.la libBasePipe.la libDistMatrixPipe.la libNeighGraphPipe.la libBettiPipe.la libRipsPipe.la libUtils.la
+TDA_Cplusplus_LDADD = libPipePacket.la libReadInput.la libWriteOutput.la libArgParser.la libBasePipe.la libDistMatrixPipe.la libNeighGraphPipe.la libBettiPipe.la libRipsPipe.la libUtils.la libSimplexTree.la libSimplexArrayList.la libSimplexBase.la
 
-lib_LTLIBRARIES = libPipePacket.la libReadInput.la libWriteOutput.la libArgParser.la libBasePipe.la libDistMatrixPipe.la libNeighGraphPipe.la libBettiPipe.la libRipsPipe.la libUtils.la
+lib_LTLIBRARIES = libPipePacket.la libReadInput.la libWriteOutput.la libArgParser.la libBasePipe.la libDistMatrixPipe.la libNeighGraphPipe.la libBettiPipe.la libRipsPipe.la libUtils.la libSimplexTree.la libSimplexArrayList.la libSimplexBase.la
 libPipePacket_la_LDFLAGS = -version-info 0:0:0
 libPipePacket_la_SOURCES = pipePacket.cpp pipePacket.hpp
 
@@ -36,3 +36,12 @@ libRipsPipe_la_SOURCES = ripsPipe.cpp ripsPipe.hpp
 
 libUtils_la_LDFLAGS = -version-info 0:0:0
 libUtils_la_SOURCES = utils.cpp utils.hpp
+
+libSimplexTree_la_LDFLAGS = -version-info 0:0:0
+libSimplexTree_la_SOURCES = simplexTree.cpp simplexTree.hpp
+
+libSimplexBase_la_LDFLAGS = -version-info 0:0:0
+libSimplexBase_la_SOURCES = simplexBase.cpp simplexBase.hpp
+
+libSimplexArrayList_la_LDFLAGS = -version-info 0:0:0
+libSimplexArrayList_la_SOURCES = simplexArrayList.cpp simplexArrayList.hpp

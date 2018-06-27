@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <set>
 #include "ripsPipe.hpp"
+#include "utils.hpp"
 
 // basePipe constructor
 ripsPipe::ripsPipe(){
@@ -23,20 +24,9 @@ ripsPipe::ripsPipe(){
 }
 
 
-std::vector<unsigned> intersect(std::vector<unsigned> v1, std::vector<unsigned> v2){
-	std::vector<unsigned> ret;
-	
-	sort(v1.begin(), v1.end());
-	sort(v2.begin(), v2.end());
-	
-	set_intersection(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(ret));
-	
-	return ret;
-}
-
-
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket ripsPipe::runPipe(pipePacket inData){
+	utils ut;
 	
 	//Store the complex built from the VR expansion
 	std::vector<std::vector<unsigned>> edges;
@@ -59,7 +49,7 @@ pipePacket ripsPipe::runPipe(pipePacket inData){
 			
 			//First search for intersections of the current element
 			for(unsigned t = j+1; t < temp.size(); t++){
-				auto simp = intersect(temp[j], temp[t]);
+				auto simp = ut.intersect(temp[j], temp[t],false);
 
 				//This point intersects; potential candidate for a higher-level simplice
 				if (simp.size() > 0){
@@ -67,7 +57,7 @@ pipePacket ripsPipe::runPipe(pipePacket inData){
 					
 					//Loop through the current tempIntersections list
 					for(unsigned z = 0; z < tempIntersections.size(); z++){
-						simp = intersect(tempIntersections[z], temp[t]);
+						simp = ut.intersect(tempIntersections[z], temp[t],false);
 						
 						if(simp.size() > 0){
 							//Copy the tested simplex into the new intersection

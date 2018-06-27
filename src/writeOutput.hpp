@@ -7,8 +7,9 @@ class writeOutput {
   private:
   public:
     writeOutput();
-    bool writeCSV(std::string filename, std::vector<std::vector<double>>);
-    bool writeMAT(std::string filename, std::vector<std::vector<double>>);
+    bool writeStats(std::string, std::string);
+    bool writeCSV(std::string, std::vector<std::vector<double>>);
+    bool writeMAT(std::string, std::vector<std::vector<double>>);
 	bool writeConsole(pipePacket*);
 };
 

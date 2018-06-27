@@ -37,12 +37,11 @@ basePipe* basePipe::newPipe(const std::string &pipeT){
 
 // runPipeWrapper -> wrapper for timing of runPipe and other misc. functions
 pipePacket basePipe::runPipeWrapper(pipePacket inData){
-	pipePacket retData;
 	
 	//Start a timer for physical time passed during the pipe's function
 	auto startTime = std::chrono::high_resolution_clock::now();
 	
-	retData = runPipe(inData);
+	inData = runPipe(inData);
 	
 	//Stop the timer for time passed during the pipe's function
 	auto endTime = std::chrono::high_resolution_clock::now();
@@ -53,28 +52,29 @@ pipePacket basePipe::runPipeWrapper(pipePacket inData){
 	//Output the time and memory used for this pipeline segment
 	std::cout << "Pipeline " << pipeType << " executed in " << (elapsed.count()/1000.0) << " seconds (physical time)" << std::endl;
 	
-	auto dataSize = retData.getSize();
-	auto unit = "Bytes";
+	auto dataSize = inData.getSize();
+	auto unit = "B";
 	
 	//Convert large datatypes (GB, MB, KB)
 	if(dataSize > 1000000000){
 		//Convert to GB
 		dataSize = dataSize/1000000000;
-		unit = "GigaBytes";
+		unit = "GB";
 	} else if(dataSize > 1000000){
 		//Convert to MB
 		dataSize = dataSize/1000000;
-		unit = "MegaBytes";
+		unit = "MB";
 	} else if (dataSize > 1000){
 		//Convert to KB
 		dataSize = dataSize/1000;
-		unit = "KiloBytes";
+		unit = "KB";
 	}
 	
 	std::cout << "\tData size: " << dataSize << " " << unit << std::endl << std::endl;
 	
+	inData.stats += pipeType + "," + std::to_string(elapsed.count()/1000.0) + "," + std::to_string(dataSize) + "," + unit + "\n";
 	
-	return retData;
+	return inData;
 }
 
 // runPipe -> Run the configured functions of this pipeline segment

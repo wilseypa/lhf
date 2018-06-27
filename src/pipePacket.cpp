@@ -1,10 +1,12 @@
 #include <string>
 #include <vector>
 #include "pipePacket.hpp"
+#include "simplexBase.hpp"
 
 // pipePacket constructor, currently no needed information for the class constructor
-pipePacket::pipePacket(){
-
+pipePacket::pipePacket(const std::string& simplexType){
+	simplexBase *bs = new simplexBase();
+	workData.complex = bs->newSimplex(simplexType);
 }
 
 double pipePacket::getSize(){
@@ -34,6 +36,9 @@ double pipePacket::getSize(){
 	for(auto row : workData.weights)
 		size += sizeof(row);
 	
+	
+	//Calculate size of complex storage
+	size += workData.complex->getSize();
 	
 	return size;
 }

@@ -14,10 +14,10 @@ int main(int argc, char* argv[]){
     auto *rs = new readInput();
     auto *ap = new argParser();
     auto *ws = new writeOutput();
-    auto *wD = new pipePacket();
     
     auto args = ap->parse(argc, argv);
 	
+    auto *wD = new pipePacket(args["complexType"]);	//wD (workingData)
 	
 	//Read data from inputFile CSV
     wD->workData.originalData = rs->readCSV(args["inputFile"]);
@@ -58,12 +58,13 @@ int main(int argc, char* argv[]){
 		}
 		
 		pipe = args.find("outputFile");
-		/*if(pipe != args.end()){
-			if (args["outputFile"] == "console"){
-				ws->writeConsole(wD);
+		if(pipe != args.end()){
+			//if (args["outputFile"] == "console"){
+			//	ws->writeConsole(wD);
+			//}
 			
-			}
-		}*/
+			ws->writeStats(wD->stats, args["outputFile"]);
+		}
 		
 	}
     return 0;
