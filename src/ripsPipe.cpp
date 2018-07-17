@@ -33,7 +33,7 @@ pipePacket ripsPipe::runPipe(pipePacket inData){
 	std::vector<double> weights;
 	std::vector<std::vector<unsigned>> temp;
 	
-	for(auto sortTemp : inData.workData.edges){
+	for(auto sortTemp : inData.workData.complex->edges){
 		sort(sortTemp.begin(), sortTemp.end());
 		temp.push_back(sortTemp);
 	}
@@ -95,13 +95,13 @@ pipePacket ripsPipe::runPipe(pipePacket inData){
 
 		temp.clear();
 		for (auto n : test){
-			inData.workData.edges.push_back(n);
+			inData.workData.complex->edges.push_back(n);
 			temp.push_back(n);
 		}
 		std::cout << "\t" << i << "-Dimensional Simplices: " << temp.size() << std::endl;
 		
 	}
-	std::cout << "\tComplex Size: " << inData.workData.edges.size() << std::endl;
+	std::cout << "\tComplex Size: " << inData.workData.complex->edges.size() << std::endl;
 	
 	return inData;
 }

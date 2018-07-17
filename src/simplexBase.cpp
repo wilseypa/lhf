@@ -47,3 +47,9 @@ int simplexBase::simplexCount(){
 	std::cout << "No simplexCount function defined for: " << simplexType << std::endl;
 	return -1;
 }
+
+void simplexBase::outputSimplex(){
+	std::cout << "No outputSimplex function defined for: " << simplexType << std::endl;
+	return;
+}
+	

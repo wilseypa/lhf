@@ -23,20 +23,20 @@ neighGraphPipe::neighGraphPipe(){
 pipePacket neighGraphPipe::runPipe(pipePacket inData){	
 	utils ut;
 	//Store our nodes, edges, and weights
-	std::vector<unsigned> nodeIndex(inData.workData.workingData.size()-1);
+	std::vector<unsigned> nodeIndex(inData.workData.originalData.size()-1);
 	std::vector<std::vector<unsigned>> edges;
 	std::vector<double> weights;
 	 
 	 
 	//Iterate through each vector
-	for(unsigned i = 0; i < inData.workData.workingData.size(); i++){
+	for(unsigned i = 0; i < inData.workData.originalData.size(); i++){
 		//Grab a second vector to compare to 
-		for(unsigned j = 0; j < inData.workData.workingData.size()-i; j++){
+		for(unsigned j = 0; j < inData.workData.originalData.size()-i; j++){
 			
 			if (i != j+1){
 				
 				//Calculate vector distance 
-				auto dist = ut.vectors_distance(inData.workData.workingData[i],inData.workData.workingData[j]);
+				auto dist = ut.vectors_distance(inData.workData.originalData[i],inData.workData.originalData[j]);
 				
 				//Filter distances <= epsilon, > 0 (same point)
 				if(dist <= epsilon && dist > 0){
@@ -48,8 +48,8 @@ pipePacket neighGraphPipe::runPipe(pipePacket inData){
 		
 		}
 	}
-	inData.workData.edges = edges;
-	inData.workData.weights = weights;
+	inData.workData.complex->edges = edges;
+	inData.workData.complex->weights = weights;
 	
 	/*
 	std::cout << "test\t" << inData.workData.workingData[0].size() << std::endl;

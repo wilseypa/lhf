@@ -18,24 +18,7 @@ double pipePacket::getSize(){
 	for(auto row : workData.originalData){
 		for(auto index : row)
 			size += sizeof(index);
-	}
-	
-	//Calculate size of working data
-	for(auto row: workData.workingData){
-		for(auto index : row)
-			size += sizeof(index);
-	}
-	
-	//Calculate size of edges
-	for(auto row : workData.edges){
-		for(auto index : row)
-			size += sizeof(index);
 	}	
-	
-	//Calculate size of weights
-	for(auto row : workData.weights)
-		size += sizeof(row);
-	
 	
 	//Calculate size of complex storage
 	size += workData.complex->getSize();

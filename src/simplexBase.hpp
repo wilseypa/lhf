@@ -9,10 +9,16 @@ class simplexBase {
 	simplexBase();
 	simplexBase* newSimplex(const std::string &simplexT);
 	
+	//Temporary!:
+	std::vector<double> weights;
+	std::vector<std::vector<unsigned>> edges;
+	
+	
 	double getSize();
 	void insert(std::vector<double>);
 	void find(std::vector<double>);
 	int simplexCount();
 	int vertexCount();
+	void outputSimplex();
 };
 

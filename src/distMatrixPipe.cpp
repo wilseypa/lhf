@@ -29,13 +29,13 @@ pipePacket distMatrixPipe::runPipe(pipePacket inData){
 	std::vector<std::vector<double>> distMatrix;
 	 
 	//Iterate through each vector
-	for(unsigned i = 0; i < inData.workData.workingData.size()-1; i++){
+	for(unsigned i = 0; i < inData.workData.originalData.size()-1; i++){
 		//Grab a second vector to compare to 
 		std::vector<double> temp;
-		for(unsigned j = 0; j < inData.workData.workingData.size()-1; j++){
+		for(unsigned j = 0; j < inData.workData.originalData.size()-1; j++){
 
 				//Calculate vector distance 
-				auto dist = ut.vectors_distance(inData.workData.workingData[i],inData.workData.workingData[j]);
+				auto dist = ut.vectors_distance(inData.workData.originalData[i],inData.workData.originalData[j]);
 	
 				temp.push_back(dist);	
 		}
@@ -43,7 +43,7 @@ pipePacket distMatrixPipe::runPipe(pipePacket inData){
 	}
 	
 	//Assign to the pipePacket
-	inData.workData.workingData = distMatrix;
+	inData.workData.originalData = distMatrix;
 	
 	return inData;
 }

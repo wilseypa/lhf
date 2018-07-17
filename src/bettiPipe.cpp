@@ -45,8 +45,8 @@ int checkFace(std::vector<unsigned> face, std::vector<unsigned> simplex){
 	if(simplex.size() == 0)
 		return 1;
 	else if(ut.intersect(face,simplex,false).size() == face.size()){
-		ut.print1DVector(face);
-		ut.print1DVector(simplex);
+		//ut.print1DVector(face);
+		//ut.print1DVector(simplex);
 		return 1;
 	}
 	else
@@ -138,14 +138,14 @@ pipePacket bettiPipe::runPipe(pipePacket inData){
 	std::vector<std::vector<std::vector<int>>> allBoundaries;
 	
 	for(int d = 0; d < dim; d++){		
-		std::vector<std::vector<int>> boundary = boundaryMatrix(inData.workData.edges, d);
+		std::vector<std::vector<int>> boundary = boundaryMatrix(inData.workData.complex->edges, d);
 		
 		std::cout << "\tReduced boundary matrix -> " << boundary.size() << " x " <<boundary[1].size() << std::endl;
 		
-		std::cout << "\tDim: " << d << "\tRANKS: ";
-		for(auto z : ranks)
-			std::cout << z << " ";
-		std::cout << std::endl;
+		//std::cout << "\tDim: " << d << "\tRANKS: ";
+		//for(auto z : ranks)
+		//	std::cout << z << " ";
+		//std::cout << std::endl;
 	
 		allBoundaries.push_back(boundary);
 	}

@@ -26,7 +26,7 @@ int main(int argc, char* argv[]){
 	if(wD->workData.originalData.size() > 0){
 		
 		//Add data to our pipePacket
-		wD->workData.workingData = wD->workData.originalData;
+		wD->workData.originalData = wD->workData.originalData;
 	
 		// Begin processing parts of the pipeline
 		// DataInput -> A -> B -> ... -> DataOutput
