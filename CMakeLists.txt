@@ -12,7 +12,7 @@ project("LHF")
 add_subdirectory("LHF")
 add_subdirectory("Complex")
 add_subdirectory("Pipes")
-
+add_subdirectory("Utils")
 
 enable_testing()
 add_subdirectory(test)

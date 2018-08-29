@@ -4,24 +4,23 @@
 
 ### REQUIREMENTS 
 
-- C++17
+- C++14
   
-- AutoTools
+- CMake
 
 ---
 			  
 ### COMPILING 
 
-	##    autoreconf -i
-	##    ./configure
+	##    cmake .
 	##    make
 
 ---
 
 ###  RUNNING 
 
-	##    cd src
-	##    ./TDA_Cplusplus <args>
+	##    cd LHF
+	##    ./LHF <args>
 
 ---
 
@@ -39,7 +38,7 @@
  
 ### EXAMPLES:
 
-	##    ./TDA_Cplusplus -p distMatrix --inputFile testData.csv
-	##    ./TDA_Cplusplus --pipeline distMatrix.distMatrix.distMatrix -i testData.csv -o output.csv
+	##    ./LHF -p distMatrix --inputFile testData.csv
+	##    ./LHF --pipeline distMatrix.distMatrix.distMatrix -i testData.csv -o output.csv
 
 ---
