@@ -1,11 +1,12 @@
 #include <string>
 #include <vector>
+#include <typeinfo>
+#include <iostream>
 #include "pipePacket.hpp"
-#include "simplexBase.hpp"
 
 // pipePacket constructor, currently no needed information for the class constructor
-pipePacket::pipePacket(const std::string& simplexType){
-	simplexBase *bs = new simplexBase();
+pipePacket::pipePacket(const std::string& simplexType, const double epsilon){
+	simplexBase *bs = new simplexBase(epsilon);
 	workData.complex = bs->newSimplex(simplexType);
 }
 

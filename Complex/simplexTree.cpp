@@ -3,9 +3,12 @@
 #include <iostream>
 #include "simplexTree.hpp"
 
+simplexTree::simplexTree(){return;}
+
 // simplexTree constructor
-simplexTree::simplexTree(){
+simplexTree::simplexTree(double maxEpsilon){
 	simplexType="simplexTree";
+	maxEpsilon = maxEpsilon;
 	this->isLeaf = false;
 
 	for (int i = 0; i < MAX_POINTS; i++)
@@ -29,7 +32,7 @@ void simplexTree::insert(std::string key) {
 	for (int i = 0; i < key.length(); i++) {
 		// Create a new node if it doesn't exist.
 		if (present->character[key[i]] == nullptr)
-			present->character[key[i]] = new simplexTree();
+			present->character[key[i]] = new simplexTree(maxEpsilon);
 
 		// Go to the next node.
 		present = present->character[key[i]];

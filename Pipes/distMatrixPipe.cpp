@@ -14,7 +14,7 @@
 #include <functional>
 #include <algorithm>
 #include "distMatrixPipe.hpp"
-#include "utils.cpp"
+#include "utils.hpp"
 
 // basePipe constructor
 distMatrixPipe::distMatrixPipe(){

@@ -1,12 +1,15 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <typeinfo>
 #include "simplexBase.hpp"
 #include "simplexTree.hpp"
 #include "simplexArrayList.hpp"
 
-simplexBase::simplexBase(){
-	
+simplexBase::simplexBase(){return;}
+simplexBase::simplexBase(double maxE){
+	maxEpsilon = maxE;
+	std::cout << maxEpsilon << std::endl;	
 }
 
 // simplexTree constructor, currently no needed information for the class constructor
@@ -16,12 +19,21 @@ simplexBase* simplexBase::newSimplex(const std::string &simplexT){
 	std::cout << "Creating new simplex structure: " << simplexT << std::endl;
 	
 	if(simplexType == "simplexTree"){
-		return new simplexTree();
-	} else if (simplexType == "simplexArrayList"){
-		return new simplexArrayList();
+		return new simplexTree(maxEpsilon);
+	} else if (simplexType == "simplexArrayList"){	
+		std::cout << maxEpsilon << std::endl;	
+		return new simplexArrayList(maxEpsilon);
 	}
 	return 0;
 }
+
+
+std::vector<std::vector<unsigned>> simplexBase::getEdges(int dim, double epsilon){
+	std::cout << "No get edges function defined for: " << simplexType << std::endl;
+	std::vector<std::vector<unsigned>> a;
+	return a;
+}
+
 
 double simplexBase::getSize(){
 	std::cout << "No size function defined for: " << simplexType << std::endl;
@@ -50,6 +62,11 @@ int simplexBase::simplexCount(){
 
 void simplexBase::outputSimplex(){
 	std::cout << "No outputSimplex function defined for: " << simplexType << std::endl;
+	return;
+}
+
+void simplexBase::expandDimensions(int dim){
+	std::cout << "No expandDimensions function defined for: " << simplexType << std::endl;
 	return;
 }
 	

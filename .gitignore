@@ -1,3 +1,13 @@
+# Additional ignores (specific to LHF):
+*.a
+*.lib
+Makefile
+*.cmake
+CMakeCache.txt
+CMakeFiles
+LHF
+install_manifest.txt
+
 # Prerequisites
 *.d
 

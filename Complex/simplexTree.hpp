@@ -11,6 +11,7 @@ class simplexTree : public simplexBase {
   private:
   public:
 	simplexTree();
+	simplexTree(double);
 	bool isLeaf;
 	simplexTree* character[MAX_POINTS];
 	

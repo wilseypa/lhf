@@ -6,7 +6,7 @@
 class pipePacket {
   private:
   public:
-	pipePacket(const std::string &);
+	pipePacket(const std::string &, const double);
 	std::string stats;
   
 	struct pipeData{

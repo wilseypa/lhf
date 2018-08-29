@@ -6,15 +6,17 @@
 class simplexArrayList : public simplexBase{
   private:
   public:
-	simplexArrayList();
+	simplexArrayList(double);
 	std::string stats;	
 	std::vector<std::vector<unsigned>> edges;
 	std::vector<double> weights;
 	
 	double getSize();	
+	std::vector<std::vector<unsigned>> getEdges(int,double);
 	void insert(std::vector<double>);
 	void find(std::vector<double>);
 	int vertexCount();
 	int simplexCount();
+	void expandDimensions(int);
 };
 
