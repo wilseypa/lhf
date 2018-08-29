@@ -11,18 +11,44 @@
 using namespace std;
 
 int main(int argc, char* argv[]){
+	//	Steps to compute PH (raw):
+	//
+	//		1.	Build a 2-D neighborhood graph
+	//			a. Weight each edge less than epsilon
+	//			b. Order edges (min to max)
+	//
+	//		2.  Rips filtration
+	//			a. Build higher-level simplices (d > 2)
+	//				- Retain the largest of edges as weight (when simplex forms)
+	//			b. Build list of **relevant epsilon values
+	//
+	//		3.	Betti calculation
+	//			a. For each relevant epsilon value
+	//				i.	Create Boundary Matrix
+	//					- if pn[i,j] < n, set to 1
+	//					- else set to 0
+	//				ii.	Compute RREF
+	//				iii.Store constituent boundary points
+	//
+	//
+	//	**relevant refers to edge weights, i.e. where a simplex of any
+	//			dimension is created (or merged into another simplex)
+	
+	//Define external classes used for reading input, parsing arguments, writing output
 	auto *rs = new readInput();
     auto *ap = new argParser();
     auto *ws = new writeOutput();
     
+    //Parse the command-line arguments
     auto args = ap->parse(argc, argv);
-	
+    
+	//Create a pipePacket (datatype) to store the complex and pass between engines
     auto *wD = new pipePacket(args["complexType"], stod(args["epsilon"]));	//wD (workingData)
 	
 	//Read data from inputFile CSV
     wD->workData.originalData = rs->readCSV(args["inputFile"]);
 
-
+	//If data was found in the inputFile
 	if(wD->workData.originalData.size() > 0){
 		
 		//Add data to our pipePacket
@@ -45,18 +71,22 @@ int main(int argc, char* argv[]){
 				auto *bp = new basePipe();
 				auto *cp = bp->newPipe(curFunct);
 				
+				//Check if the pipe was created and configure
 				if(cp != 0 && cp->configPipe(args)){
+					//Run the pipe function (wrapper)
 					*wD = cp->runPipeWrapper(*wD);
 				} else {
 					cout << "Failed to configure pipeline: " << args["pipeline"] << endl;
 				}
 			}
 		}
+		//If the pipeline was undefined...
 		else {
 			cout << "Failed to find a suitable pipeline, exiting..." << endl;
 			return 1;
 		}
 		
+		//Output the data using writeOutput library
 		pipe = args.find("outputFile");
 		if(pipe != args.end()){
 			//if (args["outputFile"] == "console"){

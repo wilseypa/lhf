@@ -42,10 +42,10 @@ std::vector<std::vector<unsigned>> nSimplices(unsigned n, std::vector<std::vecto
 
 // Check if a face is a subset of a simplex
 int checkFace(std::vector<unsigned> face, std::vector<unsigned> simplex){
-	ut.print1DVector(face);
-	ut.print1DVector(simplex);
-	std::cout << "SIZE: " << ut.intersect(face,simplex,false).first.size() << std::endl;
-	ut.print1DVector(ut.intersect(face,simplex,false).first);
+	//ut.print1DVector(face);
+	//ut.print1DVector(simplex);
+	//std::cout << "SIZE: " << ut.intersect(face,simplex,false).first.size() << std::endl;
+	//ut.print1DVector(ut.intersect(face,simplex,false).first);
 	
 	if(simplex.size() == 0)
 		return 1;
