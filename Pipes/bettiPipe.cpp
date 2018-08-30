@@ -88,9 +88,6 @@ std::vector<std::vector<unsigned>> reduceBoundaryMatrix(std::vector<std::vector<
 				for(unsigned d = i+1; d < boundaryMatrix[0].size(); d++)
 					clearRow[d] = tempRow[d];
 					
-				//ut.print1DVector(tempRow);
-				//ut.print1DVector(clearRow);
-				
 				//Remove our vector from the boundaryMatrix and continue processing next column
 				boundaryMatrix.erase(boundaryMatrix.begin() + j);
 				
@@ -179,34 +176,38 @@ std::vector<std::vector<unsigned>> boundaryMatrix(std::vector<std::vector<unsign
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket bettiPipe::runPipe(pipePacket inData){
 	std::vector<std::vector<std::vector<unsigned>>> allBoundaries;
-	
+	std::vector<double> checkedEdges = {0};
 	
 	auto local_edges = inData.workData.complex->getEdges(0,0);
 	
 	std::cout << local_edges.size() << std::endl;
 	std::cout << inData.workData.complex->simplexType << std::endl;
 	
-	for(int d = 1; d < dim; d++){		
+	for(int d = 0; d < dim; d++){		
 		for(auto edge : local_edges){
 			double epsilon = edge.first;
-				
-			std::vector<std::vector<unsigned>> boundary = boundaryMatrix(nSimplices(epsilon,d+1,local_edges),nSimplices(epsilon,d,local_edges));
-			std::cout << "\tReduced boundary matrix @ " << epsilon << " -> " << boundary.size() ;
-			std::cout << " x " <<boundary[1].size() << std::endl;
+					
+			if(std::find(checkedEdges.begin(), checkedEdges.end(), epsilon) == checkedEdges.end()){
+				std::vector<std::vector<unsigned>> boundary = boundaryMatrix(nSimplices(epsilon,d+1,local_edges),nSimplices(epsilon,d,local_edges));
+				std::cout << "\tReduced boundary matrix @ " << epsilon << " -> " << boundary.size() ;
+				std::cout << " x " <<boundary[1].size() << std::endl;
+			
+				std::cout << std::endl << "REDUCED BOUNDARY" << std::endl;
+				for(unsigned z = 0; z < boundary.size(); z++)
+					ut.print1DVector(boundary[z]);
+				std::cout << std::endl << std::endl;
 		
-			std::cout << std::endl << "REDUCED BOUNDARY" << std::endl;
-			for(unsigned d = 0; d < boundary.size(); d++)
-				ut.print1DVector(boundary[d]);
-			std::cout << std::endl << std::endl;
-	
+			
+				std::cout << "\tDim: " << d << "\tRANKS: ";
+				for(auto z : ranks)
+					std::cout << z << " ";
+				std::cout << std::endl;
 		
-			std::cout << "\tDim: " << d << "\tRANKS: ";
-			for(auto z : ranks)
-				std::cout << z << " ";
-			std::cout << std::endl;
-	
-			allBoundaries.push_back(boundary);
+				checkedEdges.push_back(epsilon);
+				allBoundaries.push_back(boundary);
+			}
 		}
+		checkedEdges={0};
 	}
 	
 	
