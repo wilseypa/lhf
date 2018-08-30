@@ -12,7 +12,7 @@ class simplexArrayList : public simplexBase{
 	std::vector<double> weights;
 	
 	double getSize();	
-	std::vector<std::vector<unsigned>> getEdges(int,double);
+	std::vector<std::pair<double,std::vector<unsigned>>> getEdges(int,double);
 	void insert(std::vector<double>);
 	void find(std::vector<double>);
 	int vertexCount();

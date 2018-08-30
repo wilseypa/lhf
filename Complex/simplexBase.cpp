@@ -28,9 +28,9 @@ simplexBase* simplexBase::newSimplex(const std::string &simplexT){
 }
 
 
-std::vector<std::vector<unsigned>> simplexBase::getEdges(int dim, double epsilon){
+std::vector<std::pair<double,std::vector<unsigned>>> simplexBase::getEdges(int dim, double epsilon){
 	std::cout << "No get edges function defined for: " << simplexType << std::endl;
-	std::vector<std::vector<unsigned>> a;
+	std::vector<std::pair<double,std::vector<unsigned>>> a;
 	return a;
 }
 

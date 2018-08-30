@@ -29,12 +29,14 @@ bettiPipe::bettiPipe(){
 }
 
 //Filter and return simplices of a specified dimension
-std::vector<std::vector<unsigned>> nSimplices(unsigned n, std::vector<std::vector<unsigned>> complex){
+std::vector<std::vector<unsigned>> nSimplices(int epsilon, unsigned n, std::vector<std::pair<double,std::vector<unsigned>>> complex){
 	std::vector<std::vector<unsigned>> ret;
 	
 	for(auto v : complex){
-		if(v.size() == n)
-			ret.push_back(v);
+		if(v.second.size() == n){
+			if(v.first <= epsilon)
+				ret.push_back(v.second);
+		}
 	}
 	
 	return ret;
@@ -83,41 +85,52 @@ std::vector<std::vector<unsigned>> reduceBoundaryMatrix(std::vector<std::vector<
 				clearRow[i] = 0;
 				
 				//Set up the temp row for both operations:
-				for(unsigned d = 0; d < boundaryMatrix[0].size(); d++)
-					tempRow[d] = tempRow[d] ^ clearRow[d];
+				for(unsigned d = i+1; d < boundaryMatrix[0].size(); d++)
+					clearRow[d] = tempRow[d];
 					
-				ut.print1DVector(tempRow);
-				ut.print1DVector(clearRow);
+				//ut.print1DVector(tempRow);
+				//ut.print1DVector(clearRow);
+				
+				//Remove our vector from the boundaryMatrix and continue processing next column
+				boundaryMatrix.erase(boundaryMatrix.begin() + j);
 				
 				//Iterate through remaining vectors and XOR with our vector or the clearRow
-				j += 1;
+				//j += 1;
 				while(j < boundaryMatrix.size()){
 					if(boundaryMatrix[j][i] == 1){
 						for(unsigned d = 0; d < boundaryMatrix[0].size(); d++)
-							boundaryMatrix[j][d] = boundaryMatrix[j][d] ^ tempRow[d];
+							boundaryMatrix[j][d] = boundaryMatrix[j][d] != tempRow[d];
 					}
-					else{
-						for(unsigned d = 0; d < boundaryMatrix[0].size(); d++)
-							boundaryMatrix[j][d] = boundaryMatrix[j][d] ^ clearRow[d];
-					}
+					//else{
+						//for(unsigned d = 0; d < boundaryMatrix[0].size(); d++)
+							//boundaryMatrix[j][d] = boundaryMatrix[j][d] != clearRow[d];
+					//}
 							
 					j += 1;
 				}			
 				
-				//Remove our vector from the boundaryMatrix and continue processing next column
-				boundaryMatrix.erase(std::find(boundaryMatrix.begin(), boundaryMatrix.end(), tempRow));
+				for(auto a : ret){
+					if (a[i] == 1){
+						for(unsigned d = 0; d < ret.size(); d++)
+							a[d] = a[d] != tempRow[d];
+					}					
+				}
 			}
 		}		
 	}
 
+	if(boundaryMatrix.size() > 0){
+		for (auto a : boundaryMatrix)
+			ret.push_back(a);
+	}
+	
 	ranks.push_back(rank);
-	nRanks.push_back(boundaryMatrix[0].size() - rank);
-	std::cout << "COUNT:" << ret.size() << std::endl;
-	return boundaryMatrix;
+	nRanks.push_back(ret.size() - rank);
+	return ret;
 }
 
 // Get the boundary matrix from the edges
-std::vector<std::vector<unsigned>> boundaryMatrix(std::vector<std::vector<unsigned>> edges, int dim){
+std::vector<std::vector<unsigned>> boundaryMatrix(std::vector<std::vector<unsigned>> nChain, std::vector<std::vector<unsigned>> pChain){
 	std::vector<std::vector<unsigned>> ret;
 	std::vector<std::vector<unsigned>> boundary;	
 	
@@ -125,11 +138,7 @@ std::vector<std::vector<unsigned>> boundaryMatrix(std::vector<std::vector<unsign
 	//	return {{0}};
 	
 	//Create the boundary matrix from chains
-	std::vector<std::vector<unsigned>> nChain = nSimplices(dim+2, edges);
-	std::vector<std::vector<unsigned>> pChain = nSimplices(dim+1, edges);
 	std::vector<unsigned> bDim;
-	
-	std::cout << dim << "-dimensional simplices: " << edges.size() << std::endl;
 	
 	std::cout << "pre: " << nChain.size() << " " << pChain.size() << std::endl;
 	
@@ -145,9 +154,9 @@ std::vector<std::vector<unsigned>> boundaryMatrix(std::vector<std::vector<unsign
 		bDim.clear();
 	}
 	else{
-		for(unsigned i = 0; i < pChain.size(); i++){
-			for(unsigned j = 0; j < nChain.size(); j++){
-				bDim.push_back(checkFace(pChain[i], nChain[j]));
+		for(unsigned i = 0; i < nChain.size(); i++){
+			for(unsigned j = 0; j < pChain.size(); j++){
+				bDim.push_back(checkFace(pChain[j], nChain[i]));
 			}
 			boundary.push_back(bDim);
 			bDim.clear();
@@ -156,6 +165,8 @@ std::vector<std::vector<unsigned>> boundaryMatrix(std::vector<std::vector<unsign
 		
 	std::cout << "\tFinished boundary matrix -> " << boundary.size() << " x " <<boundary[1].size() << std::endl << std::endl;
 	
+	
+	std::cout << std::endl << "ORIGINAL BOUNDARY" << std::endl;
 	for(unsigned d = 0; d < boundary.size(); d++)
 		ut.print1DVector(boundary[d]);
 	std::cout << std::endl << std::endl;
@@ -167,26 +178,35 @@ std::vector<std::vector<unsigned>> boundaryMatrix(std::vector<std::vector<unsign
 
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket bettiPipe::runPipe(pipePacket inData){
-	std::vector<std::vector<unsigned>> local_edges;	
 	std::vector<std::vector<std::vector<unsigned>>> allBoundaries;
 	
 	
-	local_edges = inData.workData.complex->getEdges(0,0);
+	auto local_edges = inData.workData.complex->getEdges(0,0);
 	
 	std::cout << local_edges.size() << std::endl;
 	std::cout << inData.workData.complex->simplexType << std::endl;
 	
-	for(int d = 0; d < dim; d++){		
-		std::vector<std::vector<unsigned>> boundary = boundaryMatrix(local_edges, d);
-		std::cout << "\tReduced boundary matrix -> " << boundary.size() ;
-		std::cout << " x " <<boundary[1].size() << std::endl;
+	for(int d = 1; d < dim; d++){		
+		for(auto edge : local_edges){
+			double epsilon = edge.first;
+				
+			std::vector<std::vector<unsigned>> boundary = boundaryMatrix(nSimplices(epsilon,d+1,local_edges),nSimplices(epsilon,d,local_edges));
+			std::cout << "\tReduced boundary matrix @ " << epsilon << " -> " << boundary.size() ;
+			std::cout << " x " <<boundary[1].size() << std::endl;
 		
-		std::cout << "\tDim: " << d << "\tRANKS: ";
-		for(auto z : ranks)
-			std::cout << z << " ";
-		std::cout << std::endl;
+			std::cout << std::endl << "REDUCED BOUNDARY" << std::endl;
+			for(unsigned d = 0; d < boundary.size(); d++)
+				ut.print1DVector(boundary[d]);
+			std::cout << std::endl << std::endl;
 	
-		allBoundaries.push_back(boundary);
+		
+			std::cout << "\tDim: " << d << "\tRANKS: ";
+			for(auto z : ranks)
+				std::cout << z << " ";
+			std::cout << std::endl;
+	
+			allBoundaries.push_back(boundary);
+		}
 	}
 	
 	

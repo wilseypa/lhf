@@ -87,8 +87,8 @@ void simplexArrayList::insert(std::vector<double> vector){
 
 
 // Wrapper to expose edges
-std::vector<std::vector<unsigned>> simplexArrayList::getEdges(int dim, double epsilon){
-	return edges;
+std::vector<std::pair<double,std::vector<unsigned>>> simplexArrayList::getEdges(int dim, double epsilon){
+	return weightedGraph;
 }
 
 // Search function to find a specific vector in the simplexArrayList
@@ -100,13 +100,8 @@ void simplexArrayList::find(std::vector<double> vector){
 // Output the total simplices stored in the simplical complex
 int simplexArrayList::simplexCount(){
 	utils ut;
-	std::cout << "\tSimplices: " << edges.size() << std::endl;
 	
-	for(auto q : edges){
-		ut.print1DVector(q);
-	}
-	
-	return -1;
+	return weightedGraph.size();
 }
 
 // Output the total vertices stored in the simplical complex
@@ -123,14 +118,17 @@ int simplexArrayList::vertexCount(){
 void simplexArrayList::expandDimensions(int dim){
 	utils ut;
 
+	std::vector<unsigned> tempVect;
+	//Add the original vectors to the weighted graph
+	for(auto i = 0; i < data.size(); i++){
+		weightedGraph.push_back(std::make_pair(0.0,tempVect={i}));
+	}
+
 	//Store the complex built from the VR expansion
 	std::vector<std::pair<double,std::vector<unsigned>>> weightGraph = weightedGraph;
 	
-	//Print out the vectors (for clarity)
-	for(auto q : weightGraph){
-		std::cout << q.first << "\t";
-		ut.print1DVector(q.second);
-	}
+	//Sort the 2D simplices by weight
+	std::sort(weightedGraph.begin(), weightedGraph.end());
 	
 	std::cout << "\t1-Dimensional Simplices: " << weightGraph.size() << std::endl;
 	
@@ -155,15 +153,14 @@ void simplexArrayList::expandDimensions(int dim){
 					//Get the max weight of simplex
 					double weight = 0;
 					
-					std::cout << "WEIGHTS: " << weightGraph[j].first << "\t" <<weightGraph[t].first << std::endl;
-					
 					if(weightGraph[j].first > weightGraph[t].first)
 						weight = weightGraph[j].first;
 					else
 						weight = weightGraph[t].first;
-										
 					
-					tempIntersections.push_back(std::make_pair(weight, simp));
+					auto weightPair = std::make_pair(weight,simp);
+					if(std::find(tempIntersections.begin(), tempIntersections.end(), weightPair) != tempIntersections.end())		
+						tempIntersections.push_back(weightPair);
 				}
 			}
 			//Loop through the current tempIntersections list
@@ -178,21 +175,24 @@ void simplexArrayList::expandDimensions(int dim){
 					else
 						weight = tempInt.first;
 					
-					
 					test.push_back(std::make_pair(weight,tempInt.second.second));
-				
 				}
 			}		
 		}
-
+		
+		//Clear the weightGraph for the next iteration (remove d-1 simplices)
+		weightGraph.clear();
+		
+		//Sort the entries by weight
+		std::sort(test.begin(), test.end());
+		
+		std::cout << "WEIGHT GRAPH" << std::endl << std::endl;
 		//Print out the vectors (for clarity)
 		for(auto q : test){
 			std::cout << q.first << "\t";
 			ut.print1DVector(q.second);
 		}
-		
-		//Clear the weightGraph for the next iteration (remove d-1 simplices)
-		weightGraph.clear();
+		std::cout << std::endl;
 		
 		//Store the found d-dimensional simplices into weightedGraph and temp (weightGraph)
 		for (auto n : test){

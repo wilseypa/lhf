@@ -23,7 +23,7 @@ class simplexBase {
 	virtual void find(std::vector<double>);
 	virtual int simplexCount();
 	virtual int vertexCount();
-	virtual std::vector<std::vector<unsigned>> getEdges(int,double);
+	virtual std::vector<std::pair<double,std::vector<unsigned>>> getEdges(int,double);
 	virtual void outputSimplex();
 	virtual void expandDimensions(int);
 };
