@@ -61,11 +61,11 @@ int checkFace(std::vector<unsigned> face, std::vector<unsigned> simplex){
 }
 
 // Reduce the binary boundary matrix
-std::vector<std::vector<unsigned>> reduceBoundaryMatrix(std::vector<std::vector<unsigned>> boundaryMatrix){
+std::pair<std::vector<std::vector<unsigned>>,int> reduceBoundaryMatrix(std::vector<std::vector<unsigned>> boundaryMatrix){
 	std::vector<std::vector<unsigned>> ret;
 	int rank = 0;
 	if(boundaryMatrix.size() <= 0)
-		return boundaryMatrix;
+		return std::make_pair(boundaryMatrix, 0);
 		
 	//Step through each column and search for a 1 in that column
 	for(unsigned i = 0; i < boundaryMatrix[0].size(); i++){
@@ -85,6 +85,7 @@ std::vector<std::vector<unsigned>> reduceBoundaryMatrix(std::vector<std::vector<
 				clearRow[i] = 0;
 				
 				//Set up the temp row for both operations:
+				
 				for(unsigned d = i+1; d < boundaryMatrix[0].size(); d++)
 					clearRow[d] = tempRow[d];
 					
@@ -121,26 +122,26 @@ std::vector<std::vector<unsigned>> reduceBoundaryMatrix(std::vector<std::vector<
 			ret.push_back(a);
 	}
 	
+	std::cout << "Rank: " << rank << std::endl;
+	std::cout << "Nullity: " << (ret[0].size() - rank) << std::endl;
 	ranks.push_back(rank);
 	nRanks.push_back(ret.size() - rank);
-	return ret;
+	return std::make_pair(ret, rank);
 }
 
 // Get the boundary matrix from the edges
-std::vector<std::vector<unsigned>> boundaryMatrix(std::vector<std::vector<unsigned>> nChain, std::vector<std::vector<unsigned>> pChain){
+std::pair<std::vector<std::vector<unsigned>>,int> boundaryMatrix(std::vector<std::vector<unsigned>> nChain, std::vector<std::vector<unsigned>> pChain){
 	std::vector<std::vector<unsigned>> ret;
 	std::vector<std::vector<unsigned>> boundary;	
 	
-	//if(dim <= 1)
-	//	return {{0}};
 	
 	//Create the boundary matrix from chains
 	std::vector<unsigned> bDim;
 	
-	std::cout << "pre: " << nChain.size() << " " << pChain.size() << std::endl;
+	//std::cout << "pre: " << nChain.size() << " " << pChain.size() << std::endl;
 	
 	if (nChain.size() == 0)
-		return {{0}};
+		return std::make_pair(ret,0);
 	
 	//
 	if (pChain.size() == 0){
@@ -173,38 +174,92 @@ std::vector<std::vector<unsigned>> boundaryMatrix(std::vector<std::vector<unsign
 }
 
 
+std::vector<std::vector<unsigned>> extractBoundaries(std::vector<std::pair<double, std::vector<unsigned>>> edges, std::vector<std::vector<unsigned>> boundaryMatrix, int nullity){
+	std::vector<std::vector<unsigned>> boundaries;
+	
+	//Iterate through each boundary 
+	//	nullity = (dim - rank)
+	//	Aggregate edges that form the constituent boundary
+	for(int i = 0; i < nullity; i++){
+		
+		//store the current boundary
+		std::vector<unsigned> currentBoundary;
+		int j = 0;
+		
+		//
+		for(auto vect : boundaryMatrix){
+			
+			if(vect[vect.size() - nullity] == 1){
+				for(auto edge : edges[j].second){
+					std::cout << edge << " ";
+					currentBoundary.push_back(edge);
+				}
+			}
+			j++;
+			
+		}
+		
+		for(auto edge : edges[edges.size() - nullity + i].second){
+			std::cout << edge << " ";
+			currentBoundary.push_back(edge);
+		}
+		std::cout << std::endl << std::endl;
+		
+		for (auto e : currentBoundary)
+			std::cout << e << ",";
+		std::cout << std::endl;
+		
+		boundaries.push_back(currentBoundary);
+		
+	}
+	
+	return boundaries;
+}
+
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket bettiPipe::runPipe(pipePacket inData){
 	std::vector<std::vector<std::vector<unsigned>>> allBoundaries;
-	std::vector<double> checkedEdges = {0};
+
 	
 	auto local_edges = inData.workData.complex->getEdges(0,0);
 	
-	std::cout << local_edges.size() << std::endl;
-	std::cout << inData.workData.complex->simplexType << std::endl;
+	//std::cout << local_edges.size() << std::endl;
+	//std::cout << inData.workData.complex->simplexType << std::endl;
 	
+	
+	//Iterate through each dimension to build boundary matrix
 	for(int d = 0; d < dim; d++){		
+		std::vector<double> checkedEdges = {0};
+		//For each edge
 		for(auto edge : local_edges){
+			
+			//Get the weights (increasing order)
 			double epsilon = edge.first;
-					
+			//Check if we've already 
 			if(std::find(checkedEdges.begin(), checkedEdges.end(), epsilon) == checkedEdges.end()){
-				std::vector<std::vector<unsigned>> boundary = boundaryMatrix(nSimplices(epsilon,d+1,local_edges),nSimplices(epsilon,d,local_edges));
-				std::cout << "\tReduced boundary matrix @ " << epsilon << " -> " << boundary.size() ;
-				std::cout << " x " <<boundary[1].size() << std::endl;
-			
-				std::cout << std::endl << "REDUCED BOUNDARY" << std::endl;
-				for(unsigned z = 0; z < boundary.size(); z++)
-					ut.print1DVector(boundary[z]);
-				std::cout << std::endl << std::endl;
-		
-			
-				std::cout << "\tDim: " << d << "\tRANKS: ";
-				for(auto z : ranks)
-					std::cout << z << " ";
-				std::cout << std::endl;
+				
+				std::cout << "EPSILON: " << epsilon << std::endl;
+				//Get the reduced boundary matrix
+				std::pair<std::vector<std::vector<unsigned>>, int> boundary = boundaryMatrix(nSimplices(epsilon,d+1,local_edges),nSimplices(epsilon,d,local_edges));
+				if(boundary.second > 0){
+					
+					std::cout << "\tReduced boundary matrix @ " << epsilon << " -> " << boundary.first.size() ;
+					std::cout << " x " <<boundary.first[1].size() << std::endl;
+					
+					std::cout << std::endl << "REDUCED BOUNDARY" << std::endl;
+					for(unsigned z = 0; z < boundary.first.size(); z++)
+						ut.print1DVector(boundary.first[z]);
+					std::cout << std::endl << std::endl;
+					extractBoundaries(local_edges,boundary.first, boundary.second);
+				
+					std::cout << "\tDim: " << d << "\tRANKS: ";
+					for(auto z : ranks)
+						std::cout << z << " ";
+					std::cout << std::endl;
+				}
 		
 				checkedEdges.push_back(epsilon);
-				allBoundaries.push_back(boundary);
+				allBoundaries.push_back(boundary.first);
 			}
 		}
 		checkedEdges={0};
