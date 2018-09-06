@@ -120,7 +120,7 @@ void simplexArrayList::expandDimensions(int dim){
 
 	std::vector<unsigned> tempVect;
 	//Add the original vectors to the weighted graph
-	for(auto i = 0; i < data.size(); i++){
+	for(auto i = 0; i < data.size()-1; i++){
 		weightedGraph.push_back(std::make_pair(0.0,tempVect={i}));
 	}
 

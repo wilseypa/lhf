@@ -29,15 +29,29 @@ bettiPipe::bettiPipe(){
 }
 
 //Filter and return simplices of a specified dimension
-std::vector<std::vector<unsigned>> nSimplices(int epsilon, unsigned n, std::vector<std::pair<double,std::vector<unsigned>>> complex){
+std::vector<std::vector<unsigned>> nSimplices(double epsilon, unsigned n, std::vector<std::pair<double,std::vector<unsigned>>> complex){
 	std::vector<std::vector<unsigned>> ret;
 	
 	for(auto v : complex){
+		
+		//for(auto i : v.second)
+		//	std::cout << i << " ";
+		//std::cout << "--> " << v.second.size() << " " << v.first << " " << epsilon << std::endl << std::endl;
+		
+		
 		if(v.second.size() == n){
 			if(v.first <= epsilon)
 				ret.push_back(v.second);
 		}
 	}
+	
+	//std::cout << "nSimplices : " << n << std::endl;
+	//for(auto i : ret){
+	//	for(auto p : i)
+	//		std::cout << p << " ";
+	//	std::cout << std::endl;
+	//}
+	//std::cout << std::endl;
 	
 	return ret;
 }
@@ -152,9 +166,30 @@ std::pair<std::vector<std::vector<unsigned>>,int> boundaryMatrix(std::vector<std
 		bDim.clear();
 	}
 	else{
-		for(unsigned i = 0; i < nChain.size(); i++){
-			for(unsigned j = 0; j < pChain.size(); j++){
-				bDim.push_back(checkFace(pChain[j], nChain[i]));
+		std::cout << nChain.size() << "\t" << pChain.size() << std::endl << std::endl;
+		
+		std::cout << "_______nChain______" << std::endl;
+		for(auto i : nChain){
+			for(auto p : i)
+				std::cout << p << " ";
+			std::cout << std::endl;
+		}
+		std::cout << std::endl << std::endl;
+		
+		std::cout << "_______pChain______" << std::endl;
+		for(auto i : pChain){
+			for(auto p : i)
+				std::cout << p << " ";
+			std::cout << std::endl;
+		}
+		std::cout << std::endl;
+		
+		
+		//Create the rows (nChain)
+		for(unsigned i = 0; i < pChain.size(); i++){
+			//Create the columns (pChain)
+			for(unsigned j = 0; j < nChain.size(); j++){
+				bDim.push_back(checkFace(pChain[i], nChain[j]));
 			}
 			boundary.push_back(bDim);
 			bDim.clear();
@@ -217,6 +252,18 @@ std::vector<std::vector<unsigned>> extractBoundaries(std::vector<std::pair<doubl
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
+//
+//	bettiPipe: generate boundary matrix, determine constituent boundaries
+//		edges that make up the boundary
+//
+//		For each dimension, 
+//			Generate boundary matrix at each weight
+//				Then, reduce the boundary matrix to RREF
+//				Extract boundaries from RREF
+//			Generate barcodes (lifespans) of each component
+//				WITH boundaries that form the barcode
+//		
+//
 pipePacket bettiPipe::runPipe(pipePacket inData){
 	std::vector<std::vector<std::vector<unsigned>>> allBoundaries;
 
