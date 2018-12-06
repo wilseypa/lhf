@@ -4,12 +4,12 @@
 
 cmake_minimum_required(VERSION 3.5)
 
-#add_library(pipePacket "pipePacket.cpp" "pipePacket.hpp")
+add_library(pipePacket "pipePacket.cpp" "pipePacket.hpp")
 add_library(basePipe "basePipe.cpp" "basePipe.hpp")
-#add_library(bettiPipe "bettiPipe.cpp" "bettiPipe.hpp")
-#add_library(distMatrixPipe "distMatrixPipe.cpp" "distMatrixPipe.hpp")
-#add_library(neighGraphPipe "neighGraphPipe.cpp" "neighGraphPipe.hpp")
-#add_library(ripsPipe "ripsPipe.cpp" "ripsPipe.hpp")
+add_library(bettiPipe "bettiPipe.cpp" "bettiPipe.hpp")
+add_library(distMatrixPipe "distMatrixPipe.cpp" "distMatrixPipe.hpp")
+add_library(neighGraphPipe "neighGraphPipe.cpp" "neighGraphPipe.hpp")
+add_library(ripsPipe "ripsPipe.cpp" "ripsPipe.hpp")
 
 include_directories(../Complex)
 link_directories(../Complex)
