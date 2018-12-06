@@ -7,28 +7,36 @@
 #include "basePipe.hpp"
 #include "writeOutput.hpp"
 #include "pipePacket.hpp"
+#include "preprocessor.hpp"
 
 using namespace std;
 
 int main(int argc, char* argv[]){
-	//	Steps to compute PH (raw):
+	//	Steps to compute PH with preprocessing:
 	//
-	//		1.	Build a 2-D neighborhood graph
+	//		1.  Preprocess the input data
+	//			a. Store the original dataset, reduced dataset, cluster indices
+	//
+	//		2.	Build a 2-D neighborhood graph
 	//			a. Weight each edge less than epsilon
 	//			b. Order edges (min to max)
 	//
-	//		2.  Rips filtration
+	//		3.  Rips filtration
 	//			a. Build higher-level simplices (d > 2)
 	//				- Retain the largest of edges as weight (when simplex forms)
 	//			b. Build list of **relevant epsilon values
 	//
-	//		3.	Betti calculation
+	//		4.	Betti calculation
 	//			a. For each relevant epsilon value
 	//				i.	Create Boundary Matrix
 	//					- if pn[i,j] < n, set to 1
 	//					- else set to 0
 	//				ii.	Compute RREF
 	//				iii.Store constituent boundary points
+	//
+	//		5.	Upscaling
+	//			a. Upscale around boundary points
+	//			b. For each upscaled boundary, repeat steps 2-4
 	//
 	//
 	//	**relevant refers to edge weights, i.e. where a simplex of any
@@ -53,6 +61,13 @@ int main(int argc, char* argv[]){
 		
 		//Add data to our pipePacket
 		wD->workData.originalData = wD->workData.originalData;
+		
+		//Start with the preprocessing function, if enabled
+		auto pre = args["preprocessor"];
+		if(pre != ""){
+			auto *preprocess = new preprocessor();
+			auto *prePipe = preprocess->newPreprocessor(pre);
+		}
 	
 		// Begin processing parts of the pipeline
 		// DataInput -> A -> B -> ... -> DataOutput
