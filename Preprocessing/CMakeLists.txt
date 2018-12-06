@@ -5,6 +5,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 add_library(preprocessor "preprocessor.cpp" "preprocessor.hpp")
+add_library(kMeansPlusPlus "kMeansPlusPlus.cpp" "kMeansPlusPlus.hpp")
 
 include_directories(../Complex)
 link_directories(../Complex)

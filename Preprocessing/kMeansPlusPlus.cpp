@@ -17,6 +17,21 @@ kMeansPlusPlus::kMeansPlusPlus(){
 
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
+	//Arguments - How many clusters? Convergence value
+	
+	
+	//Initialize centroids (Plus plus mechanism with kmeans - Hartigan, Wong)
+	
+	
+	//Iterate over the data, compute WCSSE -> Minimize WCSSE
+	
+	
+	
+	//Convergence, return the centroids, the cluster assignments
+	
+	
+	
+	
 	
 	std::cout << "No run function defined for: " << procName << std::endl;
 	

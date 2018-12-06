@@ -21,7 +21,7 @@ include_directories(../Utils)
 link_directories(../Utils)
 
 # target_link_libraries(LHF PipeFunctions)
-target_link_libraries(basePipe pipePacket bettiPipe distMatrixPipe neighGraphPipe ripsPipe)
+target_link_libraries(basePipe utils simplexBase pipePacket bettiPipe distMatrixPipe neighGraphPipe ripsPipe)
 
 INSTALL (TARGETS basePipe
 	LIBRARY DESTINATION lib

@@ -23,7 +23,7 @@ link_directories(../Utils)
 #Add Source to this project's executable
 add_executable(LHF "main.cpp")
 
-target_link_libraries(LHF utils basePipe simplexBase preprocessor)
+target_link_libraries(LHF simplexBase pipePacket utils basePipe preprocessor)
 
 # TODO: Add tests and install targets if needed.
 
