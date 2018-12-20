@@ -38,7 +38,7 @@
  
 ### EXAMPLES:
 
-	##    ./LHFmain -p distMatrix --inputFile testData.csv
-	##    ./LHFmain --pipeline distMatrix.distMatrix.distMatrix -i testData.csv -o output.csv
+	##    ./LHF -p distMatrix --inputFile testData.csv
+	##    ./LHF --pipeline distMatrix.distMatrix.distMatrix -i testData.csv -o output.csv
 
 ---
