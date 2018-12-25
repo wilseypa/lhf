@@ -13,6 +13,9 @@ link_directories(../Complex)
 include_directories(../Pipes)
 link_directories(../Pipes)
 
+include_directories(../Utils)
+link_directories(../Utils)
+
 target_link_libraries(preprocessor kMeansPlusPlus)
 
 INSTALL (TARGETS preprocessor
