@@ -3,43 +3,120 @@
 #include <iostream>
 #include "simplexTree.hpp"
 
-simplexTree::simplexTree(){return;}
+simplexTree::simplexTree(std::vector<std::vector<double>> _distMatrix){
+	head = tail;
+	indexCounter = 0;
+	distMatrix = _distMatrix;
+	return;
+}
+
 
 // simplexTree constructor
-simplexTree::simplexTree(double maxEpsilon){
+simplexTree::simplexTree(double _maxEpsilon, std::vector<std::vector<double>> _distMatrix){
+	head = tail;
+	indexCounter = 0;
+	distMatrix = _distMatrix;
+	
 	simplexType="simplexTree";
-	maxEpsilon = maxEpsilon;
-	this->isLeaf = false;
-
-	for (int i = 0; i < MAX_POINTS; i++)
-		this->character[i] = nullptr;
+	maxEpsilon = _maxEpsilon;
+	
 }
 
-double simplexTree::getSize(){
-	size_t size = 0;
+void simplexTree::recurse(treeNode* node, int curIndex){
+	//If this node has a child, recurse children first
 	
-	//Calculate size of original data
+	//std::cout << "Check child : " << node->index << std::endl;
+	if( node->child != nullptr ){
+		recurse(node->child, curIndex);
+	}
+
+	//std::cout << "Check neighbors: " << node->index << std::endl;
+	//If this node has neighbors (next), recurse neighbors
+	if( node->next != nullptr ){
+		recurse(node->next, curIndex);
+	}
+
+	//std::cout << "Inserting new node... : " << maxEpsilon << " [ " << node->index << " , " << curIndex << " ] "<< std::endl;
+	//std::cout << "distMatrix: " << distMatrix[node->index][curIndex] << std::endl;
 	
-	return size;
-}
-
-
-// Iterative function to insert a simplex, i.e. a key, in the tree.
-void simplexTree::insert(std::string key) {
-
-	// Start from the root.
-	simplexTree* present = this;
-	for (int i = 0; i < key.length(); i++) {
-		// Create a new node if it doesn't exist.
-		if (present->character[key[i]] == nullptr)
-			present->character[key[i]] = new simplexTree(maxEpsilon);
-
-		// Go to the next node.
-		present = present->character[key[i]];
+	//Check if this node needs insertion, if so, make a copy and insert
+	if(distMatrix[node->index][curIndex] < maxEpsilon){
+		
+		treeNode* insNode = new treeNode;
+		treeNode* temp;
+		
+		//std::cout << "\tCreating... " << std::endl;
+		
+		insNode->index = curIndex;
+		insNode->weight = distMatrix[node->index][curIndex];
+		
+		//std::cout << "\tCreated new child node..." << std::endl;
+		
+		if(node->child == nullptr){
+			node->child = insNode;
+			nodeCount++;
+		} else {
+			// Children already exist; iterate until we find empty slot
+			temp = node->child;
+			while(temp->next != nullptr){temp = temp->next;};
+			temp->next = insNode;			
+			nodeCount++;			
+		}	
 	}
 	
-	// Set the current node as a leaf.
-	present->isLeaf = true;
+	return;
+}
+
+// Insert a node into the tree
+//		
+void simplexTree::insert(std::vector<double>) {
+	//std::cout << "Inserting node: " << indexCounter << std::endl;
+	
+	//Create our new node to insert
+	treeNode* curNode = new treeNode;
+	curNode->index = indexCounter;
+	curNode->weight = 0;
+	
+	//std::cout << "Created Node" << std::endl;
+	
+	//Check if this is the first node (i.e. head==tail)
+	//	If so, initialize the head and tail nodes
+	if(head == nullptr){
+		//std::cout << "First node!" << std::endl;
+		head = curNode;
+		indexCounter++;
+		nodeCount++;
+		return;
+	}
+		
+	// This needs to be a recursive span ->
+	//		if the node has a child, recurse
+	//		if the node has a sibling, recurse
+	//
+	//			| 0 | 1 | ... |
+	//			/
+	//         /
+	//		| 1 | 2 | 3 | 
+	//      /          \
+	//	   /            \
+	//   | 2 | 3 |     | 4 | 5 |
+
+	// For each node, check if the current node is inserted anywhere
+		
+	//std::cout << "recursing... " << head->index << std::endl;	
+		
+	recurse(head, indexCounter);
+	
+	//std::cout << "Adding neighbor..." << std::endl;
+	
+	//Insert into the right of the tree
+	treeNode* temp = head;
+	while(temp->next != nullptr){temp = temp->next;};
+	temp->next = curNode;	
+	nodeCount++;
+	
+	indexCounter++;
+	return;
 
 }
 
@@ -128,12 +205,16 @@ bool simplexTree::deletion(simplexTree*& present, std::string key) {
 
 int simplexTree::vertexCount(){
 	//Return the number of vertices in the tree
-	
-	return -1;
+	return nodeCount;
 }
 
 int simplexTree::simplexCount(){
 	//Return the number of simplices in the tree
 	
 	return -1;
+}
+
+double simplexTree::getSize(){
+	//Size of node: [double + double + byte (*) + byte (*)] = 18 Bytes
+	return nodeCount * 18;
 }

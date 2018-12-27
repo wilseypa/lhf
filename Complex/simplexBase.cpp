@@ -12,14 +12,20 @@ simplexBase::simplexBase(double maxE){
 	std::cout << maxEpsilon << std::endl;	
 }
 
+void simplexBase::setDistanceMatrix(std::vector<std::vector<double>> _distMatrix){
+	distMatrix = _distMatrix;
+	std::cout << "Dist Matrix::::: " << distMatrix.size() << std::endl;
+	return;
+}
+
 // simplexTree constructor, currently no needed information for the class constructor
 simplexBase* simplexBase::newSimplex(const std::string &simplexT){
 	simplexType = simplexT;
 	
-	std::cout << "Creating new simplex structure: " << simplexT << std::endl;
+	std::cout << "Creating new simplex structure: " << simplexT << " : " << maxEpsilon << std::endl;
 	
 	if(simplexType == "simplexTree"){
-		return new simplexTree(maxEpsilon);
+		return new simplexTree(maxEpsilon, distMatrix);
 	} else if (simplexType == "simplexArrayList"){	
 		std::cout << maxEpsilon << std::endl;	
 		return new simplexArrayList(maxEpsilon);

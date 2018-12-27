@@ -9,17 +9,32 @@
 
 class simplexTree : public simplexBase {
   private:
+  
+	struct treeNode{
+		int index;
+		double weight;
+		treeNode* child = nullptr;
+		treeNode* next = nullptr;
+	};
+			
+	int indexCounter;
+	treeNode* head;
+	treeNode* tail;
+	int nodeCount;
+  
   public:
-	simplexTree();
-	simplexTree(double);
+	simplexTree(std::vector<std::vector<double>>);
+	simplexTree(double, std::vector<std::vector<double>>);
+	
 	bool isLeaf;
 	simplexTree* character[MAX_POINTS];
 	
+	void recurse(treeNode*, int);
 	double getSize();
 
 	// At this time, let's just assume that each simplex is labeled by a key that
 	// can, in general, be considered as a string.
-	void insert(std::string);
+	void insert(std::vector<double>);
 	bool deletion(simplexTree*&, std::string);
 	bool search(std::string);
 	bool haveChild(simplexTree const*);

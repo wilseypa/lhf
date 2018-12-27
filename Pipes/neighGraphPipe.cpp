@@ -30,6 +30,8 @@ pipePacket neighGraphPipe::runPipe(pipePacket inData){
 		inData.workData.complex->insert(inData.workData.originalData[i]);
 	}
 
+	std::cout << "SimplexTree Size: " << inData.workData.complex->getSize() << std::endl;
+
 	return inData;
 }
 
