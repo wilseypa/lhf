@@ -67,6 +67,9 @@ int main(int argc, char* argv[]){
 		if(pre != ""){
 			auto *preprocess = new preprocessor();
 			auto *prePipe = preprocess->newPreprocessor(pre);
+			
+			prePipe->configPreprocessor(args);
+			prePipe->runPreprocessor(*wD);
 		}
 	
 		// Begin processing parts of the pipeline
@@ -110,7 +113,11 @@ int main(int argc, char* argv[]){
 			
 			ws->writeStats(wD->stats, args["outputFile"]);
 		}
-		
+	} else {
+		ap->printUsage();
 	}
+	
+	
+	
     return 0;
 }

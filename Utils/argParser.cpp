@@ -10,8 +10,8 @@
 #include "argParser.hpp"
 
 
-std::map<std::string, std::string> argMap = { {"dimensions","d"},{"iterations","r"},{"pipeline","p"},{"inputFile","i"},{"outputFile","o"},{"epsilon","e"},{"debug","x"},{"complexType","c"}};
-std::map<std::string, std::string> defaultMap = { {"dimensions","3"},{"iterations","1000"},{"pipeline","neighGraph.rips.betti"},{"inputFile","None"},{"outputFile","console"},{"epsilon","5"},{"debug","0"},{"complexType","simplexArrayList"}};
+std::map<std::string, std::string> argMap = { {"dimensions","d"},{"iterations","r"},{"pipeline","p"},{"inputFile","i"},{"outputFile","o"},{"epsilon","e"},{"debug","x"},{"complexType","c"},{"clusters","k"},{"preprocessor","pre"}};
+std::map<std::string, std::string> defaultMap = { {"dimensions","3"},{"iterations","250"},{"pipeline","neighGraph.rips.betti"},{"inputFile","None"},{"outputFile","console"},{"epsilon","5"},{"debug","0"},{"complexType","simplexArrayList"},{"clusters","5"},{"preprocessor",""}};
 
 // argParse constructor, currently no needed information for the class constructor
 argParser::argParser(){
@@ -41,7 +41,11 @@ std::map<std::string, std::string> argParser::defaultArguments(std::map<std::str
 }
 
 
-
+void argParser::printUsage(){
+	std::cout << "Usage: " << std::endl;
+	
+	return;
+}
 
 
 // argParser::parse -> Parse through arguments and return a map (dictionary)

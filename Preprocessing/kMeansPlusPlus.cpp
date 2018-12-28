@@ -23,35 +23,36 @@ kMeansPlusPlus::kMeansPlusPlus(){
 
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
-	//Arguments - How many clusters? Convergence value
-				utils ut;
-				//Storing centroids
-				std::vector<std::vector<double>> centroids;
-				//Storing labels for mapping data to centroids
-				std::vector<int> labels;
+	//Arguments - num_clusters, num_iterations
 
+	utils ut;
+	std::vector<std::vector<double>> centroids;		//Storing centroids
+	std::vector<int> labels;						//Storing labels for mapping data to centroids
 
 
 	//Initialize centroids (Plus plus mechanism with kmeans - Hartigan, Wong)
     
 	//initialize first random centroid from data
+	
+	//mersenne twister random algorithm - used to have reproducible results from seed
+	//	This seed should be recorded to reproduce after a run
+	//	There may be multiple seeds in a run depending on how many times k-means is used
 	static std::random_device seed;  
-	static std::mt19937 gen(seed()); //mersenne twister random algorithm
+	static std::mt19937 gen(seed()); 
+	
 	std::uniform_int_distribution<size_t> distribution(0, inData.workData.originalData.size()-1);
     int index = distribution(gen);
+	
 	std::vector<double> center_initial = inData.workData.originalData[index];
+    
     //compute squared distances from initial center
-
 	std::vector<double> tempdist;
-    for(unsigned i = 0; i<inData.workData.originalData.size()-1; i++) {
-             
+    for(unsigned i = 0; i<inData.workData.originalData.size()-1; i++) {        
 	    auto dist = ut.vectors_distance(inData.workData.originalData[i], center_initial);
 		tempdist.push_back(dist);
 	}
+	
 	//choose kth centroid based on probability of dist/(sum of dist)
-
-	int num_clusters = 5; //need to set out of cmd line later... testing for now
-
     for(unsigned k = 0; k<num_clusters; k++){
         int index_next = distribution(gen);
 		//std::vector<int> temp;
@@ -73,8 +74,17 @@ pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
 				}
 			}
 	}
+	
+	//Put a total ordering on the centroids before assigning labels
+	//		See Arxiv paper for information on why
+	//		(Total ordered centroids need to be inserted into pipepacket for PH)
+	//		
+	
+	
+	
 	//assigning points to centroids
-	int num_iterations = 250; //pass in from cmd line? using this to test for now
+	//	This will eventually occur in parallel, should probably be removed (eventually)
+	//	i.e. labels are not necessary to continue the PH computation but are for upscaling
 	std::vector<size_t> assignments(inData.workData.originalData.size());
 	for (size_t point = 0; point<inData.workData.originalData.size(); point++){
 		double dist_best = std::numeric_limits<double>::max(); //setting max starting distance
@@ -90,9 +100,10 @@ pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
 	
 		assignments[point] = cluster_best;
 	}
-    
 	
-	std::cout << "No run function defined for: " << procName << std::endl;
+	
+	
+    std::cout << "Clustered data..." << std::endl;
 	//Assign to the pipepacket
     inData.workData.originalData = centroids;
 
@@ -102,8 +113,9 @@ pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
 // configPipe -> configure the function settings of this pipeline segment
 bool kMeansPlusPlus::configPreprocessor(std::map<std::string, std::string> configMap){
 
-	std::cout << "No configure function defined for: " << procName << std::endl;
-    
+	num_clusters = stoi(configMap["clusters"]);			
+	num_iterations = stoi(configMap["iterations"]);
+	
 	return true;
 }
 

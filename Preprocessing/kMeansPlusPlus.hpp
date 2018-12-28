@@ -6,6 +6,8 @@
 
 class kMeansPlusPlus : public preprocessor {
   private:
+	int num_clusters;			
+	int num_iterations;			
   public:
 	kMeansPlusPlus();
     pipePacket runPreprocessor(pipePacket inData);
