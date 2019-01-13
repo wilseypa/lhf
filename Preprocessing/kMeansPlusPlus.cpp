@@ -29,7 +29,7 @@ pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
 	std::vector<std::vector<double>> centroids;		//Storing centroids
 	std::vector<int> labels;						//Storing labels for mapping data to centroids
 
-
+    num_clusters = 5; //for testing purposes.... set out of cmd later
 	//Initialize centroids (Plus plus mechanism with kmeans - Hartigan, Wong)
     
 	//initialize first random centroid from data
@@ -73,34 +73,76 @@ pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
 				    k = k;
 				}
 			}
-	}
+	} 
 	
 	//Put a total ordering on the centroids before assigning labels
 	//		See Arxiv paper for information on why
 	//		(Total ordered centroids need to be inserted into pipepacket for PH)
-	//		
+	//
+	// std::vector<double> total_order; 
+	// for(unsigned k = 0; k<num_clusters; k++){
+	// 	total_order[k] = centroids[k][0]; //arbitrarily assign centroids a total order for upscaling
+	// }
 	
 	
 	
-	//assigning points to centroids
+	//labeling points so they can be assigned to a cluster
 	//	This will eventually occur in parallel, should probably be removed (eventually)
 	//	i.e. labels are not necessary to continue the PH computation but are for upscaling
-	std::vector<size_t> assignments(inData.workData.originalData.size());
-	for (size_t point = 0; point<inData.workData.originalData.size(); point++){
+	for(size_t point = 0; point<inData.workData.originalData.size(); point++){
 		double dist_best = std::numeric_limits<double>::max(); //setting max starting distance
-		size_t cluster_best = 0;
-		for(size_t cluster = 0; cluster <num_clusters; cluster++){
+		//size_t cluster_best = 0;
+		for(size_t cluster = 0; cluster<num_clusters; cluster++){
 			const double cluster_dist = ut.vectors_distance(inData.workData.originalData[point], centroids[cluster]);
             if(cluster_dist < dist_best){
 				dist_best = cluster_dist; //assigning new best distance based on centroids
 				//cluster_best = centroids[cluster];
-				labels.push_back(cluster);
+				labels.push_back(cluster);  //labeling each point based on best cluster
 			}
 		}
 	
-		assignments[point] = cluster_best;
 	}
+ 	//assigning points to a cluster based on their label
+ 	std::vector<std::vector<double>> assignments;
 	
+	for(size_t k=0; k<num_clusters; k++){  
+		for(size_t point = 0; point<inData.workData.originalData.size(); point++){
+			if(labels[point] == k){ 
+               assignments.push_back(inData.workData.originalData[point]); //what will this data look like coming in... iterator can change
+			   // need to add assignments to vector****************************
+              // centroids[k].insert(centroids[k].end(), assignments.begin(), assignments.end()); //appending assigned points to centroid
+			}
+		}
+		
+    }  
+ 
+
+
+	//counting points in each cluster so mean can be computed
+	std::vector<double> counts(num_clusters, 0);
+	for(size_t k=0; k<inData.workData.originalData.size(); k++){   
+		for(size_t j=0; j<num_clusters; j++){   
+			if(labels[k] == j){
+				counts[j] += 1;
+			}	
+		}
+	} 
+
+	//summing points in each cluster so mean can be computed
+	std::vector<double> summed_clusters(num_clusters, 1);  
+	
+	for(size_t i=0; i<num_clusters; i++){
+	   summed_clusters[i] = std::accumulate(centroids[i].begin(), centroids[i].end(), 0 );
+	   
+	} 
+	
+	// //dividing sums by counts to recompute centroids
+	 std::vector<double> new_centroids(num_clusters, 0);
+     for(size_t i = 0; i<num_clusters; i++){
+         new_centroids[i] = (summed_clusters[i]/counts[i]); //recomputing new centroids
+         centroids[i][0] = new_centroids[i];  //replace original centroids with new centroids
+	 }  
+	 
 	
 	
     std::cout << "Clustered data..." << std::endl;
