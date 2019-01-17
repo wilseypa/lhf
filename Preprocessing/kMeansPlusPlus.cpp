@@ -110,6 +110,7 @@ pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
 			if(labels[point] == k){ 
                assignments.push_back(inData.workData.originalData[point]); //what will this data look like coming in... iterator can change
 			   // need to add assignments to vector****************************
+		centroids.push_back(assignments[k]);
               // centroids[k].insert(centroids[k].end(), assignments.begin(), assignments.end()); //appending assigned points to centroid
 			}
 		}
