@@ -11,9 +11,12 @@ class pipePacket {
   
 	struct pipeData{
 		std::vector<std::vector<double>> originalData;
+		std::vector<int> originalLabels;
+		std::vector<std::vector<double>> upscaleData;
 		simplexBase* complex;
 	} workData;
 	
+	std::vector<std::vector<int>> boundaries;
 	
 	double getSize();	
 };

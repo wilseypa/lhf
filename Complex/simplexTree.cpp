@@ -40,7 +40,7 @@ void simplexTree::recurse(treeNode* node, int curIndex){
 	//std::cout << "distMatrix: " << distMatrix[node->index][curIndex] << std::endl;
 	
 	//Check if this node needs insertion, if so, make a copy and insert
-	if(distMatrix[node->index][curIndex] < maxEpsilon){
+	if(distMatrix[node->index][curIndex] < maxEpsilon){		
 		
 		treeNode* insNode = new treeNode;
 		treeNode* temp;
@@ -52,14 +52,16 @@ void simplexTree::recurse(treeNode* node, int curIndex){
 		
 		//std::cout << "\tCreated new child node..." << std::endl;
 		
-		if(node->child == nullptr){
+		if(node->child == nullptr && checkParent(node, curIndex)){
 			node->child = insNode;
+			insNode->parent = node;
 			nodeCount++;
-		} else {
+		} else if (checkParent(node,curIndex)) {
 			// Children already exist; iterate until we find empty slot
 			temp = node->child;
 			while(temp->next != nullptr){temp = temp->next;};
-			temp->next = insNode;			
+			temp->next = insNode;	
+			insNode->parent = temp->parent;	
 			nodeCount++;			
 		}	
 	}
@@ -67,10 +69,26 @@ void simplexTree::recurse(treeNode* node, int curIndex){
 	return;
 }
 
+
+bool simplexTree::checkParent(treeNode* node, int curIndex){
+	bool retVal = true;
+	
+	if(node->parent != nullptr)
+		retVal = checkParent(node->parent, curIndex);
+	
+	if(distMatrix[node->index][curIndex] >= maxEpsilon)
+		retVal = false;
+		
+	return retVal;
+	
+}
+
 // Insert a node into the tree
 //		
 void simplexTree::insert(std::vector<double>) {
 	//std::cout << "Inserting node: " << indexCounter << std::endl;
+	std::cout << "Index: " << indexCounter << "\tNode Count: " << nodeCount << "\tSize: " << getSize() << std::endl;
+	
 	
 	//Create our new node to insert
 	treeNode* curNode = new treeNode;

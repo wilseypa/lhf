@@ -11,6 +11,75 @@
 
 using namespace std;
 
+
+
+void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD){
+    auto *ws = new writeOutput();
+	//Start with the preprocessing function, if enabled
+	auto pre = args["preprocessor"];
+	if(pre != ""){
+		auto *preprocess = new preprocessor();
+		auto *prePipe = preprocess->newPreprocessor(pre);
+		
+		std::cout << "Configuring preprocessor" << std::endl;
+		prePipe->configPreprocessor(args);
+		std::cout << "Running preprocessor" << std::endl;
+		prePipe->runPreprocessor(*wD);
+	}
+	
+	// Begin processing parts of the pipeline
+	// DataInput -> A -> B -> ... -> DataOutput
+	// Parsed by "." -> i.e. A.B.C.D
+	auto pipe = args.find("pipeline");
+	if(pipe != args.end()){
+		auto pipeFuncts = std::string(args["pipeline"]);
+		auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
+		
+		//For each '.' separated pipeline function (count of '.' + 1 -> lim)
+		for(unsigned i = 0; i < lim; i++){
+			auto curFunct = pipeFuncts.substr(0,pipeFuncts.find('.'));
+			pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
+			
+			//Build the pipe component, configure and run
+			auto *bp = new basePipe();
+			auto *cp = bp->newPipe(curFunct);
+			
+			//Check if the pipe was created and configure
+			if(cp != 0 && cp->configPipe(args)){
+				//Run the pipe function (wrapper)
+				*wD = cp->runPipeWrapper(*wD);
+			} else {
+				cout << "Failed to configure pipeline: " << args["pipeline"] << endl;
+			}
+		}
+	}
+	//If the pipeline was undefined...
+	else {
+		cout << "Failed to find a suitable pipeline, exiting..." << endl;
+		return;
+	}
+	
+	//Output the data using writeOutput library
+	pipe = args.find("outputFile");
+	if(pipe != args.end()){
+		//if (args["outputFile"] == "console"){
+		//	ws->writeConsole(wD);
+		//}
+		
+		ws->writeStats(wD->stats, args["outputFile"]);
+	}
+	return;
+}
+
+
+
+
+
+
+
+
+
+
 int main(int argc, char* argv[]){
 	//	Steps to compute PH with preprocessing:
 	//
@@ -45,7 +114,6 @@ int main(int argc, char* argv[]){
 	//Define external classes used for reading input, parsing arguments, writing output
 	auto *rs = new readInput();
     auto *ap = new argParser();
-    auto *ws = new writeOutput();
     
     //Parse the command-line arguments
     auto args = ap->parse(argc, argv);
@@ -62,57 +130,14 @@ int main(int argc, char* argv[]){
 		//Add data to our pipePacket
 		wD->workData.originalData = wD->workData.originalData;
 		
-		//Start with the preprocessing function, if enabled
-		auto pre = args["preprocessor"];
-		if(pre != ""){
-			auto *preprocess = new preprocessor();
-			auto *prePipe = preprocess->newPreprocessor(pre);
+		auto ar = args["upscale"];
+		std::cout << ar << std::endl;
+		if(ar == "true"){
+			std::cout << "Starting upscale method..." << std::endl;
 			
-			prePipe->configPreprocessor(args);
-			prePipe->runPreprocessor(*wD);
+			processDataWrapper(args, wD);
 		}
-	
-		// Begin processing parts of the pipeline
-		// DataInput -> A -> B -> ... -> DataOutput
-		// Parsed by "." -> i.e. A.B.C.D
-		auto pipe = args.find("pipeline");
-		if(pipe != args.end()){
-			auto pipeFuncts = std::string(args["pipeline"]);
-			auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
-			
-			//For each '.' separated pipeline function (count of '.' + 1 -> lim)
-			for(unsigned i = 0; i < lim; i++){
-				auto curFunct = pipeFuncts.substr(0,pipeFuncts.find('.'));
-				pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
-				
-				//Build the pipe component, configure and run
-				auto *bp = new basePipe();
-				auto *cp = bp->newPipe(curFunct);
-				
-				//Check if the pipe was created and configure
-				if(cp != 0 && cp->configPipe(args)){
-					//Run the pipe function (wrapper)
-					*wD = cp->runPipeWrapper(*wD);
-				} else {
-					cout << "Failed to configure pipeline: " << args["pipeline"] << endl;
-				}
-			}
-		}
-		//If the pipeline was undefined...
-		else {
-			cout << "Failed to find a suitable pipeline, exiting..." << endl;
-			return 1;
-		}
-		
-		//Output the data using writeOutput library
-		pipe = args.find("outputFile");
-		if(pipe != args.end()){
-			//if (args["outputFile"] == "console"){
-			//	ws->writeConsole(wD);
-			//}
-			
-			ws->writeStats(wD->stats, args["outputFile"]);
-		}
+
 	} else {
 		ap->printUsage();
 	}

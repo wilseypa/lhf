@@ -13,6 +13,7 @@
 #include "neighGraphPipe.hpp"
 #include "bettiPipe.hpp"
 #include "ripsPipe.hpp"
+#include "upscalePipe.hpp"
 
 // basePipe constructor
 basePipe::basePipe(){
@@ -30,6 +31,8 @@ basePipe* basePipe::newPipe(const std::string &pipeT){
 		return new bettiPipe();
 	} else if (pipeType == "rips"){
 		return new ripsPipe();
+	} else if (pipeType == "upscale"){
+		return new upscalePipe();
 	}
 	
 	return 0;

@@ -15,6 +15,7 @@ class simplexTree : public simplexBase {
 		double weight;
 		treeNode* child = nullptr;
 		treeNode* next = nullptr;
+		treeNode* parent = nullptr;
 	};
 			
 	int indexCounter;
@@ -27,6 +28,7 @@ class simplexTree : public simplexBase {
 	simplexTree(double, std::vector<std::vector<double>>);
 	
 	bool isLeaf;
+	bool checkParent(treeNode*, int);
 	simplexTree* character[MAX_POINTS];
 	
 	void recurse(treeNode*, int);

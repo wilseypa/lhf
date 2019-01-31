@@ -10,6 +10,7 @@ add_library(bettiPipe "bettiPipe.cpp" "bettiPipe.hpp")
 add_library(distMatrixPipe "distMatrixPipe.cpp" "distMatrixPipe.hpp")
 add_library(neighGraphPipe "neighGraphPipe.cpp" "neighGraphPipe.hpp")
 add_library(ripsPipe "ripsPipe.cpp" "ripsPipe.hpp")
+add_library(upscalePipe "upscalePipe.cpp" "upscalePipe.hpp")
 
 include_directories(../Complex)
 link_directories(../Complex)
@@ -21,7 +22,7 @@ include_directories(../Utils)
 link_directories(../Utils)
 
 # target_link_libraries(LHF PipeFunctions)
-target_link_libraries(basePipe utils simplexBase pipePacket bettiPipe distMatrixPipe neighGraphPipe ripsPipe)
+target_link_libraries(basePipe utils simplexBase pipePacket bettiPipe distMatrixPipe neighGraphPipe ripsPipe upscalePipe)
 
 INSTALL (TARGETS basePipe
 	LIBRARY DESTINATION lib
