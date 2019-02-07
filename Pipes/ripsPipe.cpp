@@ -40,11 +40,11 @@ pipePacket ripsPipe::runPipe(pipePacket inData){
 	std::cout << "\tComplex Mem: " << inData.workData.complex->getSize() << std::endl;
 	
 	auto a = inData.workData.complex->getEdges(0,0);
-	std::cout << std::endl << std::endl;
-	for(auto z : a){
-		std::cout << z.first << "\t";
-		ut.print1DVector(z.second);
-	}
+	//std::cout << std::endl << std::endl;
+	//for(auto z : a){
+	//	std::cout << z.first << "\t";
+	//	ut.print1DVector(z.second);
+	//}
 	
 	return inData;
 }

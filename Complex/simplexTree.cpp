@@ -36,9 +36,6 @@ void simplexTree::recurse(treeNode* node, int curIndex){
 		recurse(node->next, curIndex);
 	}
 
-	//std::cout << "Inserting new node... : " << maxEpsilon << " [ " << node->index << " , " << curIndex << " ] "<< std::endl;
-	//std::cout << "distMatrix: " << distMatrix[node->index][curIndex] << std::endl;
-	
 	//Check if this node needs insertion, if so, make a copy and insert
 	if(distMatrix[node->index][curIndex] < maxEpsilon){		
 		

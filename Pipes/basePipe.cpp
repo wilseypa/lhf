@@ -14,6 +14,7 @@
 #include "bettiPipe.hpp"
 #include "ripsPipe.hpp"
 #include "upscalePipe.hpp"
+#include "boundaryPipe.hpp"
 
 // basePipe constructor
 basePipe::basePipe(){
@@ -33,6 +34,8 @@ basePipe* basePipe::newPipe(const std::string &pipeT){
 		return new ripsPipe();
 	} else if (pipeType == "upscale"){
 		return new upscalePipe();
+	} else if (pipeType == "boundary"){
+		return new boundaryPipe();
 	}
 	
 	return 0;
