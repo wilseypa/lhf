@@ -10,7 +10,7 @@
 #include <vector>
 #include "preprocessor.hpp"
 #include "kMeansPlusPlus.hpp"
-
+#include "streamingkMeans.hpp"
 // basePipe constructor
 preprocessor::preprocessor(){
 	return;
@@ -21,10 +21,15 @@ preprocessor* preprocessor::newPreprocessor(const std::string &procT){
 	procName= procT;
 	if(procName == "none"){
 		return new preprocessor();
-	} else if (procName == "kmeansplusplus" || procName == "kmeans++" || procName == "streamingkmeans"){
+	} else if (procName == "kmeansplusplus" || procName == "kmeans++"){
 		return new kMeansPlusPlus();
 		std::cout;
 	} 
+	  else  if(procName == "streamingKmeans" || procName == "streamingkmeans"){
+	  return new streamingkMeans();
+	  std::cout;
+	} 
+
 	return 0;
 }
 
