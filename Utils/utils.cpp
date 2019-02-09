@@ -69,25 +69,43 @@ std::pair<std::vector<unsigned>, std::vector<unsigned>> utils::intersect(std::ve
 	set_union(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(retTemp.second));
 	set_symmetric_difference(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(retTemp.first));
 
-	/*for(auto iter = v1.begin(); iter!= v1.end(); iter++){
-		std::cout << *iter << ",";
-	}
-	std::cout << "\t";
-	for(auto iter = v2.begin(); iter!= v2.end(); iter++){
-		std::cout << *iter << ",";
-	}
-	std::cout << "\t";
-	for(auto iter = retTemp.first.begin(); iter!= retTemp.first.end(); iter++){
-		std::cout << *iter << ",";
-	}
-	std::cout << "\t";
-	for(auto iter = retTemp.second.begin(); iter!= retTemp.second.end(); iter++){
-		std::cout << *iter << ",";
-	}
-	std::cout << std::endl;*/
-
 	if(retTemp.first.size() == v1.size())
 		return retTemp;
 	else
 		return ret;
 }
+
+// Find the symmetric difference of two vectors
+std::vector<unsigned> utils::symmetricDiff(std::vector<unsigned> v1, std::vector<unsigned> v2, bool isSorted){
+	std::vector<unsigned> ret;
+	std::vector<unsigned> retTemp;
+	
+	if(v1 == v2)
+		return ret;
+	
+	if(!isSorted){
+		sort(v1.begin(), v1.end());
+		sort(v2.begin(), v2.end());
+	}
+	
+	set_symmetric_difference(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(retTemp));
+	return retTemp;
+}
+
+// Find the union of two vectors
+std::vector<unsigned> utils::setUnion(std::vector<unsigned> v1, std::vector<unsigned> v2, bool isSorted){
+	std::vector<unsigned> ret;
+	std::vector<unsigned> retTemp;
+	
+	if(v1 == v2)
+		return ret;
+	
+	if(!isSorted){
+		sort(v1.begin(), v1.end());
+		sort(v2.begin(), v2.end());
+	}
+	
+	set_union(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(retTemp));
+	return retTemp;
+}
+
