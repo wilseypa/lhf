@@ -68,8 +68,28 @@ std::pair<std::vector<unsigned>, std::vector<unsigned>> utils::intersect(std::ve
 	
 	set_union(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(retTemp.second));
 	set_symmetric_difference(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(retTemp.first));
+	
+	/*for(auto iter = v1.begin(); iter!= v1.end(); iter++){
+		std::cout << *iter << ",";
+	}
+	std::cout << "\t";
+	for(auto iter = v2.begin(); iter!= v2.end(); iter++){
+		std::cout << *iter << ",";
+	}
+	std::cout << "\t";
+	for(auto iter = retTemp.first.begin(); iter!= retTemp.first.end(); iter++){
+		std::cout << *iter << ",";
+	}
+	std::cout << "\t";
+	for(auto iter = retTemp.second.begin(); iter!= retTemp.second.end(); iter++){
+		std::cout << *iter << ",";
+	}
+	std::cout << std::endl;
+	std::cout << std::to_string(retTemp.first.size() == 2) << std::endl;
 
-	if(retTemp.first.size() == v1.size())
+	*/
+	
+	if(retTemp.first.size() == 2)
 		return retTemp;
 	else
 		return ret;
@@ -87,8 +107,21 @@ std::vector<unsigned> utils::symmetricDiff(std::vector<unsigned> v1, std::vector
 		sort(v1.begin(), v1.end());
 		sort(v2.begin(), v2.end());
 	}
-	
 	set_symmetric_difference(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(retTemp));
+	
+	/*for(auto iter = v1.begin(); iter!= v1.end(); iter++){
+		std::cout << *iter << ",";
+	}
+	std::cout << "\t";
+	for(auto iter = v2.begin(); iter!= v2.end(); iter++){
+		std::cout << *iter << ",";
+	}
+	std::cout << "\t";
+	for(auto iter = retTemp.begin(); iter!= retTemp.end(); iter++){
+		std::cout << *iter << ",";
+	}
+	std::cout << std::endl;*/
+	
 	return retTemp;
 }
 
@@ -106,6 +139,19 @@ std::vector<unsigned> utils::setUnion(std::vector<unsigned> v1, std::vector<unsi
 	}
 	
 	set_union(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(retTemp));
+		
+	/*for(auto iter = v1.begin(); iter!= v1.end(); iter++){
+		std::cout << *iter << ",";
+	}
+	std::cout << "\t";
+	for(auto iter = v2.begin(); iter!= v2.end(); iter++){
+		std::cout << *iter << ",";
+	}
+	std::cout << "\t";
+	for(auto iter = retTemp.begin(); iter!= retTemp.end(); iter++){
+		std::cout << *iter << ",";
+	}
+	std::cout << std::endl;*/
 	return retTemp;
 }
 

@@ -33,8 +33,6 @@ double simplexArrayList::getSize(){
 	return size;
 }
 
-
-
 // Insert for simplexArrayList -> O((n+1)(n+2)/2) -> O(n^2)
 //		Sequence: 0 , 1 , 3 , 6 , 10 , 15
 //		(AKA very inefficient)
@@ -124,16 +122,17 @@ void simplexArrayList::expandDimensions(int dim){
 	utils ut;
 
 	std::vector<unsigned> tempVect;
+	
+	//Store the complex built from the VR expansion
+	std::vector<std::pair<double,std::vector<unsigned>>> weightGraph = weightedGraph;
+	
 	//Add the original vectors to the weighted graph
 	for(auto i = 0; i < data.size()-1; i++){
 		weightedGraph.push_back(std::make_pair(0.0,tempVect={i}));
 	}
-
-	//Store the complex built from the VR expansion
-	std::vector<std::pair<double,std::vector<unsigned>>> weightGraph = weightedGraph;
 	
 	//Iterate up to max dimension of simplex, starting at dim 2 (edges)
-	for(unsigned i = 2; i <= dim; i++){
+	for(unsigned i = 2; i <= dim+1; i++){
 		
 		//Store d-dimensional simplices
 		std::vector<std::pair<double,std::vector<unsigned>>> test;
@@ -158,9 +157,11 @@ void simplexArrayList::expandDimensions(int dim){
 						weight = weightGraph[t].first;
 					
 					auto weightPair = std::make_pair(weight,simp);
-					if(std::find(tempIntersections.begin(), tempIntersections.end(), weightPair) == tempIntersections.end())		
+					if(std::find(tempIntersections.begin(), tempIntersections.end(), weightPair) == tempIntersections.end()){
 						tempIntersections.push_back(weightPair);
+					}
 				}
+				
 			}
 			//Loop through the current tempIntersections list
 			for(auto tempInt : tempIntersections){				
@@ -180,6 +181,27 @@ void simplexArrayList::expandDimensions(int dim){
 					}
 					if(!testExist)
 						test.push_back(std::make_pair(weight,tempInt.second.second));
+				}
+				else{
+					if(ut.symmetricDiff(weightGraph[j].second, tempInt.second.first, true).size() == 1){
+						if(ut.symmetricDiff(weightGraph[j].second, tempInt.second.second, true).size() == weightGraph[j].second.size() - 1){
+							double weight = 0;
+							//Copy the tested simplex into the new intersection
+							if(weightGraph[j].first > tempInt.first)
+								weight = weightGraph[j].first;
+							else
+								weight = tempInt.first;
+							
+							bool testExist = false;
+							for(auto z : test){
+								if(z.second == tempInt.second.second)
+									testExist=true;
+							}
+							if(!testExist)
+								test.push_back(std::make_pair(weight,tempInt.second.second));
+						}
+					}
+				
 				}
 			}		
 		}

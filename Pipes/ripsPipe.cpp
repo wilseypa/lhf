@@ -33,7 +33,6 @@ pipePacket ripsPipe::runPipe(pipePacket inData){
 		ut.print1DVector(z);
 	}
 	
-	std::cout << "EXPANDING DIMENSIONS" << std::endl;
 	inData.workData.complex->expandDimensions(dim);
 		
 	std::cout << "\tComplex Size: " << inData.workData.complex->simplexCount() << std::endl;

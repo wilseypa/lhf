@@ -12,9 +12,9 @@
 using namespace std;
 
 
-
 void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD){
     auto *ws = new writeOutput();
+    
 	//Start with the preprocessing function, if enabled
 	auto pre = args["preprocessor"];
 	if(pre != ""){
