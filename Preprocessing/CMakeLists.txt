@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.5)
 
 add_library(preprocessor "preprocessor.cpp" "preprocessor.hpp")
 add_library(kMeansPlusPlus "kMeansPlusPlus.cpp" "kMeansPlusPlus.hpp")
-
+add_library(streamingkMeans "streamingkMeans.cpp" "streamingkMeans.cpp")
 include_directories(../Complex)
 link_directories(../Complex)
 
@@ -17,6 +17,7 @@ include_directories(../Utils)
 link_directories(../Utils)
 
 target_link_libraries(preprocessor kMeansPlusPlus)
+target_link_libraries(preprocessor streamingkMeans)
 
 INSTALL (TARGETS preprocessor
 	LIBRARY DESTINATION lib
