@@ -27,12 +27,15 @@ bettiPipe::bettiPipe(){
 std::vector<std::vector<unsigned>> bettiPipe::nSimplices(double epsilon, unsigned n, std::vector<std::pair<double,std::vector<unsigned>>> complex){
 	std::vector<std::vector<unsigned>> ret;
 	
+	
+	
 	for(auto v : complex){
 		if(v.second.size() == n){
 			if(v.first <= epsilon)
 				ret.push_back(v.second);
 		}
 	}
+	
 	return ret;
 }
 
@@ -115,7 +118,7 @@ std::pair<int,int> bettiPipe::getRank(std::vector<std::vector<unsigned>> nChain,
 	
 	//Create the boundary matrix from chains
 	std::vector<unsigned> bDim;
-	
+
 	if (nChain.size() == 0)
 		return std::make_pair(0,pChain.size());
 	
@@ -159,7 +162,7 @@ pipePacket bettiPipe::runPipe(pipePacket inData){
 	std::vector<float> lifeSpans[dim];
 	
 	//Retrieve
-	auto local_edges = inData.workData.complex->getEdges(0,0);
+	auto local_edges = inData.workData.complex->getAllEdges();
 	std::string barcodes;
 	for(int d2 = 0; d2 <= dim; d2++){
 		bettiNumbers.push_back(0);
@@ -179,12 +182,16 @@ pipePacket bettiPipe::runPipe(pipePacket inData){
 			
 			//Iterate through each dimension to build boundary matrix
 			for(int d = dim; d >= 0; d--){
+				std::vector<std::vector<unsigned>> nChain = inData.workData.complex->getEdges(d, epsilon);
+				//auto nChain = nSimplices(epsilon,d,local_edges);
+				std::vector<std::vector<unsigned>> pChain = inData.workData.complex->getEdges(d+1, epsilon);
+				int p1Count = nSimplices(epsilon,d+2,local_edges).size();
 				
 				if(d == dim)
-					last_rank_nul.first = nSimplices(epsilon,d+2,local_edges).size();
+					last_rank_nul.first = p1Count;
 				
 				//Get the reduced boundary matrix
-				auto rank_nul = getRank(nSimplices(epsilon,d,local_edges), nSimplices(epsilon,d+1,local_edges), nSimplices(epsilon,d+2,local_edges).size());
+				auto rank_nul = getRank(nChain, pChain, p1Count);
 							
 				if(bettiNumbers[d] != (rank_nul.second- last_rank_nul.first)){
 					bettiNumbers[d] = (rank_nul.second- last_rank_nul.first);

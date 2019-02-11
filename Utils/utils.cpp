@@ -50,8 +50,29 @@ double utils::vectors_distance(const std::vector<double>& a, const std::vector<d
 		
 		std::transform(a.begin(), a.end(), b.begin(), std::back_inserter(temp),[](double e1, double e2) {return pow((e1-e2),2);});
 	
-		return sqrt(std::accumulate(temp.begin(), temp.end(), 0.0));
+		
+	
+		return roundf(sqrt(std::accumulate(temp.begin(), temp.end(), 0.0)) * 1000) / 1000;
 }
+
+std::vector<unsigned> utils::setIntersect(std::vector<unsigned> v1, std::vector<unsigned> v2, bool isSorted){
+	std::vector<unsigned> ret;
+	
+	if(v1 == v2)
+		return v1;
+	
+	if(!isSorted){
+		sort(v1.begin(), v1.end());
+		sort(v2.begin(), v2.end());
+	}
+	
+	set_intersection(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(ret));
+	
+	return ret;
+	
+}
+	
+
 
 // Find the intersect of two vectors
 std::pair<std::vector<unsigned>, std::vector<unsigned>> utils::intersect(std::vector<unsigned> v1, std::vector<unsigned> v2, bool isSorted){

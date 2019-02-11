@@ -21,9 +21,7 @@ void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD)
 		auto *preprocess = new preprocessor();
 		auto *prePipe = preprocess->newPreprocessor(pre);
 		
-		std::cout << "Configuring preprocessor" << std::endl;
 		prePipe->configPreprocessor(args);
-		std::cout << "Running preprocessor" << std::endl;
 		prePipe->runPreprocessor(*wD);
 	}
 	
@@ -131,9 +129,7 @@ int main(int argc, char* argv[]){
 		wD->workData.originalData = wD->workData.originalData;
 		
 		auto ar = args["upscale"];
-		std::cout << ar << std::endl;
 		if(ar == "true"){
-			std::cout << "Starting upscale method..." << std::endl;
 			
 			processDataWrapper(args, wD);
 		}

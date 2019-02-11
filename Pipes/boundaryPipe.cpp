@@ -262,7 +262,7 @@ std::vector<std::vector<unsigned>> boundaryPipe::extractBoundaries(std::vector<s
 //				WITH boundaries that form the barcode
 //
 pipePacket boundaryPipe::runPipe(pipePacket inData){
-	std::vector<std::vector<std::vector<unsigned>>> allBoundaries;
+	/*std::vector<std::vector<std::vector<unsigned>>> allBoundaries;
 	
 	auto local_edges = inData.workData.complex->getEdges(0,0);
 	
@@ -278,7 +278,7 @@ pipePacket boundaryPipe::runPipe(pipePacket inData){
 		for(auto edge : local_edges){
 			
 			//Get the weights (increasing order)
-			double epsilon = edge.first;
+			double epsilon = 0; //edge.first;
 			
 			//Check if we've already 
 			if(std::find(checkedEdges.begin(), checkedEdges.end(), epsilon) == checkedEdges.end()){
@@ -316,7 +316,7 @@ pipePacket boundaryPipe::runPipe(pipePacket inData){
 	}
 	
 	
-	return inData;
+	return inData;*/
 }
 
 

@@ -14,7 +14,6 @@ simplexBase::simplexBase(double maxE){
 
 void simplexBase::setDistanceMatrix(std::vector<std::vector<double>> _distMatrix){
 	distMatrix = _distMatrix;
-	std::cout << "Dist Matrix::::: " << distMatrix.size() << std::endl;
 	return;
 }
 
@@ -28,18 +27,23 @@ simplexBase* simplexBase::newSimplex(const std::string &simplexT){
 		return new simplexTree(maxEpsilon, distMatrix);
 	} else if (simplexType == "simplexArrayList"){	
 		std::cout << maxEpsilon << std::endl;	
-		return new simplexArrayList(maxEpsilon);
+		return new simplexArrayList(maxEpsilon, distMatrix);
 	}
 	return 0;
 }
 
 
-std::vector<std::pair<double,std::vector<unsigned>>> simplexBase::getEdges(int dim, double epsilon){
+std::vector<std::vector<unsigned>> simplexBase::getEdges(int dim, double epsilon){
+	std::cout << "No get edges function defined for: " << simplexType << std::endl;
+	std::vector<std::vector<unsigned>> a;
+	return a;
+}
+
+std::vector<std::pair<double,std::vector<unsigned>>> simplexBase::getAllEdges(){
 	std::cout << "No get edges function defined for: " << simplexType << std::endl;
 	std::vector<std::pair<double,std::vector<unsigned>>> a;
 	return a;
 }
-
 
 double simplexBase::getSize(){
 	std::cout << "No size function defined for: " << simplexType << std::endl;
