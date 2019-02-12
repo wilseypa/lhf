@@ -70,8 +70,9 @@ std::map<std::string, std::string> argParser::parse(int argc, char** argv){
 	argParser::defaultArguments(retVal);
 	
 	//Print the argument set
+	std::cout << "Arguments being used: " << std::endl;
 	for( const auto& sm_pair : retVal){
-		std::cout << sm_pair.first << '\t' << sm_pair.second << std::endl;
+		std::cout << "\t" << sm_pair.first << "   \t" << sm_pair.second << std::endl;
 	}
 	std::cout << std::endl;
 	return retVal;

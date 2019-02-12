@@ -19,7 +19,7 @@
 
 // basePipe constructor
 ripsPipe::ripsPipe(){
-	pipeType = "Vietoris Rips (inductive)";
+	pipeType = "Rips (inductive)";
 	return;
 }
 

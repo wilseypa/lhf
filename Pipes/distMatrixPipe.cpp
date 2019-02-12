@@ -42,9 +42,6 @@ pipePacket distMatrixPipe::runPipe(pipePacket inData){
 		distMatrix.push_back(temp);
 	}
 	
-	//Assign to the pipePacket
-	//inData.workData.originalData = distMatrix;
-	
 	inData.workData.complex->setDistanceMatrix(distMatrix);
 	
 	return inData;

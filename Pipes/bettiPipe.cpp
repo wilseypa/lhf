@@ -147,6 +147,7 @@ pipePacket bettiPipe::runPipe(pipePacket inData){
 	
 	std::vector<bettiDef_t> bettis;
 	
+	
 	std::vector<int> bettiNumbers;
 	std::vector<float> lifeSpans[dim];
 	
@@ -167,7 +168,6 @@ pipePacket bettiPipe::runPipe(pipePacket inData){
 	for(auto eps : local_weights){
 		//Reload the buffers with the current edges
 		edges = inData.workData.complex->getAllEdges(eps);
-		
 		
 		//Get the weights (increasing order)
 		//Check if we've already processed or not
@@ -202,15 +202,6 @@ pipePacket bettiPipe::runPipe(pipePacket inData){
 
 	}
 	
-	if(debug){
-		std::cout << "\n\n______________RESULTS_______________" << std::endl;
-		std::cout << bettiOutput[0] << std::endl << std::endl;
-		std::cout << bettiOutput[1] << std::endl << std::endl;
-		std::cout << bettiOutput[2] << std::endl;
-	}
-	
-	std::cout << "\n\n______________RESULTS_______________" << std::endl;
-	
 	std::string output = "Dim,Birth,Death\n";
 	
 	for(int i = 0; i < dim; i ++){
@@ -240,8 +231,15 @@ pipePacket bettiPipe::runPipe(pipePacket inData){
 		}
 	}
 	
-	std::cout << output << std::endl;
+	if(debug){
+		std::cout << "\n\n______________RESULTS_______________" << std::endl;
+		std::cout << bettiOutput[0] << std::endl << std::endl;
+		std::cout << bettiOutput[1] << std::endl << std::endl;
+		std::cout << bettiOutput[2] << std::endl;
+		std::cout << std::endl << output << std::endl;
+	}
 	
+	inData.bettiOutput = output;
 	
 	return inData;
 }

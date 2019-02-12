@@ -22,7 +22,7 @@ basePipe::basePipe(){
 }
 
 basePipe* basePipe::newPipe(const std::string &pipeT){
-	std::cout << "Building pipeline: " << pipeT << std::endl << std::endl;
+	std::cout << "Building pipeline: " << pipeT << std::endl;
 	pipeType = pipeT;
 	if(pipeType == "distMatrix"){
 		return new distMatrixPipe();
@@ -56,7 +56,7 @@ pipePacket basePipe::runPipeWrapper(pipePacket inData){
 	std::chrono::duration<double, std::milli> elapsed = endTime - startTime;
 	
 	//Output the time and memory used for this pipeline segment
-	std::cout << "Pipeline " << pipeType << " executed in " << (elapsed.count()/1000.0) << " seconds (physical time)" << std::endl;
+	std::cout << "\tPipeline " << pipeType << " executed in " << (elapsed.count()/1000.0) << " seconds (physical time)" << std::endl;
 	
 	auto dataSize = inData.getSize();
 	auto unit = "B";
@@ -76,7 +76,7 @@ pipePacket basePipe::runPipeWrapper(pipePacket inData){
 		unit = "KB";
 	}
 	
-	std::cout << "\tData size: " << dataSize << " " << unit << std::endl << std::endl;
+	std::cout << "\t\tData size: " << dataSize << " " << unit << std::endl << std::endl;
 	
 	inData.stats += pipeType + "," + std::to_string(elapsed.count()/1000.0) + "," + std::to_string(dataSize) + "," + unit + "," + std::to_string(inData.workData.complex->vertexCount()) + "," + std::to_string(inData.workData.complex->simplexCount()) + "\n";
 	

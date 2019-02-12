@@ -126,9 +126,9 @@ bool writeOutput::writeMAT(std::string filename, std::vector<std::vector<double>
 bool writeOutput::writeConsole(pipePacket* workData){
 	std::vector<std::vector<double>> result;
 	
-	std::cout << "_________Simplicial Complex OUTPUT__________" << std::endl;
+	std::cout << "_________Persistent Homology OUTPUT__________" << std::endl;
 		
-	workData->workData.complex->outputSimplex();
+	std::cout << workData->bettiOutput << std::endl;
 	
 	return true;
 	

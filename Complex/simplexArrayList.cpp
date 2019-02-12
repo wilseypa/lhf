@@ -27,7 +27,6 @@ double simplexArrayList::getSize(){
 	//Calculate size of weights
 	for(auto row : weights)
 		size += sizeof(row);
-	std::cout << "SIZE: " << size << std::endl; //<< " : " << sizeof(weightedGraph[0][0].second)*weightedGraph[0][0].second.size() <<std::endl;
 	return size;
 }
 

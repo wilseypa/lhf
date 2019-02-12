@@ -2,6 +2,7 @@
 #include <vector>
 #include <algorithm>
 #include <typeinfo>
+#include <thread>
 #include "readInput.hpp"
 #include "argParser.hpp"
 #include "basePipe.hpp"
@@ -12,19 +13,9 @@
 using namespace std;
 
 
-void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD){
-    auto *ws = new writeOutput();
-    
-	//Start with the preprocessing function, if enabled
-	auto pre = args["preprocessor"];
-	if(pre != ""){
-		auto *preprocess = new preprocessor();
-		auto *prePipe = preprocess->newPreprocessor(pre);
-		
-		prePipe->configPreprocessor(args);
-		prePipe->runPreprocessor(*wD);
-	}
-	
+void runPipeline(std::map<std::string, std::string> args, pipePacket* wD){
+	auto *ws = new writeOutput();
+
 	// Begin processing parts of the pipeline
 	// DataInput -> A -> B -> ... -> DataOutput
 	// Parsed by "." -> i.e. A.B.C.D
@@ -60,14 +51,49 @@ void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD)
 	//Output the data using writeOutput library
 	pipe = args.find("outputFile");
 	if(pipe != args.end()){
-		//if (args["outputFile"] == "console"){
-		//	ws->writeConsole(wD);
-		//}
+		if (args["outputFile"] == "console"){
+			//ws->writeConsole(wD);
+		}
 		
 		ws->writeStats(wD->stats, args["outputFile"]);
 	}
+	
 	return;
 }
+
+
+
+void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD){
+    
+	//Start with the preprocessing function, if enabled
+	auto pre = args["preprocessor"];
+	if(pre != ""){
+		auto *preprocess = new preprocessor();
+		auto *prePipe = preprocess->newPreprocessor(pre);
+		
+		prePipe->configPreprocessor(args);
+		prePipe->runPreprocessorWrapper(*wD);
+	}
+	do{
+		if(wD->boundaries.size() > 0){
+			std::vector<std::thread> threads;
+			
+			//Spin off a pipeline for each boundary...
+			for(auto bound : wD->boundaries){
+				std::thread curThread([&]{runPipeline(args,wD);});
+				//curThread.detach();
+				threads.push_back(std::move(curThread));
+			}
+			for(int a = 0; a < threads.size(); a++){
+				threads[a].join();
+			}
+		} else {
+			runPipeline(args, wD);
+		}
+	} while (wD->boundaries.size() > 0);
+		
+	return;
+}	
 
 
 

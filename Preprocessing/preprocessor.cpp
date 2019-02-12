@@ -17,17 +17,15 @@ preprocessor::preprocessor(){
 }
 
 preprocessor* preprocessor::newPreprocessor(const std::string &procT){
-	std::cout << "Building preprocessor: " << procT << std::endl << std::endl;
+	std::cout << "Building preprocessor: " << procT << std::endl ;
 	procName= procT;
 	if(procName == "none"){
 		return new preprocessor();
 	} else if (procName == "kmeansplusplus" || procName == "kmeans++"){
 		return new kMeansPlusPlus();
-		std::cout;
 	} 
 	  else  if(procName == "streamingKmeans" || procName == "streamingkmeans"){
-	  return new streamingkMeans();
-	  std::cout;
+		return new streamingkMeans();
 	} 
 
 	return 0;
@@ -48,11 +46,12 @@ pipePacket preprocessor::runPreprocessorWrapper(pipePacket inData){
 	std::chrono::duration<double, std::milli> elapsed = endTime - startTime;
 	
 	//Output the time and memory used for this pipeline segment
-	std::cout << "Pipeline " << procName << " executed in " << (elapsed.count()/1000.0) << " seconds (physical time)" << std::endl;
+	std::cout << "\tPipeline " << procName << " executed in " << (elapsed.count()/1000.0) << " seconds (physical time)" << std::endl << std::endl;
 	
-	auto dataSize = inData.getSize();
+	/*auto dataSize = inData.getSize();
 	auto unit = "B";
 	
+	std::cout << "Test" << std::endl;
 	//Convert large datatypes (GB, MB, KB)
 	if(dataSize > 1000000000){
 		//Convert to GB
@@ -69,8 +68,8 @@ pipePacket preprocessor::runPreprocessorWrapper(pipePacket inData){
 	}
 	
 	std::cout << "\tData size: " << dataSize << " " << unit << std::endl << std::endl;
-	
-	inData.stats += procName + "," + std::to_string(elapsed.count()/1000.0) + "," + std::to_string(dataSize) + "," + unit + "\n";
+	*/
+	inData.stats += procName + "," + std::to_string(elapsed.count()/1000.0) + "\n"; // + "," + std::to_string(dataSize) + "," + unit + "\n";
 	
 	return inData;
 }

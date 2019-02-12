@@ -16,7 +16,8 @@ class pipePacket {
 		simplexBase* complex;
 	} workData;
 	
-	std::vector<std::vector<int>> boundaries;
+	std::vector<std::vector<unsigned>> boundaries;
+	std::string bettiOutput;
 	
 	double getSize();	
 };
