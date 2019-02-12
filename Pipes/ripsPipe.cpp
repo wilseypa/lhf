@@ -26,24 +26,12 @@ ripsPipe::ripsPipe(){
 
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket ripsPipe::runPipe(pipePacket inData){
-
-	std::cout << "\tTest Complex Size: " << inData.workData.complex->edges.size() << std::endl;
 	utils ut;
-	for(auto z : inData.workData.complex->edges){
-		ut.print1DVector(z);
-	}
 	
 	inData.workData.complex->expandDimensions(dim);
 		
 	std::cout << "\tComplex Size: " << inData.workData.complex->simplexCount() << std::endl;
 	std::cout << "\tComplex Mem: " << inData.workData.complex->getSize() << std::endl;
-	
-	auto a = inData.workData.complex->getEdges(0,0);
-	//std::cout << std::endl << std::endl;
-	//for(auto z : a){
-	//	std::cout << z.first << "\t";
-	//	ut.print1DVector(z.second);
-	//}
 	
 	return inData;
 }

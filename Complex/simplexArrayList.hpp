@@ -6,12 +6,9 @@
 class simplexArrayList : public simplexBase{
   private:
 	int indexCount;
-	std::vector<std::vector<std::pair<double,std::vector<unsigned>>>> weightedGraph;
   public:
 	simplexArrayList(double, std::vector<std::vector<double>>);
-	std::string stats;	
-	std::vector<std::vector<unsigned>> edges;
-	std::vector<double> weights;
+	std::string stats;
 	
 	double getSize();	
 	std::vector<std::vector<unsigned>> getEdges(int,double);

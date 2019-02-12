@@ -162,21 +162,24 @@ pipePacket bettiPipe::runPipe(pipePacket inData){
 	std::vector<float> lifeSpans[dim];
 	
 	//Retrieve
-	auto local_edges = inData.workData.complex->getAllEdges();
+	auto local_weights = inData.workData.complex->weights;
 	std::string barcodes;
 	for(int d2 = 0; d2 <= dim; d2++){
 		bettiNumbers.push_back(0);
 	}
 	
+	std::string bettiOutput[] = {"Epsilon\t\tDim\tBD\tBetti\trank\tnullity\tlRank\tlNul\n","Epsilon\t\tDim\tBD\tBetti\trank\tnullity\tlRank\tlNul\n","Epsilon\t\tDim\tBD\tBetti\trank\tnullity\tlRank\tlNul\n"};
+
+	
 	double epsilon = 0;
 	
 	//For each edge
-	for(auto edge : local_edges){
+	for(auto eps : local_weights){
 		
 		//Get the weights (increasing order)
 		//Check if we've already processed or not
-		if(epsilon != edge.first){
-			epsilon = edge.first;
+		if(epsilon != eps){
+			epsilon = eps;
 			
 			auto last_rank_nul = std::make_pair(0,0);
 			
@@ -185,7 +188,9 @@ pipePacket bettiPipe::runPipe(pipePacket inData){
 				std::vector<std::vector<unsigned>> nChain = inData.workData.complex->getEdges(d, epsilon);
 				//auto nChain = nSimplices(epsilon,d,local_edges);
 				std::vector<std::vector<unsigned>> pChain = inData.workData.complex->getEdges(d+1, epsilon);
-				int p1Count = nSimplices(epsilon,d+2,local_edges).size();
+				int p1Count = inData.workData.complex->getEdges(d+2,epsilon).size();
+				
+				std::cout << d << ", n-chains: " << nChain.size() << "\tp-chains: " << pChain.size() << std::endl;
 				
 				if(d == dim)
 					last_rank_nul.first = p1Count;
@@ -199,13 +204,20 @@ pipePacket bettiPipe::runPipe(pipePacket inData){
 				
 				if(d != dim)
 					bettis.push_back(bettiDef_t {epsilon, d, rank_nul.second - last_rank_nul.first});
-				
+				bettiOutput[d] += std::to_string(epsilon) + "\t" + std::to_string(d) + "\t" + std::to_string(d-1) + "\t" + std::to_string(rank_nul.second)/* - last_rank_nul.first)*/ + "\t" + std::to_string(rank_nul.first) + "\t" + std::to_string(rank_nul.second) + "\t" + std::to_string(last_rank_nul.first) + "\t" + std::to_string(last_rank_nul.second) + "\n";
+
 				last_rank_nul = rank_nul;
 				
 			}
 		}
 
 	}
+	
+	std::cout << "\n\n______________RESULTS_______________" << std::endl;
+	std::cout << bettiOutput[0] << std::endl << std::endl;
+	std::cout << bettiOutput[1] << std::endl << std::endl;
+	std::cout << bettiOutput[2] << std::endl;
+
 	
 	std::cout << "\n\n______________RESULTS_______________" << std::endl;
 	

@@ -11,13 +11,10 @@ class simplexBase {
 	void setDistanceMatrix(std::vector<std::vector<double>> _distMatrix);
 	simplexBase* newSimplex(const std::string &simplexT);
 	double maxEpsilon;
-	std::vector<std::vector<double>> data;
 	std::vector<std::vector<double>> distMatrix;
+	std::vector<std::vector<std::pair<double,std::vector<unsigned>>>> weightedGraph;
 	
-	//Temporary!:
-	std::vector<double> weights;
-	std::vector<std::vector<unsigned>> edges;
-	
+	std::vector<double> weights;	
 	
 	virtual double getSize();
 	virtual void insert(std::vector<double>);

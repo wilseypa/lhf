@@ -29,8 +29,11 @@ pipePacket neighGraphPipe::runPipe(pipePacket inData){
 		//insert data into the complex (SimplexArrayList, SimplexTree)
 		inData.workData.complex->insert(inData.workData.originalData[i]);
 	}
-
-	std::cout << "SimplexTree Size: " << inData.workData.complex->getSize() << std::endl;
+	
+	
+	std::cout << "0 Dim: " << inData.workData.complex->weightedGraph[0].size() << std::endl;
+	std::cout << "1 Dim: " << inData.workData.complex->weightedGraph[1].size() << std::endl;
+	
 
 	return inData;
 }

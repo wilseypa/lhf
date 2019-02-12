@@ -21,8 +21,6 @@ void simplexBase::setDistanceMatrix(std::vector<std::vector<double>> _distMatrix
 simplexBase* simplexBase::newSimplex(const std::string &simplexT){
 	simplexType = simplexT;
 	
-	std::cout << "Creating new simplex structure: " << simplexT << " : " << maxEpsilon << std::endl;
-	
 	if(simplexType == "simplexTree"){
 		return new simplexTree(maxEpsilon, distMatrix);
 	} else if (simplexType == "simplexArrayList"){	
