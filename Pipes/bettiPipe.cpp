@@ -26,9 +26,6 @@ bettiPipe::bettiPipe(){
 //Filter and return simplices of a specified dimension
 std::vector<std::vector<unsigned>> bettiPipe::nSimplices(double epsilon, unsigned n, std::vector<std::pair<double,std::vector<unsigned>>> complex){
 	std::vector<std::vector<unsigned>> ret;
-	
-	
-	
 	for(auto v : complex){
 		if(v.second.size() == n){
 			if(v.first <= epsilon)
@@ -55,23 +52,20 @@ int bettiPipe::checkFace(std::vector<unsigned> face, std::vector<unsigned> simpl
 std::pair<int,int> bettiPipe::reduceBoundaryMatrix(std::vector<std::vector<unsigned>> boundaryMatrix){
 	std::vector<std::vector<unsigned>> ret;
 	int rank = 0;
+	
 	if(boundaryMatrix.size() <= 0)
 		return std::make_pair(0,0);
 		
-	
 	//Step through each column and search for a 1 in that column
 	for(unsigned i = 0; i < boundaryMatrix[0].size(); i++){
-		bool found = false;
 		//Step through each vector
 		for(unsigned j = 0; j < boundaryMatrix.size(); j++){
 			
 			//If the vector has a 1 in the target column
 			if(boundaryMatrix[j][i] == 1){
 				rank += 1;
-				found = true;
 				
 				//Add the vector to our returned matrix
-				//Along with a vector to clear out the row
 				auto tempRow = boundaryMatrix[j];
 					
 				//Remove our vector from the boundaryMatrix and continue processing next column
@@ -81,23 +75,21 @@ std::pair<int,int> bettiPipe::reduceBoundaryMatrix(std::vector<std::vector<unsig
 				//j += 1;
 				while(j < boundaryMatrix.size()){
 					if(boundaryMatrix[j][i] == 1){
-						
-						//XOR the two rows
+						//XOR the remaining rows
 						for(unsigned d = 0; d < boundaryMatrix[0].size(); d++)
-							boundaryMatrix[j][d] = boundaryMatrix[j][d] != tempRow[d];
+							boundaryMatrix[j][d] = boundaryMatrix[j][d] ^ tempRow[d];
 					}
-							
 					j += 1;
 				}			
 				
-				for(int a = 0; a < ret.size(); a++){
+				/*for(int a = 0; a < ret.size(); a++){
 					//xor the returned rows
 					if (ret[a][i] == 1){
 						for(unsigned d = 0; d < ret[a].size(); d++)
-							ret[a][d] = (ret[a][d] != tempRow[d]);
+							ret[a][d] = (ret[a][d] ^ tempRow[d]);
 					}					
 				}
-				ret.push_back(tempRow);
+				ret.push_back(tempRow);*/
 			}
 		}
 	}
@@ -113,23 +105,20 @@ std::pair<int,int> bettiPipe::reduceBoundaryMatrix(std::vector<std::vector<unsig
 
 // Get the boundary matrix from the edges
 std::pair<int,int> bettiPipe::getRank(std::vector<std::vector<unsigned>> nChain, std::vector<std::vector<unsigned>> pChain){
-	std::vector<std::vector<unsigned>> ret;
 	std::vector<std::vector<unsigned>> boundary;	
-	
-	//Create the boundary matrix from chains
-	std::vector<unsigned> bDim;
 
 	if (nChain.size() == 0)
 		return std::make_pair(0,pChain.size());
 	
 	//Create the rows (nChain)
 	for(unsigned i = 0; i < nChain.size(); i++){
+		std::vector<unsigned> bDim;
+		
 		//Create the columns (pChain)
 		for(unsigned j = 0; j < pChain.size(); j++){
 			bDim.push_back(checkFace(nChain[i], pChain[j]));
 		}
 		boundary.push_back(bDim);
-		bDim.clear();
 	}	
 	
 	//Reduce the boundary matrix
@@ -161,6 +150,8 @@ pipePacket bettiPipe::runPipe(pipePacket inData){
 	std::vector<int> bettiNumbers;
 	std::vector<float> lifeSpans[dim];
 	
+	std::vector<std::vector<std::vector<unsigned>>> edges;
+	
 	//Retrieve
 	auto local_weights = inData.workData.complex->weights;
 	std::string barcodes;
@@ -168,26 +159,32 @@ pipePacket bettiPipe::runPipe(pipePacket inData){
 		bettiNumbers.push_back(0);
 	}
 	
+	std::string bettiOutput[] = {"Epsilon\t\tDim\tBD\tBetti\trank\tnullity\tlRank\tlNul\n","Epsilon\t\tDim\tBD\tBetti\trank\tnullity\tlRank\tlNul\n","Epsilon\t\tDim\tBD\tBetti\trank\tnullity\tlRank\tlNul\n"};
+	
 	double epsilon = 0;
 	
 	//For each edge
 	for(auto eps : local_weights){
+		//Reload the buffers with the current edges
+		edges = inData.workData.complex->getAllEdges(eps);
+		
 		
 		//Get the weights (increasing order)
 		//Check if we've already processed or not
 		if(epsilon != eps){
 			epsilon = eps;
-			
 			auto last_rank_nul = std::make_pair(0,0);
 			
 			//Iterate through each dimension to build boundary matrix
 			for(int d = dim; d >= 0; d--){
-				std::vector<std::vector<unsigned>> nChain = inData.workData.complex->getEdges(d, epsilon);
-				//auto nChain = nSimplices(epsilon,d,local_edges);
-				std::vector<std::vector<unsigned>> pChain = inData.workData.complex->getEdges(d+1, epsilon);
 				
 				//Get the reduced boundary matrix
-				auto rank_nul = getRank(nChain, pChain);
+				std::pair<int, int> rank_nul;
+				
+				if(d == 0)
+					rank_nul = getRank({}, edges[d]);
+				else
+					rank_nul = getRank(edges[d-1], edges[d]);
 							
 				if(bettiNumbers[d] != (rank_nul.second- last_rank_nul.first)){
 					bettiNumbers[d] = (rank_nul.second- last_rank_nul.first);
@@ -195,12 +192,21 @@ pipePacket bettiPipe::runPipe(pipePacket inData){
 				
 				if(d != dim)
 					bettis.push_back(bettiDef_t {epsilon, d, rank_nul.second - last_rank_nul.first});
-				
+				if(debug){
+					bettiOutput[d] += std::to_string(epsilon) + "\t" + std::to_string(d) + "\t" + std::to_string(d-1) + "\t" + std::to_string(rank_nul.second)/* - last_rank_nul.first)*/ + "\t" + std::to_string(rank_nul.first) + "\t" + std::to_string(rank_nul.second) + "\t" + std::to_string(last_rank_nul.first) + "\t" + std::to_string(last_rank_nul.second) + "\n";
+				}
 				last_rank_nul = rank_nul;
 				
 			}
 		}
 
+	}
+	
+	if(debug){
+		std::cout << "\n\n______________RESULTS_______________" << std::endl;
+		std::cout << bettiOutput[0] << std::endl << std::endl;
+		std::cout << bettiOutput[1] << std::endl << std::endl;
+		std::cout << bettiOutput[2] << std::endl;
 	}
 	
 	std::cout << "\n\n______________RESULTS_______________" << std::endl;

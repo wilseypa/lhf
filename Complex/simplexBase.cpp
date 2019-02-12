@@ -37,9 +37,9 @@ std::vector<std::vector<unsigned>> simplexBase::getEdges(int dim, double epsilon
 	return a;
 }
 
-std::vector<std::vector<unsigned>> simplexBase::getAllEdges(){
+std::vector<std::vector<std::vector<unsigned>>> simplexBase::getAllEdges(double epsilon){
 	std::cout << "No get edges function defined for: " << simplexType << std::endl;
-	std::vector<std::vector<unsigned>> a;
+	std::vector<std::vector<std::vector<unsigned>>> a;
 	return a;
 }
 

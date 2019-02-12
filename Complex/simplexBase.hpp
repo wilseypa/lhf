@@ -21,7 +21,7 @@ class simplexBase {
 	virtual int simplexCount();
 	virtual int vertexCount();
 	virtual std::vector<std::vector<unsigned>> getEdges(int,double);
-	virtual std::vector<std::vector<unsigned>> getAllEdges();
+	virtual std::vector<std::vector<std::vector<unsigned>>> getAllEdges(double);
 	virtual void outputSimplex();
 	virtual void expandDimensions(int);
 };
