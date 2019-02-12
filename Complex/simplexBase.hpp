@@ -12,8 +12,7 @@ class simplexBase {
 	simplexBase* newSimplex(const std::string &simplexT);
 	double maxEpsilon;
 	std::vector<std::vector<double>> distMatrix;
-	std::vector<std::vector<std::pair<double,std::vector<unsigned>>>> weightedGraph;
-	
+	std::vector<std::vector<std::vector<unsigned>>> weightedGraph;
 	std::vector<double> weights;	
 	
 	virtual double getSize();
@@ -22,7 +21,7 @@ class simplexBase {
 	virtual int simplexCount();
 	virtual int vertexCount();
 	virtual std::vector<std::vector<unsigned>> getEdges(int,double);
-	virtual std::vector<std::pair<double,std::vector<unsigned>>> getAllEdges();
+	virtual std::vector<std::vector<unsigned>> getAllEdges();
 	virtual void outputSimplex();
 	virtual void expandDimensions(int);
 };

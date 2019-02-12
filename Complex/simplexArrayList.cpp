@@ -12,9 +12,9 @@ simplexArrayList::simplexArrayList(double maxE, std::vector<std::vector<double>>
 	indexCount = 0;
 }
 
-bool sortinrev(const std::pair<double,std::vector<unsigned>> &a, const std::pair<double,std::vector<unsigned>> &b) 
+bool sortinrev(const std::vector<unsigned> &a, const std::vector<unsigned> &b) 
 { 
-	return (a.first > b.first); 
+	return (a > b); 
 } 
 
 double simplexArrayList::getSize(){
@@ -26,8 +26,7 @@ double simplexArrayList::getSize(){
 	for(int i = 0; i < weightedGraph.size(); i++){
 		
 		//Size is the ([# weighted graph entries] x [std::pair size]) + ([dimension of graph] * [vector entry size]) 
-		size += (weightedGraph[i].size() * sizeof(std::make_pair(0.0,weightedGraph[i][0].second))) + \
-					(i * sizeof(unsigned));
+		size += (weightedGraph[i].size() * sizeof(weightedGraph[i][0]));
 	}
 	
 	//Calculate size of weights
@@ -49,19 +48,15 @@ void simplexArrayList::insert(std::vector<double> vector){
 	//		points 1 and 5 with a weight of 1.82
 	//
 	//
-	std::pair<double,std::vector<unsigned>> tempGraph;
+	std::vector<unsigned> tempGraph;
 	
 	if(vector.empty())
 		return;
 	
 	//If this is the first point inserted...
 	if(weightedGraph.size() == 0){	
-		std::vector<unsigned> blank = {0};
-		tempGraph = std::make_pair(0.0, blank);
-		std::vector<std::pair<double,std::vector<unsigned>>> pair;
-		pair.push_back(tempGraph);
-		weightedGraph.push_back(pair);
-		
+		std::vector<std::vector<unsigned>> blank = {{0}};
+		weightedGraph.push_back(blank);
 		return;
 	}
 	
@@ -72,7 +67,7 @@ void simplexArrayList::insert(std::vector<double> vector){
 		
 		auto i = weightedGraph[0].size();
 		std::vector<unsigned> blank = {i};
-		weightedGraph[0].push_back(std::make_pair(0.0,blank));
+		weightedGraph[0].push_back(blank);
 		
 		//Iterate through each existing to compare to new insertion
 		for(unsigned j = 0; j < weightedGraph[0].size(); j++){
@@ -87,20 +82,12 @@ void simplexArrayList::insert(std::vector<double> vector){
 				std::vector<unsigned> edge = {j,i};
 				
 				if(weightedGraph.size() == 1){
-					tempGraph = std::make_pair(dist, edge);
-					std::vector<std::pair<double,std::vector<unsigned>>> pair;
-					pair.push_back(tempGraph);
-					weightedGraph.push_back(pair);
-					weights.push_back(dist);
+					std::vector<std::vector<unsigned>> blank2 = {edge};
+					weightedGraph.push_back(blank2);
+				} else {
+					if(std::find(weightedGraph[1].begin(), weightedGraph[1].end(), edge) == weightedGraph[1].end())
+						weightedGraph[1].push_back(edge);
 				}
-				
-				bool testExist = false;
-				for(auto z : weightedGraph[1]){
-					if(z.second == edge)
-						testExist=true;
-					}
-				if(!testExist)
-					weightedGraph[1].push_back(std::make_pair(dist,edge));
 				
 				if(std::find(weights.begin(), weights.end(), dist) == weights.end())
 					weights.push_back(dist);
@@ -116,30 +103,35 @@ void simplexArrayList::insert(std::vector<double> vector){
 std::vector<std::vector<unsigned>> simplexArrayList::getEdges(int dim, double epsilon){
 	std::vector<std::vector<unsigned>> ret;
 	utils ut;
-	std::cout << "\t_______" << std::endl;
-	std::cout << "\tEpsilon: " << epsilon << "\tdim: " << dim << std::endl;
-	
 	if(dim - 1 < 0)
 		return ret;
 	if(weightedGraph.size() < dim)
-		return ret;
-	
+		return ret;	
+
 	for(auto a : weightedGraph[dim-1]){
-		if(a.first <= epsilon){
-			std::cout << "\t";
-			ret.push_back(a.second);
-			ut.print1DVector(a.second);
+		
+		bool isTrue = true;
+		for(int i = 0; i < a.size(); i++){
+			for(int j = i+1; j < a.size(); j++){
+				if(distMatrix[a[i]][a[j]] > epsilon){
+					isTrue =false;
+					//weightedGraph[dim-1].erase(remove(weightedGraph[dim-1].begin(), weightedGraph[dim-1].end(), a),weightedGraph[dim-1].end());
+					break;
+				}
+			}
+		}
+		
+		if(isTrue){
+			ret.push_back(a);
 		}
 	}
-	std::cout << "\tRetSize: " << ret.size() << "\tWG Size: " << weightedGraph[dim-1].size() << std::endl;
-	
 	
 	return ret;
 }
 
 // Wrapper to expose edges
-std::vector<std::pair<double,std::vector<unsigned>>> simplexArrayList::getAllEdges(){
-	std::vector<std::pair<double, std::vector<unsigned>>> ret;
+std::vector<std::vector<unsigned>> simplexArrayList::getAllEdges(){
+	std::vector<std::vector<unsigned>> ret;
 	
 	for(auto a : weightedGraph){
 		for(auto b : a)
@@ -185,7 +177,7 @@ void simplexArrayList::expandDimensions(int dim){
 
 	std::vector<unsigned> tempVect;
 	//Store the complex built from the VR expansion
-	std::vector<std::pair<double,std::vector<unsigned>>> weightGraph = weightedGraph[1];
+	std::vector<std::vector<unsigned>> weightGraph = weightedGraph[1];
 	
 	
 	//Iterate up to max dimension of simplex, starting at dim 2 (edges)
@@ -194,42 +186,24 @@ void simplexArrayList::expandDimensions(int dim){
 			weightGraph = weightedGraph[i];
 		
 		//Store d-dimensional simplices
-		std::vector<std::pair<double,std::vector<unsigned>>> test;
+		std::vector<std::vector<unsigned>> test;
 		
 		//Iterate through each element in the previous dimension's edges
 		for(unsigned j = 0; j < weightGraph.size(); j++){
 						
 			//First search for intersections of the current element
 			for(unsigned t = j+1; t < weightGraph.size(); t++){
-				auto simp = ut.intersect(weightGraph[j].second, weightGraph[t].second,true);
+				auto simp = ut.intersect(weightGraph[j], weightGraph[t],true);
 				
-
 				//This point intersects; potential candidate for a higher-level simplice
 				if (simp.first.size() >0){
-					//Get the max weight of simplex
-					double weight = 0;
-					if(weightGraph[j].first > weightGraph[t].first)
-						weight = weightGraph[j].first;
-					else
-						weight = weightGraph[t].first;
 					
 					for(int k = t+1; k < weightGraph.size(); k++){
 						
-						if(weightGraph[k].second == simp.first){
-							
-							if(weightGraph[k].first > weight)
-								weight = weightGraph[k].first;
+						if(weightGraph[k] == simp.first){
 								
-							bool testExist = false;
-							for(auto z : test){
-								if(z.second == simp.second)
-									testExist=true;
-							}
-							if(!testExist)
-								test.push_back(std::make_pair(weight,simp.second));
-								
-							if(std::find(weights.begin(), weights.end(), weight) == weights.end())
-								weights.push_back(weight);
+							if(std::find(test.begin(), test.end(), simp.second) == test.end())
+								test.push_back(simp.second);
 						}
 					}
 				}
@@ -243,8 +217,7 @@ void simplexArrayList::expandDimensions(int dim){
 		for (auto n : test){
 			
 			if(weightedGraph.size() == i){
-				std::vector<std::pair<double,std::vector<unsigned>>> pair;
-				pair.push_back(n);
+				std::vector<std::vector<unsigned>> pair = {n};
 				weightedGraph.push_back(pair);
 			}
 			else
@@ -258,19 +231,10 @@ void simplexArrayList::expandDimensions(int dim){
 	//Sort the simplices by weight
 	for(auto a : weightedGraph){
 		std::sort(a.begin(), a.end(), sortinrev);
-		std::cout << "************" << std::endl;
-		for (auto z : a){
-			ut.print1DVector(z.second);
-		}
 	}
 	
 	weights.push_back(0.0);
 	std::sort(weights.begin(), weights.end(), std::greater<>());
-	
-	for(auto a : weights){
-		std::cout << a << std::endl;
-	}
-	std::cout << std::endl;
 	
 	return;
 }

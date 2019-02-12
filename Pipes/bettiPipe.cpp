@@ -52,7 +52,7 @@ int bettiPipe::checkFace(std::vector<unsigned> face, std::vector<unsigned> simpl
 }
 
 // Reduce the binary boundary matrix
-std::pair<int,int> bettiPipe::reduceBoundaryMatrix(std::vector<std::vector<unsigned>> boundaryMatrix, int nChainSize){
+std::pair<int,int> bettiPipe::reduceBoundaryMatrix(std::vector<std::vector<unsigned>> boundaryMatrix){
 	std::vector<std::vector<unsigned>> ret;
 	int rank = 0;
 	if(boundaryMatrix.size() <= 0)
@@ -112,7 +112,7 @@ std::pair<int,int> bettiPipe::reduceBoundaryMatrix(std::vector<std::vector<unsig
 }
 
 // Get the boundary matrix from the edges
-std::pair<int,int> bettiPipe::getRank(std::vector<std::vector<unsigned>> nChain, std::vector<std::vector<unsigned>> pChain, int nCount){
+std::pair<int,int> bettiPipe::getRank(std::vector<std::vector<unsigned>> nChain, std::vector<std::vector<unsigned>> pChain){
 	std::vector<std::vector<unsigned>> ret;
 	std::vector<std::vector<unsigned>> boundary;	
 	
@@ -133,7 +133,7 @@ std::pair<int,int> bettiPipe::getRank(std::vector<std::vector<unsigned>> nChain,
 	}	
 	
 	//Reduce the boundary matrix
-	return reduceBoundaryMatrix(boundary, nCount);
+	return reduceBoundaryMatrix(boundary);
 }
 
 
@@ -168,9 +168,6 @@ pipePacket bettiPipe::runPipe(pipePacket inData){
 		bettiNumbers.push_back(0);
 	}
 	
-	std::string bettiOutput[] = {"Epsilon\t\tDim\tBD\tBetti\trank\tnullity\tlRank\tlNul\n","Epsilon\t\tDim\tBD\tBetti\trank\tnullity\tlRank\tlNul\n","Epsilon\t\tDim\tBD\tBetti\trank\tnullity\tlRank\tlNul\n"};
-
-	
 	double epsilon = 0;
 	
 	//For each edge
@@ -188,15 +185,9 @@ pipePacket bettiPipe::runPipe(pipePacket inData){
 				std::vector<std::vector<unsigned>> nChain = inData.workData.complex->getEdges(d, epsilon);
 				//auto nChain = nSimplices(epsilon,d,local_edges);
 				std::vector<std::vector<unsigned>> pChain = inData.workData.complex->getEdges(d+1, epsilon);
-				int p1Count = inData.workData.complex->getEdges(d+2,epsilon).size();
-				
-				std::cout << d << ", n-chains: " << nChain.size() << "\tp-chains: " << pChain.size() << std::endl;
-				
-				if(d == dim)
-					last_rank_nul.first = p1Count;
 				
 				//Get the reduced boundary matrix
-				auto rank_nul = getRank(nChain, pChain, p1Count);
+				auto rank_nul = getRank(nChain, pChain);
 							
 				if(bettiNumbers[d] != (rank_nul.second- last_rank_nul.first)){
 					bettiNumbers[d] = (rank_nul.second- last_rank_nul.first);
@@ -204,20 +195,13 @@ pipePacket bettiPipe::runPipe(pipePacket inData){
 				
 				if(d != dim)
 					bettis.push_back(bettiDef_t {epsilon, d, rank_nul.second - last_rank_nul.first});
-				bettiOutput[d] += std::to_string(epsilon) + "\t" + std::to_string(d) + "\t" + std::to_string(d-1) + "\t" + std::to_string(rank_nul.second)/* - last_rank_nul.first)*/ + "\t" + std::to_string(rank_nul.first) + "\t" + std::to_string(rank_nul.second) + "\t" + std::to_string(last_rank_nul.first) + "\t" + std::to_string(last_rank_nul.second) + "\n";
-
+				
 				last_rank_nul = rank_nul;
 				
 			}
 		}
 
 	}
-	
-	std::cout << "\n\n______________RESULTS_______________" << std::endl;
-	std::cout << bettiOutput[0] << std::endl << std::endl;
-	std::cout << bettiOutput[1] << std::endl << std::endl;
-	std::cout << bettiOutput[2] << std::endl;
-
 	
 	std::cout << "\n\n______________RESULTS_______________" << std::endl;
 	
