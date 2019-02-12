@@ -183,6 +183,8 @@ int simplexArrayList::simplexCount(){
 
 // Output the total vertices stored in the simplical complex
 int simplexArrayList::vertexCount(){
+	if(weightedGraph.size() == 0)
+		return 0;
 	return weightedGraph[0].size();
 }
 

@@ -18,7 +18,7 @@
 
 // basePipe constructor
 distMatrixPipe::distMatrixPipe(){
-
+	pipeType = "DistMatrix";
 	return;
 }
 

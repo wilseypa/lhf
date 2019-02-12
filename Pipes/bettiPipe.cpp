@@ -233,7 +233,7 @@ pipePacket bettiPipe::runPipe(pipePacket inData){
 			
 			if(j == 0){
 				while(lastBetti.betti > 0){
-					output += std::to_string(i) + "," + std::to_string(lastBetti.epsilon) + "," + std::to_string(2) + "\n";
+					output += std::to_string(i) + "," + std::to_string(lastBetti.epsilon) + "," + std::to_string(maxEpsilon) + "\n";
 					lastBetti.betti--;
 				}
 			}
@@ -257,6 +257,11 @@ bool bettiPipe::configPipe(std::map<std::string, std::string> configMap){
 	pipe = configMap.find("debug");
 	if(pipe != configMap.end())
 		debug = std::atoi(configMap["debug"].c_str());
+	else return false;
+	
+	pipe = configMap.find("epsilon");
+	if(pipe != configMap.end())
+		maxEpsilon = std::atof(configMap["epsilon"].c_str());
 	else return false;
 	
 	return true;

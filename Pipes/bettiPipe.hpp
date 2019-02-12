@@ -9,6 +9,7 @@
 class bettiPipe : public basePipe {
   private:
 	utils ut;
+	float maxEpsilon;
   public:
 	int dim;
     bettiPipe();

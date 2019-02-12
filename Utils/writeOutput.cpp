@@ -23,7 +23,7 @@ writeOutput::writeOutput(){
 // writeStat -> write the pipeline statistics to a csv formatted file
 bool writeOutput::writeStats(std::string stats, std::string filename){
 	std::ofstream file(filename + "_stats.csv");
-	file << "PipeName,PhysExecutionTime,MemorySize,MemoryUnits\n";
+	file << "PipeName,PhysExecutionTime,MemorySize,MemoryUnits,VertexCount,SimplexCount\n";
 	file << stats;
 	return true;	
 }
