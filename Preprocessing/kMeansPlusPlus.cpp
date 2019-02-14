@@ -108,10 +108,10 @@ pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
     }
 
 
-/*  for(unsigned i = 0; i < labels.size(); i++){
+  /*for(unsigned i = 0; i < labels.size(); i++){
             std::cout << labels[i] << ",";
     }
-    std::cout << "\n";  */
+    std::cout << "\n";*/  
 
     
     //assigning points to a cluster based on their label
@@ -138,52 +138,26 @@ pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
 
     //counting points in each cluster so mean can be computed
     std::vector<double> counts(num_clusters, 0);
+    std::vector<double> summed_clusters; 
   
     for(size_t point=0; point<inData.workData.originalData.size(); point++){   
+        summed_clusters.push_back(0);
         for(size_t j=0; j<num_clusters; j++){   
             if(labels[point] == j){
                 counts[j] += 1;
+                summed_clusters[point] += ut.vectors_distance(inData.workData.originalData[point], centroids[labels[point]]);
+                
             }   
         }
     } 
-
-     for(unsigned j = 0; j < counts.size(); j++){
-            std::cout << counts[j] << '\t';
-        } 
+	std::cout << std::endl;
+	for(unsigned j = 0; j < counts.size(); j++){
+		std::cout << counts[j] << '\t';
+            std::cout << summed_clusters[j] << "\trAvg = " << summed_clusters[j]/counts[j] << std::endl;
+	} 
 
 
     //summing points in each cluster so mean can be computed... not working yet
-
-   std::vector<double> summed_clusters(num_clusters); 
- 
-    
- /*   for(int k=0; k<num_clusters-1; k++){
-    for(int i = 0; i<assignments.size(); i++){
-            for(int j = 0; j<assignments[i].size(); j++){
-           if(labels[i] == k){
-            tempSum += assignments[i][j];
-            summed_clusters.push_back(assignments[i][j]);
-          auto  tempSum = std::accumulate(assignments[j].begin(), assignments[j].end(), 0);
-             std::cout<<tempSum<<"tempSum";
-            }
-               
-           
-           summed_clusters.push_back(tempSum);
-          }
-        }
-    }  
-    
-        std::cout<< summed_clusters.size()<<"size";
-    for(unsigned j = 0; j < summed_clusters.size(); j++){
-            std::cout<<summed_clusters[j]<< "";
-       }  */
-
-    // //dividing sums by counts to recompute centroids 
-   /*  std::vector<double> new_centroids(num_clusters, 0);
-     for(size_t i = 0; i<num_clusters; i++){
-         new_centroids[i] = (summed_clusters[i]/counts[i]); //recomputing new centroids
-         centroids[i] = new_centroids[i];  //replace original centroids with new centroids
-     }  */
 
     
     std::cout << "Clustered data..." << std::endl;
@@ -205,9 +179,5 @@ bool kMeansPlusPlus::configPreprocessor(std::map<std::string, std::string> confi
 		num_iterations = std::atoi(configMap["iterations"].c_str());
 	else return false;
 
-        
-
-    
-    return true;
+	return true;
 }
-//assigning points to nearest cluster
