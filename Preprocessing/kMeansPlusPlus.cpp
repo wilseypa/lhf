@@ -80,11 +80,12 @@ pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
     
         for(unsigned i = 0; i < centroids.size(); i++){
         for(unsigned j = 0; j < centroids[j].size(); j++){
+	    std::cout << i + 1 << "->";
             std::cout << centroids[i][j]<< '\t';
 
         }
         std::cout << std::endl;
-        std::cout << i + 1 << "->";
+        
         }
         //labeling points so they can be assigned to a cluster
     //  This will eventually occur in parallel, should probably be removed (eventually)
