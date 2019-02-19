@@ -12,15 +12,15 @@ class simplexTree : public simplexBase {
   
 	struct treeNode{
 		int index;
-		double weight;
 		treeNode* child = nullptr;
-		treeNode* next = nullptr;
+		treeNode* sibling = nullptr;
 		treeNode* parent = nullptr;
 	};
 			
+	std::vector<treeNode*> dimensions;		
+	
 	int indexCounter;
 	treeNode* head;
-	treeNode* tail;
 	int nodeCount;
   
   public:
