@@ -6,6 +6,7 @@
 
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <cmath>
 #include <iterator>
@@ -242,6 +243,18 @@ pipePacket bettiPipe::runPipe(pipePacket inData){
 	inData.bettiOutput = output;
 	
 	return inData;
+}
+
+
+// outputData -> used for tracking each stage of the pipeline's data output without runtime
+void bettiPipe::outputData(pipePacket inData){
+	std::ofstream file;
+	file.open("output/" + pipeType + "_bettis_output.csv");
+	
+	file << inData.bettiOutput;
+	
+	file.close();
+	return;
 }
 
 

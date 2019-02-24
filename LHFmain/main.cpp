@@ -71,8 +71,11 @@ void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD)
 		auto *preprocess = new preprocessor();
 		auto *prePipe = preprocess->newPreprocessor(pre);
 		
-		prePipe->configPreprocessor(args);
-		prePipe->runPreprocessorWrapper(*wD);
+		if(prePipe != 0 && prePipe->configPreprocessor(args)){
+			*wD = prePipe->runPreprocessorWrapper(*wD);
+		} else {
+			cout << "Failed to configure pipeline: " << args["pipeline"] << endl;
+		}
 	}
 	do{
 		if(wD->boundaries.size() > 0){

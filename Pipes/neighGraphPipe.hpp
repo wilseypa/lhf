@@ -9,7 +9,8 @@ class neighGraphPipe : public basePipe {
 	double epsilon;
   public:
     neighGraphPipe();
-    pipePacket runPipe(pipePacket inData);
-    bool configPipe(std::map<std::string, std::string> configMap);
+    pipePacket runPipe(pipePacket);
+	void outputData(pipePacket);
+    bool configPipe(std::map<std::string, std::string>);
 };
 

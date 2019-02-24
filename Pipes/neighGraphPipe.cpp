@@ -6,6 +6,7 @@
 
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <iterator>
 #include <vector>
 #include <functional>
@@ -50,3 +51,19 @@ bool neighGraphPipe::configPipe(std::map<std::string, std::string> configMap){
 	return true;
 }
 
+
+// outputData -> used for tracking each stage of the pipeline's data output without runtime
+void neighGraphPipe::outputData(pipePacket inData){
+	std::ofstream file;
+	file.open("output/" + pipeType + "_output.csv");
+	
+	for(auto a : inData.workData.complex->weightedGraph[1]){
+		for(auto d : a){
+			file << d << ",";
+		}
+		file << "\n";
+	}
+	
+	file.close();
+	return;
+}

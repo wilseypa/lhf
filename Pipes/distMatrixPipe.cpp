@@ -6,6 +6,7 @@
 
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <cmath>
 #include <iterator>
@@ -44,6 +45,7 @@ pipePacket distMatrixPipe::runPipe(pipePacket inData){
 	
 	inData.workData.complex->setDistanceMatrix(distMatrix);
 	
+	std::cout << "\tDist Matrix Size: " << distMatrix.size() << " x " << distMatrix.size() << std::endl;
 	return inData;
 }
 
@@ -56,5 +58,21 @@ bool distMatrixPipe::configPipe(std::map<std::string, std::string> configMap){
 	else return false;
 	
 	return true;
+}
+
+// outputData -> used for tracking each stage of the pipeline's data output without runtime
+void distMatrixPipe::outputData(pipePacket inData){
+	std::ofstream file;
+	file.open("output/" + pipeType + "_output.csv");
+	
+	for(auto a : inData.workData.complex->distMatrix){
+		for(auto d : a){
+			file << d << ",";
+		}
+		file << "\n";
+	}
+	
+	file.close();
+	return;
 }
 

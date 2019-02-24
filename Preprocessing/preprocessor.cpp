@@ -80,7 +80,7 @@ pipePacket preprocessor::runPreprocessorWrapper(pipePacket inData){
 
 void preprocessor::outputData(std::vector<unsigned> data){
 	std::ofstream file;
-	file.open(procName + "_label_output.csv");
+	file.open("output/" + procName + "_label_output.csv");
 	
 	for (auto a : data){
 		file << std::to_string(a) << "\n";
@@ -93,7 +93,7 @@ void preprocessor::outputData(std::vector<unsigned> data){
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
 void preprocessor::outputData(std::vector<std::vector<double>> data){
 	std::ofstream file;
-	file.open(procName + "_centroid_output.csv");
+	file.open("output/" + procName + "_centroid_output.csv");
 	
 	for (auto a : data){
 		for (auto d : a){

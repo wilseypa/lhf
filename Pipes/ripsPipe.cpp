@@ -6,6 +6,7 @@
 
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <cmath>
 #include <iterator>
@@ -19,7 +20,7 @@
 
 // basePipe constructor
 ripsPipe::ripsPipe(){
-	pipeType = "Rips (inductive)";
+	pipeType = "Rips_Inductive";
 	return;
 }
 
@@ -48,5 +49,24 @@ bool ripsPipe::configPipe(std::map<std::string, std::string> configMap){
 	
 	
 	return true;
+}
+
+
+// outputData -> used for tracking each stage of the pipeline's data output without runtime
+void ripsPipe::outputData(pipePacket inData){
+	std::ofstream file;
+	file.open("output/" + pipeType + "_output.csv");
+	
+	for (int i = 0; i < inData.workData.complex->weightedGraph.size(); i++){
+		for(auto a : inData.workData.complex->weightedGraph[i]){
+			for(auto d : a){
+				file << d << ",";
+			}
+			file << "\n";
+		}
+	}
+	
+	file.close();
+	return;
 }
 

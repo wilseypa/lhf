@@ -19,5 +19,6 @@ class bettiPipe : public basePipe {
 	int checkFace(std::vector<unsigned> face, std::vector<unsigned>);
 	std::pair<int,int> reduceBoundaryMatrix(std::vector<std::vector<unsigned>>);
 	std::pair<int,int> getRank(std::vector<std::vector<unsigned>>, std::vector<std::vector<unsigned>>);
+	void outputData(pipePacket);
 };
 

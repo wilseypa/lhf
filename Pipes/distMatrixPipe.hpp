@@ -10,5 +10,6 @@ class distMatrixPipe : public basePipe {
     distMatrixPipe();
     pipePacket runPipe(pipePacket inData);
     bool configPipe(std::map<std::string, std::string> configMap);
+	void outputData(pipePacket);
 };
 

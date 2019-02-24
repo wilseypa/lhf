@@ -81,17 +81,20 @@ pipePacket basePipe::runPipeWrapper(pipePacket inData){
 	
 	inData.stats += pipeType + "," + std::to_string(elapsed.count()/1000.0) + "," + std::to_string(dataSize) + "," + unit + "," + std::to_string(inData.workData.complex->vertexCount()) + "," + std::to_string(inData.workData.complex->simplexCount()) + "\n";
 	
-	outputData(inData.workData.originalData);
+	if(debug)
+		outputData(inData);
 	
 	return inData;
 }
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-void basePipe::outputData(std::vector<std::vector<double>> data){
-	std::ofstream file;
-	file.open(pipeType + "_output.csv");
+void basePipe::outputData(pipePacket inData){
+	std::cout << "No output function defined for: " << pipeType << std::endl;
 	
-	for (auto a : data){
+	std::ofstream file;
+	file.open("output/" + pipeType + "_output.csv");
+	
+	for (auto a : inData.workData.originalData){
 		for (auto d : a){
 			file << std::to_string(d) << ",";
 		}
@@ -116,6 +119,11 @@ pipePacket basePipe::runPipe(pipePacket inData){
 bool basePipe::configPipe(std::map<std::string, std::string> configMap){
 	
 	std::cout << "No configure function defined for: " << pipeType << std::endl;
+
+	auto pipe = configMap.find("debug");
+	if(pipe != configMap.end())
+		debug = std::atoi(configMap["debug"].c_str());
+	else return false;
 	
 	return true;
 }

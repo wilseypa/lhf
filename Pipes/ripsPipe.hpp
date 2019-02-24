@@ -9,7 +9,8 @@ class ripsPipe : public basePipe {
   public:
 	int dim;
     ripsPipe();
-    pipePacket runPipe(pipePacket inData);
-    bool configPipe(std::map<std::string, std::string> configMap);
+    pipePacket runPipe(pipePacket);
+    bool configPipe(std::map<std::string, std::string>);
+	void outputData(pipePacket);
 };
 
