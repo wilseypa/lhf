@@ -155,6 +155,7 @@ void simplexTree::insert(std::vector<double>) {
 			do{
 				if(distMatrix[parentNode->index][indexCounter] > maxEpsilon){
 					ins = false;
+					std::cout << "weight > maxE" << std::endl;
 					break;
 				}	
 				parentNode = parentNode->parent;
@@ -168,11 +169,13 @@ void simplexTree::insert(std::vector<double>) {
 				insNode->parent = curNode;
 				insNode->index = indexCounter;
 				
+				std::cout << "d" << std::endl;
 				//If no nodes currently exist at the list level
 				if(i == dimensions.size() - 1){
 					dimensions.push_back(insNode);
 					curNode->child = insNode;				
 				} else if(curNode->child == nullptr){
+					std::cout << "e" << std::endl;
 					//Current node has no children
 					curNode->child = insNode;
 					
@@ -181,10 +184,12 @@ void simplexTree::insert(std::vector<double>) {
 					if(prevNode != nullptr){
 						
 						prevNode = prevNode->child;
-						std::cout << "g" << std::endl;
-						while((prevNode = prevNode->sibling) != nullptr);
+						std::cout << "g2" << std::endl;
+						while(prevNode->sibling != nullptr && (prevNode = prevNode->sibling) != nullptr){
+							//std::cout << prevNode << "\t";
+						}
 					}
-					std::cout << "g" << std::endl;
+					std::cout << "g1" << std::endl;
 					prevNode->sibling = insNode;
 					
 					//Add the next subnode
@@ -194,13 +199,11 @@ void simplexTree::insert(std::vector<double>) {
 				} else {
 					treeNode* temp = curNode->child;
 					treeNode* temp_prev = temp;
-					while((temp_prev = temp) && temp->sibling->parent == curNode);
+					while( temp->sibling != nullptr && (temp_prev = temp)  &&  (temp = temp->sibling) && temp->sibling->parent == curNode);
+					std::cout << "e2" << std::endl;
 					temp_prev->sibling = insNode;
 					insNode->sibling = temp;
-					
 				}
-				
-				
 			}			
 			
 			prevNode = curNode;

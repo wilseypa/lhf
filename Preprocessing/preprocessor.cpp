@@ -7,6 +7,7 @@
 #include <chrono>
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include "preprocessor.hpp"
 #include "kMeansPlusPlus.hpp"
@@ -71,9 +72,40 @@ pipePacket preprocessor::runPreprocessorWrapper(pipePacket inData){
 	*/
 	inData.stats += procName + "," + std::to_string(elapsed.count()/1000.0) + "\n"; // + "," + std::to_string(dataSize) + "," + unit + "\n";
 	
+	outputData(inData.workData.originalData);
+	outputData(inData.workData.originalLabels);
+	
 	return inData;
 }
 
+void preprocessor::outputData(std::vector<unsigned> data){
+	std::ofstream file;
+	file.open(procName + "_label_output.csv");
+	
+	for (auto a : data){
+		file << std::to_string(a) << "\n";
+	}
+	file.close();
+	return;
+}
+	
+
+// outputData -> used for tracking each stage of the pipeline's data output without runtime
+void preprocessor::outputData(std::vector<std::vector<double>> data){
+	std::ofstream file;
+	file.open(procName + "_centroid_output.csv");
+	
+	for (auto a : data){
+		for (auto d : a){
+			file << std::to_string(d) << ",";
+		}
+		file << "\n";
+	}
+	
+	file.close();
+	return;
+}
+	
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket preprocessor::runPreprocessor(pipePacket inData){
 	

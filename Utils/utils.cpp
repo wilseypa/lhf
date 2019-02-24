@@ -30,7 +30,14 @@ void utils::print1DSet(const auto& a){
 		}
 		std::cout << "\t";
 }
-	
+
+void utils::print1DVector(const std::vector<double>& a){
+	for(unsigned i = 0; i < a.size(); i++){
+			std::cout << a[i] << ",";
+	}
+	std::cout << "\n";
+	return;
+}
 
 void utils::print1DVector(const std::vector<unsigned>& a){
 	for(unsigned i = 0; i < a.size(); i++){
@@ -40,9 +47,17 @@ void utils::print1DVector(const std::vector<unsigned>& a){
 	return;
 }
 
+std::vector<double> utils::feature_distance(std::vector<double>* a, std::vector<double>* b){
+	std::vector<double> ret;
+	
+	return ret;
+}
 
-double utils::vectors_distance(const std::vector<double>& a, const std::vector<double>& b)
-{		
+double utils::vectors_distance(const double& a, const double& b){
+		return roundf(pow((a-b),2) * 1000) / 1000;
+}
+
+double utils::vectors_distance(const std::vector<double>& a, const std::vector<double>& b){		
 		std::vector<double> temp;
 		
 		if(b.size() == 0)

@@ -12,6 +12,7 @@ class basePipe {
     basePipe();
     basePipe* newPipe(const std::string&);
     pipePacket runPipeWrapper(pipePacket inData);
+	virtual void outputData(std::vector<std::vector<double>>);
     virtual pipePacket runPipe(pipePacket inData);
     virtual bool configPipe(std::map<std::string, std::string> configMap);
 };

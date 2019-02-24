@@ -11,12 +11,14 @@
 #include <string>
 #include <numeric>
 #include <iostream>
+#include <functional> 
 #include <vector>
 #include "kMeansPlusPlus.hpp"
 #include "utils.hpp"
 
 // basePipe constructor
 kMeansPlusPlus::kMeansPlusPlus(){
+	procName = "k-means++";
     return;
 }
 //taking in preprocessor type
@@ -57,6 +59,7 @@ pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
 	//		-> in order to maximize the distance/difference between centroids
      for(unsigned k = 0; k<num_clusters-1; k++){ //adding means 2 -> k-1 to centroids based on distance 
         int index_next = distribution(gen);
+        bool picked = false;
         std::vector<double>  center_next = inData.workData.originalData[index_next];
             for(unsigned j=0; j<inData.workData.originalData.size()-1; j++) {
                 auto dist_next = ut.vectors_distance(inData.workData.originalData[j], center_next);
@@ -67,10 +70,21 @@ pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
                 
                 if(valid_center && (std::find(tempCentroids.begin(), tempCentroids.end(), inData.workData.originalData[index_next]) == tempCentroids.end())){
                     tempCentroids.push_back(inData.workData.originalData[index_next]);
+                    picked = true;
+                    break;
                 }
             
             }
     }       
+    
+    int i = 0;
+    while(tempCentroids.size() < num_clusters){
+		if(std::find(tempCentroids.begin(), tempCentroids.end(), inData.workData.originalData[i]) == tempCentroids.end()){
+			tempCentroids.push_back(inData.workData.originalData[i]);
+		}
+		i++;
+	}
+    
     
     //Now, we need to iterate over the centroids and classify each point
     //	Compute the new centroid as the geometric mean of the classified points
@@ -79,151 +93,71 @@ pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
     //		Convergence on # iterations, or a minimum movement of centroids (< .01)
     // OUTPUT: Final centroids, labeled data, sum of vectors in a label, count of points in label
     
-    std::vector<double> counts(num_clusters, 0);
-    std::vector<double> summed_clusters(num_clusters, 0); 
+    //Need to store: 
+    //	Counts, the number of clusters in each classification
+    //	summedClusters, the total cluster distance (for r_max and r_avg)
+    //	summedCentroidVectors, for the geometric sum of the centroid
+    //	lastCentroids, to track the change in cluster WCSSE
+    std::vector<unsigned> lastLabels;
     
+    //Iterate until we reach max iderations or no change in the classification
 	for (int z = 0; z < num_iterations; z++){
-		int minDistanceLabel = 0;
-		double minDist = std::numeric_limits<double>::max();
-		for (int c = 0; c < tempCentroids.size(); c++){
-			int minDistanceLabel = 0;
+		
+		std::vector<double> summedClusters(num_clusters, 0); 
+		std::vector<std::vector<double>> summedCentroidVectors(num_clusters, std::vector<double>(inData.workData.originalData[0].size(), 0));
+		std::vector<double> counts(num_clusters, 0);
+		std::vector<unsigned> curLabels;
+		
+		//For each point, classify it to a centroid
+		for (unsigned j = 0; j < inData.workData.originalData.size() - 1; j++){
+			double minDist = std::numeric_limits<double>::max();
+			unsigned clusterIndex = 0;
 			
-			for ( int j = 0; j < inData.workData.originalData.size(); j++){
+			//Check each centroid for the minimum distance
+			for (unsigned c = 0; c < tempCentroids.size(); c++){
 				auto curDist = ut.vectors_distance(inData.workData.originalData[j], tempCentroids[c]);
 				
 				
 				if(curDist < minDist){
-					minDistanceLabel = c;
+					clusterIndex = c;
 					minDist = curDist;
 				}
-				
-				
 			}
 			
-			counts[minDistanceLabel] ++;
-			summed_clusters[c] += minDist;
-			
-			//Compute feature sum of distances for a label ** Nick to check on this and revise** 
-			// summed_features[label] += ut.featureDistance(originalData, tempCentroids)
+			for(int d = 0; d < inData.workData.originalData[j].size(); d++){
+				summedCentroidVectors[clusterIndex][d] += inData.workData.originalData[j][d];
+			}
+			curLabels.push_back(clusterIndex);
+			counts[clusterIndex] ++;
+			summedClusters[clusterIndex] += minDist;
 			
 		}		
 		
-		//if z=num_iterations or converge: 
-		//	Assign Final Labels
-		//	Assign final centroid points (geometric center of classified points)
-		//  Rmax, Ravg
-		//	BREAK
-		
-		
 		//Otherwise, 
 		//		Shift the centroid geometric centers to new centroids
+		for(int i = 0; i < summedCentroidVectors.size(); i++){
+			for(int d =0; d < summedCentroidVectors[0].size(); d++){
+				summedCentroidVectors[i][d] = summedCentroidVectors[i][d] / counts[i];
+			}
+		}
+		
+		tempCentroids = summedCentroidVectors;
+		
+		//Check for convergence
+		if(curLabels == lastLabels){
+			break;
+		}		
+		
+		
+		lastLabels = curLabels;
 		
 	}
-   
-   
-
-	/*std::cout << tempCentroids.size() << " : " << tempCentroids[0].size() << std::endl;
-
-	auto end = tempCentroids.end();  //removing duplicates from temp matrix
-	for (auto it = tempCentroids.begin(); it != end; it++){
-		end = std::remove(it +1, end, *it);
-	}
-	tempCentroids.erase(end, tempCentroids.end());
-	
-	
-	std::cout << tempCentroids.size() << " : " << tempCentroids[0].size() << std::endl;
-*/
-
-	for(int i = 0; i<tempCentroids.size(); i++){
-		centroids.push_back(tempCentroids[i]);  //adding unique centroids to centroids matrix
-	} 
-
-
-	for(unsigned i = 0; i < centroids.size(); i++){
-	for(unsigned j = 0; j < centroids[j].size(); j++){
-	std::cout << i + 1 << "->";
-		std::cout << centroids[i][j]<< '\t';
-
-	}
-	std::cout << std::endl;
-
-	}
-	//labeling points so they can be assigned to a cluster
-    //  This will eventually occur in parallel, should probably be removed (eventually)
-    //  i.e. labels are not necessary to continue the PH computation but are for upscaling
-
-    for(auto r = 0; r<num_iterations; r++){   //reassign points to centroids based on cmd arg iterations
-        for(size_t point = 0; point<inData.workData.originalData.size(); point++){
-            double dist_best = std::numeric_limits<double>::max(); //setting max starting distance
-            //size_t cluster_best = 0;
-            for(size_t cluster = 0; cluster<num_clusters; cluster++){
-                const double cluster_dist = ut.vectors_distance(inData.workData.originalData[point], centroids[cluster]);
-                if(cluster_dist < dist_best){
-                    dist_best = cluster_dist; //assigning new best distance based on centroids
-                    //cluster_best = centroids[cluster];
-                    labels.push_back(cluster);  //labeling each point based on best cluster
-                }   
-            }
     
-        }
-    }
-
-
-  /*for(unsigned i = 0; i < labels.size(); i++){
-            std::cout << labels[i] << ",";
-    }
-    std::cout << "\n";*/  
-
-    
-    //assigning points to a cluster based on their label
-    std::vector<std::vector<double>> assignments;
-   // std::vector<double> assignments;
-    int *ptr;
-    for(int k=0; k<num_clusters; k++){  
-        for(size_t point = 0; point<inData.workData.originalData.size(); point++){
-            if(labels[point] == k){ 
-             // std::cout << inData.workData.originalData[point][0] <<"point";
-                assignments.push_back(inData.workData.originalData[point]);
-            }
-        }
-        
-    }  
-
-
- /*  for(unsigned i = 0; i < assignments.size(); i++){
-		for(unsigned j = 0; j < assignments[i].size(); j++){
-			std::cout << assignments[i][j] << '\t';
-		}
-		std::cout << std::endl;
-	}   */
-
-    //counting points in each cluster so mean can be computed
-  
-    for(size_t point=0; point<inData.workData.originalData.size(); point++){   
-        summed_clusters.push_back(0);
-        for(size_t j=0; j<num_clusters; j++){   
-            if(labels[point] == j){
-                counts[j] += 1;
-                summed_clusters[point] += ut.vectors_distance(inData.workData.originalData[point], centroids[labels[point]]);
-                
-            }   
-        }
-    } 
-	std::cout << std::endl;
-	for(unsigned j = 0; j < counts.size(); j++){
-		std::cout << counts[j] << '\t';
-        std::cout << summed_clusters[j] << "\trAvg = " << summed_clusters[j]/counts[j] << std::endl;
-	} 
-
-
-    //summing points in each cluster so mean can be computed... not working yet
-
-    
-    std::cout << "Clustered data..." << std::endl;
-    //Assign to the pipepacket
-    inData.workData.originalData = centroids;
-    inData.workData.originalLabels = labels;
-    return inData;
+	std::cout << "Clustered data..." << std::endl;
+	//Assign to the pipepacket
+	inData.workData.originalData = tempCentroids;
+	inData.workData.originalLabels = lastLabels;
+	return inData;
 }
 
 // configPipe -> configure the function settings of this pipeline segment

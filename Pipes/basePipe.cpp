@@ -7,6 +7,7 @@
 #include <chrono>
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include "basePipe.hpp"
 #include "distMatrixPipe.hpp"
@@ -80,8 +81,28 @@ pipePacket basePipe::runPipeWrapper(pipePacket inData){
 	
 	inData.stats += pipeType + "," + std::to_string(elapsed.count()/1000.0) + "," + std::to_string(dataSize) + "," + unit + "," + std::to_string(inData.workData.complex->vertexCount()) + "," + std::to_string(inData.workData.complex->simplexCount()) + "\n";
 	
+	outputData(inData.workData.originalData);
+	
 	return inData;
 }
+
+// outputData -> used for tracking each stage of the pipeline's data output without runtime
+void basePipe::outputData(std::vector<std::vector<double>> data){
+	std::ofstream file;
+	file.open(pipeType + "_output.csv");
+	
+	for (auto a : data){
+		for (auto d : a){
+			file << std::to_string(d) << ",";
+		}
+		file << "\n";
+	}
+	
+	file.close();
+	return;
+}
+	
+
 
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket basePipe::runPipe(pipePacket inData){
