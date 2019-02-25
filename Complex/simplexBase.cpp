@@ -8,8 +8,7 @@
 
 simplexBase::simplexBase(){return;}
 simplexBase::simplexBase(double maxE){
-	maxEpsilon = maxE;
-	std::cout << maxEpsilon << std::endl;	
+	maxEpsilon = maxE;	
 }
 
 void simplexBase::setDistanceMatrix(std::vector<std::vector<double>> _distMatrix){
@@ -24,7 +23,6 @@ simplexBase* simplexBase::newSimplex(const std::string &simplexT){
 	if(simplexType == "simplexTree"){
 		return new simplexTree(maxEpsilon, distMatrix);
 	} else if (simplexType == "simplexArrayList"){	
-		std::cout << maxEpsilon << std::endl;	
 		return new simplexArrayList(maxEpsilon, distMatrix);
 	}
 	return 0;

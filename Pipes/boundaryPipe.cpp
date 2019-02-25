@@ -68,11 +68,12 @@ std::pair<std::vector<std::vector<unsigned>>,std::pair<int,int>> boundaryPipe::r
 				
 				//Add the vector to our returned matrix
 				auto tempRow = boundaryMatrix[j];
+				ret.push_back(tempRow);
 					
 				//Remove our vector from the boundaryMatrix and continue processing next column
 				boundaryMatrix.erase(boundaryMatrix.begin() + j);
 				
-				//Iterate through remaining vectors and XOR with our vector or the clearRow
+				//Iterate through remaining vectors and XOR with our vector
 				//j += 1;
 				while(j < boundaryMatrix.size()){
 					if(boundaryMatrix[j][i] == 1){
@@ -82,13 +83,12 @@ std::pair<std::vector<std::vector<unsigned>>,std::pair<int,int>> boundaryPipe::r
 					}
 					j += 1;
 				}		
-				
-				/*for(auto a : ret){
+				for(auto a : ret){
 					if (a[i] == 1){
 						for(unsigned d = 0; d < ret.size(); d++)
-							a[d] = a[d] != tempRow[d];
+							a[d] = a[d] ^ tempRow[d];
 					}					
-				}*/
+				}
 			}
 		}		
 	}
@@ -97,6 +97,7 @@ std::pair<std::vector<std::vector<unsigned>>,std::pair<int,int>> boundaryPipe::r
 		for (auto a : boundaryMatrix)
 			ret.push_back(a);
 	}
+	
 	return std::make_pair(ret, std::make_pair(rank, (ret[0].size() - rank)));
 }
 
@@ -124,49 +125,40 @@ std::pair<std::vector<std::vector<unsigned>>,std::pair<int,int>> boundaryPipe::b
 		boundary.push_back(bDim);
 	}	
 
-	return reduceBoundaryMatrix(boundary);
+	auto a = reduceBoundaryMatrix(boundary);
+	auto z = extractBoundaries(nChain, a.first, a.second.second);
+	
+	return a;
 }
 
 
-std::vector<std::vector<unsigned>> boundaryPipe::extractBoundaries(std::vector<std::pair<double, std::vector<unsigned>>> edges, std::vector<std::vector<unsigned>> boundaryMatrix, int nullity){
+std::vector<std::vector<unsigned>> boundaryPipe::extractBoundaries(std::vector<std::vector<unsigned>> edges, std::vector<std::vector<unsigned>> boundaryMatrix, int nullity){
 	std::vector<std::vector<unsigned>> boundaries;
 	
 	//Iterate through each boundary 
 	//	nullity = (dim - rank)
 	//	Aggregate edges that form the constituent boundary
 	
-	// First, the columns (i to nullity)
-	for(int i = 0; i < nullity; i++){
+	// First, the columns (i to nullity), but they aren't sorted
+	// Extract the nullity number of columns, these represent the loops
+	//		Check each column for a leading 1
+	for(int i = 0; i < boundaryMatrix[0].size(); i++){
 		
-		std::vector<unsigned> currentBoundary;		// Stores current boundary
-		int j = 0;									// 
+		std::vector<unsigned> currentBoundary;		// Stores current boundary						// 
 		
 		//For each vector (row) in the boundary matrix 
-		for(auto vect : boundaryMatrix){
+		for(unsigned j = 0; j < boundaryMatrix.size(); j++){
 			
-			//If the 
-			if(vect[vect.size() - nullity] == 1){
+			//If there is a 1 in the row
+			if(boundaryMatrix[j][i] == 1){
 				
-				for(auto edge : edges[j].second){
-					//std::cout << edge << " ";
+				for(auto edge : edges[j])
 					currentBoundary.push_back(edge);
-				}
 			}
-			j++;
-			
 		}
 		
-		for(auto edge : edges[edges.size() - nullity + i].second){
-			//std::cout << edge << " ";
-			currentBoundary.push_back(edge);
-		}
-		//std::cout << std::endl << std::endl;
-		
-		//or (auto e : currentBoundary)
-		//	std::cout << e << ",";
-		//std::cout << std::endl;
-		
-		boundaries.push_back(currentBoundary);
+		if(currentBoundary.size() > 1)
+			boundaries.push_back(currentBoundary);
 		
 	}
 	

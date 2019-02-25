@@ -17,7 +17,7 @@ class boundaryPipe : public basePipe {
     pipePacket runPipe(pipePacket);
     bool configPipe(std::map<std::string, std::string>);
 	std::vector<std::vector<unsigned>> nSimplices(double, unsigned, std::vector<std::pair<double,std::vector<unsigned>>>);
-	std::vector<std::vector<unsigned>> extractBoundaries(std::vector<std::pair<double, std::vector<unsigned>>>, std::vector<std::vector<unsigned>>, int);
+	std::vector<std::vector<unsigned>> extractBoundaries(std::vector<std::vector<unsigned>>, std::vector<std::vector<unsigned>>, int);
 	int checkFace(std::vector<unsigned> face, std::vector<unsigned>);
 	void outputData(pipePacket);
 	std::pair<std::vector<std::vector<unsigned>>,std::pair<int,int>> reduceBoundaryMatrix(std::vector<std::vector<unsigned>>);
