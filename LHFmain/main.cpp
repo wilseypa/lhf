@@ -77,8 +77,34 @@ void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD)
 			cout << "Failed to configure pipeline: " << args["pipeline"] << endl;
 		}
 	}
+	
+	args["pipeline"] = "distMatrix.neighGraph.rips.betti";
+	
+	runPipeline(args, wD);
+		
+	return;
+}	
+
+void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* wD){
+    
+	//Start with the preprocessing function, if enabled
+	auto pre = args["preprocessor"];
+	if(pre != ""){
+		auto *preprocess = new preprocessor();
+		auto *prePipe = preprocess->newPreprocessor(pre);
+		
+		if(prePipe != 0 && prePipe->configPreprocessor(args)){
+			*wD = prePipe->runPreprocessorWrapper(*wD);
+		} else {
+			cout << "Failed to configure pipeline: " << args["pipeline"] << endl;
+		}
+	}
+	
+	args["pipeline"] = "distMatrix.neighGraph.rips.boundary";
+	
 	do{
 		if(wD->boundaries.size() > 0){
+			
 			std::vector<std::thread> threads;
 			
 			//Spin off a pipeline for each boundary...
@@ -97,15 +123,6 @@ void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD)
 		
 	return;
 }	
-
-
-
-
-
-
-
-
-
 
 int main(int argc, char* argv[]){
 	//	Steps to compute PH with preprocessing:
@@ -159,10 +176,10 @@ int main(int argc, char* argv[]){
 		
 		auto ar = args["upscale"];
 		if(ar == "true"){
-			
+			processUpscaleWrapper(args, wD);
+		} else {
 			processDataWrapper(args, wD);
 		}
-
 	} else {
 		ap->printUsage();
 	}

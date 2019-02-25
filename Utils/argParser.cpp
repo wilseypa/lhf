@@ -11,7 +11,7 @@
 
 
 std::map<std::string, std::string> argMap = { {"dimensions","d"},{"iterations","r"},{"pipeline","p"},{"inputFile","i"},{"outputFile","o"},{"epsilon","e"},{"debug","x"},{"complexType","c"},{"clusters","k"},{"preprocessor","pre"},{"upscale","u"}};
-std::map<std::string, std::string> defaultMap = { {"dimensions","2"},{"iterations","250"},{"pipeline","distMatrix.neighGraph.rips.betti"},{"inputFile","None"},{"outputFile","console"},{"epsilon","5"},{"debug","0"},{"complexType","simplexArrayList"},{"clusters","5"},{"preprocessor",""},{"upscale","true"}};
+std::map<std::string, std::string> defaultMap = { {"dimensions","2"},{"iterations","250"},{"pipeline","distMatrix.neighGraph.rips.betti"},{"inputFile","None"},{"outputFile","console"},{"epsilon","5"},{"debug","0"},{"complexType","simplexArrayList"},{"clusters","5"},{"preprocessor",""},{"upscale","false"}};
 
 // argParse constructor, currently no needed information for the class constructor
 argParser::argParser(){
@@ -72,7 +72,7 @@ std::map<std::string, std::string> argParser::parse(int argc, char** argv){
 	//Print the argument set
 	std::cout << "Arguments being used: " << std::endl;
 	for( const auto& sm_pair : retVal){
-		std::cout << "\t" << sm_pair.first << "   \t" << sm_pair.second << std::endl;
+		std::cout << "\t" << sm_pair.first << " (" << argMap[sm_pair.first] << ")   \t" << sm_pair.second << std::endl;
 	}
 	std::cout << std::endl;
 	return retVal;

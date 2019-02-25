@@ -22,7 +22,7 @@ preprocessor* preprocessor::newPreprocessor(const std::string &procT){
 	procName= procT;
 	if(procName == "none"){
 		return new preprocessor();
-	} else if (procName == "kmeansplusplus" || procName == "kmeans++"){
+	} else if (procName == "kmeansplusplus" || procName == "kmeans++" || procName == "kmeans"){
 		return new kMeansPlusPlus();
 	} 
 	  else  if(procName == "streamingKmeans" || procName == "streamingkmeans"){

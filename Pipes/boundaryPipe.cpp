@@ -7,6 +7,7 @@
 
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <cmath>
 #include <iterator>
@@ -26,43 +27,22 @@ boundaryPipe::boundaryPipe(){
 //Filter and return simplices of a specified dimension
 std::vector<std::vector<unsigned>> boundaryPipe::nSimplices(double epsilon, unsigned n, std::vector<std::pair<double,std::vector<unsigned>>> complex){
 	std::vector<std::vector<unsigned>> ret;
-	
 	for(auto v : complex){
-		
-		//for(auto i : v.second)
-		//	std::cout << i << " ";
-		//std::cout << "--> " << v.second.size() << " " << v.first << " " << epsilon << std::endl << std::endl;
-		
-		
 		if(v.second.size() == n){
 			if(v.first <= epsilon)
 				ret.push_back(v.second);
 		}
 	}
 	
-	//std::cout << "nSimplices : " << n << std::endl;
-	//for(auto i : ret){
-	//	for(auto p : i)
-	//		std::cout << p << " ";
-	//	std::cout << std::endl;
-	//}
-	//std::cout << std::endl;
-	
 	return ret;
 }
 
 // Check if a face is a subset of a simplex
 int boundaryPipe::checkFace(std::vector<unsigned> face, std::vector<unsigned> simplex){
-	//ut.print1DVector(face);
-	//ut.print1DVector(simplex);
-	//std::cout << "SIZE: " << ut.intersect(face,simplex,false).first.size() << std::endl;
-	//ut.print1DVector(ut.intersect(face,simplex,false).first);
 	
 	if(simplex.size() == 0)
 		return 1;
-	else if(ut.intersect(face,simplex,false).first.size() == face.size()){
-		//ut.print1DVector(face);
-		//ut.print1DVector(simplex);
+	else if(ut.symmetricDiff(face,simplex,false).size() == 1){
 		return 1;
 	}
 	else
@@ -70,15 +50,15 @@ int boundaryPipe::checkFace(std::vector<unsigned> face, std::vector<unsigned> si
 }
 
 // Reduce the binary boundary matrix
-std::pair<std::vector<std::vector<unsigned>>,int> boundaryPipe::reduceBoundaryMatrix(std::vector<std::vector<unsigned>> boundaryMatrix){
+std::pair<std::vector<std::vector<unsigned>>,std::pair<int,int>> boundaryPipe::reduceBoundaryMatrix(std::vector<std::vector<unsigned>> boundaryMatrix){
 	std::vector<std::vector<unsigned>> ret;
 	int rank = 0;
+	
 	if(boundaryMatrix.size() <= 0)
-		return std::make_pair(boundaryMatrix, 0);
+		return std::make_pair(ret,std::make_pair(0,0));
 		
 	//Step through each column and search for a 1 in that column
 	for(unsigned i = 0; i < boundaryMatrix[0].size(); i++){
-		
 		//Step through each vector
 		for(unsigned j = 0; j < boundaryMatrix.size(); j++){
 			
@@ -87,16 +67,7 @@ std::pair<std::vector<std::vector<unsigned>>,int> boundaryPipe::reduceBoundaryMa
 				rank += 1;
 				
 				//Add the vector to our returned matrix
-				//Along with a vector to clear out the row
-				ret.push_back(boundaryMatrix[j]);
 				auto tempRow = boundaryMatrix[j];
-				auto clearRow = boundaryMatrix[j];
-				clearRow[i] = 0;
-				
-				//Set up the temp row for both operations:
-				
-				for(unsigned d = i+1; d < boundaryMatrix[0].size(); d++)
-					clearRow[d] = tempRow[d];
 					
 				//Remove our vector from the boundaryMatrix and continue processing next column
 				boundaryMatrix.erase(boundaryMatrix.begin() + j);
@@ -105,23 +76,19 @@ std::pair<std::vector<std::vector<unsigned>>,int> boundaryPipe::reduceBoundaryMa
 				//j += 1;
 				while(j < boundaryMatrix.size()){
 					if(boundaryMatrix[j][i] == 1){
+						//XOR the remaining rows
 						for(unsigned d = 0; d < boundaryMatrix[0].size(); d++)
-							boundaryMatrix[j][d] = boundaryMatrix[j][d] != tempRow[d];
+							boundaryMatrix[j][d] = boundaryMatrix[j][d] ^ tempRow[d];
 					}
-					//else{
-						//for(unsigned d = 0; d < boundaryMatrix[0].size(); d++)
-							//boundaryMatrix[j][d] = boundaryMatrix[j][d] != clearRow[d];
-					//}
-							
 					j += 1;
-				}			
+				}		
 				
-				for(auto a : ret){
+				/*for(auto a : ret){
 					if (a[i] == 1){
 						for(unsigned d = 0; d < ret.size(); d++)
 							a[d] = a[d] != tempRow[d];
 					}					
-				}
+				}*/
 			}
 		}		
 	}
@@ -130,19 +97,13 @@ std::pair<std::vector<std::vector<unsigned>>,int> boundaryPipe::reduceBoundaryMa
 		for (auto a : boundaryMatrix)
 			ret.push_back(a);
 	}
-	
-//	std::cout << "Rank: " << rank << std::endl;
-//	std::cout << "Nullity: " << (ret[0].size() - rank) << std::endl;
-	ranks.push_back(rank);
-	nRanks.push_back(ret.size() - rank);
-	return std::make_pair(ret, rank);
+	return std::make_pair(ret, std::make_pair(rank, (ret[0].size() - rank)));
 }
 
 // Get the boundary matrix from the edges
-std::pair<std::vector<std::vector<unsigned>>,int> boundaryPipe::boundaryMatrix(std::vector<std::vector<unsigned>> nChain, std::vector<std::vector<unsigned>> pChain){
+std::pair<std::vector<std::vector<unsigned>>,std::pair<int,int>> boundaryPipe::boundaryMatrix(std::vector<std::vector<unsigned>> nChain, std::vector<std::vector<unsigned>> pChain){
 	std::vector<std::vector<unsigned>> ret;
 	std::vector<std::vector<unsigned>> boundary;	
-	
 	
 	//Create the boundary matrix from chains
 	std::vector<unsigned> bDim;
@@ -150,56 +111,19 @@ std::pair<std::vector<std::vector<unsigned>>,int> boundaryPipe::boundaryMatrix(s
 	//std::cout << "pre: " << nChain.size() << " " << pChain.size() << std::endl;
 	
 	if (nChain.size() == 0)
-		return std::make_pair(ret,0);
+		return std::make_pair(ret,std::make_pair(0,pChain.size()));
 	
 	//
-	if (pChain.size() == 0){
-		for(unsigned j = 0; j < nChain.size(); j++){
-			bDim.push_back(1);
+	for(unsigned i = 0; i < nChain.size(); i++){
+		std::vector<unsigned> bDim;
+		
+		//Create the columns (pChain)
+		for(unsigned j = 0; j < pChain.size(); j++){
+			bDim.push_back(checkFace(nChain[i], pChain[j]));
 		}
 		boundary.push_back(bDim);
-		bDim.clear();
-	}
-	else{
-/*		std::cout << nChain.size() << "\t" << pChain.size() << std::endl << std::endl;
-		
-		std::cout << "_______nChain______" << std::endl;
-		for(auto i : nChain){
-			for(auto p : i)
-				std::cout << p << " ";
-			std::cout << std::endl;
-		}
-		std::cout << std::endl << std::endl;
-		
-		std::cout << "_______pChain______" << std::endl;
-		for(auto i : pChain){
-			for(auto p : i)
-				std::cout << p << " ";
-			std::cout << std::endl;
-		}
-		std::cout << std::endl;
-*/	
-		
-		//Create the rows (nChain)
-		for(unsigned i = 0; i < pChain.size(); i++){
-			//Create the columns (pChain)
-			for(unsigned j = 0; j < nChain.size(); j++){
-				bDim.push_back(checkFace(pChain[i], nChain[j]));
-			}
-			boundary.push_back(bDim);
-			bDim.clear();
-		}	
-	}
-		
-/*	std::cout << "\tFinished boundary matrix -> " << boundary.size() << " x " <<boundary[1].size() << std::endl << std::endl;
-	
-	
-	std::cout << std::endl << "ORIGINAL BOUNDARY" << std::endl;
-	for(unsigned d = 0; d < boundary.size(); d++)
-		ut.print1DVector(boundary[d]);
-	std::cout << std::endl << std::endl;
-*/	
-	//Reduce the boundary matrix
+	}	
+
 	return reduceBoundaryMatrix(boundary);
 }
 
@@ -262,63 +186,124 @@ std::vector<std::vector<unsigned>> boundaryPipe::extractBoundaries(std::vector<s
 //				WITH boundaries that form the barcode
 //
 pipePacket boundaryPipe::runPipe(pipePacket inData){
-	/*std::vector<std::vector<std::vector<unsigned>>> allBoundaries;
-	
-	auto local_edges = inData.workData.complex->getEdges(0,0);
-	
-	//std::cout << local_edges.size() << std::endl;
-	//std::cout << inData.workData.complex->simplexType << std::endl;
+	std::vector<std::vector<std::vector<unsigned>>> allBoundaries;
 	
 	
-	//Iterate through each dimension to build boundary matrix
-	for(int d = 0; d < dim; d++){		
-		std::vector<double> checkedEdges = {0};
-		
-		//For each edge
-		for(auto edge : local_edges){
-			
-			//Get the weights (increasing order)
-			double epsilon = 0; //edge.first;
-			
-			//Check if we've already 
-			if(std::find(checkedEdges.begin(), checkedEdges.end(), epsilon) == checkedEdges.end()){
-				
-				//std::cout << "EPSILON: " << epsilon << std::endl;
-				
-				//Get the reduced boundary matrix
-				std::pair<std::vector<std::vector<unsigned>>, int> boundary = boundaryMatrix(nSimplices(epsilon,d+1,local_edges),nSimplices(epsilon,d,local_edges));
-				
-				//If the rank is greater than 0 (i.e. a feature exists in the boundary matrix)
-				if(boundary.second > 0){
-					
-					//std::cout << "\tReduced boundary matrix @ " << epsilon << " -> " << boundary.first.size() ;
-					//std::cout << " x " <<boundary.first[1].size() << std::endl;
-					
-					//std::cout << std::endl << "REDUCED BOUNDARY" << std::endl;
-					//for(unsigned z = 0; z < boundary.first.size(); z++)
-					//	ut.print1DVector(boundary.first[z]);
-					//std::cout << std::endl << std::endl;
-					
-					//Extract the boundary points from the RREF boundary matrix
-					extractBoundaries(local_edges,boundary.first, boundary.second);
-				
-					//std::cout << "\tDim: " << d << "\tRANKS: ";
-					//for(auto z : ranks)
-					//	std::cout << z << " ";
-					//std::cout << std::endl;
-				}
-		
-				checkedEdges.push_back(epsilon);
-				allBoundaries.push_back(boundary.first);
-			}
-		}
-		checkedEdges={0};
+	struct bettiDef_t{
+		double epsilon;
+		int dim;
+		int betti;
+	};
+	
+	std::vector<bettiDef_t> bettis;
+	
+	
+	std::vector<int> bettiNumbers;
+	std::vector<float> lifeSpans[dim];
+	
+	std::vector<std::vector<std::vector<unsigned>>> edges;
+	
+	//Retrieve
+	auto local_weights = inData.workData.complex->weights;
+	std::string barcodes;
+	for(int d2 = 0; d2 <= dim; d2++){
+		bettiNumbers.push_back(0);
 	}
 	
+	std::string bettiOutput[] = {"Epsilon\t\tDim\tBD\tBetti\trank\tnullity\tlRank\tlNul\n","Epsilon\t\tDim\tBD\tBetti\trank\tnullity\tlRank\tlNul\n","Epsilon\t\tDim\tBD\tBetti\trank\tnullity\tlRank\tlNul\n"};
 	
-	return inData;*/
+	double epsilon = 0;
+	
+	//For each edge
+	for(auto eps : local_weights){
+		//Reload the buffers with the current edges
+		edges = inData.workData.complex->getAllEdges(eps);
+		
+		//Get the weights (increasing order)
+		//Check if we've already processed or not
+		if(epsilon != eps){
+			epsilon = eps;
+			auto last_rank_nul = std::make_pair(0,0);
+			
+			//Iterate through each dimension to build boundary matrix
+			for(int d = dim; d >= 0; d--){
+				
+				//Get the reduced boundary matrix
+				std::pair<int, int> rank_nul;
+				
+				if(d == 0)
+					rank_nul = boundaryMatrix({}, edges[d]).second;
+				else
+					rank_nul = boundaryMatrix(edges[d-1], edges[d]).second;
+							
+				if(bettiNumbers[d] != (rank_nul.second- last_rank_nul.first)){
+					bettiNumbers[d] = (rank_nul.second- last_rank_nul.first);
+				}
+				
+				if(d != dim)
+					bettis.push_back(bettiDef_t {epsilon, d, rank_nul.second - last_rank_nul.first});
+				if(debug){
+					bettiOutput[d] += std::to_string(epsilon) + "\t" + std::to_string(d) + "\t" + std::to_string(d-1) + "\t" + std::to_string(rank_nul.second)/* - last_rank_nul.first)*/ + "\t" + std::to_string(rank_nul.first) + "\t" + std::to_string(rank_nul.second) + "\t" + std::to_string(last_rank_nul.first) + "\t" + std::to_string(last_rank_nul.second) + "\n";
+				}
+				last_rank_nul = rank_nul;
+				
+			}
+		}
+
+	}
+	
+	std::string output = "Dim,Birth,Death\n";
+	
+	for(int i = 0; i < dim; i ++){
+		bettiDef_t lastBetti = {0.0,i,0};
+		for(int j = bettis.size(); j >= 0; j--){
+			int lastBirth;
+			
+			if(bettis[j].dim == i){
+				
+				if(bettis[j].betti < lastBetti.betti){
+					for(int k = 0; k < (lastBetti.betti - bettis[j].betti); k++)
+						output += std::to_string(i) + "," + std::to_string(lastBetti.epsilon) + "," + std::to_string(bettis[j].epsilon) + "\n";
+					lastBetti.betti = bettis[j].betti;
+				}
+				if(bettis[j].betti > lastBetti.betti){
+					lastBetti.epsilon = bettis[j].epsilon;
+					lastBetti.betti = bettis[j].betti;
+				}
+			}
+			
+			if(j == 0){
+				while(lastBetti.betti > 0){
+					output += std::to_string(i) + "," + std::to_string(lastBetti.epsilon) + "," + std::to_string(maxEpsilon) + "\n";
+					lastBetti.betti--;
+				}
+			}
+		}
+	}
+	
+	if(debug){
+		std::cout << "\n\n______________RESULTS_______________" << std::endl;
+		std::cout << bettiOutput[0] << std::endl << std::endl;
+		std::cout << bettiOutput[1] << std::endl << std::endl;
+		std::cout << bettiOutput[2] << std::endl;
+		std::cout << std::endl << output << std::endl;
+	}
+	
+	inData.bettiOutput = output;
+	
+	return inData;
 }
 
+// outputData -> used for tracking each stage of the pipeline's data output without runtime
+void boundaryPipe::outputData(pipePacket inData){
+	std::ofstream file;
+	file.open("output/" + pipeType + "_bettis_output.csv");
+	
+	file << inData.bettiOutput;
+	
+	file.close();
+	return;
+}
 
 // configPipe -> configure the function settings of this pipeline segment
 bool boundaryPipe::configPipe(std::map<std::string, std::string> configMap){
@@ -330,6 +315,11 @@ bool boundaryPipe::configPipe(std::map<std::string, std::string> configMap){
 	pipe = configMap.find("debug");
 	if(pipe != configMap.end())
 		debug = std::atoi(configMap["debug"].c_str());
+	else return false;
+	
+	pipe = configMap.find("epsilon");
+	if(pipe != configMap.end())
+		maxEpsilon = std::atof(configMap["epsilon"].c_str());
 	else return false;
 	
 	return true;
