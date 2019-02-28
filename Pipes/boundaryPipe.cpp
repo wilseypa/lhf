@@ -126,7 +126,8 @@ std::pair<std::vector<std::vector<unsigned>>,std::pair<int,int>> boundaryPipe::b
 	}	
 
 	auto a = reduceBoundaryMatrix(boundary);
-	auto z = extractBoundaries(nChain, a.first, a.second.second);
+	
+	
 	
 	return a;
 }
@@ -153,15 +154,29 @@ std::vector<std::vector<unsigned>> boundaryPipe::extractBoundaries(std::vector<s
 			if(boundaryMatrix[j][i] == 1){
 				
 				for(auto edge : edges[j])
-					currentBoundary.push_back(edge);
+					if(std::find(currentBoundary.begin(), currentBoundary.end(), edge) == currentBoundary.end())
+						currentBoundary.push_back(edge);
 			}
 		}
 		
-		if(currentBoundary.size() > 1)
-			boundaries.push_back(currentBoundary);
+		std::cout << i << "\t" << nullity << std::endl;
+		
+		if(currentBoundary.size() > 1){
+			std::cout << "Found Boundary\t";
+			ut.print1DVector(currentBoundary);
+			
+			if(boundaries.size() == 0){
+				boundaries.push_back(currentBoundary);
+			} else {
+				for(auto a : boundaries){
+					if(ut.setIntersect(currentBoundary, a, false).size() == 0)
+						boundaries.push_back(currentBoundary);
+				}
+			}
+		}
 		
 	}
-	
+	std::cout << "ret" << std::endl;
 	return boundaries;
 }
 
@@ -178,7 +193,7 @@ std::vector<std::vector<unsigned>> boundaryPipe::extractBoundaries(std::vector<s
 //				WITH boundaries that form the barcode
 //
 pipePacket boundaryPipe::runPipe(pipePacket inData){
-	std::vector<std::vector<std::vector<unsigned>>> allBoundaries;
+	std::vector<std::vector<unsigned>> allBoundaries;
 	
 	
 	struct bettiDef_t{
@@ -221,13 +236,36 @@ pipePacket boundaryPipe::runPipe(pipePacket inData){
 			for(int d = dim; d >= 0; d--){
 				
 				//Get the reduced boundary matrix
-				std::pair<int, int> rank_nul;
+				std::pair<std::vector<std::vector<unsigned>>,std::pair<int,int>>  bound_rank_nul;
 				
 				if(d == 0)
-					rank_nul = boundaryMatrix({}, edges[d]).second;
+					bound_rank_nul = boundaryMatrix({}, edges[d]);
 				else
-					rank_nul = boundaryMatrix(edges[d-1], edges[d]).second;
-							
+					bound_rank_nul = boundaryMatrix(edges[d-1], edges[d]);
+				
+				if(d > 1){
+					std::cout <<"Extracting boundaries..." << std::endl;
+					std::vector<std::vector<unsigned>> z = extractBoundaries(edges[d-1], bound_rank_nul.first, bound_rank_nul.second.second);
+					
+					std::cout << "\n\n______________BOUNDARIES (" << std::to_string(z.size()) << ")_______________" << std::endl;
+					
+					for(auto a : z){
+						ut.print1DVector(a);
+					}
+					
+					
+					for(auto bound : z){
+						std::cout << "bound\t";
+						for(auto curBound : allBoundaries){
+							std::cout << "curBound\t";
+							if(ut.setIntersect(bound, curBound, true).size() > bound.size())
+								allBoundaries.push_back(bound);
+						}
+					}
+				}
+				
+				auto rank_nul = bound_rank_nul.second;
+											
 				if(bettiNumbers[d] != (rank_nul.second- last_rank_nul.first)){
 					bettiNumbers[d] = (rank_nul.second- last_rank_nul.first);
 				}
@@ -279,6 +317,11 @@ pipePacket boundaryPipe::runPipe(pipePacket inData){
 		std::cout << bettiOutput[1] << std::endl << std::endl;
 		std::cout << bettiOutput[2] << std::endl;
 		std::cout << std::endl << output << std::endl;
+	}
+	
+	std::cout << "\n\n______________BOUNDARIES_______________" << std::endl;
+	for(auto a : allBoundaries){
+		ut.print1DVector(a);
 	}
 	
 	inData.bettiOutput = output;

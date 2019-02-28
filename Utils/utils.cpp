@@ -82,6 +82,19 @@ std::vector<unsigned> utils::setIntersect(std::vector<unsigned> v1, std::vector<
 	}
 	
 	set_intersection(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(ret));
+
+	/*for(auto iter = v1.begin(); iter!= v1.end(); iter++){
+		std::cout << *iter << ",";
+	}
+	std::cout << "\t";
+	for(auto iter = v2.begin(); iter!= v2.end(); iter++){
+		std::cout << *iter << ",";
+	}
+	std::cout << "\t";
+	for(auto iter = ret.begin(); iter!= ret.end(); iter++){
+		std::cout << *iter << ",";
+	}
+	std::cout << std::endl;*/
 	
 	return ret;
 	
