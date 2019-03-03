@@ -24,9 +24,6 @@ double simplexArrayList::getSize(){
 		size += (weightedGraph[i].size() * sizeof(weightedGraph[i][0]));
 	}
 	
-	//Calculate size of weights
-	for(auto row : weights)
-		size += sizeof(row);
 	return size;
 }
 
@@ -74,19 +71,13 @@ void simplexArrayList::insert(std::vector<double> vector){
 				
 				if(std::find(weightedGraph[1].begin(), weightedGraph[1].end(), edge) == weightedGraph[1].end())
 					weightedGraph[1].push_back(edge);
-				
-				if(std::find(weights.begin(), weights.end(), dist) == weights.end())
-					weights.push_back(dist);
+
 			}
 		}
 		
 		weightedGraph[0].push_back({i});
 		
 	}	
-	
-	
-	weights.push_back(0.0);
-	std::sort(weights.begin(), weights.end(), std::greater<>());
 	
 	return;
 }

@@ -1,8 +1,10 @@
 #include <string>
+#include <algorithm>
 #include <vector>
 #include <unistd.h>
 #include <iostream>
 #include "simplexTree.hpp"
+#include "utils.hpp"
 
 simplexTree::simplexTree(double _maxEpsilon, std::vector<std::vector<double>> _distMatrix, int _maxDim){
 	indexCounter = 0;
@@ -47,10 +49,6 @@ void simplexTree::printTree(treeNode* head){
 // Insert a node into the tree
 //		
 void simplexTree::insert(std::vector<double>) {
-	std::cout << "Insert Node - Index: " << indexCounter << "\tNode Count: " << nodeCount << "\tSize: " << getSize() << std::endl;
-	
-	//printTree(head);
-	
 	
 	//Create our new node to insert
 	treeNode* curNode = new treeNode;
@@ -62,7 +60,6 @@ void simplexTree::insert(std::vector<double>) {
 		head = curNode;
 		indexCounter++;
 		nodeCount++;
-		std::cout << "HEAD: " << head << std::endl;
 		dimensions.push_back(head);
 		
 		return;
@@ -206,11 +203,64 @@ int simplexTree::vertexCount(){
 
 int simplexTree::simplexCount(){
 	//Return the number of simplices in the tree
-	
-	return -1;
+	return nodeCount;
 }
 
 double simplexTree::getSize(){
-	//Size of node: [double + double + byte (*) + byte (*)] = 18 Bytes
-	return nodeCount * 18;
+	//Size of node: [int + byte (*) + byte (*)] = 18 Bytes
+	return nodeCount * sizeof(treeNode);
 }
+
+
+std::vector<std::vector<std::vector<unsigned>>> simplexTree::getAllEdges(double epsilon){
+	std::vector<std::vector<std::vector<unsigned>>> edgeGraph;
+	utils ut;
+
+	//Iterate through each dimension and build the edge graph
+	//	Prune any simplices where the maximum edge is greater than epsilon
+	for(int i = dimensions.size()-1; i >= 0; i--){
+		
+		//Store the current dimensional graph and a temporary node to iterate with
+		std::vector<std::vector<unsigned>> dimGraph;
+		treeNode* curNode = dimensions[i];
+		
+		//Iterate each sibling of the dimension
+		do{
+			std::vector<unsigned> curSimplex;
+			curSimplex.push_back(curNode->index);
+			
+			//Check if parents, etc. are still less than epsilon
+			bool rem = false;
+			if(curNode->parent != nullptr){
+				treeNode* parentNode = curNode->parent;
+				
+				do{
+					if(distMatrix[parentNode->index][curNode->index] > epsilon){
+						rem = true;
+					}
+					curSimplex.insert(curSimplex.begin(), parentNode->index);
+				}while(!rem && parentNode->parent != nullptr && (parentNode = parentNode->parent) != nullptr);
+					
+			}
+			//Remove the node...
+			if(rem){
+			
+			
+			//Otherwise, add the simplex to our dimensional graph
+			} else {
+				
+				if(std::find(dimGraph.begin(), dimGraph.end(), curSimplex) == dimGraph.end())		
+					dimGraph.push_back(curSimplex);
+			}			
+			
+		} while (curNode->sibling != nullptr && (curNode = curNode->sibling) != nullptr);
+		
+		//Push the dimensional graph into the returned edges
+		edgeGraph.insert(edgeGraph.begin(), dimGraph);
+		
+	}
+	
+	return edgeGraph;
+}
+
+

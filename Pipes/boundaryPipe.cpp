@@ -211,7 +211,7 @@ pipePacket boundaryPipe::runPipe(pipePacket inData){
 	std::vector<std::vector<std::vector<unsigned>>> edges;
 	
 	//Retrieve
-	auto local_weights = inData.workData.complex->weights;
+	auto local_weights = inData.weights;
 	std::string barcodes;
 	for(int d2 = 0; d2 <= dim; d2++){
 		bettiNumbers.push_back(0);

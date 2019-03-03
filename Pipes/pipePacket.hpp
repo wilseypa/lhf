@@ -17,6 +17,7 @@ class pipePacket {
 	} workData;
 	
 	std::vector<std::vector<unsigned>> boundaries;
+	std::vector<double> weights;	
 	std::string bettiOutput;
 	
 	double getSize();	

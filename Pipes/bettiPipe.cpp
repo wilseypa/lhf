@@ -240,7 +240,6 @@ std::pair<std::queue<unsigned>, std::pair<int,int>> bettiPipe::getRank(std::vect
 //		
 //
 pipePacket bettiPipe::runPipe(pipePacket inData){
-
 	struct bettiDef_t{
 		double epsilon;
 		int dim;
@@ -256,7 +255,7 @@ pipePacket bettiPipe::runPipe(pipePacket inData){
 	std::vector<std::vector<std::vector<unsigned>>> edges;
 	
 	//Retrieve
-	auto local_weights = inData.workData.complex->weights;
+	auto local_weights = inData.weights;
 	std::string barcodes;
 	for(int d2 = 0; d2 <= dim; d2++){
 		bettiNumbers.push_back(0);

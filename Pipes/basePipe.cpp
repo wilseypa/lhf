@@ -81,12 +81,8 @@ pipePacket basePipe::runPipeWrapper(pipePacket inData){
 	
 	inData.stats += pipeType + "," + std::to_string(elapsed.count()/1000.0) + "," + std::to_string(dataSize) + "," + unit + "," + std::to_string(inData.workData.complex->vertexCount()) + "," + std::to_string(inData.workData.complex->simplexCount()) + "\n";
 	
-	
-	std::cout << "ret..." << std::endl;
-	if(debug){
-		std::cout << "ret...2" << std::endl;
+	if(debug)
 		outputData(inData);
-	}
 	
 	return inData;
 }

@@ -26,13 +26,12 @@ pipePacket neighGraphPipe::runPipe(pipePacket inData){
 
 	//Iterate through each vector, inserting into simplex storage
 	for(unsigned i = 0; i < inData.workData.originalData.size(); i++){
-		
-		//insert data into the complex (SimplexArrayList, SimplexTree)
-		inData.workData.complex->insert(inData.workData.originalData[i]);
+		if(!inData.workData.originalData[i].empty()){
+			//insert data into the complex (SimplexArrayList, SimplexTree)
+			inData.workData.complex->insert(inData.workData.originalData[i]);
+		}
 	}	
 
-
-	std::cout << "returning..." << std::endl;
 	return inData;
 }
 
@@ -59,13 +58,15 @@ void neighGraphPipe::outputData(pipePacket inData){
 	std::ofstream file;
 	file.open("output/" + pipeType + "_output.csv");
 	
-	for(auto a : inData.workData.complex->weightedGraph[1]){
-		for(auto d : a){
-			file << d << ",";
+	if(inData.workData.complex->simplexType == "simplexArrayList"){
+		for(auto a : inData.workData.complex->weightedGraph[1]){
+			for(auto d : a){
+				file << d << ",";
+			}
+			file << "\n";
 		}
-		file << "\n";
+		file.close();
 	}
 	
-	file.close();
 	return;
 }

@@ -14,7 +14,6 @@ class simplexBase {
 	int maxDimension;
 	std::vector<std::vector<double>> distMatrix;
 	std::vector<std::vector<std::vector<unsigned>>> weightedGraph;
-	std::vector<double> weights;	
 	
 	virtual double getSize();
 	virtual void insert(std::vector<double>);

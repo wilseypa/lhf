@@ -22,6 +22,7 @@ class simplexTree : public simplexBase {
   public:
 	simplexTree(std::vector<std::vector<double>>);
 	simplexTree(double, std::vector<std::vector<double>>, int);
+	std::vector<std::vector<std::vector<unsigned>>> getAllEdges(double);
 	
 	bool isLeaf;
 	

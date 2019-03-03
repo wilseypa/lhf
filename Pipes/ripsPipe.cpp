@@ -56,8 +56,6 @@ bool ripsPipe::configPipe(std::map<std::string, std::string> configMap){
 void ripsPipe::outputData(pipePacket inData){
 	std::ofstream file;
 	
-	std::cout << "output" << std::endl;
-	
 	if(inData.workData.complex->simplexType == "simplexArrayList"){
 		file.open("output/" + pipeType + "_output.csv");
 		for (int i = 0; i < inData.workData.complex->weightedGraph.size(); i++){

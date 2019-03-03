@@ -31,19 +31,29 @@ pipePacket distMatrixPipe::runPipe(pipePacket inData){
 	 
 	//Iterate through each vector
 	for(unsigned i = 0; i < inData.workData.originalData.size()-1; i++){
-		//Grab a second vector to compare to 
-		std::vector<double> temp;
-		for(unsigned j = 0; j < inData.workData.originalData.size()-1; j++){
+		if(!inData.workData.originalData[i].empty()){
+		
+			//Grab a second vector to compare to 
+			std::vector<double> temp;
+			for(unsigned j = 0; j < inData.workData.originalData.size()-1; j++){
 
-				//Calculate vector distance 
-				auto dist = ut.vectors_distance(inData.workData.originalData[i],inData.workData.originalData[j]);
-	
-				temp.push_back(dist);	
+					//Calculate vector distance 
+					auto dist = ut.vectors_distance(inData.workData.originalData[i],inData.workData.originalData[j]);
+									
+					if(std::find(inData.weights.begin(), inData.weights.end(), dist) == inData.weights.end())
+						inData.weights.push_back(dist);
+		
+					temp.push_back(dist);	
+			}
+			distMatrix.push_back(temp);
 		}
-		distMatrix.push_back(temp);
 	}
 	
 	inData.workData.complex->setDistanceMatrix(distMatrix);
+	
+	inData.weights.push_back(0.0);
+	inData.weights.push_back(0.0);
+	std::sort(inData.weights.begin(), inData.weights.end(), std::greater<>());
 	
 	std::cout << "\tDist Matrix Size: " << distMatrix.size() << " x " << distMatrix.size() << std::endl;
 	return inData;
