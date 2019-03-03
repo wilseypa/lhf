@@ -31,6 +31,8 @@ pipePacket neighGraphPipe::runPipe(pipePacket inData){
 		inData.workData.complex->insert(inData.workData.originalData[i]);
 	}	
 
+
+	std::cout << "returning..." << std::endl;
 	return inData;
 }
 

@@ -9,6 +9,7 @@ simplexTree::simplexTree(double _maxEpsilon, std::vector<std::vector<double>> _d
 	distMatrix = _distMatrix;
 	maxDim = _maxDim;
 	maxEpsilon = _maxEpsilon;
+	simplexType = "simplexTree";
 	return;
 }
 

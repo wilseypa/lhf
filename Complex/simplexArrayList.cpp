@@ -237,3 +237,5 @@ void simplexArrayList::expandDimensions(int dim){
 	
 	return;
 }
+
+
