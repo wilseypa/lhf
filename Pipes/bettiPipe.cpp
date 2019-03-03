@@ -56,9 +56,7 @@ std::pair<int,int> bettiPipe::reduceBoundaryMatrix(std::vector<std::vector<unsig
 		
 	if(boundaryMatrix.size() <= 0)
 		return std::make_pair(0,0);
-		
-	for(int a = 0; a < boundaryMatrix.size() ; a++)
-		ut.print1DVector(boundaryMatrix[a]);
+	
 	//Step through each column and search for a 1 in that column
 	for(unsigned i = 0; i < boundaryMatrix[0].size(); i++){
 		//Step through each vector
@@ -103,7 +101,6 @@ std::pair<int,int> bettiPipe::reduceBoundaryMatrix(std::vector<std::vector<unsig
 		}
 	}
 	
-	std::cout << "Rank: " << rank << "\tNullity: " << (ret[0].size()-rank) << std::endl;
 	return std::make_pair(rank, (ret[0].size() - rank));
 }
 
@@ -115,9 +112,6 @@ std::pair<std::queue<unsigned>,std::pair<int,int>> bettiPipe::reduceBoundaryMatr
 	int invNul = boundaryMatrix.size();
 	if(boundaryMatrix.size() == 0 || boundaryMatrix[0].size() <= 0)
 		return std::make_pair(pivots, std::make_pair(0,0));
-		
-	for(int a = 0; a < boundaryMatrix.size() ; a++)
-		ut.print1DVector(boundaryMatrix[a]);
 	
 	//Step through each column and search for a 1 in that column
 	
@@ -158,7 +152,6 @@ std::pair<std::queue<unsigned>,std::pair<int,int>> bettiPipe::reduceBoundaryMatr
 			}
 		}
 	}
-	std::cout << "Rank: " << rank << "\tNullity: " << (invNul-rank) << std::endl;
 	return std::make_pair(pivots, std::make_pair(rank, (invNul - rank)));
 }
 
@@ -170,7 +163,7 @@ std::pair<std::queue<unsigned>, std::pair<int,int>> bettiPipe::getRank(std::vect
 	if (nChain.size() == 0)
 		return std::make_pair(temp, std::make_pair(0,pChain.size()));
 	
-	if(debug){
+	if(twist == "true"){
 		std::vector<std::vector<unsigned>> boundary;
 		//Clear out the pChain columns faces of zChain from the boundary matrix 
 		//	See [Chen, Kerber 2011] for details
@@ -181,16 +174,7 @@ std::pair<std::queue<unsigned>, std::pair<int,int>> bettiPipe::getRank(std::vect
 		//		BUT it reduces the complexity of reduction
 		//			(may require restructuring of boundary matrix (pivoted))
 		
-		//
 		
-		std::cout << "NCHAIN____";
-		for(auto i : nChain)
-			ut.print1DVector(i);
-			
-		std::cout << "PCHAIN____";
-		for(auto i : pChain)
-			ut.print1DVector(i);
-			
 		unsigned curPivot = -1;
 		if(!pivots.empty()){
 			curPivot = pivots.front();
@@ -219,7 +203,8 @@ std::pair<std::queue<unsigned>, std::pair<int,int>> bettiPipe::getRank(std::vect
 			
 			boundary.push_back(tempVector);
 		}	
-		std::cout << "\tCleared Count: " << clearedCount << std::endl;
+		if(debug)
+			std::cout << "\tCleared Count: " << clearedCount << std::endl;
 		
 		//Reduce the boundary matrix
 		return reduceBoundaryMatrixRev(boundary);
@@ -394,6 +379,11 @@ bool bettiPipe::configPipe(std::map<std::string, std::string> configMap){
 	pipe = configMap.find("epsilon");
 	if(pipe != configMap.end())
 		maxEpsilon = std::atof(configMap["epsilon"].c_str());
+	else return false;
+	
+	pipe = configMap.find("twist");
+	if(pipe != configMap.end())
+		twist = configMap["twist"];
 	else return false;
 	
 	return true;

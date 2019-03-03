@@ -11,6 +11,7 @@ class bettiPipe : public basePipe {
   private:
 	utils ut;
 	float maxEpsilon;
+	std::string twist;
   public:
 	int dim;
     bettiPipe();

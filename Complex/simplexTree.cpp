@@ -1,93 +1,59 @@
 #include <string>
 #include <vector>
+#include <unistd.h>
 #include <iostream>
 #include "simplexTree.hpp"
 
-simplexTree::simplexTree(std::vector<std::vector<double>> _distMatrix){
+simplexTree::simplexTree(double _maxEpsilon, std::vector<std::vector<double>> _distMatrix, int _maxDim){
 	indexCounter = 0;
 	distMatrix = _distMatrix;
-	return;
-}
-
-
-// simplexTree constructor
-simplexTree::simplexTree(double _maxEpsilon, std::vector<std::vector<double>> _distMatrix){
-	indexCounter = 0;
-	distMatrix = _distMatrix;
-	
-	simplexType="simplexTree";
+	maxDim = _maxDim;
 	maxEpsilon = _maxEpsilon;
-	
-}
-
-void simplexTree::recurse(treeNode* node, int curIndex){
-	//If this node has a child, recurse children first
-	
-	//std::cout << "Check child : " << node->index << std::endl;
-	/*if( node->child != nullptr ){
-		recurse(node->child, curIndex);
-	}
-
-	//std::cout << "Check neighbors: " << node->index << std::endl;
-	//If this node has neighbors (next), recurse neighbors
-	if( node->sibling != nullptr){
-		recurse(node->sibling, curIndex);
-	}
-
-	//Check if this node needs insertion, if so, make a copy and insert
-	if(distMatrix[node->index][curIndex] < maxEpsilon){		
-		
-		treeNode* insNode = new treeNode;
-		treeNode* temp;
-		
-		//std::cout << "\tCreating... " << std::endl;
-		
-		insNode->index = curIndex;
-		
-		//std::cout << "\tCreated new child node..." << std::endl;
-		
-		if(node->child == nullptr && checkParent(node, curIndex)){
-			node->child = insNode;
-			insNode->parent = node;
-			nodeCount++;
-		} else if (checkParent(node,curIndex)) {
-			// Children already exist; iterate until we find empty slot
-			//temp = node->child;
-			while(temp->sibling != nullptr){temp = temp->sibling;};
-			temp->sibling = insNode;	
-			insNode->parent = temp->parent;	
-			nodeCount++;			
-		}	
-	}*/
-	
 	return;
 }
 
-
-bool simplexTree::checkParent(treeNode* node, int curIndex){
-	bool retVal = true;
+void simplexTree::printTree(treeNode* head){
 	
-	if(node->parent != nullptr)
-		retVal = checkParent(node->parent, curIndex);
+	std::cout << "_____________________________________" << std::endl;
 	
-	if(distMatrix[node->index][curIndex] >= maxEpsilon)
-		retVal = false;
+	if(head == nullptr){
+		std::cout << "Empty tree... " << std::endl;
+		return;
+	}
+	
+	treeNode* current;
+	
+	for(int i = 0; i < dimensions.size() ; i++){
+		std::cout << std::endl << "Dim: " << i << std::endl << std::endl;
 		
-	return retVal;
+		current = dimensions[i];
+		
+		do{
+			
+			std::cout << current->index << "," << current << "," << current->parent << "\t";
+			
+		} while(current->sibling != nullptr && (current = current->sibling) != nullptr);
+		
+		std::cout << std::endl;
+	}
 	
+	std::cout << "_____________________________________" << std::endl;
+	return;
 }
+	
+	
 
 // Insert a node into the tree
 //		
 void simplexTree::insert(std::vector<double>) {
 	std::cout << "Insert Node - Index: " << indexCounter << "\tNode Count: " << nodeCount << "\tSize: " << getSize() << std::endl;
 	
+	//printTree(head);
+	
 	
 	//Create our new node to insert
 	treeNode* curNode = new treeNode;
 	curNode->index = indexCounter;
-	
-	//std::cout << "Created Node" << std::endl;
 	
 	//Check if this is the first node (i.e. head)
 	//	If so, initialize the head node
@@ -99,19 +65,7 @@ void simplexTree::insert(std::vector<double>) {
 		dimensions.push_back(head);
 		
 		return;
-	} else if (dimensions.size() ==1){
-		head->child = curNode;
-		curNode->parent = head;
-		
-		std::cout << "HEAD: " << head << std::endl;
-		std::cout << "CurNode: " << curNode << std::endl;
-		std::cout << "curNodeParent: " << curNode->parent << std::endl;
-		indexCounter++;
-		nodeCount++;
-		dimensions.push_back(curNode);
-		return;
 	}
-		
 		
 		
 	// This needs to be a recursive span -> (or not!)
@@ -129,85 +83,78 @@ void simplexTree::insert(std::vector<double>) {
 	//	        /           \
 	//d3 --> | 2 | 3 |     | 4 | 5 |
 	//
-	
 
-	// For each node, check if the current node is inserted anywhere
-		
-	//std::cout << "recursing... " << head->index << std::endl;	
-	//recurse(head, indexCounter);
 	
-	std::cout << "Test: " << dimensions.size() << std::endl;
-	
-	//Loop each dimensional list
-	for(int i = dimensions.size() - 1; i > 0; i--){
-		std::cout << "a " << i << "\t" << dimensions[i] << std::endl;
-		//Loop each sibling in the dimensional list
+	//Loop each dimensional list; start at dn, then dn-1, ..., d0
+	for(int i = (dimensions.size()-1 < maxDim ? dimensions.size() - 1 : maxDim); i >= 0; i--){
 		
-		treeNode* prevNode = nullptr;
+		
+		
+		//Loop each sibling in the current dimensional list (as a do-while, break when no more siblings)
 		curNode = dimensions[i];
 		do{
-			
-			std::cout << "b" << std::endl;
 			//Determine if the index needs to inserted below the current node
-			bool ins = true;
-			treeNode* parentNode = curNode;
+			//	First, check the distance matrix for curNodeIndex v. curIndex
+			//	Second (if first is true), check all parents dist matrix of parentNodeIndex v. curIndex
+			//astd::cout << "TEST: " << i << std::endl;
+			if(distMatrix[curNode->index][indexCounter] < maxEpsilon){
+				//	This node is a candidate, now we need to check each parent of the current branch
+				//		to ensure the distance matrix entry for parentNodeindex v. curIndex is < maxEpsilon
+
+				bool ins = true;
+				treeNode* parentNode = curNode; //Temporarily store the parent so we don't lose track of our current
 			
-			do{
-				if(distMatrix[parentNode->index][indexCounter] > maxEpsilon){
-					ins = false;
-					std::cout << "weight > maxE" << std::endl;
-					break;
-				}	
-				parentNode = parentNode->parent;
+				// This loop will check each parent and set whether to insert a node
+				do{
+					if(distMatrix[parentNode->index][indexCounter] > maxEpsilon){
+						ins = false;
+					}	
+				}while(ins && parentNode->parent != nullptr && (parentNode = parentNode->parent) != nullptr);
 				
-			}while(ins && parentNode != head);
-			std::cout << "c" << std::endl;
-			
-			if(ins){
-				//Add the node to the list
-				treeNode* insNode = new treeNode;
-				insNode->parent = curNode;
-				insNode->index = indexCounter;
-				
-				std::cout << "d" << std::endl;
-				//If no nodes currently exist at the list level
-				if(i == dimensions.size() - 1){
-					dimensions.push_back(insNode);
-					curNode->child = insNode;				
-				} else if(curNode->child == nullptr){
-					std::cout << "e" << std::endl;
-					//Current node has no children
-					curNode->child = insNode;
+				//Insert the node; the distance to each parent is less than epsilon
+				if(ins){
+					//Allocate a new node to be inserted into the tree
+					treeNode* insNode = new treeNode;
 					
-					std::cout << "f" << std::endl;
-					//Insert into the previous subnode
-					if(prevNode != nullptr){
+					//This new node's parent is the current node we're indexing on
+					insNode->parent = curNode;
+					insNode->index = indexCounter;
+					insNode-> sibling = nullptr;
+				
+					//Check the dimensional list
+					//	if no nodes exist at the dimension, this is the first
+					if(i == dimensions.size() - 1){
+						dimensions.push_back(insNode);				
+					
+					//	Nodes currently exist at the dimension, insert as a sibling
+					//		This should be inserted with nodes of the same parent
+					} else {
+						treeNode* iterateNode = dimensions[i+1];
+						ins = false; //Store if we've inserted this node while looping through siblings
 						
-						prevNode = prevNode->child;
-						std::cout << "g2" << std::endl;
-						while(prevNode->sibling != nullptr && (prevNode = prevNode->sibling) != nullptr){
-							//std::cout << prevNode << "\t";
+						//Loop through dimensional node siblings
+						do{
+								//Check if we've found parent nodes...
+								if(iterateNode->parent == insNode->parent){
+									ins = true;
+									
+									//perform an insertion of the node...
+									insNode->sibling = iterateNode->sibling;
+									iterateNode->sibling = insNode;
+									
+									nodeCount++;
+								}
+						} while(!ins && iterateNode->sibling != nullptr && (iterateNode = iterateNode->sibling) != nullptr);
+							
+						// Check if we successfully inserted a node; if not, insert to end
+						if(!ins){
+							iterateNode->sibling = insNode;
 						}
 					}
-					std::cout << "g1" << std::endl;
-					prevNode->sibling = insNode;
-					
-					//Add the next subnode
-					if((curNode = curNode->sibling) != nullptr){
-						insNode->sibling = curNode->child;				
-					}
-				} else {
-					treeNode* temp = curNode->child;
-					treeNode* temp_prev = temp;
-					while( temp->sibling != nullptr && (temp_prev = temp)  &&  (temp = temp->sibling) && temp->sibling->parent == curNode);
-					std::cout << "e2" << std::endl;
-					temp_prev->sibling = insNode;
-					insNode->sibling = temp;
 				}
 			}			
 			
-			prevNode = curNode;
-		}while(curNode->sibling != nullptr && (curNode = curNode->sibling));
+		}while(curNode->sibling != nullptr && (curNode = curNode->sibling) != nullptr);
 	}
 	
 	
@@ -216,9 +163,15 @@ void simplexTree::insert(std::vector<double>) {
 	//std::cout << "Adding neighbor..." << std::endl;
 	
 	//Insert into the right of the tree
-	treeNode* temp = head;
-	while(temp->sibling != nullptr){temp = temp->sibling;};
-	temp->sibling = curNode;	
+	treeNode* temp = dimensions[0];
+	treeNode* ins = new treeNode();
+	while(temp->sibling != nullptr && (temp = temp->sibling) != nullptr);
+	ins->index = indexCounter;
+	ins->sibling = nullptr;
+	ins->parent = nullptr;
+	temp->sibling = ins;
+	
+	
 	nodeCount++;
 	
 	indexCounter++;
@@ -230,82 +183,18 @@ void simplexTree::insert(std::vector<double>) {
 // Iterative function to search for a key in the tree. The function returns true
 // if the key is found, else it returns false.
 bool simplexTree::search(std::string key){
-	
-	// Return false if the tree is empty.
-	if (this == nullptr)
-		return false;
 
-	simplexTree* present = this;
-
-	for (int i = 0; i < key.length(); i++) {
-		// Go to the next node.
-		present = present->character[key[i]];
-
-		// If the key queried for is invalid, i.e. if the end of the tree is reached
-		if (present == nullptr)
-			return false;
-	}
-
-	// If the current node is a leaf and we have reached the end of the string, return true.
-	return present->isLeaf;
 
 }
 
 
 // The following function returns true if a given node has a child.
 bool simplexTree::haveChild(simplexTree const* present) {
-	for (int i = 0; i < MAX_POINTS; i++)
-		if (present->character[i])
-			return true;    // Child found.
 
-	return false;
 }
 
 // A recursive function to delete a simplex from the tree.
 bool simplexTree::deletion(simplexTree*& present, std::string key) {
-
-	// Return if the tree is empty
-	if (present == nullptr)
-		return false;
-
-	// If the end of the key is not reached.
-	if (key.length()) {
-		// recursively search for the node corresponding to the next character
-		// in the key and if it returns true, delete current node given it is a non-leaf node.
-		if (present != nullptr &&
-				present->character[key[0]] != nullptr &&
-				deletion(present->character[key[0]], key.substr(1)) &&
-				present->isLeaf == false) {
-
-			if (!haveChild(present)) {
-				delete present;
-				present = nullptr;
-				return true;
-			} else {
-				return false;
-			}
-		}
-	}
-
-	// If the end of the key is reached
-	if (key.length() == 0 && present->isLeaf) {
-		// If the current node is a leaf node and doesn't have any child
-		if (!haveChild(present)) {
-			// Delete the current node.
-			delete present;
-			present = nullptr;
-
-			// Delete the non-leaf parent nodes.
-			return true;
-		} else {
-			// Mark current node as a non-leaf node (it is not deleted).
-			present->isLeaf = false;
-
-			// Its parent nodes are not deleted.
-			return false;
-		}
-	}
-
 	return false;
 }
 

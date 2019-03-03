@@ -5,8 +5,8 @@
 #include "pipePacket.hpp"
 
 // pipePacket constructor, currently no needed information for the class constructor
-pipePacket::pipePacket(const std::string& simplexType, const double epsilon){
-	simplexBase *bs = new simplexBase(epsilon);
+pipePacket::pipePacket(const std::string& simplexType, const double epsilon, const int maxDim){
+	simplexBase *bs = new simplexBase(epsilon, maxDim);
 	workData.complex = bs->newSimplex(simplexType);
 }
 

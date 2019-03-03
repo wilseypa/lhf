@@ -7,8 +7,9 @@
 #include "simplexArrayList.hpp"
 
 simplexBase::simplexBase(){return;}
-simplexBase::simplexBase(double maxE){
+simplexBase::simplexBase(double maxE, int maxDim){
 	maxEpsilon = maxE;	
+	maxDimension = maxDim;	
 }
 
 void simplexBase::setDistanceMatrix(std::vector<std::vector<double>> _distMatrix){
@@ -21,7 +22,7 @@ simplexBase* simplexBase::newSimplex(const std::string &simplexT){
 	simplexType = simplexT;
 	
 	if(simplexType == "simplexTree"){
-		return new simplexTree(maxEpsilon, distMatrix);
+		return new simplexTree(maxEpsilon, distMatrix, maxDimension);
 	} else if (simplexType == "simplexArrayList"){	
 		return new simplexArrayList(maxEpsilon, distMatrix);
 	}

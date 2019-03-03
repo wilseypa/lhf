@@ -1,15 +1,11 @@
 #pragma once
 #include "simplexBase.hpp"
 
-// Define the maximum number of points whose corresponding simplices can be stored
-// in the simplex tree.
-#define MAX_POINTS 2000
-
 // Header file for simplexTree class - see simplexTree.cpp for descriptions
 
 class simplexTree : public simplexBase {
   private:
-  
+	int maxDim;
 	struct treeNode{
 		int index;
 		treeNode* child = nullptr;
@@ -25,14 +21,12 @@ class simplexTree : public simplexBase {
   
   public:
 	simplexTree(std::vector<std::vector<double>>);
-	simplexTree(double, std::vector<std::vector<double>>);
+	simplexTree(double, std::vector<std::vector<double>>, int);
 	
 	bool isLeaf;
-	bool checkParent(treeNode*, int);
-	simplexTree* character[MAX_POINTS];
 	
-	void recurse(treeNode*, int);
 	double getSize();
+	void printTree(treeNode*);
 
 	// At this time, let's just assume that each simplex is labeled by a key that
 	// can, in general, be considered as a string.

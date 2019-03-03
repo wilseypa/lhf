@@ -7,10 +7,11 @@ class simplexBase {
   public:
 	std::string simplexType;
 	simplexBase();
-	simplexBase(double);
+	simplexBase(double, int);
 	void setDistanceMatrix(std::vector<std::vector<double>> _distMatrix);
 	simplexBase* newSimplex(const std::string &simplexT);
 	double maxEpsilon;
+	int maxDimension;
 	std::vector<std::vector<double>> distMatrix;
 	std::vector<std::vector<std::vector<unsigned>>> weightedGraph;
 	std::vector<double> weights;	
