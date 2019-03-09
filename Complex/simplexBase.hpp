@@ -1,4 +1,5 @@
 #pragma once
+#include <set>
 
 // Header file for simplexBase class - see simplexTree.cpp for descriptions
 
@@ -16,12 +17,12 @@ class simplexBase {
 	std::vector<std::vector<std::vector<unsigned>>> weightedGraph;
 	
 	virtual double getSize();
-	virtual void insert(std::vector<double>);
+	virtual void insert(std::vector<double>&);
 	virtual void find(std::vector<double>);
 	virtual int simplexCount();
 	virtual int vertexCount();
 	virtual std::vector<std::vector<unsigned>> getEdges(int,double);
-	virtual std::vector<std::vector<std::vector<unsigned>>> getAllEdges(double);
+	virtual std::vector<std::vector<std::pair<std::set<unsigned>, double>>> getAllEdges(double);
 	virtual void outputSimplex();
 	virtual void expandDimensions(int);
 };

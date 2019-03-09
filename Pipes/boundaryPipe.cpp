@@ -208,7 +208,7 @@ pipePacket boundaryPipe::runPipe(pipePacket inData){
 	std::vector<int> bettiNumbers;
 	std::vector<float> lifeSpans[dim];
 	
-	std::vector<std::vector<std::vector<unsigned>>> edges;
+	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges;
 	
 	//Retrieve
 	auto local_weights = inData.weights;
@@ -238,14 +238,14 @@ pipePacket boundaryPipe::runPipe(pipePacket inData){
 				//Get the reduced boundary matrix
 				std::pair<std::vector<std::vector<unsigned>>,std::pair<int,int>>  bound_rank_nul;
 				
-				if(d == 0)
-					bound_rank_nul = boundaryMatrix({}, edges[d]);
-				else
-					bound_rank_nul = boundaryMatrix(edges[d-1], edges[d]);
+				//if(d == 0)
+				//	bound_rank_nul = boundaryMatrix({}, edges[d]);
+				//else
+				//	bound_rank_nul = boundaryMatrix(edges[d-1], edges[d]);
 				
 				if(d > 1){
 					std::cout <<"Extracting boundaries..." << std::endl;
-					std::vector<std::vector<unsigned>> z = extractBoundaries(edges[d-1], bound_rank_nul.first, bound_rank_nul.second.second);
+					/*std::vector<std::vector<unsigned>> z = extractBoundaries(edges[d-1], bound_rank_nul.first, bound_rank_nul.second.second);
 					
 					std::cout << "\n\n______________BOUNDARIES (" << std::to_string(z.size()) << ")_______________" << std::endl;
 					
@@ -261,7 +261,7 @@ pipePacket boundaryPipe::runPipe(pipePacket inData){
 							if(ut.setIntersect(bound, curBound, true).size() > bound.size())
 								allBoundaries.push_back(bound);
 						}
-					}
+					}*/
 				}
 				
 				auto rank_nul = bound_rank_nul.second;

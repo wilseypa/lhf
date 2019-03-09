@@ -1,10 +1,14 @@
 #pragma once
 #include "simplexBase.hpp"
+#include <set>
 
 // Header file for pipePacket class - see pipePacket.cpp for descriptions
 
 class pipePacket {
   private:
+  
+  
+  
   public:
 	pipePacket(const std::string &, const double, const int);
 	std::string stats;
@@ -17,7 +21,7 @@ class pipePacket {
 	} workData;
 	
 	std::vector<std::vector<unsigned>> boundaries;
-	std::vector<double> weights;	
+	std::set<double, std::greater<double>> weights;	
 	std::string bettiOutput;
 	
 	double getSize();	

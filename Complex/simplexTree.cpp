@@ -6,12 +6,70 @@
 #include "simplexTree.hpp"
 #include "utils.hpp"
 
+bool sortBySecond(const std::pair<std::set<unsigned>, double> &a, const std::pair<std::set<unsigned>, double> &b){
+	return (a.second > b.second);
+}
+	
+
 simplexTree::simplexTree(double _maxEpsilon, std::vector<std::vector<double>> _distMatrix, int _maxDim){
 	indexCounter = 0;
 	distMatrix = _distMatrix;
 	maxDim = _maxDim;
 	maxEpsilon = _maxEpsilon;
 	simplexType = "simplexTree";
+	return;
+}
+
+void simplexTree::recurseInsert(treeNode* node, unsigned curIndex, int depth, double maxE, std::set<unsigned> simp){
+	utils ut;
+	//Incremental insertion
+	//Recurse to each child (which we'll use the parent pointer for...)
+	treeNode* temp;
+	
+	double curE = distMatrix[node->index][indexCounter];
+	curE = curE > maxE ? curE : maxE;
+	
+	
+	//Check if the node needs inserted at this level
+	if(curE < maxEpsilon){
+		treeNode* insNode = new treeNode();
+		insNode->index = curIndex;
+		nodeCount++;
+		simp.insert(node->index);
+		
+		//Get the largest weight of this simplex
+		maxE = curE > node->weight ? curE : node->weight;
+		insNode->weight = maxE;
+		
+		//if depth (i.e. 1 for first iteration) is LT weightGraphSize (starts at 1)
+		//std::cout << "WEG: " << weightEdgeGraph.size() << "\t" << simp.size() << "\t" << maxDim << std::endl;
+		
+		if(weightEdgeGraph.size() < simp.size()){
+			std::vector<std::pair<std::set<unsigned>,double>> tempWEG;
+			tempWEG.push_back(std::make_pair(simp, maxE));
+			weightEdgeGraph.push_back(tempWEG);
+		} else {
+			weightEdgeGraph[simp.size() - 1].push_back(std::make_pair(simp, maxE));
+		}
+		
+		//Check if the node has children already... (remember parent == child for incremental)
+		if(node->parent == nullptr){
+			node->parent = insNode;
+			
+		} else {
+			insNode->sibling = node->parent;
+			node->parent = insNode;
+			
+			temp = insNode->sibling;
+			//Have to check the children now...
+			if(simp.size() <= maxDim){
+				do {
+					recurseInsert(temp, curIndex, depth + 1, maxE, simp);
+				} while(temp->sibling != nullptr && (temp = temp->sibling) != nullptr);
+			}
+		}
+	}
+		
 	return;
 }
 
@@ -44,57 +102,19 @@ void simplexTree::printTree(treeNode* head){
 	return;
 }
 	
-	
-
-// Insert a node into the tree
-//		
-void simplexTree::insert(std::vector<double>) {
-	
+void simplexTree::insertInductive(){
 	//Create our new node to insert
 	treeNode* curNode = new treeNode;
 	curNode->index = indexCounter;
 	
-	//Check if this is the first node (i.e. head)
-	//	If so, initialize the head node
-	if(head == nullptr){		
-		head = curNode;
-		indexCounter++;
-		nodeCount++;
-		dimensions.push_back(head);
-		
-		return;
-	}
-		
-		
-	// This needs to be a recursive span -> (or not!)
-	//		if the node has a child, recurse
-	//		if the node has a sibling, recurse
-	//
-	//d0 -->          ({!})
-	//			       /
-	//			      /
-	//d1 -->	   | 0 | 1 | ... |
-	//		        /
-	//             /
-	//d2 -->    | 1 | 2 | 3 | 
-	//           /         \
-	//	        /           \
-	//d3 --> | 2 | 3 |     | 4 | 5 |
-	//
-
-	
-	//Loop each dimensional list; start at dn, then dn-1, ..., d0
+	//Loop each dimensional list; start at dn, then dn-1, ..., d0 (OLD WAY, INDUCTIVE VR)
 	for(int i = (dimensions.size()-1 < maxDim ? dimensions.size() - 1 : maxDim); i >= 0; i--){
-		
-		
-		
 		//Loop each sibling in the current dimensional list (as a do-while, break when no more siblings)
 		curNode = dimensions[i];
 		do{
 			//Determine if the index needs to inserted below the current node
 			//	First, check the distance matrix for curNodeIndex v. curIndex
 			//	Second (if first is true), check all parents dist matrix of parentNodeIndex v. curIndex
-			//astd::cout << "TEST: " << i << std::endl;
 			if(distMatrix[curNode->index][indexCounter] < maxEpsilon){
 				//	This node is a candidate, now we need to check each parent of the current branch
 				//		to ensure the distance matrix entry for parentNodeindex v. curIndex is < maxEpsilon
@@ -117,7 +137,7 @@ void simplexTree::insert(std::vector<double>) {
 					//This new node's parent is the current node we're indexing on
 					insNode->parent = curNode;
 					insNode->index = indexCounter;
-					insNode-> sibling = nullptr;
+					insNode->sibling = nullptr;
 				
 					//Check the dimensional list
 					//	if no nodes exist at the dimension, this is the first
@@ -155,20 +175,84 @@ void simplexTree::insert(std::vector<double>) {
 		}while(curNode->sibling != nullptr && (curNode = curNode->sibling) != nullptr);
 	}
 	
+	return;
+}
+
+
+// Insert a node into the tree
+//		
+void simplexTree::insert(std::vector<double>&) {
 	
+	//Create our new node to insert
+	treeNode* curNode = new treeNode;
+	curNode->index = indexCounter;
+	
+	std::set<unsigned> tempSet = {curNode->index};
+	
+	//Check if this is the first node (i.e. head)
+	//	If so, initialize the head node
+	if(head == nullptr){		
+		head = curNode;
+		indexCounter++;
+		nodeCount++;
+		dimensions.push_back(head);
+		
+		std::vector<std::pair<std::set<unsigned>,double>> tempWEG;
+		tempWEG.push_back(std::make_pair(tempSet, 0));
+		weightEdgeGraph.push_back(tempWEG);
+		
+		return;
+	}
+		
+		
+	// This needs to be a recursive span -> (or not!)
+	//		if the node has a child, recurse
+	//		if the node has a sibling, recurse
+	//
+	//d0 -->          ({!})
+	//			       /
+	//			      /
+	//d1 -->	   | 0 | 1 | ... |
+	//		        /
+	//             /
+	//d2 -->    | 1 | 2 | 3 | 
+	//           /         \
+	//	        /           \
+	//d3 --> | 2 | 3 |     | 4 | 5 |
+	//
+
+	treeNode* temp = dimensions[0];
+	
+	
+	
+	//Now let's do it the new way - incremental VR;
+	//	Start at the first dimension (d0);
+	//		if e (d0, dn) < eps
+	//			recurse down tree
+	//				recurse	
+	//			insert to current
+	//	iterate to d0->sibling
+	
+	
+	
+	do{
+		recurseInsert(temp, indexCounter, 0, 0, tempSet);
+	
+	
+	}while(temp->sibling != nullptr && (temp = temp->sibling) != nullptr);
 	
 	
 	//std::cout << "Adding neighbor..." << std::endl;
 	
 	//Insert into the right of the tree
-	treeNode* temp = dimensions[0];
+	temp = dimensions[0];
 	treeNode* ins = new treeNode();
 	while(temp->sibling != nullptr && (temp = temp->sibling) != nullptr);
 	ins->index = indexCounter;
 	ins->sibling = nullptr;
 	ins->parent = nullptr;
 	temp->sibling = ins;
-	
+	weightEdgeGraph[0].push_back(std::make_pair(tempSet, 0));
 	
 	nodeCount++;
 	
@@ -212,55 +296,15 @@ double simplexTree::getSize(){
 }
 
 
-std::vector<std::vector<std::vector<unsigned>>> simplexTree::getAllEdges(double epsilon){
-	std::vector<std::vector<std::vector<unsigned>>> edgeGraph;
-	utils ut;
-
-	//Iterate through each dimension and build the edge graph
-	//	Prune any simplices where the maximum edge is greater than epsilon
-	for(int i = dimensions.size()-1; i >= 0; i--){
-		
-		//Store the current dimensional graph and a temporary node to iterate with
-		std::vector<std::vector<unsigned>> dimGraph;
-		treeNode* curNode = dimensions[i];
-		
-		//Iterate each sibling of the dimension
-		do{
-			std::vector<unsigned> curSimplex;
-			curSimplex.push_back(curNode->index);
-			
-			//Check if parents, etc. are still less than epsilon
-			bool rem = false;
-			if(curNode->parent != nullptr){
-				treeNode* parentNode = curNode->parent;
-				
-				do{
-					if(distMatrix[parentNode->index][curNode->index] > epsilon){
-						rem = true;
-					}
-					curSimplex.insert(curSimplex.begin(), parentNode->index);
-				}while(!rem && parentNode->parent != nullptr && (parentNode = parentNode->parent) != nullptr);
-					
-			}
-			//Remove the node...
-			if(rem){
-			
-			
-			//Otherwise, add the simplex to our dimensional graph
-			} else {
-				
-				if(std::find(dimGraph.begin(), dimGraph.end(), curSimplex) == dimGraph.end())		
-					dimGraph.push_back(curSimplex);
-			}			
-			
-		} while (curNode->sibling != nullptr && (curNode = curNode->sibling) != nullptr);
-		
-		//Push the dimensional graph into the returned edges
-		edgeGraph.insert(edgeGraph.begin(), dimGraph);
-		
+std::vector<std::vector<std::pair<std::set<unsigned>,double>>> simplexTree::getAllEdges(double epsilon){
+	
+	if(!isSorted){
+		for (int i = 0; i < weightEdgeGraph.size(); i++)
+			std::sort(weightEdgeGraph[i].begin(), weightEdgeGraph[i].end(), sortBySecond);
+		isSorted = true;
 	}
 	
-	return edgeGraph;
+	return weightEdgeGraph;
 }
 
 

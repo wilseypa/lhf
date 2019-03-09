@@ -49,6 +49,18 @@ int bettiPipe::checkFace(std::vector<unsigned> face, std::vector<unsigned> simpl
 		return 0;
 }
 
+// Check if a face is a subset of a simplex
+int bettiPipe::checkFace(std::set<unsigned> face, std::set<unsigned> simplex){
+	
+	if(simplex.size() == 0)
+		return 1;
+	else if(ut.symmetricDiff(face,simplex,false).size() == 1){
+		return 1;
+	}
+	else
+		return 0;
+}
+
 // Reduce the binary boundary matrix
 std::pair<int,int> bettiPipe::reduceBoundaryMatrix(std::vector<std::vector<unsigned>> boundaryMatrix){
 	std::vector<std::vector<unsigned>> ret;
@@ -82,25 +94,15 @@ std::pair<int,int> bettiPipe::reduceBoundaryMatrix(std::vector<std::vector<unsig
 					}
 					j += 1;
 				}			
-				
-				/*for(int a = 0; a < ret.size(); a++){
-					//xor the returned rows
-					if (ret[a][i] == 1){
-						for(unsigned d = 0; d < ret[a].size(); d++)
-							ret[a][d] = (ret[a][d] ^ tempRow[d]);
-					}					
-				}
-				ret.push_back(tempRow);*/
 			}
 		}
 	}
-
+	
 	if(boundaryMatrix.size() > 0){
 		for (auto a : boundaryMatrix){
 			ret.push_back(a);
 		}
-	}
-	
+	}	
 	return std::make_pair(rank, (ret[0].size() - rank));
 }
 
@@ -152,9 +154,9 @@ std::pair<std::queue<unsigned>,std::pair<int,int>> bettiPipe::reduceBoundaryMatr
 			}
 		}
 	}
+	
 	return std::make_pair(pivots, std::make_pair(rank, (invNul - rank)));
 }
-
 
 
 // Get the boundary matrix from the edges
@@ -212,19 +214,128 @@ std::pair<std::queue<unsigned>, std::pair<int,int>> bettiPipe::getRank(std::vect
 
 	std::vector<std::vector<unsigned>> boundary;
 
-	//Create the rows (nChain)
-	for(unsigned i = 0; i < nChain.size(); i++){
-		std::vector<unsigned> bDim;
-		
-		//Create the columns (pChain)
-		for(unsigned j = 0; j < pChain.size(); j++){
-			bDim.push_back(checkFace(nChain[i], pChain[j]));
-		}
-		boundary.push_back(bDim);
-	}	
+	
 	
 	//Reduce the boundary matrix
 	return std::make_pair(temp, reduceBoundaryMatrix(boundary));
+}
+
+std::pair<std::queue<unsigned>, std::pair<int,int>> bettiPipe::removeSimplices(std::vector<std::pair<std::set<unsigned>,double>> &dimEdges, std::vector<std::vector<unsigned>> &dimBoundary, double epsilon, std::queue<unsigned> &pivots, std::pair<int, int> &lastRankNull){
+	//Determine if there are simplices to remove from this dimension at the new epsilon
+	//		If there are, update the edges and boundary matrix for the dimension; return true (as in recompute)
+	//		Otherwise return false; no update is needed
+	std::queue<unsigned> retPivots;
+	std::pair<std::queue<unsigned>, std::pair<int,int>> ret;
+	
+	//This is the first iteration, don't want to remove anything and not worth iterating
+	if(epsilon == maxEpsilon){
+		if(twist == "true"){
+			return reduceBoundaryMatrixRev(dimBoundary);
+		} else {
+			//Not using pivots
+			return std::make_pair(retPivots, reduceBoundaryMatrix(dimBoundary));
+		}
+	}
+	
+	//Store the edges to remove to prevent inconsistencies when indexing
+	std::vector<std::pair<std::set<unsigned>,double>> remEdges;
+	
+	//Track the number of removed items for consistency when indexing
+	int removedItems = 0;
+	
+	//Iterate through each of the edges, looking for anything cut off by epsilon
+	//		these entries should be sorted desc by weight
+	for(int i = 0; i < dimEdges.size(); i++){
+		
+		//If we've reached edges that remain
+		if(dimEdges[i].second <= epsilon)
+			break;
+			
+		remEdges.push_back(dimEdges[i]);
+		removedItems++;		
+	}
+	
+	//Remove the edges from the boundary matrix
+	if(twist == "true"){
+		if(removedItems > 0){
+			//When twisted, remove the rows (from start to # of removed items)
+			dimBoundary.erase(dimBoundary.begin(), dimBoundary.begin() + removedItems);
+			
+			ret = reduceBoundaryMatrixRev(dimBoundary);
+		} else {
+			ret = std::make_pair(retPivots, lastRankNull);
+		}
+			
+	} else {
+		if(removedItems > 0){
+			//Otherwise remove the columns (from start to # of removed items)
+			for (int i = 0; i < dimBoundary.size(); i++)
+				dimBoundary[i].erase(dimBoundary[i].begin(), dimBoundary[i].begin() + removedItems);
+				
+			ret = std::make_pair(retPivots, reduceBoundaryMatrix(dimBoundary));
+		} else {
+			
+			ret = std::make_pair(retPivots, lastRankNull);
+		}
+			
+	}
+	//Remove the edges from the edge list
+	dimEdges.erase(dimEdges.begin(), dimEdges.begin() + removedItems);
+	
+	return ret;
+	
+}
+
+std::vector<std::vector<std::vector<unsigned>>> bettiPipe::createBoundaryMatrix(std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges){
+	std::vector<std::vector<std::vector<unsigned>>> boundary;
+	
+	//Iterate through each dimensional graph...
+	for(int d = edges.size()-1; d >= 0; d--){
+		std::vector<std::vector<unsigned>> tempBoundary;
+		
+		//Setup p-chains and n-chains
+		std::vector<std::pair<std::set<unsigned>,double>> nChain;
+		std::vector<std::pair<std::set<unsigned>,double>> pChain = edges[d];
+		
+		
+		if(d == 0)
+			nChain = {};
+		else
+			nChain = edges[d-1];
+			
+			
+		//Decide if we're going to twist or not; changes orientation of the boundary matrix
+		if(twist == "true"){
+		
+			//Create the columns (pChain) PIVOTED!
+			for(unsigned i = 0; i < pChain.size(); i++){
+				std::vector<unsigned> tempVector(nChain.size(), 0);
+				
+				//Create the rows (nChain)
+				for(unsigned j = 0; j < nChain.size(); j++){
+					tempVector[j] = (checkFace(nChain[j].first, pChain[i].first));
+				}
+				tempBoundary.push_back(tempVector);	
+			}
+		} else {
+			//Create the rows (nChain)
+			for(unsigned i = 0; i < nChain.size(); i++){
+			std::vector<unsigned> bDim;
+			
+				//Create the columns (pChain)
+				for(unsigned j = 0; j < pChain.size(); j++){
+					bDim.push_back(checkFace(nChain[i].first, pChain[j].first));
+				}
+				tempBoundary.push_back(bDim);
+			}	
+		}
+
+		
+		boundary.insert(boundary.begin(),tempBoundary);
+		
+	}
+
+	return boundary;
 }
 
 
@@ -249,63 +360,68 @@ pipePacket bettiPipe::runPipe(pipePacket inData){
 	std::vector<bettiDef_t> bettis;
 	
 	
-	std::vector<int> bettiNumbers;
+	std::vector<int> bettiNumbers (dim,0);
 	std::vector<float> lifeSpans[dim];
 	
-	std::vector<std::vector<std::vector<unsigned>>> edges;
+	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges = inData.workData.complex->getAllEdges(maxEpsilon);
+	std::vector<std::vector<std::vector<unsigned>>> dimBoundaries = createBoundaryMatrix(edges);
+	std::queue<unsigned> dimPivots[dim+1];
+	
+	std::pair<int, int> dimRankNull[dim+2];
+	std::fill_n(dimRankNull, dim+1, std::make_pair(0,0));
 	
 	//Retrieve
 	auto local_weights = inData.weights;
 	std::string barcodes;
-	for(int d2 = 0; d2 <= dim; d2++){
-		bettiNumbers.push_back(0);
-	}
 	
-	std::string bettiOutput[] = {"Epsilon\t\tDim\tBD\tBetti\trank\tnullity\tlRank\tlNul\n","Epsilon\t\tDim\tBD\tBetti\trank\tnullity\tlRank\tlNul\n","Epsilon\t\tDim\tBD\tBetti\trank\tnullity\tlRank\tlNul\n"};
+	std::string bettiOutput[dim+1];
+	std::fill_n(bettiOutput, dim+1, "Epsilon\t\tDim\tBD\tBetti\trank\tnullity\tlRank\tlNul\n");
 	
 	double epsilon = 0;
 	
 	//For each edge
 	for(auto eps : local_weights){
 		//Reload the buffers with the current edges
-		edges = inData.workData.complex->getAllEdges(eps);
+		//	note - this is no longer controlled from the complex structure;
+		//
+		//	Instead, we should look at the previous boundaries (dn, ...., d0) 
+		//		for changes; if the weight is < epsilon for a dimension we need
+		//		to recompute the boundaries (but only remove a feature; don't 
+		//		recreate the boundary matrix from scratch)
+		//
+		//	To do this, store each boundary matrix locally; pass by reference
+		//		to the rank function if the boundary matrix has changed
 		
 		//Get the weights (increasing order)
 		//Check if we've already processed or not
 		if(epsilon != eps){
 			epsilon = eps;
+			
 			auto last_rank_nul = std::make_pair(0,0);
 			std::queue<unsigned> pivots;
 			//Iterate through each dimension to build boundary matrix
 			for(int d = dim; d >= 0; d--){
-				
-				//Get the reduced boundary matrix
-				std::pair<int, int> rank_nul;
+				//If this is true, the rank/nullity of the dimension needs
+				//	to be recalculated; the boundary matrix has changed!
 				std::pair<std::queue<unsigned>, std::pair<int,int>> retVal;
+				
 				if(d == 0)
-					retVal = getRank({}, edges[d], pivots);
-				else if(d == dim)
-					retVal = getRank(edges[d-1], edges[d], pivots);
+					retVal.second = std::make_pair(0, 6);
 				else
-					retVal = getRank(edges[d-1], edges[d], pivots);
+					retVal = removeSimplices(edges[d], dimBoundaries[d], epsilon, dimPivots[d+1], dimRankNull[d]);
 				
-				pivots = retVal.first;
-				rank_nul = retVal.second;
 				
-				if(bettiNumbers[d] != (rank_nul.second- last_rank_nul.first)){
-					bettiNumbers[d] = (rank_nul.second- last_rank_nul.first);
-				}
+				dimRankNull[d] = retVal.second;
+				dimPivots[d] = retVal.first;
 				
 				if(d != dim)
-					bettis.push_back(bettiDef_t {epsilon, d, rank_nul.second - last_rank_nul.first});
+					bettis.push_back(bettiDef_t {epsilon, d, dimRankNull[d].second - dimRankNull[d+1].first});
 				if(debug){
-					bettiOutput[d] += std::to_string(epsilon) + "\t" + std::to_string(d) + "\t" + std::to_string(d-1) + "\t" + std::to_string(rank_nul.second)/* - last_rank_nul.first)*/ + "\t" + std::to_string(rank_nul.first) + "\t" + std::to_string(rank_nul.second) + "\t" + std::to_string(last_rank_nul.first) + "\t" + std::to_string(last_rank_nul.second) + "\n";
-				}
-				last_rank_nul = rank_nul;
+					bettiOutput[d] += std::to_string(epsilon) + "\t" + std::to_string(d) + "\t" + std::to_string(d-1) + "\t" + std::to_string(dimRankNull[d].second - dimRankNull[d+1].first)/* - last_rank_nul.first)*/ + "\t" + std::to_string(dimRankNull[d].first) + "\t" + std::to_string(dimRankNull[d].second) + "\t" + std::to_string(dimRankNull[d+1].first) + "\t" + std::to_string(dimRankNull[d+1].second) + "\n";
+				}	
 				
 			}
 		}
-
 	}
 	
 	std::string output = "Dim,Birth,Death\n";
@@ -339,9 +455,9 @@ pipePacket bettiPipe::runPipe(pipePacket inData){
 	
 	if(debug){
 		std::cout << "\n\n______________RESULTS_______________" << std::endl;
-		std::cout << bettiOutput[0] << std::endl << std::endl;
-		std::cout << bettiOutput[1] << std::endl << std::endl;
-		std::cout << bettiOutput[2] << std::endl;
+		for(auto z : bettiOutput){
+			std::cout << z << std::endl << std::endl;
+		}
 		std::cout << std::endl << output << std::endl;
 	}
 	
@@ -378,7 +494,7 @@ bool bettiPipe::configPipe(std::map<std::string, std::string> configMap){
 	pipe = configMap.find("epsilon");
 	if(pipe != configMap.end())
 		maxEpsilon = std::atof(configMap["epsilon"].c_str());
-	else return false;
+	else return false;	
 	
 	pipe = configMap.find("twist");
 	if(pipe != configMap.end())

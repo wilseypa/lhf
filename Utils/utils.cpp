@@ -47,6 +47,14 @@ void utils::print1DVector(const std::vector<unsigned>& a){
 	return;
 }
 
+void utils::print1DVector(const std::set<unsigned>& a){
+	for(auto z : a){
+			std::cout << z << ",";
+	}
+	std::cout << "\n";
+	return;
+}
+
 std::vector<double> utils::feature_distance(std::vector<double>* a, std::vector<double>* b){
 	std::vector<double> ret;
 	
@@ -54,7 +62,7 @@ std::vector<double> utils::feature_distance(std::vector<double>* a, std::vector<
 }
 
 double utils::vectors_distance(const double& a, const double& b){
-		return roundf(pow((a-b),2) * 1000) / 1000;
+		return pow((a-b),2);
 }
 
 double utils::vectors_distance(const std::vector<double>& a, const std::vector<double>& b){		
@@ -67,7 +75,7 @@ double utils::vectors_distance(const std::vector<double>& a, const std::vector<d
 	
 		
 	
-		return roundf(sqrt(std::accumulate(temp.begin(), temp.end(), 0.0)) * 1000) / 1000;
+		return sqrt(std::accumulate(temp.begin(), temp.end(), 0.0));
 }
 
 std::vector<unsigned> utils::setIntersect(std::vector<unsigned> v1, std::vector<unsigned> v2, bool isSorted){
@@ -156,6 +164,36 @@ std::vector<unsigned> utils::symmetricDiff(std::vector<unsigned> v1, std::vector
 		sort(v1.begin(), v1.end());
 		sort(v2.begin(), v2.end());
 	}
+	set_symmetric_difference(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(retTemp));
+	
+	/*for(auto iter = v1.begin(); iter!= v1.end(); iter++){
+		std::cout << *iter << ",";
+	}
+	std::cout << "\t";
+	for(auto iter = v2.begin(); iter!= v2.end(); iter++){
+		std::cout << *iter << ",";
+	}
+	std::cout << "\t";
+	for(auto iter = retTemp.begin(); iter!= retTemp.end(); iter++){
+		std::cout << *iter << ",";
+	}
+	std::cout << std::endl;*/
+	
+	return retTemp;
+}
+
+// Find the symmetric difference of two vectors
+std::vector<unsigned> utils::symmetricDiff(std::set<unsigned> v1, std::set<unsigned> v2, bool isSorted){
+	std::vector<unsigned> ret;
+	std::vector<unsigned> retTemp;
+	
+	if(v1 == v2)
+		return ret;
+	
+	//if(!isSorted){
+	//	sort(v1.begin(), v1.end());
+	//	sort(v2.begin(), v2.end());
+//	}
 	set_symmetric_difference(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(retTemp));
 	
 	/*for(auto iter = v1.begin(); iter!= v1.end(); iter++){

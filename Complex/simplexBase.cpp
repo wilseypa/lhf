@@ -36,9 +36,9 @@ std::vector<std::vector<unsigned>> simplexBase::getEdges(int dim, double epsilon
 	return a;
 }
 
-std::vector<std::vector<std::vector<unsigned>>> simplexBase::getAllEdges(double epsilon){
+std::vector<std::vector<std::pair<std::set<unsigned>,double>>> simplexBase::getAllEdges(double epsilon){
 	std::cout << "No get edges function defined for: " << simplexType << std::endl;
-	std::vector<std::vector<std::vector<unsigned>>> a;
+	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> a;
 	return a;
 }
 
@@ -47,7 +47,7 @@ double simplexBase::getSize(){
 	return 0;
 }
 
-void simplexBase::insert(std::vector<double>){
+void simplexBase::insert(std::vector<double>&){
 	std::cout << "No insert function defined for: " << simplexType << std::endl;
 	return;
 }

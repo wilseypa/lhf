@@ -31,7 +31,7 @@ double simplexArrayList::getSize(){
 //		Sequence: 0 , 1 , 3 , 6 , 10 , 15
 //		(AKA very inefficient)
 //
-void simplexArrayList::insert(std::vector<double> vector){
+void simplexArrayList::insert(std::vector<double> &vector){
 	utils ut;
 	
 	//Create a temporary pair to hold the weight and 2-D edge
@@ -114,27 +114,30 @@ std::vector<std::vector<unsigned>> simplexArrayList::getEdges(int dim, double ep
 }
 
 // Wrapper to expose edges
-std::vector<std::vector<std::vector<unsigned>>> simplexArrayList::getAllEdges(double epsilon){
+std::vector<std::vector<std::pair<std::set<unsigned>, double>>> simplexArrayList::getAllEdges(double epsilon){
 	utils ut;
-	std::vector<std::vector<std::vector<unsigned>>> ret;
+	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> ret;
 	
-	for(int dim = 0; dim < weightedGraph.size(); dim++){
+	/*for(int dim = 0; dim < weightedGraph.size(); dim++){
 		
-		std::vector<std::vector<unsigned>> temp;
+		std::vector<std::pair<std::vector<unsigned>, double>> temp;
 		for(int a = 0; a < weightedGraph[dim].size(); a++){
 			if(weightedGraph[dim][a].size() > 0){ 
-			
+				double maxDist = 0;
 				bool isTrue = true;
 				for(int t = 0; t < weightedGraph[dim][a].size(); t++){
 					for(int s = t+1; s < weightedGraph[dim][a].size(); s++){
 						
-						if(distMatrix[weightedGraph[dim][a][t]][weightedGraph[dim][a][s]] > epsilon){
+						double curDist = distMatrix[weightedGraph[dim][a][t]][weightedGraph[dim][a][s]];
+						
+						if(curDist > epsilon){
 							
 							isTrue =false;
 							//weightedGraph[dim].erase(weightedGraph[dim].begin() + a);
 							//weightedGraph[dim].erase(remove(weightedGraph[dim].begin(), weightedGraph[dim].end(), weightedGraph[dim][a]));
 							break;
-						}
+						} else if (curDist > maxDist)
+							maxDist = curDist;
 					}
 					if(!isTrue){
 						break;
@@ -142,12 +145,12 @@ std::vector<std::vector<std::vector<unsigned>>> simplexArrayList::getAllEdges(do
 				}
 				
 				if(isTrue){
-					temp.push_back(weightedGraph[dim][a]);
+					temp.push_back(std::make_pair(weightedGraph[dim][a], maxDist));
 				}
 			}
 		}
 		ret.push_back(temp);
-	}
+	}*/
 	
 	
 	return ret;
