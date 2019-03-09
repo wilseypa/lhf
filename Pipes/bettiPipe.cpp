@@ -406,7 +406,7 @@ pipePacket bettiPipe::runPipe(pipePacket inData){
 				std::pair<std::queue<unsigned>, std::pair<int,int>> retVal;
 				
 				if(d == 0)
-					retVal.second = std::make_pair(0, 6);
+					retVal.second = std::make_pair(0, edges[d].size());
 				else
 					retVal = removeSimplices(edges[d], dimBoundaries[d], epsilon, dimPivots[d+1], dimRankNull[d]);
 				

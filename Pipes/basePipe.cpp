@@ -16,6 +16,7 @@
 #include "ripsPipe.hpp"
 #include "upscalePipe.hpp"
 #include "boundaryPipe.hpp"
+#include "persistencePairs.hpp"
 
 // basePipe constructor
 basePipe::basePipe(){
@@ -37,6 +38,8 @@ basePipe* basePipe::newPipe(const std::string &pipeT){
 		return new upscalePipe();
 	} else if (pipeType == "boundary"){
 		return new boundaryPipe();
+	} else if (pipeType == "persistence"){
+		return new persistencePairs();
 	}
 	
 	return 0;

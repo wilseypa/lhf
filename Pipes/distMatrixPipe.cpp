@@ -42,7 +42,8 @@ pipePacket distMatrixPipe::runPipe(pipePacket inData){
 					//Calculate vector distance 
 					auto dist = ut.vectors_distance(inData.workData.originalData[i],inData.workData.originalData[j]);
 					
-					inData.weights.insert(dist);
+					if(dist < maxEpsilon)
+						inData.weights.insert(dist);
 					distMatrix[i][j] = dist;
 					//temp.push_back(dist);	
 			}
