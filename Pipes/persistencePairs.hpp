@@ -10,7 +10,7 @@
 class persistencePairs : public basePipe {
   private:
 	utils ut;
-	float maxEpsilon;
+	double maxEpsilon;
 	std::string twist;
   public:
 	int dim;
@@ -20,8 +20,8 @@ class persistencePairs : public basePipe {
 	std::vector<std::vector<unsigned>> nSimplices(double, unsigned, std::vector<std::pair<double,std::vector<unsigned>>>);
 	int checkFace(std::vector<unsigned> face, std::vector<unsigned>);
 	int checkFace(std::set<unsigned> face, std::set<unsigned>);
-	void computeIntervals();
-	void removePivotRows();
+	void computeIntervals(std::vector<std::pair<std::set<unsigned>, double>>, std::vector<std::vector<std::pair<double,double>>> &);
+	std::set<unsigned> removePivotRows(std::pair<std::set<unsigned>, double> &);
 	void outputData(pipePacket);
 };
 

@@ -61,7 +61,13 @@ int persistencePairs::checkFace(std::set<unsigned> face, std::set<unsigned> simp
 		return 0;
 }
 
-void persistencePairs::computeIntervals(){
+void persistencePairs::computeIntervals(std::vector<std::pair<std::set<unsigned>, double>> kSimplices, std::vector<std::vector<std::pair<double,double>>> &intervals){
+	struct tArrayEntry_t{
+		bool marked = false;
+		int maxIndex;
+		std::set<unsigned> simplex;
+	};
+		
 	//def ComputeIntervals(K):
 	//for k=0 to dim(K) Lk = 0; {
 	//	for j=0 to m-1 {
@@ -70,7 +76,6 @@ void persistencePairs::computeIntervals(){
 	//		else {
 	//			i = maxindexd; k = dim si;
 	//			store j and d in T[i];
-	//			Lk = Lk U {(deg si, deg sj)}
 	//		}
 	//	}
 	//	for j=0 to m-1 {
@@ -80,11 +85,45 @@ void persistencePairs::computeIntervals(){
 	//	}
 	//}
 	
+	//Create our T-array
+	tArrayEntry_t tArray[kSimplices.size()];
 	
+	std::cout << "total simplices: " << kSimplices.size() << std::endl;
+	
+	
+	int curIndex = 0; //Track our index in the tArray
+	
+	//for k=0 to dim(K) Lk = 0;
+	for(auto simp : kSimplices){													//	for j=0 to m-1 {
+		std::set<unsigned> d = removePivotRows(simp);								//		d = RemovePivotrows(sj)
+		if(d.size() == 0)
+			tArray[curIndex].marked = true;											//		if(d==0) Mark sj
+		else {
+			unsigned i = *d.rbegin();												//			i = maxindexd; k = dim si;
+			auto k = kSimplices[i].first.size();									// !! need to get kSimplices[i].size in a diff manner
+			tArray[i].maxIndex = curIndex;
+			tArray[i].simplex = d;													//			store j and d in T[i];
+			
+			intervals[simp.first.size()].push_back(std::make_pair(kSimplices[i].second, kSimplices[curIndex].second));
+			
+																					//			Lk = Lk U {(deg si, deg sj)}
+																					//NOTE: Degree is the weight of the simplex
+		}
+		curIndex++;
+	}
+	
+	curIndex = 0;
+	for(auto simp : kSimplices){													//	for j=0 to m-1 {
+		if(tArray[curIndex].marked && tArray[curIndex].simplex.size() == 0){							//		if sj is marked and T[j] is empty{
+			intervals[simp.first.size()].push_back(std::make_pair(kSimplices[curIndex].second, maxEpsilon));		//			k = dim sj; Lk = Lk U {(deg sj, inf)}
+		}
+	}	
+	
+	return;
 }
 
 
-void persistencePairs::removePivotRows(){
+std::set<unsigned> persistencePairs::removePivotRows(std::pair<std::set<unsigned>, double> &simp){
 	//def RemovePivotRows(s):
 	//k = dim s; d = delk*s
 	//Remove unmarked items in d;
@@ -118,7 +157,18 @@ pipePacket persistencePairs::runPipe(pipePacket inData){
 	std::vector<int> bettiNumbers (dim,0);
 	std::vector<float> lifeSpans[dim];
 	
+	std::vector<std::vector<std::pair<double, double>>> intervals;
+	
 	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges = inData.workData.complex->getAllEdges(maxEpsilon);
+	std::vector<std::pair<std::set<unsigned>,double>> flattenedEdges;
+	
+	for(auto a : edges){
+		for(auto z : a){
+			flattenedEdges.push_back(z);
+		}
+	}
+	
+	
 	//Retrieve
 	auto local_weights = inData.weights;
 
@@ -129,11 +179,17 @@ pipePacket persistencePairs::runPipe(pipePacket inData){
 	
 	//Compute the persistence pairs as detailed by Zomorodian
 	
-	
-	
-	
-	
-	
+	computeIntervals(flattenedEdges, intervals);
+		
+	if(debug){
+		for(int d = 0; d < dim; d++){
+			std::cout << "______Intervals d = " << d << "______" << std::endl;
+			std::cout << "dim\tbirth\tdeath" << std::endl;
+			for (auto a : intervals[d])
+				std::cout << d << "\t" << a.first << "\t" << a.second << std::endl;
+			std::cout << std::endl;
+		}
+	}
 	
 	return inData;
 }
