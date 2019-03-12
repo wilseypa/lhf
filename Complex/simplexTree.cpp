@@ -7,7 +7,7 @@
 #include "utils.hpp"
 
 bool sortBySecond(const std::pair<std::set<unsigned>, double> &a, const std::pair<std::set<unsigned>, double> &b){
-	return (a.second > b.second);
+	return (a.second < b.second);
 }
 	
 

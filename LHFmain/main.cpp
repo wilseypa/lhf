@@ -78,7 +78,7 @@ void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD)
 		}
 	}
 	
-	args["pipeline"] = "distMatrix.neighGraph.rips.betti";
+	args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
 	
 	runPipeline(args, wD);
 		

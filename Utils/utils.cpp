@@ -107,6 +107,36 @@ std::vector<unsigned> utils::setIntersect(std::vector<unsigned> v1, std::vector<
 	return ret;
 	
 }
+
+std::set<unsigned> utils::setIntersect(std::set<unsigned> v1, std::set<unsigned> v2, bool isSorted){
+	std::set<unsigned> ret;
+	
+	if(v1 == v2)
+		return v1;
+	
+	//if(!isSorted){
+	//	sort(v1.begin(), v1.end());
+	//	sort(v2.begin(), v2.end());
+	//}
+	
+	set_intersection(v1.begin(), v1.end(), v2.begin(), v2.end(), std::inserter(ret, ret.begin()));
+	
+	for(auto iter = v1.begin(); iter!= v1.end(); iter++){
+		std::cout << *iter << ",";
+	}
+	std::cout << "\t";
+	for(auto iter = v2.begin(); iter!= v2.end(); iter++){
+		std::cout << *iter << ",";
+	}
+	std::cout << "\t";
+	for(auto iter = ret.begin(); iter!= ret.end(); iter++){
+		std::cout << *iter << ",";
+	}
+	std::cout << std::endl;
+	
+	return ret;
+	
+}
 	
 
 
