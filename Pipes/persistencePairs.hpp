@@ -22,6 +22,8 @@ class persistencePairs : public basePipe {
 		std::set<unsigned> simplex;
 	};
 	
+	std::vector<tArrayEntry_t> tArray;
+	
 	int dim;
     persistencePairs();
     pipePacket runPipe(pipePacket inData);
@@ -29,10 +31,8 @@ class persistencePairs : public basePipe {
 	std::vector<std::vector<unsigned>> nSimplices(double, unsigned, std::vector<std::pair<double,std::vector<unsigned>>>);
 	int checkFace(std::vector<unsigned> face, std::vector<unsigned>);
 	int checkFace(std::set<unsigned> face, std::set<unsigned>);
-	std::vector<unsigned> getRankNull(std::vector<std::vector<unsigned>>, unsigned);
-	std::vector<unsigned> createBoundaryMatrix(std::vector<std::vector<std::pair<std::set<unsigned>,double>>>);
-	std::set<unsigned> removePivotRows(int, std::pair<std::set<unsigned>, double>, std::vector<std::vector<std::vector<unsigned>>>);
-	std::vector<std::vector<std::pair<double,double>>> computeIntervals(std::vector<std::vector<std::pair<std::set<unsigned>,double>>>);
+	std::set<unsigned> getRankNull(std::vector<std::vector<unsigned>>, unsigned);
+	std::set<unsigned> createBoundaryMatrix(std::vector<std::vector<std::pair<std::set<unsigned>,double>>>);
 	void outputData(pipePacket);
 };
 
