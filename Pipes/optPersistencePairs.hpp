@@ -31,8 +31,8 @@ class optPersistencePairs : public basePipe {
 	std::vector<std::vector<unsigned>> nSimplices(double, unsigned, std::vector<std::pair<double,std::vector<unsigned>>>);
 	int checkFace(std::vector<unsigned> face, std::vector<unsigned>);
 	int checkFace(std::set<unsigned> face, std::set<unsigned>);
-	std::set<unsigned> getRankNull(std::vector<std::vector<unsigned>>, unsigned);
-	std::set<unsigned> createBoundaryMatrix(std::vector<std::vector<std::pair<std::set<unsigned>,double>>>, int d);
+	std::pair<std::set<unsigned>,std::set<unsigned>> getRankNull(std::vector<std::vector<unsigned>>);
+	std::vector<std::vector<unsigned>> createBoundaryMatrix(std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges, int d, std::set<unsigned> pivots);
 	void outputData(pipePacket);
 };
 

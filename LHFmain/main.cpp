@@ -78,7 +78,7 @@ void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD)
 		}
 	}
 	
-	args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
+	args["pipeline"] = "distMatrix.neighGraph.rips.optPersistence";
 	
 	runPipeline(args, wD);
 		
@@ -100,7 +100,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		}
 	}
 	
-	args["pipeline"] = "distMatrix.neighGraph.rips.boundary";
+	args["pipeline"] = "distMatrix.neighGraph.rips.optPersistence";
 	
 	do{
 		if(wD->boundaries.size() > 0){

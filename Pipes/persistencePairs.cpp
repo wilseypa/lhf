@@ -194,7 +194,7 @@ pipePacket persistencePairs::runPipe(pipePacket inData){
 	//Generate our boundary matrix and retrieve pivots
 	std::set<unsigned> kPivots = createBoundaryMatrix(edges);
 	
-	std::string bettis = "curIndex,index,dim,birth,death\n";
+	std::string bettis = "dim,birth,death\n";
 	
 	//Flatten the edges into a single array
 	std::vector<std::set<unsigned>> kSimplices;
@@ -288,7 +288,7 @@ void persistencePairs::outputData(pipePacket inData){
 	
 	file.open("output/tArray.csv");
 	
-	file << "ti\tDim\tMarked\tBirth\tDeath\tSimplex\n";
+	file << "ti,Dim,Marked,Birth,Death,Simplex\n";
 	for(auto tStruct : tArray){
 		file << tStruct.ti << "," << tStruct.simplex.size()-1 << "," << tStruct.marked << "," << tStruct.birth << "," << tStruct.death << ",";
 		for(auto index : tStruct.simplex)
