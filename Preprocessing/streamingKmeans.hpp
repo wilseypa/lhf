@@ -4,12 +4,13 @@
 #include <map>
 #include "preprocessor.hpp"
 
-class streamingkMeans : public preprocessor {
+class streamingKmeans : public preprocessor {
   private:
 	int num_clusters;			
-	//int num_iterations;			
+	int num_iterations;		
+  	
   public:
-	streamingkMeans();
+	streamingKmeans();
     pipePacket runPreprocessor(pipePacket inData);
     bool configPreprocessor(std::map<std::string, std::string> configMap);
 };
