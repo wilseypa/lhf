@@ -14,6 +14,8 @@
 #include <functional> 
 #include <vector>
 #include "streamingKmeans.hpp"
+#include "coresetUtils.hpp"
+#include "streamingUtils.hpp"
 #include "utils.hpp"
 // basePipe constructor
 streamingKmeans::streamingKmeans(){
