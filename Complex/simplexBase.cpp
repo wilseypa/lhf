@@ -5,6 +5,7 @@
 #include "simplexBase.hpp"
 #include "simplexTree.hpp"
 #include "simplexArrayList.hpp"
+#include "indSimplexTree.hpp"
 
 simplexBase::simplexBase(){return;}
 simplexBase::simplexBase(double maxE, int maxDim){
@@ -25,6 +26,8 @@ simplexBase* simplexBase::newSimplex(const std::string &simplexT){
 		return new simplexTree(maxEpsilon, distMatrix, maxDimension);
 	} else if (simplexType == "simplexArrayList"){	
 		return new simplexArrayList(maxEpsilon, distMatrix);
+	} else if (simplexType == "indSimplexTree"){
+		return new indSimplexTree(maxEpsilon, distMatrix, maxDimension);
 	}
 	return 0;
 }
