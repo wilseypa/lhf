@@ -11,7 +11,7 @@
 #include <vector>
 #include "preprocessor.hpp"
 #include "kMeansPlusPlus.hpp"
-#include "streamingkMeans.hpp"
+#include "streamingKmeans.hpp"
 // basePipe constructor
 preprocessor::preprocessor(){
 	return;
@@ -26,7 +26,7 @@ preprocessor* preprocessor::newPreprocessor(const std::string &procT){
 		return new kMeansPlusPlus();
 	} 
 	  else  if(procName == "streamingKmeans" || procName == "streamingkmeans"){
-		return new streamingkMeans();
+		return new streamingKmeans();
 	} 
 
 	return 0;
