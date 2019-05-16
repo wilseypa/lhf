@@ -11,6 +11,14 @@ class streamingKmeans : public preprocessor {
   	
   public:
 	streamingKmeans();
+  struct bucket { //bucket holds a coreset of "m" points
+ //   int curSize;
+    std::vector<std::vector<double>> points;
+  //  struct point *points;
+ //   struct point *spillover;  //describes points when a bucket reaches size m
+  };
+
+
     pipePacket runPreprocessor(pipePacket inData);
     bool configPreprocessor(std::map<std::string, std::string> configMap);
 };
