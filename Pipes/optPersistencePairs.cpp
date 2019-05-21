@@ -111,6 +111,64 @@ std::pair<std::set<unsigned>,std::set<unsigned>> optPersistencePairs::getRankNul
 	return std::make_pair(retPivots, retFaces);
 }
 
+std::vector<std::set<unsigned>> optPersistencePairs::createBoundarySets(std::vector<std::vector<indSimplexTree::graphEntry>> ge, int d, std::set<unsigned> pivots, pipePacket p){
+	
+	std::cout << "GE : " << ge[d-1].size() << std::endl;
+	std::cout << "Creating Boundary Sets... d=" << d << std::endl;
+	
+	//Start a timer for physical time passed during the pipe's function
+	auto startTime = std::chrono::high_resolution_clock::now();	
+	
+	std::vector<indSimplexTree::graphEntry> nChain;
+	std::vector<indSimplexTree::graphEntry> pChain = ge[d];
+	
+	
+	if(d == 0){
+		std::vector<std::set<unsigned>> a;
+		return a;
+	} else
+		nChain = ge[d-1];
+	
+	std::cout << "NChains: " << nChain.size() << "\tPChains: " << pChain.size() << std::endl;
+		
+	std::set<unsigned> a;
+	std::vector<std::set<unsigned>> tempBoundary(pChain.size(), a);
+	
+	
+	unsigned curPivot = -1;
+	if(!pivots.empty()){
+		std::cout << "Test3" << std::endl;
+		curPivot = *(pivots.begin());
+		
+		//Create the columns (pChain), indexed by the rows in our pivot table
+		for(unsigned i = 0; i < pChain.size(); i++){
+			if(i == curPivot){
+				if(!pivots.empty()){
+					pivots.erase(pivots.begin());
+					if(!pivots.empty())
+						curPivot = *(pivots.begin());
+				}				
+			} else {
+				std::cout << "test" << std::endl;
+				tempBoundary[i] = pChain[i].getFaces(p.workData.complex);
+				
+				std::cout << "test2" << std::endl;
+			}
+			
+			
+		}
+			
+	}else {	;
+		for(unsigned i = 0; i < pChain.size(); i++){
+			//Create the rows (nChain)
+			tempBoundary[i] = pChain[i].getFaces(p.workData.complex);
+			//ut.print1DVector(tempBoundary[i]);
+		} 
+		
+	}
+	
+}
+
 
 std::vector<std::vector<unsigned>> optPersistencePairs::createBoundaryMatrix(std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges, int d, std::set<unsigned> pivots){
 	
@@ -173,7 +231,7 @@ std::vector<std::vector<unsigned>> optPersistencePairs::createBoundaryMatrix(std
 	//Output the time and memory used for this pipeline segment
 	std::cout << "Boundary Matrix (d=" << d << ") created in: " << (elapsed.count()/1000.0) << " seconds (physical time)" << std::endl;
 
-	/*if(debug == 1){
+	if(debug == 1){
 		std::cout << std::endl << "_____BOUNDARY______" << std::endl;
 		for(auto z : tempBoundary){
 			std::cout << "  ";
@@ -182,7 +240,7 @@ std::vector<std::vector<unsigned>> optPersistencePairs::createBoundaryMatrix(std
 			std::cout << std::endl;
 		}
 		std::cout << std::endl << std::endl;
-	}*/
+	}
 		
 		
 
@@ -200,133 +258,150 @@ pipePacket optPersistencePairs::runPipe(pipePacket inData){
 	//Start a timer for physical time passed during the pipe's function
 	auto startTime = std::chrono::high_resolution_clock::now();
 	unsigned pivotOffset = 0;
-	
-	
-	auto edgeStartTime = std::chrono::high_resolution_clock::now();
-	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges = inData.workData.complex->getAllEdges(maxEpsilon);
-	auto edgeEndTime = std::chrono::high_resolution_clock::now();
-	
-	for(auto i : edges){
-		pivotOffset += i.size();
-	}
-	
-	std::string bettis = "curIndex,index,dim,birth,death\n";
-	
-	std::vector<std::vector<unsigned>> temp;
-	std::vector<std::vector<std::vector<unsigned>>> ret;
-	for(int i = 0; i <= dim; i++){
-		ret.push_back(temp);
-	}
-	
-	std::set<unsigned> allPivots;
 	std::set<unsigned> pivots;
-	std::set<unsigned> maxFaces;
+	std::string bettis = "curIndex,index,dim,birth,death\n";
+	auto edgeEndTime = std::chrono::high_resolution_clock::now();
+	auto edgeStartTime = std::chrono::high_resolution_clock::now();
+	if(alterPipe){
+		std::vector<std::vector<indSimplexTree::graphEntry>> indGraph = inData.workData.complex->getIndexEdges(maxEpsilon);
+		edgeEndTime = std::chrono::high_resolution_clock::now();
+		
+		for(int d = dim; d > 0; d--){
+			
+			auto r = createBoundarySets(indGraph, d, pivots, inData);
+			
+			
+			
+			
+		}
+		
+		
+	}
+	
+	else{
+		std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges = inData.workData.complex->getAllEdges(maxEpsilon);
+		edgeEndTime = std::chrono::high_resolution_clock::now();
+		
+		for(auto i : edges){
+			pivotOffset += i.size();
+		}
+		
+		
+		std::vector<std::vector<unsigned>> temp;
+		std::vector<std::vector<std::vector<unsigned>>> ret;
+		for(int i = 0; i <= dim; i++){
+			ret.push_back(temp);
+		}
+		
+		std::set<unsigned> allPivots;
+		std::set<unsigned> maxFaces;
 
-	//Iterate each dimension, only need coefficients (V)
-	for(int d = dim; d > 0; d--){
-				
-		//First, construct the current boundary matrix (by dimension); clear pivots (if they exist)
-		ret[d] = createBoundaryMatrix(edges, d, maxFaces);
+		//Iterate each dimension, only need coefficients (V)
+		for(int d = dim; d > 0; d--){
 			
-		//Compute the pivots of the current boundary matrix
-		auto pivot_maxface_pair = getRankNull(ret[d]);
-	
-		pivots = pivot_maxface_pair.first;
-		maxFaces = pivot_maxface_pair.second;
-		
-		pivotOffset -= edges[d].size();
-		//Store the current pivots into allPivots (with offset) to compute tArray
-		for(auto it = pivots.begin(); it != pivots.end() ; it++){
-			unsigned val = *it;
-			allPivots.insert(val + pivotOffset);
-		}
-		
-		for(auto it = maxFaces.begin(); it != maxFaces.end() ; it++){
-			unsigned val = *it;
-		}
-		
-		
-		//Iterate to next dimension; use the pivots to clear rows of the next dimension, use the boundary (later) 
-		//		to compute the tArray
-	}	
-			
-			
-	//Create the tArray from the identified pivots
-	
-	
-	std::vector<std::pair<double,double>> temp2;
-	std::vector<std::vector<std::pair<double,double>>> retarray;
-	for(int i = 0; i < dim; i++){
-		retarray.push_back(temp2);
-	}
-	
-	
-	//Flatten the edges into a single array
-	std::vector<std::set<unsigned>> kSimplices;
-	std::vector<double> kWeights;
-	for(auto a : edges){		
-		for(auto z : a){
-			kSimplices.push_back(z.first);
-			kWeights.push_back(z.second);
-		}
-	}	
-	
-	unsigned curPivot = -1;
-	if(!allPivots.empty()){
-		curPivot = *(allPivots.begin());
-	}
-	
-	for(int curIndex = 0; curIndex < kSimplices.size(); curIndex++){
-		int curDim = kSimplices[curIndex].size();
-		
-		tArray.push_back(tArrayEntry_t());
-		tArray[curIndex].simplex = kSimplices[curIndex];
-		
-		if(curDim == 1){
-			tArray[curIndex].birth = kWeights[curIndex];
-			tArray[curIndex].marked = true;			
-		}
-		else if(curIndex != curPivot){
-			tArray[curIndex].birth = kWeights[curIndex];
-			tArray[curIndex].marked = true;
-			
-		} else {
-			int iter = tArray.size();
-			for(; iter >= 0; iter--){
-				if(curDim == 2 && tArray[iter].marked && tArray[iter].death < 0 && tArray[curIndex].simplex.size() != kSimplices[iter].size())
-					break;
-				
-				else if(tArray[iter].marked && tArray[iter].death < 0 \
-					&& tArray[curIndex].simplex.size() != kSimplices[iter].size() \
-					&& ut.setIntersect(kSimplices[iter], tArray[curIndex].simplex, false).size() == tArray[curIndex].simplex.size() - 1)
-						break;
-			}
-			if(iter != 0){
-				if(tArray[iter].death < 0 ){
-					tArray[iter].death = kWeights[curIndex];
 					
-					if(tArray[iter].death != tArray[iter].birth)
-						bettis += std::to_string(tArray[curIndex].simplex.size() - 2) + "," + std::to_string(tArray[iter].birth) + "," + std::to_string(kWeights[curIndex]) + "\n";
-				}
+			//First, construct the current boundary matrix (by dimension); clear pivots (if they exist)
+			ret[d] = createBoundaryMatrix(edges, d, maxFaces);
+				
+			//Compute the pivots of the current boundary matrix
+			auto pivot_maxface_pair = getRankNull(ret[d]);
+		
+			pivots = pivot_maxface_pair.first;
+			maxFaces = pivot_maxface_pair.second;
+			
+			pivotOffset -= edges[d].size();
+			//Store the current pivots into allPivots (with offset) to compute tArray
+			for(auto it = pivots.begin(); it != pivots.end() ; it++){
+				unsigned val = *it;
+				allPivots.insert(val + pivotOffset);
 			}
 			
-			if(!allPivots.empty()){
-				allPivots.erase(allPivots.begin());
+			for(auto it = maxFaces.begin(); it != maxFaces.end() ; it++){
+				unsigned val = *it;
+			}
+			
+			
+			//Iterate to next dimension; use the pivots to clear rows of the next dimension, use the boundary (later) 
+			//		to compute the tArray
+		}	
+				
+				
+		//Create the tArray from the identified pivots
+		
+		
+		std::vector<std::pair<double,double>> temp2;
+		std::vector<std::vector<std::pair<double,double>>> retarray;
+		for(int i = 0; i < dim; i++){
+			retarray.push_back(temp2);
+		}
+		
+		
+		//Flatten the edges into a single array
+		std::vector<std::set<unsigned>> kSimplices;
+		std::vector<double> kWeights;
+		for(auto a : edges){		
+			for(auto z : a){
+				kSimplices.push_back(z.first);
+				kWeights.push_back(z.second);
+			}
+		}	
+		
+		unsigned curPivot = -1;
+		if(!allPivots.empty()){
+			curPivot = *(allPivots.begin());
+		}
+		
+		for(int curIndex = 0; curIndex < kSimplices.size(); curIndex++){
+			int curDim = kSimplices[curIndex].size();
+			
+			tArray.push_back(tArrayEntry_t());
+			tArray[curIndex].simplex = kSimplices[curIndex];
+			
+			if(curDim == 1){
+				tArray[curIndex].birth = kWeights[curIndex];
+				tArray[curIndex].marked = true;			
+			}
+			else if(curIndex != curPivot){
+				tArray[curIndex].birth = kWeights[curIndex];
+				tArray[curIndex].marked = true;
+				
+			} else {
+				int iter = tArray.size();
+				for(; iter >= 0; iter--){
+					if(curDim == 2 && tArray[iter].marked && tArray[iter].death < 0 && tArray[curIndex].simplex.size() != kSimplices[iter].size())
+						break;
+					
+					else if(tArray[iter].marked && tArray[iter].death < 0 \
+						&& tArray[curIndex].simplex.size() != kSimplices[iter].size() \
+						&& ut.setIntersect(kSimplices[iter], tArray[curIndex].simplex, false).size() == tArray[curIndex].simplex.size() - 1)
+							break;
+				}
+				if(iter != 0){
+					if(tArray[iter].death < 0 ){
+						tArray[iter].death = kWeights[curIndex];
+						
+						if(tArray[iter].death != tArray[iter].birth)
+							bettis += std::to_string(tArray[curIndex].simplex.size() - 2) + "," + std::to_string(tArray[iter].birth) + "," + std::to_string(kWeights[curIndex]) + "\n";
+					}
+				}
+				
 				if(!allPivots.empty()){
-					curPivot = *(allPivots.begin());
+					allPivots.erase(allPivots.begin());
+					if(!allPivots.empty()){
+						curPivot = *(allPivots.begin());
+					}
 				}
 			}
 		}
-	}
+	
 
-
-	for(int t = 0; t < kSimplices.size(); t++){
-		if(tArray[t].marked && tArray[t].death == -1 && tArray[t].simplex.size() <= dim){
-			retarray[tArray[t].simplex.size() - 1].push_back(std::make_pair(kWeights[t], maxEpsilon));
-			bettis += std::to_string(tArray[t].simplex.size() - 1) + "," + std::to_string(tArray[t].birth) + "," + std::to_string(maxEpsilon) + "\n";
+		for(int t = 0; t < kSimplices.size(); t++){
+			if(tArray[t].marked && tArray[t].death == -1 && tArray[t].simplex.size() <= dim){
+				retarray[tArray[t].simplex.size() - 1].push_back(std::make_pair(kWeights[t], maxEpsilon));
+				bettis += std::to_string(tArray[t].simplex.size() - 1) + "," + std::to_string(tArray[t].birth) + "," + std::to_string(maxEpsilon) + "\n";
+			}
 		}
 	}
-	
 	
 	//Stop the timer for time passed during the pipe's function
 	auto endTime = std::chrono::high_resolution_clock::now();
@@ -393,6 +468,10 @@ bool optPersistencePairs::configPipe(std::map<std::string, std::string> configMa
 	if(pipe != configMap.end())
 		twist = configMap["twist"];
 	else return false;
+	
+	pipe = configMap.find("complexType");
+	if(pipe != configMap.end() && configMap["complexType"] == "indSimplexTree")
+		alterPipe = true;
 	
 	return true;
 }

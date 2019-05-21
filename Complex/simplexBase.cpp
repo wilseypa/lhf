@@ -1,6 +1,5 @@
 #include <string>
 #include <vector>
-#include <iostream>
 #include <typeinfo>
 #include "simplexBase.hpp"
 #include "simplexTree.hpp"
@@ -45,6 +44,12 @@ std::vector<std::vector<std::pair<std::set<unsigned>,double>>> simplexBase::getA
 	return a;
 }
 
+std::vector<std::vector<indSimplexTree::graphEntry>> simplexBase::getIndexEdges(double epsilon){
+	std::cout << "No get index edges function defined for: " << simplexType << std::endl;
+	std::vector<std::vector<indSimplexTree::graphEntry>> a;
+	return a;
+}
+
 double simplexBase::getSize(){
 	std::cout << "No size function defined for: " << simplexType << std::endl;
 	return 0;
@@ -58,6 +63,11 @@ void simplexBase::insert(std::vector<double>&){
 void simplexBase::find(std::vector<double>){
 	std::cout << "No find function defined for: " << simplexType << std::endl;
 	return;
+}
+
+unsigned simplexBase::find(std::set<unsigned>){
+	std::cout << "No find function defined for: " << simplexType << std::endl;
+	return -1;
 }
 
 int simplexBase::vertexCount(){

@@ -1,6 +1,6 @@
 #pragma once
-#include "simplexBase.hpp"
 #include <set>
+#include "simplexBase.hpp"
 
 // Header file for simplexTree class - see simplexTree.cpp for descriptions
 
@@ -15,41 +15,27 @@ class indSimplexTree : public simplexBase {
 	};
   
 	int maxDim;
-	struct indTreeNode{
-		unsigned index;
-		indTreeNode* child = nullptr;
-		indTreeNode* sibling = nullptr;
-		indTreeNode* parent = nullptr;
-		std::set<unsigned> simplexSet;
-		double weight = 0;
-	};
 	
-	struct graphEntry{
-		std::set<unsigned> simplexSet;
-		double weight = 0;
-		indTreeNode* entry = nullptr;	
-		
-		graphEntry(){}
-		graphEntry(std::set<unsigned> simp, double wt, indTreeNode* ent) { 
-			simplexSet = simp; weight = wt; entry = ent;
-		}
-	};
 	
-	std::vector<std::vector<graphEntry>> indexedGraph;
-	std::vector<int> dimCounts = {6, 10, 20};
+	std::vector<unsigned> dimCounts = {6, 15, 20};
 			
-	std::vector<indTreeNode*> dimensions;		
+	std::vector<std::vector<indTreeNode*>> dimensions;		
 	
 	unsigned indexCounter;
 	indTreeNode* head;
 	int nodeCount;
   
   public:
+  
+	std::vector<std::vector<graphEntry>> indexedGraph;
+  
 	indSimplexTree(std::vector<std::vector<double>>);
 	indSimplexTree(double, std::vector<std::vector<double>>, int);
-	std::vector<std::vector<indSimplexTree::graphEntry>> getIndexEdges(double);
+	std::vector<std::vector<graphEntry>> getIndexEdges(double);
 	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> getAllEdges(double);
+	std::set<unsigned> getFaces(graphEntry ge);
 	
+	static bool compareByWeight(const graphEntry &, const graphEntry &);
 	bool isLeaf;
 	
 	double getSize();
@@ -60,6 +46,7 @@ class indSimplexTree : public simplexBase {
 	void insert(std::vector<double>&);
 	bool deletion(indSimplexTree*&, std::string);
 	bool search(std::set<unsigned>);
+	unsigned find(std::set<unsigned>);
 	bool haveChild(indSimplexTree const*);
 	void insertInductive();
 	void recurseInsert(indTreeNode*, unsigned, int, double, std::set<unsigned>);

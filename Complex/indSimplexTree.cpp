@@ -29,46 +29,48 @@ void indSimplexTree::recurseInsert(indTreeNode* node, unsigned curIndex, int dep
 	double curE = distMatrix[node->index][indexCounter];
 	curE = curE > maxE ? curE : maxE;
 	
+	depth = simp.size() - 1;
+	
 	
 	//Check if the node needs inserted at this level
 	if(curE < maxEpsilon){
 		indTreeNode* insNode = new indTreeNode();
 		insNode->index = curIndex;
 		nodeCount++;
-		simp.insert(node->index);
+		std::set<unsigned> newSimp = simp;
+		newSimp.insert(node->index);
+		insNode->simplexSet = newSimp;
+		dimCounts[depth+1]++;
 		
 		//Get the largest weight of this simplex
 		maxE = curE > node->weight ? curE : node->weight;
 		insNode->weight = maxE;
+				
+		//Check the dimensional list
+		//	if no nodes exist at the dimension, this is the first
+		if(depth == dimensions.size() - 1){
+			std::vector<indTreeNode*> tn;
+			tn.push_back(insNode);
+			dimensions.push_back(tn);
+		} else {
+			dimensions[depth+1].push_back(insNode);
+		}
 		
-		//if depth (i.e. 1 for first iteration) is LT weightGraphSize (starts at 1)
-		//std::cout << "WEG: " << weightEdgeGraph.size() << "\t" << simp.size() << "\t" << maxDim << std::endl;
-		
-		//graphEntry ge;
-		
-		//if(indexedGraph.size() < simp.size()){
-		//	std::vector<graphEntry> tempWEG;
-		//	ge.weight = maxE;
-		//	ge.simplexSet = simp;
-		//	tempWEG.push_back(ge);
-		//	indexedGraph.push_back(tempWEG);
-		//} else {
-		//	indexedGraph[simp.size() - 1].push_back(std::make_pair(insNode, std::make_pair(simp, maxE)));
-		//}
 		
 		//Check if the node has children already... (remember parent == child for incremental)
-		if(node->parent == nullptr){
-			node->parent = insNode;
-			
+		if(node->child == nullptr){
+			insNode->parent = node;
+			node->child = insNode;
 		} else {
-			insNode->sibling = node->parent;
-			node->parent = insNode;
+			insNode->parent = node;
+			insNode->sibling = node->child;
+			node->child = insNode;
 			
 			temp = insNode->sibling;
 			//Have to check the children now...
-			if(simp.size() <= maxDim){
+			if(newSimp.size() <= maxDim){
 				do {
-					recurseInsert(temp, curIndex, depth + 1, maxE, simp);
+					recurseInsert(temp, curIndex, depth + 1, maxE, newSimp);
 				} while(temp->sibling != nullptr && (temp = temp->sibling) != nullptr);
 			}
 		}
@@ -91,7 +93,7 @@ void indSimplexTree::printTree(indTreeNode* head){
 	for(int i = 0; i < dimensions.size() ; i++){
 		std::cout << std::endl << "Dim: " << i << std::endl << std::endl;
 		
-		current = dimensions[i];
+		current = dimensions[i][0];
 		
 		do{
 			
@@ -114,7 +116,7 @@ void indSimplexTree::insertInductive(){
 	//Loop each dimensional list; start at dn, then dn-1, ..., d0 (OLD WAY, INDUCTIVE VR)
 	for(int i = (dimensions.size()-1 < maxDim ? dimensions.size() - 1 : maxDim); i >= 0; i--){
 		//Loop each sibling in the current dimensional list (as a do-while, break when no more siblings)
-		curNode = dimensions[i];
+		curNode = dimensions[i][0];
 		do{
 			//Determine if the index needs to inserted below the current node
 			//	First, check the distance matrix for curNodeIndex v. curIndex
@@ -146,12 +148,15 @@ void indSimplexTree::insertInductive(){
 					//Check the dimensional list
 					//	if no nodes exist at the dimension, this is the first
 					if(i == dimensions.size() - 1){
-						dimensions.push_back(insNode);				
+						
+						std::vector<indTreeNode*> tempInd;
+						tempInd.push_back(insNode);
+						dimensions.push_back(tempInd);				
 					
 					//	Nodes currently exist at the dimension, insert as a sibling
 					//		This should be inserted with nodes of the same parent
 					} else {
-						indTreeNode* iterateNode = dimensions[i+1];
+						indTreeNode* iterateNode = dimensions[i+1][0];
 						ins = false; //Store if we've inserted this node while looping through siblings
 						
 						//Loop through dimensional node siblings
@@ -183,6 +188,8 @@ void indSimplexTree::insertInductive(){
 }
 
 
+
+
 // Insert a node into the tree
 //		
 void indSimplexTree::insert(std::vector<double>&) {
@@ -195,11 +202,18 @@ void indSimplexTree::insert(std::vector<double>&) {
 	
 	//Check if this is the first node (i.e. head)
 	//	If so, initialize the head node
-	if(head == nullptr){		
+	if(head == nullptr){	
+		
+		curNode->simplexSet = { indexCounter };	
 		head = curNode;
 		indexCounter++;
 		nodeCount++;
-		dimensions.push_back(head);
+		
+		std::vector<indTreeNode*> tempInd;
+		tempInd.push_back(head);
+		dimensions.push_back(tempInd);
+		
+		dimCounts[0]++;
 		
 		//std::vector<indGraphEntry> tempWEG;
 		//tempWEG.push_back(new graphEntry(tempSet, 0, curNode));
@@ -225,7 +239,7 @@ void indSimplexTree::insert(std::vector<double>&) {
 	//d3 --> | 2 | 3 |     | 4 | 5 |
 	//
 
-	indTreeNode* temp = dimensions[0];
+	indTreeNode* temp = dimensions[0][0];
 	
 	
 	
@@ -241,25 +255,23 @@ void indSimplexTree::insert(std::vector<double>&) {
 	
 	do{
 		recurseInsert(temp, indexCounter, 0, 0, tempSet);
-	
-	
 	}while(temp->sibling != nullptr && (temp = temp->sibling) != nullptr);
 	
-	
-	//std::cout << "Adding neighbor..." << std::endl;
-	
 	//Insert into the right of the tree
-	temp = dimensions[0];
+	temp = dimensions[0][0];
 	indTreeNode* ins = new indTreeNode();
 	while(temp->sibling != nullptr && (temp = temp->sibling) != nullptr);
 	ins->index = indexCounter;
 	ins->sibling = nullptr;
 	ins->parent = nullptr;
+	ins->simplexSet = { indexCounter };
 	temp->sibling = ins;
 	//indexedGraph[0].push_back(std::make_pair(ins, std::make_pair(tempSet, 0)));
 	
-	nodeCount++;
 	
+	dimensions[0].push_back(ins);
+	dimCounts[0]++;
+	nodeCount++;
 	indexCounter++;
 	return;
 
@@ -269,7 +281,7 @@ void indSimplexTree::insert(std::vector<double>&) {
 // Iterative function to search for a key in the tree. The function returns true
 // if the key is found, else it returns false.
 bool indSimplexTree::search(std::set<unsigned> simplex){
-	indTreeNode* curNode = dimensions[0];
+	indTreeNode* curNode = dimensions[0][0];
 	
 	for(auto i :simplex){
 		while(curNode != nullptr && curNode->index != i);
@@ -302,26 +314,56 @@ int indSimplexTree::simplexCount(){
 	return nodeCount;
 } 
 
+unsigned indSimplexTree::find(std::set<unsigned> simplex){
+	utils ut;
+	
+	indTreeNode* curNode = dimensions[0][*simplex.begin()];
+	
+	for(auto i = simplex.begin() ; i != simplex.end(); i++){
+		if(i != simplex.begin() && curNode->child != nullptr){
+			curNode = curNode->child;
+			
+			while(curNode != nullptr){
+				if(curNode->index != *i){
+					curNode = curNode->sibling; 
+				} else if(curNode->index == *i){
+					break;
+				} else { 
+					return -1; 
+				}
+			}
+		}
+	}
+	return curNode->sortedIndex;	
+	
+}
+
 double indSimplexTree::getSize(){
 	//Size of node: [int + byte (*) + byte (*)] = 18 Bytes
-	return nodeCount * sizeof(indTreeNode);
+	return nodeCount * (sizeof(indTreeNode) + sizeof(graphEntry));
+}
+
+bool indSimplexTree::compareByWeight(const graphEntry &a, const graphEntry &b){
+	return a.weight < b.weight;	
 }
 
 void indSimplexTree::sortAndBuildGraph(){
-	std::cout << "sortAndBuildGraph" << std::endl;
+	utils ut;	
 	
-	indTreeNode* curNode = dimensions[0];
-	std::vector<graphEntry> curEntry(dimCounts[0], *(new graphEntry()));
+	indTreeNode* curNode = dimensions[0][0];
+	std::vector<graphEntry> curEntry;
 	std::vector<std::vector<graphEntry>> ret;
 	
 	//Handle points first, default ordering
-	while(curNode != nullptr){
-		std::cout << curNode->weight << "\t" << curNode << std::endl;
-		curEntry.push_back(graphEntry(curNode->simplexSet, curNode->weight, curNode));
-		if(curNode->sibling == nullptr){break;}
-		curNode = curNode->sibling;
+	int i = 0;
+	for(auto cur : dimensions[0]){
+		graphEntry ge(cur->simplexSet, cur->weight, cur);
+		curEntry.push_back(ge);
+		//ut.print1DVector(cur->simplexSet);
+		i++;
 	}	
 	ret.push_back(curEntry);
+	//std::cout << "Sort and Build " << dimensions.size() << std::endl;
 	
 	//When inserting the next few dimensions, need to first update 
 	//	the indTreeNode to point to the correct graphEntry now (since we've resorted)
@@ -329,34 +371,41 @@ void indSimplexTree::sortAndBuildGraph(){
 	//	This just involves iterating the sorted vector and following the indTreeNode
 	//		pointer to update the curNode; we'll use this to speed up checkFace functions
 
-	
-	
+	int iter = 0;
 	for(int i = 1; i < dimensions.size(); i++){
 		
-		std::cout << "dim: " << i << std::endl;
-		std::vector<graphEntry> innerEntry(dimCounts[i], *(new graphEntry()));
-		curNode = dimensions[i];
-		std::cout << "test" << std::endl;
-		while(curNode != nullptr){
-			innerEntry.push_back(graphEntry(curNode->simplexSet, curNode->weight, curNode));
-			
-			if(curNode->sibling == nullptr){break;}
+		std::vector<graphEntry> innerEntry;//(dimCounts[i], *(new graphEntry()));
+		
+		for(auto cur : dimensions[i]){
+			indSimplexTree::graphEntry ge(cur->simplexSet, cur->weight, cur);			
+			innerEntry.push_back(ge);
 		}		
 		
 		
 		//SORT graph vector HERE, reassociate indTreeNode pointer
+		std::sort(innerEntry.begin(), innerEntry.end(), indSimplexTree::compareByWeight);
+		//std::cout << "Sorted!" << std::endl;
 		
+		int it = 0;
+		for(auto a : innerEntry){
+			a.entry->sortedIndex = it;
+			it++;
+			//std::cout << a.weight << "\t";
+			//ut.print1DVector(a.simplexSet);
+		}
+		
+		//std::cout << "Pushing..." << std::endl;
 		
 		ret.push_back(innerEntry);
 	}
 	
 	indexedGraph = ret;
 	
+	
 }
 
 
 std::vector<std::vector<std::pair<std::set<unsigned>,double>>> indSimplexTree::getAllEdges(double epsilon){
-	std::cout << "getAllEdges" << std::endl;
 	
 	if(!isSorted){
 		sortAndBuildGraph();
@@ -381,7 +430,7 @@ std::vector<std::vector<std::pair<std::set<unsigned>,double>>> indSimplexTree::g
 
 
 std::vector<std::vector<indSimplexTree::graphEntry>> indSimplexTree::getIndexEdges(double epsilon){
-	std::cout << "getIndexEdges" << std::endl;
+
 	if(!isSorted){
 		sortAndBuildGraph();
 		isSorted = true;
