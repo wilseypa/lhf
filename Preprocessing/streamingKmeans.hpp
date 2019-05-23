@@ -11,14 +11,9 @@ class streamingKmeans : public preprocessor {
   	
   public:
 	streamingKmeans();
-  struct bucket { //bucket holds a coreset of "m" points
- //   int curSize;
-    std::vector<std::vector<double>> points;
-  //  struct point *points;
- //   struct point *spillover;  //describes points when a bucket reaches size m
-  };
 
-
+void streamingKmeans:: approxNearestNeighbor(std::vector<std::vector<double>> facilities, float dotProd, int n, float distSquare, int dim );
+void streamingKmeans:: binarySearch(std::vector<std::vector<double>> approxFacilities, int n, double target);
     pipePacket runPreprocessor(pipePacket inData);
     bool configPreprocessor(std::map<std::string, std::string> configMap);
-};
+}; 

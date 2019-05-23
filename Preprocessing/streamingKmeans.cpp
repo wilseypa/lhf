@@ -14,7 +14,6 @@
 #include <functional> 
 #include <vector>
 #include "streamingKmeans.hpp"
-#include "coresetUtils.hpp"
 #include "streamingUtils.hpp"
 #include "utils.hpp"
 // basePipe constructor
@@ -34,29 +33,15 @@ pipePacket streamingKmeans::runPreprocessor(pipePacket inData){
 	static std::mt19937 gen(seed());
 	std::uniform_int_distribution<size_t> distribution(0, inData.workData.originalData.size()-1);
 
-
-	int m = 5;
-	int tracker = 0;
-	 //open file stream  --> use file from input arg
-	 //while open ... do
-	std::vector<std::vector<double>> tempBucket;  //bucket 0
-	std::vector<std::vector<double>> firstBucket; 
-	std::vector<std::vector<std::vector<double>>> bucketManager; // holds all filled buckets
-	 for(unsigned i = 0; i<inData.workData.originalData.size()-1; i++){
-		
-    
-    
-		for(unsigned b = 0; i<m-1; b++){
-       tempBucket.push_back(inData.workData.originalData[i]);  //add first point to Bucket 1  
-			 if(i%m == 0){
-				 for(unsigned j = 0; j<tempBucket.size()-1; j++) {
-					 bucketManager.push_back(tempBucket);   //filling 0th and 1st bucket
-				 }
-			 }                               
-		}
-		// if 0th and 1st bucket full, compute new coreset of size m from union of the points in b0 and b1
-		//and put in b2, for b(i) = 2 -> numBuckets. then clear b0 so new points can be assigned
-    
+//constants used for the online step (BMORST11 Streaming k-means...)
+const float E = 2.718281828;
+const float alpha = 2.0; //for approx triangle inequality
+const float cofl = 3 * alpha + 2 * (E/(E-1));   //constant online facility location
+const float beta = 2 * alpha * alpha * cofl + (2* alpha);  //constant to increase lower bound
+const float kofl = (6 * alpha) + 1; //constant OFL for upper bound on number of facilities
+// OFL generates AT MOST kofl(1 + log n)(OPT/L) facilities
+ std::vector<std::vector<double>> facilities; //centroids
+ std::vector<std::vector<double>> omega; // vector of values between 0 and 1 based on dim of facilities
 
 
 
@@ -64,31 +49,39 @@ pipePacket streamingKmeans::runPreprocessor(pipePacket inData){
 
 
 
-		}
-    //for a data stream of n points, there are log2(n/m) + 2 buckets
-		//extract coresets of size m from data stream -> merge and reduce technique - Har-Peled & Mazumdar 2004
-		//new points inserted into Bucket B0 (0->m points)
-
-       // choose next points "according to D^2" -> (dist(point, set)/(sum of[dist(set, point)])
-		//when B0 full (now contains a coreset), move points to B1
-    
-			//if B1 full (contains m points) make new coreset from B0 and B1 and move to B2 .. repeat for i
 
 
+//facility cost f = 1/(k(1+log n))  k clusters, n points, empty set K  //facility==centroid
+//as each point arrives either make it a facility or assign it to one based on delta/f prob
+
+//while file stream open
+      //while K <= scriptK = klogn (num clusters <= num facilities f) & stream unread
+			    //read next point x from the stream
 
 
+					//measure delta = min d(x,y)^2 --> using approx nearest neighbor
 
+					//if delta/f event occurs
+					    // K <- K union current point x
+				  // else assign x to closest facility in K
 
+		  // if current stream not exhausted....
+			   //while K <= scriptK 
+				    //facility <- Beta*facility
 
-	 //close file stream
+						//move points x in K to the COM of points for that facility
 
-	// do kmeans++ on reduced dataset (reduce step)
+						//set wsubx be number of points assigned to x in K
 
-	 //return clustered data 
-	
-	
-	
-	
+						//intialize K hat containing first facility from K
+	              //for each x in K
+								   //measure delta = min d(x,y)^2 --> using approx nearest neighbor
+									 //if delta/f event occurs 
+									     // K hat <- K hat union current point x
+									 //else assign x to its closest facility K hat
+							  // set K <- K hat
+	  // else Run batck k-means on weighted points K
+		// Perform ball k-means on set of clusters from previous step
      
 
 
@@ -112,4 +105,22 @@ bool streamingKmeans::configPreprocessor(std::map<std::string, std::string> conf
 	return true;
 }
 
-//assigning points to nearest cluster
+void streamingKmeans:: approxNearestNeighbor(std::vector<std::vector<double>> facilities, float dotProd, int n, float distSquare, int dim ){
+
+}
+
+
+void streamingKmeans:: binarySearch(std::vector<std::vector<double>> approxFacilities, int n, double target){
+
+}
+
+
+float dotProd(std::vector<std::vector<double>> facilities, std::vector<std::vector<double>> omega){
+	//takes dot product of facilities centroids and omega, where omega is d dimensions large uniformly distributed between 0,1
+	//when new points arrive, dot product calculated, and find 2 centroids x dot omega is between... faster than calc nearest neighbor
+	std::vector<double> temp;
+
+  std::transform(facilities.begin(), omega.begin(), std::back_inserter(temp), [](double e1, double e2)  {return e1*e2;});
+  
+  return std::accumulate(temp.begin(), temp.end(), 0.0);
+}
