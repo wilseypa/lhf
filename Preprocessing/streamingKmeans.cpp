@@ -44,6 +44,7 @@ const float kofl = (6 * alpha) + 1; //constant OFL for upper bound on number of 
 // OFL generates AT MOST kofl(1 + log n)(OPT/L) facilities
  std::vector<std::vector<double>> facilities; //centroids, size = to numClusters "empty set K"
  std::vector<double> omega; // vector of values between 0 and 1 based on dim of facilities
+ std::vector<double> facilityLabel; // tracks the index of the facilities before they are sorted into the approx facility
 
 for(int d = 0; d<inData.workData.originalData[0].size(); d++){
 	omega[d] = randDouble();  // initializing omega
@@ -120,35 +121,58 @@ bool streamingKmeans::configPreprocessor(std::map<std::string, std::string> conf
 	return true;
 }
 
-void streamingKmeans:: approxNearestNeighbor(std::vector<std::vector<double>> approxFacilities, std::vector<double> omega, int x, int size, pipePacket(inData)){
+std::vector<double> streamingKmeans:: approxNearestNeighbor(std::vector<std::vector<double>> facilities, std::vector<double> approxFacilities, std::vector<double> facilityLabel, std::vector<double> omega, int x, int size, pipePacket(inData)){
   //based on random projection 
+	//x is current point being examined
+	//n is number of centroids/facilities
 	utils ut;
-  double projection = dotProd(approxFacilities[0], omega);
+  double projection = dotProd(inData.workData.originalData[x], omega);
 	int loc = binarySearch(approxFacilities, omega, size, projection);
 	//store facilities sorted by their inner product with omega 
 	//when new point x arrives, find 2 facilities/centroids that x dotProd omega is between
 	//pick which centroid is exactly closer to x , set that equal to delta or "closest facility"
 	if(loc == -1){
 		//nearest centroid is current
-		double curCentroid = ut.vectors_distance(inData.workData.originalData[x], approxFacilities[0]);
+		double squareDist = ut.vectors_distance(inData.workData.originalData[x], facilities[facilityLabel[0]] ); //dist between current point and approxFacil corresponding to current centroid denoted by facilTracker
 		
 	}
 	else if (loc == x-1){
 		//nearest is approx[n-1]
-		double nextCentroid =  ut.vectors_distance(inData.workData.originalData[x], approxFacilities[x]);
-
+		double squareDist =  ut.vectors_distance(inData.workData.originalData[x], facilities[facilityLabel[size-1]]);
 	}
+
+	double squareDist = ut.vectors_distance(inData.workData.originalData[x], facilities[facilityLabel[loc]] );
+
+	double dist = ut.vectors_distance(inData.workData.originalData[x], facilities[facilityLabel[loc + 1]]);
+  if(squareDist <= dist){
+		return facilities[facilityLabel[loc]];
+	}
+	else {
+		squareDist = dist;
+		return facilities[facilityLabel[loc + 1]];
+	}
+
+
+
+
+
+
+
+
+
+
+
 	return;
 
 }
 
 
-int streamingKmeans:: binarySearch(std::vector<std::vector<double>> approxFacilities, std::vector<double> omega, int n, double target){ //dotProd is target
+int streamingKmeans:: binarySearch(std::vector<double> approxFacilities, std::vector<double> omega, int n, double target){ //dotProd is target
   //performing binary search on approxFacilities to find starting location for approxNearestNeighbor
-	if( target < dotProd(approxFacilities[0], omega)){
+	if( target < approxFacilities[0]){  //projection = dotProd of 
 		return -1; //if target < dotProd, search unsuccessful
-	}
-  if(target > dotProd(approxFacilities[n], omega)) {
+	} 
+  if(target > approxFacilities[n-1]) {
 		return n-1;
 	}
 	int low = 0;
@@ -156,10 +180,10 @@ int streamingKmeans:: binarySearch(std::vector<std::vector<double>> approxFacili
 	int mid; 
 	while(high - low >1) {
 		mid = (high+low)/2;
-		if(approxFacilities[mid].data >= target ) {
+		if(approxFacilities[mid]>= target ) {
 			high = mid;
 		}
-		if(dotProd(approxFacilities[mid], omega) <= target) {
+		if(approxFacilities[mid] <= target) {
 			low = mid;
 		}
 	}
