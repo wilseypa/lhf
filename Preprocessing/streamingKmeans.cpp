@@ -27,43 +27,58 @@ streamingKmeans::streamingKmeans(){
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket streamingKmeans::runPreprocessor(pipePacket inData){
 	//Arguments - num_clusters, num_iterations
-
+  int numClusters;
 	utils ut;
 	static std::random_device seed;
 	static std::mt19937 gen(seed());
 	std::uniform_int_distribution<size_t> distribution(0, inData.workData.originalData.size()-1);
-
+int n = 5;
+int size = inData.workData.originalData.size();
 //constants used for the online step (BMORST11 Streaming k-means...)
 const float E = 2.718281828;
 const float alpha = 2.0; //for approx triangle inequality
 const float cofl = 3 * alpha + 2 * (E/(E-1));   //constant online facility location
 const float beta = 2 * alpha * alpha * cofl + (2* alpha);  //constant to increase lower bound
 const float kofl = (6 * alpha) + 1; //constant OFL for upper bound on number of facilities
+
 // OFL generates AT MOST kofl(1 + log n)(OPT/L) facilities
- std::vector<std::vector<double>> facilities; //centroids
- std::vector<std::vector<double>> omega; // vector of values between 0 and 1 based on dim of facilities
+ std::vector<std::vector<double>> facilities; //centroids, size = to numClusters "empty set K"
+ std::vector<double> omega; // vector of values between 0 and 1 based on dim of facilities
 
+for(int d = 0; d<inData.workData.originalData[0].size(); d++){
+	omega[d] = randDouble();  // initializing omega
 
+}
+std::vector<std::vector<double>> approxFacilities;
 
-
-
-
-
-
-
-//facility cost f = 1/(k(1+log n))  k clusters, n points, empty set K  //facility==centroid
+//facility cost f = 1/(k(1+log n))  k clusters, n points, empty set K  //facility==centroid 
+float f = 1/(numClusters*(1+ log(inData.workData.originalData.size())));
 //as each point arrives either make it a facility or assign it to one based on delta/f prob
 
 //while file stream open
       //while K <= scriptK = klogn (num clusters <= num facilities f) & stream unread
-			    //read next point x from the stream
-
-
+			while(facilities.size() <= numClusters*log(inData.workData.originalData.size()) ) {
+				for(int x = 0; x<inData.workData.originalData.size(); x++) {   //read next point x from the stream
+			//	 double delta = approxNearestNeighbor(inData.workData.originalData[x], omega[x], );
+				
 					//measure delta = min d(x,y)^2 --> using approx nearest neighbor
 
 					//if delta/f event occurs
 					    // K <- K union current point x
 				  // else assign x to closest facility in K
+				
+				
+				
+				
+				
+				
+				
+				}
+			}
+			   
+
+
+				
 
 		  // if current stream not exhausted....
 			   //while K <= scriptK 
@@ -105,22 +120,85 @@ bool streamingKmeans::configPreprocessor(std::map<std::string, std::string> conf
 	return true;
 }
 
-void streamingKmeans:: approxNearestNeighbor(std::vector<std::vector<double>> facilities, float dotProd, int n, float distSquare, int dim ){
+void streamingKmeans:: approxNearestNeighbor(std::vector<std::vector<double>> approxFacilities, std::vector<double> omega, int x, int size, pipePacket(inData)){
+  //based on random projection 
+	utils ut;
+  double projection = dotProd(approxFacilities[0], omega);
+	int loc = binarySearch(approxFacilities, omega, size, projection);
+	//store facilities sorted by their inner product with omega 
+	//when new point x arrives, find 2 facilities/centroids that x dotProd omega is between
+	//pick which centroid is exactly closer to x , set that equal to delta or "closest facility"
+	if(loc == -1){
+		//nearest centroid is current
+		double curCentroid = ut.vectors_distance(inData.workData.originalData[x], approxFacilities[0]);
+		
+	}
+	else if (loc == x-1){
+		//nearest is approx[n-1]
+		double nextCentroid =  ut.vectors_distance(inData.workData.originalData[x], approxFacilities[x]);
+
+	}
+	return;
 
 }
 
 
-void streamingKmeans:: binarySearch(std::vector<std::vector<double>> approxFacilities, int n, double target){
+int streamingKmeans:: binarySearch(std::vector<std::vector<double>> approxFacilities, std::vector<double> omega, int n, double target){ //dotProd is target
+  //performing binary search on approxFacilities to find starting location for approxNearestNeighbor
+	if( target < dotProd(approxFacilities[0], omega)){
+		return -1; //if target < dotProd, search unsuccessful
+	}
+  if(target > dotProd(approxFacilities[n], omega)) {
+		return n-1;
+	}
+	int low = 0;
+	int high = n-1;
+	int mid; 
+	while(high - low >1) {
+		mid = (high+low)/2;
+		if(approxFacilities[mid].data >= target ) {
+			high = mid;
+		}
+		if(dotProd(approxFacilities[mid], omega) <= target) {
+			low = mid;
+		}
+	}
+return low;
+
 
 }
 
 
-float dotProd(std::vector<std::vector<double>> facilities, std::vector<std::vector<double>> omega){
+//double dotProd(std::vector<std::vector<double>> approxFacilities, std::vector<std::vector<double>> omega){  //d is dimension
+double streamingKmeans::dotProd(const std::vector<double>& a, const std::vector<double>& b){
 	//takes dot product of facilities centroids and omega, where omega is d dimensions large uniformly distributed between 0,1
 	//when new points arrive, dot product calculated, and find 2 centroids x dot omega is between... faster than calc nearest neighbor
 	std::vector<double> temp;
-
-  std::transform(facilities.begin(), omega.begin(), std::back_inserter(temp), [](double e1, double e2)  {return e1*e2;});
+ 
+  std::transform(a.begin(), b.begin(), std::back_inserter(temp), [](double e1, double e2)  {return e1*e2;});
   
   return std::accumulate(temp.begin(), temp.end(), 0.0);
+}
+
+double streamingKmeans::dotProd2D(std::vector<std::vector<double>>&  a, std::vector<std::vector<double>> & b){
+	//takes dot product of facilities centroids and omega, where omega is d dimensions large uniformly distributed between 0,1
+	//when new points arrive, dot product calculated, and find 2 centroids x dot omega is between... faster than calc nearest neighbor
+	std::vector<double> temp;
+ 
+  std::transform(a.begin(), b.begin(), std::back_inserter(temp), [](double e1, double e2)  {return e1*e2;});
+  
+  return std::accumulate(temp.begin(), temp.end(), 0.0);
+}
+
+double streamingKmeans::randDouble(){
+    return rand()/(double(RAND_MAX)+1);
+} 
+
+bool streamingKmeans::prob(double f){
+	// returns true with f's probability.
+	return randDouble() < f;
+}
+
+int streamingKmeans::random(int low, int high){
+	return low + ( rand() % (high - low) );
 }
