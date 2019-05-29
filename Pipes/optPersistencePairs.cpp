@@ -62,6 +62,62 @@ int optPersistencePairs::checkFace(std::set<unsigned> face, std::set<unsigned> s
 		return 0;
 }
 
+std::pair<std::set<unsigned>,std::set<unsigned>> optPersistencePairs::getRankNull(std::vector<std::set<unsigned>> boundaryMatrix){
+	//Perform column echelon reduction; basically the inverse of the RREF
+	//	return column index of pivots (ranks)
+	//	return row index of maximal faces for clearing
+	
+	utils ut;
+		
+	std::set<unsigned> retPivots;
+	std::set<unsigned> retFaces;
+	
+	//Step through each column and search for pivot sequentially
+	for(unsigned i = 0; i < boundaryMatrix.size(); i++){
+		
+		//Step through each simplex
+		for(unsigned j = 0; j < boundaryMatrix.size(); j++){
+			
+			//If the vector has j in the target set
+			if(boundaryMatrix[j].size() > 0 && *(boundaryMatrix[j].begin()) == i){
+				retPivots.insert(j);
+	
+				//Create a temp set for XOR
+				std::set<unsigned> tempColumn = boundaryMatrix[j];
+				
+				//Record the lowest maximal face
+				unsigned lastMaximal = *boundaryMatrix[j].begin();
+				
+				for(auto mf = boundaryMatrix[j].begin(); mf != boundaryMatrix[j].end(); mf++){
+					lastMaximal = *mf;
+				}
+				if(retFaces.find(lastMaximal) == retFaces.end() && lastMaximal != *boundaryMatrix[j].begin())
+					retFaces.insert(lastMaximal);
+				
+				
+				//Iterate through remaining sets and XOR with our set
+				while(j < boundaryMatrix.size()){
+					if(boundaryMatrix[j].size() > 0 && *(boundaryMatrix[j].begin()) == i){
+						//XOR the remaining rows
+						boundaryMatrix[j] = ut.setXOR(tempColumn, boundaryMatrix[j]);
+					}
+					j += 1;
+				}				
+			}
+		}
+	}
+	std::cout << "RetPivots: " << retPivots.size() << "\t";
+	ut.print1DVector(retPivots);
+	std::cout << "RetFaces: " << retFaces.size() << "\t";
+	ut.print1DVector(retFaces);
+	
+	return std::make_pair(retPivots, retFaces);
+	
+	
+	
+	
+}
+
 std::pair<std::set<unsigned>,std::set<unsigned>> optPersistencePairs::getRankNull(std::vector<std::vector<unsigned>> boundaryMatrix){
 	
 	//Perform column echelon reduction; basically the inverse of the RREF
@@ -108,13 +164,14 @@ std::pair<std::set<unsigned>,std::set<unsigned>> optPersistencePairs::getRankNul
 			}
 		}
 	}
+	std::cout << "RetPivots: " << retPivots.size() << "\t";
+	ut.print1DVector(retPivots);
+	std::cout << "RetFaces: " << retFaces.size() << "\t";
+	ut.print1DVector(retFaces);
 	return std::make_pair(retPivots, retFaces);
 }
 
 std::vector<std::set<unsigned>> optPersistencePairs::createBoundarySets(std::vector<std::vector<indSimplexTree::graphEntry>> ge, int d, std::set<unsigned> pivots, pipePacket p){
-	
-	std::cout << "GE : " << ge[d-1].size() << std::endl;
-	std::cout << "Creating Boundary Sets... d=" << d << std::endl;
 	
 	//Start a timer for physical time passed during the pipe's function
 	auto startTime = std::chrono::high_resolution_clock::now();	
@@ -128,8 +185,6 @@ std::vector<std::set<unsigned>> optPersistencePairs::createBoundarySets(std::vec
 		return a;
 	} else
 		nChain = ge[d-1];
-	
-	std::cout << "NChains: " << nChain.size() << "\tPChains: " << pChain.size() << std::endl;
 		
 	std::set<unsigned> a;
 	std::vector<std::set<unsigned>> tempBoundary(pChain.size(), a);
@@ -137,9 +192,7 @@ std::vector<std::set<unsigned>> optPersistencePairs::createBoundarySets(std::vec
 	
 	unsigned curPivot = -1;
 	if(!pivots.empty()){
-		std::cout << "Test3" << std::endl;
 		curPivot = *(pivots.begin());
-		
 		//Create the columns (pChain), indexed by the rows in our pivot table
 		for(unsigned i = 0; i < pChain.size(); i++){
 			if(i == curPivot){
@@ -149,23 +202,21 @@ std::vector<std::set<unsigned>> optPersistencePairs::createBoundarySets(std::vec
 						curPivot = *(pivots.begin());
 				}				
 			} else {
-				std::cout << "test" << std::endl;
 				tempBoundary[i] = pChain[i].getFaces(p.workData.complex);
-				
-				std::cout << "test2" << std::endl;
 			}
 			
 			
 		}
 			
+		std::cout << std::endl;
 	}else {	;
 		for(unsigned i = 0; i < pChain.size(); i++){
 			//Create the rows (nChain)
 			tempBoundary[i] = pChain[i].getFaces(p.workData.complex);
-			//ut.print1DVector(tempBoundary[i]);
 		} 
 		
 	}
+	return tempBoundary;
 	
 }
 
@@ -262,14 +313,40 @@ pipePacket optPersistencePairs::runPipe(pipePacket inData){
 	std::string bettis = "curIndex,index,dim,birth,death\n";
 	auto edgeEndTime = std::chrono::high_resolution_clock::now();
 	auto edgeStartTime = std::chrono::high_resolution_clock::now();
+	
+	std::set<unsigned> allPivots;
+	std::set<unsigned> maxFaces;
+	
+	
 	if(alterPipe){
 		std::vector<std::vector<indSimplexTree::graphEntry>> indGraph = inData.workData.complex->getIndexEdges(maxEpsilon);
 		edgeEndTime = std::chrono::high_resolution_clock::now();
 		
 		for(int d = dim; d > 0; d--){
 			
-			auto r = createBoundarySets(indGraph, d, pivots, inData);
+			auto r = createBoundarySets(indGraph, d, maxFaces, inData);
 			
+			std::cout << "Getting Rank Nulls : " << r.size() << std::endl;
+			//Compute the pivots of the current boundary matrix
+			auto pivot_maxface_pair = getRankNull(r);
+		
+			pivots = pivot_maxface_pair.first;
+			maxFaces = pivot_maxface_pair.second;
+			
+			pivotOffset -= inData.workData.complex->dimCounts[d];
+			//Store the current pivots into allPivots (with offset) to compute tArray
+			for(auto it = pivots.begin(); it != pivots.end() ; it++){
+				unsigned val = *it;
+				allPivots.insert(val + pivotOffset);
+			}
+			
+			for(auto it = maxFaces.begin(); it != maxFaces.end() ; it++){
+				unsigned val = *it;
+			}
+			
+			
+			//Iterate to next dimension; use the pivots to clear rows of the next dimension, use the boundary (later) 
+			//		to compute the tArray
 			
 			
 			
@@ -293,13 +370,10 @@ pipePacket optPersistencePairs::runPipe(pipePacket inData){
 			ret.push_back(temp);
 		}
 		
-		std::set<unsigned> allPivots;
-		std::set<unsigned> maxFaces;
 
 		//Iterate each dimension, only need coefficients (V)
 		for(int d = dim; d > 0; d--){
 			
-					
 			//First, construct the current boundary matrix (by dimension); clear pivots (if they exist)
 			ret[d] = createBoundaryMatrix(edges, d, maxFaces);
 				

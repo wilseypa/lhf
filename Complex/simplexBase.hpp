@@ -73,6 +73,7 @@ class simplexBase {
 		}
 	};
   
+	std::vector<unsigned> dimCounts = {6, 15, 20};
   
 	std::string simplexType;
 	simplexBase();

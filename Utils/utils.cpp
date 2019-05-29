@@ -65,6 +65,19 @@ double utils::vectors_distance(const double& a, const double& b){
 		return pow((a-b),2);
 }
 
+std::set<unsigned> utils::setXOR(std::set<unsigned> setA, std::set<unsigned> setB){
+	std::set<unsigned> ret;
+
+	if(setA.size() == 0)
+		ret = setB;
+	else if (setB.size() == 0)
+		ret = setA;
+	else
+		set_symmetric_difference(setA.begin(), setA.end(), setB.begin(), setB.end(), std::inserter(ret, ret.begin()));
+	
+	return ret;
+}
+
 double utils::vectors_distance(const std::vector<double>& a, const std::vector<double>& b){		
 		std::vector<double> temp;
 		

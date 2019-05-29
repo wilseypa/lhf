@@ -205,10 +205,10 @@ void indSimplexTree::insert(std::vector<double>&) {
 	if(head == nullptr){	
 		
 		curNode->simplexSet = { indexCounter };	
+		curNode->sortedIndex = indexCounter;
 		head = curNode;
 		indexCounter++;
 		nodeCount++;
-		
 		std::vector<indTreeNode*> tempInd;
 		tempInd.push_back(head);
 		dimensions.push_back(tempInd);
@@ -264,6 +264,7 @@ void indSimplexTree::insert(std::vector<double>&) {
 	ins->index = indexCounter;
 	ins->sibling = nullptr;
 	ins->parent = nullptr;
+	ins->sortedIndex = indexCounter;
 	ins->simplexSet = { indexCounter };
 	temp->sibling = ins;
 	//indexedGraph[0].push_back(std::make_pair(ins, std::make_pair(tempSet, 0)));

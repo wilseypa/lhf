@@ -17,7 +17,6 @@ class indSimplexTree : public simplexBase {
 	int maxDim;
 	
 	
-	std::vector<unsigned> dimCounts = {6, 15, 20};
 			
 	std::vector<std::vector<indTreeNode*>> dimensions;		
 	
