@@ -113,9 +113,6 @@ std::pair<std::set<unsigned>,std::set<unsigned>> optPersistencePairs::getRankNul
 	
 	return std::make_pair(retPivots, retFaces);
 	
-	
-	
-	
 }
 
 std::pair<std::set<unsigned>,std::set<unsigned>> optPersistencePairs::getRankNull(std::vector<std::vector<unsigned>> boundaryMatrix){
@@ -171,6 +168,171 @@ std::pair<std::set<unsigned>,std::set<unsigned>> optPersistencePairs::getRankNul
 	return std::make_pair(retPivots, retFaces);
 }
 
+//returns offset ranks (ready for tArray)
+std::set<unsigned> optPersistencePairs::getRankNull(std::vector<std::vector<indSimplexTree::graphEntry>> ge, pipePacket p){
+	
+	std::cout << "GetRankNull" << std::endl;
+	
+	//Initialize the total number of entries in the graph
+	int pivotOffset = 0;
+	for(auto i : ge){
+		pivotOffset += i.size();
+	}
+	
+	//Store allPivots (for return), curPivots & curFaces for iterations
+	std::set<unsigned> allPivots;
+	std::set<unsigned> curPivots;
+	std::set<unsigned> curFaces;
+	
+	for(int d = dim; d > 0; d--){
+		
+		//Start a timer for physical time passed during this dimensions computation
+		auto startTime = std::chrono::high_resolution_clock::now();	
+		
+		//Get the nChain and pChain
+		std::vector<indSimplexTree::graphEntry> nChain = ge[d-1];
+		std::vector<indSimplexTree::graphEntry> pChain = ge[d];
+		
+		//Local variable for storing the next iteration's pivots and faces
+		std::set<unsigned> nextPivots;
+		std::set<unsigned> nextFaces;
+		
+		//Initialize our boundary matrix and pivots
+		std::set<unsigned> a;
+		std::vector<std::set<unsigned>> tempBoundary(pChain.size(), a);
+		std::vector<std::set<unsigned>> pivotXOR(nChain.size(), a);
+		std::vector<std::pair<int, std::set<unsigned>>> tempBuffer;
+		int curCount = 0;
+		
+		//Get the current face (for twist algorithm)
+		unsigned curFace = -1;
+		if(!curFaces.empty()){
+			curFace = *(curFaces.begin());			
+		}
+		
+		//Subtract the length of the pChain from the pivotOffset for indexing
+		pivotOffset -= pChain.size();
+			
+		
+		//Create the rows (nChain) iteratively
+		//
+		//		1) Add a pChain at a time to buffer until a pivot is found in current index (row)
+		//		2) After a pivot is found, start at beginning of buffer and repeat
+		//			a) If a pivot is found before the end of the buffer, XOR with remaining, back to step 2
+		//			b) If no pivot is found, continue to step 1
+		
+		//For each row (nChains)
+		for(unsigned i = 0; i < nChain.size(); i++){
+			
+			//Track if we've found a pivot in the row
+			bool found = false;
+			
+			
+			//First, check buffered pivots (if they exist)
+			for(int j = 0; j < tempBuffer.size(); j++){
+				if(tempBuffer[j].second.size() > 0 && *(tempBuffer[j].second.begin()) == i){
+					
+					//The pivot we're looking for already exists in the buffer...
+					nextPivots.insert(tempBuffer[j].first + pivotOffset);
+					pivotXOR[i] = tempBuffer[j].second;
+					
+					found = true;
+					
+					//XOR remaining rows in the buffer to remove pivots
+					for(unsigned t = j+1; t < tempBuffer.size(); t++){
+						if(tempBuffer[t].second.size() > 0 && *(tempBuffer[t].second.begin()) == i){
+							tempBuffer[t].second = ut.setXOR(tempBuffer[j].second, tempBuffer[t].second);
+						}
+					}					
+					
+					//Record the lowest maximal face
+					unsigned lastMaximal = *tempBuffer[j].second.begin();
+					
+					//Grab the maximal face for clearing
+					for(auto mf = tempBuffer[j].second.begin(); mf != tempBuffer[j].second.end(); mf++){
+						lastMaximal = *mf;
+					}
+					if(nextFaces.find(lastMaximal) == nextFaces.end() && lastMaximal != *tempBuffer[j].second.begin())
+						nextFaces.insert(lastMaximal);
+					
+					//Remove the pivot
+					tempBuffer.erase(tempBuffer.begin() + j);
+					
+					break;
+				}
+			}
+			
+			if(!found){
+				//No buffered pivots; pop pChains until we find one (possibly with a limit?)
+				for(int j = curCount; j < pChain.size(); j++){
+					
+					if(j == curFace){
+						if(!curFaces.empty()){
+							curFaces.erase(curFaces.begin());
+							if(!curFaces.empty())
+								curFace = *(curFaces.begin());
+						}
+						curCount++;
+					} else {
+						auto setFace = pChain[j].getFaces(p.workData.complex);
+						
+						//XOR with previous rows (while set.begin < j)
+						
+						
+						if(*(setFace.begin()) < i){
+							setFace = ut.setXOR(setFace, pivotXOR[*(setFace.begin())]);
+							
+							while(setFace.begin() != setFace.end() && *(setFace.begin()) < i){
+								
+								setFace = ut.setXOR(setFace, pivotXOR[*(setFace.begin())]);
+							}
+							
+						}
+						
+						
+						if(setFace.size() > 0 && *(setFace.begin()) == i){
+							nextPivots.insert(j + pivotOffset);
+							pivotXOR[i] = setFace;
+							found = true;
+							curCount++;
+							break;
+							
+						} else {
+							tempBuffer.push_back(std::make_pair(j,setFace));
+							curCount++;
+						}
+						
+					}
+				}
+			}
+		}
+		curPivots = nextPivots;
+		curFaces = nextFaces;
+		for(auto a : curPivots){
+			allPivots.insert(a);
+		}
+		
+		
+			
+		//Stop the timer for time passed during the pipe's function
+		auto endTime = std::chrono::high_resolution_clock::now();
+
+		//Calculate the duration (physical time) for the pipe's function
+		std::chrono::duration<double, std::milli> elapsed = endTime - startTime;
+
+		//Output the time and memory used for this pipeline segment
+		std::cout << "Boundary Matrix (d=" << d << ") created in: " << (elapsed.count()/1000.0) << " seconds (physical time)" << std::endl;
+		std::cout << "Faces: " << curFaces.size() << std::endl;
+		
+		std::cout << std::endl << std::endl;
+		
+	}
+	
+	return allPivots;
+	
+}
+
+
 std::vector<std::set<unsigned>> optPersistencePairs::createBoundarySets(std::vector<std::vector<indSimplexTree::graphEntry>> ge, int d, std::set<unsigned> pivots, pipePacket p){
 	
 	//Start a timer for physical time passed during the pipe's function
@@ -179,7 +341,6 @@ std::vector<std::set<unsigned>> optPersistencePairs::createBoundarySets(std::vec
 	std::vector<indSimplexTree::graphEntry> nChain;
 	std::vector<indSimplexTree::graphEntry> pChain = ge[d];
 	
-	
 	if(d == 0){
 		std::vector<std::set<unsigned>> a;
 		return a;
@@ -187,8 +348,7 @@ std::vector<std::set<unsigned>> optPersistencePairs::createBoundarySets(std::vec
 		nChain = ge[d-1];
 		
 	std::set<unsigned> a;
-	std::vector<std::set<unsigned>> tempBoundary(pChain.size(), a);
-	
+	std::vector<std::set<unsigned>> tempBoundary(pChain.size(), a);	
 	
 	unsigned curPivot = -1;
 	if(!pivots.empty()){
@@ -216,6 +376,29 @@ std::vector<std::set<unsigned>> optPersistencePairs::createBoundarySets(std::vec
 		} 
 		
 	}
+	
+	//Stop the timer for time passed during the pipe's function
+	auto endTime = std::chrono::high_resolution_clock::now();
+
+	//Calculate the duration (physical time) for the pipe's function
+	std::chrono::duration<double, std::milli> elapsed = endTime - startTime;
+
+	//Output the time and memory used for this pipeline segment
+	std::cout << "Boundary Matrix (d=" << d << ") created in: " << (elapsed.count()/1000.0) << " seconds (physical time)" << std::endl;
+
+	if(debug == 1){
+		std::cout << std::endl << "_____BOUNDARY______" << std::endl;
+		for(auto z : tempBoundary){
+			std::cout << "  ";
+			for(auto y : z)
+				std::cout << y << " ";
+			std::cout << std::endl;
+		}
+		std::cout << std::endl << std::endl;
+	}
+	
+	
+	
 	return tempBoundary;
 	
 }
@@ -317,23 +500,43 @@ pipePacket optPersistencePairs::runPipe(pipePacket inData){
 	std::set<unsigned> allPivots;
 	std::set<unsigned> maxFaces;
 	
+	//Flatten the edges into a single array
+	std::vector<std::set<unsigned>> kSimplices;
+	std::vector<double> kWeights;
 	
-	if(alterPipe){
+	if(twist == "true"){
+		
 		std::vector<std::vector<indSimplexTree::graphEntry>> indGraph = inData.workData.complex->getIndexEdges(maxEpsilon);
 		edgeEndTime = std::chrono::high_resolution_clock::now();
+		
+		allPivots = getRankNull(indGraph, inData);	
+	
+		for(auto a : indGraph){		
+			for(auto z : a){
+				kSimplices.push_back(z.simplexSet);
+				kWeights.push_back(z.weight);
+			}
+		}	
+	
+	}else if(alterPipe){
+		std::vector<std::vector<indSimplexTree::graphEntry>> indGraph = inData.workData.complex->getIndexEdges(maxEpsilon);
+		edgeEndTime = std::chrono::high_resolution_clock::now();
+		
+		for(auto i : indGraph){
+			pivotOffset += i.size();
+		}
 		
 		for(int d = dim; d > 0; d--){
 			
 			auto r = createBoundarySets(indGraph, d, maxFaces, inData);
 			
-			std::cout << "Getting Rank Nulls : " << r.size() << std::endl;
 			//Compute the pivots of the current boundary matrix
 			auto pivot_maxface_pair = getRankNull(r);
 		
 			pivots = pivot_maxface_pair.first;
 			maxFaces = pivot_maxface_pair.second;
 			
-			pivotOffset -= inData.workData.complex->dimCounts[d];
+			pivotOffset -= indGraph[d].size();
 			//Store the current pivots into allPivots (with offset) to compute tArray
 			for(auto it = pivots.begin(); it != pivots.end() ; it++){
 				unsigned val = *it;
@@ -344,18 +547,20 @@ pipePacket optPersistencePairs::runPipe(pipePacket inData){
 				unsigned val = *it;
 			}
 			
-			
 			//Iterate to next dimension; use the pivots to clear rows of the next dimension, use the boundary (later) 
 			//		to compute the tArray
-			
-			
-			
 		}
 		
 		
-	}
-	
-	else{
+		for(auto a : indGraph){		
+			for(auto z : a){
+				kSimplices.push_back(z.simplexSet);
+				kWeights.push_back(z.weight);
+			}
+		}	
+		
+		
+	} else{
 		std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges = inData.workData.complex->getAllEdges(maxEpsilon);
 		edgeEndTime = std::chrono::high_resolution_clock::now();
 		
@@ -398,84 +603,81 @@ pipePacket optPersistencePairs::runPipe(pipePacket inData){
 			//Iterate to next dimension; use the pivots to clear rows of the next dimension, use the boundary (later) 
 			//		to compute the tArray
 		}	
-				
-				
-		//Create the tArray from the identified pivots
 		
 		
-		std::vector<std::pair<double,double>> temp2;
-		std::vector<std::vector<std::pair<double,double>>> retarray;
-		for(int i = 0; i < dim; i++){
-			retarray.push_back(temp2);
-		}
-		
-		
-		//Flatten the edges into a single array
-		std::vector<std::set<unsigned>> kSimplices;
-		std::vector<double> kWeights;
 		for(auto a : edges){		
 			for(auto z : a){
 				kSimplices.push_back(z.first);
 				kWeights.push_back(z.second);
 			}
 		}	
-		
-		unsigned curPivot = -1;
-		if(!allPivots.empty()){
-			curPivot = *(allPivots.begin());
-		}
-		
-		for(int curIndex = 0; curIndex < kSimplices.size(); curIndex++){
-			int curDim = kSimplices[curIndex].size();
+	}
 			
-			tArray.push_back(tArrayEntry_t());
-			tArray[curIndex].simplex = kSimplices[curIndex];
-			
-			if(curDim == 1){
-				tArray[curIndex].birth = kWeights[curIndex];
-				tArray[curIndex].marked = true;			
-			}
-			else if(curIndex != curPivot){
-				tArray[curIndex].birth = kWeights[curIndex];
-				tArray[curIndex].marked = true;
-				
-			} else {
-				int iter = tArray.size();
-				for(; iter >= 0; iter--){
-					if(curDim == 2 && tArray[iter].marked && tArray[iter].death < 0 && tArray[curIndex].simplex.size() != kSimplices[iter].size())
-						break;
-					
-					else if(tArray[iter].marked && tArray[iter].death < 0 \
-						&& tArray[curIndex].simplex.size() != kSimplices[iter].size() \
-						&& ut.setIntersect(kSimplices[iter], tArray[curIndex].simplex, false).size() == tArray[curIndex].simplex.size() - 1)
-							break;
-				}
-				if(iter != 0){
-					if(tArray[iter].death < 0 ){
-						tArray[iter].death = kWeights[curIndex];
-						
-						if(tArray[iter].death != tArray[iter].birth)
-							bettis += std::to_string(tArray[curIndex].simplex.size() - 2) + "," + std::to_string(tArray[iter].birth) + "," + std::to_string(kWeights[curIndex]) + "\n";
-					}
-				}
-				
-				if(!allPivots.empty()){
-					allPivots.erase(allPivots.begin());
-					if(!allPivots.empty()){
-						curPivot = *(allPivots.begin());
-					}
-				}
-			}
-		}
+	//Create the tArray from the identified pivots
 	
-
-		for(int t = 0; t < kSimplices.size(); t++){
-			if(tArray[t].marked && tArray[t].death == -1 && tArray[t].simplex.size() <= dim){
-				retarray[tArray[t].simplex.size() - 1].push_back(std::make_pair(kWeights[t], maxEpsilon));
-				bettis += std::to_string(tArray[t].simplex.size() - 1) + "," + std::to_string(tArray[t].birth) + "," + std::to_string(maxEpsilon) + "\n";
+	
+	std::vector<std::pair<double,double>> temp2;
+	std::vector<std::vector<std::pair<double,double>>> retarray;
+	for(int i = 0; i < dim; i++){
+		retarray.push_back(temp2);
+	}
+	
+	
+	unsigned curPivot = -1;
+	if(!allPivots.empty()){
+		curPivot = *(allPivots.begin());
+	}
+	
+	for(int curIndex = 0; curIndex < kSimplices.size(); curIndex++){
+		int curDim = kSimplices[curIndex].size();
+		
+		tArray.push_back(tArrayEntry_t());
+		tArray[curIndex].simplex = kSimplices[curIndex];
+		
+		if(curDim == 1){
+			tArray[curIndex].birth = kWeights[curIndex];
+			tArray[curIndex].marked = true;			
+		}
+		else if(curIndex != curPivot){
+			tArray[curIndex].birth = kWeights[curIndex];
+			tArray[curIndex].marked = true;
+			
+		} else {
+			int iter = tArray.size();
+			for(; iter >= 0; iter--){
+				if(curDim == 2 && tArray[iter].marked && tArray[iter].death < 0 && tArray[curIndex].simplex.size() != kSimplices[iter].size())
+					break;
+				else if(tArray[iter].marked && tArray[iter].death < 0 \
+					&& tArray[curIndex].simplex.size() != kSimplices[iter].size() \
+					&& ut.setIntersect(kSimplices[iter], tArray[curIndex].simplex, false).size() == tArray[curIndex].simplex.size() - 1)
+						break;
+			}
+			if(iter != 0){
+				if(tArray[iter].death < 0 ){
+					tArray[iter].death = kWeights[curIndex];
+					
+					if(tArray[iter].death != tArray[iter].birth)
+						bettis += std::to_string(tArray[curIndex].simplex.size() - 2) + "," + std::to_string(tArray[iter].birth) + "," + std::to_string(kWeights[curIndex]) + "\n";
+				}
+			}
+			
+			if(!allPivots.empty()){
+				allPivots.erase(allPivots.begin());
+				if(!allPivots.empty()){
+					curPivot = *(allPivots.begin());
+				}
 			}
 		}
 	}
+
+
+	for(int t = 0; t < kSimplices.size(); t++){
+		if(tArray[t].marked && tArray[t].death == -1 && tArray[t].simplex.size() <= dim){
+			retarray[tArray[t].simplex.size() - 1].push_back(std::make_pair(kWeights[t], maxEpsilon));
+			bettis += std::to_string(tArray[t].simplex.size() - 1) + "," + std::to_string(tArray[t].birth) + "," + std::to_string(maxEpsilon) + "\n";
+		}
+	}
+	
 	
 	//Stop the timer for time passed during the pipe's function
 	auto endTime = std::chrono::high_resolution_clock::now();
@@ -489,7 +691,7 @@ pipePacket optPersistencePairs::runPipe(pipePacket inData){
 	std::cout << "Edges executed in " << (edgeElapsed.count()/1000.0) << " seconds (physical time)" << std::endl;
 	
 	//Print the bettis	
-	//std::cout << bettis << std::endl;
+	std::cout << bettis << std::endl;
 		
 	inData.bettiOutput = bettis;
 		

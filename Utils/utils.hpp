@@ -15,7 +15,7 @@ class utils {
 	double vectors_distance(const double&, const double&);
 	double vectors_distance(const std::vector<double>&, const std::vector<double>&);
 	void print1DSet(const auto&);	
-	std::set<unsigned> setXOR(std::set<unsigned>, std::set<unsigned>);
+	std::set<unsigned> setXOR(std::set<unsigned>&, std::set<unsigned>&);
 	std::set<unsigned> setIntersect(std::set<unsigned>, std::set<unsigned>, bool isSorted);
 	std::vector<unsigned> setIntersect(std::vector<unsigned>, std::vector<unsigned>, bool);
 	std::vector<unsigned> symmetricDiff(std::vector<unsigned>, std::vector<unsigned>, bool);
