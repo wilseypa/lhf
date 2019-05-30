@@ -16,6 +16,8 @@
 #include "streamingKmeans.hpp"
 #include "streamingUtils.hpp"
 #include "utils.hpp"
+// overall goal: get weighted representation of streaming data, then perform k means on that Shindler 11
+
 // basePipe constructor
 streamingKmeans::streamingKmeans(){
 	procName = "streamingKmeans";
@@ -32,47 +34,80 @@ pipePacket streamingKmeans::runPreprocessor(pipePacket inData){
 	static std::random_device seed;
 	static std::mt19937 gen(seed());
 	std::uniform_int_distribution<size_t> distribution(0, inData.workData.originalData.size()-1);
-int n = 5;
-int size = inData.workData.originalData.size();
+  int n = 5;
+  int size = inData.workData.originalData.size();
+  int maxFacilities = 1000;
 //constants used for the online step (BMORST11 Streaming k-means...)
-const float E = 2.718281828;
-const float alpha = 2.0; //for approx triangle inequality
-const float cofl = 3 * alpha + 2 * (E/(E-1));   //constant online facility location
-const float beta = 2 * alpha * alpha * cofl + (2* alpha);  //constant to increase lower bound
-const float kofl = (6 * alpha) + 1; //constant OFL for upper bound on number of facilities
+  const float E = 2.718281828;
+  const float alpha = 2.0; //for approx triangle inequality
+  const float cofl = 3 * alpha + 2 * (E/(E-1));   //constant online facility location
+  const float beta = 2 * alpha * alpha * cofl + (2* alpha);  //constant to increase lower bound
+  const float kofl = (6 * alpha) + 1; //constant OFL for upper bound on number of facilities
 
 // OFL generates AT MOST kofl(1 + log n)(OPT/L) facilities
+
+double delta; // delta = cost of current point and y found via approxNearestNeighbor
+
+
+
  std::vector<std::vector<double>> facilities; //centroids, size = to numClusters "empty set K"
  std::vector<double> omega; // vector of values between 0 and 1 based on dim of facilities
  std::vector<double> facilityLabel; // tracks the index of the facilities before they are sorted into the approx facility
-
+ std::vector<double> weight;  //storing weights of points assigned to clusters
 for(int d = 0; d<inData.workData.originalData[0].size(); d++){
-	omega[d] = randDouble();  // initializing omega
-
+    omega[d] = randDouble();  // initializing omega
 }
-std::vector<std::vector<double>> approxFacilities;
+std::vector<double> approxFacilities;
+ std::vector<std::vector<double>> kHat;
 
-//facility cost f = 1/(k(1+log n))  k clusters, n points, empty set K  //facility==centroid 
-float f = 1/(numClusters*(1+ log(inData.workData.originalData.size())));
+float f = 1/(numClusters*(1+ log(inData.workData.originalData.size()))); //facility cost f = 1/(k(1+log n))  k clusters, n points, empty set K  //facility==centroid 
 //as each point arrives either make it a facility or assign it to one based on delta/f prob
 
 //while file stream open
       //while K <= scriptK = klogn (num clusters <= num facilities f) & stream unread
 			while(facilities.size() <= numClusters*log(inData.workData.originalData.size()) ) {
 				for(int x = 0; x<inData.workData.originalData.size(); x++) {   //read next point x from the stream
-			//	 double delta = approxNearestNeighbor(inData.workData.originalData[x], omega[x], );
-				
-					//measure delta = min d(x,y)^2 --> using approx nearest neighbor
+				    std::vector<double> y = approxNearestNeighbor(facilities,  approxFacilities, facilityLabel, omega,  x,  size, pipePacket(inData));
+			      delta = ut.vectors_distance(inData.workData.originalData[x], y); 	//measure delta = min d(x,y)^2 --> using approx nearest neighbor
+				        if(prob(delta/f)){
+                  facilities.push_back(inData.workData.originalData[x]);     // K <- K union current point x
+								}
+				        else{  
+					          // add current point to closest cluster center in facilities
+							  }
 
-					//if delta/f event occurs
-					    // K <- K union current point x
-				  // else assign x to closest facility in K
-				
-				
-				
-				
-				
-				
+				      while(facilities.size() < maxFacilities){  	// if current stream not exhausted
+					    f = beta*f; //increasing the cost to add a new centroid
+		
+							//move points x in K to the COM of points for that facility
+              
+							//set wsubx be number of points assigned to x in K
+
+						
+						 kHat.push_back(facilities[0]); //initialize K hat containing first facility from K
+	               for(unsigned xHat = 0; xHat<facilities.size(); xHat++){  //for each x in K
+							       std::vector<double> yHat = approxNearestNeighbor(facilities,  approxFacilities, facilityLabel, omega,  x,  size, pipePacket(inData));
+							       double deltaHat = ut.vectors_distance(facilities[xHat], yHat); 
+                         if(prob(weight[xHat]*deltaHat/f)) {
+									          kHat.push_back(facilities[xHat]);
+								 			   }
+								 		     else {
+									 			   // add x to its closest facility in Khat
+								 			   }
+									} 
+							facilities = kHat;  //setting weight adjusted centroids to original centroids			
+						}
+
+							  // now that stream has been exhausted.... Run batch k-means on weighted points K
+
+
+
+								// Perform ball k-means on set of clusters from previous step
+								   // pick 2 random centroids 
+									 // compute (distance between the 2 initial centroids)/3 --> set to ball radius 
+								   //select points in each cluster closest to each centroid within ball radius
+									 //compute center of mass of those points --> becomes final centroid 
+
 				
 				}
 			}
@@ -81,23 +116,7 @@ float f = 1/(numClusters*(1+ log(inData.workData.originalData.size())));
 
 				
 
-		  // if current stream not exhausted....
-			   //while K <= scriptK 
-				    //facility <- Beta*facility
 
-						//move points x in K to the COM of points for that facility
-
-						//set wsubx be number of points assigned to x in K
-
-						//intialize K hat containing first facility from K
-	              //for each x in K
-								   //measure delta = min d(x,y)^2 --> using approx nearest neighbor
-									 //if delta/f event occurs 
-									     // K hat <- K hat union current point x
-									 //else assign x to its closest facility K hat
-							  // set K <- K hat
-	  // else Run batck k-means on weighted points K
-		// Perform ball k-means on set of clusters from previous step
      
 
 
@@ -151,17 +170,6 @@ std::vector<double> streamingKmeans:: approxNearestNeighbor(std::vector<std::vec
 		squareDist = dist;
 		return facilities[facilityLabel[loc + 1]];
 	}
-
-
-
-
-
-
-
-
-
-
-
 	return;
 
 }
