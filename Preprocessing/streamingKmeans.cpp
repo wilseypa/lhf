@@ -98,7 +98,7 @@ float f = 1/(numClusters*(1+ log(inData.workData.originalData.size()))); //facil
 							facilities = kHat;  //setting weight adjusted centroids to original centroids			
 						}
 
-							  // now that stream has been exhausted.... Run batch k-means on weighted points K
+							  // now that stream has been exhausted.... Run batch k-means on weighted points K (regular k means)
 
 
 
@@ -111,16 +111,6 @@ float f = 1/(numClusters*(1+ log(inData.workData.originalData.size()))); //facil
 				
 				}
 			}
-			   
-
-
-				
-
-
-     
-
-
-
 	return inData;
 }
 
@@ -140,7 +130,7 @@ bool streamingKmeans::configPreprocessor(std::map<std::string, std::string> conf
 	return true;
 }
 
-std::vector<double> streamingKmeans:: approxNearestNeighbor(std::vector<std::vector<double>> facilities, std::vector<double> approxFacilities, std::vector<double> facilityLabel, std::vector<double> omega, int x, int size, pipePacket(inData)){
+std::vector<double> streamingKmeans::approxNearestNeighbor(std::vector<std::vector<double>> facilities, std::vector<double> approxFacilities, std::vector<double> facilityLabel, std::vector<double> omega, int x, int size, pipePacket(inData)){
   //based on random projection 
 	//x is current point being examined
 	//n is number of centroids/facilities
@@ -170,12 +160,13 @@ std::vector<double> streamingKmeans:: approxNearestNeighbor(std::vector<std::vec
 		squareDist = dist;
 		return facilities[facilityLabel[loc + 1]];
 	}
-	return;
+
 
 }
 
 
-int streamingKmeans:: binarySearch(std::vector<double> approxFacilities, std::vector<double> omega, int n, double target){ //dotProd is target
+
+int streamingKmeans::binarySearch(std::vector<double> approxFacilities, std::vector<double> omega, int n, double target){ //dotProd is target
   //performing binary search on approxFacilities to find starting location for approxNearestNeighbor
 	if( target < approxFacilities[0]){  //projection = dotProd of 
 		return -1; //if target < dotProd, search unsuccessful
@@ -207,12 +198,12 @@ double streamingKmeans::dotProd(const std::vector<double>& a, const std::vector<
 	//when new points arrive, dot product calculated, and find 2 centroids x dot omega is between... faster than calc nearest neighbor
 	std::vector<double> temp;
  
-  std::transform(a.begin(), b.begin(), std::back_inserter(temp), [](double e1, double e2)  {return e1*e2;});
+  std::transform(a.begin(), a.end(), b.begin(),  std::back_inserter(temp), [](double e1, double e2) {return (e1*e2);});
   
   return std::accumulate(temp.begin(), temp.end(), 0.0);
 }
 
-double streamingKmeans::dotProd2D(std::vector<std::vector<double>>&  a, std::vector<std::vector<double>> & b){
+/*double streamingKmeans::dotProd2D(std::vector<std::vector<double>>&  a, std::vector<std::vector<double>> & b){
 	//takes dot product of facilities centroids and omega, where omega is d dimensions large uniformly distributed between 0,1
 	//when new points arrive, dot product calculated, and find 2 centroids x dot omega is between... faster than calc nearest neighbor
 	std::vector<double> temp;
@@ -220,7 +211,7 @@ double streamingKmeans::dotProd2D(std::vector<std::vector<double>>&  a, std::vec
   std::transform(a.begin(), b.begin(), std::back_inserter(temp), [](double e1, double e2)  {return e1*e2;});
   
   return std::accumulate(temp.begin(), temp.end(), 0.0);
-}
+}  */
 
 double streamingKmeans::randDouble(){
     return rand()/(double(RAND_MAX)+1);
@@ -234,3 +225,4 @@ bool streamingKmeans::prob(double f){
 int streamingKmeans::random(int low, int high){
 	return low + ( rand() % (high - low) );
 }
+
