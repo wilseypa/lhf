@@ -10,9 +10,10 @@ class streamingUtils  {
 	int num_iterations;			
   public:
 	streamingUtils();
-std::vector<std::vector<double>> kMeans(std::vector<std::vector<double>>& kHat);
-std::vector<std::vector<double>> ballKmeans(std::vector<std::vector<double>>& kHat);
-    pipePacket runPreprocessor(pipePacket inData);
-    bool configPreprocessor(std::map<std::string, std::string> configMap);
+  std::vector<std::vector<double>> kMeans(std::vector<std::vector<double>>& kHat);
+  std::vector<std::vector<double>> ballKmeans(std::vector<std::vector<double>>& kHat);
+
+  pipePacket runPreprocessor(pipePacket inData);
+  bool configPreprocessor(std::map<std::string, std::string> configMap);
 };
 
