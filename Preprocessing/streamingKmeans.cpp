@@ -55,7 +55,7 @@ double delta; // delta = cost of current point and y found via approxNearestNeig
  std::vector<double> omega; // vector of values between 0 and 1 based on dim of facilities
  std::vector<double> facilityLabel; // tracks the index of the facilities before they are sorted into the approx facility
  std::vector<double> weight;  //storing weights of points assigned to clusters
-std::vector<std::vector<double>> finalClusters;
+
 for(int d = 0; d<inData.workData.originalData[0].size(); d++){
     omega[d] = randDouble();  // initializing omega
 }
