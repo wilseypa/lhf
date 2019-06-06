@@ -16,7 +16,7 @@
 #include "streamingKmeans.hpp"
 #include "streamingUtils.hpp"
 #include "utils.hpp"
-// overall goal: get weighted representation of streaming data, then perform k means on that Shindler 11
+// overall goal: get weighted representation of streaming data, then perform k means on that .... Shindler 11
 
 // basePipe constructor
 streamingKmeans::streamingKmeans(){
@@ -31,6 +31,7 @@ pipePacket streamingKmeans::runPreprocessor(pipePacket inData){
 	//Arguments - num_clusters, num_iterations
   int numClusters;
 	utils ut;
+	streamingUtils streamUt;
 	static std::random_device seed;
 	static std::mt19937 gen(seed());
 	std::uniform_int_distribution<size_t> distribution(0, inData.workData.originalData.size()-1);
@@ -54,6 +55,7 @@ double delta; // delta = cost of current point and y found via approxNearestNeig
  std::vector<double> omega; // vector of values between 0 and 1 based on dim of facilities
  std::vector<double> facilityLabel; // tracks the index of the facilities before they are sorted into the approx facility
  std::vector<double> weight;  //storing weights of points assigned to clusters
+std::vector<std::vector<double>> finalClusters;
 for(int d = 0; d<inData.workData.originalData[0].size(); d++){
     omega[d] = randDouble();  // initializing omega
 }
@@ -62,28 +64,49 @@ std::vector<double> approxFacilities;
 
 float f = 1/(numClusters*(1+ log(inData.workData.originalData.size()))); //facility cost f = 1/(k(1+log n))  k clusters, n points, empty set K  //facility==centroid 
 //as each point arrives either make it a facility or assign it to one based on delta/f prob
-
+std::vector<double> summedClusters(num_clusters, 0);
+std::vector<std::vector<double>> summedCentroidVectors;
+std::vector<double> counts;
+std::vector<unsigned> curLabels;
 //while file stream open
       //while K <= scriptK = klogn (num clusters <= num facilities f) & stream unread
 			while(facilities.size() <= numClusters*log(inData.workData.originalData.size()) ) {
+
 				for(int x = 0; x<inData.workData.originalData.size(); x++) {   //read next point x from the stream
 				    std::vector<double> y = approxNearestNeighbor(facilities,  approxFacilities, facilityLabel, omega,  x,  size, pipePacket(inData));
 			      delta = ut.vectors_distance(inData.workData.originalData[x], y); 	//measure delta = min d(x,y)^2 --> using approx nearest neighbor
 				        if(prob(delta/f)){
-                  facilities.push_back(inData.workData.originalData[x]);     // K <- K union current point x
+                  facilities.push_back(inData.workData.originalData[x]);     // K <- K union current point x (add centroid)
 								}
 				        else{  
 					          // add current point to closest cluster center in facilities
-							  }
+										for(unsigned c = 0; c<facilities.size(); c++){
+											double minDist = std::numeric_limits<double>::max();
+											unsigned clusterIndex = 0;
+											auto curDist = ut.vectors_distance(inData.workData.originalData[x], facilities[c]);
+												if(curDist < minDist) {
+													clusterIndex = c;
+													minDist = curDist;
+												}
+												for(unsigned d = 0; d<inData.workData.originalData[x].size(); d++){
+													summedCentroidVectors[clusterIndex][d] += inData.workData.originalData[x][d];
+													}
+													curLabels.push_back(clusterIndex);
+												counts[clusterIndex] ++;
+							//			summedClusters[clusterIndex] += minDist;
+										}
+							  	}
 
 				      while(facilities.size() < maxFacilities){  	// if current stream not exhausted
 					    f = beta*f; //increasing the cost to add a new centroid
 		
 							//move points x in K to the COM of points for that facility
-              
-							//set wsubx be number of points assigned to x in K
-
-						
+              	for(unsigned i = 0; i < summedCentroidVectors.size(); i++){
+										for(unsigned d =0; d < summedCentroidVectors[0].size(); d++){
+												summedCentroidVectors[i][d] = summedCentroidVectors[i][d] / counts[i];
+										}
+								}
+						  weight = counts;   	//set wsubx be number of points assigned to x in K
 						 kHat.push_back(facilities[0]); //initialize K hat containing first facility from K
 	               for(unsigned xHat = 0; xHat<facilities.size(); xHat++){  //for each x in K
 							       std::vector<double> yHat = approxNearestNeighbor(facilities,  approxFacilities, facilityLabel, omega,  x,  size, pipePacket(inData));
@@ -93,24 +116,39 @@ float f = 1/(numClusters*(1+ log(inData.workData.originalData.size()))); //facil
 								 			   }
 								 		     else {
 									 			   // add x to its closest facility in Khat
+														for(unsigned x = 0; x<facilities.size(); x++){
+															for(unsigned k = 0; k<kHat.size(); k++){
+																	double minDist = std::numeric_limits<double>::max();
+																	unsigned clusterIndex = 0;
+																	auto curDist = ut.vectors_distance(facilities[x], kHat[k]);
+																		if(curDist < minDist) {
+																			clusterIndex = k;
+																			minDist = curDist;
+																		}
+																		for(unsigned d = 0; d<inData.workData.originalData[x].size(); d++){
+																			summedCentroidVectors[clusterIndex][d] += inData.workData.originalData[x][d];
+																		}
+																		curLabels.push_back(clusterIndex);
+																		counts[clusterIndex] ++;
+																}
+														}
+							  					}
+									}
+
+													 
 								 			   }
-									} 
+					} 
 							facilities = kHat;  //setting weight adjusted centroids to original centroids			
 						}
 
 							  // now that stream has been exhausted.... Run batch k-means on weighted points K (regular k means)
-
-
-
-								// Perform ball k-means on set of clusters from previous step
-								   // pick 2 random centroids 
-									 // compute (distance between the 2 initial centroids)/3 --> set to ball radius 
-								   //select points in each cluster closest to each centroid within ball radius
-									 //compute center of mass of those points --> becomes final centroid 
+          std::vector<std::vector<double>> clusters =  streamUt.kMeans(kHat);
+					std::vector<std::vector<double>> finalClusters = streamUt.ballKmeans(clusters); //ball Kmeans to get better centroids
 
 				
-				}
-			}
+					
+	inData.workData.originalData = finalClusters;		
+	
 	return inData;
 }
 

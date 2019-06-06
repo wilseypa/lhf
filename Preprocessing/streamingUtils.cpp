@@ -21,7 +21,7 @@ streamingUtils::streamingUtils(){
   
 }
 
-void streamingUtils::kMeans(std::vector<std::vector<double>>& kHat){ //"batch"/ normal kmeans clustering to be performed on data
+std::vector<std::vector<double>> streamingUtils::kMeans(std::vector<std::vector<double>>& kHat){ //"batch"/ normal kmeans clustering to be performed on data
     utils ut;
      int numIterations;
      int numClusters;
@@ -93,13 +93,13 @@ void streamingUtils::kMeans(std::vector<std::vector<double>>& kHat){ //"batch"/ 
 
     }
     
-    return;
+    return tempClusters;
 
 }
 
 
 
-void streamingUtils::ballKmeans(std::vector<std::vector<double>>& clusters){
+std::vector<std::vector<double>> streamingUtils::ballKmeans(std::vector<std::vector<double>>& clusters){
 
 								   //select points in each cluster closest to each centroid within ball radius
 									 //compute center of mass of those points --> becomes final centroid 
@@ -157,7 +157,7 @@ void streamingUtils::ballKmeans(std::vector<std::vector<double>>& clusters){
 			break;
 		}	*/
 
-    return;
+    return tempCentroids;
     }
 
 
