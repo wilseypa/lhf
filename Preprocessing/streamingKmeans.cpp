@@ -62,9 +62,10 @@ double f = 1/(numClusters*(1 + log(size))); //facility cost f = 1/(k(1+log n))  
 
 std::vector<double> summedClusters(num_clusters, 0);
 std::vector<std::vector<double>> summedCentroidVectors;
-std::vector<double> counts;
+std::vector<double> counts(maxFacilities, 0);
 std::vector<unsigned> curLabels;
 std::vector< std::pair<double, int>> sortedApproxFacils;
+std::vector< std::pair<std::vector<double>, int>> clustered;
 
 //adding first values to everything so the approximate vectors project correctly
 facilities.push_back(inData.workData.originalData[0]);
@@ -81,8 +82,9 @@ int approxSize = sortedApproxFacils.size();
         
 				for(int x = 1; x<inData.workData.originalData.size(); x++) {   //read next point x from the stream
 					int numFacilities = 1;
+					unsigned facilityIndex = 1;
 					while(numFacilities <= maxFacilities){
-						unsigned facilityIndex = 1;
+						
 				 		std::vector<double> y = approxNearestNeighbor(facilities, sortedApproxFacils, omega,  x,  approxSize, pipePacket(inData));
 						std::cout<< y[0] << "  <-y value \n";
 			      double delta = ut.vectors_distance(inData.workData.originalData[x], y); 	//measure delta = min d(x,y)^2 --> using approx nearest neighbor to get y
@@ -98,8 +100,11 @@ int approxSize = sortedApproxFacils.size();
 									numFacilities++;
 									facilityIndex++;
 				          std::cout << "point added to centroids \n";
+									double dotProductTest = dotProd(inData.workData.originalData[x], omega);
+									std::cout<< dotProductTest<< "  dotProdSanityCheck \n";
 									approxFacilities.push_back(dotProd(inData.workData.originalData[x], omega)); // need to keep track of sorted approxFacilities
-								  for(int a = 1; a<approxFacilities.size(); a++){//sorting approx facilities ascending so they can be binary searched
+								  std::cout<< approxFacilities[1] << " <-approxFacilsval 1 \n";
+									for(int a = 1; a<approxFacilities.size(); a++){//sorting approx facilities ascending so they can be binary searched
 										sortedApproxFacils.push_back(std::make_pair(approxFacilities[a], a));
 										   
 									} 
@@ -112,28 +117,34 @@ int approxSize = sortedApproxFacils.size();
 										summedCentroidVectors = facilities;
 					          // add current point to closest cluster center in facilities
 										std::cout << "point not added to centroids GOT HERE \n";
-										unsigned clusterIndex;
+								//		auto clusterIndex;'
+										double minDist = 10000000;
 										for(unsigned c = 0; c<numFacilities; c++){
-											double minDist = std::numeric_limits<double>::max();
-											unsigned clusterIndex = 0;
+											// clusterIndex = 0;
 											double curDist = ut.vectors_distance(inData.workData.originalData[x], facilities[c]);
+											std::cout << minDist << "minDist \n";
 											std::cout<< curDist << "curDist \n";
 												if(curDist < minDist) {
-													clusterIndex = c;
+													//clusterIndex = c;
+												//	std::cout<< clusterIndex << " <-current CI  \n";
+
+													std::cout << &curDist << "\t" << &minDist << std::endl;
 													minDist = curDist;
+													std::cout << minDist << " <-newMinDist" << std::endl;
+													clustered.push_back(std::make_pair(inData.workData.originalData[x], c));
+
+													std::cout << "Test" << std::endl;
+													counts[c] ++;
 												}
 										}
-												for(unsigned d = 0; d<inData.workData.originalData[x].size(); d++){
+									}
+								}
+											//	for(unsigned d = 0; d<inData.workData.originalData[x].size(); d++){
 														std::cout << "point not added to centroids GOT HERE 3rd loop\n";
-														summedCentroidVectors[clusterIndex][d] += inData.workData.originalData[x][d];
-												
-													}
-													curLabels.push_back(clusterIndex);
-												counts[clusterIndex] ++;
-							//			summedClusters[clusterIndex] += minDist;
+					} 					
 									
-							  	}
-						}
+							  
+						
         /*     if(numFacilities = maxFacilities) {   // we reached max facilities count, now evaluate and raise cost
 					    f = beta*f; //increasing the cost to add a new centroid
 							//move points x in K to the COM of points for that facility
@@ -176,7 +187,7 @@ int approxSize = sortedApproxFacils.size();
 						 facilities = kHat; 
 						//		}  //end of phase transition  */
 												 
-					}   //end of inData loop processing
+					  // } end of inData loop processing
 							 //setting weight adjusted centroids to original centroids		
 							
 							  // now that stream has been exhausted.... Run batch k-means on weighted points K (regular k means)
@@ -323,6 +334,5 @@ bool streamingKmeans::prob(double f){
 int streamingKmeans::random(int low, int high){
 	return low + ( rand() % (high - low) );
 }
-
 
 
