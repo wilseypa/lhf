@@ -33,7 +33,7 @@ pipePacket streamingKmeans::runPreprocessor(pipePacket inData){
   int numClusters = 20;
 	utils ut;
 	streamingUtils streamUt;
-  int n = 5;
+  //int n = 5;
   int size = inData.workData.originalData.size();
 	std::cout<< size << "  <-size of data\n";
   int maxFacilities = 20;
@@ -61,30 +61,43 @@ std::vector<double> approxFacilities(0);
 double f = 1/(numClusters*(1 + log(size))); //facility cost f = 1/(k(1+log n))  k clusters, n points, empty set K  //facility==centroid 
 
 std::vector<double> summedClusters(num_clusters, 0);
-std::vector<std::vector<double>> summedCentroidVectors;
+
 std::vector<double> counts(maxFacilities, 0);
 std::vector<unsigned> curLabels;
 std::vector< std::pair<double, int>> sortedApproxFacils;
 std::vector< std::pair<std::vector<double>, int>> clustered;
+std::vector< std::pair<std::vector<double>, int>> kHatClustered;
+
 
 //adding first values to everything so the approximate vectors project correctly
-facilities.push_back(inData.workData.originalData[0]);
-approxFacilities.push_back(dotProd(inData.workData.originalData[0], omega));
-sortedApproxFacils.push_back(std::make_pair(approxFacilities[0], 0));
-/*std::cout<<sortedApproxFacils[0].first<< "test5\n";
-std::cout<<sortedApproxFacils[0].second<< "test4\n";
-std::cout<<facilities[sortedApproxFacils[0].second][0]<< "test6 \n";
-std::cout<<facilities[0][0] << "test7 \n";  */
+
+for(unsigned i = 0; i<numClusters; i++){
+	facilities.push_back(inData.workData.originalData[i]);
+	approxFacilities.push_back(dotProd(inData.workData.originalData[i], omega));
+	sortedApproxFacils.push_back(std::make_pair(approxFacilities[i], i));
+	sort(sortedApproxFacils.begin(), sortedApproxFacils.end()); 
+	clustered.push_back(std::make_pair(inData.workData.originalData[i], i));
+	counts[i] ++;
+}
 int approxSize = sortedApproxFacils.size();
+int numFacilities = facilities.size();
+
+std::vector<std::vector<double>> summedCentroidVectors(numClusters, std::vector<double>(inData.workData.originalData[0].size(), 0)); 
+
+/*std::cout<<inData.workData.originalData[x][0];
+std::cout<< " test point\n" <<std::endl;
+std::cout<<inData.workData.originalData[x][1];
+std::cout<< " test point\n" <<std::endl;
+std::vector<double> y = approxNearestNeighbor(facilities, sortedApproxFacils, omega,  x,  approxSize, pipePacket(inData));
+std::cout << y[0] << "   <-y ]\n";  */
+   
+
 //while file stream open
       //while K <= scriptK = klogn (num clusters <= num facilities f) & stream unread
 			  //numClusters*log(size)
         
-				for(int x = 1; x<inData.workData.originalData.size(); x++) {   //read next point x from the stream
-					int numFacilities = 1;
-					unsigned facilityIndex = 1;
-					while(numFacilities <= maxFacilities){
-						
+				for(int x = numClusters; x<inData.workData.originalData.size(); x++) {   //read next point x from the stream
+				if (numFacilities <= maxFacilities){   //first phase goes immediately to reassigning
 				 		std::vector<double> y = approxNearestNeighbor(facilities, sortedApproxFacils, omega,  x,  approxSize, pipePacket(inData));
 						std::cout<< y[0] << "  <-y value \n";
 			      double delta = ut.vectors_distance(inData.workData.originalData[x], y); 	//measure delta = min d(x,y)^2 --> using approx nearest neighbor to get y
@@ -93,18 +106,13 @@ int approxSize = sortedApproxFacils.size();
 						std::cout<< f << " <-f value is \n";
 					
 
-					  
 				        if(prob(delta/f)){ //as each point arrives either make it a facility or assign it to one based on delta/f prob
                   facilities.push_back(inData.workData.originalData[x]);     // K <- K union current point x (add centroid)
-									facilityLabel.push_back(facilityIndex);
 									numFacilities++;
-									facilityIndex++;
 				          std::cout << "point added to centroids \n";
 									double dotProductTest = dotProd(inData.workData.originalData[x], omega);
-									std::cout<< dotProductTest<< "  dotProdSanityCheck \n";
-									approxFacilities.push_back(dotProd(inData.workData.originalData[x], omega)); // need to keep track of sorted approxFacilities
-								  std::cout<< approxFacilities[1] << " <-approxFacilsval 1 \n";
-									for(int a = 1; a<approxFacilities.size(); a++){//sorting approx facilities ascending so they can be binary searched
+									approxFacilities.push_back(dotProd(inData.workData.originalData[x], omega)); 
+									for(int a = 0; a<approxFacilities.size(); a++){//sorting approx facilities ascending so they can be binary searched
 										sortedApproxFacils.push_back(std::make_pair(approxFacilities[a], a));
 										   
 									} 
@@ -112,79 +120,86 @@ int approxSize = sortedApproxFacils.size();
 									std::cout<< numFacilities << "  <- facility size \n";
 									std::cout<< sortedApproxFacils[1].first << sortedApproxFacils[1].second;
 								}
-						    	
 				        else{  
-										summedCentroidVectors = facilities;
 					          // add current point to closest cluster center in facilities
 										std::cout << "point not added to centroids GOT HERE \n";
-								//		auto clusterIndex;'
-										double minDist = 10000000;
+										double minDist = std::numeric_limits<double>::max();
 										for(unsigned c = 0; c<numFacilities; c++){
 											// clusterIndex = 0;
 											double curDist = ut.vectors_distance(inData.workData.originalData[x], facilities[c]);
-											std::cout << minDist << "minDist \n";
-											std::cout<< curDist << "curDist \n";
 												if(curDist < minDist) {
-													//clusterIndex = c;
-												//	std::cout<< clusterIndex << " <-current CI  \n";
-
-													std::cout << &curDist << "\t" << &minDist << std::endl;
 													minDist = curDist;
-													std::cout << minDist << " <-newMinDist" << std::endl;
 													clustered.push_back(std::make_pair(inData.workData.originalData[x], c));
-
-													std::cout << "Test" << std::endl;
 													counts[c] ++;
 												}
 										}
 									}
-								}
-											//	for(unsigned d = 0; d<inData.workData.originalData[x].size(); d++){
-														std::cout << "point not added to centroids GOT HERE 3rd loop\n";
-					} 					
-									
-							  
-						
-        /*     if(numFacilities = maxFacilities) {   // we reached max facilities count, now evaluate and raise cost
+					}
+					//			numFacilities = 0;
+					//		facilities.clear();
+					//approxFacilities.clear();
+					//sortedApproxFacils.clear();
+				 else if(numFacilities > maxFacilities) {   // we reached max facilities count, now evaluate and raise cost
 					    f = beta*f; //increasing the cost to add a new centroid
-							//move points x in K to the COM of points for that facility
-              	for(unsigned i = 0; i < summedCentroidVectors.size(); i++){
-										for(unsigned d =0; d < summedCentroidVectors[0].size(); d++){
-												summedCentroidVectors[i][d] = summedCentroidVectors[i][d] / counts[i];
+							for(unsigned q = 0; q<facilities.size(); q++){   //summing the points belonging to each cluster
+								if (clustered[q].second == q) {
+									for(unsigned dim = 0; dim < facilities[0].size(); dim++){
+											summedCentroidVectors[q][dim] += clustered[q].first[dim];  //[q][dim];
 										}
-								}
-						  weight = counts;   	//set wsubx be number of points assigned to x in K
-						 kHat.push_back(facilities[0]); //initialize K hat containing first facility from K
-	               for(unsigned xHat = 0; xHat<numFacilities; xHat++){  //for each x in K
-							       std::vector<double> yHat = approxNearestNeighbor(facilities,  sortedApproxFacils, omega,  x,  size, pipePacket(inData));
-							       double deltaHat = ut.vectors_distance(facilities[xHat], yHat); 
+							}
+							}
+									for(unsigned i = 0; i < summedCentroidVectors.size(); i++){  //move points x in K to the COM of points for that facility
+										for(unsigned dim =0; dim < summedCentroidVectors[0].size(); dim++){
+												summedCentroidVectors[i][dim] = summedCentroidVectors[i][dim] / counts[i];
+										}
+									}  
+						 weight = counts;   	//set wsubx be number of points assigned to x in K
+						 kHat.push_back(summedCentroidVectors[0]); //initialize K hat containing first facility from K
+	               for(unsigned xHat = 0; xHat<summedCentroidVectors.size(); xHat++){  //for each x in K
+							       std::vector<double> yHat = approxNearestNeighbor(summedCentroidVectors,  sortedApproxFacils, omega,  xHat,  size, pipePacket(inData));
+							       double deltaHat = ut.vectors_distance(summedCentroidVectors[xHat], yHat); 
                          if(prob(weight[xHat]*deltaHat/f)){
 									          kHat.push_back(facilities[xHat]);
 								 			   }
 								 		     else{
 									 			   // add x to its closest facility in Khat
-														for(unsigned x = 0; x<facilities.size(); x++){
+															double minDist = std::numeric_limits<double>::max();
+														for(unsigned x = 0; x<summedCentroidVectors.size(); x++){
 															for(unsigned k = 0; k<kHat.size(); k++){
-																	double minDist = std::numeric_limits<double>::max();
-																	unsigned clusterIndex = 0;
-																	auto curDist = ut.vectors_distance(facilities[x], kHat[k]);
+																
+																	double curDist = ut.vectors_distance(summedCentroidVectors[x], kHat[k]);
 																		if(curDist < minDist) {
-																			clusterIndex = k;
 																			minDist = curDist;
 																		}
 																		for(unsigned d = 0; d<inData.workData.originalData[x].size(); d++){
-																			facilities[clusterIndex][d] += inData.workData.originalData[x][d];
+																			//facilities[k][d] += inData.workData.originalData[x][d];
+																			kHatClustered.push_back(std::make_pair(summedCentroidVectors[x], k));
 																		}
-																		curLabels.push_back(clusterIndex);
-																		counts[clusterIndex] ++;
+																	
+																	//	counts[k] ++;
 																}
 														}
 							  					}
-									}
-						 }
-						 numFacilities = 0;
-						 facilities.clear();
-						 facilities = kHat; 
+							}				
+					}
+
+								
+				/*			for(unsigned i = 0; i < summedCentroidVectors.size(); i++){
+									//	for(unsigned dim =0; dim < summedCentroidVectors[0].size(); dim++){
+											std::cout<<	summedCentroidVectors[i][0] << " ";   // = summedCentroidVectors[i][dim] / counts[i];
+											std::cout<<	summedCentroidVectors[i][1]; 
+											std::cout << "summed clusters \n";
+									//	}  */
+						
+						
+		
+			}  //end reading 					
+							
+						
+           
+				//		 numFacilities = 0;
+				//		 facilities.clear();
+			//			 facilities = kHat; // */
 						//		}  //end of phase transition  */
 												 
 					  // } end of inData loop processing
@@ -193,8 +208,14 @@ int approxSize = sortedApproxFacils.size();
 							  // now that stream has been exhausted.... Run batch k-means on weighted points K (regular k means)
       //    std::vector<std::vector<double>> clusters =  streamUt.kMeans(kHat);
 		//			std::vector<std::vector<double>> finalClusters = streamUt.ballKmeans(clusters); //ball Kmeans to get better centroids
-//inData.workData.originalData = finalClusters;		
-	inData.workData.originalData = kHat;	
+//inData.workData.originalData = finalClusters;	
+  std::vector<std::vector<double>> finalClusters;
+	for(unsigned f = 0; f<numClusters; f++){
+     finalClusters.push_back(kHatClustered[f].first);
+
+	}
+ // kHatClustered.first = facilities;	
+	inData.workData.originalData = finalClusters;	
 	return inData;	
 }
 
@@ -222,7 +243,7 @@ std::vector<double> streamingKmeans::approxNearestNeighbor(std::vector<std::vect
 	double squareDist;
   double projection = dotProd(inData.workData.originalData[x], omega);
 	int loc = binarySearch(sortedApproxFacils, omega, facilities.size(), projection);
-	std::cout<<loc<<"  <-loc\n";
+//	std::cout<<loc<<"  <-loc\n";
 	//store facilities sorted by their inner product with omega 
 	//when new point x arrives, find 2 facilities/centroids that x dotProd omega is between
 	//pick which centroid is exactly closer to x , set that equal to delta or "closest facility"
@@ -230,19 +251,20 @@ std::vector<double> streamingKmeans::approxNearestNeighbor(std::vector<std::vect
 	if(loc == -1){
 		//nearest centroid is current one
 		 squareDist = ut.vectors_distance(inData.workData.originalData[x], facilities[sortedApproxFacils[0].second] ); 
+//		 std::cout<<squareDist<< " <-squareDist x\n";
 		return inData.workData.originalData[x];  
 	}
 	else if (loc == x-1){
 		double squareDist =  ut.vectors_distance(inData.workData.originalData[x], facilities[sortedApproxFacils[size-1].second]);
-		std::cout<<squareDist<< " <-squareDist";
+//		std::cout<<squareDist<< " <-squareDist x-1\n";
 		return facilities[sortedApproxFacils[size-1].second];
 	}
- /* else {
-			std::cout<<"got here2\n";
-			squareDist = ut.vectors_distance(inData.workData.originalData[x], facilities[sortedApproxFacils[loc].second] );
-	}  */
-
+ 
+	
+	squareDist = ut.vectors_distance(inData.workData.originalData[x], facilities[sortedApproxFacils[loc].second] );
+//	std::cout<<squareDist<< " <-squareDist ==0\n";
 	double dist = ut.vectors_distance(inData.workData.originalData[x], facilities[sortedApproxFacils[loc + 1].second]);
+//	std::cout<<dist<< " <-Dist \n";
   if(squareDist <= dist){
 		return facilities[sortedApproxFacils[loc].second];
 	}
@@ -279,12 +301,7 @@ int streamingKmeans::binarySearch(std::vector< std::pair <double, int> > sortedA
 		}
 		if(sortedApproxFacils[mid].first <= projection) {
 			low = mid;
-		}
-		else
-		{ std::cout<<"approx not big enough";
-			return 0;
-		}  
-		
+		}		
 	}  
 return low;
 
@@ -302,16 +319,6 @@ double streamingKmeans::dotProd(const std::vector<double>& a, const std::vector<
   
   return std::accumulate(temp.begin(), temp.end(), 0.0);
 }
-
-/*double streamingKmeans::dotProd2D(std::vector<std::vector<double>>&  a, std::vector<std::vector<double>> & b){
-	//takes dot product of facilities centroids and omega, where omega is d dimensions large uniformly distributed between 0,1
-	//when new points arrive, dot product calculated, and find 2 centroids x dot omega is between... faster than calc nearest neighbor
-	std::vector<double> temp;
- 
-  std::transform(a.begin(), b.begin(), std::back_inserter(temp), [](double e1, double e2)  {return e1*e2;});
-  
-  return std::accumulate(temp.begin(), temp.end(), 0.0);
-}  */
 
 double streamingKmeans::randDouble(){    // random double between 0 and 1  (stack overflow implementation)
 	 std::mt19937_64 rng;
