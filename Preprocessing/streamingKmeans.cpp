@@ -63,6 +63,7 @@ double f = 1/(numClusters*(1 + log(size))); //facility cost f = 1/(k(1+log n))  
 std::vector<double> summedClusters(num_clusters, 0);
 
 std::vector<double> counts(maxFacilities, 0);
+std::vector<double> tempCounts(maxFacilities, 0);
 std::vector<unsigned> curLabels;
 std::vector< std::pair<double, int>> sortedApproxFacils;
 std::vector< std::pair<std::vector<double>, int>> clustered;
@@ -142,13 +143,20 @@ std::cout << y[0] << "   <-y ]\n";  */
 								if (clustered[q].second == q) {
 									for(unsigned dim = 0; dim < facilities[0].size(); dim++){
 											summedCentroidVectors[q][dim] += clustered[q].first[dim];  //[q][dim];
-											std::cout<<clustered[q].first[dim] << "   <-clustered before summed \n";
-										}
+											tempCounts[q] ++;
+									//		std::cout<<clustered[q].first[dim] << "   <-clustered before summed \n";
+									//		std::cout<<summedCentroidVectors[q][dim] << " <-summed Centroid vec \n";
+										}   
+												std::cout<<summedCentroidVectors[q][0] << " <-summed Centroid vec \n";
+												std::cout<<"got here"<<" \n";
 								}
-							}
+								std::cout<< tempCounts[q] << "   <-counts \n";
+							}  
+					
 									for(unsigned i = 0; i < summedCentroidVectors.size(); i++){  //move points x in K to the COM of points for that facility
 										for(unsigned dim =0; dim < summedCentroidVectors[0].size(); dim++){
-												summedCentroidVectors[i][dim] = summedCentroidVectors[i][dim] / counts[i];
+												summedCentroidVectors[i][dim] = summedCentroidVectors[i][dim] / tempCounts[i];
+												std::cout<<"got here 2"<<" \n";
 										
 										}
 
@@ -281,7 +289,7 @@ bool streamingKmeans::configPreprocessor(std::map<std::string, std::string> conf
 	return true;
 }
 
-std::vector<double> streamingKmeans::approxNearestNeighbor(std::vector<std::vector<double>> facilities, std::vector< std::pair <double, int> > sortedApproxFacils, std::vector<double> omega, int x, int size, pipePacket(inData)){
+std::vector<double> streamingKmeans::approxNearestNeighbor(std::vector<std::vector<double>>& facilities, std::vector<std::pair <double, int>>& sortedApproxFacils, std::vector<double> omega, int x, int size, pipePacket(inData)){
   //based on random projection, x is current point being examined, n is number of centroids/facilities
 	utils ut;
 	double squareDist;
@@ -320,7 +328,7 @@ std::vector<double> streamingKmeans::approxNearestNeighbor(std::vector<std::vect
 
 }
 
-std::vector<double> streamingKmeans::approxHat(std::vector<std::vector<double>> kHat, std::vector< std::pair <double, int> > sortedApproxFacils, std::vector<double> omega, int xHat, int size){
+std::vector<double> streamingKmeans::approxHat(std::vector<std::vector<double>>& kHat, std::vector<std::pair <double, int>>& sortedApproxFacils, std::vector<double> omega, int xHat, int size){
   //based on random projection, x is current point being examined, n is number of centroids/facilities
 	utils ut;
 	double squareDist;
@@ -361,7 +369,7 @@ std::vector<double> streamingKmeans::approxHat(std::vector<std::vector<double>> 
 
 
 
-int streamingKmeans::binarySearch(std::vector< std::pair <double, int> > sortedApproxFacils, std::vector<double> omega, int n, double projection){ //dotProd is target
+int streamingKmeans::binarySearch(std::vector<std::pair <double, int>>& sortedApproxFacils, std::vector<double> omega, int n, double projection){ //dotProd is target
   //performing binary search on approxFacilities to find starting location for approxNearestNeighbor
 	std::cout <<projection << "projection\n";
 	std::cout << n << " size of approxFacil\n";
