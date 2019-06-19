@@ -56,6 +56,7 @@ for(int d = 0; d<inData.workData.originalData[0].size(); d++){
 }
 std:: cout<< omega[0] << omega[1] << "  <-omega\n";
 std::vector<double> approxFacilities(0);
+std::vector<double> approxFacilitiesHat(0);
  std::vector<std::vector<double>> kHat;
 
 double f = 1/(numClusters*(1 + log(size))); //facility cost f = 1/(k(1+log n))  k clusters, n points, empty set K  //facility==centroid 
@@ -63,9 +64,10 @@ double f = 1/(numClusters*(1 + log(size))); //facility cost f = 1/(k(1+log n))  
 std::vector<double> summedClusters(num_clusters, 0);
 
 std::vector<double> counts(maxFacilities, 0);
-std::vector<double> tempCounts(maxFacilities, 0);
+std::vector<int> tempCounts(maxFacilities, 0);
 std::vector<unsigned> curLabels;
 std::vector< std::pair<double, int>> sortedApproxFacils;
+std::vector< std::pair<double, int>> sortedApproxFacilsHat;
 std::vector< std::pair<std::vector<double>, int>> clustered;
 std::vector< std::pair<std::vector<double>, int>> kHatClustered;
 
@@ -82,7 +84,7 @@ for(unsigned i = 0; i<(numClusters/2); i++){
 }
 int approxSize = sortedApproxFacils.size();
 int numFacilities = facilities.size();
-
+int tracker  = 0;
 std::vector<std::vector<double>> summedCentroidVectors(numClusters, std::vector<double>(inData.workData.originalData[0].size(), 0)); 
 
 /*std::cout<<inData.workData.originalData[x][0];
@@ -110,7 +112,7 @@ std::cout << y[0] << "   <-y ]\n";  */
                   facilities.push_back(inData.workData.originalData[x]);     // K <- K union current point x (add centroid)
 								//	numFacilities++;
 				          std::cout << "point added to centroids \n";
-									double dotProductTest = dotProd(inData.workData.originalData[x], omega);
+						//			double dotProductTest = dotProd(inData.workData.originalData[x], omega);
 									approxFacilities.push_back(dotProd(inData.workData.originalData[x], omega)); 
 									for(int a = 0; a<approxFacilities.size(); a++){//sorting approx facilities ascending so they can be binary searched
 										sortedApproxFacils.push_back(std::make_pair(approxFacilities[a], a));
@@ -143,32 +145,60 @@ std::cout << y[0] << "   <-y ]\n";  */
 								if (clustered[q].second == q) {
 									for(unsigned dim = 0; dim < facilities[0].size(); dim++){
 											summedCentroidVectors[q][dim] += clustered[q].first[dim];  //[q][dim];
-											tempCounts[q] ++;
 									//		std::cout<<clustered[q].first[dim] << "   <-clustered before summed \n";
 									//		std::cout<<summedCentroidVectors[q][dim] << " <-summed Centroid vec \n";
-										}   
-												std::cout<<summedCentroidVectors[q][0] << " <-summed Centroid vec \n";
-												std::cout<<"got here"<<" \n";
-								}
-								std::cout<< tempCounts[q] << "   <-counts \n";
+									}  
+									tempCounts[q] ++; 
+										std::cout<<summedCentroidVectors[q][0] << " <-summed Centroid vec \n";
+													std::cout<< "GOT HERE";
+								}			
+											
 							}  
-					
+						//	std::cout<< "GOT HERE" ;
+							for(int test = 0; test< tempCounts.size()-1; test++){
+								if(tempCounts[test] > 0 ){
+									tracker++;
+								}
+								std::cout<<tempCounts[test] << " tempCounts \n";
+							}    
+							std::cout<< tempCounts.size() << "  <-tempCount size \n";
+					//		tracker = 6;
+							  std::cout<<summedCentroidVectors.size() << "  <-size of summed centroid vectors \n";
+								std::cout<<tracker<<"  <-tracker \n";
+								summedCentroidVectors.resize(tracker);
+								  std::cout<<summedCentroidVectors.size() << "  <-size of summed centroid vectors \n";
+								tracker = 0;
 									for(unsigned i = 0; i < summedCentroidVectors.size(); i++){  //move points x in K to the COM of points for that facility
 										for(unsigned dim =0; dim < summedCentroidVectors[0].size(); dim++){
 												summedCentroidVectors[i][dim] = summedCentroidVectors[i][dim] / tempCounts[i];
-												std::cout<<"got here 2"<<" \n";
+										//		std::cout<<"got here 2"<<" \n";
 										
 										}
-
 										std::cout<<summedCentroidVectors[i][0] << " " << summedCentroidVectors[i][1] << " <-summed before weighting \n"; 
-									//	std::cout<<counts[i] << "   <-cluster cts\n";
 									}  
-            
+						
 						 weight = counts;   	//set wsubx be number of points assigned to x in K
-				//		 std::cout<<summedCentroidVectors[0][0] << "  test\n";
+						 std::cout<<summedCentroidVectors[0][0] << "  test\n";
+						 for(unsigned z = 0; z<summedCentroidVectors.size()-1; z++){
+							 		 	approxFacilitiesHat.push_back(dotProd(summedCentroidVectors[z], omega)); 
+						 }
+						 for(int a = 0; a<approxFacilitiesHat.size(); a++){//sorting approx facilities ascending so they can be binary searched
+								sortedApproxFacilsHat.push_back(std::make_pair(approxFacilitiesHat[a], a));
+										   
+							} 
+				
+						sort(sortedApproxFacilsHat.begin(), sortedApproxFacilsHat.end()); 
+							std::cout<<approxFacilitiesHat.size() << "  <-approxHat size \n";
+						std::cout<<sortedApproxFacilsHat.size() << "  <-sortedHat size \n";
 						 kHat.push_back(summedCentroidVectors[0]); //initialize K hat containing first facility from K
-	               for(int xHat = 0; xHat<summedCentroidVectors.size(); xHat++){  //for each x in K
-							       std::vector<double> yHat = approxHat(kHat, sortedApproxFacils, omega,  xHat,  size);
+	              for(int xHat = 0; xHat<summedCentroidVectors.size(); xHat++){  //for each x in K
+								 		std::cout<< "got to bottom loop" <<std::endl;
+										 	 //////// BREAKS RIGHT HERE //////
+							       std::vector<double> yHat = approxHat(kHat, sortedApproxFacilsHat, omega,  xHat,  sortedApproxFacilsHat.size());
+										 //////// BREAKS RIGHT HERE //////
+										 	summedCentroidVectors.clear();
+											sortedApproxFacilsHat.clear();
+										 std::cout<< yHat[0] << " <-yhat\n";
 							       double deltaHat = ut.vectors_distance(summedCentroidVectors[xHat], yHat); 
                          if(prob((weight[xHat]*deltaHat)/f)){   //add old facility to weighted facility set if weight is high enough
 									          kHat.push_back(summedCentroidVectors[xHat]);
@@ -190,11 +220,13 @@ std::cout << y[0] << "   <-y ]\n";  */
 																	//	counts[k] ++;
 																}
 														}
-							  					}
+							  					}  
 								facilities.clear();    //clear everything so main loop iteration can resume
 								sortedApproxFacils.clear();
 								approxFacilities.clear();
 								summedCentroidVectors.clear();
+								sortedApproxFacilsHat.clear();
+								approxFacilitiesHat.clear();
 					//			counts.clear();
 								for(unsigned k = 0; k<kHatClustered.size(); k++){   //making Khat = to K 
 									facilities.push_back(kHatClustered[k].first);
@@ -208,8 +240,8 @@ std::cout << y[0] << "   <-y ]\n";  */
 										   
 									} 
 									sort(sortedApproxFacils.begin(), sortedApproxFacils.end()); 
-								}	//end Khat loop
-						
+								}	//end Khat loop      
+						 
 						} //end facility weighting
 
 								
@@ -252,7 +284,7 @@ std::cout << y[0] << "   <-y ]\n";  */
 
 	}  */
 
-	for(unsigned f = 0; f<clustered.size(); f++){
+/*	for(unsigned f = 0; f<clustered.size(); f++){
 				for(unsigned g = 0; g<facilities[0].size(); g++){
 						std::cout<<clustered[f].first[g];
 					
@@ -261,8 +293,8 @@ std::cout << y[0] << "   <-y ]\n";  */
 					std::cout<<clustered[f].second <<  "   <- idx \n";
      			
 
-	}
-	
+	}  */
+ 	  
 
 
 
