@@ -6,34 +6,34 @@
 #include <sstream>
 #include <algorithm>
 #include <tuple>
-#include <map>
 #include <ANN/ANN.h>
-#include "utils.hpp"
+
+using namespace std;
 
 // The next two functions are for splitting a string by a delimiter. They are
 // used to split each row of the data by the appropriate delimiter.
 // Source: https://stackoverflow.com/questions/236129/how-do-i-iterate-over-the-words-of-a-string
 template<typename Out>
-void split( const std::string &s, char delim, Out result ) {
-    std::stringstream ss(s);
-    std::string item;
-    while ( std::getline(ss, item, delim) ) {
+void split( const string &s, char delim, Out result ) {
+    stringstream ss(s);
+    string item;
+    while ( getline(ss, item, delim) ) {
         *(result++) = item;
     }
 }
 
-std::vector<std::string> split( const std::string &s, char delim ) {
-    std::vector<std::string> elems;
-    split( s, delim, std::back_inserter(elems) );
+vector<string> split( const string &s, char delim ) {
+    vector<string> elems;
+    split( s, delim, back_inserter(elems) );
     return elems;
 }
 
 // Convert a vector of strings to a vector of doubles. Each data point is
 // represented as a vector of doubles.
 // Source: https://stackoverflow.com/questions/20257582/convert-vectorstdstring-to-vectordouble
-std::vector<double> stringVectorToDoubleVector( const std::vector<std::string>& stringVector ) {
-    std::vector<double> doubleVector( stringVector.size() );
-    std::transform( stringVector.begin(), stringVector.end(), doubleVector.begin(), [](const std::string& val)
+vector<double> stringVectorToDoubleVector( const vector<string>& stringVector ) {
+    vector<double> doubleVector( stringVector.size() );
+    transform( stringVector.begin(), stringVector.end(), doubleVector.begin(), [](const string& val)
                    {
                        return stod(val);
                    } );
@@ -41,45 +41,18 @@ std::vector<double> stringVectorToDoubleVector( const std::vector<std::string>& 
     return doubleVector;
 }
 
-// https://stackoverflow.com/questions/110157/how-to-retrieve-all-keys-or-values-from-a-stdmap-and-put-them-into-a-vector
-std::vector<std::vector<double>> retrieveValuesFromMap( std::map<int, std::vector<double>> const &window ) {
-    std::vector<std::vector<double>> windowVals;
-    windowVals.reserve( window.size() );
-    for (auto const &item : window)
-        windowVals.push_back(item.second);
 
-    return windowVals;
-}
-
-std::vector<std::vector<double>> createDistMatrix ( std::vector<std::vector<double>> const &vectorsInWindow, std::vector<std::vector<double>> &distMatrix ) {
-    utils ut;
-    for(unsigned i = 0; i < vectorsInWindow.size(); i++) {
-        std::vector<double> temp;
-        for(unsigned j = i+1; j < vectorsInWindow.size(); j++) {
-            auto dist = ut.vectors_distance( vectorsInWindow[i], vectorsInWindow[j] );
-            distMatrix[i][j] = dist;
-        }
-    }
-    return distMatrix;
-}
-
-std::vector<std::vector<double>> addToDistMatrix( std::vector<double> distancesToReps, std::vector<std::vector<double>> distMatrix ) {}
-
-// Find the minimum and maximum squared nearest neighbor distances within the window. These distances are computed
-// periodically, for example, with the addition of every 50 new data points to the window. For every point in the
-// window, compute and store the squared distance to its 2nd nearest neighbor (since every query point is within the
-// window, the 1st nearest neighbor is the query point itself).
-auto nnDistsWindow( std::vector<std::vector<double>> window ) {
-    int k = 2;  // The number of near neighbors to search for.
+auto nnDistsWindow( vector<vector<double>> window ) {
+    int k = 1;  // The number of near neighbors to search for.
     int dim = window[0].size();  // Assuming all data points have the same dimension.
-    double del = 0;  // At this time, we are using the exact nearest neighbor search.
+    double eps = 0;  // At this time, we are using the exact nearest neighbor search.
     int nPts = window.size();  // The actual number of data points to search from.
-    std::vector<double> squaredNNdist;  // A container to store the squared nearest neighbor distance
+    vector<double> squaredNNdist;  // A container to store the squared nearest neighbor distance
                                    // of each data point in the window.
 
     // Make the type of 'window' compatible with the type of an array of points as defined in the ANN library.
     // Source: https://stackoverflow.com/questions/4776164/c-vectorvectordouble-to-double
-    std::vector<double*> ptrs;
+    vector<double*> ptrs;
     for (auto& vec : window)
         ptrs.push_back(vec.data());
 
@@ -101,33 +74,26 @@ auto nnDistsWindow( std::vector<std::vector<double>> window ) {
                            k,
                            nnIdx,
                            dists,
-                           del);
+                           eps);
 
-        squaredNNdist.push_back(dists[1]);  // Store the squared 2nd nearest neighbor distance of the i-th point in the window.
+        squaredNNdist.push_back(dists[0]);  // Store the squared nearest neighbor distance of the i-th point in the window.
     }
 
-    // Clean up.
-    delete [] nnIdx;
-    delete [] dists;
-    delete kdTree;
-    annClose();
-
-    // Find and return the minimum and maximum of all squared nearest neighbor distances within the window.
-    auto sqrdNNdistsRange = std::minmax_element( squaredNNdist.begin(), squaredNNdist.end() );
-    return std::tuple( *sqrdNNdistsRange.first, *sqrdNNdistsRange.second );
+    auto sqrdNNdistsRange = minmax_element( squaredNNdist.begin(), squaredNNdist.end() );
+    return tuple( *sqrdNNdistsRange.first, *sqrdNNdistsRange.second );
 }
 
 // Find the nearest neighbor of a new data point in the window. Return the index of the nearest neighbor
 // and the squared nearest neighbor distance.
-auto nnSearch( std::vector<double> newPoint, std::vector<std::vector<double>> window ) {
+auto nnSearch( vector<double> newPoint, vector<vector<double>> window ) {
     int k = 1;  // The number of near neighbors to search for.
     int dim = newPoint.size();
-    double del = 0;  // At this time, we are using the exact nearest neighbor search.
+    double eps = 0;  // At this time, we are using the exact nearest neighbor search.
     int nPts = window.size();  // The actual number of data points to search from.
 
     // Make the type of 'window' compatible with the type of an array of points as defined in the ANN library.
     // Source: https://stackoverflow.com/questions/4776164/c-vectorvectordouble-to-double
-    std::vector<double*> ptrs;
+    vector<double*> ptrs;
     for (auto& vec : window)
         ptrs.push_back(vec.data());
 
@@ -148,10 +114,10 @@ auto nnSearch( std::vector<double> newPoint, std::vector<std::vector<double>> wi
                        k,
                        nnIdx,
                        dists,
-                       del);
+                       eps);
 
-    int nnIndexInWindow = nnIdx[0];  // The index of the point in the window that is nearest to the incoming (query) point.
-    double squaredNNDist = dists[0];  //  The squared distance to the point in the window that is nearest to the incoming (query) point.
+    int nnIndexinWindow = nnIdx[0];
+    double squaredNNDist = dists[0];
 
     // Clean up.
     delete [] nnIdx;
@@ -159,38 +125,27 @@ auto nnSearch( std::vector<double> newPoint, std::vector<std::vector<double>> wi
     delete kdTree;
     annClose();
 
-    return std::tuple(nnIndexInWindow, squaredNNDist);  // Using the template argument deduction feature of C++17.
+    return tuple(nnIndexinWindow, squaredNNDist);  // Using the template argument deduction feature of C++17.
 }
 
 int main()
 {
     unsigned int windowMaxSize{ 200 };  // The maximum number of points the sliding window may contain.
-                                        // It'll be a user input in future.
+                            // It'll be a user input in future.
 
     unsigned int windowMinSize = windowMaxSize - 50;  // The minimum number of points that should be present in the window
-                                                      // to form meaningful topological features by PH computation.
+                                             // to form meaningful topological features by PH computation.
 
     unsigned int numPointsAddedToWindow{ 0 };
     unsigned int nnDistCheckIntrvl{ 50 };
 
-    // Variables to store the minimum and maximum of the squared nearest neighbor distances in the window.
-    double minSqrdNNdist{ 0.0 };
-    double maxSqrdNNdist{ 0.0 };
-
-    int updateCounter = 0;
-
-
-    std::map<int, std::vector<double>> window;
-    std::vector<int> labelContainer;
-    int label{ 0 };
-    std::vector<std::vector<double>> distMatrix( windowMinSize, std::vector<double>(windowMinSize, 0) );
-
+    vector<vector<double>> window;
     FILE *pFile;
 
     char buffer[1000];  // Define an arbitrary but large enough character array
                         // to store a single row of the data.
 
-    pFile = fopen("abstraction/myFile.csv", "r");
+    pFile = fopen("myFile.csv", "r");
 
     if (pFile == NULL)
         perror ("Error opening file");
@@ -200,60 +155,33 @@ int main()
                 break;
 
             // Split the row by the appropriate delimiter to store it as a vector of doubles.
-            std::vector<std::string> row = split( buffer, ',' );
-            std::vector<double> dataPoint = stringVectorToDoubleVector(row);
+            vector<string> row = split( buffer, ',' );
+            vector<double> dataPoint = stringVectorToDoubleVector(row);
 
-            // std::copy( dataPoint.begin(), dataPoint.end(), std::ostream_iterator<double>(std::cout, " ") );
-            // std::cout << '\n';
+            // copy( dataPoint.begin(), dataPoint.end(), ostream_iterator<double>(cout, " ") );
+            // cout << '\n';
 
             // Initialize the window. Ensure that the sliding window always contains the minimum number of points.
             if ( window.size() < windowMinSize ) {
-                window.insert( std::pair<int, std::vector<double>>(label, dataPoint) );   // Add the new point to the back of the window.
+                window.push_back(dataPoint);
                 numPointsAddedToWindow++;
-                if ( numPointsAddedToWindow == windowMinSize ) {
-                    std::vector<std::vector<double>> vectorsInWindow = retrieveValuesFromMap( window );
-                    distMatrix = createDistMatrix( vectorsInWindow, distMatrix );
-                }
             }
 
             // Once window has more than the minimum number of points, apply a criterion for adding points in the window.
             else {
-                if ( numPointsAddedToWindow % nnDistCheckIntrvl == 0 )  // If 50 new points have been added to the window:
-                    std::tie(minSqrdNNdist, maxSqrdNNdist) = nnDistsWindow( window );  // compute the min and max of the squared
-                                                                                  // nearest neighbor distances of the present
-                                                                                  // set of points in the window.
+                if ( numPointsAddedToWindow % nnDistCheckIntrvl == 0 )
+                    auto [minSqrdNNdist, maxSqrdNNdist] = nnDistsWindow( window );
 
                 // Nearest neighbor search for an incoming point by ANN library. Using the structured binding feature of
                 // C++17 to receive multiple values returned by the 'nnSearch' function.
                 auto [nnIndex, sqrdDistToNearestRep] = nnSearch( dataPoint, window );
-
-
-                // If the squared distance from the new incoming point to its nearest point in the window is
-                // outside the range [minSqrdNNdist, maxSqrdNNdist]:
                 if ( (sqrdDistToNearestRep < minSqrdNNdist) || (sqrdDistToNearestRep > maxSqrdNNdist) ) {
-                    updateCounter++;
-                    std::cout << updateCounter << ": " << minSqrdNNdist << ", " << maxSqrdNNdist << '\n';
-                    window.push_back(dataPoint);  // add the incoming point to the back of the window.
+                    window.push_back(dataPoint);
                     numPointsAddedToWindow++;
-
-                    // If the number of points in the window exceeds its maximum allowed size:
-                    if ( window.size() > windowMaxSize ) {
-                        std::vector<double> repToBeDeleted = window[0];
-                        window.erase(window.begin());  // delete the point from the front of the window.
-                    }
-                }
-                else {  // Discard the incoming point, and move its representative (nearest neighbor) to the back of the window.
-                    auto representative = window.begin() + nnIndex;  // Iterator pointing to the representative of the incoming point.
-
-                    // Move the representative to the back of the window. Since the majority of the incoming points is expected
-                    // to find a representative than being added to the window, the 'move to back' operation is expected to be more
-                    // frequent than the addition or deletion of points at either end of the window. Hence, the window is designed as
-                    // a std::vector as opposed to std::deque. More information on the choice of std::vector can be found below.
-                    // https://stackoverflow.com/questions/14579957/std-container-c-move-to-front
-                    // https://stackoverflow.com/questions/20107756/push-existing-element-of-stddeque-to-the-front
-                    std::rotate( representative, representative + 1, window.end() );  // https://stackoverflow.com/questions/23789498/moving-a-vector-element-to-the-back-of-the-vector
+                    if ( window.size() > windowMaxSize )
                 }
             }
+
 
         }
         fclose (pFile);
