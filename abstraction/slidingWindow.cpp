@@ -42,12 +42,8 @@ vector<double> stringVectorToDoubleVector( const vector<string>& stringVector ) 
 }
 
 
-// Find the minimum and maximum squared nearest neighbor distances within the window. These distances are computed
-// periodically, for example, with the addition of every 50 new data points to the window. For every point in the
-// window, compute and store the squared distance to its 2nd nearest neighbor (since every query point is within the
-// window, the 1st nearest neighbor is the query point itself).
 auto nnDistsWindow( vector<vector<double>> window ) {
-    int k = 2;  // The number of near neighbors to search for.
+    int k = 1;  // The number of near neighbors to search for.
     int dim = window[0].size();  // Assuming all data points have the same dimension.
     double eps = 0;  // At this time, we are using the exact nearest neighbor search.
     int nPts = window.size();  // The actual number of data points to search from.
@@ -80,16 +76,9 @@ auto nnDistsWindow( vector<vector<double>> window ) {
                            dists,
                            eps);
 
-        squaredNNdist.push_back(dists[1]);  // Store the squared 2nd nearest neighbor distance of the i-th point in the window.
+        squaredNNdist.push_back(dists[0]);  // Store the squared nearest neighbor distance of the i-th point in the window.
     }
 
-    // Clean up.
-    delete [] nnIdx;
-    delete [] dists;
-    delete kdTree;
-    annClose();
-
-    // Find and return the minimum and maximum of all squared nearest neighbor distances within the window.
     auto sqrdNNdistsRange = minmax_element( squaredNNdist.begin(), squaredNNdist.end() );
     return tuple( *sqrdNNdistsRange.first, *sqrdNNdistsRange.second );
 }
@@ -127,8 +116,8 @@ auto nnSearch( vector<double> newPoint, vector<vector<double>> window ) {
                        dists,
                        eps);
 
-    int nnIndexInWindow = nnIdx[0];  // The index of the point in the window that is nearest to the incoming (query) point.
-    double squaredNNDist = dists[0];  //  The squared distance to the point in the window that is nearest to the incoming (query) point.
+    int nnIndexinWindow = nnIdx[0];
+    double squaredNNDist = dists[0];
 
     // Clean up.
     delete [] nnIdx;
@@ -136,7 +125,7 @@ auto nnSearch( vector<double> newPoint, vector<vector<double>> window ) {
     delete kdTree;
     annClose();
 
-    return tuple(nnIndexInWindow, squaredNNDist);  // Using the template argument deduction feature of C++17.
+    return tuple(nnIndexinWindow, squaredNNDist);  // Using the template argument deduction feature of C++17.
 }
 
 int main()
@@ -150,20 +139,13 @@ int main()
     unsigned int numPointsAddedToWindow{ 0 };
     unsigned int nnDistCheckIntrvl{ 50 };
 
-    // Variables to store the minimum and maximum of the squared nearest neighbor distances in the window.
-    double minSqrdNNdist{ 0.0 };
-    double maxSqrdNNdist{ 0.0 };
-
-    int updateCounter = 0;
-
-
     vector<vector<double>> window;
     FILE *pFile;
 
     char buffer[1000];  // Define an arbitrary but large enough character array
                         // to store a single row of the data.
 
-    pFile = fopen("abstraction/myFile.csv", "r");
+    pFile = fopen("myFile.csv", "r");
 
     if (pFile == NULL)
         perror ("Error opening file");
@@ -181,48 +163,25 @@ int main()
 
             // Initialize the window. Ensure that the sliding window always contains the minimum number of points.
             if ( window.size() < windowMinSize ) {
-                window.push_back(dataPoint);   // Add the new point to the back of the window.
+                window.push_back(dataPoint);
                 numPointsAddedToWindow++;
             }
 
             // Once window has more than the minimum number of points, apply a criterion for adding points in the window.
             else {
-                if ( numPointsAddedToWindow % nnDistCheckIntrvl == 0 )  // If 50 new points have been added to the window:
-                    tie(minSqrdNNdist, maxSqrdNNdist) = nnDistsWindow( window );  // compute the min and max of the squared
-                                                                                  // nearest neighbor distances of the present
-                                                                                  // set of points in the window.
+                if ( numPointsAddedToWindow % nnDistCheckIntrvl == 0 )
+                    auto [minSqrdNNdist, maxSqrdNNdist] = nnDistsWindow( window );
 
                 // Nearest neighbor search for an incoming point by ANN library. Using the structured binding feature of
                 // C++17 to receive multiple values returned by the 'nnSearch' function.
                 auto [nnIndex, sqrdDistToNearestRep] = nnSearch( dataPoint, window );
-
-
-                // If the squared distance from the new incoming point to its nearest point in the window is
-                // outside the range [minSqrdNNdist, maxSqrdNNdist]:
                 if ( (sqrdDistToNearestRep < minSqrdNNdist) || (sqrdDistToNearestRep > maxSqrdNNdist) ) {
-                    updateCounter++;
-                    cout << updateCounter << ": " << minSqrdNNdist << ", " << maxSqrdNNdist << '\n';
-                    window.push_back(dataPoint);  // add the incoming point to the back of the window.
+                    window.push_back(dataPoint);
                     numPointsAddedToWindow++;
-
-                    // If the number of points in the window exceeds its maximum allowed size:
-                    if ( window.size() > windowMaxSize ) {
-                        vector<double> repToBeDeleted = window[0];
-                        window.erase(window.begin());  // delete the point from the front of the window.
-                    }
-                }
-                else {  // Discard the incoming point, and move its representative (nearest neighbor) to the back of the window.
-                    auto representative = window.begin() + nnIndex;  // Iterator pointing to the representative of the incoming point.
-
-                    // Move the representative to the back of the window. Since the majority of the incoming points is expected
-                    // to find a representative than being added to the window, the 'move to back' operation is expected to be more
-                    // frequent than the addition or deletion of points at either end of the window. Hence, the window is designed as
-                    // a std::vector as opposed to std::deque. More information on the choice of std::vector can be found below.
-                    // https://stackoverflow.com/questions/14579957/std-container-c-move-to-front
-                    // https://stackoverflow.com/questions/20107756/push-existing-element-of-stddeque-to-the-front
-                    rotate( representative, representative + 1, window.end() );  // https://stackoverflow.com/questions/23789498/moving-a-vector-element-to-the-back-of-the-vector
+                    if ( window.size() > windowMaxSize )
                 }
             }
+
 
         }
         fclose (pFile);
