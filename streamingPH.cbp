@@ -35,6 +35,7 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="abstraction/myFile.csv" />
 		<Unit filename="abstraction/slidingWindow.cpp" />
 		<Extensions>
 			<envvars />
