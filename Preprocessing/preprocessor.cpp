@@ -12,6 +12,7 @@
 #include "preprocessor.hpp"
 #include "kMeansPlusPlus.hpp"
 #include "streamingKmeans.hpp"
+#include "denStream.hpp"
 // basePipe constructor
 preprocessor::preprocessor(){
 	return;
@@ -27,6 +28,9 @@ preprocessor* preprocessor::newPreprocessor(const std::string &procT){
 	} 
 	  else  if(procName == "streamingKmeans" || procName == "streamingkmeans" || procName =="streamKM"){
 		return new streamingKmeans();
+	} 
+	 else  if(procName == "denStream" || procName == "denstream" || procName =="DenStream"){
+		return new denStream();
 	} 
 
 	return 0;
