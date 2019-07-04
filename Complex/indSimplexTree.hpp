@@ -16,8 +16,6 @@ class indSimplexTree : public simplexBase {
   
 	int maxDim;
 	
-	
-			
 	std::vector<std::vector<indTreeNode*>> dimensions;		
 	
 	unsigned indexCounter;
@@ -27,12 +25,14 @@ class indSimplexTree : public simplexBase {
   public:
   
 	std::vector<std::vector<graphEntry>> indexedGraph;
+	void expandDimensions(int);
   
 	indSimplexTree(std::vector<std::vector<double>>);
 	indSimplexTree(double, std::vector<std::vector<double>>, int);
 	std::vector<std::vector<graphEntry>> getIndexEdges(double);
 	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> getAllEdges(double);
 	std::set<unsigned> getFaces(graphEntry ge);
+	std::vector<std::vector<graphEntry>> coreduction(graphEntry);
 	
 	static bool compareByWeight(const graphEntry &, const graphEntry &);
 	bool isLeaf;
@@ -43,12 +43,15 @@ class indSimplexTree : public simplexBase {
 	// At this time, let's just assume that each simplex is labeled by a key that
 	// can, in general, be considered as a string.
 	void insert(std::vector<double>&);
-	bool deletion(indSimplexTree*&, std::string);
+	bool deletion(indTreeNode*);
+	bool deletion(std::set<unsigned>);
 	bool search(std::set<unsigned>);
 	unsigned find(std::set<unsigned>);
 	bool haveChild(indSimplexTree const*);
+	double getWeight(std::set<unsigned>);
 	void insertInductive();
 	void recurseInsert(indTreeNode*, unsigned, int, double, std::set<unsigned>);
+	std::pair<std::vector<std::set<unsigned>>,std::vector<std::set<unsigned>>> recurseReduce(std::set<unsigned>,int,std::set<unsigned>,int, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
 	int vertexCount();
 	int simplexCount();
 	void sortAndBuildGraph();

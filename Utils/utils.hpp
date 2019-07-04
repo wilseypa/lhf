@@ -18,6 +18,7 @@ class utils {
 	std::set<unsigned> setXOR(std::set<unsigned>&, std::set<unsigned>&);
 	std::set<unsigned> setIntersect(std::set<unsigned>, std::set<unsigned>, bool isSorted);
 	std::vector<unsigned> setIntersect(std::vector<unsigned>, std::vector<unsigned>, bool);
+	std::vector<std::set<unsigned>> getSubsets(std::set<unsigned>, int);
 	std::vector<unsigned> symmetricDiff(std::vector<unsigned>, std::vector<unsigned>, bool);
 	std::vector<unsigned> symmetricDiff(std::set<unsigned>, std::set<unsigned>, bool);
 	std::vector<unsigned> setUnion(std::vector<unsigned>, std::vector<unsigned>, bool);

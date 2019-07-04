@@ -1,15 +1,15 @@
 #pragma once
 
-// Header file for neighGraphPipe class - see neighGraphPipe.cpp for descriptions
+// Header file for streamVR class - see streamVR.cpp for descriptions
 #include <map>
 #include "basePipe.hpp"
 
-class neighGraphPipe : public basePipe {
+class streamVR : public basePipe {
   private:
 	double epsilon;
 	int dim;
   public:
-    neighGraphPipe();
+    streamVR();
     pipePacket runPipe(pipePacket);
 	void outputData(pipePacket);
     bool configPipe(std::map<std::string, std::string>);

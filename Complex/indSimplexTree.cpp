@@ -3,6 +3,7 @@
 #include <vector>
 #include <unistd.h>
 #include <iostream>
+#include <map>
 #include "indSimplexTree.hpp"
 #include "utils.hpp"
 
@@ -18,6 +19,271 @@ indSimplexTree::indSimplexTree(double _maxEpsilon, std::vector<std::vector<doubl
 	maxEpsilon = _maxEpsilon;
 	simplexType = "indSimplexTree";
 	return;
+}
+
+std::pair<std::vector<std::set<unsigned>>,std::vector<std::set<unsigned>>> indSimplexTree::recurseReduce(std::set<unsigned> sourceSet, int fc, std::set<unsigned> curNode,int d, std::vector<std::set<unsigned>> removalSimplices, std::vector<std::set<unsigned>> processedSimplices){
+	utils ut;
+	processedSimplices.push_back(curNode);
+	
+	
+	std::vector<std::set<unsigned>> localBuf;
+	std::vector<std::set<unsigned>> localFaces;
+	std::cout << "-------Recurse Reduce---------" << std::endl;
+	ut.print1DVector(curNode);
+	
+	
+	//Get simplex subsets to track common faces - these are candidate subsets before evaluation
+	std::cout << "subsets:" << std::endl;
+	auto subsets = ut.getSubsets(curNode, d);
+	for(int i = 0; i < subsets.size(); i++){
+		ut.print1DVector(subsets[i]);
+	}
+	
+	
+	//For each candidate subset prior to evaluation
+	for(auto subset : subsets){
+		for(int z = 0; z < dimensions[d].size(); z++){
+			
+			//Check if the simplex has already been processed
+			if(std::find(removalSimplices.begin(), removalSimplices.end(), dimensions[d][z]->simplexSet) == removalSimplices.end() && \
+				std::find(processedSimplices.begin(), processedSimplices.end(), dimensions[d][z]->simplexSet) == processedSimplices.end()){
+			//if(dimensions[d][z]->simplexSet != curNode){
+				
+				
+				//If there is an intersection with the current simplex
+				if(ut.setIntersect(dimensions[d][z]->simplexSet,subset,true).size() == dimensions[d][z]->simplexSet.size() - 1	){
+					localBuf.push_back(subset);
+					localFaces.push_back(dimensions[d][z]->simplexSet);
+					//Add the current simplex to graph removal
+					//removalSimplices.push_back(dimensions[d][z]->simplexSet);
+					//std::cout << "Removal: ";
+					//ut.print1DVector(dimensions[d][z]->simplexSet);
+					//deletion(dimensions[d][z]->simplexSet);
+									
+					
+					//Find the additional simplices to remove from the graph					
+					//if(std::find(removalSimplices.begin(), removalSimplices.end(), curNode) == removalSimplices.end()){
+					//	removalSimplices.push_back(curNode);
+					//}
+					break;
+				}
+			}
+		}
+	}
+	std::cout << "Local Buf: " << localBuf.size() << "\tSubsets: " << subsets.size() << std::endl;
+	
+	//Recurses to determine if the neighboring faces all have connected faces
+	if(localBuf.size() == subsets.size()){
+		bool recurse = false;
+		for(auto face : localFaces){
+			
+			auto a = recurseReduce(curNode, 0, face, d, removalSimplices, processedSimplices);
+			processedSimplices = a.first;
+			if(a.second.size() > removalSimplices.size())
+				recurse = true;
+			removalSimplices = a.second;
+			
+		}
+		
+		if(recurse){
+			//Refresh the local buffer for faces that match
+			auto a = recurseReduce(sourceSet, 0, curNode, d, removalSimplices, processedSimplices);
+		}
+		
+		
+	} else if(dimensions[d].size() == 1 || localBuf.size() != subsets.size()){		
+		
+		std::set<unsigned> non_min;
+		double minVal = -1;
+		
+		//For each subset
+		for(auto z : subsets){
+			//if the subset is not in the local buffer (i.e. did not get filtered by faces)
+			if(std::find(localBuf.begin(), localBuf.end(), z) == localBuf.end()){
+				std::cout << "Candidate: ";
+				ut.print1DVector(z);
+				double d = getWeight(z);
+				if(minVal < 0){
+					minVal = d;
+					non_min = z;
+				} else if(d > minVal){
+					non_min = z;
+				} else {
+					minVal = d;
+				}
+				std::cout << "\tWT: " << d << std::endl;
+			}
+		}		
+		if(non_min.size() > 0){
+			removalSimplices.push_back(non_min);
+			removalSimplices.push_back(curNode);
+			std::cout << "Removal: ";
+			ut.print1DVector(non_min);
+			std::cout << "  ,  ";
+			ut.print1DVector(curNode);
+			//auto a = recurseReduce(curNode, 0, non_min, d-1, removalSimplices, processedSimplices);
+			//processedSimplices = a.first;
+			//removalSimplices = a.second;
+		}
+		fc = 0;
+	}
+	
+	return std::make_pair(processedSimplices, removalSimplices);
+}
+
+void indSimplexTree::expandDimensions(int d){
+	utils ut;
+	std::vector<graphEntry> curEntry;
+	graphEntry ge;
+	
+	std::cout << "Reducing simplex tree elementary collapse" << std::endl;
+	std::cout << "\tOriginal simplex count: " << nodeCount << std::endl;
+	
+	if(maxDim < 2){
+		std::cout << "Dim < 2, exiting reduction" << std::endl;
+		return;
+	}
+	
+	
+	//Start at the highest dimension and check for cofaces of simplices
+	//		if there isn't a shared face with another simplex of the
+	//		same dimension then remove the face
+	for(int d = dimensions.size()-1; d > 1 ; d--){
+		indTreeNode* curNode = dimensions[d][0];
+		std::vector<graphEntry> curGraph;
+		std::map<std::set<unsigned>,int> counts;
+		std::vector<std::set<unsigned>> removalSimplices;
+		std::vector<std::set<unsigned>> processedSimplices;
+		
+		std::cout << "DIMENSION: " << d << "\tSize: " << dimensions[d].size() << std::endl;
+		for(auto z : dimensions[d]){
+			std::cout << "\t";
+			ut.print1DVector(z->simplexSet);
+		}
+		
+		
+		for(auto curNode : dimensions[d]){	
+			std::cout << "Testing: ";
+			ut.print1DVector(curNode->simplexSet);
+			
+			if(std::find(processedSimplices.begin(), processedSimplices.end(), curNode->simplexSet) == processedSimplices.end() && \
+				std::find(processedSimplices.begin(), processedSimplices.end(), curNode->simplexSet) == processedSimplices.end()){
+				
+				auto a =  recurseReduce({}, 0, curNode->simplexSet, d, removalSimplices, processedSimplices);
+				
+				processedSimplices = a.first;
+				removalSimplices = a.second;
+				
+			}
+					
+		}
+		/*for(auto z: counts){
+			std::cout << "\t" << std::to_string(z.second) << ":\t";
+			ut.print1DVector(z.first);
+		}*/
+		std::cout << "_________Removals_________" << std::endl;
+		for(auto p: removalSimplices){
+			std::cout << "\t";
+			ut.print1DVector(p);
+		}
+		std::cout << std::endl;
+		
+		//Remove the removals...
+		for(auto r : removalSimplices){
+			for(int i = 0; i < dimensions[d].size(); i++){
+				if(r == dimensions[d][i]->simplexSet){
+					dimensions[d].erase(dimensions[d].begin() + i);
+					nodeCount--;
+				}
+			}
+			deletion(r);
+		}
+			
+		
+	}
+	
+	
+	std::cout << "\tElementary collapse count: " << nodeCount << std::endl;
+	std::cout << "Reducing simplex tree coreduction" << std::endl;
+	
+	
+	
+	for(auto a : indexedGraph){
+		for(auto b: a){
+			
+			//	Elementary coreduction pair if bds(b) = {a}
+			//
+			//	bds(a) = {t <= S | k(s, t) != 0 for some s <= a}
+			//		where dim(s) = dim(t) + 1
+			//
+			
+			coreduction(b);
+			//std::cout << "Reduced!" << std::endl;
+			
+		}
+	}
+	
+	std::cout << "\tCoreduction count: " << nodeCount << std::endl;
+		
+	return;
+	
+}
+
+std::vector<std::vector<simplexBase::graphEntry>> indSimplexTree::coreduction(graphEntry cur){
+	std::vector<std::vector<graphEntry>> ret = indexedGraph;
+	//Queue q ; q.insert (cur)
+	std::vector<graphEntry> simplexQueue;
+	
+	simplexQueue.push_back(cur);
+		
+	//While (queue.next() != end)
+	while(simplexQueue.size() > 0){
+		
+			//std::cout << "cored" << std::endl;
+		// s = q.pop();
+		graphEntry currentEntry = simplexQueue[0];
+		
+		//Compute cbds, bds
+		//	cbds(a) = {s <= S | k(s,t) != 0 for some t <= a}
+		std::vector<graphEntry> cbds;
+		
+		//	bds(a) = {t <= S | k(s, t) != 0 for some s <= a}
+		std::vector<graphEntry> bds;
+		
+		
+			//std::cout << "cored " << simplexQueue.size() << std::endl;
+		//if bds.size = 1
+		if(bds.size() == 1){
+		
+			//remove s from indexedGraph
+			
+			
+			//foreach coboundary of t
+			for(auto ge : cbds){
+				//queue.insert(u)
+				simplexQueue.push_back(ge);
+			}
+			
+			//remove t from s
+			
+		}
+		
+		
+		//if bds s = null 
+		if(bds.size() == 0){
+			
+			//for each coboundary of s
+			for(auto ge : cbds){
+				//queue.insert(u)
+				simplexQueue.push_back(ge);
+			}
+		}
+		
+		simplexQueue.erase(simplexQueue.begin());
+		//std::cout << "cored " << simplexQueue.size() << std::endl;
+	}
+	//std::cout << "RET" << std::endl;
+	return ret;
 }
 
 void indSimplexTree::recurseInsert(indTreeNode* node, unsigned curIndex, int depth, double maxE, std::set<unsigned> simp){
@@ -45,7 +311,7 @@ void indSimplexTree::recurseInsert(indTreeNode* node, unsigned curIndex, int dep
 		//Get the largest weight of this simplex
 		maxE = curE > node->weight ? curE : node->weight;
 		insNode->weight = maxE;
-				
+		
 		//Check the dimensional list
 		//	if no nodes exist at the dimension, this is the first
 		if(depth == dimensions.size() - 1){
@@ -68,11 +334,11 @@ void indSimplexTree::recurseInsert(indTreeNode* node, unsigned curIndex, int dep
 			
 			temp = insNode->sibling;
 			//Have to check the children now...
-			if(newSimp.size() <= maxDim){
-				do {
-					recurseInsert(temp, curIndex, depth + 1, maxE, newSimp);
-				} while(temp->sibling != nullptr && (temp = temp->sibling) != nullptr);
-			}
+			//if(newSimp.size() <= maxDim){
+			do {
+				recurseInsert(temp, curIndex, depth + 1, maxE, newSimp);
+			} while(temp->sibling != nullptr && (temp = temp->sibling) != nullptr);
+			//}
 		}
 	}
 		
@@ -107,6 +373,7 @@ void indSimplexTree::printTree(indTreeNode* head){
 	std::cout << "_____________________________________" << std::endl;
 	return;
 }
+	
 	
 void indSimplexTree::insertInductive(){
 	//Create our new node to insert
@@ -143,6 +410,7 @@ void indSimplexTree::insertInductive(){
 					//This new node's parent is the current node we're indexing on
 					insNode->parent = curNode;
 					insNode->index = indexCounter;
+					
 					insNode->sibling = nullptr;
 				
 					//Check the dimensional list
@@ -290,8 +558,37 @@ bool indSimplexTree::search(std::set<unsigned> simplex){
 		else { return false; }
 	}
 	return true;
-	
+}
 
+
+double indSimplexTree::getWeight(std::set<unsigned> search){
+	utils ut;
+	indTreeNode* curNode = dimensions[0][0];
+	
+	std::cout << "Get Weight - Size: " << search.size() << "\tSimplex Count: " << dimensions[search.size()-1].size() << "\t";
+	ut.print1DVector(search);
+	
+	for(auto a : dimensions[search.size()-1]){
+		if(search == a->simplexSet){
+			return a->weight;
+		}
+	}
+	return 10000;
+	
+	/*	
+	for(auto i : dimensions[search.size()]){
+		if
+		while(curNode != nullptr && curNode->index != i){curNode = curNode->sibling;};
+		if(curNode != nullptr){curNode = curNode->child;}
+		else return 10000;
+	}
+	if(curNode != nullptr){
+		ut.print1DVector(curNode->simplexSet);
+		std::cout << "node " << curNode->weight << std::endl;
+		return curNode->weight;
+	} else {
+		return 10000;
+	}*/
 }
 
 
@@ -300,8 +597,79 @@ bool indSimplexTree::haveChild(indSimplexTree const* present) {
 
 }
 
-// A recursive function to delete a simplex from the tree.
-bool indSimplexTree::deletion(indSimplexTree*& present, std::string key) {
+
+
+// A recursive function to delete a simplex (and sub-branches) from the tree.
+bool indSimplexTree::deletion(std::set<unsigned> removalEntry) {
+	//Remove the entry in the simplex tree
+	bool found = true;
+	indTreeNode* curNode = dimensions[0][0];
+	int d = removalEntry.size() - 1;
+	
+	
+	for(int i = 0; i < dimensions[d].size(); i++){
+		if(removalEntry == dimensions[d][i]->simplexSet){
+			curNode = dimensions[d][i];
+			dimensions[d].erase(dimensions[d].begin() + i);
+			return deletion(curNode);
+		}
+	}
+	return false;
+			
+			
+			/*
+	auto subsets = ut.getSubsets(curNode, d);
+	for(int i = 0; i < subsets.size(); i++){
+		if(subsets[i] == sourceSet)
+			subsets.erase(subsets.begin() + i);
+		
+		//Find the current entry by index
+		while(curNode!= nullptr && curNode->index != i){curNode = curNode->sibling;};
+		
+		
+		if(curNode!=nullptr){curNode = curNode->child;}
+		
+		else{
+			found = false;
+			break;
+		}
+	}
+	
+	std::cout << "DELETION!" << std::endl;
+	return ;
+	
+	*/
+	
+	
+}
+
+
+// A recursive function to delete a simplex (and sub-branches) from the tree.
+bool indSimplexTree::deletion(indTreeNode* removalEntry) {
+	indTreeNode* curNode = removalEntry;
+	
+	//Iterate to the bottom of branch
+	//while(curNode != nullptr){ 
+	//	curNode->child->parent = curNode;
+	//	curNode=curNode->child;
+	//}
+	
+	
+	//If we did go down, remove on the way back up
+	while(curNode != removalEntry){ 
+		curNode = curNode->parent;
+		delete curNode->child;
+		curNode->child = nullptr;
+	}
+	
+	//curNode = curNode->parent;
+	delete curNode;
+	nodeCount--;
+	//curNode->child = nullptr;
+	
+	//NOTE: Also need to remove from the indexed graph (if done after shuffle)
+	
+	
 	return false;
 }
 
@@ -351,6 +719,7 @@ bool indSimplexTree::compareByWeight(const graphEntry &a, const graphEntry &b){
 void indSimplexTree::sortAndBuildGraph(){
 	utils ut;	
 	
+	std::cout << "========================    SORTING    ===============================" << std::endl;
 	indTreeNode* curNode = dimensions[0][0];
 	std::vector<graphEntry> curEntry;
 	std::vector<std::vector<graphEntry>> ret;

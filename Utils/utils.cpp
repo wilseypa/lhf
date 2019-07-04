@@ -255,6 +255,37 @@ std::vector<unsigned> utils::symmetricDiff(std::set<unsigned> v1, std::set<unsig
 	return retTemp;
 }
 
+//Iteratively build subsets (faces) of the simplex set
+std::vector<std::set<unsigned>> utils::getSubsets(std::set<unsigned> set, int dim){
+	std::vector<std::set<unsigned>> subset;
+	std::set<unsigned> empty;
+	subset.push_back(empty);
+
+	//For each set in the 
+	for(auto i = set.begin(); i!= set.end(); i++){
+		std::vector<std::set<unsigned>> subsetTemp = subset;
+		unsigned entry = *i;
+
+		for (unsigned j = 0; j < subsetTemp.size(); j++){
+			subsetTemp[j].insert(entry);
+		}
+		
+		unsigned z = 0;
+		for (auto j = subsetTemp.begin(); j != subsetTemp.end(); j++){
+			subset.push_back(*j);
+			
+		}
+	}
+	
+	std::vector<std::set<unsigned>> retSubset;
+	
+	for(std::set<unsigned> z : subset){
+		if(z.size() == dim)
+			retSubset.push_back(z);
+	}
+	return retSubset;
+}
+
 // Find the union of two vectors
 std::vector<unsigned> utils::setUnion(std::vector<unsigned> v1, std::vector<unsigned> v2, bool isSorted){
 	std::vector<unsigned> ret;

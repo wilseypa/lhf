@@ -1,6 +1,5 @@
 /*
- * distMatrix hpp + cpp extend the basePipe class for calculating the 
- * distance matrix from data input
+ * streamVR hpp + cpp extend the basePipe class for 
  * 
  */
 
@@ -11,18 +10,18 @@
 #include <vector>
 #include <chrono>
 #include <functional>
-#include "neighGraphPipe.hpp"
+#include "streamVR.hpp"
 #include "utils.hpp"
 
 
 // basePipe constructor
-neighGraphPipe::neighGraphPipe(){
-	pipeType = "NeighborhoodGraph";
+streamVR::streamVR(){
+	pipeType = "StreamVR";
 	return;
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
-pipePacket neighGraphPipe::runPipe(pipePacket inData){	
+pipePacket streamVR::runPipe(pipePacket inData){	
 	utils ut;	
 	
 	//Iterate through each vector, inserting into simplex storage
@@ -43,7 +42,7 @@ pipePacket neighGraphPipe::runPipe(pipePacket inData){
 
 
 // configPipe -> configure the function settings of this pipeline segment
-bool neighGraphPipe::configPipe(std::map<std::string, std::string> configMap){
+bool streamVR::configPipe(std::map<std::string, std::string> configMap){
 	auto pipe = configMap.find("epsilon");
 	if(pipe != configMap.end())
 		epsilon = std::atof(configMap["epsilon"].c_str());
@@ -65,7 +64,7 @@ bool neighGraphPipe::configPipe(std::map<std::string, std::string> configMap){
 
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-void neighGraphPipe::outputData(pipePacket inData){
+void streamVR::outputData(pipePacket inData){
 	std::ofstream file ("output/" + pipeType + "_output.csv");
 	
 	if(inData.workData.complex->simplexType == "simplexArrayList"){

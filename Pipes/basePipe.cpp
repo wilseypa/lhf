@@ -18,6 +18,7 @@
 #include "boundaryPipe.hpp"
 #include "persistencePairs.hpp"
 #include "optPersistencePairs.hpp"
+#include "streamVR.hpp"
 
 // basePipe constructor
 basePipe::basePipe(){
@@ -43,6 +44,8 @@ basePipe* basePipe::newPipe(const std::string &pipeT){
 		return new persistencePairs();
 	} else if (pipeType == "optPersistence"){
 		return new optPersistencePairs();
+	} else if (pipeType == "streamVR"){
+		return new streamVR();
 	}
 	
 	return 0;

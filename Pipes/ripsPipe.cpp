@@ -29,7 +29,7 @@ ripsPipe::ripsPipe(){
 pipePacket ripsPipe::runPipe(pipePacket inData){
 	utils ut;
 	
-	inData.workData.complex->expandDimensions(dim);
+	//inData.workData.complex->expandDimensions(dim);
 		
 	std::cout << "\tComplex Size: " << inData.workData.complex->simplexCount() << std::endl;
 	std::cout << "\tComplex Mem: " << inData.workData.complex->getSize() << std::endl;

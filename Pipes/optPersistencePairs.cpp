@@ -204,6 +204,10 @@ std::set<unsigned> optPersistencePairs::getRankNull(std::vector<std::vector<indS
 		std::vector<std::pair<int, std::set<unsigned>>> tempBuffer;
 		int curCount = 0;
 		
+		
+		std::chrono::duration<double, std::milli> bufElapsed = startTime - startTime;
+		std::chrono::duration<double, std::milli> insElapsed = startTime - startTime;
+		
 		//Get the current face (for twist algorithm)
 		unsigned curFace = -1;
 		if(!curFaces.empty()){
@@ -221,17 +225,20 @@ std::set<unsigned> optPersistencePairs::getRankNull(std::vector<std::vector<indS
 		//			a) If a pivot is found before the end of the buffer, XOR with remaining, back to step 2
 		//			b) If no pivot is found, continue to step 1
 		
+		//std::cout << "TempBuffer: " << tempBuffer.size();
+		
 		//For each row (nChains)
 		for(unsigned i = 0; i < nChain.size(); i++){
 			
 			//Track if we've found a pivot in the row
 			bool found = false;
 			
+			auto bufStartTime = std::chrono::high_resolution_clock::now();	
 			
 			//First, check buffered pivots (if they exist)
 			for(int j = 0; j < tempBuffer.size(); j++){
 				if(tempBuffer[j].second.size() > 0 && *(tempBuffer[j].second.begin()) == i){
-					
+					//std::cout << "b\t" << tempBuffer.size() << std::endl;
 					//The pivot we're looking for already exists in the buffer...
 					nextPivots.insert(tempBuffer[j].first + pivotOffset);
 					pivotXOR[i] = tempBuffer[j].second;
@@ -262,6 +269,10 @@ std::set<unsigned> optPersistencePairs::getRankNull(std::vector<std::vector<indS
 				}
 			}
 			
+			auto bufEndTime = std::chrono::high_resolution_clock::now();
+			bufElapsed += (bufEndTime - bufStartTime);
+			auto insStartTime = std::chrono::high_resolution_clock::now();	
+			
 			if(!found){
 				//No buffered pivots; pop pChains until we find one (possibly with a limit?)
 				for(int j = curCount; j < pChain.size(); j++){
@@ -291,7 +302,9 @@ std::set<unsigned> optPersistencePairs::getRankNull(std::vector<std::vector<indS
 						
 						
 						if(setFace.size() > 0 && *(setFace.begin()) == i){
+							//std::cout << "i\t" << tempBuffer.size() << std::endl;
 							nextPivots.insert(j + pivotOffset);
+							//std::cout << std::endl;
 							pivotXOR[i] = setFace;
 							found = true;
 							curCount++;
@@ -305,7 +318,15 @@ std::set<unsigned> optPersistencePairs::getRankNull(std::vector<std::vector<indS
 					}
 				}
 			}
+			
+			
+			auto insEndTime = std::chrono::high_resolution_clock::now();
+			insElapsed += (insEndTime - insStartTime);
+			
+			
+			
 		}
+		std::cout << std::endl;
 		curPivots = nextPivots;
 		curFaces = nextFaces;
 		for(auto a : curPivots){
@@ -322,7 +343,12 @@ std::set<unsigned> optPersistencePairs::getRankNull(std::vector<std::vector<indS
 
 		//Output the time and memory used for this pipeline segment
 		std::cout << "Boundary Matrix (d=" << d << ") created in: " << (elapsed.count()/1000.0) << " seconds (physical time)" << std::endl;
+		std::cout << "PChains: " << pChain.size() << std::endl;
+		std::cout << "NChains: " << nChain.size() << std::endl;
 		std::cout << "Faces: " << curFaces.size() << std::endl;
+		std::cout << "Pivots: " << curPivots.size() << std::endl;
+		std::cout << "Buffer Elapsed: " << (bufElapsed.count()/1000.0) << std::endl;
+		std::cout << "Insert Elapsed: " << (insElapsed.count()/1000.0) << std::endl;
 		
 		std::cout << std::endl << std::endl;
 		
