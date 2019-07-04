@@ -8,7 +8,7 @@ add_library(preprocessor "preprocessor.cpp" "preprocessor.hpp")
 add_library(kMeansPlusPlus "kMeansPlusPlus.cpp" "kMeansPlusPlus.hpp")
 add_library(streamingKmeans "streamingKmeans.cpp" "streamingKmeans.cpp")
 add_library(streamingUtils "streamingUtils.cpp" "streamingUtils.hpp")
-add_library(coresetUtils "coresetUtils.cpp" "coresetUtils.hpp")
+
 include_directories(../Complex)
 link_directories(../Complex)
 
@@ -21,7 +21,7 @@ link_directories(../Utils)
 target_link_libraries(preprocessor kMeansPlusPlus)
 target_link_libraries(preprocessor streamingKmeans)
 target_link_libraries(preprocessor streamingUtils)
-target_link_libraries(preprocessor coresetUtils)
+
 
 INSTALL (TARGETS preprocessor
 	LIBRARY DESTINATION lib
