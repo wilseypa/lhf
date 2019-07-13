@@ -32,6 +32,9 @@ preprocessor* preprocessor::newPreprocessor(const std::string &procT){
 	 else  if(procName == "denStream" || procName == "denstream" || procName =="DenStream"){
 		return new denStream();
 	} 
+	 else  if(procName == "densityUtils" || procName == "DBSCAN" || procName =="dbscan"){
+		return new denStream();
+	} 
 
 	return 0;
 }

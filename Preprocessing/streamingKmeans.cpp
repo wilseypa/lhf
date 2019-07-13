@@ -60,7 +60,7 @@ std::vector<double> approxFacilitiesHat(0);
 
 double f = 1/(numClusters*(1 + log(size))); //facility cost f = 1/(k(1+log n))  k clusters, n points, empty set K  //facility==centroid 
 
-std::vector<double> summedClusters(num_clusters, 0);
+std::vector<double> summedClusters(numClusters, 0);
 
 std::vector<double> counts(maxFacilities, 0);
 std::vector<int> tempCounts(maxFacilities, 0);
@@ -466,4 +466,18 @@ int streamingKmeans::random(int low, int high){
 	return low + ( rand() % (high - low) );
 }
 
+// configPipe -> configure the function settings of this pipeline segment
+bool streamingKmeans::configPreprocessor(std::map<std::string, std::string> configMap){
+  auto preprocessor = configMap.find("clusters");
+    if(preprocessor !=configMap.end())
+        numClusters = std::atoi(configMap["clusters"].c_str());
+    else return false;
 
+    preprocessor = configMap.find("iterations");
+	if(preprocessor != configMap.end())
+		num_iterations = std::atoi(configMap["iterations"].c_str());
+	else return false;	
+	
+	
+	return true;
+}

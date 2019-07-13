@@ -6,7 +6,7 @@
 
 class streamingKmeans : public preprocessor {
   private:
-	int num_clusters;			
+	int numClusters;			
 	int num_iterations;		
   	
   public:

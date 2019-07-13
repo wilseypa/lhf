@@ -15,6 +15,7 @@
 #include <vector>
 #include "streamingUtils.hpp"
 #include "utils.hpp"
+////// use these as post processing step for StreamKM on very large data sets 
 
 // basePipe constructor
 streamingUtils::streamingUtils(){
