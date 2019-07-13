@@ -15,7 +15,7 @@
 #include <vector>
 #include "denStream.hpp"
 #include "utils.hpp"
-
+/////// Based off algorithm outlined in Cao et al 06 "Density-Based Clustering over an Evolving Data Stream with Noise"/////
 
 // basePipe constructor
 denStream::denStream(){
