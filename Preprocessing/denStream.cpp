@@ -33,12 +33,12 @@ pipePacket denStream::runPreprocessor(pipePacket inData){
 
 
 
-///////initialize p micro clusters... DBSCAN first N points??///////
+///////initialize p micro clusters... DBSCAN first N points (N has to be less than size of input data to simulate stream)///////
 
 //////////// adding points to p or o clusters and updating Tp///// 
     //set Tp = (1/lambda)* log((beta*mu)/(beta*mu-1))
     // get next point
-   //do merging on point p --> either becomes p mc or o mc
+   //do merging on point p --> either becomes p micro cluster or o microcluster
 
 
 
