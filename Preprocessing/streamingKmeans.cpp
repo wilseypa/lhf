@@ -30,7 +30,7 @@ streamingKmeans::streamingKmeans(){
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket streamingKmeans::runPreprocessor(pipePacket inData){
 	//Arguments - num_clusters, num_iterations
-  //int numClusters = 20;
+ // int numClusters = 20;
 	utils ut;
 	streamingUtils streamUt;
   //int n = 5;
