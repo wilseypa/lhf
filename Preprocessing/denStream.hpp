@@ -10,6 +10,7 @@ class denStream : public preprocessor {
   	
   public:
   denStream();
+  std::vector<int> merging(std::vector<std::vector<double>>& data, int i, std::vector<int> clusterLabels, double epsilon);
   pipePacket runPreprocessor(pipePacket inData);
   bool configPreprocessor(std::map<std::string, std::string> configMap);
 }; 
