@@ -14,6 +14,7 @@
 #include <functional> 
 #include <vector>
 #include "denStream.hpp"
+#include "densityUtils.hpp"
 #include "utils.hpp"
 /////// Based off algorithm outlined in Cao et al 06 "Density-Based Clustering over an Evolving Data Stream with Noise"/////
 
@@ -27,37 +28,58 @@ denStream::denStream(){
 
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket denStream::runPreprocessor(pipePacket inData){
+utils ut;
+densityUtils denseUt;
+
+
 /////////constants//////////
 int initPoints = 20; // points to generate p clusters (large data sets, use 1000)
 double lambda = 0.25; // decay factor
 int epsilon = 16;  //radius of cluster (same as DBSCAN epsilon)
 int mu = 10;   //weight of data points in cluster threshold
 double beta = 0.2; // outlier threshold
-int pClusterLabel = 0;
+//int pClusterLabel = 0;
 int oClusterLabel = 0;
-
+int pClusterIndex;
+int oClusterIndex;
+double timestamp;
 ///////initialize p micro clusters... DBSCAN first N points (N has to be less than size of input data to simulate stream)///////
 //this returns cluster labels corresponding to current points
 
+std::vector<int>clusterLabels = denseUt.dbscan(inData.workData.originalData);
 
 
+int pClusterLabel = *std::max_element(clusterLabels.begin(), clusterLabels.end()); //start pClusters at highest cluster from DBSCAN
+double Tp = (1/lambda)* log((beta*mu)/((beta*mu)-1)); 
 //////////// adding points to p or o clusters and updating Tp///// 
+double time = 0.0; //placeholder for time measurement
 for(int i = initPoints+1; i<inData.workData.originalData.size(); i++){
-     double Tp = (1/lambda)* log((beta*mu)/(beta*mu-1)); 
-      // get next point
-   //do merging on point p --> either becomes p micro cluster or o microcluster
+     time++;
+     std::vector<int> tempLabels = merging(inData.workData.originalData, i, clusterLabels, epsilon));  //do merging on point p --> either becomes p micro cluster or o microcluster
+     clusterLabels.insert(std::end( clusterLabels), std::begin(tempLabels), std::end(tempLabels));  //append templabels
+   if(fmod(time,Tp) == 0){  //prune clusters accordingly
+        for(int j = 0; j<clusterLabels.size(); j++){
+          for(int c = 1; c<pClusterIndex-1; c++){
+            //if weight of current p cluster < beta* mu, delete
 
 
-/////////// pruning and cluster maintenance///////
 
-   //if(current time mod Tp = 0)
-      //for each p micro cluster
-          // if(weight of cp < beta*mu)
-                // delete cp
-     // for each o micro cluster 
-         //update big Epsilon
-         //if(weight of co < big Epsilon)
-             //delete co
+          }
+
+        }
+        for(int j = 0; j<clusterLabels.size(); j++){
+          for(int o = 1; o<oClusterIndex-1; o++){
+            double outlierWeightThreshold = (2^((-lambda)*(time -timestamp + Tp))-1)/(2^(-lambda*Tp) -1);  //big epsilon
+              //if weight of current o cluster < big epsilon, delete
+
+
+
+          }
+
+        }
+   }
+
+
              
 }
     
