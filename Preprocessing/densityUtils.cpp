@@ -27,6 +27,11 @@ densityUtils::densityUtils(){
 
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket densityUtils::runPreprocessor(pipePacket inData){    //standalone preprocessor
+// make labels for upscaling
+std::vector<uint_least32_t> upscaleLabels(inData.workData.originalData.size());
+std::iota (std::begin(upscaleLabels), std::end(upscaleLabels), 0);
+////
+
 /////////constants//////////
  utils ut;
  double epsilon = 0.5; //epsilon (radius)- how close points should be to constitute a cluster (need to adjust but preferably small)
@@ -56,9 +61,33 @@ for(int i = 0; i<inData.workData.originalData.size(); i++){  //for each point
 }
 
 ///// find centroids of clusters so pass to next pipe
+   std::vector<int> counts;
+   //std::vector<std::vector<double>> sumCluster;
+   std::vector<std::vector<double>> summedCentroidVectors(clusterIndex, std::vector<double>(inData.workData.originalData[0].size(), 0));
+   for(int j = 0; j<clusterLabel.size(); j++){
+      for(int k = 1; k<clusterIndex-1; k++){
+         if (clusterLabel[j] == k)
+         counts[k] +=1;
+         for(int d = 0; d < inData.workData.originalData[j].size(); d++){
+            summedCentroidVectors[k][d] += inData.workData.originalData[j][d];
+         }
+         
+      }
+   }
 
+   for(int i = 0; i < summedCentroidVectors.size(); i++){
+			for(int d =0; d < summedCentroidVectors[0].size(); d++){
+				summedCentroidVectors[i][d] = summedCentroidVectors[i][d] / counts[i];
+			}
+		}
+
+
+   inData.workData.originalData = summedCentroidVectors;
+   inData.workData.originalLabels = upscaleLabels;
 	return inData;
 }
+
+
 
 std::vector<int> densityUtils::dbscan(std::vector<std::vector<double>>& data){   //initialization for DenStream
 utils ut; 

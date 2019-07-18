@@ -55,7 +55,7 @@ double Tp = (1/lambda)* log((beta*mu)/((beta*mu)-1));
 double time = 0.0; //placeholder for time measurement
 for(int i = initPoints+1; i<inData.workData.originalData.size(); i++){
      time++;
-     std::vector<int> tempLabels = merging(inData.workData.originalData, i, clusterLabels, epsilon));  //do merging on point p --> either becomes p micro cluster or o microcluster
+     std::vector<int> tempLabels = merging(inData.workData.originalData, i, clusterLabels, epsilon);  //do merging on point p --> either becomes p micro cluster or o microcluster
      clusterLabels.insert(std::end( clusterLabels), std::begin(tempLabels), std::end(tempLabels));  //append templabels
    if(fmod(time,Tp) == 0){  //prune clusters accordingly
         for(int j = 0; j<clusterLabels.size(); j++){
@@ -69,7 +69,7 @@ for(int i = initPoints+1; i<inData.workData.originalData.size(); i++){
         }
         for(int j = 0; j<clusterLabels.size(); j++){
           for(int o = 1; o<oClusterIndex-1; o++){
-            double outlierWeightThreshold = (2^((-lambda)*(time -timestamp + Tp))-1)/(2^(-lambda*Tp) -1);  //big epsilon
+            double outlierWeightThreshold = (pow(2,((-lambda)*(time -timestamp + Tp))-1))/(pow(2, (-lambda*Tp) -1));  //big epsilon
               //if weight of current o cluster < big epsilon, delete
 
 
@@ -82,10 +82,7 @@ for(int i = initPoints+1; i<inData.workData.originalData.size(); i++){
 
              
 }
-    
-   
-
-  utils ut;
+  
 
 	return inData;
 }
