@@ -60,7 +60,7 @@ for(int i = 0; i<inData.workData.originalData.size(); i++){  //for each point
 	return inData;
 }
 
-std::vector<std::vector<double>> densityUtils::dbscan(std::vector<std::vector<double>>& data){   //initialization for DenStream
+std::vector<int> densityUtils::dbscan(std::vector<std::vector<double>>& data){   //initialization for DenStream
 utils ut; 
 
  double epsilon = 0.5; //epsilon (radius)- how close points should be to constitute a cluster (need to adjust but preferably small)
@@ -92,7 +92,7 @@ for(int i = 0; i<data.size(); i++){  //for each point
 //will return all clusters found so that these clusters can either be pruned or maintained by DenStream
 
 
-return data;
+return clusterLabel;
 
 }
 
