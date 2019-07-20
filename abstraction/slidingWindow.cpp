@@ -6,6 +6,7 @@
 #include <sstream>
 #include <algorithm>
 #include <tuple>
+#include <map>
 #include <ANN/ANN.h>
 
 
@@ -156,7 +157,9 @@ int main()
     int updateCounter = 0;
 
 
-    std::vector<std::vector<double>> window;
+    std::map<int, std::vector<double>> window;
+    std::vector<int> labelContainer;
+    int label{ 0 };
     FILE *pFile;
 
     char buffer[1000];  // Define an arbitrary but large enough character array
@@ -180,7 +183,7 @@ int main()
 
             // Initialize the window. Ensure that the sliding window always contains the minimum number of points.
             if ( window.size() < windowMinSize ) {
-                window.push_back(dataPoint);   // Add the new point to the back of the window.
+                window.insert( std::pair<int, std::vector<double>>(label, dataPoint) );   // Add the new point to the back of the window.
                 numPointsAddedToWindow++;
             }
 
