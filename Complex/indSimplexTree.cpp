@@ -28,16 +28,16 @@ std::pair<std::vector<std::set<unsigned>>,std::vector<std::set<unsigned>>> indSi
 	
 	std::vector<std::set<unsigned>> localBuf;
 	std::vector<std::set<unsigned>> localFaces;
-	std::cout << "-------Recurse Reduce---------" << std::endl;
-	ut.print1DVector(curNode);
+	//std::cout << "-------Recurse Reduce---------" << std::endl;
+	//ut.print1DVector(curNode);
 	
 	
 	//Get simplex subsets to track common faces - these are candidate subsets before evaluation
-	std::cout << "subsets:" << std::endl;
+	//std::cout << "subsets:" << std::endl;
 	auto subsets = ut.getSubsets(curNode, d);
-	for(int i = 0; i < subsets.size(); i++){
-		ut.print1DVector(subsets[i]);
-	}
+	//for(int i = 0; i < subsets.size(); i++){
+	//	ut.print1DVector(subsets[i]);
+	//}
 	
 	
 	//For each candidate subset prior to evaluation
@@ -70,7 +70,7 @@ std::pair<std::vector<std::set<unsigned>>,std::vector<std::set<unsigned>>> indSi
 			}
 		}
 	}
-	std::cout << "Local Buf: " << localBuf.size() << "\tSubsets: " << subsets.size() << std::endl;
+	//std::cout << "Local Buf: " << localBuf.size() << "\tSubsets: " << subsets.size() << std::endl;
 	
 	//Recurses to determine if the neighboring faces all have connected faces
 	if(localBuf.size() == subsets.size()){
@@ -100,8 +100,8 @@ std::pair<std::vector<std::set<unsigned>>,std::vector<std::set<unsigned>>> indSi
 		for(auto z : subsets){
 			//if the subset is not in the local buffer (i.e. did not get filtered by faces)
 			if(std::find(localBuf.begin(), localBuf.end(), z) == localBuf.end()){
-				std::cout << "Candidate: ";
-				ut.print1DVector(z);
+				//std::cout << "Candidate: ";
+				//ut.print1DVector(z);
 				double d = getWeight(z);
 				if(minVal < 0){
 					minVal = d;
@@ -111,7 +111,7 @@ std::pair<std::vector<std::set<unsigned>>,std::vector<std::set<unsigned>>> indSi
 				} else {
 					minVal = d;
 				}
-				std::cout << "\tWT: " << d << std::endl;
+				//std::cout << "\tWT: " << d << std::endl;
 			}
 		}		
 		if(non_min.size() > 0){
@@ -119,7 +119,7 @@ std::pair<std::vector<std::set<unsigned>>,std::vector<std::set<unsigned>>> indSi
 			removalSimplices.push_back(curNode);
 			std::cout << "Removal: ";
 			ut.print1DVector(non_min);
-			std::cout << "  ,  ";
+			//std::cout << "  ,  ";
 			ut.print1DVector(curNode);
 			//auto a = recurseReduce(curNode, 0, non_min, d-1, removalSimplices, processedSimplices);
 			//processedSimplices = a.first;
@@ -148,45 +148,72 @@ void indSimplexTree::expandDimensions(int d){
 	//Start at the highest dimension and check for cofaces of simplices
 	//		if there isn't a shared face with another simplex of the
 	//		same dimension then remove the face
+	//
+	//
+	//	There are 4 cases that can happen as we iterate a simplex s_d:
+	//
+	//		1. All faces are shared, s_d >= max_d
+	//		2. All faces are shared, s_d < max_d
+	//		3. Some faces are shared
+	//		4. No faces shared
+	//
+	//
+	//	To do this, we recurse through shared faces and examine neighbor simplices;
+	//
+	//		If a neighbor simplex has all shared faces (and recurses/faces the same), no removal simplices
+	//			will be added. This will be case 1 / 2
+	//
+	//		If a neighbor simplex does not have shared faces, remove the largest edge and the simplex 
+	//			itself. Continue iterating other faces of original simplex. This will be case 3.
+	//
+	//		After all faces are finished, if processed simplices.size() = 1, case 4.
+	//
+	
+	//Iterate each dimension of simplices
 	for(int d = dimensions.size()-1; d > 1 ; d--){
-		indTreeNode* curNode = dimensions[d][0];
 		std::vector<graphEntry> curGraph;
 		std::map<std::set<unsigned>,int> counts;
 		std::vector<std::set<unsigned>> removalSimplices;
 		std::vector<std::set<unsigned>> processedSimplices;
 		
-		std::cout << "DIMENSION: " << d << "\tSize: " << dimensions[d].size() << std::endl;
-		for(auto z : dimensions[d]){
-			std::cout << "\t";
-			ut.print1DVector(z->simplexSet);
-		}
 		
-		
+		//Iterate each node in the simplex list, dimension d
 		for(auto curNode : dimensions[d]){	
-			std::cout << "Testing: ";
-			ut.print1DVector(curNode->simplexSet);
 			
-			if(std::find(processedSimplices.begin(), processedSimplices.end(), curNode->simplexSet) == processedSimplices.end() && \
-				std::find(processedSimplices.begin(), processedSimplices.end(), curNode->simplexSet) == processedSimplices.end()){
+			//Check if the current node has been processed already
+			if(std::find(processedSimplices.begin(), processedSimplices.end(), curNode->simplexSet) == processedSimplices.end()){
 				
+				//If the current node hasn't been processed, recursively iterate through shared faces and remove simplices
+				//		This function handles case 3 and 4.
 				auto a =  recurseReduce({}, 0, curNode->simplexSet, d, removalSimplices, processedSimplices);
+				
+				//Check for cases 1 / 2
+				if(removalSimplices.size() == a.second.size()){
+					
+					// 1. All faces are shared, s_d >= max_d
+					if(curNode->simplexSet.size() >= maxDim){
+						// Do nothing, need to process through t-array if a feature forms 					
+
+					// 2. All faces are shared, s_d < max_d
+					} else {
+						//Use the minimum path algorithm to remove edges from processed simplices
+						//	Need to remove all non-minimal faces of each processed simplex, along
+						//		with the simplex itself
+					}
+				}
 				
 				processedSimplices = a.first;
 				removalSimplices = a.second;
-				
 			}
 					
 		}
-		/*for(auto z: counts){
-			std::cout << "\t" << std::to_string(z.second) << ":\t";
-			ut.print1DVector(z.first);
-		}*/
-		std::cout << "_________Removals_________" << std::endl;
-		for(auto p: removalSimplices){
-			std::cout << "\t";
-			ut.print1DVector(p);
-		}
-		std::cout << std::endl;
+		
+		//std::cout << "_________Removals_________" << std::endl;
+		//for(auto p: removalSimplices){
+		//	std::cout << "\t";
+		//	ut.print1DVector(p);
+		//}
+		//std::cout << std::endl;
 		
 		//Remove the removals...
 		for(auto r : removalSimplices){
@@ -334,11 +361,11 @@ void indSimplexTree::recurseInsert(indTreeNode* node, unsigned curIndex, int dep
 			
 			temp = insNode->sibling;
 			//Have to check the children now...
-			//if(newSimp.size() <= maxDim){
-			do {
-				recurseInsert(temp, curIndex, depth + 1, maxE, newSimp);
-			} while(temp->sibling != nullptr && (temp = temp->sibling) != nullptr);
-			//}
+			if(newSimp.size() <= maxDim){
+				do {
+					recurseInsert(temp, curIndex, depth + 1, maxE, newSimp);
+				} while(temp->sibling != nullptr && (temp = temp->sibling) != nullptr);
+			}
 		}
 	}
 		
@@ -565,8 +592,8 @@ double indSimplexTree::getWeight(std::set<unsigned> search){
 	utils ut;
 	indTreeNode* curNode = dimensions[0][0];
 	
-	std::cout << "Get Weight - Size: " << search.size() << "\tSimplex Count: " << dimensions[search.size()-1].size() << "\t";
-	ut.print1DVector(search);
+	//std::cout << "Get Weight - Size: " << search.size() << "\tSimplex Count: " << dimensions[search.size()-1].size() << "\t";
+	//ut.print1DVector(search);
 	
 	for(auto a : dimensions[search.size()-1]){
 		if(search == a->simplexSet){

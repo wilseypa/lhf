@@ -40,7 +40,6 @@ std::vector<std::vector<double>> readInput::readCSV(std::string filename){
 		std::cout << "Failed to open file: " << filename << std::endl;
 		return result;
 	}
-	
 	// We are going to iterate through each line of the file until we reach the end
 	while(!file.eof()){
 		std::string line;			// Temporary (current) line
@@ -62,13 +61,13 @@ std::vector<std::vector<double>> readInput::readCSV(std::string filename){
 				line.erase(0,pos + 1);
 				
 			}
-			
 			// Get the last value of the line
 			tmp.push_back(std::stod(line.substr(0,pos)));
+			result.push_back(tmp);
 		}
-		result.push_back(tmp);
 		
 	}
+	
 	return result;
 }
 

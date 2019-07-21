@@ -29,15 +29,15 @@ pipePacket distMatrixPipe::runPipe(pipePacket inData){
 	utils ut;
 	
 	//Store our distance matrix
-	std::vector<std::vector<double>> distMatrix (inData.workData.originalData.size()-1, std::vector<double>(inData.workData.originalData.size()-1,0));
+	std::vector<std::vector<double>> distMatrix (inData.workData.originalData.size(), std::vector<double>(inData.workData.originalData.size(),0));
 	
 	//Iterate through each vector
-	for(unsigned i = 0; i < inData.workData.originalData.size()-1; i++){
+	for(unsigned i = 0; i < inData.workData.originalData.size(); i++){
 		if(!inData.workData.originalData[i].empty()){
 		
 			//Grab a second vector to compare to 
 			std::vector<double> temp;
-			for(unsigned j = i+1; j < inData.workData.originalData.size()-1; j++){
+			for(unsigned j = i+1; j < inData.workData.originalData.size(); j++){
 
 					//Calculate vector distance 
 					auto dist = ut.vectors_distance(inData.workData.originalData[i],inData.workData.originalData[j]);
