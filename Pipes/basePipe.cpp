@@ -12,7 +12,6 @@
 #include "basePipe.hpp"
 #include "distMatrixPipe.hpp"
 #include "neighGraphPipe.hpp"
-#include "bettiPipe.hpp"
 #include "ripsPipe.hpp"
 #include "upscalePipe.hpp"
 #include "boundaryPipe.hpp"
@@ -32,8 +31,6 @@ basePipe* basePipe::newPipe(const std::string &pipeT){
 		return new distMatrixPipe();
 	} else if (pipeType == "neighGraph"){
 		return new neighGraphPipe();
-	} else if (pipeType == "betti"){
-		return new bettiPipe();
 	} else if (pipeType == "rips"){
 		return new ripsPipe();
 	} else if (pipeType == "upscale"){
