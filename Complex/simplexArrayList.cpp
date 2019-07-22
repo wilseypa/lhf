@@ -149,9 +149,22 @@ std::vector<std::vector<std::pair<std::set<unsigned>, double>>> simplexArrayList
 }
 
 // Search function to find a specific vector in the simplexArrayList
-void simplexArrayList::find(std::vector<double> vector){
+// weightedGraph[d][v][p] dimension d stores vectors v of point elements p of simplexes formed
+bool simplexArrayList::find(std::vector<unsigned> vector){
 	
-	return;
+	for(auto d = 0; d = weightedGraph.size()-1; d++){
+		for(auto v = 0; v = weightedGraph[d].size(); v++){
+			for(auto p = 0; p = weightedGraph[d][v].size(); p++){
+				if(weightedGraph[d][v][p] = vector[p]){
+					return true;
+				}
+
+			}
+
+		}
+
+	}
+	return false;
 }
 
 // Output the total simplices stored in the simplical complex
