@@ -1,12 +1,20 @@
 #pragma once
+
+#ifndef UTILS_HPP_INCL
+#define UTILS_HPP_INCL
+
 #include <set>
 
 // Header file for utils class - see utils.cpp for descriptions
 
 class utils {
   private:
+	std::string debug;
+	std::string outputFile;
+  
   public:
 	utils();
+	utils(std::string, std::string);
 	void print2DVector(const std::vector<std::vector<unsigned>>&);
 	void print1DVector(const std::vector<unsigned>&);
 	void print1DVector(const std::set<unsigned>&);
@@ -23,5 +31,12 @@ class utils {
 	std::vector<unsigned> symmetricDiff(std::set<unsigned>, std::set<unsigned>, bool);
 	std::vector<unsigned> setUnion(std::vector<unsigned>, std::vector<unsigned>, bool);
 	std::pair<std::vector<unsigned>, std::vector<unsigned>> intersect(std::vector<unsigned>, std::vector<unsigned>, bool);
+	
+	//Utility functions for writing to console/debug file
+	void writeLog(std::string module, std::string message);
+	void writeDebug(std::string module, std::string message);
+	void writeError(std::string module, std::string error){writeLog(module,error);return;};
+	void writeFile(std::string fullMessage);
 };
 
+#endif

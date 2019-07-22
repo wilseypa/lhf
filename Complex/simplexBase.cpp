@@ -11,6 +11,21 @@ simplexBase::simplexBase(double maxE, int maxDim){
 	maxEpsilon = maxE;	
 	maxDimension = maxDim;	
 }
+simplexBase::simplexBase(std::map<std::string, std::string> configMap){
+	std::string debug;
+	std::string outputFile;
+	
+	auto pipe = configMap.find("debug");
+	if(pipe != configMap.end())
+		debug = std::atoi(configMap["debug"].c_str());
+	pipe = configMap.find("outputFile");
+	if(pipe != configMap.end())
+		outputFile = std::atoi(configMap["outputFile"].c_str());
+	
+	ut = utils(debug, outputFile);
+	
+	return;
+}
 
 void simplexBase::setDistanceMatrix(std::vector<std::vector<double>> _distMatrix){
 	distMatrix = _distMatrix;

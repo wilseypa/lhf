@@ -20,7 +20,19 @@
 #include "streamVR.hpp"
 
 // basePipe constructor
-basePipe::basePipe(){
+basePipe::basePipe(std::map<std::string, std::string> configMap){
+	std::string debug;
+	std::string outputFile;
+	
+	auto pipe = configMap.find("debug");
+	if(pipe != configMap.end())
+		debug = std::atoi(configMap["debug"].c_str());
+	pipe = configMap.find("outputFile");
+	if(pipe != configMap.end())
+		outputFile = std::atoi(configMap["outputFile"].c_str());
+	
+	ut = utils(debug, outputFile);
+	
 	return;
 }
 

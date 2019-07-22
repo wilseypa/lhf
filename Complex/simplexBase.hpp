@@ -1,11 +1,15 @@
 #pragma once
+#include <map>
+#include <algorithm>
 #include <set>
 #include <iostream>
+#include "utils.hpp"
 
 // Header file for simplexBase class - see simplexTree.cpp for descriptions
 
 class simplexBase {
   private:
+	utils ut;
   public:
   
 	struct indTreeNode{
@@ -78,6 +82,7 @@ class simplexBase {
 	std::string simplexType;
 	simplexBase();
 	simplexBase(double, int);
+	simplexBase(std::map<std::string, std::string>);
 	void setDistanceMatrix(std::vector<std::vector<double>> _distMatrix);
 	simplexBase* newSimplex(const std::string &simplexT);
 	double maxEpsilon;

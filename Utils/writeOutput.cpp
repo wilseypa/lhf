@@ -121,7 +121,7 @@ bool writeOutput::writeMAT(std::string filename, std::vector<std::vector<double>
 	return true;
 }
 
-
+/*
 // writeConsole -> write data input to console (hopefully pretty-print)
 bool writeOutput::writeConsole(pipePacket* workData){
 	std::vector<std::vector<double>> result;
@@ -133,4 +133,4 @@ bool writeOutput::writeConsole(pipePacket* workData){
 	return true;
 	
 }
-
+*/

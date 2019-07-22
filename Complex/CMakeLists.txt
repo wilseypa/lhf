@@ -13,7 +13,7 @@ include_directories(../Utils)
 link_directories(../Utils)
 
 # target_link_libraries(LHF PipeFunctions)
-target_link_libraries(simplexBase simplexArrayList simplexTree indSimplexTree)
+target_link_libraries(simplexBase utils pipePacket simplexArrayList simplexTree indSimplexTree)
 
 INSTALL (TARGETS simplexBase
 	LIBRARY DESTINATION lib

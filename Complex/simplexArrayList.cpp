@@ -2,7 +2,6 @@
 #include <vector>
 #include <set>
 #include "simplexArrayList.hpp"
-#include "utils.cpp"
 
 // simplexArrayList constructor, currently no needed information for the class constructor
 simplexArrayList::simplexArrayList(double maxE, std::vector<std::vector<double>> _distMatrix){
@@ -32,7 +31,6 @@ double simplexArrayList::getSize(){
 //		(AKA very inefficient)
 //
 void simplexArrayList::insert(std::vector<double> &vector){
-	utils ut;
 	
 	//Create a temporary pair to hold the weight and 2-D edge
 	//	e.g.  1.82 , {1, 5} would represent an edge between
