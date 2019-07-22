@@ -13,10 +13,12 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-g" />
+					<Add directory="/media/anindya/Data/UC/Research/TDA/Github.comRepositories/lhf/" />
 				</Compiler>
 				<Linker>
 					<Add library="../../../../../../../../usr/lib/libann.a" />
 					<Add library="../../../../../../../../usr/lib/libann.so" />
+					<Add directory="/media/anindya/Data/UC/Research/TDA/Github.comRepositories/lhf/" />
 				</Linker>
 			</Target>
 			<Target title="Release">
@@ -35,6 +37,7 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="Utils/utils.cpp" />
 		<Unit filename="abstraction/myFile.csv" />
 		<Unit filename="abstraction/slidingWindow.cpp" />
 		<Extensions>

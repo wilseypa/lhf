@@ -42,25 +42,23 @@ std::vector<double> stringVectorToDoubleVector( const std::vector<std::string>& 
 }
 
 // https://stackoverflow.com/questions/110157/how-to-retrieve-all-keys-or-values-from-a-stdmap-and-put-them-into-a-vector
-std::vector<std::vector<double>> retrieveValuesFromMap( std::map<int, std::vector<double>> const &window ) {
+std::vector<std::vector<double>> retrieveValuesFromMap( const std::map<int, std::vector<double>> &refWindow ) {
     std::vector<std::vector<double>> windowVals;
-    windowVals.reserve( window.size() );
-    for (auto const &item : window)
+    windowVals.reserve( refWindow.size() );
+    for (auto const &item : refWindow)
         windowVals.push_back(item.second);
 
     return windowVals;
 }
 
-std::vector<std::vector<double>> createDistMatrix ( std::vector<std::vector<double>> const &vectorsInWindow, std::vector<std::vector<double>> &distMatrix ) {
+void populateDistMatrix( const std::vector<std::vector<double>> &refVectsInWindow, std::vector<std::vector<double>> &refDistMat ) {
     utils ut;
-    for(unsigned i = 0; i < vectorsInWindow.size(); i++) {
-        std::vector<double> temp;
-        for(unsigned j = i+1; j < vectorsInWindow.size(); j++) {
-            auto dist = ut.vectors_distance( vectorsInWindow[i], vectorsInWindow[j] );
-            distMatrix[i][j] = dist;
+    for(unsigned i = 0; i < refVectsInWindow.size(); i++) {
+        for(unsigned j = i+1; j < refVectsInWindow.size(); j++) {
+            auto dist = ut.vectors_distance( refVectsInWindow[i], refVectsInWindow[j] );
+            refDistMat[i][j] = dist;
         }
     }
-    return distMatrix;
 }
 
 std::vector<std::vector<double>> addToDistMatrix( std::vector<double> distancesToReps, std::vector<std::vector<double>> distMatrix ) {}
@@ -171,19 +169,20 @@ int main()
                                                       // to form meaningful topological features by PH computation.
 
     unsigned int numPointsAddedToWindow{ 0 };
-    unsigned int nnDistCheckIntrvl{ 50 };
+    // unsigned int nnDistCheckIntrvl{ 50 };
 
     // Variables to store the minimum and maximum of the squared nearest neighbor distances in the window.
     double minSqrdNNdist{ 0.0 };
     double maxSqrdNNdist{ 0.0 };
 
-    int updateCounter = 0;
+    int updateCounter{ 0 };
 
 
     std::map<int, std::vector<double>> window;
     std::vector<int> labelContainer;
     int label{ 0 };
     std::vector<std::vector<double>> distMatrix( windowMinSize, std::vector<double>(windowMinSize, 0) );
+    distMatrix.reserve( windowMaxSize );
 
     FILE *pFile;
 
@@ -209,10 +208,12 @@ int main()
             // Initialize the window. Ensure that the sliding window always contains the minimum number of points.
             if ( window.size() < windowMinSize ) {
                 window.insert( std::pair<int, std::vector<double>>(label, dataPoint) );   // Add the new point to the back of the window.
+                labelContainer.push_back(label);
+                label++;
                 numPointsAddedToWindow++;
                 if ( numPointsAddedToWindow == windowMinSize ) {
                     std::vector<std::vector<double>> vectorsInWindow = retrieveValuesFromMap( window );
-                    distMatrix = createDistMatrix( vectorsInWindow, distMatrix );
+                    populateDistMatrix( vectorsInWindow, distMatrix );
                 }
             }
 
