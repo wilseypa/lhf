@@ -168,13 +168,13 @@ int main(int argc, char* argv[]){
     auto *wD = new pipePacket(args["complexType"], stod(args["epsilon"]), stoi(args["dimensions"]));	//wD (workingData)
 	
 	//Read data from inputFile CSV
-    wD->workData.originalData = rs->readCSV(args["inputFile"]);
+    wD->originalData = rs->readCSV(args["inputFile"]);
 
 	//If data was found in the inputFile
-	if(wD->workData.originalData.size() > 0){
+	if(wD->originalData.size() > 0){
 		
 		//Add data to our pipePacket
-		wD->workData.originalData = wD->workData.originalData;
+		wD->originalData = wD->originalData;
 		
 		auto ar = args["upscale"];
 		if(ar == "true"){

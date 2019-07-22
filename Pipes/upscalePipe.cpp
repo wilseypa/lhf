@@ -45,10 +45,10 @@ pipePacket upscalePipe::runPipe(pipePacket inData){
 		
 		for(auto point : bound){
 			
-			currentData.push_back(inData.workData.originalData[inData.workData.originalLabels[point]]);
+			currentData.push_back(inData.originalData[inData.originalLabels[point]]);
 		}
 	}
-	inData.workData.upscaleData = currentData;
+	inData.reducedData = currentData;
 	return inData;
 }
 

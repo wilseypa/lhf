@@ -7,7 +7,7 @@
 // pipePacket constructor, currently no needed information for the class constructor
 pipePacket::pipePacket(const std::string& simplexType, const double epsilon, const int maxDim){
 	simplexBase *bs = new simplexBase(epsilon, maxDim);
-	workData.complex = bs->newSimplex(simplexType);
+	complex = bs->newSimplex(simplexType);
 }
 
 double pipePacket::getSize(){
@@ -16,13 +16,13 @@ double pipePacket::getSize(){
 	
 	size_t size = 0;
 	
-	for(auto row : workData.originalData){
+	for(auto row : originalData){
 		for(auto index : row)
 			size += sizeof(index);
 	}	
 	
 	//Calculate size of complex storage
-	size += workData.complex->getSize();
+	size += complex->getSize();
 	
 	return size;
 }

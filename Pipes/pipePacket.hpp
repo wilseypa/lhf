@@ -6,19 +6,14 @@
 
 class pipePacket {
   private:
-  
-  
-  
   public:
 	pipePacket(const std::string &, const double, const int);
 	std::string stats;
   
-	struct pipeData{
-		std::vector<std::vector<double>> originalData;
-		std::vector<unsigned> originalLabels;
-		std::vector<std::vector<double>> upscaleData;
-		simplexBase* complex;
-	} workData;
+	std::vector<std::vector<double>> originalData;
+	std::vector<unsigned> originalLabels;
+	std::vector<std::vector<double>> reducedData;
+	simplexBase* complex;
 	
 	std::vector<std::vector<unsigned>> boundaries;
 	std::set<double, std::greater<double>> weights;	

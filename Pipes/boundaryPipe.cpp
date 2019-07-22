@@ -224,7 +224,7 @@ pipePacket boundaryPipe::runPipe(pipePacket inData){
 	//For each edge
 	for(auto eps : local_weights){
 		//Reload the buffers with the current edges
-		edges = inData.workData.complex->getAllEdges(eps);
+		edges = inData.complex->getAllEdges(eps);
 		
 		//Get the weights (increasing order)
 		//Check if we've already processed or not

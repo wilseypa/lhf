@@ -97,7 +97,7 @@ pipePacket basePipe::runPipeWrapper(pipePacket inData){
 	
 	std::cout << "\t\tData size: " << dataSize << " " << unit << std::endl << std::endl;
 	
-	inData.stats += pipeType + "," + std::to_string(elapsed.count()/1000.0) + "," + std::to_string(dataSize) + "," + unit + "," + std::to_string(inData.workData.complex->vertexCount()) + "," + std::to_string(inData.workData.complex->simplexCount()) + "\n";
+	inData.stats += pipeType + "," + std::to_string(elapsed.count()/1000.0) + "," + std::to_string(dataSize) + "," + unit + "," + std::to_string(inData.complex->vertexCount()) + "," + std::to_string(inData.complex->simplexCount()) + "\n";
 	
 	if(debug)
 		outputData(inData);
@@ -112,7 +112,7 @@ void basePipe::outputData(pipePacket inData){
 	std::ofstream file;
 	file.open("output/" + pipeType + "_output.csv");
 	
-	for (auto a : inData.workData.originalData){
+	for (auto a : inData.originalData){
 		for (auto d : a){
 			file << std::to_string(d) << ",";
 		}

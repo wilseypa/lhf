@@ -42,12 +42,12 @@ pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
     static std::random_device seed;  
     static std::mt19937 gen(seed()); 
     
-    std::uniform_int_distribution<size_t> distribution(0, inData.workData.originalData.size()-1);
+    std::uniform_int_distribution<size_t> distribution(0, inData.originalData.size()-1);
     int index = distribution(gen);
 
     
     std::vector<std::vector<double>> tempCentroids; 
-    std::vector<double> center_initial = inData.workData.originalData[index];
+    std::vector<double> center_initial = inData.originalData[index];
     centroids.push_back(center_initial);  //adding first mean to centroids
     tempCentroids.push_back(center_initial);
     std::vector<double> tempDist;
@@ -60,16 +60,16 @@ pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
      for(unsigned k = 0; k<num_clusters-1; k++){ //adding means 2 -> k-1 to centroids based on distance 
         int index_next = distribution(gen);
         bool picked = false;
-        std::vector<double>  center_next = inData.workData.originalData[index_next];
-            for(unsigned j=0; j<inData.workData.originalData.size()-1; j++) {
-                auto dist_next = ut.vectors_distance(inData.workData.originalData[j], center_next);
+        std::vector<double>  center_next = inData.originalData[index_next];
+            for(unsigned j=0; j<inData.originalData.size()-1; j++) {
+                auto dist_next = ut.vectors_distance(inData.originalData[j], center_next);
                 auto centers_dist = ut.vectors_distance(center_initial, center_next);
                 auto probability = (centers_dist*centers_dist)/dist_next;
                 
                 bool valid_center = (rand() %100) < (probability) * 10;
                 
-                if(valid_center && (std::find(tempCentroids.begin(), tempCentroids.end(), inData.workData.originalData[index_next]) == tempCentroids.end())){
-                    tempCentroids.push_back(inData.workData.originalData[index_next]);
+                if(valid_center && (std::find(tempCentroids.begin(), tempCentroids.end(), inData.originalData[index_next]) == tempCentroids.end())){
+                    tempCentroids.push_back(inData.originalData[index_next]);
                     picked = true;
                     break;
                 }
@@ -79,8 +79,8 @@ pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
     
     int i = 0;
     while(tempCentroids.size() < num_clusters){
-		if(std::find(tempCentroids.begin(), tempCentroids.end(), inData.workData.originalData[i]) == tempCentroids.end()){
-			tempCentroids.push_back(inData.workData.originalData[i]);
+		if(std::find(tempCentroids.begin(), tempCentroids.end(), inData.originalData[i]) == tempCentroids.end()){
+			tempCentroids.push_back(inData.originalData[i]);
 		}
 		i++;
 	}
@@ -104,18 +104,18 @@ pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
 	for (int z = 0; z < num_iterations; z++){
 		
 		std::vector<double> summedClusters(num_clusters, 0); 
-		std::vector<std::vector<double>> summedCentroidVectors(num_clusters, std::vector<double>(inData.workData.originalData[0].size(), 0));
+		std::vector<std::vector<double>> summedCentroidVectors(num_clusters, std::vector<double>(inData.originalData[0].size(), 0));
 		std::vector<double> counts(num_clusters, 0);
 		std::vector<unsigned> curLabels;
 		
 		//For each point, classify it to a centroid
-		for (unsigned j = 0; j < inData.workData.originalData.size() - 1; j++){
+		for (unsigned j = 0; j < inData.originalData.size() - 1; j++){
 			double minDist = std::numeric_limits<double>::max();
 			unsigned clusterIndex = 0;
 			
 			//Check each centroid for the minimum distance
 			for (unsigned c = 0; c < tempCentroids.size(); c++){
-				auto curDist = ut.vectors_distance(inData.workData.originalData[j], tempCentroids[c]);
+				auto curDist = ut.vectors_distance(inData.originalData[j], tempCentroids[c]);
 				
 				
 				if(curDist < minDist){
@@ -124,8 +124,8 @@ pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
 				}
 			}
 			
-			for(int d = 0; d < inData.workData.originalData[j].size(); d++){
-				summedCentroidVectors[clusterIndex][d] += inData.workData.originalData[j][d];
+			for(int d = 0; d < inData.originalData[j].size(); d++){
+				summedCentroidVectors[clusterIndex][d] += inData.originalData[j][d];
 			}
 			curLabels.push_back(clusterIndex);
 			counts[clusterIndex] ++;
@@ -155,8 +155,8 @@ pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
     
 	std::cout << "Clustered data..." << std::endl;
 	//Assign to the pipepacket
-	inData.workData.originalData = tempCentroids;
-	inData.workData.originalLabels = lastLabels;
+	inData.originalData = tempCentroids;
+	inData.originalLabels = lastLabels;
 	return inData;
 }
 

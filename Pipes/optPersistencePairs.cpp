@@ -285,7 +285,7 @@ std::set<unsigned> optPersistencePairs::getRankNull(std::vector<std::vector<indS
 						}
 						curCount++;
 					} else {
-						auto setFace = pChain[j].getFaces(p.workData.complex);
+						auto setFace = pChain[j].getFaces(p.complex);
 						
 						//XOR with previous rows (while set.begin < j)
 						
@@ -388,7 +388,7 @@ std::vector<std::set<unsigned>> optPersistencePairs::createBoundarySets(std::vec
 						curPivot = *(pivots.begin());
 				}				
 			} else {
-				tempBoundary[i] = pChain[i].getFaces(p.workData.complex);
+				tempBoundary[i] = pChain[i].getFaces(p.complex);
 			}
 			
 			
@@ -398,7 +398,7 @@ std::vector<std::set<unsigned>> optPersistencePairs::createBoundarySets(std::vec
 	}else {	;
 		for(unsigned i = 0; i < pChain.size(); i++){
 			//Create the rows (nChain)
-			tempBoundary[i] = pChain[i].getFaces(p.workData.complex);
+			tempBoundary[i] = pChain[i].getFaces(p.complex);
 		} 
 		
 	}
@@ -532,7 +532,7 @@ pipePacket optPersistencePairs::runPipe(pipePacket inData){
 	
 	if(twist == "true"){
 		
-		std::vector<std::vector<indSimplexTree::graphEntry>> indGraph = inData.workData.complex->getIndexEdges(maxEpsilon);
+		std::vector<std::vector<indSimplexTree::graphEntry>> indGraph = inData.complex->getIndexEdges(maxEpsilon);
 		edgeEndTime = std::chrono::high_resolution_clock::now();
 		
 		allPivots = getRankNull(indGraph, inData);	
@@ -545,7 +545,7 @@ pipePacket optPersistencePairs::runPipe(pipePacket inData){
 		}	
 	
 	}else if(alterPipe){
-		std::vector<std::vector<indSimplexTree::graphEntry>> indGraph = inData.workData.complex->getIndexEdges(maxEpsilon);
+		std::vector<std::vector<indSimplexTree::graphEntry>> indGraph = inData.complex->getIndexEdges(maxEpsilon);
 		edgeEndTime = std::chrono::high_resolution_clock::now();
 		
 		for(auto i : indGraph){
@@ -587,7 +587,7 @@ pipePacket optPersistencePairs::runPipe(pipePacket inData){
 		
 		
 	} else{
-		std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges = inData.workData.complex->getAllEdges(maxEpsilon);
+		std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges = inData.complex->getAllEdges(maxEpsilon);
 		edgeEndTime = std::chrono::high_resolution_clock::now();
 		
 		for(auto i : edges){

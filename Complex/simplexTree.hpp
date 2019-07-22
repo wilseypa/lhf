@@ -7,12 +7,6 @@
 class simplexTree : public simplexBase {
   private:
 	bool isSorted = false;
-	
-	struct cmp{
-		bool operator()(const std::pair<std::set<unsigned>, double> &a, const std::pair<std::set<unsigned>, double> &b){
-			return (a.second < b.second);
-		}
-	};
   
 	int maxDim;
 	struct treeNode{

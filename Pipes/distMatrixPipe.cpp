@@ -29,18 +29,18 @@ pipePacket distMatrixPipe::runPipe(pipePacket inData){
 	utils ut;
 	
 	//Store our distance matrix
-	std::vector<std::vector<double>> distMatrix (inData.workData.originalData.size(), std::vector<double>(inData.workData.originalData.size(),0));
+	std::vector<std::vector<double>> distMatrix (inData.originalData.size(), std::vector<double>(inData.originalData.size(),0));
 	
 	//Iterate through each vector
-	for(unsigned i = 0; i < inData.workData.originalData.size(); i++){
-		if(!inData.workData.originalData[i].empty()){
+	for(unsigned i = 0; i < inData.originalData.size(); i++){
+		if(!inData.originalData[i].empty()){
 		
 			//Grab a second vector to compare to 
 			std::vector<double> temp;
-			for(unsigned j = i+1; j < inData.workData.originalData.size(); j++){
+			for(unsigned j = i+1; j < inData.originalData.size(); j++){
 
 					//Calculate vector distance 
-					auto dist = ut.vectors_distance(inData.workData.originalData[i],inData.workData.originalData[j]);
+					auto dist = ut.vectors_distance(inData.originalData[i],inData.originalData[j]);
 					
 					if(dist < maxEpsilon)
 						inData.weights.insert(dist);
@@ -51,7 +51,7 @@ pipePacket distMatrixPipe::runPipe(pipePacket inData){
 		}
 	}
 	
-	inData.workData.complex->setDistanceMatrix(distMatrix);
+	inData.complex->setDistanceMatrix(distMatrix);
 	
 	inData.weights.insert(0.0);
 	inData.weights.insert(maxEpsilon);
@@ -82,7 +82,7 @@ void distMatrixPipe::outputData(pipePacket inData){
 	std::ofstream file;
 	file.open("output/" + pipeType + "_output.csv");
 	
-	for(auto a : inData.workData.complex->distMatrix){
+	for(auto a : inData.complex->distMatrix){
 		for(auto d : a){
 			file << d << ",";
 		}

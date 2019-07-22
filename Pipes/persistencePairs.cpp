@@ -172,7 +172,7 @@ std::set<unsigned> persistencePairs::createBoundaryMatrix(std::vector<std::vecto
 //		1. See Zomorodian-05 for algorithm/description of tArray
 //		
 pipePacket persistencePairs::runPipe(pipePacket inData){
-	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges = inData.workData.complex->getAllEdges(maxEpsilon);
+	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges = inData.complex->getAllEdges(maxEpsilon);
 	
 	std::vector<std::pair<double,double>> temp;
 	std::vector<std::vector<std::pair<double,double>>> ret;

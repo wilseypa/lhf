@@ -29,15 +29,15 @@ ripsPipe::ripsPipe(){
 pipePacket ripsPipe::runPipe(pipePacket inData){
 	utils ut;
 	
-	inData.workData.complex->expandDimensions(dim);
+	inData.complex->expandDimensions(dim);
 		
-	ut.writeLog("ripsPipe","Expanded Complex Size: " + std::to_string(inData.workData.complex->simplexCount()));
-	ut.writeLog("ripsPipe", "Expanded Complex Mem: " + std::to_string(inData.workData.complex->getSize()));
+	ut.writeLog("ripsPipe","Expanded Complex Size: " + std::to_string(inData.complex->simplexCount()));
+	ut.writeLog("ripsPipe", "Expanded Complex Mem: " + std::to_string(inData.complex->getSize()));
 	
-	inData.workData.complex->reduceComplex();
+	inData.complex->reduceComplex();
 	
-	ut.writeLog("ripsPipe","Reduced Complex Size: " + std::to_string(inData.workData.complex->simplexCount()));
-	ut.writeLog("ripsPipe", "Reduced Complex Mem: " + std::to_string(inData.workData.complex->getSize()));
+	ut.writeLog("ripsPipe","Reduced Complex Size: " + std::to_string(inData.complex->simplexCount()));
+	ut.writeLog("ripsPipe", "Reduced Complex Mem: " + std::to_string(inData.complex->getSize()));
 	
 	return inData;
 }
@@ -61,10 +61,10 @@ bool ripsPipe::configPipe(std::map<std::string, std::string> configMap){
 void ripsPipe::outputData(pipePacket inData){
 	std::ofstream file;
 	
-	if(inData.workData.complex->simplexType == "simplexArrayList"){
+	if(inData.complex->simplexType == "simplexArrayList"){
 		file.open("output/" + pipeType + "_output.csv");
-		for (int i = 0; i < inData.workData.complex->weightedGraph.size(); i++){
-			for(auto a : inData.workData.complex->weightedGraph[i]){
+		for (int i = 0; i < inData.complex->weightedGraph.size(); i++){
+			for(auto a : inData.complex->weightedGraph[i]){
 				for(auto d : a){
 					file << d << ",";
 				}
