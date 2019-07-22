@@ -230,4 +230,9 @@ void simplexArrayList::expandDimensions(int dim){
 	return;
 }
 
+void simplexArrayList::reduceComplex(){
+	
+	return;
+}
+
 

@@ -55,5 +55,6 @@ class indSimplexTree : public simplexBase {
 	int vertexCount();
 	int simplexCount();
 	void sortAndBuildGraph();
+	void reduceComplex();
 };
 

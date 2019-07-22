@@ -51,5 +51,6 @@ class simplexTree : public simplexBase {
 	void recurseInsert(treeNode*, unsigned, int, double, std::set<unsigned>);
 	int vertexCount();
 	int simplexCount();
+	void reduceComplex();
 };
 

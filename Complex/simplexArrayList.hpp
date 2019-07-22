@@ -19,5 +19,6 @@ class simplexArrayList : public simplexBase{
 	int vertexCount();
 	int simplexCount();
 	void expandDimensions(int);
+	void reduceComplex();
 };
 

@@ -835,4 +835,10 @@ std::vector<std::vector<indSimplexTree::graphEntry>> indSimplexTree::getIndexEdg
 	return indexedGraph;
 }
 
+void indSimplexTree::reduceComplex(){
+	
+	
+	
+	return;
+}
 

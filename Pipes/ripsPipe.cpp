@@ -29,10 +29,15 @@ ripsPipe::ripsPipe(){
 pipePacket ripsPipe::runPipe(pipePacket inData){
 	utils ut;
 	
-	//inData.workData.complex->expandDimensions(dim);
+	inData.workData.complex->expandDimensions(dim);
 		
-	std::cout << "\tComplex Size: " << inData.workData.complex->simplexCount() << std::endl;
-	std::cout << "\tComplex Mem: " << inData.workData.complex->getSize() << std::endl;
+	ut.writeLog("ripsPipe","Expanded Complex Size: " + std::to_string(inData.workData.complex->simplexCount()));
+	ut.writeLog("ripsPipe", "Expanded Complex Mem: " + std::to_string(inData.workData.complex->getSize()));
+	
+	inData.workData.complex->reduceComplex();
+	
+	ut.writeLog("ripsPipe","Reduced Complex Size: " + std::to_string(inData.workData.complex->simplexCount()));
+	ut.writeLog("ripsPipe", "Reduced Complex Mem: " + std::to_string(inData.workData.complex->getSize()));
 	
 	return inData;
 }
@@ -41,12 +46,12 @@ pipePacket ripsPipe::runPipe(pipePacket inData){
 // configPipe -> configure the function settings of this pipeline segment
 bool ripsPipe::configPipe(std::map<std::string, std::string> configMap){
 	
-	
 	auto pipe = configMap.find("dimensions");
 	if(pipe != configMap.end()){
 		dim = std::atoi(configMap["dimensions"].c_str());
 	}
 	
+	ut.writeDebug("ripsPipe","Configured with parameters { dim: " + std::to_string(dim) + "}");
 	
 	return true;
 }

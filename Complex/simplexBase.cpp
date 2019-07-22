@@ -47,61 +47,66 @@ simplexBase* simplexBase::newSimplex(const std::string &simplexT){
 }
 
 
-std::vector<std::vector<unsigned>> simplexBase::getEdges(int dim, double epsilon){
-	std::cout << "No get edges function defined for: " << simplexType << std::endl;
+std::vector<std::vector<unsigned>> simplexBase::getDimEdges(int dim, double epsilon){
+	ut.writeLog("simplexBase","No get edges function defined for: " + simplexType);
 	std::vector<std::vector<unsigned>> a;
 	return a;
 }
 
 std::vector<std::vector<std::pair<std::set<unsigned>,double>>> simplexBase::getAllEdges(double epsilon){
-	std::cout << "No get edges function defined for: " << simplexType << std::endl;
+	ut.writeLog("simplexBase","No get edges function defined for: " + simplexType);
 	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> a;
 	return a;
 }
 
 std::vector<std::vector<indSimplexTree::graphEntry>> simplexBase::getIndexEdges(double epsilon){
-	std::cout << "No get index edges function defined for: " << simplexType << std::endl;
+	ut.writeLog("simplexBase","No get index edges function defined for: " + simplexType);
 	std::vector<std::vector<indSimplexTree::graphEntry>> a;
 	return a;
 }
 
 double simplexBase::getSize(){
-	std::cout << "No size function defined for: " << simplexType << std::endl;
+	ut.writeLog("simplexBase","No size function defined for: " + simplexType);
 	return 0;
 }
 
 void simplexBase::insert(std::vector<double>&){
-	std::cout << "No insert function defined for: " << simplexType << std::endl;
+	ut.writeLog("simplexBase","No insert function defined for: " + simplexType);
 	return;
 }
 
 void simplexBase::find(std::vector<double>){
-	std::cout << "No find function defined for: " << simplexType << std::endl;
+	ut.writeLog("simplexBase","No find function defined for: " + simplexType);
 	return;
 }
 
 unsigned simplexBase::find(std::set<unsigned>){
-	std::cout << "No find function defined for: " << simplexType << std::endl;
+	ut.writeLog("simplexBase","No find function defined for: " + simplexType);
 	return -1;
 }
 
 int simplexBase::vertexCount(){
-	std::cout << "No vertexCount function defined for: " << simplexType << std::endl;
+	ut.writeLog("simplexBase","No vertexCount function defined for: " + simplexType);
 	return -1;
 }
 
 int simplexBase::simplexCount(){
-	std::cout << "No simplexCount function defined for: " << simplexType << std::endl;
+	ut.writeLog("simplexBase","No simplexCount function defined for: " + simplexType);
 	return -1;
 }
 
 void simplexBase::outputSimplex(){
-	std::cout << "No outputSimplex function defined for: " << simplexType << std::endl;
+	ut.writeLog("simplexBase","No outputSimplex function defined for: " + simplexType);
 	return;
 }
 
 void simplexBase::expandDimensions(int dim){
-	std::cout << "No expandDimensions function defined for: " << simplexType << std::endl;
+	ut.writeLog("simplexBase","No expandDimensions function defined for: " + simplexType);
+	return;
+}
+	
+void simplexBase::reduceComplex(){
+	ut.writeLog("simplexBase","No reduceComplex function defined for: " + simplexType);
 	return;
 }
 	

@@ -307,4 +307,9 @@ std::vector<std::vector<std::pair<std::set<unsigned>,double>>> simplexTree::getA
 	return weightEdgeGraph;
 }
 
+void simplexTree::reduceComplex(){
+	
+	
+	return;
+}
 

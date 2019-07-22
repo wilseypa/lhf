@@ -9,8 +9,8 @@
 
 class simplexBase {
   private:
-	utils ut;
   public:
+	utils ut;
   
 	struct indTreeNode{
 		unsigned index;
@@ -96,13 +96,12 @@ class simplexBase {
 	virtual unsigned find(std::set<unsigned>);
 	virtual int simplexCount();
 	virtual int vertexCount();
-	virtual std::vector<std::vector<unsigned>> getEdges(int,double);
+	virtual std::vector<std::vector<unsigned>> getDimEdges(int,double);
 	virtual std::vector<std::vector<std::pair<std::set<unsigned>, double>>> getAllEdges(double);
-	virtual void outputSimplex();
-	virtual void expandDimensions(int);
 	virtual std::vector<std::vector<graphEntry>> getIndexEdges(double);
+	virtual void outputSimplex();
 	
-	
-	
+	virtual void expandDimensions(int);
+	virtual void reduceComplex();
 	
 };

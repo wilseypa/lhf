@@ -7,8 +7,8 @@
 
 class basePipe {
   private:
-	utils ut;
   public:
+	utils ut;
 	std::string pipeType;
 	int debug;
     basePipe(){};
