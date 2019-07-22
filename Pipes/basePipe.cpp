@@ -37,7 +37,7 @@ basePipe::basePipe(std::map<std::string, std::string> configMap){
 }
 
 basePipe* basePipe::newPipe(const std::string &pipeT){
-	std::cout << "Building pipeline: " << pipeT << std::endl;
+	ut.writeLog("basePipe","Building pipeline: " + pipeT);
 	pipeType = pipeT;
 	if(pipeType == "distMatrix"){
 		return new distMatrixPipe();
@@ -75,7 +75,7 @@ pipePacket basePipe::runPipeWrapper(pipePacket inData){
 	std::chrono::duration<double, std::milli> elapsed = endTime - startTime;
 	
 	//Output the time and memory used for this pipeline segment
-	std::cout << "\tPipeline " << pipeType << " executed in " << (elapsed.count()/1000.0) << " seconds (physical time)" << std::endl;
+	ut.writeLog(pipeType,"\tPipeline " + pipeType + " executed in " + std::to_string(elapsed.count()/1000.0) + " seconds (physical time)");
 	
 	auto dataSize = inData.getSize();
 	auto unit = "B";
@@ -95,9 +95,10 @@ pipePacket basePipe::runPipeWrapper(pipePacket inData){
 		unit = "KB";
 	}
 	
-	std::cout << "\t\tData size: " << dataSize << " " << unit << std::endl << std::endl;
-	
 	inData.stats += pipeType + "," + std::to_string(elapsed.count()/1000.0) + "," + std::to_string(dataSize) + "," + unit + "," + std::to_string(inData.complex->vertexCount()) + "," + std::to_string(inData.complex->simplexCount()) + "\n";
+	
+	std::string ds = std::to_string(dataSize);
+	ut.writeLog(pipeType,"\t\tData size: " + ds + " " + unit + "\n");
 	
 	if(debug)
 		outputData(inData);

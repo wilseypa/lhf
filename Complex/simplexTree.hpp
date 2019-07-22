@@ -24,7 +24,6 @@ class simplexTree : public simplexBase {
 	std::vector<std::vector<std::pair<std::set<unsigned>, double>>> weightEdgeGraph;
 
 	void printTree(treeNode*);
-	bool haveChild(simplexTree const*);
 	void insertInductive();
 	void recurseInsert(treeNode*, unsigned, int, double, std::set<unsigned>);
   
@@ -35,12 +34,12 @@ class simplexTree : public simplexBase {
 	//virtual interface functions
 	double getSize();
 	void insert(std::vector<double>&);
-	void find(std::vector<double>);
+	unsigned find(std::set<unsigned>);
 	int simplexCount();
 	int vertexCount();
 	std::vector<std::vector<unsigned>> getDimEdges(int,double);
 	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> getAllEdges(double);
-	bool deletion(simplexTree*&, std::string);
+	bool deletion(treeNode*);
 	void expandDimensions(int){return;};
 	void reduceComplex();
 	

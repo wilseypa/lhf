@@ -5,12 +5,7 @@
 #include <iostream>
 #include <map>
 #include "indSimplexTree.hpp"
-#include "utils.hpp"
 
-
-bool sortSecond(const std::pair<std::set<unsigned>, double> &a, const std::pair<std::set<unsigned>, double> &b){
-	return (a.second < b.second);
-}
 
 indSimplexTree::indSimplexTree(double _maxEpsilon, std::vector<std::vector<double>> _distMatrix, int _maxDim){
 	indexCounter = 0;
@@ -22,23 +17,13 @@ indSimplexTree::indSimplexTree(double _maxEpsilon, std::vector<std::vector<doubl
 }
 
 std::pair<std::vector<std::set<unsigned>>,std::vector<std::set<unsigned>>> indSimplexTree::recurseReduce(std::set<unsigned> sourceSet, int fc, std::set<unsigned> curNode,int d, std::vector<std::set<unsigned>> removalSimplices, std::vector<std::set<unsigned>> processedSimplices){
-	utils ut;
 	processedSimplices.push_back(curNode);
-	
 	
 	std::vector<std::set<unsigned>> localBuf;
 	std::vector<std::set<unsigned>> localFaces;
-	//std::cout << "-------Recurse Reduce---------" << std::endl;
-	//ut.print1DVector(curNode);
-	
 	
 	//Get simplex subsets to track common faces - these are candidate subsets before evaluation
-	//std::cout << "subsets:" << std::endl;
 	auto subsets = ut.getSubsets(curNode, d);
-	//for(int i = 0; i < subsets.size(); i++){
-	//	ut.print1DVector(subsets[i]);
-	//}
-	
 	
 	//For each candidate subset prior to evaluation
 	for(auto subset : subsets){
@@ -189,7 +174,6 @@ std::vector<std::vector<simplexBase::graphEntry>> indSimplexTree::coreduction(gr
 }
 
 void indSimplexTree::recurseInsert(indTreeNode* node, unsigned curIndex, int depth, double maxE, std::set<unsigned> simp){
-	utils ut;
 	//Incremental insertion
 	//Recurse to each child (which we'll use the parent pointer for...)
 	indTreeNode* temp;
@@ -464,7 +448,6 @@ bool indSimplexTree::search(std::set<unsigned> simplex){
 
 
 double indSimplexTree::getWeight(std::set<unsigned> search){
-	utils ut;
 	indTreeNode* curNode = dimensions[0][0];
 	
 	//std::cout << "Get Weight - Size: " << search.size() << "\tSimplex Count: " << dimensions[search.size()-1].size() << "\t";
@@ -586,7 +569,6 @@ int indSimplexTree::simplexCount(){
 } 
 
 unsigned indSimplexTree::find(std::set<unsigned> simplex){
-	utils ut;
 	
 	indTreeNode* curNode = dimensions[0][*simplex.begin()];
 	
@@ -619,7 +601,6 @@ bool indSimplexTree::compareByWeight(const graphEntry &a, const graphEntry &b){
 }
 
 void indSimplexTree::sortAndBuildGraph(){
-	utils ut;	
 	
 	std::cout << "========================    SORTING    ===============================" << std::endl;
 	indTreeNode* curNode = dimensions[0][0];
@@ -711,7 +692,6 @@ std::vector<std::vector<indSimplexTree::graphEntry>> indSimplexTree::getIndexEdg
 }
 
 void indSimplexTree::reduceComplex(){
-	utils ut;
 	std::vector<graphEntry> curEntry;
 	graphEntry ge;
 	

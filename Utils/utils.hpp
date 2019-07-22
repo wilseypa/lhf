@@ -37,6 +37,8 @@ class utils {
 	void writeDebug(std::string module, std::string message);
 	void writeError(std::string module, std::string error){writeLog(module,error);return;};
 	void writeFile(std::string fullMessage);
+	
+	static bool sortBySecond(const std::pair<std::set<unsigned>, double> &, const std::pair<std::set<unsigned>, double> &);
 };
 
 #endif

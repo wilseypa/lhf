@@ -351,3 +351,7 @@ void utils::writeFile(std::string fullMessage){
 	return;
 }
 
+
+bool utils::sortBySecond(const std::pair<std::set<unsigned>, double> &a, const std::pair<std::set<unsigned>, double> &b){
+	return (a.second < b.second);
+}

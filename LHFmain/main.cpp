@@ -38,13 +38,13 @@ void runPipeline(std::map<std::string, std::string> args, pipePacket* wD){
 				//Run the pipe function (wrapper)
 				*wD = cp->runPipeWrapper(*wD);
 			} else {
-				cout << "Failed to configure pipeline: " << args["pipeline"] << endl;
+				cout << "LHF : Failed to configure pipeline: " << args["pipeline"] << endl;
 			}
 		}
 	}
 	//If the pipeline was undefined...
 	else {
-		cout << "Failed to find a suitable pipeline, exiting..." << endl;
+		cout << "LHF : Failed to find a suitable pipeline, exiting..." << endl;
 		return;
 	}
 	
@@ -74,7 +74,7 @@ void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD)
 		if(prePipe != 0 && prePipe->configPreprocessor(args)){
 			*wD = prePipe->runPreprocessorWrapper(*wD);
 		} else {
-			cout << "Failed to configure pipeline: " << args["pipeline"] << endl;
+			cout << "LHF : Failed to configure pipeline: " << args["pipeline"] << endl;
 		}
 	}
 	
@@ -97,7 +97,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		if(prePipe != 0 && prePipe->configPreprocessor(args)){
 			*wD = prePipe->runPreprocessorWrapper(*wD);
 		} else {
-			cout << "Failed to configure pipeline: " << args["pipeline"] << endl;
+			cout << "LHF : sFailed to configure pipeline: " << args["pipeline"] << endl;
 		}
 	}
 	

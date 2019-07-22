@@ -1,6 +1,6 @@
 /*
- * distMatrix hpp + cpp extend the basePipe class for calculating the 
- * distance matrix from data input
+ * neighGraphPipe hpp + cpp extend the basePipe class for building the 
+ * neighborhood graph from data input in the complex structure configured
  * 
  */
 
@@ -12,35 +12,27 @@
 #include <chrono>
 #include <functional>
 #include "neighGraphPipe.hpp"
-#include "utils.hpp"
 
 
 // basePipe constructor
 neighGraphPipe::neighGraphPipe(){
-	pipeType = "NeighborhoodGraph";
+	pipeType = "neighGraph";
 	return;
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket neighGraphPipe::runPipe(pipePacket inData){	
-	utils ut;	
 	
 	//Iterate through each vector, inserting into simplex storage
 	for(unsigned i = 0; i < inData.originalData.size(); i++){
 		if(!inData.originalData[i].empty()){
 			//insert data into the complex (SimplexArrayList, SimplexTree)
-			inData.complex->insert(inData.originalData[i]);
-			
+			inData.complex->insert(inData.originalData[i]);	
 		}
-	}	
-	
-	
-	inData.complex->expandDimensions(dim);
+	}
 
 	return inData;
 }
-
-
 
 // configPipe -> configure the function settings of this pipeline segment
 bool neighGraphPipe::configPipe(std::map<std::string, std::string> configMap){

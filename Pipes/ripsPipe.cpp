@@ -20,14 +20,13 @@
 
 // basePipe constructor
 ripsPipe::ripsPipe(){
-	pipeType = "Rips_Inductive";
+	pipeType = "ripsPipe";
 	return;
 }
 
 
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket ripsPipe::runPipe(pipePacket inData){
-	utils ut;
 	
 	inData.complex->expandDimensions(dim);
 		
@@ -38,7 +37,7 @@ pipePacket ripsPipe::runPipe(pipePacket inData){
 	
 	ut.writeLog("ripsPipe","Reduced Complex Size: " + std::to_string(inData.complex->simplexCount()));
 	ut.writeLog("ripsPipe", "Reduced Complex Mem: " + std::to_string(inData.complex->getSize()));
-	
+
 	return inData;
 }
 

@@ -13,7 +13,6 @@ simplexArrayList::simplexArrayList(double maxE, std::vector<std::vector<double>>
 
 double simplexArrayList::getSize(){
 	//Calculate size of original data
-	
 	size_t size = 0;
 	
 	//Calculate size of edges
@@ -26,12 +25,12 @@ double simplexArrayList::getSize(){
 	return size;
 }
 
+
 // Insert for simplexArrayList -> O((n+1)(n+2)/2) -> O(n^2)
 //		Sequence: 0 , 1 , 3 , 6 , 10 , 15
 //		(AKA very inefficient)
 //
 void simplexArrayList::insert(std::vector<double> &vector){
-	
 	//Create a temporary pair to hold the weight and 2-D edge
 	//	e.g.  1.82 , {1, 5} would represent an edge between
 	//		points 1 and 5 with a weight of 1.82
@@ -44,10 +43,8 @@ void simplexArrayList::insert(std::vector<double> &vector){
 	//If this is the first point inserted...
 	if(weightedGraph.size() == 0){	
 		weightedGraph.push_back({{0}});
-		weightedGraph.push_back({{}});
 		return;
 	}
-	
 	
 	//If there are already points, do a brute-force compare
 	//		this will take a comparison to every existing point
@@ -67,14 +64,13 @@ void simplexArrayList::insert(std::vector<double> &vector){
 				//NOTE: do this in opposite order so pairs are ordered! -> {J, I}
 				std::vector<unsigned> edge = {j,i};
 				
-				if(std::find(weightedGraph[1].begin(), weightedGraph[1].end(), edge) == weightedGraph[1].end())
+				if(weightedGraph.size() == 1)
+					weightedGraph.push_back({edge});
+				else if(std::find(weightedGraph[1].begin(), weightedGraph[1].end(), edge) == weightedGraph[1].end())
 					weightedGraph[1].push_back(edge);
-
 			}
 		}
-		
 		weightedGraph[0].push_back({i});
-		
 	}	
 	
 	return;
@@ -84,7 +80,6 @@ void simplexArrayList::insert(std::vector<double> &vector){
 // Wrapper to expose edges
 std::vector<std::vector<unsigned>> simplexArrayList::getDimEdges(int dim, double epsilon){
 	std::vector<std::vector<unsigned>> ret;
-	utils ut;
 	if(dim - 1 < 0)
 		return ret;
 	if(weightedGraph.size() < dim)
@@ -113,7 +108,6 @@ std::vector<std::vector<unsigned>> simplexArrayList::getDimEdges(int dim, double
 
 // Wrapper to expose edges
 std::vector<std::vector<std::pair<std::set<unsigned>, double>>> simplexArrayList::getAllEdges(double epsilon){
-	utils ut;
 	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> ret;
 	
 	/*for(int dim = 0; dim < weightedGraph.size(); dim++){
@@ -162,7 +156,6 @@ void simplexArrayList::find(std::vector<double> vector){
 
 // Output the total simplices stored in the simplical complex
 int simplexArrayList::simplexCount(){
-	utils ut;
 	int simplexRet = 0;
 	
 	for(auto a : weightedGraph){
@@ -186,35 +179,36 @@ int simplexArrayList::vertexCount(){
 //
 //
 void simplexArrayList::expandDimensions(int dim){
-	utils ut;
-
 	std::vector<unsigned> tempVect;	
 	
+	
 	//Iterate up to max dimension of simplex, starting at dim 2 (edges)
-	for(unsigned i = 2; i <= dim; i++){
-		
-		if(weightedGraph.size() == i)
-			weightedGraph.push_back({{}});
-		
+	for(unsigned d = 2; d <= dim; d++){
 		
 		//Store d-dimensional simplices
 		std::vector<std::vector<unsigned>> test;
 		
 		//Iterate through each element in the previous dimension's edges
-		for(unsigned j = 0; j < weightedGraph[i-1].size(); j++){
+		for(unsigned j = 0; j < weightedGraph[d-1].size(); j++){
 			//First search for intersections of the current element
-			for(unsigned t = j+1; t < weightedGraph[i-1].size(); t++){
-				auto simp = ut.symmetricDiff(weightedGraph[i-1][j], weightedGraph[i-1][t],true);
+			for(unsigned t = j+1; t < weightedGraph[d-1].size(); t++){
+				
+				auto simp = ut.symmetricDiff(weightedGraph[d-1][j], weightedGraph[d-1][t],true);
 				//This point intersects; potential candidate for a higher-level simplice
-				if (simp.size() == 2){
-					
-					for(int k = t+1; k < weightedGraph[i-1].size(); k++){
+				//std::cout << "d";
+				if (simp.size() == d){
+					//std::cout << "t" << std::endl;
+					for(int k = t+1; k < weightedGraph[d-1].size(); k++){
 						
-						if(weightedGraph[i-1][k] == simp){
-							simp = ut.setUnion(weightedGraph[i-1][j], weightedGraph[i-1][t],true);
+						if(weightedGraph[d-1][k] == simp){
+							simp = ut.setUnion(weightedGraph[d-1][j], weightedGraph[d-1][t],true);
 							
-							if(std::find(weightedGraph[i].begin(), weightedGraph[i].end(), simp) == weightedGraph[i].end())
-								weightedGraph[i].push_back(simp);
+							if(std::find(weightedGraph[d].begin(), weightedGraph[d].end(), simp) == weightedGraph[d].end()){
+								if(weightedGraph.size() == d)
+									weightedGraph.push_back({simp});
+								else
+									weightedGraph[d].push_back(simp);
+							}
 						}
 					}
 				}
