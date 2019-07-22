@@ -131,131 +131,6 @@ std::pair<std::vector<std::set<unsigned>>,std::vector<std::set<unsigned>>> indSi
 	return std::make_pair(processedSimplices, removalSimplices);
 }
 
-void indSimplexTree::expandDimensions(int d){
-	utils ut;
-	std::vector<graphEntry> curEntry;
-	graphEntry ge;
-	
-	std::cout << "Reducing simplex tree elementary collapse" << std::endl;
-	std::cout << "\tOriginal simplex count: " << nodeCount << std::endl;
-	
-	if(maxDim < 2){
-		std::cout << "Dim < 2, exiting reduction" << std::endl;
-		return;
-	}
-	
-	
-	//Start at the highest dimension and check for cofaces of simplices
-	//		if there isn't a shared face with another simplex of the
-	//		same dimension then remove the face
-	//
-	//
-	//	There are 4 cases that can happen as we iterate a simplex s_d:
-	//
-	//		1. All faces are shared, s_d >= max_d
-	//		2. All faces are shared, s_d < max_d
-	//		3. Some faces are shared
-	//		4. No faces shared
-	//
-	//
-	//	To do this, we recurse through shared faces and examine neighbor simplices;
-	//
-	//		If a neighbor simplex has all shared faces (and recurses/faces the same), no removal simplices
-	//			will be added. This will be case 1 / 2
-	//
-	//		If a neighbor simplex does not have shared faces, remove the largest edge and the simplex 
-	//			itself. Continue iterating other faces of original simplex. This will be case 3.
-	//
-	//		After all faces are finished, if processed simplices.size() = 1, case 4.
-	//
-	
-	//Iterate each dimension of simplices
-	for(int d = dimensions.size()-1; d > 1 ; d--){
-		std::vector<graphEntry> curGraph;
-		std::map<std::set<unsigned>,int> counts;
-		std::vector<std::set<unsigned>> removalSimplices;
-		std::vector<std::set<unsigned>> processedSimplices;
-		
-		
-		//Iterate each node in the simplex list, dimension d
-		for(auto curNode : dimensions[d]){	
-			
-			//Check if the current node has been processed already
-			if(std::find(processedSimplices.begin(), processedSimplices.end(), curNode->simplexSet) == processedSimplices.end()){
-				
-				//If the current node hasn't been processed, recursively iterate through shared faces and remove simplices
-				//		This function handles case 3 and 4.
-				auto a =  recurseReduce({}, 0, curNode->simplexSet, d, removalSimplices, processedSimplices);
-				
-				//Check for cases 1 / 2
-				if(removalSimplices.size() == a.second.size()){
-					
-					// 1. All faces are shared, s_d >= max_d
-					if(curNode->simplexSet.size() >= maxDim){
-						// Do nothing, need to process through t-array if a feature forms 					
-
-					// 2. All faces are shared, s_d < max_d
-					} else {
-						//Use the minimum path algorithm to remove edges from processed simplices
-						//	Need to remove all non-minimal faces of each processed simplex, along
-						//		with the simplex itself
-					}
-				}
-				
-				processedSimplices = a.first;
-				removalSimplices = a.second;
-			}
-					
-		}
-		
-		//std::cout << "_________Removals_________" << std::endl;
-		//for(auto p: removalSimplices){
-		//	std::cout << "\t";
-		//	ut.print1DVector(p);
-		//}
-		//std::cout << std::endl;
-		
-		//Remove the removals...
-		for(auto r : removalSimplices){
-			for(int i = 0; i < dimensions[d].size(); i++){
-				if(r == dimensions[d][i]->simplexSet){
-					dimensions[d].erase(dimensions[d].begin() + i);
-					nodeCount--;
-				}
-			}
-			deletion(r);
-		}
-			
-		
-	}
-	
-	
-	std::cout << "\tElementary collapse count: " << nodeCount << std::endl;
-	std::cout << "Reducing simplex tree coreduction" << std::endl;
-	
-	
-	
-	for(auto a : indexedGraph){
-		for(auto b: a){
-			
-			//	Elementary coreduction pair if bds(b) = {a}
-			//
-			//	bds(a) = {t <= S | k(s, t) != 0 for some s <= a}
-			//		where dim(s) = dim(t) + 1
-			//
-			
-			coreduction(b);
-			//std::cout << "Reduced!" << std::endl;
-			
-		}
-	}
-	
-	std::cout << "\tCoreduction count: " << nodeCount << std::endl;
-		
-	return;
-	
-}
-
 std::vector<std::vector<simplexBase::graphEntry>> indSimplexTree::coreduction(graphEntry cur){
 	std::vector<std::vector<graphEntry>> ret = indexedGraph;
 	//Queue q ; q.insert (cur)
@@ -836,9 +711,132 @@ std::vector<std::vector<indSimplexTree::graphEntry>> indSimplexTree::getIndexEdg
 }
 
 void indSimplexTree::reduceComplex(){
+	utils ut;
+	std::vector<graphEntry> curEntry;
+	graphEntry ge;
+	
+	std::cout << "Reducing simplex tree elementary collapse" << std::endl;
+	std::cout << "\tOriginal simplex count: " << nodeCount << std::endl;
+	
+	if(maxDim < 2){
+		std::cout << "Dim < 2, exiting reduction" << std::endl;
+		return;
+	}
+	
+	
+	//Start at the highest dimension and check for cofaces of simplices
+	//		if there isn't a shared face with another simplex of the
+	//		same dimension then remove the face
+	//
+	//
+	//	There are 4 cases that can happen as we iterate a simplex s_d:
+	//
+	//		1. All faces are shared, s_d >= max_d
+	//		2. All faces are shared, s_d < max_d
+	//		3. Some faces are shared
+	//		4. No faces shared
+	//
+	//
+	//	To do this, we recurse through shared faces and examine neighbor simplices;
+	//
+	//		If a neighbor simplex has all shared faces (and recurses/faces the same), no removal simplices
+	//			will be added. This will be case 1 / 2
+	//
+	//		If a neighbor simplex does not have shared faces, remove the largest edge and the simplex 
+	//			itself. Continue iterating other faces of original simplex. This will be case 3.
+	//
+	//		After all faces are finished, if processed simplices.size() = 1, case 4.
+	//
+	
+	//Iterate each dimension of simplices
+	for(int d = dimensions.size()-1; d > 1 ; d--){
+		std::vector<graphEntry> curGraph;
+		std::map<std::set<unsigned>,int> counts;
+		std::vector<std::set<unsigned>> removalSimplices;
+		std::vector<std::set<unsigned>> processedSimplices;
+		
+		
+		//Iterate each node in the simplex list, dimension d
+		for(auto curNode : dimensions[d]){	
+			
+			//Check if the current node has been processed already
+			if(std::find(processedSimplices.begin(), processedSimplices.end(), curNode->simplexSet) == processedSimplices.end()){
+				
+				//If the current node hasn't been processed, recursively iterate through shared faces and remove simplices
+				//		This function handles case 3 and 4.
+				auto a =  recurseReduce({}, 0, curNode->simplexSet, d, removalSimplices, processedSimplices);
+				
+				//Check for cases 1 / 2
+				if(removalSimplices.size() == a.second.size()){
+					
+					// 1. All faces are shared, s_d >= max_d
+					if(curNode->simplexSet.size() >= maxDim){
+						// Do nothing, need to process through t-array if a feature forms 					
+
+					// 2. All faces are shared, s_d < max_d
+					} else {
+						//Use the minimum path algorithm to remove edges from processed simplices
+						//	Need to remove all non-minimal faces of each processed simplex, along
+						//		with the simplex itself
+					}
+				}
+				
+				processedSimplices = a.first;
+				removalSimplices = a.second;
+			}
+					
+		}
+		
+		//std::cout << "_________Removals_________" << std::endl;
+		//for(auto p: removalSimplices){
+		//	std::cout << "\t";
+		//	ut.print1DVector(p);
+		//}
+		//std::cout << std::endl;
+		
+		//Remove the removals...
+		for(auto r : removalSimplices){
+			for(int i = 0; i < dimensions[d].size(); i++){
+				if(r == dimensions[d][i]->simplexSet){
+					dimensions[d].erase(dimensions[d].begin() + i);
+					nodeCount--;
+				}
+			}
+			deletion(r);
+		}
+			
+		
+	}
+	
+	
+	std::cout << "\tElementary collapse count: " << nodeCount << std::endl;
+	std::cout << "Reducing simplex tree coreduction" << std::endl;
 	
 	
 	
+	for(auto a : indexedGraph){
+		for(auto b: a){
+			
+			//	Elementary coreduction pair if bds(b) = {a}
+			//
+			//	bds(a) = {t <= S | k(s, t) != 0 for some s <= a}
+			//		where dim(s) = dim(t) + 1
+			//
+			
+			coreduction(b);
+			//std::cout << "Reduced!" << std::endl;
+			
+		}
+	}
+	
+	std::cout << "\tCoreduction count: " << nodeCount << std::endl;
+		
 	return;
 }
 
+
+std::vector<std::vector<unsigned>> indSimplexTree::getDimEdges(int,double){
+	std::vector<std::vector<unsigned>> ret;
+	return ret;
+	
+}

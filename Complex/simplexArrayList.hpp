@@ -7,17 +7,19 @@
 class simplexArrayList : public simplexBase{
   private:
 	int indexCount;
+	std::string stats;
   public:
 	simplexArrayList(double, std::vector<std::vector<double>>);
-	std::string stats;
-	
-	double getSize();	
-	std::vector<std::vector<unsigned>> getEdges(int,double);
-	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> getAllEdges(double);
+		
+	//virtual interface functions
+	double getSize();
 	void insert(std::vector<double>&);
 	void find(std::vector<double>);
-	int vertexCount();
 	int simplexCount();
+	int vertexCount();
+	std::vector<std::vector<unsigned>> getDimEdges(int,double);
+	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> getAllEdges(double);
+	bool deletion(std::vector<unsigned>);
 	void expandDimensions(int);
 	void reduceComplex();
 };

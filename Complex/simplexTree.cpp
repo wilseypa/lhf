@@ -262,14 +262,6 @@ void simplexTree::insert(std::vector<double>&) {
 }
 
 
-// Iterative function to search for a key in the tree. The function returns true
-// if the key is found, else it returns false.
-bool simplexTree::search(std::string key){
-
-
-}
-
-
 // The following function returns true if a given node has a child.
 bool simplexTree::haveChild(simplexTree const* present) {
 
@@ -313,3 +305,16 @@ void simplexTree::reduceComplex(){
 	return;
 }
 
+
+std::vector<std::vector<unsigned>> simplexTree::getDimEdges(int,double){
+	std::vector<std::vector<unsigned>> ret;
+	
+	return ret;
+	
+	
+}
+
+void simplexTree::find(std::vector<double>){
+	
+	return;
+}

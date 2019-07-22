@@ -78,18 +78,19 @@ class simplexBase {
 	};
   
 	std::vector<unsigned> dimCounts = {6, 15, 20};
-  
 	std::string simplexType;
+	double maxEpsilon;
+	int maxDimension;
+	std::vector<std::vector<double>> distMatrix;
+	std::vector<std::vector<std::vector<unsigned>>> weightedGraph;
+  
 	simplexBase();
 	simplexBase(double, int);
 	simplexBase(std::map<std::string, std::string>);
 	void setDistanceMatrix(std::vector<std::vector<double>> _distMatrix);
 	simplexBase* newSimplex(const std::string &simplexT);
-	double maxEpsilon;
-	int maxDimension;
-	std::vector<std::vector<double>> distMatrix;
-	std::vector<std::vector<std::vector<unsigned>>> weightedGraph;
 	
+	//virtual interface functions
 	virtual double getSize();
 	virtual void insert(std::vector<double>&);
 	virtual void find(std::vector<double>);
@@ -99,9 +100,9 @@ class simplexBase {
 	virtual std::vector<std::vector<unsigned>> getDimEdges(int,double);
 	virtual std::vector<std::vector<std::pair<std::set<unsigned>, double>>> getAllEdges(double);
 	virtual std::vector<std::vector<graphEntry>> getIndexEdges(double);
-	virtual void outputSimplex();
-	
 	virtual void expandDimensions(int);
 	virtual void reduceComplex();
 	
+	//Unused, possibly future
+	virtual void outputSimplex();
 };

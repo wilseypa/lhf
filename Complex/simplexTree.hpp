@@ -6,9 +6,6 @@
 
 class simplexTree : public simplexBase {
   private:
-	bool isSorted = false;
-  
-	int maxDim;
 	struct treeNode{
 		unsigned index;
 		treeNode* child = nullptr;
@@ -17,34 +14,35 @@ class simplexTree : public simplexBase {
 		double weight = 0;
 	};
 	
-	std::vector<std::vector<std::pair<std::set<unsigned>, double>>> weightEdgeGraph;
-			
-	std::vector<treeNode*> dimensions;		
-	
+	bool isSorted = false;
+	int maxDim;
+	bool isLeaf;
 	unsigned indexCounter;
 	treeNode* head;
 	int nodeCount;
+	std::vector<treeNode*> dimensions;	
+	std::vector<std::vector<std::pair<std::set<unsigned>, double>>> weightEdgeGraph;
+
+	void printTree(treeNode*);
+	bool haveChild(simplexTree const*);
+	void insertInductive();
+	void recurseInsert(treeNode*, unsigned, int, double, std::set<unsigned>);
   
   public:
 	simplexTree(std::vector<std::vector<double>>);
 	simplexTree(double, std::vector<std::vector<double>>, int);
-	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> getAllEdges(double);
 	
-	bool isLeaf;
-	
+	//virtual interface functions
 	double getSize();
-	void printTree(treeNode*);
-
-	// At this time, let's just assume that each simplex is labeled by a key that
-	// can, in general, be considered as a string.
 	void insert(std::vector<double>&);
-	bool deletion(simplexTree*&, std::string);
-	bool search(std::string);
-	bool haveChild(simplexTree const*);
-	void insertInductive();
-	void recurseInsert(treeNode*, unsigned, int, double, std::set<unsigned>);
-	int vertexCount();
+	void find(std::vector<double>);
 	int simplexCount();
+	int vertexCount();
+	std::vector<std::vector<unsigned>> getDimEdges(int,double);
+	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> getAllEdges(double);
+	bool deletion(simplexTree*&, std::string);
+	void expandDimensions(int){return;};
 	void reduceComplex();
+	
 };
 

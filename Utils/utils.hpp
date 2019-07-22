@@ -9,7 +9,7 @@
 
 class utils {
   private:
-	std::string debug;
+	std::string debug = "0";
 	std::string outputFile = "console";
   
   public:

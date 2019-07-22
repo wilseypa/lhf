@@ -82,7 +82,7 @@ void simplexArrayList::insert(std::vector<double> &vector){
 
 
 // Wrapper to expose edges
-std::vector<std::vector<unsigned>> simplexArrayList::getEdges(int dim, double epsilon){
+std::vector<std::vector<unsigned>> simplexArrayList::getDimEdges(int dim, double epsilon){
 	std::vector<std::vector<unsigned>> ret;
 	utils ut;
 	if(dim - 1 < 0)

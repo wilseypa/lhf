@@ -335,9 +335,9 @@ void utils::writeDebug(std::string module, std::string message){
 	if(debug == "0" || debug == "false"){
 		return;
 	} else if(outputFile == "console"){
-		std::cout << "D\t[" << module << "]:\t" << message << std::endl;
+		std::cout << "[DEBUG]\t[" << module << "]:\t" << message << std::endl;
 	} else {
-		writeFile("D\t[" + module + "]:\t" + message);
+		writeFile("[DEBUG]\t[" + module + "]:\t" + message);
 	}
 	
 	return;
