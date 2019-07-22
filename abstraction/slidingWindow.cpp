@@ -8,7 +8,7 @@
 #include <tuple>
 #include <map>
 #include <ANN/ANN.h>
-
+#include "utils.hpp"
 
 // The next two functions are for splitting a string by a delimiter. They are
 // used to split each row of the data by the appropriate delimiter.
@@ -41,6 +41,29 @@ std::vector<double> stringVectorToDoubleVector( const std::vector<std::string>& 
     return doubleVector;
 }
 
+// https://stackoverflow.com/questions/110157/how-to-retrieve-all-keys-or-values-from-a-stdmap-and-put-them-into-a-vector
+std::vector<std::vector<double>> retrieveValuesFromMap( std::map<int, std::vector<double>> const &window ) {
+    std::vector<std::vector<double>> windowVals;
+    windowVals.reserve( window.size() );
+    for (auto const &item : window)
+        windowVals.push_back(item.second);
+
+    return windowVals;
+}
+
+std::vector<std::vector<double>> createDistMatrix ( std::vector<std::vector<double>> const &vectorsInWindow, std::vector<std::vector<double>> &distMatrix ) {
+    utils ut;
+    for(unsigned i = 0; i < vectorsInWindow.size(); i++) {
+        std::vector<double> temp;
+        for(unsigned j = i+1; j < vectorsInWindow.size(); j++) {
+            auto dist = ut.vectors_distance( vectorsInWindow[i], vectorsInWindow[j] );
+            distMatrix[i][j] = dist;
+        }
+    }
+    return distMatrix;
+}
+
+std::vector<std::vector<double>> addToDistMatrix( std::vector<double> distancesToReps, std::vector<std::vector<double>> distMatrix ) {}
 
 // Find the minimum and maximum squared nearest neighbor distances within the window. These distances are computed
 // periodically, for example, with the addition of every 50 new data points to the window. For every point in the
@@ -160,6 +183,8 @@ int main()
     std::map<int, std::vector<double>> window;
     std::vector<int> labelContainer;
     int label{ 0 };
+    std::vector<std::vector<double>> distMatrix( windowMinSize, std::vector<double>(windowMinSize, 0) );
+
     FILE *pFile;
 
     char buffer[1000];  // Define an arbitrary but large enough character array
@@ -185,6 +210,10 @@ int main()
             if ( window.size() < windowMinSize ) {
                 window.insert( std::pair<int, std::vector<double>>(label, dataPoint) );   // Add the new point to the back of the window.
                 numPointsAddedToWindow++;
+                if ( numPointsAddedToWindow == windowMinSize ) {
+                    std::vector<std::vector<double>> vectorsInWindow = retrieveValuesFromMap( window );
+                    distMatrix = createDistMatrix( vectorsInWindow, distMatrix );
+                }
             }
 
             // Once window has more than the minimum number of points, apply a criterion for adding points in the window.
