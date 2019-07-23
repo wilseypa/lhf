@@ -51,14 +51,25 @@ std::vector<std::vector<double>> retrieveValuesFromMap( const std::map<int, std:
     return windowVals;
 }
 
-void populateDistMatrix( const std::vector<std::vector<double>> &refVectsInWindow, std::vector<std::vector<double>> &refDistMat ) {
+auto populateDistMatrix( const std::vector<std::vector<double>> &refVectsInWindow, std::vector<std::vector<double>> &refDistMat ) {
     utils ut;
+    std::vector<double> nnDists;
     for(unsigned i = 0; i < refVectsInWindow.size(); i++) {
-        for(unsigned j = i+1; j < refVectsInWindow.size(); j++) {
-            auto dist = ut.vectors_distance( refVectsInWindow[i], refVectsInWindow[j] );
-            refDistMat[i][j] = dist;
+        std::vector<double> distsFromCurrVect;
+        for(unsigned j = 0; j < refVectsInWindow.size(); j++) {
+            if (j < i) {
+                distsFromCurrVect.push_back( refDistMat[j][i] );
+            } else if (j > i) {
+                auto dist = ut.vectors_distance( refVectsInWindow[i], refVectsInWindow[j] );
+                refDistMat[i][j] = dist;
+                distsFromCurrVect.push_back( dist );
+            }
         }
+        auto nnDistFromCurrVect = *std::min_element( distsFromCurrVect.begin(), distsFromCurrVect.end() );
+        nnDists.push_back( nnDistFromCurrVect );
     }
+    auto nnDistsRange = std::minmax_element( nnDists.begin(), nnDists.end() );
+    return std::tuple( *nnDistsRange.first, *nnDistsRange.second );
 }
 
 std::vector<std::vector<double>> addToDistMatrix( std::vector<double> distancesToReps, std::vector<std::vector<double>> distMatrix ) {}
@@ -172,14 +183,15 @@ int main()
     // unsigned int nnDistCheckIntrvl{ 50 };
 
     // Variables to store the minimum and maximum of the squared nearest neighbor distances in the window.
-    double minSqrdNNdist{ 0.0 };
-    double maxSqrdNNdist{ 0.0 };
+    double minNNdist{ 0.0 };
+    double maxNNdist{ 0.0 };
 
     int updateCounter{ 0 };
 
 
     std::map<int, std::vector<double>> window;
     std::vector<int> labelContainer;
+    labelContainer.reserve( windowMaxSize );
     int label{ 0 };
     std::vector<std::vector<double>> distMatrix( windowMinSize, std::vector<double>(windowMinSize, 0) );
     distMatrix.reserve( windowMaxSize );
@@ -213,7 +225,7 @@ int main()
                 numPointsAddedToWindow++;
                 if ( numPointsAddedToWindow == windowMinSize ) {
                     std::vector<std::vector<double>> vectorsInWindow = retrieveValuesFromMap( window );
-                    populateDistMatrix( vectorsInWindow, distMatrix );
+                    std::tie(minNNdist, maxNNdist) = populateDistMatrix( vectorsInWindow, distMatrix );
                 }
             }
 
