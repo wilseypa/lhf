@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <tuple>
 #include <map>
+#include <cmath>
 #include <ANN/ANN.h>
 #include "utils.hpp"
 
@@ -51,16 +52,16 @@ std::vector<std::vector<double>> retrieveValuesFromMap( const std::map<int, std:
     return windowVals;
 }
 
-auto populateDistMatrix( const std::vector<std::vector<double>> &refVectsInWindow, std::vector<std::vector<double>> &refDistMat ) {
+auto populateDistMatrix( const std::vector<std::vector<double>> &refWindowValues, std::vector<std::vector<double>> &refDistMat ) {
     utils ut;
     std::vector<double> nnDists;
-    for(unsigned i = 0; i < refVectsInWindow.size(); i++) {
+    for(unsigned i = 0; i < refWindowValues.size(); i++) {
         std::vector<double> distsFromCurrVect;
-        for(unsigned j = 0; j < refVectsInWindow.size(); j++) {
+        for(unsigned j = 0; j < refWindowValues.size(); j++) {
             if (j < i) {
                 distsFromCurrVect.push_back( refDistMat[j][i] );
             } else if (j > i) {
-                auto dist = ut.vectors_distance( refVectsInWindow[i], refVectsInWindow[j] );
+                auto dist = ut.vectors_distance( refWindowValues[i], refWindowValues[j] );
                 refDistMat[i][j] = dist;
                 distsFromCurrVect.push_back( dist );
             }
@@ -128,21 +129,21 @@ auto nnDistsWindow( std::vector<std::vector<double>> window ) {
 
 // Find the nearest neighbor of a new data point in the window. Return the index of the nearest neighbor
 // and the squared nearest neighbor distance.
-auto nnSearch( std::vector<double> newPoint, std::vector<std::vector<double>> window ) {
-    int k = 1;  // The number of near neighbors to search for.
-    int dim = newPoint.size();
+auto nnSearch( const std::vector<double> &refNewPoint, const std::vector<std::vector<double>> &refWindowValues ) {
+    int k = refWindowValues.size();  // The number of near neighbors to search for.
+    int dim = refNewPoint.size();
     double del = 0;  // At this time, we are using the exact nearest neighbor search.
-    int nPts = window.size();  // The actual number of data points to search from.
+    int nPts = refWindowValues.size();  // The actual number of data points to search from.
 
     // Make the type of 'window' compatible with the type of an array of points as defined in the ANN library.
     // Source: https://stackoverflow.com/questions/4776164/c-vectorvectordouble-to-double
     std::vector<double*> ptrs;
-    for (auto& vec : window)
-        ptrs.push_back(vec.data());
+    for (auto& vec : refWindowValues)
+        ptrs.push_back( vec.data() );
 
     ANNpointArray dataPts = ptrs.data();  // The data points to search from.
 
-    ANNpoint queryPt = &newPoint[0];  // The query point which is the new incoming point from the stream.
+    ANNpoint queryPt = &refNewPoint[0];  // The query point which is the new incoming point from the stream.
     ANNidxArray nnIdx = new ANNidx[k];  // Near neighbor indices (to be returned by the search).
     ANNdistArray dists = new ANNdist[k];  // Squared near neighbor distances (to be returned by the search).
 
@@ -160,7 +161,7 @@ auto nnSearch( std::vector<double> newPoint, std::vector<std::vector<double>> wi
                        del);
 
     int nnIndexInWindow = nnIdx[0];  // The index of the point in the window that is nearest to the incoming (query) point.
-    double squaredNNDist = dists[0];  //  The squared distance to the point in the window that is nearest to the incoming (query) point.
+    double squaredNNDist = sqrt(dists[0]);  //  The distance to the point in the window that is nearest to the incoming (query) point.
 
     // Clean up.
     delete [] nnIdx;
@@ -176,8 +177,8 @@ int main()
     unsigned int windowMaxSize{ 200 };  // The maximum number of points the sliding window may contain.
                                         // It'll be a user input in future.
 
-    unsigned int windowMinSize = windowMaxSize - 50;  // The minimum number of points that should be present in the window
-                                                      // to form meaningful topological features by PH computation.
+    unsigned int windowMinSize{ 150 };  // The minimum number of points that should be present in the window
+                                        // to form meaningful topological features by PH computation.
 
     unsigned int numPointsAddedToWindow{ 0 };
     // unsigned int nnDistCheckIntrvl{ 50 };
@@ -189,10 +190,18 @@ int main()
     int updateCounter{ 0 };
 
 
-    std::map<int, std::vector<double>> window;
-    std::vector<int> labelContainer;
-    labelContainer.reserve( windowMaxSize );
-    int label{ 0 };
+    // std::map<int, std::vector<double>> window;
+    std::vector<int> windowKeys;
+    windowKeys.reserve( windowMaxSize );
+
+    std::vector<std::vector<double>> windowValues;
+    windowValues.reserve( windowMaxSize );
+
+    std::vector<int> dynamicKeyContainer;
+    dynamicKeyContainer.reserve( windowMaxSize );
+
+    int key{ 0 };
+
     std::vector<std::vector<double>> distMatrix( windowMinSize, std::vector<double>(windowMinSize, 0) );
     distMatrix.reserve( windowMaxSize );
 
@@ -218,27 +227,29 @@ int main()
             // std::cout << '\n';
 
             // Initialize the window. Ensure that the sliding window always contains the minimum number of points.
-            if ( window.size() < windowMinSize ) {
-                window.insert( std::pair<int, std::vector<double>>(label, dataPoint) );   // Add the new point to the back of the window.
-                labelContainer.push_back(label);
-                label++;
+            if ( windowKeys.size() < windowMinSize ) {
+                // window.insert( std::pair<int, std::vector<double>>(label, dataPoint) );   // Add the new point to the back of the window.
+                windowKeys.push_back(key);
+                windowValues.push_back(dataPoint);
+                dynamicKeyContainer.push_back(key);
+                key++;
                 numPointsAddedToWindow++;
                 if ( numPointsAddedToWindow == windowMinSize ) {
-                    std::vector<std::vector<double>> vectorsInWindow = retrieveValuesFromMap( window );
-                    std::tie(minNNdist, maxNNdist) = populateDistMatrix( vectorsInWindow, distMatrix );
+                    // std::vector<std::vector<double>> vectorsInWindow = retrieveValuesFromMap( window );
+                    std::tie(minNNdist, maxNNdist) = populateDistMatrix( windowValues, distMatrix );
                 }
             }
 
             // Once window has more than the minimum number of points, apply a criterion for adding points in the window.
             else {
-                if ( numPointsAddedToWindow % nnDistCheckIntrvl == 0 )  // If 50 new points have been added to the window:
-                    std::tie(minSqrdNNdist, maxSqrdNNdist) = nnDistsWindow( window );  // compute the min and max of the squared
+                // if ( numPointsAddedToWindow % nnDistCheckIntrvl == 0 )  // If 50 new points have been added to the window:
+                    // std::tie(minSqrdNNdist, maxSqrdNNdist) = nnDistsWindow( window );  // compute the min and max of the squared
                                                                                   // nearest neighbor distances of the present
                                                                                   // set of points in the window.
 
                 // Nearest neighbor search for an incoming point by ANN library. Using the structured binding feature of
                 // C++17 to receive multiple values returned by the 'nnSearch' function.
-                auto [nnIndex, sqrdDistToNearestRep] = nnSearch( dataPoint, window );
+                auto [nnIndex, sqrdDistToNearestRep] = nnSearch( dataPoint, windowValues );
 
 
                 // If the squared distance from the new incoming point to its nearest point in the window is
