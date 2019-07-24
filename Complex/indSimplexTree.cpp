@@ -568,7 +568,7 @@ int indSimplexTree::simplexCount(){
 	return nodeCount;
 } 
 
-unsigned indSimplexTree::find(std::set<unsigned> simplex){
+bool indSimplexTree::find(std::set<unsigned> simplex){
 	
 	indTreeNode* curNode = dimensions[0][*simplex.begin()];
 	

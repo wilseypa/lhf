@@ -75,12 +75,12 @@ void simplexBase::insert(std::vector<double>&){
 	return;
 }
 
-void simplexBase::find(std::vector<double>){
+bool simplexBase::find(std::vector<unsigned>){
 	ut.writeLog(simplexType,"No find function defined");
-	return;
+	return -1;
 }
 
-unsigned simplexBase::find(std::set<unsigned>){
+bool simplexBase::find(std::set<unsigned>){
 	ut.writeLog(simplexType,"No find function defined");
 	return -1;
 }

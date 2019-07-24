@@ -296,7 +296,7 @@ std::vector<std::vector<unsigned>> simplexTree::getDimEdges(int d,double){
 	
 }
 
-unsigned simplexTree::find(std::set<unsigned>){
+bool simplexTree::find(std::set<unsigned>){
 	
 	return 0;
 }

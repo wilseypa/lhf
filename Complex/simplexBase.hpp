@@ -93,8 +93,8 @@ class simplexBase {
 	//virtual interface functions
 	virtual double getSize();
 	virtual void insert(std::vector<double>&);
-	virtual void find(std::vector<double>);
-	virtual unsigned find(std::set<unsigned>);
+	virtual bool find(std::vector<unsigned>);
+	virtual bool find(std::set<unsigned>);
 	virtual int simplexCount();
 	virtual int vertexCount();
 	virtual std::vector<std::vector<unsigned>> getDimEdges(int,double);

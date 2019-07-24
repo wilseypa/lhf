@@ -43,7 +43,7 @@ class indSimplexTree : public simplexBase {
 	//virtual interface functions
 	double getSize();
 	void insert(std::vector<double>&);
-	unsigned find(std::set<unsigned>);
+	bool find(std::set<unsigned>);
 	int simplexCount();
 	int vertexCount();
 	std::vector<std::vector<unsigned>> getDimEdges(int,double);
