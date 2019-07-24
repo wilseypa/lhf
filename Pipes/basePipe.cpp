@@ -17,24 +17,7 @@
 #include "boundaryPipe.hpp"
 #include "persistencePairs.hpp"
 #include "optPersistencePairs.hpp"
-#include "streamVR.hpp"
-
-// basePipe constructor
-basePipe::basePipe(std::map<std::string, std::string> configMap){
-	std::string debug;
-	std::string outputFile;
-	
-	auto pipe = configMap.find("debug");
-	if(pipe != configMap.end())
-		debug = std::atoi(configMap["debug"].c_str());
-	pipe = configMap.find("outputFile");
-	if(pipe != configMap.end())
-		outputFile = std::atoi(configMap["outputFile"].c_str());
-	
-	ut = utils(debug, outputFile);
-	
-	return;
-}
+#include "slidingWindow.hpp"
 
 basePipe* basePipe::newPipe(const std::string &pipeT){
 	ut.writeLog("basePipe","Building pipeline: " + pipeT);
@@ -53,8 +36,8 @@ basePipe* basePipe::newPipe(const std::string &pipeT){
 		return new persistencePairs();
 	} else if (pipeType == "optPersistence"){
 		return new optPersistencePairs();
-	} else if (pipeType == "streamVR"){
-		return new streamVR();
+	} else if (pipeType == "slidingWindow" || pipeType == "sliding"){
+		return new slidingWindow();
 	}
 	
 	return 0;

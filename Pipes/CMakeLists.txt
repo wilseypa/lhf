@@ -13,7 +13,7 @@ add_library(upscalePipe "upscalePipe.cpp" "upscalePipe.hpp")
 add_library(boundaryPipe "boundaryPipe.cpp" "boundaryPipe.hpp")
 add_library(persistencePairs "persistencePairs.cpp" "persistencePairs.hpp")
 add_library(optPersistencePairs "optPersistencePairs.cpp" "optPersistencePairs.hpp")
-add_library(streamVR "streamVR.cpp" "streamVR.hpp")
+add_library(slidingWindow "slidingWindow.cpp" "slidingWindow.hpp")
 
 include_directories(../Complex)
 link_directories(../Complex)
@@ -25,7 +25,7 @@ include_directories(../Utils)
 link_directories(../Utils)
 
 # target_link_libraries(LHF PipeFunctions)
-target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe ripsPipe upscalePipe boundaryPipe persistencePairs optPersistencePairs streamVR)
+target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe ripsPipe upscalePipe boundaryPipe persistencePairs optPersistencePairs slidingWindow)
 
 INSTALL (TARGETS basePipe
 	LIBRARY DESTINATION lib

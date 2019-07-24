@@ -303,14 +303,22 @@ void persistencePairs::outputData(pipePacket inData){
 
 // configPipe -> configure the function settings of this pipeline segment
 bool persistencePairs::configPipe(std::map<std::string, std::string> configMap){
-	auto pipe = configMap.find("dimensions");
+	std::string strDebug;
+	
+	auto pipe = configMap.find("debug");
+	if(pipe != configMap.end()){
+		debug = std::atoi(configMap["debug"].c_str());
+		strDebug = configMap["debug"];
+	}
+	pipe = configMap.find("outputFile");
+	if(pipe != configMap.end())
+		outputFile = configMap["outputFile"].c_str();
+	
+	ut = utils(strDebug, outputFile);
+	
+	pipe = configMap.find("dimensions");
 	if(pipe != configMap.end())
 		dim = std::atoi(configMap["dimensions"].c_str());
-	else return false;
-	
-	pipe = configMap.find("debug");
-	if(pipe != configMap.end())
-		debug = std::atoi(configMap["debug"].c_str());
 	else return false;
 	
 	pipe = configMap.find("epsilon");

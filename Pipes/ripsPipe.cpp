@@ -44,13 +44,25 @@ pipePacket ripsPipe::runPipe(pipePacket inData){
 
 // configPipe -> configure the function settings of this pipeline segment
 bool ripsPipe::configPipe(std::map<std::string, std::string> configMap){
+	std::string strDebug;
 	
-	auto pipe = configMap.find("dimensions");
+	auto pipe = configMap.find("debug");
+	if(pipe != configMap.end()){
+		debug = std::atoi(configMap["debug"].c_str());
+		strDebug = configMap["debug"];
+	}
+	pipe = configMap.find("outputFile");
+	if(pipe != configMap.end())
+		outputFile = configMap["outputFile"].c_str();
+	
+	ut = utils(strDebug, outputFile);
+	
+	pipe = configMap.find("dimensions");
 	if(pipe != configMap.end()){
 		dim = std::atoi(configMap["dimensions"].c_str());
 	}
 	
-	ut.writeDebug("ripsPipe","Configured with parameters { dim: " + std::to_string(dim) + "}");
+	ut.writeDebug("ripsPipe","Configured with parameters { dim: " + std::to_string(dim) + " , debug: " + strDebug + ", outputFile: " + outputFile + "}");
 	
 	return true;
 }

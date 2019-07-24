@@ -11,8 +11,8 @@ class basePipe {
 	utils ut;
 	std::string pipeType;
 	int debug;
+	std::string outputFile;
     basePipe(){};
-    basePipe(std::map<std::string, std::string> argDict);
     basePipe* newPipe(const std::string&);
     pipePacket runPipeWrapper(pipePacket);
 	virtual void outputData(pipePacket);
