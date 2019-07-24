@@ -67,6 +67,8 @@ bool slidingWindow::configPipe(std::map<std::string, std::string> configMap){
 	}
 	else return false;
 	
+	ut.writeDebug("slidingWindow","Configured with parameters { dim: " + configMap["dimensions"] + ", eps: " + configMap["epsilon"] + ", debug: " + strDebug + ", outputFile: " + outputFile + " }");
+	
 	return true;
 }
 

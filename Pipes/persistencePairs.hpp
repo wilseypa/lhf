@@ -21,6 +21,7 @@ class persistencePairs : public basePipe {
 		double death = -1;
 		std::set<unsigned> simplex;
 	};
+	bool alterPipe = false;
 	
 	std::vector<tArrayEntry_t> tArray;
 	

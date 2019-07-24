@@ -68,6 +68,8 @@ bool upscalePipe::configPipe(std::map<std::string, std::string> configMap){
 	
 	ut = utils(strDebug, outputFile);
 	
+	ut.writeDebug("upscale","Configured with parameters { debug: " + strDebug + ", outputFile: " + outputFile + " }");
+	
 	return true;
 }
 

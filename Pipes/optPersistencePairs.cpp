@@ -489,7 +489,7 @@ std::vector<std::vector<unsigned>> optPersistencePairs::createBoundaryMatrix(std
 	std::chrono::duration<double, std::milli> elapsed = endTime - startTime;
 
 	//Output the time and memory used for this pipeline segment
-	std::cout << "Boundary Matrix (d=" << d << ") created in: " << (elapsed.count()/1000.0) << " seconds (physical time)" << std::endl;
+	ut.writeDebug("optPersistence","Boundary Matrix (d=" + std::to_string(d) + ") created in: " + std::to_string(elapsed.count()/1000.0) + " seconds (physical time)");
 
 	if(debug == 1){
 		std::cout << std::endl << "_____BOUNDARY______" << std::endl;
@@ -713,11 +713,12 @@ pipePacket optPersistencePairs::runPipe(pipePacket inData){
 	std::chrono::duration<double, std::milli> edgeElapsed = edgeEndTime - edgeStartTime;
 	
 	//Output the time and memory used for this pipeline segment
-	std::cout << "Bettis executed in " << (elapsed.count()/1000.0) << " seconds (physical time)" << std::endl;
-	std::cout << "Edges executed in " << (edgeElapsed.count()/1000.0) << " seconds (physical time)" << std::endl;
+	ut.writeDebug("optPersistence", "Bettis executed in " + std::to_string(elapsed.count()/1000.0) + " seconds (physical time)");
+	ut.writeDebug("optPersistence", "Edges executed in " + std::to_string(edgeElapsed.count()/1000.0) + " seconds (physical time)");
 	
 	//Print the bettis	
-	std::cout << bettis << std::endl;
+	if(debug)
+		std::cout << std::endl << bettis << std::endl;
 		
 	inData.bettiOutput = bettis;
 		
@@ -782,6 +783,9 @@ bool optPersistencePairs::configPipe(std::map<std::string, std::string> configMa
 	pipe = configMap.find("complexType");
 	if(pipe != configMap.end() && configMap["complexType"] == "indSimplexTree")
 		alterPipe = true;
+	
+	ut.writeDebug("optPersistence","Configured with parameters { dim: " + configMap["dimensions"] + ", twist: " + twist + ", complexType: " + configMap["complexType"] + ", eps: " + configMap["epsilon"]);
+	ut.writeDebug("optPersistence","\t\t\tdebug: " + strDebug + ", outputFile: " + outputFile + " }");
 	
 	return true;
 }

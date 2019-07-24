@@ -365,6 +365,9 @@ bool boundaryPipe::configPipe(std::map<std::string, std::string> configMap){
 		maxEpsilon = std::atof(configMap["epsilon"].c_str());
 	else return false;
 	
+	ut.writeDebug("boundary","Configured with parameters { dim: " + configMap["dimensions"] + ", eps: " + configMap["epsilon"] + ", debug: " + strDebug + ", outputFile: " + outputFile + " }");
+	
+	
 	return true;
 }
 

@@ -158,7 +158,7 @@ std::set<unsigned> persistencePairs::createBoundaryMatrix(std::vector<std::vecto
 		std::chrono::duration<double, std::milli> elapsed = endTime - startTime;
 	
 		//Output the time and memory used for this pipeline segment
-		std::cout << "GetRankNull calculated for dim " << d << " executed in " << (elapsed.count()/1000.0) << " seconds (physical time)" << std::endl;
+		ut.writeDebug("persistence","GetRankNull calculated for dim " + std::to_string(d) + " executed in " + std::to_string(elapsed.count()/1000.0) + " seconds (physical time)");
 	
 		
 	}
@@ -266,10 +266,11 @@ pipePacket persistencePairs::runPipe(pipePacket inData){
 	std::chrono::duration<double, std::milli> elapsed = endTime - startTime;
 	
 	//Output the time and memory used for this pipeline segment
-	std::cout << "Bettis executed in " << (elapsed.count()/1000.0) << " seconds (physical time)" << std::endl;
+	ut.writeDebug("persistence","Bettis executed in " + std::to_string(elapsed.count()/1000.0) + " seconds (physical time)");;
 	
-	//Print the bettis	
-	std::cout << bettis << std::endl;
+	//Print the bettis
+	if(debug)
+		std::cout << std::endl << bettis << std::endl;
 		
 	inData.bettiOutput = bettis;
 		
@@ -330,6 +331,13 @@ bool persistencePairs::configPipe(std::map<std::string, std::string> configMap){
 	if(pipe != configMap.end())
 		twist = configMap["twist"];
 	else return false;
+	
+	pipe = configMap.find("complexType");
+	if(pipe != configMap.end() && configMap["complexType"] == "indSimplexTree")
+		alterPipe = true;
+		
+	ut.writeDebug("persistence","Configured with parameters { dim: " + configMap["dimensions"] + ", twist: " + twist + ", complexType: " + configMap["complexType"] + ", eps: " + configMap["epsilon"]);
+	ut.writeDebug("persistence","\t\t\t\tdebug: " + strDebug + ", outputFile: " + outputFile + " }");
 	
 	return true;
 }

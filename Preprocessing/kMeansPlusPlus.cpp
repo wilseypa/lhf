@@ -27,8 +27,6 @@ kMeansPlusPlus::kMeansPlusPlus(){
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
     //Arguments - num_clusters, num_iterations
-
-    utils ut;
     std::vector<std::vector<double>> centroids;     //Storing centroids
     std::vector<int> labels;                        //Storing labels for mapping data to centroids
 
@@ -162,15 +160,29 @@ pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
 
 // configPipe -> configure the function settings of this pipeline segment
 bool kMeansPlusPlus::configPreprocessor(std::map<std::string, std::string> configMap){
-    auto preprocessor = configMap.find("clusters");
-    if(preprocessor !=configMap.end())
+	std::string strDebug;
+	
+	auto pipe = configMap.find("debug");
+	if(pipe != configMap.end()){
+		debug = std::atoi(configMap["debug"].c_str());
+		strDebug = configMap["debug"];
+	}
+	pipe = configMap.find("outputFile");
+	if(pipe != configMap.end())
+		outputFile = configMap["outputFile"].c_str();
+	
+	ut = utils(strDebug, outputFile);
+    pipe = configMap.find("clusters");
+    if(pipe !=configMap.end())
         num_clusters = std::atoi(configMap["clusters"].c_str());
     else return false;
 
-    preprocessor = configMap.find("iterations");
-	if(preprocessor != configMap.end())
+    pipe = configMap.find("iterations");
+	if(pipe != configMap.end())
 		num_iterations = std::atoi(configMap["iterations"].c_str());
 	else return false;
+	
+	ut.writeDebug("StreamKMeans","Configured with parameters { clusters: " + configMap["clusters"] + ", iterations: " + configMap["iterations"] + ", debug: " + strDebug + ", outputFile: " + outputFile + " }");
 
 	return true;
 }

@@ -82,6 +82,8 @@ bool distMatrixPipe::configPipe(std::map<std::string, std::string> configMap){
 		maxEpsilon = std::atof(configMap["epsilon"].c_str());
 	else return false;
 	
+	ut.writeDebug("distMatrixPipe","Configured with parameters { eps: " + configMap["epsilon"] + " , debug: " + strDebug + ", outputFile: " + outputFile + " }");
+	
 	return true;
 }
 

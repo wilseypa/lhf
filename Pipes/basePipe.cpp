@@ -20,7 +20,7 @@
 #include "slidingWindow.hpp"
 
 basePipe* basePipe::newPipe(const std::string &pipeT){
-	ut.writeLog("basePipe","Building pipeline: " + pipeT);
+	ut.writeDebug("basePipe","Building pipeline: " + pipeT);
 	pipeType = pipeT;
 	if(pipeType == "distMatrix"){
 		return new distMatrixPipe();
@@ -91,7 +91,7 @@ pipePacket basePipe::runPipeWrapper(pipePacket inData){
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
 void basePipe::outputData(pipePacket inData){
-	std::cout << "No output function defined for: " << pipeType << std::endl;
+	ut.writeDebug("basePipe","No output function defined for: " + pipeType);
 	
 	std::ofstream file;
 	file.open("output/" + pipeType + "_output.csv");
@@ -111,16 +111,14 @@ void basePipe::outputData(pipePacket inData){
 
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket basePipe::runPipe(pipePacket inData){
-	
-	std::cout << "No run function defined for: " << pipeType << std::endl;
+	ut.writeError("basePipe","No run function defined for: " + pipeType);
 	
 	return inData;
 }	
 
 // configPipe -> configure the function settings of this pipeline segment
 bool basePipe::configPipe(std::map<std::string, std::string> configMap){
-	
-	std::cout << "No configure function defined for: " << pipeType << std::endl;
+	ut.writeDebug("basePipe","No configure function defined for: " + pipeType);
 
 	auto pipe = configMap.find("debug");
 	if(pipe != configMap.end())

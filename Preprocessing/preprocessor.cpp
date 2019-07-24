@@ -18,7 +18,7 @@ preprocessor::preprocessor(){
 }
 
 preprocessor* preprocessor::newPreprocessor(const std::string &procT){
-	std::cout << "Building preprocessor: " << procT << std::endl ;
+	ut.writeDebug("preprocessor","Building preprocessor: " + procT);
 	procName= procT;
 	if(procName == "none"){
 		return new preprocessor();

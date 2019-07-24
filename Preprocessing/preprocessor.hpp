@@ -9,6 +9,8 @@ class preprocessor {
   public:
 	std::string procName;
 	int debug;
+	std::string outputFile;
+	utils ut;
     preprocessor();
     preprocessor* newPreprocessor(const std::string&);
     pipePacket runPreprocessorWrapper(pipePacket inData);

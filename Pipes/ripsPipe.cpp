@@ -62,7 +62,7 @@ bool ripsPipe::configPipe(std::map<std::string, std::string> configMap){
 		dim = std::atoi(configMap["dimensions"].c_str());
 	}
 	
-	ut.writeDebug("ripsPipe","Configured with parameters { dim: " + std::to_string(dim) + " , debug: " + strDebug + ", outputFile: " + outputFile + "}");
+	ut.writeDebug("ripsPipe","Configured with parameters { dim: " + std::to_string(dim) + " , debug: " + strDebug + ", outputFile: " + outputFile + " }");
 	
 	return true;
 }
