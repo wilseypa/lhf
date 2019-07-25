@@ -166,12 +166,11 @@ bool simplexArrayList::find(std::vector<unsigned> vector){
 bool simplexArrayList::deletion(std::vector<unsigned> removalEntry){
 
 	for(auto v = 0; v < weightedGraph[removalEntry.size() - 1].size(); v++){
-		for(auto t = 0; t<removalEntry.size(); t++){
-			if(weightedGraph[removalEntry.size() - 1][v][t] == removalEntry[t]){
-				weightedGraph[removalEntry.size() - 1][v].clear();
-				return true;
+		if(weightedGraph[removalEntry.size() - 1][v].first == removalEntry){
+			weightedGraph[removalEntry.size() - 1][v].first.clear();
+			return true;
 			}
-		}
+		
 	} 
 	return false;  
    
