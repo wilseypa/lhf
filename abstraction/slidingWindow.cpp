@@ -161,7 +161,7 @@ auto nnSearch( const std::vector<double> &refNewPoint, const std::vector<std::ve
                        del);
 
     int nnIndexInWindow = nnIdx[0];  // The index of the point in the window that is nearest to the incoming (query) point.
-    double squaredNNDist = sqrt(dists[0]);  //  The distance to the point in the window that is nearest to the incoming (query) point.
+    double nnDistFromNewPoint = sqrt(dists[0]);  //  The distance to the point in the window that is nearest to the incoming (query) point.
 
     // Clean up.
     delete [] nnIdx;
@@ -169,7 +169,7 @@ auto nnSearch( const std::vector<double> &refNewPoint, const std::vector<std::ve
     delete kdTree;
     annClose();
 
-    return std::tuple(nnIndexInWindow, squaredNNDist);  // Using the template argument deduction feature of C++17.
+    return std::tuple(nnIndexInWindow, nnDistFromNewPoint);  // Using the template argument deduction feature of C++17.
 }
 
 int main()
@@ -249,22 +249,33 @@ int main()
 
                 // Nearest neighbor search for an incoming point by ANN library. Using the structured binding feature of
                 // C++17 to receive multiple values returned by the 'nnSearch' function.
-                auto [nnIndex, sqrdDistToNearestRep] = nnSearch( dataPoint, windowValues );
+                auto [nnIndex, distToNearestRep] = nnSearch( dataPoint, windowValues );
 
 
-                // If the squared distance from the new incoming point to its nearest point in the window is
-                // outside the range [minSqrdNNdist, maxSqrdNNdist]:
-                if ( (sqrdDistToNearestRep < minSqrdNNdist) || (sqrdDistToNearestRep > maxSqrdNNdist) ) {
+                // If the distance from the new incoming point to its nearest point in the window is
+                // outside the range [minNNdist, maxNNdist]:
+                if ( (distToNearestRep < minNNdist) || (distToNearestRep > maxNNdist) ) {
                     updateCounter++;
-                    std::cout << updateCounter << ": " << minSqrdNNdist << ", " << maxSqrdNNdist << '\n';
+                    std::cout << updateCounter << ": " << minNNdist << ", " << maxNNdist << '\n';
+
+                    if ( windowKeys.size() > windowMaxSize ) {
+                        int keyToBeDeleted = dynamicKeyContainer[0];
+                        dynamicKeyContainer.erase( dynamicKeyContainer.begin() );  // delete the point from the front of the window.
+
+                        // https://thispointer.com/c-how-to-find-an-element-in-vector-and-get-its-index/
+                        std::vector<int>::iterator iter = std::find( windowKeys.begin(), windowKeys.end(), keyToBeDeleted );
+                        int indexToBeDeleted = std::distance( windowKeys.begin(), iter );
+
+                        windowKeys.erase( windowKeys.begin() + indexToBeDeleted );
+                        windowValues.erase( windowValues.begin() + indexToBeDeleted );
+
+                    }
+
                     window.push_back(dataPoint);  // add the incoming point to the back of the window.
                     numPointsAddedToWindow++;
 
                     // If the number of points in the window exceeds its maximum allowed size:
-                    if ( window.size() > windowMaxSize ) {
-                        std::vector<double> repToBeDeleted = window[0];
-                        window.erase(window.begin());  // delete the point from the front of the window.
-                    }
+
                 }
                 else {  // Discard the incoming point, and move its representative (nearest neighbor) to the back of the window.
                     auto representative = window.begin() + nnIndex;  // Iterator pointing to the representative of the incoming point.
