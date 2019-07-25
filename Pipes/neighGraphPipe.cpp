@@ -72,10 +72,10 @@ void neighGraphPipe::outputData(pipePacket inData){
 	
 	if(inData.complex->simplexType == "simplexArrayList"){
 		for(auto a : inData.complex->weightedGraph[1]){
-			for(auto d : a){
+			for(auto d : a.first){
 				file << d << ",";
 			}
-			file << "\n";
+			file << a.second << "\n";
 		}
 	}else{
 		auto edges = inData.complex->getAllEdges(5);
