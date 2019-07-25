@@ -76,10 +76,10 @@ void ripsPipe::outputData(pipePacket inData){
 		file.open("output/" + pipeType + "_output.csv");
 		for (int i = 0; i < inData.complex->weightedGraph.size(); i++){
 			for(auto a : inData.complex->weightedGraph[i]){
-				for(auto d : a){
+				for(auto d : a.first){
 					file << d << ",";
 				}
-				file << "\n";
+				file << a.second << "\n";
 			}
 		}
 		

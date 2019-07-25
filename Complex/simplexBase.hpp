@@ -82,7 +82,7 @@ class simplexBase {
 	double maxEpsilon;
 	int maxDimension;
 	std::vector<std::vector<double>> distMatrix;
-	std::vector<std::vector<std::vector<unsigned>>> weightedGraph;
+	std::vector<std::vector<std::pair<std::vector<unsigned>, double>>> weightedGraph;
   
 	simplexBase();
 	simplexBase(double, int);

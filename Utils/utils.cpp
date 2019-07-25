@@ -357,6 +357,8 @@ bool utils::sortBySecond(const std::pair<std::set<unsigned>, double> &a, const s
 }
 
 
+
+
 //Iteratively build subsets (faces) of the simplex set
 std::vector<std::set<unsigned>> utils::getSubsets(std::set<unsigned> set){
 	std::vector<std::set<unsigned>> subset;

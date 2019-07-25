@@ -57,7 +57,7 @@ pipePacket distMatrixPipe::runPipe(pipePacket inData){
 	inData.weights.insert(maxEpsilon);
 	//std::sort(inData.weights.begin(), inData.weights.end(), std::greater<>());
 	
-	ut.writeLog("distMatrix", "\tDist Matrix Size: " + std::to_string(distMatrix.size()) + " x " + std::to_string(distMatrix.size()));
+	ut.writeDebug 	("distMatrix", "\tDist Matrix Size: " + std::to_string(distMatrix.size()) + " x " + std::to_string(distMatrix.size()));
 	return inData;
 }
 

@@ -10,6 +10,7 @@ class simplexArrayList : public simplexBase{
 	std::string stats;
   public:
 	simplexArrayList(double, std::vector<std::vector<double>>);
+	double findWeight(std::vector<unsigned>);
 		
 	//virtual interface functions
 	double getSize();
