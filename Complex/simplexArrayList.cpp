@@ -172,8 +172,8 @@ bool simplexArrayList::deletion(std::vector<unsigned> removalEntry){
 				return true;
 			}
 		}
-	
-	}   
+	} 
+	return false;  
    
 }  
 
