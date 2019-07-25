@@ -34,9 +34,7 @@ void simplexArrayList::insert(std::vector<double> &vector){
 	//Create a temporary pair to hold the weight and 2-D edge
 	//	e.g.  1.82 , {1, 5} would represent an edge between
 	//		points 1 and 5 with a weight of 1.82
-	//
-	//
-	
+		
 	if(vector.empty())
 		return;
 	
@@ -50,7 +48,7 @@ void simplexArrayList::insert(std::vector<double> &vector){
 	//		this will take a comparison to every existing point
 	else {
 		
-		auto i = weightedGraph[0].size();
+		unsigned i = weightedGraph[0].size();
 		
 		//Iterate through each existing to compare to new insertion
 		for(unsigned j = 0; j < weightedGraph[0].size(); j++){
@@ -151,18 +149,13 @@ std::vector<std::vector<std::pair<std::set<unsigned>, double>>> simplexArrayList
 // Search function to find a specific vector in the simplexArrayList
 // weightedGraph[d][v][p] dimension d stores vectors v of point elements p of simplexes formed
 bool simplexArrayList::find(std::vector<unsigned> vector){
-	
-	for(auto d = 0; d = weightedGraph.size()-1; d++){
-		for(auto v = 0; v = weightedGraph[d].size(); v++){
-			for(auto p = 0; p = weightedGraph[d][v].size(); p++){
-				if(weightedGraph[d][v][p] = vector[p]){
-					return true;
-				}
-
-			}
-
+	//Search the weighted graph from the size of the vector
+	for(auto v = 0; v < weightedGraph[vector.size() - 1].size(); v++){
+		//ut.print1DVector(weightedGraph[vector.size() - 1][v]);
+		
+		if(weightedGraph[vector.size() - 1][v] == vector){
+			return true;
 		}
-
 	}
 	return false;
 }
@@ -190,8 +183,12 @@ int simplexArrayList::vertexCount(){
 //		Sequence: 0 , 1 , 3 , 6 , 10 , 15
 //		(AKA very inefficient)
 //
+//	Do this by comparing each simplex to subsequent simplices; if they intersect
+//		with a face, search for the remaining faces
 //
-void simplexArrayList::expandDimensions(int dim){
+//
+void simplexArrayList::expandDimensions(int dim){	
+	
 	std::vector<unsigned> tempVect;	
 	
 	
@@ -201,26 +198,61 @@ void simplexArrayList::expandDimensions(int dim){
 		//Store d-dimensional simplices
 		std::vector<std::vector<unsigned>> test;
 		
-		//Iterate through each element in the previous dimension's edges
+		//Iterate through each element in the current dimension's edges
 		for(unsigned j = 0; j < weightedGraph[d-1].size(); j++){
+			
 			//First search for intersections of the current element
 			for(unsigned t = j+1; t < weightedGraph[d-1].size(); t++){
-				
+					
+				//Symmetric Diff will give us the 
 				auto simp = ut.symmetricDiff(weightedGraph[d-1][j], weightedGraph[d-1][t],true);
+				std::vector<unsigned> totalVector = simp;
+				
+				
 				//This point intersects; potential candidate for a higher-level simplice
-				//std::cout << "d";
-				if (simp.size() == d){
-					//std::cout << "t" << std::endl;
-					for(int k = t+1; k < weightedGraph[d-1].size(); k++){
+				//	Note - this is supposed to be 2, and will always be 2
+				if (simp.size() == 2){
+					
+					bool create = true;
+					auto m = ut.setIntersect(weightedGraph[d-1][j],weightedGraph[d-1][t],true);
+					
+					//Case that we have a single vertex as the intersect
+					if(m.size() == 1){
+						std::vector<unsigned> searchVector = simp;
 						
-						if(weightedGraph[d-1][k] == simp){
-							simp = ut.setUnion(weightedGraph[d-1][j], weightedGraph[d-1][t],true);
+						sort(searchVector.begin(), searchVector.end());
+						totalVector = searchVector;
+						for(auto pt : m)
+							totalVector.push_back(pt);
+				
+						sort(totalVector.begin(), totalVector.end());
+						if(!find(searchVector))
+							create = false;
+						
+					
+					} else if(m.size() > 1){
+						
+						for(auto z : ut.getSubsets(m)){
 							
-							if(std::find(weightedGraph[d].begin(), weightedGraph[d].end(), simp) == weightedGraph[d].end()){
-								if(weightedGraph.size() == d)
-									weightedGraph.push_back({simp});
-								else
-									weightedGraph[d].push_back(simp);
+							std::vector<unsigned> searchVector = simp;
+							for(unsigned pt : z){
+								searchVector.push_back(pt);
+							}
+							totalVector = ut.setUnion(totalVector, searchVector, true);
+							
+							if(!find(searchVector)){
+								create = false;
+								break;
+							}
+						}
+					}
+					
+					if(create){
+						if(weightedGraph.size() == d)
+							weightedGraph.push_back({totalVector});
+						else{
+							if(std::find(weightedGraph[d].begin(), weightedGraph[d].end(), totalVector) == weightedGraph[d].end()){
+								weightedGraph[d].push_back(totalVector);
 							}
 						}
 					}

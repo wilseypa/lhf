@@ -355,3 +355,66 @@ void utils::writeFile(std::string fullMessage){
 bool utils::sortBySecond(const std::pair<std::set<unsigned>, double> &a, const std::pair<std::set<unsigned>, double> &b){
 	return (a.second < b.second);
 }
+
+
+//Iteratively build subsets (faces) of the simplex set
+std::vector<std::set<unsigned>> utils::getSubsets(std::set<unsigned> set){
+	std::vector<std::set<unsigned>> subset;
+	std::set<unsigned> empty;
+	subset.push_back(empty);
+
+	//For each set in the 
+	for(auto i = set.begin(); i!= set.end(); i++){
+		std::vector<std::set<unsigned>> subsetTemp = subset;
+		unsigned entry = *i;
+
+		for (unsigned j = 0; j < subsetTemp.size(); j++){
+			subsetTemp[j].insert(entry);
+		}
+		
+		unsigned z = 0;
+		for (auto j = subsetTemp.begin(); j != subsetTemp.end(); j++){
+			subset.push_back(*j);
+			
+		}
+	}
+	
+	std::vector<std::set<unsigned>> retSubset;
+	
+	for(std::set<unsigned> z : subset){
+		if(z.size() == set.size() - 1)
+			retSubset.push_back(z);
+	}
+	return retSubset;
+}
+
+//Iteratively build subsets (faces) of the simplex set
+std::vector<std::vector<unsigned>> utils::getSubsets(std::vector<unsigned> set){
+	std::vector<std::vector<unsigned>> subset;
+	std::vector<unsigned> empty;
+	subset.push_back(empty);
+
+	//For each set in the 
+	for(auto i = set.begin(); i!= set.end(); i++){
+		std::vector<std::vector<unsigned>> subsetTemp = subset;
+		unsigned entry = *i;
+
+		for (unsigned j = 0; j < subsetTemp.size(); j++){
+			subsetTemp[j].push_back(entry);
+		}
+		
+		unsigned z = 0;
+		for (auto j = subsetTemp.begin(); j != subsetTemp.end(); j++){
+			subset.push_back(*j);
+			
+		}
+	}
+	
+	std::vector<std::vector<unsigned>> retSubset;
+	
+	for(std::vector<unsigned> z : subset){
+		if(z.size() == set.size() - 1)
+			retSubset.push_back(z);
+	}
+	return retSubset;
+}
