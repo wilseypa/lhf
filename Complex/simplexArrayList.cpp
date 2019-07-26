@@ -163,18 +163,6 @@ bool simplexArrayList::find(std::vector<unsigned> vector){
 	}
 	return false;
 }
-bool simplexArrayList::deletion(std::vector<unsigned> removalEntry){
-
-	for(auto v = 0; v < weightedGraph[removalEntry.size() - 1].size(); v++){
-		if(weightedGraph[removalEntry.size() - 1][v].first == removalEntry){
-			weightedGraph[removalEntry.size() - 1][v].first.clear();
-			return true;
-			}
-		
-	} 
-	return false;  
-   
-}  
 
 // Search function to find a specific vector in the simplexArrayList
 // weightedGraph[d][v][p] dimension d stores vectors v of point elements p of simplexes formed
@@ -398,6 +386,7 @@ bool simplexArrayList::deletion(std::vector<unsigned> vector){
 		
 		if(weightedGraph[vector.size() - 1][v].first == vector){
 			weightedGraph[vector.size() - 1].erase(weightedGraph[vector.size() - 1].begin() + v);
+			return true;
 		}
 	}
 	return false;
