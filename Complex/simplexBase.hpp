@@ -85,10 +85,11 @@ class simplexBase {
 	std::vector<std::vector<std::pair<std::vector<unsigned>, double>>> weightedGraph;
   
 	simplexBase();
-	simplexBase(double, int);
 	simplexBase(std::map<std::string, std::string>);
+	simplexBase(double, int);
+	void setConfig(std::map<std::string, std::string>);
 	void setDistanceMatrix(std::vector<std::vector<double>> _distMatrix);
-	simplexBase* newSimplex(const std::string &simplexT);
+	simplexBase* newSimplex(const std::string &simplexT, std::map<std::string, std::string> configMap);
 	
 	//virtual interface functions
 	virtual double getSize();

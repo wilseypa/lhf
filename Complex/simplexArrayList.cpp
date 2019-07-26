@@ -4,9 +4,10 @@
 #include "simplexArrayList.hpp"
 
 // simplexArrayList constructor, currently no needed information for the class constructor
-simplexArrayList::simplexArrayList(double maxE, std::vector<std::vector<double>> _distMatrix){
+simplexArrayList::simplexArrayList(double maxE, double maxD, std::vector<std::vector<double>> _distMatrix){
 	simplexType = "simplexArrayList";
 	maxEpsilon = maxE;
+	maxDimension = maxD;
 	distMatrix = _distMatrix;
 	indexCount = 0;
 }
@@ -53,26 +54,28 @@ void simplexArrayList::insert(std::vector<double> &vector){
 		
 		unsigned i = weightedGraph[0].size();
 		vertex = {i};
-		
-		//Iterate through each existing to compare to new insertion
-		for(unsigned j = 0; j < weightedGraph[0].size(); j++){
-			
-			auto dist = distMatrix[j][i];
-			
-			//Filter distances <= maxEpsilon, > 0 (same point)
-			if(dist <= maxEpsilon){
+		if(maxDimension > 0){
+			//Iterate through each existing to compare to new insertion
+			for(unsigned j = 0; j < weightedGraph[0].size(); j++){
 				
-				//Create an Edge vector (pair) 
-				//NOTE: do this in opposite order so pairs are ordered! -> {J, I}
-				std::vector<unsigned> edge = {j,i};
+				auto dist = distMatrix[j][i];
 				
-				if(weightedGraph.size() == 1)
-					weightedGraph.push_back({std::make_pair(edge, dist)});
-				else if(std::find(weightedGraph[1].begin(), weightedGraph[1].end(), std::make_pair(edge, dist)) == weightedGraph[1].end())
-					weightedGraph[1].push_back(std::make_pair(edge,dist));
+				//Filter distances <= maxEpsilon, > 0 (same point)
+				if(dist <= maxEpsilon){
+					
+					//Create an Edge vector (pair) 
+					//NOTE: do this in opposite order so pairs are ordered! -> {J, I}
+					std::vector<unsigned> edge = {j,i};
+					
+					if(weightedGraph.size() == 1)
+						weightedGraph.push_back({std::make_pair(edge, dist)});
+					else if(std::find(weightedGraph[1].begin(), weightedGraph[1].end(), std::make_pair(edge, dist)) == weightedGraph[1].end())
+						weightedGraph[1].push_back(std::make_pair(edge,dist));
+				}
 			}
 		}
 		weightedGraph[0].push_back(std::make_pair(vertex,0.0));
+		
 	}	
 	
 	return;
@@ -209,9 +212,12 @@ void simplexArrayList::expandDimensions(int dim){
 	
 	std::vector<unsigned> tempVect;	
 	
-	
 	//Iterate up to max dimension of simplex, starting at dim 2 (edges)
 	for(unsigned d = 2; d <= dim; d++){
+		
+		//Check if we need to break from expanding dimensions (no more edges)
+		if(weightedGraph.size() < d)
+			break;
 		
 		//Store d-dimensional simplices
 		std::vector<std::vector<unsigned>> test;
@@ -304,6 +310,7 @@ void simplexArrayList::reduceComplex(){
 	
 	
 	for(auto i = weightedGraph.size()-1; i > 1; i--){
+		
 		std::vector<std::vector<unsigned>> removals;
 		std::vector<std::vector<unsigned>> checked;
 		std::vector<unsigned> currentSimplex;

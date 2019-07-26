@@ -71,11 +71,13 @@ void neighGraphPipe::outputData(pipePacket inData){
 	std::ofstream file ("output/" + pipeType + "_output.csv");
 	
 	if(inData.complex->simplexType == "simplexArrayList"){
-		for(auto a : inData.complex->weightedGraph[1]){
-			for(auto d : a.first){
-				file << d << ",";
+		if(inData.complex->weightedGraph.size() > 1){
+			for(auto a : inData.complex->weightedGraph[1]){
+				for(auto d : a.first){
+					file << d << ",";
+				}
+				file << a.second << "\n";
 			}
-			file << a.second << "\n";
 		}
 	}else{
 		auto edges = inData.complex->getAllEdges(5);

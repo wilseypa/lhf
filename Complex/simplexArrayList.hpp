@@ -9,7 +9,7 @@ class simplexArrayList : public simplexBase{
 	int indexCount;
 	std::string stats;
   public:
-	simplexArrayList(double, std::vector<std::vector<double>>);
+	simplexArrayList(double, double, std::vector<std::vector<double>>);
 	double findWeight(std::vector<unsigned>);
 	std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<unsigned>>> recurseReduce(std::pair<std::vector<unsigned>,double>, std::vector<std::vector<unsigned>>, std::vector<std::vector<unsigned>>);
 

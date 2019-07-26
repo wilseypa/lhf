@@ -7,11 +7,19 @@
 #include "indSimplexTree.hpp"
 
 simplexBase::simplexBase(){return;}
+
+simplexBase::simplexBase(std::map<std::string, std::string> configMap){
+	setConfig(configMap);
+	
+	return;
+}
+
 simplexBase::simplexBase(double maxE, int maxDim){
 	maxEpsilon = maxE;	
 	maxDimension = maxDim;	
 }
-simplexBase::simplexBase(std::map<std::string, std::string> configMap){
+
+void simplexBase::setConfig(std::map<std::string, std::string> configMap){
 	std::string debug;
 	std::string outputFile;
 	
@@ -21,11 +29,21 @@ simplexBase::simplexBase(std::map<std::string, std::string> configMap){
 	pipe = configMap.find("outputFile");
 	if(pipe != configMap.end())
 		outputFile = std::atoi(configMap["outputFile"].c_str());
+	pipe = configMap.find("dimensions");
+	if(pipe != configMap.end())
+		maxDimension = std::atoi(configMap["dimensions"].c_str());
+	else return;
+	pipe = configMap.find("epsilon");
+	if(pipe != configMap.end())
+		maxEpsilon = std::atof(configMap["epsilon"].c_str());
+	else return;	
 	
+	std::cout << "Setting utils for : " << simplexType << std::endl;
 	ut = utils(debug, outputFile);
 	
 	return;
 }
+
 
 void simplexBase::setDistanceMatrix(std::vector<std::vector<double>> _distMatrix){
 	distMatrix = _distMatrix;
@@ -33,15 +51,21 @@ void simplexBase::setDistanceMatrix(std::vector<std::vector<double>> _distMatrix
 }
 
 // simplexTree constructor, currently no needed information for the class constructor
-simplexBase* simplexBase::newSimplex(const std::string &simplexT){
+simplexBase* simplexBase::newSimplex(const std::string &simplexT, std::map<std::string, std::string> configMap){
 	simplexType = simplexT;
 	
 	if(simplexType == "simplexTree"){
-		return new simplexTree(maxEpsilon, distMatrix, maxDimension);
+		auto t = new simplexTree(maxEpsilon, distMatrix, maxDimension);
+		t->setConfig(configMap);
+		return t;
 	} else if (simplexType == "simplexArrayList"){	
-		return new simplexArrayList(maxEpsilon, distMatrix);
+		auto t = new simplexArrayList(maxEpsilon, maxDimension, distMatrix);
+		t->setConfig(configMap);
+		return t;
 	} else if (simplexType == "indSimplexTree"){
-		return new indSimplexTree(maxEpsilon, distMatrix, maxDimension);
+		auto t = new indSimplexTree(maxEpsilon, distMatrix, maxDimension);
+		t->setConfig(configMap);
+		return t;
 	}
 	return 0;
 }

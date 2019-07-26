@@ -8,6 +8,7 @@ class pipePacket {
   private:
   public:
 	pipePacket(const std::string &, const double, const int);
+	pipePacket(const std::map<std::string, std::string>, const std::string&);
 	std::string stats;
   
 	std::vector<std::vector<double>> originalData;
