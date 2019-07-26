@@ -30,13 +30,13 @@ pipePacket ripsPipe::runPipe(pipePacket inData){
 	
 	inData.complex->expandDimensions(dim);
 		
-	ut.writeLog("ripsPipe","Expanded Complex Size: " + std::to_string(inData.complex->simplexCount()));
-	ut.writeLog("ripsPipe", "Expanded Complex Mem: " + std::to_string(inData.complex->getSize()));
+	ut.writeDebug("ripsPipe","Expanded Complex Size: " + std::to_string(inData.complex->simplexCount()));
+	ut.writeDebug("ripsPipe", "Expanded Complex Mem: " + std::to_string(inData.complex->getSize()));
 	
 	inData.complex->reduceComplex();
 	
-	ut.writeLog("ripsPipe","Reduced Complex Size: " + std::to_string(inData.complex->simplexCount()));
-	ut.writeLog("ripsPipe", "Reduced Complex Mem: " + std::to_string(inData.complex->getSize()));
+	ut.writeDebug("ripsPipe","Reduced Complex Size: " + std::to_string(inData.complex->simplexCount()));
+	ut.writeDebug("ripsPipe", "Reduced Complex Mem: " + std::to_string(inData.complex->getSize()));
 
 	return inData;
 }

@@ -11,6 +11,8 @@ class simplexArrayList : public simplexBase{
   public:
 	simplexArrayList(double, std::vector<std::vector<double>>);
 	double findWeight(std::vector<unsigned>);
+	std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<unsigned>>> recurseReduce(std::pair<std::vector<unsigned>,double>, std::vector<std::vector<unsigned>>, std::vector<std::vector<unsigned>>);
+
 		
 	//virtual interface functions
 	double getSize();

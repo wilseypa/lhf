@@ -225,7 +225,7 @@ void simplexArrayList::expandDimensions(int dim){
 				//Symmetric Diff will give us the 
 				auto simp = ut.symmetricDiff(weightedGraph[d-1][j].first, weightedGraph[d-1][t].first,true);
 				std::vector<unsigned> totalVector = simp;
-				double maxWeight = -1;
+				double maxWeight = weightedGraph[d-1][j].second > weightedGraph[d-1][t].second ? weightedGraph[d-1][j].second : weightedGraph[d-1][t].second;
 				
 				
 				//This point intersects; potential candidate for a higher-level simplice
@@ -299,7 +299,94 @@ void simplexArrayList::expandDimensions(int dim){
 
 void simplexArrayList::reduceComplex(){
 	
+	//Start with the largest dimension
+	ut.writeDebug("simplexArrayList","Reducing complex, starting simplex count: " + std::to_string(simplexCount()));
+	
+	
+	for(auto i = weightedGraph.size()-1; i > 1; i--){
+		std::vector<std::vector<unsigned>> removals;
+		std::vector<std::vector<unsigned>> checked;
+		std::vector<unsigned> currentSimplex;
+
+		while(checked.size() != weightedGraph[i].size()){
+			for(auto l : weightedGraph[i]){
+				if(std::find(checked.begin(),checked.end(),l.first) == checked.end()){
+					auto ret = recurseReduce(l, removals, checked);
+					removals = ret.first;
+					checked = ret.second;
+				}
+			}
+		}	
+		
+		//Remove the removals
+		for(auto rem : removals){
+			deletion(rem);
+		}
+			
+	}
+	
+	ut.writeDebug("simplexArrayList","Finished reducing complex, reduced simplex count: " + std::to_string(simplexCount()));
+	
 	return;
 }
 
+std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<unsigned>>> simplexArrayList::recurseReduce(std::pair<std::vector<unsigned>,double> simplex, std::vector<std::vector<unsigned>> removals, std::vector<std::vector<unsigned>> checked){
+	checked.push_back(simplex.first);
+	auto subsets = ut.getSubsets(simplex.first);
+	std::vector<unsigned> maxFace;
+	
+	bool canRemove = true;
+	
+	//Look at each face
+	for(auto face : subsets){
+		
+		//Check if the face is shared; if so, recurse
+		for(auto simp : weightedGraph[simplex.first.size() - 1]){
+			
+			if(simp != simplex && std::find(checked.begin(), checked.end(), simp.first) == checked.end()){
+				auto sDiff = ut.symmetricDiff(simp.first, face,true);
 
+				//This point intersects;
+				if (sDiff.size() == 1){
+					auto ret = recurseReduce(simp, removals, checked);
+					removals = ret.first;
+					checked = ret.second;
+				
+					//Check if the simplex was not removed
+					if(std::find(removals.begin(), removals.end(), simp.first) == removals.end()){
+						canRemove = false;
+						break;
+					}
+				}
+				
+			}
+		}
+		
+		//Check if the face is the max face
+		double wt = -1;
+		if((wt = findWeight(face)) == simplex.second){
+			maxFace = face;
+		}
+		
+	}	
+	
+	if(canRemove){
+		removals.push_back(simplex.first);
+		removals.push_back(maxFace);
+	}	
+	
+	return std::make_pair(removals, checked);
+	
+}
+
+bool simplexArrayList::deletion(std::vector<unsigned> vector){
+	//Search the weighted graph from the size of the vector
+	for(auto v = 0; v < weightedGraph[vector.size() - 1].size(); v++){
+		//ut.print1DVector(weightedGraph[vector.size() - 1][v]);
+		
+		if(weightedGraph[vector.size() - 1][v].first == vector){
+			weightedGraph[vector.size() - 1].erase(weightedGraph[vector.size() - 1].begin() + v);
+		}
+	}
+	return false;
+}
