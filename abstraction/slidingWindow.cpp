@@ -9,7 +9,7 @@
 #include <map>
 #include <cmath>
 #include <ANN/ANN.h>
-#include "utils.hpp"
+#include "Utils/utils.hpp"
 
 // The next two functions are for splitting a string by a delimiter. They are
 // used to split each row of the data by the appropriate delimiter.
@@ -42,6 +42,7 @@ std::vector<double> stringVectorToDoubleVector( const std::vector<std::string>& 
     return doubleVector;
 }
 
+/*
 // https://stackoverflow.com/questions/110157/how-to-retrieve-all-keys-or-values-from-a-stdmap-and-put-them-into-a-vector
 std::vector<std::vector<double>> retrieveValuesFromMap( const std::map<int, std::vector<double>> &refWindow ) {
     std::vector<std::vector<double>> windowVals;
@@ -51,13 +52,14 @@ std::vector<std::vector<double>> retrieveValuesFromMap( const std::map<int, std:
 
     return windowVals;
 }
+*/
 
-auto populateDistMatrix( const std::vector<std::vector<double>> &refWindowValues, std::vector<std::vector<double>> &refDistMat ) {
+auto populateDistMatrix( const std::vector<std::vector<double>> &refWindowValues, std::vector<std::vector<double>> &refDistMat, std::vector<double> &refNNDists ) {
     utils ut;
-    std::vector<double> nnDists;
-    for(unsigned i = 0; i < refWindowValues.size(); i++) {
+    // std::vector<double> nnDists;
+    for(unsigned int i = 0; i < refWindowValues.size(); i++) {
         std::vector<double> distsFromCurrVect;
-        for(unsigned j = 0; j < refWindowValues.size(); j++) {
+        for(unsigned int j = 0; j < refWindowValues.size(); j++) {
             if (j < i) {
                 distsFromCurrVect.push_back( refDistMat[j][i] );
             } else if (j > i) {
@@ -67,14 +69,38 @@ auto populateDistMatrix( const std::vector<std::vector<double>> &refWindowValues
             }
         }
         auto nnDistFromCurrVect = *std::min_element( distsFromCurrVect.begin(), distsFromCurrVect.end() );
-        nnDists.push_back( nnDistFromCurrVect );
+        refNNDists.push_back( nnDistFromCurrVect );
     }
-    auto nnDistsRange = std::minmax_element( nnDists.begin(), nnDists.end() );
+    auto nnDistsRange = std::minmax_element( refNNDists.begin(), refNNDists.end() );
     return std::tuple( *nnDistsRange.first, *nnDistsRange.second );
 }
 
-std::vector<std::vector<double>> addToDistMatrix( std::vector<double> distancesToReps, std::vector<std::vector<double>> distMatrix ) {}
+void deleteFromDistMatrix( int indexToBeDeleted, std::vector<std::vector<double>> &refDistMat, std::vector<double> &refNNDists ) {
+    refDistMat.erase( refDistMat.begin() + indexToBeDeleted );
+    for(unsigned int i = 0; i < refDistMat.size(); i++)
+        refDistMat[i].erase( refDistMat[i].begin() + indexToBeDeleted );
 
+    refNNDists.erase( refNNDists.begin() + indexToBeDeleted );
+    // auto nnDistsRange = std::minmax_element( refNNDists.begin(), refNNDists.end() );
+    // return std::tuple( *nnDistsRange.first, *nnDistsRange.second );
+}
+
+auto addToDistMatrix( std::vector<std::vector<double>> &refDistMat, std::vector<double> &refNNDists, const std::vector<double> &refDistsFromNewPoint) {
+    for(unsigned int i = 0; i < refDistMat.size(); i++)
+        refDistMat[i].push_back( refDistsFromNewPoint[i] );
+
+    int newSize = refDistMat[0].size();
+    std::vector<double> newRow(newSize, 0);
+    refDistMat.push_back( newRow );
+
+    auto nnDistFromNewPoint = *std::min_element( refDistsFromNewPoint.begin(), refDistsFromNewPoint.end() );
+    refNNDists.push_back( nnDistFromNewPoint );
+
+    auto nnDistsRange = std::minmax_element( refNNDists.begin(), refNNDists.end() );
+    return std::tuple( *nnDistsRange.first, *nnDistsRange.second );
+}
+
+/*
 // Find the minimum and maximum squared nearest neighbor distances within the window. These distances are computed
 // periodically, for example, with the addition of every 50 new data points to the window. For every point in the
 // window, compute and store the squared distance to its 2nd nearest neighbor (since every query point is within the
@@ -104,7 +130,7 @@ auto nnDistsWindow( std::vector<std::vector<double>> window ) {
                             nPts,
                             dim);
 
-    for (unsigned int i = 0; i < (unsigned)nPts; i++) {  // Iterate through each data point in the window.
+    for(unsigned int i = 0; i < (unsigned)nPts; i++) {  // Iterate through each data point in the window.
         ANNpoint queryPt = &window[i][0];  // Each data point becomes a query point.
         kdTree->annkSearch(
                            queryPt,
@@ -126,9 +152,10 @@ auto nnDistsWindow( std::vector<std::vector<double>> window ) {
     auto sqrdNNdistsRange = std::minmax_element( squaredNNdist.begin(), squaredNNdist.end() );
     return std::tuple( *sqrdNNdistsRange.first, *sqrdNNdistsRange.second );
 }
+*/
 
 // Find the nearest neighbor of a new data point in the window. Return the index of the nearest neighbor
-// and the squared nearest neighbor distance.
+// and the nearest neighbor distance.
 auto nnSearch( const std::vector<double> &refNewPoint, const std::vector<std::vector<double>> &refWindowValues ) {
     int k = refWindowValues.size();  // The number of near neighbors to search for.
     int dim = refNewPoint.size();
@@ -160,16 +187,16 @@ auto nnSearch( const std::vector<double> &refNewPoint, const std::vector<std::ve
                        dists,
                        del);
 
-    int nnIndexInWindow = nnIdx[0];  // The index of the point in the window that is nearest to the incoming (query) point.
-    double nnDistFromNewPoint = sqrt(dists[0]);  //  The distance to the point in the window that is nearest to the incoming (query) point.
+    // int nnIndexInWindow = nnIdx[0];  // The index of the point in the window that is nearest to the incoming (query) point.
+    // double nnDistFromNewPoint = sqrt(dists[0]);  //  The distance to the point in the window that is nearest to the incoming (query) point.
 
     // Clean up.
-    delete [] nnIdx;
-    delete [] dists;
+    // delete [] nnIdx;
+    // delete [] dists;
     delete kdTree;
     annClose();
 
-    return std::tuple(nnIndexInWindow, nnDistFromNewPoint);  // Using the template argument deduction feature of C++17.
+    return std::tuple(nnIdx, dists);  // Using the template argument deduction feature of C++17.
 }
 
 int main()
@@ -186,6 +213,9 @@ int main()
     // Variables to store the minimum and maximum of the squared nearest neighbor distances in the window.
     double minNNdist{ 0.0 };
     double maxNNdist{ 0.0 };
+
+    std::vector<double> nnDists;
+    nnDists.reserve( windowMaxSize );
 
     int updateCounter{ 0 };
 
@@ -236,7 +266,7 @@ int main()
                 numPointsAddedToWindow++;
                 if ( numPointsAddedToWindow == windowMinSize ) {
                     // std::vector<std::vector<double>> vectorsInWindow = retrieveValuesFromMap( window );
-                    std::tie(minNNdist, maxNNdist) = populateDistMatrix( windowValues, distMatrix );
+                    std::tie(minNNdist, maxNNdist) = populateDistMatrix( windowValues, distMatrix, nnDists );
                 }
             }
 
@@ -249,8 +279,8 @@ int main()
 
                 // Nearest neighbor search for an incoming point by ANN library. Using the structured binding feature of
                 // C++17 to receive multiple values returned by the 'nnSearch' function.
-                auto [nnIndex, distToNearestRep] = nnSearch( dataPoint, windowValues );
-
+                auto [repIndices, sqrdDistsToReps] = nnSearch( dataPoint, windowValues );
+                double distToNearestRep = sqrt( sqrdDistsToReps[0] );
 
                 // If the distance from the new incoming point to its nearest point in the window is
                 // outside the range [minNNdist, maxNNdist]:
@@ -258,6 +288,7 @@ int main()
                     updateCounter++;
                     std::cout << updateCounter << ": " << minNNdist << ", " << maxNNdist << '\n';
 
+                    // If the number of points in the window exceeds its maximum allowed size:
                     if ( windowKeys.size() > windowMaxSize ) {
                         int keyToBeDeleted = dynamicKeyContainer[0];
                         dynamicKeyContainer.erase( dynamicKeyContainer.begin() );  // delete the point from the front of the window.
@@ -268,17 +299,30 @@ int main()
 
                         windowKeys.erase( windowKeys.begin() + indexToBeDeleted );
                         windowValues.erase( windowValues.begin() + indexToBeDeleted );
-
+                        deleteFromDistMatrix( indexToBeDeleted, distMatrix, nnDists );
                     }
 
-                    window.push_back(dataPoint);  // add the incoming point to the back of the window.
+                    windowKeys.push_back(key);  // add the incoming point to the back of the window.
+                    windowValues.push_back(dataPoint);
+                    dynamicKeyContainer.push_back(key);
+                    key++;
                     numPointsAddedToWindow++;
 
-                    // If the number of points in the window exceeds its maximum allowed size:
+                    std::vector<double> distsFromNewPoint;
+                    unsigned int numReps = repIndices.size();
+                    for(unsigned int i = 0; i < numReps; i++) {
+                        // https://stackoverflow.com/questions/3909784/how-do-i-find-a-particular-value-in-an-array-and-return-its-index
+                        int windowIndex = std::distance(repIndices, std::find(repIndices, repIndices + numReps, i));
+                        distsFromNewPoint.push_back( sqrt( sqrdDistsToReps[windowIndex] ) );
+                    }
 
+                    std::tie(minNNdist, maxNNdist) = addToDistMatrix( distMatrix, nnDists, distsFromNewPoint );
                 }
                 else {  // Discard the incoming point, and move its representative (nearest neighbor) to the back of the window.
-                    auto representative = window.begin() + nnIndex;  // Iterator pointing to the representative of the incoming point.
+                    int nnRepIndex = repIndices[0];
+                    int nnRepKey = windowKeys[nnRepIndex];
+
+                    std::vector<int>::iterator itRep = std::find( dynamicKeyContainer.begin(), dynamicKeyContainer.end(), nnRepKey ) // Iterator pointing to the representative of the incoming point.
 
                     // Move the representative to the back of the window. Since the majority of the incoming points is expected
                     // to find a representative than being added to the window, the 'move to back' operation is expected to be more
@@ -286,7 +330,7 @@ int main()
                     // a std::vector as opposed to std::deque. More information on the choice of std::vector can be found below.
                     // https://stackoverflow.com/questions/14579957/std-container-c-move-to-front
                     // https://stackoverflow.com/questions/20107756/push-existing-element-of-stddeque-to-the-front
-                    std::rotate( representative, representative + 1, window.end() );  // https://stackoverflow.com/questions/23789498/moving-a-vector-element-to-the-back-of-the-vector
+                    std::rotate( itRep, itRep + 1, dynamicKeyContainer.end() );  // https://stackoverflow.com/questions/23789498/moving-a-vector-element-to-the-back-of-the-vector
                 }
             }
 
