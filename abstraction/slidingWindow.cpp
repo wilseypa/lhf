@@ -9,7 +9,7 @@
 #include <map>
 #include <cmath>
 #include <ANN/ANN.h>
-#include "Utils/utils.hpp"
+#include "utils.hpp"
 
 // The next two functions are for splitting a string by a delimiter. They are
 // used to split each row of the data by the appropriate delimiter.
@@ -89,7 +89,7 @@ auto addToDistMatrix( std::vector<std::vector<double>> &refDistMat, std::vector<
     for(unsigned int i = 0; i < refDistMat.size(); i++)
         refDistMat[i].push_back( refDistsFromNewPoint[i] );
 
-    int newSize = refDistMat[0].size();
+    unsigned int newSize = refDistMat[0].size();
     std::vector<double> newRow(newSize, 0);
     refDistMat.push_back( newRow );
 
@@ -156,7 +156,7 @@ auto nnDistsWindow( std::vector<std::vector<double>> window ) {
 
 // Find the nearest neighbor of a new data point in the window. Return the index of the nearest neighbor
 // and the nearest neighbor distance.
-auto nnSearch( const std::vector<double> &refNewPoint, const std::vector<std::vector<double>> &refWindowValues ) {
+auto nnSearch( std::vector<double> &refNewPoint, std::vector<std::vector<double>> &refWindowValues ) {
     int k = refWindowValues.size();  // The number of near neighbors to search for.
     int dim = refNewPoint.size();
     double del = 0;  // At this time, we are using the exact nearest neighbor search.
@@ -165,7 +165,7 @@ auto nnSearch( const std::vector<double> &refNewPoint, const std::vector<std::ve
     // Make the type of 'window' compatible with the type of an array of points as defined in the ANN library.
     // Source: https://stackoverflow.com/questions/4776164/c-vectorvectordouble-to-double
     std::vector<double*> ptrs;
-    for (auto& vec : refWindowValues)
+    for (auto &vec : refWindowValues)
         ptrs.push_back( vec.data() );
 
     ANNpointArray dataPts = ptrs.data();  // The data points to search from.
@@ -309,7 +309,7 @@ int main()
                     numPointsAddedToWindow++;
 
                     std::vector<double> distsFromNewPoint;
-                    unsigned int numReps = repIndices.size();
+                    unsigned int numReps = windowKeys.size() - 1;
                     for(unsigned int i = 0; i < numReps; i++) {
                         // https://stackoverflow.com/questions/3909784/how-do-i-find-a-particular-value-in-an-array-and-return-its-index
                         int windowIndex = std::distance(repIndices, std::find(repIndices, repIndices + numReps, i));
@@ -320,9 +320,9 @@ int main()
                 }
                 else {  // Discard the incoming point, and move its representative (nearest neighbor) to the back of the window.
                     int nnRepIndex = repIndices[0];
-                    int nnRepKey = windowKeys[nnRepIndex];
+                    int nnRepKey = windowKeys[(unsigned)nnRepIndex];
 
-                    std::vector<int>::iterator itRep = std::find( dynamicKeyContainer.begin(), dynamicKeyContainer.end(), nnRepKey ) // Iterator pointing to the representative of the incoming point.
+                    std::vector<int>::iterator itRep = std::find( dynamicKeyContainer.begin(), dynamicKeyContainer.end(), nnRepKey ); // Iterator pointing to the representative of the incoming point.
 
                     // Move the representative to the back of the window. Since the majority of the incoming points is expected
                     // to find a representative than being added to the window, the 'move to back' operation is expected to be more

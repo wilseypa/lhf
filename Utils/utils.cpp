@@ -28,14 +28,16 @@ void utils::print2DVector(const std::vector<std::vector<unsigned>>& a){
 	return;
 }
 
+/*
 void utils::print1DSet(const auto& a){
 		std::cout << "Test\t";
-		
+
 		for(auto iter = a.first.begin(); iter!= a.first.end(); iter++){
 			std::cout << *iter << ",";
 		}
 		std::cout << "\t";
 }
+*/
 
 void utils::print1DVector(const std::vector<double>& a){
 	for(unsigned i = 0; i < a.size(); i++){
@@ -63,7 +65,7 @@ void utils::print1DVector(const std::set<unsigned>& a){
 
 std::vector<double> utils::feature_distance(std::vector<double>* a, std::vector<double>* b){
 	std::vector<double> ret;
-	
+
 	return ret;
 }
 
@@ -80,34 +82,34 @@ std::set<unsigned> utils::setXOR(std::set<unsigned>& setA, std::set<unsigned>& s
 	//	ret = setA;
 	//else
 	set_symmetric_difference(setA.begin(), setA.end(), setB.begin(), setB.end(), std::inserter(ret, ret.begin()));
-	
+
 	return ret;
 }
 
-double utils::vectors_distance(const std::vector<double>& a, const std::vector<double>& b){		
+double utils::vectors_distance(const std::vector<double>& a, const std::vector<double>& b){
 		std::vector<double> temp;
-		
+
 		if(b.size() == 0)
 			return 0;
-		
+
 		std::transform(a.begin(), a.end(), b.begin(), std::back_inserter(temp),[](double e1, double e2) {return pow((e1-e2),2);});
-	
-		
-	
+
+
+
 		return sqrt(std::accumulate(temp.begin(), temp.end(), 0.0));
 }
 
 std::vector<unsigned> utils::setIntersect(std::vector<unsigned> v1, std::vector<unsigned> v2, bool isSorted){
 	std::vector<unsigned> ret;
-	
+
 	if(v1 == v2)
 		return v1;
-	
+
 	if(!isSorted){
 		sort(v1.begin(), v1.end());
 		sort(v2.begin(), v2.end());
 	}
-	
+
 	set_intersection(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(ret));
 
 	/*for(auto iter = v1.begin(); iter!= v1.end(); iter++){
@@ -122,24 +124,24 @@ std::vector<unsigned> utils::setIntersect(std::vector<unsigned> v1, std::vector<
 		std::cout << *iter << ",";
 	}
 	std::cout << std::endl;*/
-	
+
 	return ret;
-	
+
 }
 
 std::set<unsigned> utils::setIntersect(std::set<unsigned> v1, std::set<unsigned> v2, bool isSorted){
 	std::set<unsigned> ret;
-	
+
 	if(v1 == v2)
 		return v1;
-	
+
 	//if(!isSorted){
 	//	sort(v1.begin(), v1.end());
 	//	sort(v2.begin(), v2.end());
 	//}
-	
+
 	set_intersection(v1.begin(), v1.end(), v2.begin(), v2.end(), std::inserter(ret, ret.begin()));
-	
+
 	/*for(auto iter = v1.begin(); iter!= v1.end(); iter++){
 		std::cout << *iter << ",";
 	}
@@ -152,29 +154,29 @@ std::set<unsigned> utils::setIntersect(std::set<unsigned> v1, std::set<unsigned>
 		std::cout << *iter << ",";
 	}
 	std::cout << std::endl;*/
-	
+
 	return ret;
-	
+
 }
-	
+
 
 
 // Find the intersect of two vectors
 std::pair<std::vector<unsigned>, std::vector<unsigned>> utils::intersect(std::vector<unsigned> v1, std::vector<unsigned> v2, bool isSorted){
 	std::pair<std::vector<unsigned>, std::vector<unsigned>> ret;
 	std::pair<std::vector<unsigned>, std::vector<unsigned>> retTemp;
-	
+
 	if(v1 == v2)
 		return ret;
-	
+
 	if(!isSorted){
 		sort(v1.begin(), v1.end());
 		sort(v2.begin(), v2.end());
 	}
-	
+
 	set_union(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(retTemp.second));
 	set_symmetric_difference(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(retTemp.first));
-	
+
 	/*for(auto iter = v1.begin(); iter!= v1.end(); iter++){
 		std::cout << *iter << ",";
 	}
@@ -194,7 +196,7 @@ std::pair<std::vector<unsigned>, std::vector<unsigned>> utils::intersect(std::ve
 	std::cout << std::to_string(retTemp.first.size() == 2) << std::endl;
 
 	*/
-	
+
 	if(retTemp.first.size() == 2)
 		return retTemp;
 	else
@@ -205,16 +207,16 @@ std::pair<std::vector<unsigned>, std::vector<unsigned>> utils::intersect(std::ve
 std::vector<unsigned> utils::symmetricDiff(std::vector<unsigned> v1, std::vector<unsigned> v2, bool isSorted){
 	std::vector<unsigned> ret;
 	std::vector<unsigned> retTemp;
-	
+
 	if(v1 == v2)
 		return ret;
-	
+
 	if(!isSorted){
 		sort(v1.begin(), v1.end());
 		sort(v2.begin(), v2.end());
 	}
 	set_symmetric_difference(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(retTemp));
-	
+
 	/*for(auto iter = v1.begin(); iter!= v1.end(); iter++){
 		std::cout << *iter << ",";
 	}
@@ -227,7 +229,7 @@ std::vector<unsigned> utils::symmetricDiff(std::vector<unsigned> v1, std::vector
 		std::cout << *iter << ",";
 	}
 	std::cout << std::endl;*/
-	
+
 	return retTemp;
 }
 
@@ -235,16 +237,16 @@ std::vector<unsigned> utils::symmetricDiff(std::vector<unsigned> v1, std::vector
 std::vector<unsigned> utils::symmetricDiff(std::set<unsigned> v1, std::set<unsigned> v2, bool isSorted){
 	std::vector<unsigned> ret;
 	std::vector<unsigned> retTemp;
-	
+
 	if(v1 == v2)
 		return ret;
-	
+
 	//if(!isSorted){
 	//	sort(v1.begin(), v1.end());
 	//	sort(v2.begin(), v2.end());
 //	}
 	set_symmetric_difference(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(retTemp));
-	
+
 	/*for(auto iter = v1.begin(); iter!= v1.end(); iter++){
 		std::cout << *iter << ",";
 	}
@@ -257,7 +259,7 @@ std::vector<unsigned> utils::symmetricDiff(std::set<unsigned> v1, std::set<unsig
 		std::cout << *iter << ",";
 	}
 	std::cout << std::endl;*/
-	
+
 	return retTemp;
 }
 
@@ -267,7 +269,7 @@ std::vector<std::set<unsigned>> utils::getSubsets(std::set<unsigned> set, int di
 	std::set<unsigned> empty;
 	subset.push_back(empty);
 
-	//For each set in the 
+	//For each set in the
 	for(auto i = set.begin(); i!= set.end(); i++){
 		std::vector<std::set<unsigned>> subsetTemp = subset;
 		unsigned entry = *i;
@@ -275,16 +277,16 @@ std::vector<std::set<unsigned>> utils::getSubsets(std::set<unsigned> set, int di
 		for (unsigned j = 0; j < subsetTemp.size(); j++){
 			subsetTemp[j].insert(entry);
 		}
-		
+
 		unsigned z = 0;
 		for (auto j = subsetTemp.begin(); j != subsetTemp.end(); j++){
 			subset.push_back(*j);
-			
+
 		}
 	}
-	
+
 	std::vector<std::set<unsigned>> retSubset;
-	
+
 	for(std::set<unsigned> z : subset){
 		if(z.size() == dim)
 			retSubset.push_back(z);
@@ -296,17 +298,17 @@ std::vector<std::set<unsigned>> utils::getSubsets(std::set<unsigned> set, int di
 std::vector<unsigned> utils::setUnion(std::vector<unsigned> v1, std::vector<unsigned> v2, bool isSorted){
 	std::vector<unsigned> ret;
 	std::vector<unsigned> retTemp;
-	
+
 	if(v1 == v2)
 		return ret;
-	
+
 	if(!isSorted){
 		sort(v1.begin(), v1.end());
 		sort(v2.begin(), v2.end());
 	}
-	
+
 	set_union(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(retTemp));
-		
+
 	/*for(auto iter = v1.begin(); iter!= v1.end(); iter++){
 		std::cout << *iter << ",";
 	}
@@ -339,15 +341,15 @@ void utils::writeDebug(std::string module, std::string message){
 	} else {
 		writeFile("[DEBUG]\t[" + module + "]:\t" + message);
 	}
-	
+
 	return;
 }
 
 void utils::writeFile(std::string fullMessage){
 	std::ofstream outfile;
 	outfile.open(outputFile, std::ios_base::app);
-	outfile << fullMessage << "\n"; 
-	
+	outfile << fullMessage << "\n";
+
 	return;
 }
 

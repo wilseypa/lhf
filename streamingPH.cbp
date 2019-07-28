@@ -14,11 +14,13 @@
 				<Compiler>
 					<Add option="-g" />
 					<Add directory="/media/anindya/Data/UC/Research/TDA/Github.comRepositories/lhf/" />
+					<Add directory="Utils" />
 				</Compiler>
 				<Linker>
 					<Add library="../../../../../../../../usr/lib/libann.a" />
 					<Add library="../../../../../../../../usr/lib/libann.so" />
 					<Add directory="/media/anindya/Data/UC/Research/TDA/Github.comRepositories/lhf/" />
+					<Add directory="Utils" />
 				</Linker>
 			</Target>
 			<Target title="Release">
