@@ -10,6 +10,8 @@
 #include <cmath>
 #include <ANN/ANN.h>
 #include "utils.hpp"
+#include "basePipe.hpp"
+#include "pipePacket.hpp"
 
 // The next two functions are for splitting a string by a delimiter. They are
 // used to split each row of the data by the appropriate delimiter.
@@ -217,7 +219,9 @@ int main()
     std::vector<double> nnDists;
     nnDists.reserve( windowMaxSize );
 
-    int updateCounter{ 0 };
+    int addCounter{ 0 };
+    int deleteCounter{ 0 };
+    int lruCounter{ 0 };
 
 
     // std::map<int, std::vector<double>> window;
@@ -234,6 +238,8 @@ int main()
 
     std::vector<std::vector<double>> distMatrix( windowMinSize, std::vector<double>(windowMinSize, 0) );
     distMatrix.reserve( windowMaxSize );
+
+    std::map<std::string, std::string> args = { {"dimensions", "2"}, {"epsilon", "5"}, {"complexType", "indSimplexTree"} };
 
     FILE *pFile;
 
@@ -285,11 +291,13 @@ int main()
                 // If the distance from the new incoming point to its nearest point in the window is
                 // outside the range [minNNdist, maxNNdist]:
                 if ( (distToNearestRep < minNNdist) || (distToNearestRep > maxNNdist) ) {
-                    updateCounter++;
-                    std::cout << updateCounter << ": " << minNNdist << ", " << maxNNdist << '\n';
+                    addCounter++;
+                    std::cout << "AddCounter: " << addCounter << '\n';
 
                     // If the number of points in the window exceeds its maximum allowed size:
                     if ( windowKeys.size() > windowMaxSize ) {
+                        deleteCounter++;
+                        std::cout << "DeleteCounter: " << deleteCounter << '\n';
                         int keyToBeDeleted = dynamicKeyContainer[0];
                         dynamicKeyContainer.erase( dynamicKeyContainer.begin() );  // delete the point from the front of the window.
 
@@ -331,11 +339,14 @@ int main()
                     // https://stackoverflow.com/questions/14579957/std-container-c-move-to-front
                     // https://stackoverflow.com/questions/20107756/push-existing-element-of-stddeque-to-the-front
                     std::rotate( itRep, itRep + 1, dynamicKeyContainer.end() );  // https://stackoverflow.com/questions/23789498/moving-a-vector-element-to-the-back-of-the-vector
+                    lruCounter++;
+                    // std::cout << "LRU Counter: " << lruCounter << '\n';
                 }
             }
 
         }
         fclose (pFile);
     }
+
     return 0;
 }
