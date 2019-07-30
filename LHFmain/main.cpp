@@ -31,7 +31,7 @@ void runPipeline(std::map<std::string, std::string> args, pipePacket* wD){
 			
 			//Build the pipe component, configure and run
 			auto *bp = new basePipe();
-			auto *cp = bp->newPipe(curFunct);
+			auto *cp = bp->newPipe(curFunct, args["complexType"]);
 			
 			//Check if the pipe was created and configure
 			if(cp != 0 && cp->configPipe(args)){
@@ -79,7 +79,7 @@ void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD)
 	}
 	
 	if(args["pipeline"] == "")
-		args["pipeline"] = "distMatrix.neighGraph.rips.optPersistence";
+		args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
 	
 	runPipeline(args, wD);
 		
@@ -102,7 +102,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 	}
 	
 	if(args["pipeline"] == "")
-		args["pipeline"] = "distMatrix.neighGraph.rips.optPersistence";
+		args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
 	
 	do{
 		if(wD->boundaries.size() > 0){
