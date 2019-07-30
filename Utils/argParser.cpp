@@ -10,8 +10,8 @@
 #include "argParser.hpp"
 
 
-std::map<std::string, std::string> argMap = { {"dimensions","d"},{"iterations","r"},{"pipeline","p"},{"inputFile","i"},{"outputFile","o"},{"epsilon","e"},{"debug","x"},{"complexType","c"},{"clusters","k"},{"preprocessor","pre"},{"upscale","u"},{"twist","t"}};
-std::map<std::string, std::string> defaultMap = { {"dimensions","2"},{"iterations","250"},{"pipeline",""},{"inputFile","None"},{"outputFile","console"},{"epsilon","5"},{"debug","0"},{"complexType","indSimplexTree"},{"clusters","5"},{"preprocessor",""},{"upscale","false"},{"twist","false"}};
+std::map<std::string, std::string> argMap = { {"mode","m"},{"dimensions","d"},{"iterations","r"},{"pipeline","p"},{"inputFile","i"},{"outputFile","o"},{"epsilon","e"},{"debug","x"},{"complexType","c"},{"clusters","k"},{"preprocessor","pre"},{"upscale","u"},{"twist","t"},{"collapse","z"}};
+std::map<std::string, std::string> defaultMap = { {"mode", "standard"},{"dimensions","2"},{"iterations","250"},{"pipeline",""},{"inputFile","None"},{"outputFile","console"},{"epsilon","5"},{"debug","0"},{"complexType","indSimplexTree"},{"clusters","5"},{"preprocessor",""},{"upscale","false"},{"twist","false"},{"collapse","true"}};
 
 // argParse constructor, currently no needed information for the class constructor
 argParser::argParser(){

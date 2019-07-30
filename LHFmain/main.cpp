@@ -78,9 +78,6 @@ void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD)
 		}
 	}
 	
-	if(args["pipeline"] == "")
-		args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
-	
 	runPipeline(args, wD);
 		
 	return;
@@ -100,9 +97,6 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 			cout << "LHF : sFailed to configure pipeline: " << args["pipeline"] << endl;
 		}
 	}
-	
-	if(args["pipeline"] == "")
-		args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
 	
 	do{
 		if(wD->boundaries.size() > 0){
@@ -157,12 +151,34 @@ int main(int argc, char* argv[]){
 	//	**relevant refers to edge weights, i.e. where a simplex of any
 	//			dimension is created (or merged into another simplex)
 	
+	
 	//Define external classes used for reading input, parsing arguments, writing output
 	auto *rs = new readInput();
     auto *ap = new argParser();
     
     //Parse the command-line arguments
     auto args = ap->parse(argc, argv);
+    
+    //Determine what pipe we will be running
+    if(args["pipeline"] == ""){
+		if(args["mode"] == "standard")
+			args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
+		else if(args["mode"] == "reduced"){
+			if(args["preprocessor"] == "")
+				args["preprocessor"] = "kmeans++";
+			args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
+		} else if(args["mode"] == "upscale"){
+			if(args["preprocessor"] == "")
+				args["preprocessor"] = "kmeans++";
+			args["upscale"] = "true";
+			args["pipeline"] = "distMatrix.neighGraph.rips.persistence.boundary.upscale";
+		} else if(args["mode"] == "stream"){
+			if(args["preprocessor"] == "")
+				args["preprocessor"] = "streamingkmeans";
+			args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
+		}
+	
+	}
     
 	//Create a pipePacket (datatype) to store the complex and pass between engines
     auto *wD = new pipePacket(args["complexType"], stod(args["epsilon"]), stoi(args["dimensions"]));	//wD (workingData)

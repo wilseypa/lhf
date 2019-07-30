@@ -7,6 +7,7 @@
 class ripsPipe : public basePipe {
   private:
   public:
+	std::string collapse;
 	int dim;
     ripsPipe();
     pipePacket runPipe(pipePacket);
