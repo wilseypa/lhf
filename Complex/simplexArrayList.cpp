@@ -115,40 +115,18 @@ std::vector<std::vector<unsigned>> simplexArrayList::getDimEdges(int dim, double
 std::vector<std::vector<std::pair<std::set<unsigned>, double>>> simplexArrayList::getAllEdges(double epsilon){
 	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> ret;
 	
-	/*for(int dim = 0; dim < weightedGraph.size(); dim++){
+	for(auto dim : weightedGraph){
+		std::vector<std::pair<std::set<unsigned>,double>> dimGraph;
 		
-		std::vector<std::pair<std::vector<unsigned>, double>> temp;
-		for(int a = 0; a < weightedGraph[dim].size(); a++){
-			if(weightedGraph[dim][a].size() > 0){ 
-				double maxDist = 0;
-				bool isTrue = true;
-				for(int t = 0; t < weightedGraph[dim][a].size(); t++){
-					for(int s = t+1; s < weightedGraph[dim][a].size(); s++){
-						
-						double curDist = distMatrix[weightedGraph[dim][a][t]][weightedGraph[dim][a][s]];
-						
-						if(curDist > epsilon){
-							
-							isTrue =false;
-							//weightedGraph[dim].erase(weightedGraph[dim].begin() + a);
-							//weightedGraph[dim].erase(remove(weightedGraph[dim].begin(), weightedGraph[dim].end(), weightedGraph[dim][a]));
-							break;
-						} else if (curDist > maxDist)
-							maxDist = curDist;
-					}
-					if(!isTrue){
-						break;
-					}
-				}
-				
-				if(isTrue){
-					temp.push_back(std::make_pair(weightedGraph[dim][a], maxDist));
-				}
-			}
+		for(auto edge : dim){
+			std::set<unsigned> curSet;
+			std::copy(edge.first.begin(), edge.first.end(), std::inserter(curSet, curSet.end()));
+			dimGraph.push_back(std::make_pair(curSet, edge.second));			
 		}
-		ret.push_back(temp);
-	}*/
-	
+		
+		if(dimGraph.size() > 0)
+			ret.push_back(dimGraph);
+	}
 	
 	return ret;
 }
