@@ -14,12 +14,16 @@
 				<Compiler>
 					<Add option="-g" />
 					<Add directory="/media/anindya/Data/UC/Research/TDA/Github.comRepositories/lhf/" />
+					<Add directory="Complex" />
+					<Add directory="Pipes" />
 					<Add directory="Utils" />
 				</Compiler>
 				<Linker>
 					<Add library="../../../../../../../../usr/lib/libann.a" />
 					<Add library="../../../../../../../../usr/lib/libann.so" />
 					<Add directory="/media/anindya/Data/UC/Research/TDA/Github.comRepositories/lhf/" />
+					<Add directory="Complex" />
+					<Add directory="Pipes" />
 					<Add directory="Utils" />
 				</Linker>
 			</Target>
@@ -39,7 +43,42 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="Complex/indSimplexTree.cpp" />
+		<Unit filename="Complex/indSimplexTree.hpp" />
+		<Unit filename="Complex/simplexArrayList.cpp" />
+		<Unit filename="Complex/simplexArrayList.hpp" />
+		<Unit filename="Complex/simplexBase.cpp" />
+		<Unit filename="Complex/simplexBase.hpp" />
+		<Unit filename="Complex/simplexTree.cpp" />
+		<Unit filename="Complex/simplexTree.hpp" />
+		<Unit filename="Pipes/basePipe.cpp" />
+		<Unit filename="Pipes/basePipe.hpp" />
+		<Unit filename="Pipes/boundaryPipe.cpp" />
+		<Unit filename="Pipes/boundaryPipe.hpp" />
+		<Unit filename="Pipes/distMatrixPipe.cpp" />
+		<Unit filename="Pipes/distMatrixPipe.hpp" />
+		<Unit filename="Pipes/neighGraphPipe.cpp" />
+		<Unit filename="Pipes/neighGraphPipe.hpp" />
+		<Unit filename="Pipes/optPersistencePairs.cpp" />
+		<Unit filename="Pipes/optPersistencePairs.hpp" />
+		<Unit filename="Pipes/persistencePairs.cpp" />
+		<Unit filename="Pipes/persistencePairs.hpp" />
+		<Unit filename="Pipes/pipePacket.cpp" />
+		<Unit filename="Pipes/pipePacket.hpp" />
+		<Unit filename="Pipes/ripsPipe.cpp" />
+		<Unit filename="Pipes/ripsPipe.hpp" />
+		<Unit filename="Pipes/slidingWindow.cpp" />
+		<Unit filename="Pipes/slidingWindow.hpp" />
+		<Unit filename="Pipes/upscalePipe.cpp" />
+		<Unit filename="Pipes/upscalePipe.hpp" />
+		<Unit filename="Utils/argParser.cpp" />
+		<Unit filename="Utils/argParser.hpp" />
+		<Unit filename="Utils/readInput.cpp" />
+		<Unit filename="Utils/readInput.hpp" />
 		<Unit filename="Utils/utils.cpp" />
+		<Unit filename="Utils/utils.hpp" />
+		<Unit filename="Utils/writeOutput.cpp" />
+		<Unit filename="Utils/writeOutput.hpp" />
 		<Unit filename="abstraction/myFile.csv" />
 		<Unit filename="abstraction/slidingWindow.cpp" />
 		<Extensions>

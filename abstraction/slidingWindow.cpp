@@ -56,16 +56,17 @@ std::vector<std::vector<double>> retrieveValuesFromMap( const std::map<int, std:
 }
 */
 
-auto populateDistMatrix( const std::vector<std::vector<double>> &refWindowValues, std::vector<std::vector<double>> &refDistMat, std::vector<double> &refNNDists ) {
+auto populateDistMatrix( pipePacket inData, std::vector<std::vector<double>> &refDistMat, std::vector<double> &refNNDists, double maxEpsilon ) {
     utils ut;
-    // std::vector<double> nnDists;
-    for(unsigned int i = 0; i < refWindowValues.size(); i++) {
+    for(unsigned int i = 0; i < inData.originalData.size(); i++) {
         std::vector<double> distsFromCurrVect;
-        for(unsigned int j = 0; j < refWindowValues.size(); j++) {
+        for(unsigned int j = 0; j < inData.originalData.size(); j++) {
             if (j < i) {
                 distsFromCurrVect.push_back( refDistMat[j][i] );
             } else if (j > i) {
-                auto dist = ut.vectors_distance( refWindowValues[i], refWindowValues[j] );
+                auto dist = ut.vectors_distance( inData.originalData[i], inData.originalData[j] );
+                if(dist < maxEpsilon)
+                    inData.weights.insert( dist );
                 refDistMat[i][j] = dist;
                 distsFromCurrVect.push_back( dist );
             }
@@ -73,8 +74,13 @@ auto populateDistMatrix( const std::vector<std::vector<double>> &refWindowValues
         auto nnDistFromCurrVect = *std::min_element( distsFromCurrVect.begin(), distsFromCurrVect.end() );
         refNNDists.push_back( nnDistFromCurrVect );
     }
+
+    inData.complex->setDistanceMatrix( refDistMat );
+    inData.weights.insert( 0.0 );
+    inData.weights.insert( maxEpsilon );
+
     auto nnDistsRange = std::minmax_element( refNNDists.begin(), refNNDists.end() );
-    return std::tuple( *nnDistsRange.first, *nnDistsRange.second );
+    return std::tuple( *nnDistsRange.first, *nnDistsRange.second, inData );
 }
 
 void deleteFromDistMatrix( int indexToBeDeleted, std::vector<std::vector<double>> &refDistMat, std::vector<double> &refNNDists ) {
@@ -87,19 +93,24 @@ void deleteFromDistMatrix( int indexToBeDeleted, std::vector<std::vector<double>
     // return std::tuple( *nnDistsRange.first, *nnDistsRange.second );
 }
 
-auto addToDistMatrix( std::vector<std::vector<double>> &refDistMat, std::vector<double> &refNNDists, const std::vector<double> &refDistsFromNewPoint) {
-    for(unsigned int i = 0; i < refDistMat.size(); i++)
+auto addToDistMatrix( pipePacket inData, std::vector<std::vector<double>> &refDistMat, std::vector<double> &refNNDists, const std::vector<double> &refDistsFromNewPoint, double maxEpsilon ) {
+    for(unsigned int i = 0; i < refDistMat.size(); i++) {
         refDistMat[i].push_back( refDistsFromNewPoint[i] );
+        if( refDistsFromNewPoint[i] < maxEpsilon )
+            inData.weights.insert( refDistsFromNewPoint[i] );
+    }
 
     unsigned int newSize = refDistMat[0].size();
     std::vector<double> newRow(newSize, 0);
     refDistMat.push_back( newRow );
 
+    inData.complex->setDistanceMatrix( refDistMat );
+
     auto nnDistFromNewPoint = *std::min_element( refDistsFromNewPoint.begin(), refDistsFromNewPoint.end() );
     refNNDists.push_back( nnDistFromNewPoint );
 
     auto nnDistsRange = std::minmax_element( refNNDists.begin(), refNNDists.end() );
-    return std::tuple( *nnDistsRange.first, *nnDistsRange.second );
+    return std::tuple( *nnDistsRange.first, *nnDistsRange.second, inData );
 }
 
 /*
@@ -240,6 +251,12 @@ int main()
     distMatrix.reserve( windowMaxSize );
 
     std::map<std::string, std::string> args = { {"dimensions", "2"}, {"epsilon", "5"}, {"complexType", "indSimplexTree"} };
+    auto *wD = new pipePacket(args["complexType"], stod(args["epsilon"]), stoi(args["dimensions"]));
+
+    double maxEpsilon = std::atof(args["epsilon"].c_str());
+
+    auto *bp = new basePipe();
+    auto *cp = bp->newPipe("neighGraph");
 
     FILE *pFile;
 
@@ -272,7 +289,16 @@ int main()
                 numPointsAddedToWindow++;
                 if ( numPointsAddedToWindow == windowMinSize ) {
                     // std::vector<std::vector<double>> vectorsInWindow = retrieveValuesFromMap( window );
-                    std::tie(minNNdist, maxNNdist) = populateDistMatrix( windowValues, distMatrix, nnDists );
+                    wD->originalData = windowValues;
+                    // pipePacket inData = *wD;
+                    std::tie( minNNdist, maxNNdist, *wD ) = populateDistMatrix( *wD, distMatrix, nnDists, maxEpsilon );
+
+                    // auto *bp = new basePipe();
+                    // auto *cp = bp->newPipe("neighGraph");
+
+                    if(cp != 0 && cp->configPipe(args))
+                        *wD = cp->runPipeWrapper(*wD);
+
                 }
             }
 
@@ -324,7 +350,10 @@ int main()
                         distsFromNewPoint.push_back( sqrt( sqrdDistsToReps[windowIndex] ) );
                     }
 
-                    std::tie(minNNdist, maxNNdist) = addToDistMatrix( distMatrix, nnDists, distsFromNewPoint );
+                    wD->originalData.push_back( dataPoint );
+                    std::tie(minNNdist, maxNNdist, *wD) = addToDistMatrix( *wD, distMatrix, nnDists, distsFromNewPoint, maxEpsilon );
+                    wD->complex->insert( dataPoint );
+
                 }
                 else {  // Discard the incoming point, and move its representative (nearest neighbor) to the back of the window.
                     int nnRepIndex = repIndices[0];

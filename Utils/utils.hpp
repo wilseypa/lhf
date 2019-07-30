@@ -22,7 +22,7 @@ class utils {
 	std::vector<double> feature_distance(std::vector<double>*, std::vector<double>*);
 	double vectors_distance(const double&, const double&);
 	double vectors_distance(const std::vector<double>&, const std::vector<double>&);
-// 	void print1DSet(const auto&);
+//	void print1DSet(const auto&);
 	std::set<unsigned> setXOR(std::set<unsigned>&, std::set<unsigned>&);
 	std::set<unsigned> setIntersect(std::set<unsigned>, std::set<unsigned>, bool isSorted);
 	std::vector<unsigned> setIntersect(std::vector<unsigned>, std::vector<unsigned>, bool);
