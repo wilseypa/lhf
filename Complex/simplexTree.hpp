@@ -6,30 +6,32 @@
 
 class simplexTree : public simplexBase {
   private:
+	bool isSorted = false;
+	unsigned indexCounter;
+	int nodeCount;
+	std::vector<std::vector<std::pair<std::set<unsigned>, double>>> weightEdgeGraph;
+	
+	void insertInductive();
+  
+  public:
 	struct treeNode{
 		unsigned index;
+		std::set<unsigned> simplex;
 		treeNode* child = nullptr;
 		treeNode* sibling = nullptr;
 		treeNode* parent = nullptr;
 		double weight = 0;
 	};
 	
-	bool isSorted = false;
-	int maxDim;
-	bool isLeaf;
-	unsigned indexCounter;
 	treeNode* head;
-	int nodeCount;
-	std::vector<treeNode*> dimensions;	
-	std::vector<std::vector<std::pair<std::set<unsigned>, double>>> weightEdgeGraph;
-
-	void printTree(treeNode*);
-	void insertInductive();
-	void recurseInsert(treeNode*, unsigned, int, double, std::set<unsigned>);
-  
-  public:
+	std::vector<treeNode*> dimensions;
+		
 	simplexTree(std::vector<std::vector<double>>);
 	simplexTree(double, std::vector<std::vector<double>>, int);
+	std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(std::pair<std::set<unsigned>,double>, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
+	void printTree(treeNode*);	
+	void recurseInsert(treeNode*, unsigned, int, double, std::set<unsigned>);
+	double findWeight(std::set<unsigned>);
 	
 	//virtual interface functions
 	double getSize();
@@ -39,6 +41,7 @@ class simplexTree : public simplexBase {
 	int vertexCount();
 	std::vector<std::vector<unsigned>> getDimEdges(int,double);
 	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> getAllEdges(double);
+	bool deletion(std::set<unsigned>);
 	bool deletion(treeNode*);
 	void expandDimensions(int){return;};
 	void reduceComplex();

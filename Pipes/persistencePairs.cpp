@@ -170,9 +170,11 @@ std::set<unsigned> persistencePairs::createBoundaryMatrix(std::vector<std::vecto
 //
 //	persistencePairs: For computing the persistence pairs from simplicial complex:
 //		1. See Zomorodian-05 for algorithm/description of tArray
-//		
 pipePacket persistencePairs::runPipe(pipePacket inData){
+	
+	//Get all edges for the simplexArrayList or simplexTree
 	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges = inData.complex->getAllEdges(maxEpsilon);
+	
 	
 	std::vector<std::pair<double,double>> temp;
 	std::vector<std::vector<std::pair<double,double>>> ret;
