@@ -19,8 +19,8 @@
 #include "optPersistencePairs.hpp"
 #include "slidingWindow.hpp"
 
-basePipe* basePipe::newPipe(const std::string &pipeT){
-	ut.writeDebug("basePipe","Building pipeline: " + pipeT);
+basePipe* basePipe::newPipe(const std::string &pipeT, const std::string &complexType){
+	ut.writeDebug("basePipe","Building pipeline: " + pipeT + " for " + complexType);
 	pipeType = pipeT;
 	if(pipeType == "distMatrix"){
 		return new distMatrixPipe();

@@ -206,7 +206,8 @@ pipePacket boundaryPipe::runPipe(pipePacket inData){
 
 
 	std::vector<int> bettiNumbers;
-//	std::vector<float> lifeSpans[dim];
+	// std::vector<float> lifeSpans[dim];
+	std::vector<float> lifeSpans;
 
 	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges;
 

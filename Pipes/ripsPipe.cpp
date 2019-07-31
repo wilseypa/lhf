@@ -33,11 +33,12 @@ pipePacket ripsPipe::runPipe(pipePacket inData){
 	ut.writeDebug("ripsPipe","Expanded Complex Size: " + std::to_string(inData.complex->simplexCount()));
 	ut.writeDebug("ripsPipe", "Expanded Complex Mem: " + std::to_string(inData.complex->getSize()));
 	
-	inData.complex->reduceComplex();
-	
-	ut.writeDebug("ripsPipe","Reduced Complex Size: " + std::to_string(inData.complex->simplexCount()));
-	ut.writeDebug("ripsPipe", "Reduced Complex Mem: " + std::to_string(inData.complex->getSize()));
-
+	if(collapse == "true" || collapse == "1"){
+		inData.complex->reduceComplex();
+		
+		ut.writeDebug("ripsPipe","Reduced Complex Size: " + std::to_string(inData.complex->simplexCount()));
+		ut.writeDebug("ripsPipe", "Reduced Complex Mem: " + std::to_string(inData.complex->getSize()));
+	}
 	return inData;
 }
 
@@ -62,7 +63,11 @@ bool ripsPipe::configPipe(std::map<std::string, std::string> configMap){
 		dim = std::atoi(configMap["dimensions"].c_str());
 	}
 	
-	ut.writeDebug("ripsPipe","Configured with parameters { dim: " + std::to_string(dim) + " , debug: " + strDebug + ", outputFile: " + outputFile + " }");
+	pipe = configMap.find("collapse");
+	if(pipe != configMap.end())
+		collapse = configMap["collapse"];
+	
+	ut.writeDebug("ripsPipe","Configured with parameters { dim: " + std::to_string(dim) + " , debug: " + strDebug + ", outputFile: " + outputFile + ", collapse: " + collapse + " }");
 	
 	return true;
 }

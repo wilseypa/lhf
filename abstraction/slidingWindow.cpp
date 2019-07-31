@@ -251,12 +251,13 @@ int main()
     distMatrix.reserve( windowMaxSize );
 
     std::map<std::string, std::string> args = { {"dimensions", "2"}, {"epsilon", "5"}, {"complexType", "indSimplexTree"} };
+    // std::map<std::string, std::string> args = { {"dimensions", "2"}, {"epsilon", "5"}, {"complexType", "simplexTree"} };
     auto *wD = new pipePacket(args["complexType"], stod(args["epsilon"]), stoi(args["dimensions"]));
 
     double maxEpsilon = std::atof(args["epsilon"].c_str());
 
     auto *bp = new basePipe();
-    auto *cp = bp->newPipe("neighGraph");
+    auto *cp = bp->newPipe( "neighGraph", args["complexType"] );
 
     FILE *pFile;
 
@@ -294,7 +295,7 @@ int main()
                     std::tie( minNNdist, maxNNdist, *wD ) = populateDistMatrix( *wD, distMatrix, nnDists, maxEpsilon );
 
                     // auto *bp = new basePipe();
-                    // auto *cp = bp->newPipe("neighGraph");
+                    // auto *cp = bp->newPipe( "neighGraph", args["complexType"] );
 
                     if(cp != 0 && cp->configPipe(args))
                         *wD = cp->runPipeWrapper(*wD);

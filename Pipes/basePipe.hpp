@@ -13,7 +13,7 @@ class basePipe {
 	int debug;
 	std::string outputFile;
     basePipe(){};
-    basePipe* newPipe(const std::string&);
+    basePipe* newPipe(const std::string&, const std::string&);
     pipePacket runPipeWrapper(pipePacket);
 	virtual void outputData(pipePacket);
     virtual pipePacket runPipe(pipePacket);
