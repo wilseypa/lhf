@@ -28,7 +28,7 @@ densityUtils::densityUtils(){
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket densityUtils::runPreprocessor(pipePacket inData){    //standalone preprocessor
 // make labels for upscaling
-std::vector<uint_least32_t> upscaleLabels(inData.workData.originalData.size());
+std::vector<uint_least32_t> upscaleLabels(inData.originalData.size());
 std::iota (std::begin(upscaleLabels), std::end(upscaleLabels), 0);
 ////
 
@@ -37,23 +37,23 @@ std::iota (std::begin(upscaleLabels), std::end(upscaleLabels), 0);
  double epsilon = 0.5; //epsilon (radius)- how close points should be to constitute a cluster (need to adjust but preferably small)
  int minPoints = 4; //(density threshold) - minimum # of points to from a dense region (# dimensions +1, (+ >1) ifdata/larger data)
 
- std::vector<int> processed(inData.workData.originalData.size(), 0); 
- std::vector<int> noiseClassifier(inData.workData.originalData.size(), 0);  // 1 = noise
- std::vector<int> clusterLabel(inData.workData.originalData.size(), 0);  //cluster each non noise Point ends up in
+ std::vector<int> processed(inData.originalData.size(), 0); 
+ std::vector<int> noiseClassifier(inData.originalData.size(), 0);  // 1 = noise
+ std::vector<int> clusterLabel(inData.originalData.size(), 0);  //cluster each non noise Point ends up in
  std::vector<int> neighborTracker;
 ////////////  DBSCAN Revisited, Revisited Schubert 2017 ///////////
  int clusterIndex = 0;
 
-for(int i = 0; i<inData.workData.originalData.size(); i++){  //for each point
+for(int i = 0; i<inData.originalData.size(); i++){  //for each point
     if(processed[i] == 0){ //if point has not been processed or clustered already 
        processed[i] == 1;
-       std::vector<std::vector<double>> neighbors = neighborQuery(inData.workData.originalData, neighborTracker, i, epsilon);  //  find initial neighbors of current point
+       std::vector<std::vector<double>> neighbors = neighborQuery(inData.originalData, neighborTracker, i, epsilon);  //  find initial neighbors of current point
        if(neighbors.size() < minPoints){    // --non core points are marked as noise relative to current point
             noiseClassifier[i] = 1;
        }
        else{
            clusterIndex +=1;
-           if( expandCluster(inData.workData.originalData, neighbors, neighborTracker, clusterLabel, clusterIndex, epsilon, minPoints, processed)){
+           if( expandCluster(inData.originalData, neighbors, neighborTracker, clusterLabel, clusterIndex, epsilon, minPoints, processed)){
               clusterLabel[i] = clusterIndex;
           }
        }
@@ -63,13 +63,13 @@ for(int i = 0; i<inData.workData.originalData.size(); i++){  //for each point
 ///// find centroids of clusters so pass to next pipe
    std::vector<int> counts;
    //std::vector<std::vector<double>> sumCluster;
-   std::vector<std::vector<double>> summedCentroidVectors(clusterIndex, std::vector<double>(inData.workData.originalData[0].size(), 0));
+   std::vector<std::vector<double>> summedCentroidVectors(clusterIndex, std::vector<double>(inData.originalData[0].size(), 0));
    for(int j = 0; j<clusterLabel.size(); j++){
       for(int k = 1; k<clusterIndex-1; k++){
          if (clusterLabel[j] == k)
          counts[k] +=1;
-         for(int d = 0; d < inData.workData.originalData[j].size(); d++){
-            summedCentroidVectors[k][d] += inData.workData.originalData[j][d];
+         for(int d = 0; d < inData.originalData[j].size(); d++){
+            summedCentroidVectors[k][d] += inData.originalData[j][d];
          }
          
       }
@@ -82,8 +82,8 @@ for(int i = 0; i<inData.workData.originalData.size(); i++){  //for each point
 		}
 
 
-   inData.workData.originalData = summedCentroidVectors;
-   inData.workData.originalLabels = upscaleLabels;
+   inData.originalData = summedCentroidVectors;
+   inData.originalLabels = upscaleLabels;
 	return inData;
 }
 
