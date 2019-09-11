@@ -30,12 +30,12 @@ streamingKmeans::streamingKmeans(){
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket streamingKmeans::runPreprocessor(pipePacket inData){
 	//Arguments - num_clusters, num_iterations
-<<<<<<< HEAD
+
   int numClusters = 20;
-=======
+
  // int numClusters = 20;
 	utils ut;
->>>>>>> denStream
+
 	streamingUtils streamUt;
   //int n = 5;
   int size = inData.originalData.size();
@@ -291,7 +291,7 @@ std::vector<std::vector<double>> summedCentroidVectors(numClusters, std::vector<
 
 
 
-<<<<<<< HEAD
+
 // configPipe -> configure the function settings of this pipeline segment
 bool streamingKmeans::configPreprocessor(std::map<std::string, std::string> configMap){
 	std::string strDebug;
@@ -309,7 +309,7 @@ bool streamingKmeans::configPreprocessor(std::map<std::string, std::string> conf
 	
 	pipe = configMap.find("clusters");
     if(pipe !=configMap.end())
-        num_clusters = std::atoi(configMap["clusters"].c_str());
+        numClusters = std::atoi(configMap["clusters"].c_str());
     else return false;
 
     pipe = configMap.find("iterations");
@@ -321,9 +321,7 @@ bool streamingKmeans::configPreprocessor(std::map<std::string, std::string> conf
 	
 	return true;
 }
-=======
 
->>>>>>> denStream
 
 std::vector<double> streamingKmeans::approxNearestNeighbor(std::vector<std::vector<double>>& facilities, std::vector<std::pair <double, int>>& sortedApproxFacils, std::vector<double> omega, int x, int size, pipePacket(inData)){
   //based on random projection, x is current point being examined, n is number of centroids/facilities
@@ -475,7 +473,7 @@ int streamingKmeans::random(int low, int high){
 	return low + ( rand() % (high - low) );
 }
 
-// configPipe -> configure the function settings of this pipeline segment
+/*// configPipe -> configure the function settings of this pipeline segment
 bool streamingKmeans::configPreprocessor(std::map<std::string, std::string> configMap){
   auto preprocessor = configMap.find("clusters");
     if(preprocessor !=configMap.end())
@@ -489,4 +487,4 @@ bool streamingKmeans::configPreprocessor(std::map<std::string, std::string> conf
 	
 	
 	return true;
-}
+}  */

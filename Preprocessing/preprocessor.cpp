@@ -13,6 +13,7 @@
 #include "kMeansPlusPlus.hpp"
 #include "streamingKmeans.hpp"
 #include "denStream.hpp"
+#include "densityUtils.hpp"
 // basePipe constructor
 preprocessor::preprocessor(){
 	return;
@@ -33,7 +34,7 @@ preprocessor* preprocessor::newPreprocessor(const std::string &procT){
 		return new denStream();
 	} 
 	 else  if(procName == "densityUtils" || procName == "DBSCAN" || procName =="dbscan"){
-		return new denStream();
+		return new densityUtils();
 	} 
 
 	return 0;

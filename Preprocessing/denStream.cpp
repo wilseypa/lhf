@@ -46,16 +46,16 @@ double timestamp;
 ///////initialize p micro clusters... DBSCAN first N points (N has to be less than size of input data to simulate stream)///////
 //this returns cluster labels corresponding to current points
 
-std::vector<int>clusterLabels = denseUt.dbscan(inData.workData.originalData);
+std::vector<int>clusterLabels = denseUt.dbscan(inData.originalData);
 
 
 int pClusterLabel = *std::max_element(clusterLabels.begin(), clusterLabels.end()); //start pClusters at highest cluster from DBSCAN
 double Tp = (1/lambda)* log((beta*mu)/((beta*mu)-1)); 
 //////////// adding points to p or o clusters and updating Tp///// 
 double time = 0.0; //placeholder for time measurement
-for(int i = initPoints+1; i<inData.workData.originalData.size(); i++){
+for(int i = initPoints+1; i<inData.originalData.size(); i++){
      time++;
-     std::vector<int> tempLabels = merging(inData.workData.originalData, i, clusterLabels, epsilon);  //do merging on point p --> either becomes p micro cluster or o microcluster
+     std::vector<int> tempLabels = merging(inData.originalData, i, clusterLabels, epsilon);  //do merging on point p --> either becomes p micro cluster or o microcluster
      clusterLabels.insert(std::end( clusterLabels), std::begin(tempLabels), std::end(tempLabels));  //append templabels
    if(fmod(time,Tp) == 0){  //prune clusters accordingly
         for(int j = 0; j<clusterLabels.size(); j++){
