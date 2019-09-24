@@ -1,4 +1,4 @@
-# LHF: Lightweight Framework for Homology
+# LHF: Lightweight Homology Framework
 
 ---
 
