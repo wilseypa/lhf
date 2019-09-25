@@ -177,6 +177,54 @@ void simplexTree::insertInductive(){
 //** 				Public Functions 					**//
 //**													**//
 
+
+// Insert a node into the tree using the distance matrix and a vector index to track changes
+void simplexTree::insertIterative(std::vector<double> &distMatrixRow){
+	distMatrix.push_back(distMatrixRow);
+	
+	insert(distMatrixRow);	
+	
+	runningVectorIndices.push_back(runningVectorCount);
+	runningVectorCount++;
+	
+	return;
+}
+
+// Delete a node from the tree and from the distance matrix using a vector index
+void simplexTree::deleteIterative(int vectorIndex){
+	//Find what row/column of our distance matrix pertain to the vector index
+	
+	std::vector<int>::iterator it;
+	if((it = std::find(runningVectorIndices.begin(), runningVectorIndices.end(), vectorIndex)) != runningVectorIndices.end()){
+		std::cout << "Found vector at index " << it - runningVectorIndices.begin() + 1 << std::endl;
+	
+	
+		int index = it - runningVectorIndices.begin() + 1;
+		
+		//Delete the row and column from the distance matrix based on vector index
+		distMatrix.erase(distMatrix.begin() + index);
+		
+		for(auto z : distMatrix){
+			if(z.size() >= index)
+				z.erase(z.begin() + index);
+		}
+	
+		//Delete all entries in the simplex tree with the index...
+		// TODO :)
+	
+	
+	
+	} else {
+		std::cout << "Failed to find vector by index!" << std::endl;
+	}
+	
+	return;
+}
+
+
+
+
+
 // Insert a node into the tree
 //		
 void simplexTree::insert(std::vector<double>&) {

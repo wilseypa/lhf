@@ -83,6 +83,8 @@ class simplexBase {
 	int maxDimension;
 	std::vector<std::vector<double>> distMatrix;
 	std::vector<std::vector<std::pair<std::vector<unsigned>, double>>> weightedGraph;
+	int runningVectorCount = 0;
+	std::vector<int> runningVectorIndices;
   
 	simplexBase();
 	simplexBase(std::map<std::string, std::string>);
@@ -93,6 +95,8 @@ class simplexBase {
 	
 	//virtual interface functions
 	virtual double getSize();
+	void insertIterative(std::vector<double>&);
+	void deleteIterative(int);
 	virtual void insert(std::vector<double>&);
 	virtual bool find(std::vector<unsigned>);
 	virtual bool find(std::set<unsigned>);
