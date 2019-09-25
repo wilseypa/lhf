@@ -19,4 +19,4 @@ add_subdirectory("Pipes")
 add_subdirectory("Utils")
 add_subdirectory("Preprocessing")
 
-add_subdirectory(test)
+add_subdirectory(cmake_tests)
