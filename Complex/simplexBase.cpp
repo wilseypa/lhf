@@ -10,19 +10,19 @@ simplexBase::simplexBase(){return;}
 
 simplexBase::simplexBase(std::map<std::string, std::string> configMap){
 	setConfig(configMap);
-	
+
 	return;
 }
 
 simplexBase::simplexBase(double maxE, int maxDim){
-	maxEpsilon = maxE;	
-	maxDimension = maxDim;	
+	maxEpsilon = maxE;
+	maxDimension = maxDim;
 }
 
 void simplexBase::setConfig(std::map<std::string, std::string> configMap){
 	std::string debug;
 	std::string outputFile;
-	
+
 	auto pipe = configMap.find("debug");
 	if(pipe != configMap.end())
 		debug = std::atoi(configMap["debug"].c_str());
@@ -36,11 +36,11 @@ void simplexBase::setConfig(std::map<std::string, std::string> configMap){
 	pipe = configMap.find("epsilon");
 	if(pipe != configMap.end())
 		maxEpsilon = std::atof(configMap["epsilon"].c_str());
-	else return;	
-	
+	else return;
+
 	std::cout << "Setting utils for : " << simplexType << std::endl;
 	ut = utils(debug, outputFile);
-	
+
 	return;
 }
 
@@ -53,16 +53,18 @@ void simplexBase::setDistanceMatrix(std::vector<std::vector<double>> _distMatrix
 // simplexTree constructor, currently no needed information for the class constructor
 simplexBase* simplexBase::newSimplex(const std::string &simplexT, std::map<std::string, std::string> configMap){
 	simplexType = simplexT;
-	
+
 	if(simplexType == "simplexTree"){
+        std::cout << "simplexTree selected" << std::endl;
 		auto t = new simplexTree(maxEpsilon, distMatrix, maxDimension);
 		t->setConfig(configMap);
 		return t;
-	} else if (simplexType == "simplexArrayList"){	
+	} else if (simplexType == "simplexArrayList"){
 		auto t = new simplexArrayList(maxEpsilon, maxDimension, distMatrix);
 		t->setConfig(configMap);
 		return t;
 	} else if (simplexType == "indSimplexTree"){
+	    std::cout << "ind: " << simplexType << std::endl;
 		auto t = new indSimplexTree(maxEpsilon, distMatrix, maxDimension);
 		t->setConfig(configMap);
 		return t;
@@ -128,9 +130,9 @@ void simplexBase::expandDimensions(int dim){
 	ut.writeLog(simplexType,"No expandDimensions function defined");
 	return;
 }
-	
+
 void simplexBase::reduceComplex(){
 	ut.writeLog(simplexType,"No reduceComplex function defined");
 	return;
 }
-	
+

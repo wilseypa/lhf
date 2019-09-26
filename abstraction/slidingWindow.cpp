@@ -220,7 +220,7 @@ int main()
     unsigned int windowMinSize{ 150 };  // The minimum number of points that should be present in the window
                                         // to form meaningful topological features by PH computation.
 
-    unsigned int numPointsAddedToWindow{ 0 };
+    // unsigned int numPointsAddedToWindow{ 0 };
     // unsigned int nnDistCheckIntrvl{ 50 };
 
     // Variables to store the minimum and maximum of the squared nearest neighbor distances in the window.
@@ -256,8 +256,11 @@ int main()
 
     double maxEpsilon = std::atof(args["epsilon"].c_str());
 
-    auto *bp = new basePipe();
-    auto *cp = bp->newPipe( "neighGraph", args["complexType"] );
+    std::cout << args["complexType"] << '\n';
+
+    // auto *bp = new basePipe();
+    // auto *cp = bp->newPipe( "neighGraph", args["complexType"] );
+
 
     FILE *pFile;
 
@@ -287,15 +290,15 @@ int main()
                 windowValues.push_back(dataPoint);
                 dynamicKeyContainer.push_back(key);
                 key++;
-                numPointsAddedToWindow++;
-                if ( numPointsAddedToWindow == windowMinSize ) {
+                // numPointsAddedToWindow++;
+                if ( key == windowMinSize ) {
                     // std::vector<std::vector<double>> vectorsInWindow = retrieveValuesFromMap( window );
                     wD->originalData = windowValues;
-                    // pipePacket inData = *wD;
+                    pipePacket inData = *wD;
                     std::tie( minNNdist, maxNNdist, *wD ) = populateDistMatrix( *wD, distMatrix, nnDists, maxEpsilon );
 
-                    // auto *bp = new basePipe();
-                    // auto *cp = bp->newPipe( "neighGraph", args["complexType"] );
+                    auto *bp = new basePipe();
+                    auto *cp = bp->newPipe( "neighGraph", args["complexType"] );
 
                     if(cp != 0 && cp->configPipe(args))
                         *wD = cp->runPipeWrapper(*wD);
@@ -322,7 +325,7 @@ int main()
                     std::cout << "AddCounter: " << addCounter << '\n';
 
                     // If the number of points in the window exceeds its maximum allowed size:
-                    if ( windowKeys.size() > windowMaxSize ) {
+                    if ( windowKeys.size() == windowMaxSize ) {
                         deleteCounter++;
                         std::cout << "DeleteCounter: " << deleteCounter << '\n';
                         int keyToBeDeleted = dynamicKeyContainer[0];
@@ -335,13 +338,18 @@ int main()
                         windowKeys.erase( windowKeys.begin() + indexToBeDeleted );
                         windowValues.erase( windowValues.begin() + indexToBeDeleted );
                         deleteFromDistMatrix( indexToBeDeleted, distMatrix, nnDists );
+
+                        //std::set<unsigned> deletionSet = {indexToBeDeleted};
+                        //wd->complex->deletion(deletionSet);
+
+
                     }
 
                     windowKeys.push_back(key);  // add the incoming point to the back of the window.
                     windowValues.push_back(dataPoint);
                     dynamicKeyContainer.push_back(key);
                     key++;
-                    numPointsAddedToWindow++;
+                    // numPointsAddedToWindow++;
 
                     std::vector<double> distsFromNewPoint;
                     unsigned int numReps = windowKeys.size() - 1;
