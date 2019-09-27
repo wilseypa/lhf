@@ -176,6 +176,10 @@ int main(int argc, char* argv[]){
 			if(args["preprocessor"] == "")
 				args["preprocessor"] = "streamingkmeans";
 			args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
+		} else if(args["mode"] == "sw" || args["mode"] == "slidingwindow"){
+			args["preprocessor"] = "";
+			args["pipeline"] = "slidingwindow";
+			args["upscale"] = "false";
 		}
 	
 	}
@@ -183,11 +187,12 @@ int main(int argc, char* argv[]){
 	//Create a pipePacket (datatype) to store the complex and pass between engines
     auto *wD = new pipePacket(args["complexType"], stod(args["epsilon"]), stoi(args["dimensions"]));	//wD (workingData)
 	
-	//Read data from inputFile CSV
-    wD->originalData = rs->readCSV(args["inputFile"]);
-
+	if(args["pipeline"] != "slidingwindow"){
+		//Read data from inputFile CSV
+		wD->originalData = rs->readCSV(args["inputFile"]);
+	}
 	//If data was found in the inputFile
-	if(wD->originalData.size() > 0){
+	if(wD->originalData.size() > 0 || args["pipeline"] == "slidingwindow"){
 		
 		//Add data to our pipePacket
 		wD->originalData = wD->originalData;

@@ -9,10 +9,13 @@ class slidingWindow : public basePipe {
 	double epsilon;
 	int dim;
 	std::string inputFile;
+	void runSubPipeline();
+	std::map<std::string, std::string> subConfigMap;
   public:
     slidingWindow();
     pipePacket runPipe(pipePacket);
 	void outputData(pipePacket);
     bool configPipe(std::map<std::string, std::string>);
+    void runSubPipeline(pipePacket);
 };
 
