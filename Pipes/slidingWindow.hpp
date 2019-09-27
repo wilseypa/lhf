@@ -8,6 +8,7 @@ class slidingWindow : public basePipe {
   private:
 	double epsilon;
 	int dim;
+	std::string inputFile;
   public:
     slidingWindow();
     pipePacket runPipe(pipePacket);

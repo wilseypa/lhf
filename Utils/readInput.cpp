@@ -13,7 +13,9 @@
 #include <vector>
 #include <regex>
 #include <fstream>
+#include <cmath>
 #include "readInput.hpp"
+
 
 // readInput constructor, currently no needed information for the class constructor
 readInput::readInput(){
@@ -45,30 +47,41 @@ std::vector<std::vector<double>> readInput::readCSV(std::string filename){
 		std::string line;			// Temporary (current) line
 		std::vector<double> tmp;	// Temporary (current) vector
 		getline(file, line);		// Read the next line from file
-		std::size_t pos = std::string::npos;
 		
-		// Replace whitespace in the current line
-		line = std::regex_replace(line, std::regex(" "), "");
-		
-		// Check if the line has a length (is not a blank line)
-		if(line.size() > 0){
-			
-			// Iterate through each comma of the csv
-			while((pos = line.find_first_of(",")) != std::string::npos){
-				
-				// Push the value found before the comma, remove from the line
-				tmp.push_back(std::stod(line.substr(0,pos)));
-				line.erase(0,pos + 1);
-				
-			}
-			// Get the last value of the line
-			tmp.push_back(std::stod(line.substr(0,pos)));
+		if(parseDoubleVector(line, tmp)){
 			result.push_back(tmp);
 		}
 		
 	}
 	
 	return result;
+}
+
+
+bool readInput::parseDoubleVector(std::string line, std::vector<double> &row){
+	std::size_t pos = std::string::npos;
+	
+	// Replace whitespace in the current line
+	line = std::regex_replace(line, std::regex(" "), "");
+		
+	// Check if the line has a length (is not a blank line)
+	if(line.size() > 1){
+			
+		// Iterate through each comma of the csv
+		while((pos = line.find_first_of(",")) != std::string::npos){
+				
+			// Push the value found before the comma, remove from the line
+			row.push_back(std::stod(line.substr(0,pos)));
+			line.erase(0,pos + 1);
+				
+		}
+		// Get the last value of the line
+		row.push_back(std::stod(line.substr(0,pos)));
+	} else
+		return false;
+	
+	return true;
+	
 }
 
 
@@ -132,5 +145,30 @@ std::vector<std::vector<double>> readInput::readMAT(std::string filename){
 		
 	}
 	return result;
+}
+
+
+bool readInput::streamInit(std::string filename){
+	pFile = fopen(filename.c_str(), "r");
+	
+	if(pFile == NULL)
+		return false;
+	
+	return true;
+}
+
+
+
+bool readInput::streamRead(std::vector<double> &row){
+	
+	//Check for EOF
+	if(fgets(streamBuffer, 1000, pFile) == NULL)
+		return false;
+	
+	//Parse our row
+	if(parseDoubleVector(streamBuffer, row))	
+		return true;
+	else
+		return false;
 }
 

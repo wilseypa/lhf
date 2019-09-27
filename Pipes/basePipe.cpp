@@ -36,7 +36,7 @@ basePipe* basePipe::newPipe(const std::string &pipeT, const std::string &complex
 		return new persistencePairs();
 	} else if (pipeType == "persistence" && complexType == "indSimplexTree"){
 		return new optPersistencePairs();
-	} else if (pipeType == "slidingWindow" || pipeType == "sliding"){
+	} else if (pipeType == "slidingwindow" || pipeType == "sliding"){
 		return new slidingWindow();
 	}
 	

@@ -12,6 +12,7 @@
 #include <functional>
 #include "slidingWindow.hpp"
 #include "utils.hpp"
+#include "readInput.hpp"
 
 
 // basePipe constructor
@@ -23,18 +24,51 @@ slidingWindow::slidingWindow(){
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket slidingWindow::runPipe(pipePacket inData){	
 	utils ut;	
+	readInput rp;
 	
-	//Iterate through each vector, inserting into simplex storage
-	for(unsigned i = 0; i < inData.originalData.size(); i++){
-		if(!inData.originalData[i].empty()){
-			//insert data into the complex (SimplexArrayList, SimplexTree)
-			inData.complex->insert(inData.originalData[i]);
+	// For this pipe, we construct a sub-pipeline:
+	//		1. Read data vector by vector, push into slidingWindow evaluation
+	//		2. IF the point is to be inserted, push into the simplexTree (LRU ordered)
+	//		3. IF 100 points have passed, generate persistence intervals
+	//
+	// Loop this subpipeline until there's no more data
+	
+	std::vector<double> currentVector;
+	rp.streamInit(inputFile);
+	int pointCounter = 1;
+	
+	while(rp.streamRead(currentVector)){
+		
+		//Evaluate insertion into sliding window
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		//Check if we've gone through 100 points
+		if(pointCounter % 100 == 0){
+			//Build and trigger remaining pipeline
+			inData.complex->expandDimensions(dim);
+			
+			
 			
 		}
-	}	
+		pointCounter++;
+		
+	}
+	//Probably want to trigger the remaining pipeline one last time...
+	if((pointCounter - 1) % 100 != 0){
+		
+		inData.complex->expandDimensions(dim);
+	}
 	
 	
-	inData.complex->expandDimensions(dim);
+	ut.writeLog("slidingWindow", "\tSuccessfully evaluated " + std::to_string(pointCounter) + " points");
 
 	return inData;
 }
@@ -56,6 +90,10 @@ bool slidingWindow::configPipe(std::map<std::string, std::string> configMap){
 	
 	ut = utils(strDebug, outputFile);
 	
+	pipe = configMap.find("inputFile");
+	if(pipe != configMap.end())
+		inputFile = configMap["inputFile"].c_str();
+	
 	pipe = configMap.find("epsilon");
 	if(pipe != configMap.end())
 		epsilon = std::atof(configMap["epsilon"].c_str());
@@ -67,7 +105,7 @@ bool slidingWindow::configPipe(std::map<std::string, std::string> configMap){
 	}
 	else return false;
 	
-	ut.writeDebug("slidingWindow","Configured with parameters { dim: " + configMap["dimensions"] + ", eps: " + configMap["epsilon"] + ", debug: " + strDebug + ", outputFile: " + outputFile + " }");
+	ut.writeDebug("slidingWindow","Configured with parameters { input: " + configMap["inputFile"] + ", dim: " + configMap["dimensions"] + ", eps: " + configMap["epsilon"] + ", debug: " + strDebug + ", outputFile: " + outputFile + " }");
 	
 	return true;
 }
