@@ -26,10 +26,10 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 	utils ut;
 	readInput rp;
 
-	int windowMaxSize = 230;
-	int windowMinSize = 100;
+	int windowMaxSize = 50;
+	int windowMinSize = 20;
 
-	double minNNdist = 1.0;
+	double minNNdist = 0.0;
 	double maxNNdist = 0.0;
 
 	// For this pipe, we construct a sub-pipeline:
@@ -52,8 +52,6 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 	while(rp.streamRead(currentVector)){
 
 		//Evaluate insertion into sliding window
-		
-	
 		if(windowKeys.size() < windowMinSize){
 			windowKeys.push_back(key);
 			windowValues.push_back(currentVector);
@@ -84,45 +82,50 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 			if((nearRep < minNNdist) || (nearRep > maxNNdist)){
 				indexCounter++;
 				
+				//Check if we need to remove points
 				if(inData.originalData.size() == windowMaxSize) {
 					std::cout << "\tDeleting..." << std::endl;
 					
 					int keyToDelete = dynamicKeyContainer[0];
 					dynamicKeyContainer.erase(dynamicKeyContainer.begin());
+					
+					auto it = std::find(windowKeys.begin(), windowKeys.end(), keyToDelete);
+					int indexToDelete = std::distance(windowKeys.begin(), it);
 				
+					windowKeys.erase(windowKeys.begin() + indexToDelete);
+					windowValues.erase(windowValues.begin() + indexToDelete);
 					inData.complex->deleteIterative(keyToDelete);
 					
-					
-					
 				}
+				
 				//Insert the point
 				inData.complex->insertIterative(currentVector);
+				windowValues.push_back(currentVector);
+				windowKeys.push_back(key);
+				key++;
 				
+				//Still need to update min/max NN distances
+				minNNdist = inData.complex->minDist;
+				maxNNdist = inData.complex->maxDist;
+				
+			} else {
+				int nnIndex = 0;//index[0];
+				int nnKey = windowKeys[(unsigned)nnIndex];
+				
+				auto itRep = std::find(dynamicKeyContainer.begin(), dynamicKeyContainer.end(), nnKey);
+				
+				std::rotate(itRep, itRep + 1, dynamicKeyContainer.end());
+			
 			}
-
-			// if(new point needs to be added to Window){
-				// if(inData.originalData.size() == windowMaxSize) {
-					 // Remove the least frequently used point from Window.
-					 // Delete the corresponding simplices from complex.
-				// }
-
-				// insert data into the complex (SimplexArrayList, SimplexTree)
-				// inData.complex->insert(currentVector);
-			// }
-
-			// else {
-				  // Update the LRU
-			// }
-		
-
 		}
 
-
 		//Check if we've gone through 100 points
-		if(pointCounter % 100 == 0){
+		if(pointCounter % 100 == 0 && pointCounter > 100){
 			// Build and trigger remaining pipeline. It should only require the computation of persistence
 			// intervals from the complex being maintained.
-			//runSubPipeline(inData);
+			std::cout << "pointCounter: " << pointCounter << "\tSimplex Count: " << inData.complex->simplexCount() << "\tVertex Count: " << inData.complex->vertexCount() << std::endl;
+			
+			runSubPipeline(inData);
 
 		}
 		pointCounter++;
@@ -130,7 +133,9 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 	}
 	//Probably want to trigger the remaining pipeline one last time...
 	if((pointCounter - 1) % 100 != 0){
-		//runSubPipeline(inData);
+		std::cout << "pointCounter: " << pointCounter << "\tSimplex Count: " << inData.complex->simplexCount() << "\tVertex Count: " << inData.complex->vertexCount() << std::endl;
+		
+		runSubPipeline(inData);
 	}
 
 
@@ -140,11 +145,13 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 }
 
 
-void slidingWindow::runSubPipeline(pipePacket inData){
-    if(inData.originalData.size() == 0)
+void slidingWindow::runSubPipeline(pipePacket wrData){
+    if(wrData.originalData.size() == 0)
 		return;
+		
+	pipePacket inData = wrData;
 
-	std::string pipeFuncts = "distMatrix.neighGraph.rips.persistence";
+	std::string pipeFuncts = "rips.persistence";
 	auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
 
 	//For each '.' separated pipeline function (count of '.' + 1 -> lim)

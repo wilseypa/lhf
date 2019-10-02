@@ -11,6 +11,8 @@ class simplexBase {
   private:
   public:
 	utils ut;
+	double minDist = 0.0;
+	double maxDist = 0.0;
   
 	struct indTreeNode{
 		unsigned index;
