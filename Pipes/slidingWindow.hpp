@@ -11,6 +11,7 @@ class slidingWindow : public basePipe {
 	std::string inputFile;
 	void runSubPipeline();
 	std::map<std::string, std::string> subConfigMap;
+	void runComplexInitializer(pipePacket &);
   public:
     slidingWindow();
     pipePacket runPipe(pipePacket);

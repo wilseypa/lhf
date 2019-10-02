@@ -95,8 +95,8 @@ class simplexBase {
 	
 	//virtual interface functions
 	virtual double getSize();
-	void insertIterative(std::vector<double>&);
-	void deleteIterative(int);
+	virtual void insertIterative(std::vector<double>&);
+	virtual void deleteIterative(int);
 	virtual void insert(std::vector<double>&);
 	virtual bool find(std::vector<unsigned>);
 	virtual bool find(std::set<unsigned>);

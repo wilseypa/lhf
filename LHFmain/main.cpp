@@ -180,6 +180,7 @@ int main(int argc, char* argv[]){
 			args["preprocessor"] = "";
 			args["pipeline"] = "slidingwindow";
 			args["upscale"] = "false";
+			args["complexType"] = "simplexTree";
 		}
 	
 	}
