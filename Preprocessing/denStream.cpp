@@ -14,7 +14,7 @@
 #include <functional> 
 #include <vector>
 #include "denStream.hpp"
-#include "densityUtils.hpp"
+#include "dbscan.hpp"
 #include "utils.hpp"
 /////// Based off algorithm outlined in Cao et al 06 "Density-Based Clustering over an Evolving Data Stream with Noise"/////
 
@@ -29,7 +29,7 @@ denStream::denStream(){
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket denStream::runPreprocessor(pipePacket inData){
 utils ut;
-densityUtils denseUt;
+dbscan denseUt;
 
 
 /////////constants//////////
@@ -46,7 +46,7 @@ double timestamp;
 ///////initialize p micro clusters... DBSCAN first N points (N has to be less than size of input data to simulate stream)///////
 //this returns cluster labels corresponding to current points
 
-std::vector<int>clusterLabels = denseUt.dbscan(inData.originalData);
+std::vector<int>clusterLabels = denseUt.cluster(inData.originalData);
 
 
 int pClusterLabel = *std::max_element(clusterLabels.begin(), clusterLabels.end()); //start pClusters at highest cluster from DBSCAN
