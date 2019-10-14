@@ -26,10 +26,10 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 	utils ut;
 	readInput rp;
 
-	int windowMaxSize = 50;
+	int windowMaxSize = 25;
 	int windowMinSize = 20;
 
-	double minNNdist = 0.0;
+	double minNNdist = 5.0;
 	double maxNNdist = 0.0;
 
 	// For this pipe, we construct a sub-pipeline:
@@ -71,19 +71,29 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 		} else {
 			//Do NN search
 
-			//One with LHF NN (Aaron)
+			//One with LHF aNN (Aaron)
+			//  auto [index, sqrdDistance] = ut.aNN(dataPoint, windowValues);
 
-			//One with ANN NN (Streaming branch)
-			//
+			//One with ANN aNN (Streaming branch)
 			//	auto [index, sqrdDistance] = nnSearch(dataPoint, windowValues);
+			
+			//One with LHF NN (Utils)
+			auto reps = ut.nearestNeighbors(currentVector, windowValues);
+			
+			//ut.print1DVector(reps);
+			
+			double minDist = *std::min_element(reps.begin(),reps.end());
+			double maxDist = *std::max_element(reps.begin(),reps.end());
+			
+			//std::cout << "\tMin: " << minDist << "\tMax: " << maxDist << "\tBounds ( " << minNNdist << " , " << maxNNdist << ")" << std::endl;
 
-			double nearRep = 0;//sqrt(sqrdDistance[0]);
+			double nearRep = minDist;
 			
 			if((nearRep < minNNdist) || (nearRep > maxNNdist)){
 				indexCounter++;
 				
 				//Check if we need to remove points
-				if(inData.originalData.size() == windowMaxSize) {
+				if(windowValues.size() == windowMaxSize) {
 					std::cout << "\tDeleting..." << std::endl;
 					
 					int keyToDelete = dynamicKeyContainer[0];
@@ -99,14 +109,16 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 				}
 				
 				//Insert the point
-				inData.complex->insertIterative(currentVector);
+				inData.complex->insertIterative(reps);
 				windowValues.push_back(currentVector);
 				windowKeys.push_back(key);
 				key++;
 				
 				//Still need to update min/max NN distances
-				minNNdist = inData.complex->minDist;
-				maxNNdist = inData.complex->maxDist;
+				if(minDist < minNNdist)
+					minNNdist = minDist;
+				if(maxDist > maxNNdist)
+					maxNNdist = maxDist;
 				
 			} else {
 				int nnIndex = 0;//index[0];
@@ -129,6 +141,8 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 
 		}
 		pointCounter++;
+		
+		currentVector.clear();
 
 	}
 	//Probably want to trigger the remaining pipeline one last time...

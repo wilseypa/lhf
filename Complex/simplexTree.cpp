@@ -194,9 +194,11 @@ void simplexTree::insertIterative(std::vector<double> &distMatrixRow){
 void simplexTree::deleteIterative(int vectorIndex){
 	//Find what row/column of our distance matrix pertain to the vector index
 	
+	//std::cout << "Deleting vector : " << vectorIndex << std::endl;
+	
 	std::vector<int>::iterator it;
 	if((it = std::find(runningVectorIndices.begin(), runningVectorIndices.end(), vectorIndex)) != runningVectorIndices.end()){
-		std::cout << "Found vector at index " << it - runningVectorIndices.begin() + 1 << std::endl;
+		//std::cout << "Found vector at index " << it - runningVectorIndices.begin() + 1 << std::endl;
 	
 	
 		int index = it - runningVectorIndices.begin() + 1;
@@ -211,7 +213,7 @@ void simplexTree::deleteIterative(int vectorIndex){
 	
 		//Delete all entries in the simplex tree with the index...
 		// TODO :)
-	
+		deleteIndexRecurse(index, head);
 	
 	
 	} else {
@@ -222,6 +224,23 @@ void simplexTree::deleteIterative(int vectorIndex){
 }
 
 
+void simplexTree::deleteIndexRecurse(int vectorIndex, treeNode* curNode){
+	
+	if(curNode == nullptr){
+		std::cout << "Empty tree" << std::endl;
+		return;
+	}
+	
+	if(curNode->index == vectorIndex){
+		deletion(curNode);
+	} else if (curNode->sibling != nullptr){
+		deleteIndexRecurse(vectorIndex, curNode->sibling);
+	} else if (curNode->child != nullptr){
+		deleteIndexRecurse(vectorIndex, curNode->child);
+	}
+	
+	
+}
 
 
 

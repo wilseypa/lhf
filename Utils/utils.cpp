@@ -420,3 +420,18 @@ std::vector<std::vector<unsigned>> utils::getSubsets(std::vector<unsigned> set){
 	}
 	return retSubset;
 }
+
+
+std::vector<double> utils::nearestNeighbors(std::vector<double>& point, std::vector<std::vector<double>>& pointcloud){
+	//based on random projection, x is current point being examined, n is number of centroids/facilities
+	utils ut;
+	std::vector<double> retVal;
+		
+	//Get sq distances for each point
+	for(auto currentPoint : pointcloud){
+		retVal.push_back(ut.vectors_distance(point, currentPoint));
+	}
+	
+	return retVal;
+
+}
