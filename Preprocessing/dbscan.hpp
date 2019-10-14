@@ -10,8 +10,8 @@ class dbscan : public preprocessor {
   	
   public:
   dbscan();
- 
-  std::vector<int> cluster(std::vector<std::vector<double>>& data);
+//  std::vector<std::vector<double>> cluster
+      std::vector<int> cluster(std::vector<std::vector<double>> &data);
   int calcClusterVec(std::vector<std::vector<double>>& data, int i, double epsilon);
   int calcClusterPipePacket(pipePacket inData, int i, double epsilon);
   int expandCluster(std::vector<std::vector<double>>& data, std::vector<std::vector<double>>& neighbors, std::vector<int>& neighborTracker, std::vector<int>& clusterLabel, int clusterIndex, double epsilon, int minPoints, std::vector<int>& processed);

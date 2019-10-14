@@ -1,10 +1,10 @@
 #pragma once
 
-// Header file for kMeansPlusPlus class - see kMeansPlusPlus.cpp for descriptions
+// Header file for kdTree class - see kdTree.cpp for descriptions
 #include <map>
 #include "preprocessor.hpp"
 
-class kdtree : public preprocessor
+class kdTree : public preprocessor
 {
 private:
   

@@ -24,23 +24,27 @@ dbscan::dbscan(){
 }
 //taking in preprocessor type
 
+std::vector<int> dbscan::cluster(std::vector<std::vector<double>> &data){
 
-// runPipe -> Run the configured functions of this pipeline segment
-pipePacket dbscan::runPreprocessor(pipePacket inData){    //standalone preprocessor
-// make labels for upscaling
-std::vector<uint_least32_t> upscaleLabels(inData.originalData.size());
-std::iota (std::begin(upscaleLabels), std::end(upscaleLabels), 0);
-////
-std::cout<<"got to outside \n";
-/////////constants//////////
- utils ut;
+   //add separate dbscan path here
 
+}
+    // runPipe -> Run the configured functions of this pipeline segment
+    pipePacket
+    dbscan::runPreprocessor(pipePacket inData)
+{ //standalone preprocessor
+    // make labels for upscaling
+    std::vector<uint_least32_t> upscaleLabels(inData.originalData.size());
+    std::iota(std::begin(upscaleLabels), std::end(upscaleLabels), 0);
+    ////
+    std::cout << "got to outside \n";
+    /////////constants//////////
+    utils ut;
 
-//put all data points into the KDTree
-//kdtree -> used for neighbors test
+    //put all data points into the KDTree
+    //kdtree -> used for neighbors test
 
-
-// while points unprocessed
+    // while points unprocessed
     //if getNodesinRadius == true (current point, eps, minPts)
     //append to current cluster
 
