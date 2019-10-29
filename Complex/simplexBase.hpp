@@ -87,6 +87,7 @@ class simplexBase {
 	std::vector<std::vector<std::pair<std::vector<unsigned>, double>>> weightedGraph;
 	int runningVectorCount = 0;
 	std::vector<int> runningVectorIndices;
+	int removedSimplices = 0;
   
 	simplexBase();
 	simplexBase(std::map<std::string, std::string>);
@@ -97,7 +98,7 @@ class simplexBase {
 	
 	//virtual interface functions
 	virtual double getSize();
-	virtual void insertIterative(std::vector<double>&);
+	virtual bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&);
 	virtual void deleteIterative(int);
 	virtual void insert(std::vector<double>&);
 	virtual bool find(std::vector<unsigned>);
@@ -109,6 +110,7 @@ class simplexBase {
 	virtual std::vector<std::vector<graphEntry>> getIndexEdges(double);
 	virtual void expandDimensions(int);
 	virtual void reduceComplex();
+    virtual bool streamEvaluator(std::vector<double>, std::vector<std::vector<double>>);
 	
 	//Unused, possibly future
 	virtual void outputSimplex();

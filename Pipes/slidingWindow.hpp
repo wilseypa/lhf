@@ -8,6 +8,7 @@ class slidingWindow : public basePipe {
   private:
 	double epsilon;
 	int dim;
+	int repCounter = 0;
 	std::string inputFile;
 	void runSubPipeline();
 	std::map<std::string, std::string> subConfigMap;

@@ -127,4 +127,3 @@ bool basePipe::configPipe(std::map<std::string, std::string> configMap){
 	
 	return true;
 }
-

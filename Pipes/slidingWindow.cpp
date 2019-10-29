@@ -26,11 +26,7 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 	utils ut;
 	readInput rp;
 
-	int windowMaxSize = 200;
-	int windowMinSize = 150;
-
-	double minNNdist = 0.5;
-	double maxNNdist = 5.0;
+	int windowMaxSize = 20;
 
 	// For this pipe, we construct a sub-pipeline:
 	//		1. Read data vector by vector, push into slidingWindow evaluation
@@ -39,27 +35,20 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 	//
 	// Loop this subpipeline until there's no more data
 
-	std::vector<int> windowKeys;
 	std::vector<std::vector<double>> windowValues;
-	std::vector<int> dynamicKeyContainer;
 
 	std::vector<double> currentVector;
 	rp.streamInit(inputFile);
 	int pointCounter = 1;
-	int key = 0;
-	int indexCounter = 0;
 
 	while(rp.streamRead(currentVector)){
 
 		//Evaluate insertion into sliding window
-		if(windowKeys.size() < windowMinSize){
-			windowKeys.push_back(key);
+		if(windowValues.size() < windowMaxSize){
 			windowValues.push_back(currentVector);
-			dynamicKeyContainer.push_back(key);
-			key++;
 
 			//If we've reached window size, generate the initial complex
-			if(key == windowMinSize){
+			if(windowValues.size() == windowMaxSize){
 				std::cout << "Initializing complex" << std::endl;
 
 				inData.originalData = windowValues;
@@ -69,75 +58,23 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 			}
 
 		} else {
-			//Do NN search
+			
+			if(inData.complex->insertIterative(currentVector, windowValues)){
 
-			//One with LHF aNN (Aaron)
-			//  auto [index, sqrdDistance] = ut.aNN(dataPoint, windowValues);
-
-			//One with ANN aNN (Streaming branch)
-			//	auto [index, sqrdDistance] = nnSearch(dataPoint, windowValues);
-
-			//One with LHF NN (Utils)
-			auto reps = ut.nearestNeighbors(currentVector, windowValues);
-
-			//ut.print1DVector(reps);
-
-			double minDist = *std::min_element(reps.begin(),reps.end());
-			double maxDist = *std::max_element(reps.begin(),reps.end());
-
-			//std::cout << "\tMin: " << minDist << "\tMax: " << maxDist << "\tBounds ( " << minNNdist << " , " << maxNNdist << ")" << std::endl;
-
-			double nearRep = minDist;
-
-			if((nearRep < minNNdist) || (nearRep > maxNNdist)){
-				indexCounter++;
-
-				//Check if we need to remove points
-				if(windowKeys.size() == windowMaxSize) {
-					std::cout << "\tDeleting..." << std::endl;
-
-					int keyToDelete = dynamicKeyContainer[0];
-					dynamicKeyContainer.erase(dynamicKeyContainer.begin());
-
-					auto it = std::find(windowKeys.begin(), windowKeys.end(), keyToDelete);
-					int indexToDelete = std::distance(windowKeys.begin(), it);
-
-					windowKeys.erase(windowKeys.begin() + indexToDelete);
-					windowValues.erase(windowValues.begin() + indexToDelete);
-					inData.complex->deleteIterative(keyToDelete);
-
-				}
+				windowValues.erase(windowValues.begin());
 
 				//Insert the point
-				inData.complex->insertIterative(reps);
 				windowValues.push_back(currentVector);
-				windowKeys.push_back(key);
-				dynamicKeyContainer.push_back(key);
-				key++;
-
-				//Still need to update min/max NN distances
-//				if(minDist < minNNdist)
-//					minNNdist = minDist;
-//				if(maxDist > maxNNdist)
-//					maxNNdist = maxDist;
-
-			} else {
-				int nnIndex = 0;//index[0];
-				int nnKey = windowKeys[(unsigned)nnIndex];
-
-				auto itRep = std::find(dynamicKeyContainer.begin(), dynamicKeyContainer.end(), nnKey);
-
-				std::rotate(itRep, itRep + 1, dynamicKeyContainer.end());
-
 			}
 		}
 
 		//Check if we've gone through 100 points
-		if(pointCounter % 100 == 0 && pointCounter > 100){
+		if(pointCounter % 100 == 0 && pointCounter > windowMaxSize){
 			// Build and trigger remaining pipeline. It should only require the computation of persistence
 			// intervals from the complex being maintained.
 			std::cout << "pointCounter: " << pointCounter << "\tSimplex Count: " << inData.complex->simplexCount() << "\tVertex Count: " << inData.complex->vertexCount() << std::endl;
-
+			std::cout << "\tWindowSize: " << windowValues.size() << std::endl;
+			inData.originalData = windowValues;
 			runSubPipeline(inData);
 
 		}
@@ -153,7 +90,6 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 		runSubPipeline(inData);
 	}
 
-
 	ut.writeLog("slidingWindow", "\tSuccessfully evaluated " + std::to_string(pointCounter) + " points");
 
 	return inData;
@@ -163,11 +99,14 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 void slidingWindow::runSubPipeline(pipePacket wrData){
     if(wrData.originalData.size() == 0)
 		return;
-
+		
 	pipePacket inData = wrData;
+	outputData(inData);
 
 	std::string pipeFuncts = "rips.persistence";
 	auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
+	subConfigMap["fn"] = "_" + std::to_string(repCounter);
+	repCounter++;
 
 	//For each '.' separated pipeline function (count of '.' + 1 -> lim)
 	for(unsigned i = 0; i < lim; i++){
@@ -186,6 +125,7 @@ void slidingWindow::runSubPipeline(pipePacket wrData){
 			std::cout << "LHF : Failed to configure pipeline: " << curFunct << std::endl;
 		}
 	}
+
 
 	return;
 }
@@ -257,25 +197,13 @@ bool slidingWindow::configPipe(std::map<std::string, std::string> configMap){
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
 void slidingWindow::outputData(pipePacket inData){
-	std::ofstream file ("output/" + pipeType + "_output.csv");
+	std::ofstream file ("output/" + pipeType + "_" + std::to_string(repCounter) + "_output.csv");
 
-	if(inData.complex->simplexType == "simplexArrayList"){
-		for(auto a : inData.complex->weightedGraph[1]){
-			for(auto d : a.first){
-				file << d << ",";
-			}
-			file << "\n";
+	for(auto a : inData.originalData){
+		for(auto d : a){
+			file << d << ",";
 		}
-	}else{
-		auto edges = inData.complex->getAllEdges(5);
-		for (auto edge : edges){
-			for (auto a : edge){
-				for(auto d : a.first){
-					file << d << ",";
-				}
-				file << a.second << "\n";
-			}
-		}
+		file << "\n";
 	}
 	file << std::endl;
 

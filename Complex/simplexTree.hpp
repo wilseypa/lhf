@@ -36,7 +36,7 @@ class simplexTree : public simplexBase {
 	
 	//virtual interface functions
 	double getSize();
-	void insertIterative(std::vector<double>&);
+	bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&);
 	void deleteIterative(int);
 	void insert(std::vector<double>&);
 	bool find(std::set<unsigned>);

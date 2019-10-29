@@ -1,5 +1,7 @@
 #include <string>
 #include <vector>
+#include <cmath>
+#include <numeric>
 #include <typeinfo>
 #include "simplexBase.hpp"
 #include "simplexTree.hpp"
@@ -94,9 +96,9 @@ double simplexBase::getSize(){
 	return 0;
 }
 
-void simplexBase::insertIterative(std::vector<double>&){
+bool simplexBase::insertIterative(std::vector<double>&, std::vector<std::vector<double>>&){
 	ut.writeLog(simplexType,"No insert iterative function defined");
-	return;
+	return false;
 }
 
 void simplexBase::deleteIterative(int){
@@ -144,4 +146,29 @@ void simplexBase::reduceComplex(){
 	ut.writeLog(simplexType,"No reduceComplex function defined");
 	return;
 }
+
+bool simplexBase::streamEvaluator(std::vector<double> vector, std::vector<std::vector<double>> window){
 	
+	
+	//Do some evaluation of whether the point should stay or not
+	//		For now, let's look at the deviation of connections
+	
+	auto reps = ut.nearestNeighbors(vector, window);
+	
+	double sum = std::accumulate(reps.begin(), reps.end(), 0.0);
+	double mean = sum / reps.size();
+	
+	std::vector<double> diff(reps.size());
+	std::transform(reps.begin(), reps.end(), diff.begin(),std::bind2nd(std::minus<double>(), mean));
+	double sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
+	double stdev = std::sqrt(sq_sum / reps.size());
+	
+	
+	if (stdev > 0.5){
+		std::cout << "\tAccept: (stdev > 0.5 , " << stdev << ")" << std::endl;
+		return true;
+	}
+	
+	std::cout << "\tReject: (stdev > 0.5 , " << stdev << ")" << std::endl;
+	return false;
+}
