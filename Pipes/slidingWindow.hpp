@@ -19,5 +19,6 @@ class slidingWindow : public basePipe {
 	void outputData(pipePacket);
     bool configPipe(std::map<std::string, std::string>);
     void runSubPipeline(pipePacket);
+	void writeComplexStats(pipePacket &);
 };
 

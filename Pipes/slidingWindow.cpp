@@ -26,7 +26,7 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 	utils ut;
 	readInput rp;
 
-	int windowMaxSize = 20;
+	int windowMaxSize = 50;
 
 	// For this pipe, we construct a sub-pipeline:
 	//		1. Read data vector by vector, push into slidingWindow evaluation
@@ -92,9 +92,20 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 
 	ut.writeLog("slidingWindow", "\tSuccessfully evaluated " + std::to_string(pointCounter) + " points");
 
+	writeComplexStats(inData);
 	return inData;
 }
 
+void slidingWindow::writeComplexStats(pipePacket &inData){
+	if(inData.complex->stats.size() > 30){
+		std::ofstream file ("output/complexStats.csv");
+
+		file << inData.complex->stats << std::endl;
+
+		file.close();
+		
+	}	
+}
 
 void slidingWindow::runSubPipeline(pipePacket wrData){
     if(wrData.originalData.size() == 0)

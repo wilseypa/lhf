@@ -163,12 +163,35 @@ bool simplexBase::streamEvaluator(std::vector<double> vector, std::vector<std::v
 	double sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
 	double stdev = std::sqrt(sq_sum / reps.size());
 	
+	stats += std::to_string(runningVectorCount) + "," + std::to_string(mean) + "," + std::to_string(stdev) + ",";
 	
-	if (stdev > 0.5){
-		std::cout << "\tAccept: (stdev > 0.5 , " << stdev << ")" << std::endl;
-		return true;
+	std::sort(reps.begin(), reps.end());
+	std::vector<double> kNN;
+	int k = 20;
+	
+	for(int i = 0; i < k; i++){
+		kNN.push_back(reps[i]);
 	}
 	
-	std::cout << "\tReject: (stdev > 0.5 , " << stdev << ")" << std::endl;
+	double sum_NN = std::accumulate(kNN.begin(), kNN.end(), 0.0);
+	double mean_NN = sum_NN / kNN.size();
+	
+	std::vector<double> diff_NN(kNN.size());
+	std::transform(kNN.begin(), kNN.end(), diff_NN.begin(),std::bind2nd(std::minus<double>(), mean_NN));
+	double sq_sum_NN = std::inner_product(diff_NN.begin(), diff_NN.end(), diff_NN.begin(), 0.0);
+	double stdev_NN = std::sqrt(sq_sum_NN / kNN.size());
+	
+	stats += std::to_string(k) + "," + std::to_string(mean_NN) + "," + std::to_string(stdev_NN) + ",";
+	
+	
+	
+	
+	if (true){//stdev_NN > 10000){
+		//std::cout << "\tAccept: (stdev > 0.5 , " << stdev << ")" << std::endl;
+		stats += "Accept\n";
+		return true;
+	}
+	stats += "Reject\n";
+	//std::cout << "\tReject: (stdev > 0.5 , " << stdev << ")" << std::endl;
 	return false;
 }

@@ -88,6 +88,7 @@ class simplexBase {
 	int runningVectorCount = 0;
 	std::vector<int> runningVectorIndices;
 	int removedSimplices = 0;
+	std::string stats = "RVIndex,Mean,Stdev,k,kNN_Mean,kNN_Stdev,Result\n";
   
 	simplexBase();
 	simplexBase(std::map<std::string, std::string>);
