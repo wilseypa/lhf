@@ -37,7 +37,7 @@ kdTree::kdTree(){
 
 //avdongre.wordpress.com/2011/06/14/kd-tree-in-c/
 // github.com/crvs/KDTree/blob/master/KDTree.cpp#L41
-
+utils ut;
 using point =std::vector<double>;
 using pointList = std::vector<std::vector<double>>;
 using pointListItr =  pointList::iterator; //alias declarations
@@ -63,6 +63,12 @@ kdNode::kdNode(const pointIndex &pi, const kdNodePtr &left_,
 }
 
 kdNode::~kdNode() = default; //destructor
+//operator overloads so types don't get messed up
+kdNode::operator bool() { return (!x.empty()); }
+kdNode::operator point() { return x; }
+kdNode::operator size_t() { return index; }
+kdNode::operator pointIndex() { return pointIndex(x, index); }
+
 
 kdNodePtr newKdNodePtr()
 {
@@ -139,30 +145,74 @@ kdTree::kdTree(pointVec pointArray, pipePacket inData){
 
 }
 
+//find nearest neighbor to points - need to pick correct branch
 
+kdNodePtr kdTree::findNearest(
+    const kdNodePtr &branch, //
+    const point &pt,       //
+    const size_t &level,     //
+    const kdNodePtr &best,   //
+    const double &bestDist){
+        double d, dx, dsquared;
 
+    if (!bool(*branch)){
+        return newkdNodePtr(); // basically, null
+       }
 
+    point branch_pt(*branch);
+    size_t dim = branch_pt.size();
 
+    d = ut.vectors_distance(branch_pt, pt);
+    dx = branch_pt.at(level) - pt.at(level);
+    dsquared = dx * dx;
 
+    kdNodePtr bestL = best;
+    double bestDistL = bestDist;
 
+    if(d <bestDist){
+        bestDistL = d;
+        bestL = branch;
+    }
 
+    size_t nextLv = (level+1)%dim;
+    kdNodePtr section;
+    kdNodePtr other;
 
+    if (dx>0){ //check branch for correct one to search
+        section = branch-> left;
+        other = branch -> right;
+    }
+    else{
+        section = branch->right;
+        other = branch->left;
+    }
 
+    //traverse further down the tree
+    kdNodePtr further = findNearest(section, pt, nextLv, bestL, bestDistL);
+    if(!further -> x.empty()){
+        double dl = ut.vectors_distance(further->x, pt);
+        if(dl < bestDistL){
+            bestDistL = dl;
+            bestL= further;
+        }
+    }
 
+    if(dsquared < bestDistL){
+        further = findNearest(other, pt, nextLv, bestL, bestDistL);
+        if(!further->x.empty()){
+            double dl = ut.vectors_distance(further->x, pt);
+            if(dl < bestDistL){
+                bestDistL = dl;
+                bestL = further;
+            }
+        }
+    }
 
+    return bestL;
 
+}
 
-
-
-
-
-
-
-
-
-
-
-     /*pipePacket kdTree::runPreprocessor(pipePacket inData){
+    /*pipePacket kdTree::runPreprocessor(pipePacket inData){
 
 } 
  

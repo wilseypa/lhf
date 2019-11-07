@@ -30,6 +30,12 @@ class kdNode {
         kdNode(const pointIndex &, const kdNodePtr &, const kdNodePtr &);
         ~kdNode(); //destructor
 
+        double coord(const size_t &);
+        
+        explicit operator bool();
+        explicit operator point();
+        explicit operator size_t();
+        explicit operator pointIndex();
 };
 
 using kdNodePtr = std::shared_ptr< kdNode >;
@@ -50,7 +56,7 @@ class kdTree{
        explicit kdTree(pointVec pointArray, pipePacket inData); //vector of points, which are std::vector<doubles>. prevent implicit conversion
 
     private:
-      kdNodePtr nearest(
+      kdNodePtr findNearest(
           const kdNodePtr &branch,
           const point &pt,
           const size_t &level,
@@ -87,7 +93,9 @@ class kdTree{
             const double &rad);
 };
 
-/*class kdTree : public preprocessor
+
+
+    /*class kdTree : public preprocessor
 {
 private:
   
@@ -102,6 +110,3 @@ public:
     pipePacket runPreprocessor(pipePacket inData);
     bool configPreprocessor(std::map<std::string, std::string> configMap);
 };  */
-
-
-
