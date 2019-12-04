@@ -89,7 +89,7 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 
 			double nearRep = minDist;
 			
-			if((nearRep < minNNdist) || (nearRep > maxNNdist)){
+			if(true){//(nearRep < minNNdist) || (nearRep > maxNNdist)){
 				indexCounter++;
 				
 				//Check if we need to remove points
@@ -104,6 +104,8 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 				
 					windowKeys.erase(windowKeys.begin() + indexToDelete);
 					windowValues.erase(windowValues.begin() + indexToDelete);
+					
+					std::cout << "\tdeleteIterative... " << keyToDelete << std::endl;
 					inData.complex->deleteIterative(keyToDelete);
 					
 				}

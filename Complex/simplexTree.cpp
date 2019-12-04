@@ -219,7 +219,7 @@ void simplexTree::deleteIterative(int vectorIndex){
 	} else {
 		std::cout << "Failed to find vector by index!" << std::endl;
 	}
-	
+	std::cout << "ret delete" << std::endl;
 	return;
 }
 
@@ -232,6 +232,7 @@ void simplexTree::deleteIndexRecurse(int vectorIndex, treeNode* curNode){
 	}
 	
 	if(curNode->index == vectorIndex){
+		std::cout << "Found node... " << vectorIndex << " : " << curNode->index << std::endl;
 		deletion(curNode);
 	} else if (curNode->sibling != nullptr){
 		deleteIndexRecurse(vectorIndex, curNode->sibling);
@@ -239,7 +240,7 @@ void simplexTree::deleteIndexRecurse(int vectorIndex, treeNode* curNode){
 		deleteIndexRecurse(vectorIndex, curNode->child);
 	}
 	
-	
+	return;
 }
 
 
@@ -470,27 +471,42 @@ bool simplexTree::deletion(std::set<unsigned> removalEntry) {
 // A recursive function to delete a simplex (and sub-branches) from the tree.
 bool simplexTree::deletion(treeNode* removalEntry) {
 	treeNode* curNode = removalEntry;
+	int deletionCount = 0;
 	
 	//Iterate to the bottom of branch
-	while(curNode != nullptr){ 
+	while(curNode->child != nullptr){ 
 		curNode->child->parent = curNode;
 		curNode=curNode->child;
+		std::cout << "\t\t@ " << curNode->index << std::endl;
+	}
+	
+	if(curNode->sibling != nullptr){
+		deletion(curNode->sibling);
 	}
 	
 	
+	std::cout << "test" << std::endl;
 	//If we did go down, remove on the way back up
 	while(curNode != removalEntry){ 
 		curNode = curNode->parent;
+		
+		if(curNode->sibling != nullptr){
+			deletion(curNode->sibling);
+		}
+		
+		deletionCount++;
 		delete curNode->child;
 		curNode->child = nullptr;
 	}
 	
 	//curNode = curNode->parent;
+	deletionCount++;
 	delete curNode;
 	nodeCount--;
 	//curNode->child = nullptr;
 	
-	//NOTE: Also need to remove from the indexed graph (if done after shuffle)
+	std::cout << "\tDeleted " << deletionCount << " nodes" << std::endl;
+	
 	
 	
 	return false;
