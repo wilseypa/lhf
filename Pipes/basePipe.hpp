@@ -8,6 +8,7 @@
 class basePipe {
   private:
   public:
+	std::string fnmod = "";
 	utils ut;
 	std::string pipeType;
 	int debug;
@@ -17,6 +18,6 @@ class basePipe {
     pipePacket runPipeWrapper(pipePacket);
 	virtual void outputData(pipePacket);
     virtual pipePacket runPipe(pipePacket);
-    virtual bool configPipe(std::map<std::string, std::string>);
+    virtual bool configPipe(std::map<std::string, std::string>);    
 };
 
