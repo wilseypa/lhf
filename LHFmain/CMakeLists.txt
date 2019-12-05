@@ -2,7 +2,14 @@
 # project specific logic here.
 #
 
+IF(DEFINED MPI_CXX_COMPILER)
+  SET(CMAKE_CXX_COMPILER "${MPI_CXX_COMPILER}" CACHE FILEPATH "CXX compiler overridden with MPI C++ wrapper")
+ENDIF(DEFINED MPI_CXX_COMPILER)
+
 cmake_minimum_required(VERSION 3.5)
+
+find_package(MPI REQUIRED)
+include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 
 set (CMAKE_CXX_STANDARD 14)
 set (CMAKE_CXX_STANDARD_LIBRARIES "-lpthread")
@@ -23,7 +30,9 @@ link_directories(../Utils)
 #Add Source to this project's executable
 add_executable(LHF "main.cpp")
 
-target_link_libraries(LHF simplexBase pipePacket utils basePipe preprocessor)
+target_link_libraries(LHF PRIVATE simplexBase pipePacket utils basePipe preprocessor)
+
+
 
 # TODO: Add tests and install targets if needed.
 
