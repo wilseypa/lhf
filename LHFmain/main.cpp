@@ -53,9 +53,11 @@ void runPipeline(std::map<std::string, std::string> args, pipePacket* wD){
 	if(pipe != args.end()){
 		if (args["outputFile"] == "console"){
 			//ws->writeConsole(wD);
+		} else {
+			ws->writeStats(wD->stats, args["outputFile"]);
+			ws->writeBarcodes(wD->bettiOutput, args["outputFile"]);
+			
 		}
-		
-		ws->writeStats(wD->stats, args["outputFile"]);
 	}
 	
 	return;
