@@ -1,0 +1,20 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches:
+      - master
+      - MPI_Development
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+    # Checkout v2 : https://github.com/actions/checkout
+    - uses: actions/checkout@v2
+      
+    # Make the project
+    - name: cmake
+      run: cmake .
