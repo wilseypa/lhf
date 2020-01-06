@@ -93,7 +93,7 @@ std::vector<std::vector<indSimplexTree::graphEntry>> simplexBase::getIndexEdges(
 
 double simplexBase::getSize(){
 	ut.writeLog(simplexType,"No size function defined");
-	return 0;
+	return -1;
 }
 
 bool simplexBase::insertIterative(std::vector<double>&, std::vector<std::vector<double>>&){
@@ -114,12 +114,12 @@ void simplexBase::insert(std::vector<double>&){
 
 bool simplexBase::find(std::vector<unsigned>){
 	ut.writeLog(simplexType,"No find function defined");
-	return -1;
+	return false;
 }
 
 bool simplexBase::find(std::set<unsigned>){
 	ut.writeLog(simplexType,"No find function defined");
-	return -1;
+	return false;
 }
 
 int simplexBase::vertexCount(){
