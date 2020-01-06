@@ -80,7 +80,7 @@ class simplexBase {
 	};
   
 	std::vector<unsigned> dimCounts = {6, 15, 20};
-	std::string simplexType;
+	std::string simplexType = "simplexBase";
 	double maxEpsilon;
 	int maxDimension;
 	std::vector<std::vector<double>> distMatrix;
