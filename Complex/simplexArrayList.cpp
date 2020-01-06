@@ -134,12 +134,15 @@ std::vector<std::vector<std::pair<std::set<unsigned>, double>>> simplexArrayList
 // Search function to find a specific vector in the simplexArrayList
 // weightedGraph[d][v][p] dimension d stores vectors v of point elements p of simplexes formed
 bool simplexArrayList::find(std::vector<unsigned> vector){
-	//Search the weighted graph from the size of the vector
-	for(auto v = 0; v < weightedGraph[vector.size() - 1].size(); v++){
-		//ut.print1DVector(weightedGraph[vector.size() - 1][v]);
-		
-		if(weightedGraph[vector.size() - 1][v].first == vector){
-			return true;
+	
+	if(weightedGraph.size() >= vector.size()){
+		//Search the weighted graph from the size of the vector
+		for(auto v = 0; v < weightedGraph[vector.size() - 1].size(); v++){
+			//ut.print1DVector(weightedGraph[vector.size() - 1][v]);
+			
+			if(weightedGraph[vector.size() - 1][v].first == vector){
+				return true;
+			}
 		}
 	}
 	return false;
@@ -285,7 +288,9 @@ void simplexArrayList::reduceComplex(){
 	
 	//Start with the largest dimension
 	ut.writeDebug("simplexArrayList","Reducing complex, starting simplex count: " + std::to_string(simplexCount()));
-	
+	if(weightedGraph.size() == 0){
+		return;
+	}
 	
 	for(auto i = weightedGraph.size()-1; i > 1; i--){
 		

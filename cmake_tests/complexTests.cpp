@@ -98,7 +98,7 @@ void t_simp_base_functions(std::string &log, std::string type){
 	std::set<unsigned> findValueSet = {0};
 	
 	testComplex = testComplex->newSimplex(type, config);
-	
+	std::cout << "x" << std::endl;
 	//Insert values to initialize the complex
 	//	RET: void
 	try{
@@ -107,10 +107,12 @@ void t_simp_base_functions(std::string &log, std::string type){
 	}
 	catch(const std::exception){ failLog += type + " insert failed\n"; }
 	
+	std::cout << "z" << std::endl;
 	//Get complex size
 	//	RET: double (testValueArray.size())
 	if(testComplex->getSize() != testValueArray.size()) { failLog += type + " getSize failed : " + std::to_string(testComplex->getSize()) + "\n"; }
 	
+	std::cout << "y" << std::endl;
 	//Insert iterative into uninitialized complex
 	//	RET: void
 	if(testComplex->insertIterative(testValue, testValueArray)) { failLog += type + " insertIterative failed\n"; }
@@ -188,62 +190,59 @@ void t_simp_empty_functions(std::string &log, std::string type){
 	testComplex = testComplex->newSimplex(type, config);
 	//Don't insert anything into the complex and test our functions
 	
-	//Get complex size
-	//	RET: double (testValueArray.size())
-	if(testComplex->getSize() != testValueArray.size()) { failLog += type + " getSize failed : " + std::to_string(testComplex->getSize()) + "\n"; }
+	//Get empty complex size
+	//	RET: double (0)
+	if(testComplex->getSize() != 0) { failLog += type + " getSize failed : " + std::to_string(testComplex->getSize()) + "\n"; }
 	
-	//Insert iterative into uninitialized complex
-	//	RET: void
-	if(testComplex->insertIterative(testValue, testValueArray)) { failLog += type + " insertIterative failed\n"; }
-	
-	//Delete iterative from uninitialized complex
+	//Delete iterative from empty complex
 	//	RET: void
 	try{ testComplex->deleteIterative(0); }
 	catch(const std::exception){ failLog += type + " deleteIterative failed \n"; }
 	
-	//Find vector unsigned in uninitialized complex
-	//	RET: bool
+	//Find vector unsigned in empty complex
+	//	RET: bool (false)
 	if(testComplex->find(findValue)) { failLog += type + " find vector failed\n"; }
-	
-	//Find set unsigned in uninitialized complex
-	//	RET: bool
+	//Find set unsigned in empty complex
+	//	RET: bool (false)
 	if(testComplex->find(findValueSet)) { failLog += type + " find set failed\n"; }
+	//Get empty simplex count
+	//	RET: int (0)
+	if(testComplex->simplexCount() != 0) { failLog += type + " simplexCount failed\n"; }
 	
-	//Get uninitialized simplex count
-	//	RET: int (-1)
-	if(testComplex->simplexCount() != -1) { failLog += type + " simplexCount failed\n"; }
+	//Get empty vertex count
+	//	RET: int (0)
+	if(testComplex->vertexCount() != 0) { failLog += type + " vertexCount failed\n"; }
 	
-	//Get uninitialized vertex count
-	//	RET: int (-1)
-	if(testComplex->vertexCount() != -1) { failLog += type + " vertexCount failed\n"; }
-	
-	//Get dimensional edges from uninitialized complex
+	//Get dimensional edges from empty complex
 	//	RET: std::vector<std::vector<unsigned>>
 	if(testComplex->getDimEdges(2, 5.0).size() != 0) { failLog += type + " getDimEdges failed\n"; }
 	
-	//Get all edges from uninitialized complex
+	//Get all edges from empty complex
 	//	RET: std::vector<std::vector<std::pair<std::set<unsigned>, double>>>
 	if(testComplex->getAllEdges(5.0).size() != 0) { failLog += type + " getAllEdges failed\n"; }
 	
-	//Get indexed edges from uninitialized complex
+	std::cout << "b" << std::endl;
+	
+	//Get indexed edges from empty complex
 	//	RET: std::vector<std::vector<graphEntry>>
 	if(testComplex->getIndexEdges(1).size() != 0) { failLog += type + " getIndexEdges failed\n"; }
 	
-	//Expand the dimensions of the uninitialized complex
+	//Expand the dimensions of the empty complex
 	//	RET: void
 	try{ testComplex->expandDimensions(2); }
 	catch(const std::exception){ failLog += type + " expandDimensions failed\n"; }
 	
-	//Attempt to reduce the uninitialized complex
+	//Attempt to reduce the empty complex
 	//	RET: void
 	try{ testComplex->reduceComplex(); }
 	catch(const std::exception){ failLog += type + " reduceComplex failed\n"; }
 	
-	//Attempt to trigger the stream evaluator for the uninitialized complex
+	std::cout << "c" << std::endl;
+	//Attempt to trigger the stream evaluator for the empty complex
 	//	RET: bool
 	testComplex->streamEvaluator(testValue, testValueArray);
 	
-	
+	std::cout << "a" << std::endl;
 	//Output log status to calling function
 	if(failLog.size() > 0){
 		log += "FAILED: " + type + " Empty Test Functions---------------------------\n" + failLog;	
@@ -257,7 +256,7 @@ int main (int, char**){
 	std::string log;
 	t_simp_functions(log);
 	
-	for(std::string type : {"simplexArrayList","simplexTree","indSimplexTree"}){
+	for(std::string type : {"simplexArrayList"}){ //,"simplexTree","indSimplexTree"}){ TODO
 		try{t_simp_empty_functions(log, type);}
 		catch(const std::exception){log += "FAILED: " + type + " Empty Test Functions---------------------------\n";}	
 		

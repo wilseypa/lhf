@@ -392,32 +392,31 @@ void simplexTree::reduceComplex(){
 	ut.writeDebug("simplexTree","Reducing complex, starting simplex count: " + std::to_string(simplexCount()));
 	treeNode* cur;
 	
-	std::cout << dimensions.size() << std::endl;
-	
-	for(auto i = dimensions.size()-1; i > 1; i--){
-		
-		std::vector<std::set<unsigned>> removals;
-		std::vector<std::set<unsigned>> checked;
-
-		while(checked.size() != weightEdgeGraph[i].size()){
-			cur = dimensions[i];
-			do {
-				if(std::find(checked.begin(),checked.end(),cur->simplex) == checked.end()){
-					auto ret = recurseReduce(std::make_pair(cur->simplex, cur->weight), removals, checked);
-					removals = ret.first;
-					checked = ret.second;
-				}
-			} while (cur->sibling != nullptr && (cur = cur->sibling) != nullptr);
-		}	
-		
-		//Remove the removals
-		for(auto rem : removals){
-			deletion(rem);
-		}
-		std::cout << "Remove " << removals.size() << " from dim " << i << std::endl;
+	if(dimensions.size() > 0){
+		for(auto i = dimensions.size()-1; i > 1; i--){
 			
+			std::vector<std::set<unsigned>> removals;
+			std::vector<std::set<unsigned>> checked;
+
+			while(checked.size() != weightEdgeGraph[i].size()){
+				cur = dimensions[i];
+				do {
+					if(std::find(checked.begin(),checked.end(),cur->simplex) == checked.end()){
+						auto ret = recurseReduce(std::make_pair(cur->simplex, cur->weight), removals, checked);
+						removals = ret.first;
+						checked = ret.second;
+					}
+				} while (cur->sibling != nullptr && (cur = cur->sibling) != nullptr);
+			}	
+			
+			//Remove the removals
+			for(auto rem : removals){
+				deletion(rem);
+			}
+			std::cout << "Remove " << removals.size() << " from dim " << i << std::endl;
+				
+		}
 	}
-	
 	ut.writeDebug("simplexTree","Finished reducing complex, reduced simplex count: " + std::to_string(simplexCount()));
 	
 	return;
@@ -477,9 +476,11 @@ std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> simp
 std::vector<std::vector<unsigned>> simplexTree::getDimEdges(int d,double){
 	std::vector<std::vector<unsigned>> ret;
 	
-	for(auto z : weightEdgeGraph[d]){
-		std::vector<unsigned> temp(z.first.begin(), z.first.end());
-		ret.push_back(temp);
+	if(weightEdgeGraph.size() >= d){
+		for(auto z : weightEdgeGraph[d]){
+			std::vector<unsigned> temp(z.first.begin(), z.first.end());
+			ret.push_back(temp);
+		}
 	}
 	
 	return ret;
