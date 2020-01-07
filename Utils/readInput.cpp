@@ -69,14 +69,14 @@ bool readInput::parseDoubleVector(std::string line, std::vector<double> &row){
 			
 		// Iterate through each comma of the csv
 		while((pos = line.find_first_of(",")) != std::string::npos){
-				
 			// Push the value found before the comma, remove from the line
 			row.push_back(std::stod(line.substr(0,pos)));
 			line.erase(0,pos + 1);
 				
 		}
 		// Get the last value of the line
-		row.push_back(std::stod(line.substr(0,pos)));
+		if(line.size() > 0)
+			row.push_back(std::stod(line.substr(0,pos)));
 	} else
 		return false;
 	

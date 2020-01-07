@@ -39,13 +39,6 @@ void t_pipe_functions(std::string &log){
 
 
 // TEST simplexArrayList Functions
-void t_pipe_base_functions(std::string &log, std::string type, std::string complexType){
-	
-	
-}
-
-
-// TEST simplexArrayList Functions
 void t_pipe_empty_functions(std::string &log, std::string type, std::string complexType){
 	std::string failLog = "";
 	auto *pack = new pipePacket(complexType, 5.0, 2);
@@ -64,7 +57,7 @@ void t_pipe_empty_functions(std::string &log, std::string type, std::string comp
     
     //Configure the pipe with arguments
     // RET: bool
-    if(!testPipe->configPipe(testConfig)){ failLog += "basePipe config failed\n"; }
+    testPipe->configPipe(testConfig);
 	
 	//Run the pipe wrapper with no selected pipe
     testPipe->runPipeWrapper(*pack);
@@ -84,12 +77,8 @@ int main (int, char**){
 	
 	for(std::string type : {"distMatrix","neighGraph","rips","upscale","boundary","persistence","slidingwindow"}){ 
 		try{t_pipe_empty_functions(log, type, "simplexArrayList");}
-		catch(const std::exception){log += "FAILED: " + type + " Empty Test Functions---------------------------\n";}	
-		
-		try{t_pipe_base_functions(log, type, "simplexArrayList");}
-		catch(const std::exception){log += "FAILED: " + type + " Base Test Functions---------------------------\n";}	
-		
+		catch(const std::exception){log += "FAILED: " + type + " Empty Test Functions---------------------------\n";}			
 	}
 	
-	std::cout << std::endl << log << std::endl;
+	std::cout << std::endl << std::endl << log << std::endl;
 }
