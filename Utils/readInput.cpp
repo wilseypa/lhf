@@ -101,6 +101,8 @@ bool readInput::parseDoubleVector(std::string line, std::vector<double> &row){
 // TODO: A lot
 std::vector<std::vector<double>> readInput::readMAT(std::string filename){
 	std::vector<std::vector<double>> result;
+	int vectors = 0;
+	int dimensions = 0;
 	
 	std::ifstream file;
 	file.open(filename);
@@ -110,38 +112,32 @@ std::vector<std::vector<double>> readInput::readMAT(std::string filename){
 	// Get the number of vectors
 	if(getline(file,line)){
 		line = std::regex_replace(line,std::regex(" "),"");
-		int vectors = std::stoi(line);
+		vectors = std::stoi(line);
 	} else return result;
 	
 	// Get the number of dimensions
 	if(getline(file,line)){
 		line = std::regex_replace(line,std::regex(" "),"");
-		int dimensions = std::stoi(line);
+		dimensions = std::stoi(line);
 	} else return result;
 	
 	// We are going to iterate through each line of the file until we reach the end
-	while(!file.eof()){
+	for(int vect = 0; vect < vectors; vect++){
 		std::vector<double> tmp;	//Temporary (current) vector
-		getline(file, line);		//Read the next line from file
-		std::size_t p = std::string::npos;
 		
-		// Replace whitespace in the current line
-		line = std::regex_replace(line, std::regex(" "), "");
-		
-		// Check if the line has a length (is not a blank line)
-		if(line.size() > 0){
+		for(int dim = 0; dim < dimensions; dim++){
+			getline(file, line);		//Read the next line from file
 			
-			// Iterate through each comma of the csv
-			while((p = line.find_first_of(",")) != std::string::npos){
+			// Replace whitespace in the current line
+			line = std::regex_replace(line, std::regex(" "), "");
+			
+			// Check if the line has a length (is not a blank line)
+			if(line.size() > 0){
 				
 				// Push the value found before the comma, remove from the line
-				tmp.push_back(std::stod(line.substr(0,p)));
-				line.erase(0,p + 1);
+				tmp.push_back(std::stod(line));
 				
 			}
-			
-			// Get the last value of the line
-			tmp.push_back(std::stod(line.substr(0,p)));
 		}
 		result.push_back(tmp);
 		

@@ -29,6 +29,12 @@ streamingKmeans::streamingKmeans(){
 
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket streamingKmeans::runPreprocessor(pipePacket inData){
+	
+	if(!configured){
+		ut.writeLog(procName,"Preprocessor not configured");
+		return inData;
+	}
+	
 	//Arguments - num_clusters, num_iterations
   int numClusters = 20;
 	streamingUtils streamUt;
@@ -311,6 +317,7 @@ bool streamingKmeans::configPreprocessor(std::map<std::string, std::string> conf
 		num_iterations = std::atoi(configMap["iterations"].c_str());
 	else return false;	
 	
+	configured = true;
 	ut.writeDebug("StreamKMeans","Configured with parameters { clusters: " + configMap["clusters"] + ", iterations: " + configMap["iterations"] + ", debug: " + strDebug + ", outputFile: " + outputFile + " }");
 	
 	return true;

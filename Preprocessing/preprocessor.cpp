@@ -35,6 +35,11 @@ preprocessor* preprocessor::newPreprocessor(const std::string &procT){
 // runPipeWrapper -> wrapper for timing of runPipe and other misc. functions
 pipePacket preprocessor::runPreprocessorWrapper(pipePacket inData){
 	
+	if(!configured){
+		ut.writeLog(procName,"Preprocessor not configured");
+		return inData;
+	}
+	
 	//Start a timer for physical time passed during the pipe's function
 	auto startTime = std::chrono::high_resolution_clock::now();
 	

@@ -56,7 +56,6 @@ void t_write_functions(std::string &log){
 	} else {
 		 log += "PASSED: Write Test Functions---------------------------\n";
 	}
-	std::cout << "Exiting write function testing..." << std::endl;
 	
 	return;
 }
@@ -87,7 +86,6 @@ void t_write_csv_functions(std::string &log){
 	} else {
 		 log += "PASSED: Write CSV Functions---------------------------\n";
 	}
-	std::cout << "Exiting write csv testing..." << std::endl;
 
 	return;
 }
@@ -96,6 +94,7 @@ void t_write_csv_functions(std::string &log){
 // TEST write Functions
 void t_write_mat_functions(std::string &log){
 	auto *ws = new writeOutput();
+	auto *rs = new readInput();
 	std::string failLog = "";
 	std::vector<std::vector<double>> testValueArray {{0.0, 1.0, 2.0},{2.0, 1.0, 0.0}, {1.0, 1.0, 2.0}, \
 													 {1.1, 1.1, 1.2},{0.0, 0.4, 1.0}, {1.5, 1.5, 0.0}	};
@@ -104,8 +103,13 @@ void t_write_mat_functions(std::string &log){
 	// RET: bool
 	if(!ws->writeMAT(testValueArray,"testMATOutput")){ failLog += "writeOutput writeMAT failed\n"; }
 	
+	auto testRetArray = rs->readMAT("testMATOutput.mat");
+	
+	if(testValueArray != testRetArray)
+		failLog += "writeOutput write_mat read error occurred";
+	
 	//Remove the file
-	std::remove("testMATOutput.mat");
+	//std::remove("testMATOutput.mat");
 
 	//Output log status to calling function
 	if(failLog.size() > 0){
@@ -113,7 +117,6 @@ void t_write_mat_functions(std::string &log){
 	} else {
 		 log += "PASSED: Write CSV Functions---------------------------\n";
 	}
-	std::cout << "Exiting write csv testing..." << std::endl;
 
 	return;
 }

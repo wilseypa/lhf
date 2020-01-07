@@ -32,8 +32,6 @@ void t_pipe_functions(std::string &log){
 	} else {
 		 log += "PASSED: basePipe Test Functions---------------------------\n";
 	}
-
-	std::cout << "Exiting basePipe template testing..." << std::endl;
 	return;
 }
 
@@ -45,7 +43,7 @@ void t_pipe_empty_functions(std::string &log, std::string type, std::string comp
 	basePipe *testPipe = new basePipe();
 	testPipe = testPipe->newPipe(type, complexType);
 	
-	std::map<std::string, std::string> testConfig;
+	std::map<std::string, std::string> testConfig = {{"epsilon","5.0"}};
 	
 	//Attempt to output pipe data without initializing pipe
 	// RET: void 
@@ -67,7 +65,8 @@ void t_pipe_empty_functions(std::string &log, std::string type, std::string comp
 	} else {
 		 log += "PASSED: " + type + " Empty Test Functions---------------------------\n";
 	}
-	std::cout << "Exiting " + type + " empty function testing..." << std::endl;
+	
+	return;
 }
 
 int main (int, char**){

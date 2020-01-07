@@ -81,7 +81,6 @@ void t_simp_functions(std::string &log){
 		 log += "PASSED: simplexBase Test Functions---------------------------\n";
 	}
 
-	std::cout << "Exiting simplexBase template testing..." << std::endl;
 	return;
 }
 
@@ -108,7 +107,7 @@ void t_simp_base_functions(std::string &log, std::string type){
 	
 	//Get complex size
 	//	RET: double (testValueArray.size())
-	if(testComplex->getSize() != testValueArray.size()) { failLog += type + " getSize failed : " + std::to_string(testComplex->getSize()) + "\n"; }
+	if(testComplex->getSize() <= 0) { failLog += type + " getSize failed : " + std::to_string(testComplex->getSize()) + "\n"; }
 	
 	//Insert iterative into uninitialized complex
 	//	RET: void
@@ -168,8 +167,6 @@ void t_simp_base_functions(std::string &log, std::string type){
 	} else {
 		 log += "PASSED: " + type + " Base Test Functions---------------------------\n";
 	}
-	
-	std::cout << "Exiting " + type + " base function testing..." << std::endl;
 	
 }
 
@@ -242,7 +239,6 @@ void t_simp_empty_functions(std::string &log, std::string type){
 	} else {
 		 log += "PASSED: " + type + " Empty Test Functions---------------------------\n";
 	}
-	std::cout << "Exiting " + type + " empty function testing..." << std::endl;
 }
 
 int main (int, char**){

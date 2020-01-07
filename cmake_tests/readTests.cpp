@@ -30,7 +30,6 @@ void t_read_functions(std::string &log){
 	} else {
 		 log += "PASSED: Read Test Functions---------------------------\n";
 	}
-	std::cout << "Exiting read function testing..." << std::endl;
 	
 	return;
 }

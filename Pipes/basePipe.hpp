@@ -8,10 +8,11 @@
 class basePipe {
   private:
   public:
+	bool configured = false;
 	std::string fnmod = "";
 	utils ut;
-	std::string pipeType;
-	int debug;
+	std::string pipeType = "basePipe";
+	int debug = 0;
 	std::string outputFile;
     basePipe(){};
     basePipe* newPipe(const std::string&, const std::string&);

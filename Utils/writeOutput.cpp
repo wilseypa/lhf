@@ -97,13 +97,12 @@ bool writeOutput::writeCSV(std::string data, std::string filename, std::string h
 bool writeOutput::writeMAT(std::vector<std::vector<double>> data, std::string filename){
 	std::ofstream file(filename + ".mat");
 	
-	
+	file << std::to_string(data.size()) << "\n" << std::to_string(data[0].size()) << "\n";
 	for(auto row : data){
 		
 		for(auto column : row){
-			file << std::to_string(column) << "\t";
+			file << std::to_string(column) << "\n";
 		}
-		file << "\n";
 	}
 	file.close();
 	return true;

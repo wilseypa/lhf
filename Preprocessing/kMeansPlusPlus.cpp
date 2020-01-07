@@ -26,6 +26,11 @@ kMeansPlusPlus::kMeansPlusPlus(){
 
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
+	if(!configured){
+		ut.writeLog(procName,"Preprocessor not configured");
+		return inData;
+	}
+	
     //Arguments - num_clusters, num_iterations
     std::vector<std::vector<double>> centroids;     //Storing centroids
     std::vector<int> labels;                        //Storing labels for mapping data to centroids
@@ -182,6 +187,7 @@ bool kMeansPlusPlus::configPreprocessor(std::map<std::string, std::string> confi
 		num_iterations = std::atoi(configMap["iterations"].c_str());
 	else return false;
 	
+	configured = true;
 	ut.writeDebug("StreamKMeans","Configured with parameters { clusters: " + configMap["clusters"] + ", iterations: " + configMap["iterations"] + ", debug: " + strDebug + ", outputFile: " + outputFile + " }");
 
 	return true;

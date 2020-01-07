@@ -45,7 +45,11 @@ basePipe* basePipe::newPipe(const std::string &pipeT, const std::string &complex
 
 // runPipeWrapper -> wrapper for timing of runPipe and other misc. functions
 pipePacket basePipe::runPipeWrapper(pipePacket inData){
-	
+	//Check if the pipe has been configured
+	if(!configured){
+		ut.writeLog(pipeType,"Pipe not configured");
+		return inData;
+	}
 	//Start a timer for physical time passed during the pipe's function
 	auto startTime = std::chrono::high_resolution_clock::now();
 	
@@ -123,7 +127,6 @@ bool basePipe::configPipe(std::map<std::string, std::string> configMap){
 	auto pipe = configMap.find("debug");
 	if(pipe != configMap.end())
 		debug = std::atoi(configMap["debug"].c_str());
-	else return false;
 	
 	return true;
 }

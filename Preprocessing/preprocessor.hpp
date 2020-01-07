@@ -7,6 +7,7 @@
 class preprocessor {
   private:
   public:
+	bool configured = false;
 	std::string procName;
 	int debug;
 	std::string outputFile;

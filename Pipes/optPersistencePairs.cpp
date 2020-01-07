@@ -791,6 +791,7 @@ bool optPersistencePairs::configPipe(std::map<std::string, std::string> configMa
 	if(pipe != configMap.end() && configMap["complexType"] == "indSimplexTree")
 		alterPipe = true;
 	
+	configured = true;
 	ut.writeDebug("optPersistence","Configured with parameters { dim: " + configMap["dimensions"] + ", twist: " + twist + ", complexType: " + configMap["complexType"] + ", eps: " + configMap["epsilon"]);
 	ut.writeDebug("optPersistence","\t\t\tdebug: " + strDebug + ", outputFile: " + outputFile + " }");
 	
