@@ -94,51 +94,18 @@ bool writeOutput::writeCSV(std::string data, std::string filename, std::string h
 
 
 // writeMAT -> write in a mat formatted file of data input
-bool writeOutput::writeMAT(std::vector<std::vector<double>>, std::string filename){
-	std::vector<std::vector<double>> result;
+bool writeOutput::writeMAT(std::vector<std::vector<double>> data, std::string filename){
+	std::ofstream file(filename + ".mat");
 	
-	std::ifstream file;
-	file.open(filename);
 	
-	std::string line;			//Temporary (current) line
-	
-	// Get the number of vectors
-	getline(file,line);
-	line = std::regex_replace(line,std::regex(" "),"");
-	int vectors = std::stoi(line);
-	
-	// Get the number of dimensions
-	getline(file,line);
-	line = std::regex_replace(line,std::regex(" "),"");
-	int dimensions = std::stoi(line);
-	
-	// We are going to iterate through each line of the file until we reach the end
-	while(!file.eof()){
-		std::vector<double> tmp;	//Temporary (current) vector
-		getline(file, line);		//Read the next line from file
-		std::size_t p = std::string::npos;
+	for(auto row : data){
 		
-		// Replace whitespace in the current line
-		line = std::regex_replace(line, std::regex(" "), "");
-		
-		// Check if the line has a length (is not a blank line)
-		if(line.size() > 0){
-			
-			// Iterate through each comma of the csv
-			while((p = line.find_first_of(",")) != std::string::npos){
-				
-				// Push the value found before the comma, remove from the line
-				tmp.push_back(std::stod(line.substr(0,p)));
-				line.erase(0,p + 1);
-				
-			}
-			
-			// Get the last value of the line
-			tmp.push_back(std::stod(line.substr(0,p)));
+		for(auto column : row){
+			file << std::to_string(column) << "\t";
 		}
-		result.push_back(tmp);
-		
+		file << "\n";
 	}
+	file.close();
 	return true;
 }
 

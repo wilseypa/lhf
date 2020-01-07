@@ -98,7 +98,6 @@ void t_simp_base_functions(std::string &log, std::string type){
 	std::set<unsigned> findValueSet = {0};
 	
 	testComplex = testComplex->newSimplex(type, config);
-	std::cout << "x" << std::endl;
 	//Insert values to initialize the complex
 	//	RET: void
 	try{
@@ -107,12 +106,10 @@ void t_simp_base_functions(std::string &log, std::string type){
 	}
 	catch(const std::exception){ failLog += type + " insert failed\n"; }
 	
-	std::cout << "z" << std::endl;
 	//Get complex size
 	//	RET: double (testValueArray.size())
 	if(testComplex->getSize() != testValueArray.size()) { failLog += type + " getSize failed : " + std::to_string(testComplex->getSize()) + "\n"; }
 	
-	std::cout << "y" << std::endl;
 	//Insert iterative into uninitialized complex
 	//	RET: void
 	if(testComplex->insertIterative(testValue, testValueArray)) { failLog += type + " insertIterative failed\n"; }
@@ -221,8 +218,6 @@ void t_simp_empty_functions(std::string &log, std::string type){
 	//	RET: std::vector<std::vector<std::pair<std::set<unsigned>, double>>>
 	if(testComplex->getAllEdges(5.0).size() != 0) { failLog += type + " getAllEdges failed\n"; }
 	
-	std::cout << "b" << std::endl;
-	
 	//Get indexed edges from empty complex
 	//	RET: std::vector<std::vector<graphEntry>>
 	if(testComplex->getIndexEdges(1).size() != 0) { failLog += type + " getIndexEdges failed\n"; }
@@ -237,12 +232,10 @@ void t_simp_empty_functions(std::string &log, std::string type){
 	try{ testComplex->reduceComplex(); }
 	catch(const std::exception){ failLog += type + " reduceComplex failed\n"; }
 	
-	std::cout << "c" << std::endl;
 	//Attempt to trigger the stream evaluator for the empty complex
 	//	RET: bool
 	testComplex->streamEvaluator(testValue, testValueArray);
 	
-	std::cout << "a" << std::endl;
 	//Output log status to calling function
 	if(failLog.size() > 0){
 		log += "FAILED: " + type + " Empty Test Functions---------------------------\n" + failLog;	

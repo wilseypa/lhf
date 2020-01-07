@@ -108,14 +108,16 @@ std::vector<std::vector<double>> readInput::readMAT(std::string filename){
 	std::string line;			//Temporary (current) line
 	
 	// Get the number of vectors
-	getline(file,line);
-	line = std::regex_replace(line,std::regex(" "),"");
-	int vectors = std::stoi(line);
+	if(getline(file,line)){
+		line = std::regex_replace(line,std::regex(" "),"");
+		int vectors = std::stoi(line);
+	} else return result;
 	
 	// Get the number of dimensions
-	getline(file,line);
-	line = std::regex_replace(line,std::regex(" "),"");
-	int dimensions = std::stoi(line);
+	if(getline(file,line)){
+		line = std::regex_replace(line,std::regex(" "),"");
+		int dimensions = std::stoi(line);
+	} else return result;
 	
 	// We are going to iterate through each line of the file until we reach the end
 	while(!file.eof()){
@@ -160,6 +162,8 @@ bool readInput::streamInit(std::string filename){
 
 
 bool readInput::streamRead(std::vector<double> &row){
+	if(pFile == NULL)
+		return false;
 	
 	//Check for EOF
 	if(fgets(streamBuffer, 1000, pFile) == NULL)
