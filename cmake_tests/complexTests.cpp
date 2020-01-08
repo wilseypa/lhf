@@ -87,16 +87,22 @@ void t_simp_functions(std::string &log){
 
 // TEST simplexArrayList Functions
 void t_simp_base_functions(std::string &log, std::string type){
+	
+	std::cout << "starting base functions" << std::endl;
 	std::map<std::string,std::string> config;
 	simplexBase* testComplex = new simplexBase();
 	std::string failLog = "";
 	std::vector<double> testValue = {0.0, 1.0, 2.0};
-	std::vector<std::vector<double>> testValueArray {{0.0, 1.0, 2.0},{2.0, 1.0, 0.0}, {1.0, 1.0, 2.0}, \
+	std::vector<std::vector<double>> testValueArray = {{0.0, 1.0, 2.0},{2.0, 1.0, 0.0}, {1.0, 1.0, 2.0}, \
 													 {1.1, 1.1, 1.2},{0.0, 0.4, 1.0}, {1.5, 1.5, 0.0}	};
+	std::vector<std::vector<double>> emptyValueArray = {};
+													 
+	
 	std::vector<unsigned> findValue = {0};
 	std::set<unsigned> findValueSet = {0};
 	
 	testComplex = testComplex->newSimplex(type, config);
+	
 	//Insert values to initialize the complex
 	//	RET: void
 	try{
@@ -109,15 +115,18 @@ void t_simp_base_functions(std::string &log, std::string type){
 	//	RET: double (testValueArray.size())
 	if(testComplex->getSize() <= 0) { failLog += type + " getSize failed : " + std::to_string(testComplex->getSize()) + "\n"; }
 	
+	std::cout << "iterative insert" << std::endl;
 	//Insert iterative into uninitialized complex
 	//	RET: void
-	if(testComplex->insertIterative(testValue, testValueArray)) { failLog += type + " insertIterative failed\n"; }
+	if(testComplex->insertIterative(testValue, emptyValueArray)) { failLog += type + " insertIterative failed\n"; }
 	
+	std::cout << "b" << std::endl;
 	//Delete iterative from uninitialized complex
 	//	RET: void
 	try{ testComplex->deleteIterative(0); }
 	catch(const std::exception){ failLog += type + " deleteIterative failed \n"; }
 	
+	std::cout << "find" << std::endl;
 	//Find vector unsigned in uninitialized complex
 	//	RET: bool
 	if(testComplex->find(findValue)) { failLog += type + " find vector failed\n"; }
@@ -151,15 +160,16 @@ void t_simp_base_functions(std::string &log, std::string type){
 	try{ testComplex->expandDimensions(2); }
 	catch(const std::exception){ failLog += type + " expandDimensions failed\n"; }
 	
+	std::cout << "d" << std::endl;
 	//Attempt to reduce the uninitialized complex
 	//	RET: void
 	try{ testComplex->reduceComplex(); }
 	catch(const std::exception){ failLog += type + " reduceComplex failed\n"; }
 	
+	std::cout << "c" << std::endl;
 	//Attempt to trigger the stream evaluator for the uninitialized complex
 	//	RET: bool
 	testComplex->streamEvaluator(testValue, testValueArray);
-	
 	
 	//Output log status to calling function
 	if(failLog.size() > 0){
@@ -239,13 +249,14 @@ void t_simp_empty_functions(std::string &log, std::string type){
 	} else {
 		 log += "PASSED: " + type + " Empty Test Functions---------------------------\n";
 	}
+	std::cout << "returning from empty" << std::endl;
 }
 
 int main (int, char**){
 	std::string log;
 	t_simp_functions(log);
 	
-	for(std::string type : {"simplexArrayList"}){ //,"simplexTree","indSimplexTree"}){ TODO
+	for(std::string type : {"simplexArrayList","simplexTree"}){//,"indSimplexTree"}){ //TODO
 		try{t_simp_empty_functions(log, type);}
 		catch(const std::exception){log += "FAILED: " + type + " Empty Test Functions---------------------------\n";}	
 		

@@ -192,6 +192,10 @@ void simplexTree::insertInductive(){
 
 // Insert a node into the tree using the distance matrix and a vector index to track changes
 bool simplexTree::insertIterative(std::vector<double> &vector, std::vector<std::vector<double>> &window){
+	if(window.size() == 0){
+		return true;
+	}
+	
 	
 	if(streamEvaluator(vector, window)){
 		
@@ -237,9 +241,8 @@ void simplexTree::deleteIterative(int vectorIndex){
 	
 	
 	} else {
-		std::cout << "Failed to find vector by index!" << std::endl;
+		ut.writeDebug("simplexTree","Failed to find vector by index");
 	}
-	std::cout << "ret delete" << std::endl;
 	return;
 }
 
@@ -286,6 +289,11 @@ void simplexTree::deleteIndexRecurse(int vectorIndex, treeNode* curNode){
 // Insert a node into the tree
 //		
 void simplexTree::insert(std::vector<double>&) {
+	
+	if(distMatrix.size() == 0){
+		ut.writeDebug("simplexTree","Distance matrix is empty, skipping insertion");
+		return;
+	}
 	
 	//Create our new node to insert
 	treeNode* curNode = new treeNode;
@@ -387,6 +395,10 @@ std::vector<std::vector<std::pair<std::set<unsigned>,double>>> simplexTree::getA
 }
 
 void simplexTree::reduceComplex(){
+	if(weightEdgeGraph.size() == 0){
+		ut.writeDebug("simplexTree","Complex is empty, skipping reduction");
+		return;
+	}
 	
 	//Start with the largest dimension
 	ut.writeDebug("simplexTree","Reducing complex, starting simplex count: " + std::to_string(simplexCount()));

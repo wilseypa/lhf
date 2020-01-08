@@ -96,7 +96,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		if(prePipe != 0 && prePipe->configPreprocessor(args)){
 			*wD = prePipe->runPreprocessorWrapper(*wD);
 		} else {
-			cout << "LHF : sFailed to configure pipeline: " << args["pipeline"] << endl;
+			cout << "LHF : Failed to configure pipeline: " << args["pipeline"] << endl;
 		}
 	}
 	
