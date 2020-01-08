@@ -162,30 +162,7 @@ int main(int argc, char* argv[]){
     auto args = ap->parse(argc, argv);
     
     //Determine what pipe we will be running
-    if(args["pipeline"] == ""){
-		if(args["mode"] == "standard")
-			args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
-		else if(args["mode"] == "reduced"){
-			if(args["preprocessor"] == "")
-				args["preprocessor"] = "kmeans++";
-			args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
-		} else if(args["mode"] == "upscale"){
-			if(args["preprocessor"] == "")
-				args["preprocessor"] = "kmeans++";
-			args["upscale"] = "true";
-			args["pipeline"] = "distMatrix.neighGraph.rips.persistence.boundary.upscale";
-		} else if(args["mode"] == "stream"){
-			if(args["preprocessor"] == "")
-				args["preprocessor"] = "streamingkmeans";
-			args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
-		} else if(args["mode"] == "sw" || args["mode"] == "slidingwindow"){
-			args["preprocessor"] = "";
-			args["pipeline"] = "slidingwindow";
-			args["upscale"] = "false";
-			args["complexType"] = "simplexTree";
-		}
-	
-	}
+    args = ap->setPipeline(args);
     
 	//Create a pipePacket (datatype) to store the complex and pass between engines
     auto *wD = new pipePacket(args["complexType"], stod(args["epsilon"]), stoi(args["dimensions"]));	//wD (workingData)
