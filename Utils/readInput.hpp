@@ -6,12 +6,12 @@ class readInput {
   private:
 	FILE *pFile;
 	char streamBuffer[1000];
+	bool parseDoubleVector(std::string, std::vector<double> &);
   
   public:
     readInput();
     std::vector<std::vector<double>> readCSV(std::string filename);
     std::vector<std::vector<double>> readMAT(std::string filename);
-	bool parseDoubleVector(std::string, std::vector<double> &);
     bool streamInit(std::string filename);
     bool streamRead(std::vector<double>&);
 };

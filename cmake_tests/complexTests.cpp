@@ -81,7 +81,6 @@ void t_simp_functions(std::string &log){
 		 log += "PASSED: simplexBase Test Functions---------------------------\n";
 	}
 
-	std::cout << "Exiting simplexBase template testing..." << std::endl;
 	return;
 }
 
@@ -92,13 +91,15 @@ void t_simp_base_functions(std::string &log, std::string type){
 	simplexBase* testComplex = new simplexBase();
 	std::string failLog = "";
 	std::vector<double> testValue = {0.0, 1.0, 2.0};
-	std::vector<std::vector<double>> testValueArray {{0.0, 1.0, 2.0},{2.0, 1.0, 0.0}, {1.0, 1.0, 2.0}, \
+	std::vector<std::vector<double>> testValueArray = {{0.0, 1.0, 2.0},{2.0, 1.0, 0.0}, {1.0, 1.0, 2.0}, \
 													 {1.1, 1.1, 1.2},{0.0, 0.4, 1.0}, {1.5, 1.5, 0.0}	};
+	std::vector<std::vector<double>> emptyValueArray = {};
+											
 	std::vector<unsigned> findValue = {0};
 	std::set<unsigned> findValueSet = {0};
 	
 	testComplex = testComplex->newSimplex(type, config);
-	std::cout << "x" << std::endl;
+	
 	//Insert values to initialize the complex
 	//	RET: void
 	try{
@@ -107,15 +108,13 @@ void t_simp_base_functions(std::string &log, std::string type){
 	}
 	catch(const std::exception){ failLog += type + " insert failed\n"; }
 	
-	std::cout << "z" << std::endl;
 	//Get complex size
 	//	RET: double (testValueArray.size())
-	if(testComplex->getSize() != testValueArray.size()) { failLog += type + " getSize failed : " + std::to_string(testComplex->getSize()) + "\n"; }
+	if(testComplex->getSize() <= 0) { failLog += type + " getSize failed : " + std::to_string(testComplex->getSize()) + "\n"; }
 	
-	std::cout << "y" << std::endl;
 	//Insert iterative into uninitialized complex
 	//	RET: void
-	if(testComplex->insertIterative(testValue, testValueArray)) { failLog += type + " insertIterative failed\n"; }
+	if(testComplex->insertIterative(testValue, emptyValueArray)) { failLog += type + " insertIterative failed\n"; }
 	
 	//Delete iterative from uninitialized complex
 	//	RET: void
@@ -164,15 +163,12 @@ void t_simp_base_functions(std::string &log, std::string type){
 	//	RET: bool
 	testComplex->streamEvaluator(testValue, testValueArray);
 	
-	
 	//Output log status to calling function
 	if(failLog.size() > 0){
 		log += "FAILED: " + type + " Base Test Functions---------------------------\n" + failLog;	
 	} else {
 		 log += "PASSED: " + type + " Base Test Functions---------------------------\n";
 	}
-	
-	std::cout << "Exiting " + type + " base function testing..." << std::endl;
 	
 }
 
@@ -202,9 +198,11 @@ void t_simp_empty_functions(std::string &log, std::string type){
 	//Find vector unsigned in empty complex
 	//	RET: bool (false)
 	if(testComplex->find(findValue)) { failLog += type + " find vector failed\n"; }
+	
 	//Find set unsigned in empty complex
 	//	RET: bool (false)
 	if(testComplex->find(findValueSet)) { failLog += type + " find set failed\n"; }
+	
 	//Get empty simplex count
 	//	RET: int (0)
 	if(testComplex->simplexCount() != 0) { failLog += type + " simplexCount failed\n"; }
@@ -221,8 +219,6 @@ void t_simp_empty_functions(std::string &log, std::string type){
 	//	RET: std::vector<std::vector<std::pair<std::set<unsigned>, double>>>
 	if(testComplex->getAllEdges(5.0).size() != 0) { failLog += type + " getAllEdges failed\n"; }
 	
-	std::cout << "b" << std::endl;
-	
 	//Get indexed edges from empty complex
 	//	RET: std::vector<std::vector<graphEntry>>
 	if(testComplex->getIndexEdges(1).size() != 0) { failLog += type + " getIndexEdges failed\n"; }
@@ -237,26 +233,23 @@ void t_simp_empty_functions(std::string &log, std::string type){
 	try{ testComplex->reduceComplex(); }
 	catch(const std::exception){ failLog += type + " reduceComplex failed\n"; }
 	
-	std::cout << "c" << std::endl;
 	//Attempt to trigger the stream evaluator for the empty complex
 	//	RET: bool
 	testComplex->streamEvaluator(testValue, testValueArray);
 	
-	std::cout << "a" << std::endl;
 	//Output log status to calling function
 	if(failLog.size() > 0){
 		log += "FAILED: " + type + " Empty Test Functions---------------------------\n" + failLog;	
 	} else {
 		 log += "PASSED: " + type + " Empty Test Functions---------------------------\n";
 	}
-	std::cout << "Exiting " + type + " empty function testing..." << std::endl;
 }
 
 int main (int, char**){
 	std::string log;
 	t_simp_functions(log);
 	
-	for(std::string type : {"simplexArrayList"}){ //,"simplexTree","indSimplexTree"}){ TODO
+	for(std::string type : {"simplexArrayList","simplexTree","indSimplexTree"}){
 		try{t_simp_empty_functions(log, type);}
 		catch(const std::exception){log += "FAILED: " + type + " Empty Test Functions---------------------------\n";}	
 		

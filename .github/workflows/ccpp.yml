@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - MPI_Development
+      - cmake_development
 
 jobs:
   build:

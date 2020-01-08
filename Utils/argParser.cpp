@@ -79,5 +79,31 @@ std::map<std::string, std::string> argParser::parse(int argc, char** argv){
 }
 
 
+std::map<std::string, std::string> argParser::setPipeline(std::map<std::string, std::string> args){
+	if(args["pipeline"] == ""){
+		if(args["mode"] == "standard")
+			args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
+		else if(args["mode"] == "reduced"){
+			if(args["preprocessor"] == "")
+				args["preprocessor"] = "kmeans++";
+			args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
+		} else if(args["mode"] == "upscale"){
+			if(args["preprocessor"] == "")
+				args["preprocessor"] = "kmeans++";
+			args["upscale"] = "true";
+			args["pipeline"] = "distMatrix.neighGraph.rips.persistence.boundary.upscale";
+		} else if(args["mode"] == "stream"){
+			if(args["preprocessor"] == "")
+				args["preprocessor"] = "streamingkmeans";
+			args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
+		} else if(args["mode"] == "sw" || args["mode"] == "slidingwindow"){
+			args["preprocessor"] = "";
+			args["pipeline"] = "slidingwindow";
+			args["upscale"] = "false";
+			args["complexType"] = "simplexTree";
+		}
+	
+	}
+}
 
 

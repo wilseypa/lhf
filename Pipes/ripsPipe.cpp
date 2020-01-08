@@ -67,6 +67,7 @@ bool ripsPipe::configPipe(std::map<std::string, std::string> configMap){
 	if(pipe != configMap.end())
 		collapse = configMap["collapse"];
 	
+	configured = true;
 	ut.writeDebug("ripsPipe","Configured with parameters { dim: " + std::to_string(dim) + " , debug: " + strDebug + ", outputFile: " + outputFile + ", collapse: " + collapse + " }");
 	
 	return true;

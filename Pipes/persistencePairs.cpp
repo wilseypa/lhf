@@ -345,6 +345,7 @@ bool persistencePairs::configPipe(std::map<std::string, std::string> configMap){
 	if(pipe != configMap.end() && configMap["complexType"] == "indSimplexTree")
 		alterPipe = true;
 		
+	configured = true;
 	ut.writeDebug("persistence","Configured with parameters { dim: " + configMap["dimensions"] + ", twist: " + twist + ", complexType: " + configMap["complexType"] + ", eps: " + configMap["epsilon"]);
 	ut.writeDebug("persistence","\t\t\t\tdebug: " + strDebug + ", outputFile: " + outputFile + " }");
 	
