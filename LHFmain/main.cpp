@@ -162,7 +162,9 @@ int main(int argc, char* argv[]){
     auto args = ap->parse(argc, argv);
     
     //Determine what pipe we will be running
-    args = ap->setPipeline(args);
+    ap->setPipeline(args);
+    
+    ap->printArguments(args);
     
 	//Create a pipePacket (datatype) to store the complex and pass between engines
     auto *wD = new pipePacket(args["complexType"], stod(args["epsilon"]), stoi(args["dimensions"]));	//wD (workingData)

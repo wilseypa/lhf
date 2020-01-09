@@ -8,8 +8,9 @@ class argParser {
   public:
     argParser();
     void printUsage();
+	void printArguments(std::map<std::string,std::string>);
     std::map<std::string, std::string> parse(int argc, char** argv);
     std::map<std::string, std::string> defaultArguments(std::map<std::string, std::string>  &map);
-    std::map<std::string, std::string> setPipeline(std::map<std::string, std::string>);
+    void setPipeline(std::map<std::string, std::string>&);
 };
 

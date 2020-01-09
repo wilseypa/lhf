@@ -73,6 +73,9 @@ void t_simp_functions(std::string &log){
 	//	RET: bool
 	testComplex->streamEvaluator(testValue, testValueArray);
 	
+	//Attempt to get dim_0 pairs for the uninitialized complex
+	//	RET: std::vector<std::pair<double,std::vector<unsigned>>>
+	if(testComplex->getd0Pairs().size() > 0) { failLog += "simplexBase getd0Pairs failed\n"; }
 	
 	//Output log status to calling function
 	if(failLog.size() > 0){
@@ -162,6 +165,10 @@ void t_simp_base_functions(std::string &log, std::string type){
 	//Attempt to trigger the stream evaluator for the uninitialized complex
 	//	RET: bool
 	testComplex->streamEvaluator(testValue, testValueArray);
+	
+	//Attempt to get dim_0 pairs for the uninitialized complex
+	//	RET: std::vector<std::pair<double,std::vector<unsigned>>>
+	if(testComplex->getd0Pairs().size() > 0) { failLog += "simplexBase getd0Pairs failed\n"; }
 	
 	//Output log status to calling function
 	if(failLog.size() > 0){

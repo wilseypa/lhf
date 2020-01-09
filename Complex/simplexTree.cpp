@@ -501,6 +501,7 @@ std::vector<std::vector<unsigned>> simplexTree::getDimEdges(int d,double){
 
 bool simplexTree::find(std::set<unsigned>){
 	
+	ut.writeLog("simplexTree","find(std::set<unsigned>) not implemented!");
 	return 0;
 }
 
@@ -519,6 +520,9 @@ bool simplexTree::deletion(std::set<unsigned> removalEntry) {
 			return deletion(curNode);
 		}
 	}*/
+	
+	
+	ut.writeLog("simplexTree","deletion(std::set<unsigned>) not implemented!");
 	return false;
 	
 }
@@ -568,7 +572,14 @@ bool simplexTree::deletion(treeNode* removalEntry) {
 
 double simplexTree::findWeight(std::set<unsigned> simplex){
 	
+	ut.writeLog("simplexTree","findWeight(std::set<unsigned>) not implemented!");
 	return 1;
 }
 
+
+std::vector<std::pair<double, std::vector<unsigned>>> simplexTree::getd0Pairs(){
+	std::vector<std::pair<double, std::vector<unsigned>>> ret;
+	ut.writeLog("simplexTree","getd0Pairs() not implemented!");
+	return ret;
+}
 
