@@ -127,8 +127,11 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 			args["pipeline"] = "slidingwindow";
 			args["upscale"] = "false";
 			args["complexType"] = "simplexTree";
-		}
-	
+		} else if(args["mode"] == "fast"){
+			args["pipeline"] = "distMatrix.fastPersistence";
+			args["upscale"] = "false";
+			args["complexType"] = "simplexArrayList";
+		}	
 	}
 	
 	return;

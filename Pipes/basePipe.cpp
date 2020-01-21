@@ -18,6 +18,7 @@
 #include "persistencePairs.hpp"
 #include "optPersistencePairs.hpp"
 #include "slidingWindow.hpp"
+#include "fastPersistence.hpp"
 
 basePipe* basePipe::newPipe(const std::string &pipeT, const std::string &complexType){
 	ut.writeDebug("basePipe","Building pipeline: " + pipeT + " for " + complexType);
@@ -38,6 +39,8 @@ basePipe* basePipe::newPipe(const std::string &pipeT, const std::string &complex
 		return new optPersistencePairs();
 	} else if (pipeType == "slidingwindow" || pipeType == "sliding"){
 		return new slidingWindow();
+	} else if (pipeType == "fastPersistence" || pipeType == "fast"){
+		return new fastPersistence();
 	}
 	
 	return 0;
