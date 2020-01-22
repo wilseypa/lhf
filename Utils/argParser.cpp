@@ -128,7 +128,7 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 			args["upscale"] = "false";
 			args["complexType"] = "simplexTree";
 		} else if(args["mode"] == "fast"){
-			args["pipeline"] = "distMatrix.fastPersistence";
+			args["pipeline"] = "distMatrix.neighGraph.fastPersistence";
 			args["upscale"] = "false";
 			args["complexType"] = "simplexArrayList";
 		}	

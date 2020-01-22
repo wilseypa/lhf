@@ -36,21 +36,55 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	//Get all edges for the simplexArrayList or simplexTree
 	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges = inData.complex->getAllEdges(maxEpsilon);
 	
-	
 	std::vector<std::pair<double,double>> temp;
 	std::vector<std::vector<std::pair<double,double>>> ret;
 	for(int i = 0; i < dim; i++){
 		ret.push_back(temp);
 	}
 	
+	//Some notes on fast persistence:
+	
+	//	-Vectors need to be stored in a lexicograhically ordered set of decreasing (d+1)-tuples (e.g. {3, 1, 0})
+	//		-These vectors are replaced with their indices (e.g. {{2,1,0} = 0, {3,1,0} = 1, {3,2,0} = 2, etc.})
+	
+	//	-Reduction matrix (V) stores collection of non-zero entries for each column (indexed)
+	
 	
 	//Start a timer for physical time passed during the pipe's function
 	auto startTime = std::chrono::high_resolution_clock::now();
 	
-	//Get all dim 0 pairs
+	//Get all dim 0 persistence intervals
+		//Kruskal's minimum spanning tree algorithm
+	
+	std::vector<std::pair<std::set<unsigned>,double>> mst;
+	std::set<unsigned> conSet;
+	std::set<unsigned> wset;
+		
+	std::cout << "starting mst" << std::endl;
+		
+	for(auto edge : edges[1]){
+		if((wset = ut.setIntersect(edge.first, conSet, false)).size() < 2){
+			mst.push_back(edge);
+			for(auto i = wset.begin(); i != wset.end(); i++){
+				conSet.insert(*i);
+			}
+			
+		}
+	}
+		
+	std::cout << "ending mst" << std::endl;
+		
+	for(auto z : mst){
+		std::cout << z.second << "\t";
+		ut.print1DVector(z.first);
+	}
+	std::cout << std::endl;
+	
+	//For higher dimensional persistence intervals
+	//	
 	
 	
-	
+	//
 	
 	
 	//Stop the timer for time passed during the pipe's function
