@@ -21,20 +21,25 @@
 
 // basePipe constructor
 fastPersistence::fastPersistence(){
-	pipeType = "PersistencePairs";
+	pipeType = "FastPersistence";
 	return;
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
 //
-//	persistencePairs: For computing the persistence pairs from simplicial complex:
-//		1. See Zomorodian-05 for algorithm/description of tArray
+//	FastPersistence: For computing the persistence pairs from simplicial complex:
+//		1. See Bauer-19 for algorithm/description
 pipePacket fastPersistence::runPipe(pipePacket inData){
 	
 	std::string bettis = "";
 	
 	//Get all edges for the simplexArrayList or simplexTree
 	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges = inData.complex->getAllEdges(maxEpsilon);
+	
+	if(edges.size() < 2){
+		ut.writeLog("FastPersistence","Failed to provide the fastPersistence pipe with edges from complex");
+		return inData;
+	}
 	
 	std::vector<std::pair<double,double>> temp;
 	std::vector<std::vector<std::pair<double,double>>> ret;
@@ -60,20 +65,18 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	std::set<unsigned> conSet;
 	std::set<unsigned> wset;
 		
-	std::cout << "starting mst" << std::endl;
-		
 	for(auto edge : edges[1]){
+		std::cout << edge.second << "\t";
 		if((wset = ut.setIntersect(edge.first, conSet, false)).size() < 2){
 			mst.push_back(edge);
-			for(auto i = wset.begin(); i != wset.end(); i++){
+			for(auto i = edge.first.begin(); i != edge.first.end(); i++){
 				conSet.insert(*i);
 			}
 			
 		}
 	}
-		
-	std::cout << "ending mst" << std::endl;
-		
+	
+	std::cout << "D0: " << std::endl;
 	for(auto z : mst){
 		std::cout << z.second << "\t";
 		ut.print1DVector(z.first);
@@ -172,8 +175,8 @@ bool fastPersistence::configPipe(std::map<std::string, std::string> configMap){
 		alterPipe = true;
 		
 	configured = true;
-	ut.writeDebug("persistence","Configured with parameters { dim: " + configMap["dimensions"] + ", twist: " + twist + ", complexType: " + configMap["complexType"] + ", eps: " + configMap["epsilon"]);
-	ut.writeDebug("persistence","\t\t\t\tdebug: " + strDebug + ", outputFile: " + outputFile + " }");
+	ut.writeDebug("fastPersistence","Configured with parameters { dim: " + configMap["dimensions"] + ", twist: " + twist + ", complexType: " + configMap["complexType"] + ", eps: " + configMap["epsilon"]);
+	ut.writeDebug("fastPersistence","\t\t\t\tdebug: " + strDebug + ", outputFile: " + outputFile + " }");
 	
 	return true;
 }
