@@ -140,7 +140,7 @@ std::set<unsigned> utils::setIntersect(std::set<unsigned> v1, std::set<unsigned>
 	
 	set_intersection(v1.begin(), v1.end(), v2.begin(), v2.end(), std::inserter(ret, ret.begin()));
 	
-	for(auto iter = v1.begin(); iter!= v1.end(); iter++){
+	/*for(auto iter = v1.begin(); iter!= v1.end(); iter++){
 		std::cout << *iter << ",";
 	}
 	std::cout << "\t";
@@ -151,7 +151,7 @@ std::set<unsigned> utils::setIntersect(std::set<unsigned> v1, std::set<unsigned>
 	for(auto iter = ret.begin(); iter!= ret.end(); iter++){
 		std::cout << *iter << ",";
 	}
-	std::cout << std::endl;
+	std::cout << std::endl;*/
 	
 	return ret;
 	

@@ -66,25 +66,62 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	std::set<unsigned> wset;
 		
 	for(auto edge : edges[1]){
-		std::cout << edge.second << "\t";
 		if((wset = ut.setIntersect(edge.first, conSet, false)).size() < 2){
 			mst.push_back(edge);
-			for(auto i = edge.first.begin(); i != edge.first.end(); i++){
-				conSet.insert(*i);
-			}
+			//for(auto i = edge.first.begin(); i != edge.first.end(); i++){
+			auto i = edge.first.begin();
+			conSet.insert(*i);
 			
 		}
+		
+		//Check if we've filled our MST and can break...
+		if(mst.size() == edges[0].size()){
+			std::cout << "Exiting the MST early... " << std::endl;
+			break;
+		}
+		
 	}
 	
 	std::cout << "D0: " << std::endl;
 	for(auto z : mst){
-		std::cout << z.second << "\t";
+		std::cout << "( 0 , " << z.second << ")\t";
 		ut.print1DVector(z.first);
 	}
+	std::cout << "( 0 , " << std::to_string(maxEpsilon) << ")";
 	std::cout << std::endl;
+	
+	
+	
+	
 	
 	//For higher dimensional persistence intervals
 	//	
+	if(dim > 0){
+		//Build next dimension of ordered simplices, ignoring previous dimension pivots
+		
+		//Represent the ordered simplices as indexed sets; similar to the approach in indSimplexTree
+		
+		//Identify apparent pairs - i.e. d is the youngest face of d+1, and d+1 is the oldest coface of d
+		//		This indicates a feature represents a persistence interval
+		
+		//Track V (reduction matrix) for each column j that has been reduced to identify the constituent 
+		//		boundary simplices; we may not track this currently but will eventually
+		
+		std::vector<std::pair<std::set<unsigned>, double>> curEdges = edges[1];
+		std::vector<std::pair<std::set<unsigned>, double>> nextEdges = edges[2];
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	}
+	
 	
 	
 	//

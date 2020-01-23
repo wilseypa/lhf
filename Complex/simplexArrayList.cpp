@@ -128,6 +128,11 @@ std::vector<std::vector<std::pair<std::set<unsigned>, double>>> simplexArrayList
 			ret.push_back(dimGraph);
 	}
 	
+	
+	for (int i = 0; i < ret.size(); i++)
+		std::sort(ret[i].begin(), ret[i].end(), ut.sortBySecond);
+	
+	
 	return ret;
 }
 
