@@ -54,7 +54,7 @@ void simplexArrayList::insert(std::vector<double> &vector){
 		
 		unsigned i = weightedGraph[0].size();
 		vertex = {i};
-		if(maxDimension >= 0){
+		if(maxDimension > 0){
 			//Iterate through each existing to compare to new insertion
 			for(unsigned j = 0; j < weightedGraph[0].size(); j++){
 				
@@ -124,13 +124,12 @@ std::vector<std::vector<std::pair<std::set<unsigned>, double>>> simplexArrayList
 			dimGraph.push_back(std::make_pair(curSet, edge.second));			
 		}
 		
-		if(dimGraph.size() > 0)
+		
+		if(dimGraph.size() > 0){
+			std::sort(dimGraph.begin(), dimGraph.end(), ut.sortBySecond);
 			ret.push_back(dimGraph);
+		}
 	}
-	
-	
-	for (int i = 0; i < ret.size(); i++)
-		std::sort(ret[i].begin(), ret[i].end(), ut.sortBySecond);
 	
 	
 	return ret;

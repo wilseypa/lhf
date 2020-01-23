@@ -39,7 +39,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	//Get all edges for the simplexArrayList or simplexTree
 	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges = inData.complex->getAllEdges(maxEpsilon);
 	
-	if(edges.size() < 2){
+	if(edges.size() < dim + 1){
 		ut.writeLog("FastPersistence","Failed to provide the fastPersistence pipe with edges from complex");
 		return inData;
 	}
