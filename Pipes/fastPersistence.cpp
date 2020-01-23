@@ -31,6 +31,9 @@ fastPersistence::fastPersistence(){
 //		1. See Bauer-19 for algorithm/description
 pipePacket fastPersistence::runPipe(pipePacket inData){
 	
+	if(dim > 0)
+		inData.complex->expandDimensions(dim + 1);	
+	
 	std::string bettis = "";
 	
 	//Get all edges for the simplexArrayList or simplexTree
@@ -64,10 +67,16 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	std::vector<std::pair<std::set<unsigned>,double>> mst;
 	std::set<unsigned> conSet;
 	std::set<unsigned> wset;
+	std::set<unsigned> pivots;
+	int pivotIndex = 0;
 		
 	for(auto edge : edges[1]){
+		
+		
 		if((wset = ut.setIntersect(edge.first, conSet, false)).size() < 2){
+			pivots.insert(pivotIndex);
 			mst.push_back(edge);
+			
 			//for(auto i = edge.first.begin(); i != edge.first.end(); i++){
 			auto i = edge.first.begin();
 			conSet.insert(*i);
@@ -76,9 +85,9 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		
 		//Check if we've filled our MST and can break...
 		if(mst.size() == edges[0].size()){
-			std::cout << "Exiting the MST early... " << std::endl;
 			break;
 		}
+		pivotIndex++;
 		
 	}
 	
@@ -89,8 +98,6 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	}
 	std::cout << "( 0 , " << std::to_string(maxEpsilon) << ")";
 	std::cout << std::endl;
-	
-	
 	
 	
 	
@@ -107,23 +114,44 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		//Track V (reduction matrix) for each column j that has been reduced to identify the constituent 
 		//		boundary simplices; we may not track this currently but will eventually
 		
-		std::vector<std::pair<std::set<unsigned>, double>> curEdges = edges[1];
-		std::vector<std::pair<std::set<unsigned>, double>> nextEdges = edges[2];
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
+		for(int d = 1; d < dim; d++){
+			
+			std::cout << "D" << d << ": " << std::endl;
+			
+			std::vector<std::pair<std::set<unsigned>, double>> curEdges = edges[d];
+			std::vector<std::pair<std::set<unsigned>, double>> nextEdges = edges[d+1];
+			std::set<unsigned> nextPivots;
+			int columnIndex = 0;
+			
+			//Iterate the columns of the boundary matrix (i.e. the nextEdges)
+			for(auto column_to_reduce : nextEdges){
+				pivotIndex = 0;
+				
+				//Begin checking each vector from lowest weight for a pivot; skip previous pivots
+				for(auto row_to_check : curEdges){
+					
+					//If we find an unused pivot row that was not in previous pivots or current pivots
+					if(pivots.find(pivotIndex) == pivots.end()){
+						if(ut.setIntersect(row_to_check.first, column_to_reduce.first, true).size() == row_to_check.first.size()){
+							//Emit the pair
+							
+							if(row_to_check.second != column_to_reduce.second)
+								std::cout << "( " << row_to_check.second << " , " << column_to_reduce.second << ")" << std::endl;
+							
+							pivots.insert(pivotIndex);
+							nextPivots.insert(columnIndex);
+							
+						}
+					}
+					pivotIndex++;
+				}
+				columnIndex++;
+			}
+		}
 		
 	}
 	
-	
-	
+	std::cout << std::endl;
 	//
 	
 	

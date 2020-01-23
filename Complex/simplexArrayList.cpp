@@ -54,7 +54,7 @@ void simplexArrayList::insert(std::vector<double> &vector){
 		
 		unsigned i = weightedGraph[0].size();
 		vertex = {i};
-		if(maxDimension > 0){
+		if(maxDimension >= 0){
 			//Iterate through each existing to compare to new insertion
 			for(unsigned j = 0; j < weightedGraph[0].size(); j++){
 				
