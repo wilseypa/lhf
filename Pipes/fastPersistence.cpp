@@ -68,7 +68,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	std::set<unsigned> conSet;
 	std::set<unsigned> wset;
 	std::set<unsigned> pivots;
-	int pivotIndex = 0;
+	unsigned pivotIndex = 0;
 		
 	for(auto edge : edges[1]){
 		
@@ -114,38 +114,82 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		//Track V (reduction matrix) for each column j that has been reduced to identify the constituent 
 		//		boundary simplices; we may not track this currently but will eventually
 		
+		
 		for(int d = 1; d < dim; d++){
 			
+			//Track the current pivots located into an unordered map
+			std::unordered_map<unsigned, std::set<unsigned>> v;
 			std::cout << "D" << d << ": " << std::endl;
 			
 			std::vector<std::pair<std::set<unsigned>, double>> curEdges = edges[d];
 			std::vector<std::pair<std::set<unsigned>, double>> nextEdges = edges[d+1];
 			std::set<unsigned> nextPivots;
-			int columnIndex = 0;
+			unsigned columnIndex = 0;
 			
 			//Iterate the columns of the boundary matrix (i.e. the nextEdges)
 			for(auto column_to_reduce : nextEdges){
 				pivotIndex = 0;
+				bool foundPivot = false;
+				bool needReduced = false;
+				std::set<unsigned> cofaceList;
 				
 				//Begin checking each vector from lowest weight for a pivot; skip previous pivots
 				for(auto row_to_check : curEdges){
 					
-					//If we find an unused pivot row that was not in previous pivots or current pivots
+					// 1 of 3 things can happen here:
+					//		-The row is a pivot of the column, closing an interval
+					//		-The row is not a pivot, needing to be XOR with the stored pivot
+					//		-The row does not intersect (0 or cleared from previous dimension)
 					if(pivots.find(pivotIndex) == pivots.end()){
-						if(ut.setIntersect(row_to_check.first, column_to_reduce.first, true).size() == row_to_check.first.size()){
+						
+						//Check for intersection
+						bool isCoface = (ut.setIntersect(row_to_check.first, column_to_reduce.first, true).size() == row_to_check.first.size());
+						
+						if(isCoface)
+							cofaceList.insert(pivotIndex);
+						
+						//Row is a pivot
+						if(!needReduced && !foundPivot && isCoface && v.find(pivotIndex) == v.end()){
 							//Emit the pair
 							
 							if(row_to_check.second != column_to_reduce.second)
 								std::cout << "( " << row_to_check.second << " , " << column_to_reduce.second << ")" << std::endl;
 							
-							pivots.insert(pivotIndex);
+							//pivots.insert(pivotIndex);
 							nextPivots.insert(columnIndex);
-							
+							foundPivot = true;
+						} else if (isCoface && !needReduced) {
+							//Reduce by XOR
+							needReduced = true;
+						}
+					
+						
+					}				
+					
+					pivotIndex++;
+					
+				}
+				//Reduce the column or store into the unordered map
+				
+				
+				if(needReduced){
+					//Reduce until pivot or 0
+					std::set<unsigned int>::iterator pIndex;
+					
+					while((pIndex = cofaceList.begin()) != cofaceList.end()){
+						if(v.find(*pIndex) == v.end()){
+							v[*pIndex] = cofaceList;
+							break;
+						} else {
+							cofaceList = ut.setXOR(v[*pIndex],cofaceList);
 						}
 					}
-					pivotIndex++;
+				} else if (foundPivot) {
+					v[*cofaceList.begin()] = cofaceList;
 				}
+				
 				columnIndex++;
+				
 			}
 		}
 		
@@ -172,6 +216,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		
 	return inData;
 }
+
 
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime

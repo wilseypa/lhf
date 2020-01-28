@@ -3,6 +3,7 @@
 // Header file for bettiPipe class - see bettiPipe.cpp for descriptions
 #include <map>
 #include <queue>
+#include <unordered_map>
 #include "basePipe.hpp"
 #include "utils.hpp"
 
