@@ -72,7 +72,6 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		
 	for(auto edge : edges[1]){
 		
-		
 		if((wset = ut.setIntersect(edge.first, conSet, false)).size() < 2){
 			pivots.insert(pivotIndex);
 			mst.push_back(edge);
@@ -125,6 +124,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			std::vector<std::pair<std::set<unsigned>, double>> nextEdges = edges[d+1];
 			std::set<unsigned> nextPivots;
 			unsigned columnIndex = 0;
+			std::set<unsigned> back_insert;
 			
 			//Iterate the columns of the boundary matrix (i.e. the nextEdges)
 			for(auto column_to_reduce : nextEdges){
@@ -143,7 +143,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 					if(pivots.find(pivotIndex) == pivots.end()){
 						
 						//Check for intersection
-						bool isCoface = (ut.setIntersect(row_to_check.first, column_to_reduce.first, true).size() == row_to_check.first.size());
+						bool isCoface = std::includes(column_to_reduce.first.begin(), column_to_reduce.first.end(), row_to_check.first.begin(), row_to_check.first.end());
 						
 						if(isCoface)
 							cofaceList.insert(pivotIndex);

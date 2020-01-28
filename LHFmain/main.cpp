@@ -167,7 +167,7 @@ int main(int argc, char* argv[]){
     ap->printArguments(args);
     
 	//Create a pipePacket (datatype) to store the complex and pass between engines
-    auto *wD = new pipePacket(args["complexType"], stod(args["epsilon"]), stoi(args["dimensions"]));	//wD (workingData)
+    auto *wD = new pipePacket(args, args["complexType"]);	//wD (workingData)
 	
 	if(args["pipeline"] != "slidingwindow"){
 		//Read data from inputFile CSV

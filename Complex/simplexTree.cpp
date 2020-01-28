@@ -27,11 +27,10 @@ void simplexTree::recurseInsert(treeNode* node, unsigned curIndex, int depth, do
 	
 	if(runningVectorIndices.size() < runningVectorCount+1){
 		int offset = runningVectorCount+1 - runningVectorIndices.size();
-		double curE = distMatrix[node->index - offset][indexCounter - offset];	
+		curE = distMatrix[node->index - offset][indexCounter - offset];	
 		
 	}else{
-		//std::cout << "DEFAULT" << std::endl;
-		double curE = distMatrix[node->index][indexCounter];
+		curE = distMatrix[node->index][indexCounter];
 	}
 	
 	curE = curE > maxE ? curE : maxE;
