@@ -10,6 +10,7 @@
 #include <fstream>
 #include <vector>
 #include <cmath>
+#include <list>
 #include <iterator>
 #include <algorithm>
 #include <numeric>
@@ -67,13 +68,13 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	std::vector<std::pair<std::set<unsigned>,double>> mst;
 	std::set<unsigned> conSet;
 	std::set<unsigned> wset;
-	std::set<unsigned> pivots;
+	std::list<unsigned> pivots;
 	unsigned pivotIndex = 0;
 		
 	for(auto edge : edges[1]){
 		
 		if((wset = ut.setIntersect(edge.first, conSet, false)).size() < 2){
-			pivots.insert(pivotIndex);
+			pivots.push_back(pivotIndex);
 			mst.push_back(edge);
 			
 			//for(auto i = edge.first.begin(); i != edge.first.end(); i++){
@@ -120,27 +121,26 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			std::unordered_map<unsigned, std::set<unsigned>> v;
 			std::cout << "D" << d << ": " << std::endl;
 			
-			std::vector<std::pair<std::set<unsigned>, double>> curEdges = edges[d];
-			std::vector<std::pair<std::set<unsigned>, double>> nextEdges = edges[d+1];
-			std::set<unsigned> nextPivots;
+			std::list<unsigned> nextPivots;
 			unsigned columnIndex = 0;
-			std::set<unsigned> back_insert;
 			
 			//Iterate the columns of the boundary matrix (i.e. the nextEdges)
-			for(auto column_to_reduce : nextEdges){
+			for(auto column_to_reduce : edges[d+1]){
 				pivotIndex = 0;
 				bool foundPivot = false;
 				bool needReduced = false;
 				std::set<unsigned> cofaceList;
 				
+				auto pivotPointer = pivots.begin();
+				
 				//Begin checking each vector from lowest weight for a pivot; skip previous pivots
-				for(auto row_to_check : curEdges){
+				for(auto row_to_check : edges[d]){
 					
 					// 1 of 3 things can happen here:
 					//		-The row is a pivot of the column, closing an interval
 					//		-The row is not a pivot, needing to be XOR with the stored pivot
 					//		-The row does not intersect (0 or cleared from previous dimension)
-					if(pivots.find(pivotIndex) == pivots.end()){
+					if(*pivotPointer != pivotIndex){
 						
 						//Check for intersection
 						bool isCoface = std::includes(column_to_reduce.first.begin(), column_to_reduce.first.end(), row_to_check.first.begin(), row_to_check.first.end());
@@ -156,7 +156,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 								std::cout << "( " << row_to_check.second << " , " << column_to_reduce.second << ")" << std::endl;
 							
 							//pivots.insert(pivotIndex);
-							nextPivots.insert(columnIndex);
+							nextPivots.push_back(columnIndex);
 							foundPivot = true;
 						} else if (isCoface && !needReduced) {
 							//Reduce by XOR
@@ -164,6 +164,8 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						}
 					
 						
+					} else {
+						pivotPointer++;
 					}				
 					
 					pivotIndex++;
