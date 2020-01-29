@@ -4,7 +4,8 @@ on:
   push:
     branches:
       - master
-      - MPI_Development
+#      Commenting out MPI development, need to get MPI working on github actions
+#      - MPI_Development
       - cmake_development
 
 jobs:
