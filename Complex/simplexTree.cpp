@@ -27,11 +27,10 @@ void simplexTree::recurseInsert(treeNode* node, unsigned curIndex, int depth, do
 	
 	if(runningVectorIndices.size() < runningVectorCount+1){
 		int offset = runningVectorCount+1 - runningVectorIndices.size();
-		double curE = distMatrix[node->index - offset][indexCounter - offset];	
+		curE = distMatrix[node->index - offset][indexCounter - offset];	
 		
 	}else{
-		//std::cout << "DEFAULT" << std::endl;
-		double curE = distMatrix[node->index][indexCounter];
+		curE = distMatrix[node->index][indexCounter];
 	}
 	
 	curE = curE > maxE ? curE : maxE;
@@ -192,6 +191,10 @@ void simplexTree::insertInductive(){
 
 // Insert a node into the tree using the distance matrix and a vector index to track changes
 bool simplexTree::insertIterative(std::vector<double> &vector, std::vector<std::vector<double>> &window){
+	if(window.size() == 0){
+		return true;
+	}
+	
 	
 	if(streamEvaluator(vector, window)){
 		
@@ -237,9 +240,8 @@ void simplexTree::deleteIterative(int vectorIndex){
 	
 	
 	} else {
-		std::cout << "Failed to find vector by index!" << std::endl;
+		ut.writeDebug("simplexTree","Failed to find vector by index");
 	}
-	
 	return;
 }
 
@@ -278,6 +280,7 @@ void simplexTree::deleteIndexRecurse(int vectorIndex, treeNode* curNode){
 		deleteIndexRecurse(vectorIndex, curNode->child);
 	}
 	
+	return;
 }
 
 
@@ -285,6 +288,11 @@ void simplexTree::deleteIndexRecurse(int vectorIndex, treeNode* curNode){
 // Insert a node into the tree
 //		
 void simplexTree::insert(std::vector<double>&) {
+	
+	if(distMatrix.size() == 0){
+		ut.writeDebug("simplexTree","Distance matrix is empty, skipping insertion");
+		return;
+	}
 	
 	//Create our new node to insert
 	treeNode* curNode = new treeNode;
@@ -386,37 +394,40 @@ std::vector<std::vector<std::pair<std::set<unsigned>,double>>> simplexTree::getA
 }
 
 void simplexTree::reduceComplex(){
+	if(weightEdgeGraph.size() == 0){
+		ut.writeDebug("simplexTree","Complex is empty, skipping reduction");
+		return;
+	}
 	
 	//Start with the largest dimension
 	ut.writeDebug("simplexTree","Reducing complex, starting simplex count: " + std::to_string(simplexCount()));
 	treeNode* cur;
 	
-	std::cout << dimensions.size() << std::endl;
-	
-	for(auto i = dimensions.size()-1; i > 1; i--){
-		
-		std::vector<std::set<unsigned>> removals;
-		std::vector<std::set<unsigned>> checked;
-
-		while(checked.size() != weightEdgeGraph[i].size()){
-			cur = dimensions[i];
-			do {
-				if(std::find(checked.begin(),checked.end(),cur->simplex) == checked.end()){
-					auto ret = recurseReduce(std::make_pair(cur->simplex, cur->weight), removals, checked);
-					removals = ret.first;
-					checked = ret.second;
-				}
-			} while (cur->sibling != nullptr && (cur = cur->sibling) != nullptr);
-		}	
-		
-		//Remove the removals
-		for(auto rem : removals){
-			deletion(rem);
-		}
-		std::cout << "Remove " << removals.size() << " from dim " << i << std::endl;
+	if(dimensions.size() > 0){
+		for(auto i = dimensions.size()-1; i > 1; i--){
 			
+			std::vector<std::set<unsigned>> removals;
+			std::vector<std::set<unsigned>> checked;
+
+			while(checked.size() != weightEdgeGraph[i].size()){
+				cur = dimensions[i];
+				do {
+					if(std::find(checked.begin(),checked.end(),cur->simplex) == checked.end()){
+						auto ret = recurseReduce(std::make_pair(cur->simplex, cur->weight), removals, checked);
+						removals = ret.first;
+						checked = ret.second;
+					}
+				} while (cur->sibling != nullptr && (cur = cur->sibling) != nullptr);
+			}	
+			
+			//Remove the removals
+			for(auto rem : removals){
+				deletion(rem);
+			}
+			std::cout << "Remove " << removals.size() << " from dim " << i << std::endl;
+				
+		}
 	}
-	
 	ut.writeDebug("simplexTree","Finished reducing complex, reduced simplex count: " + std::to_string(simplexCount()));
 	
 	return;
@@ -476,9 +487,11 @@ std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> simp
 std::vector<std::vector<unsigned>> simplexTree::getDimEdges(int d,double){
 	std::vector<std::vector<unsigned>> ret;
 	
-	for(auto z : weightEdgeGraph[d]){
-		std::vector<unsigned> temp(z.first.begin(), z.first.end());
-		ret.push_back(temp);
+	if(weightEdgeGraph.size() >= d){
+		for(auto z : weightEdgeGraph[d]){
+			std::vector<unsigned> temp(z.first.begin(), z.first.end());
+			ret.push_back(temp);
+		}
 	}
 	
 	return ret;
@@ -487,6 +500,7 @@ std::vector<std::vector<unsigned>> simplexTree::getDimEdges(int d,double){
 
 bool simplexTree::find(std::set<unsigned>){
 	
+	ut.writeLog("simplexTree","find(std::set<unsigned>) not implemented!");
 	return 0;
 }
 
@@ -505,6 +519,9 @@ bool simplexTree::deletion(std::set<unsigned> removalEntry) {
 			return deletion(curNode);
 		}
 	}*/
+	
+	
+	ut.writeLog("simplexTree","deletion(std::set<unsigned>) not implemented!");
 	return false;
 	
 }
@@ -513,26 +530,40 @@ bool simplexTree::deletion(std::set<unsigned> removalEntry) {
 // A recursive function to delete a simplex (and sub-branches) from the tree.
 bool simplexTree::deletion(treeNode* removalEntry) {
 	treeNode* curNode = removalEntry;
+	int deletionCount = 0;
 	
 	//Iterate to the bottom of branch
 	while(curNode->child != nullptr){ 
 		curNode->child->parent = curNode;
 		curNode=curNode->child;
+		std::cout << "\t\t@ " << curNode->index << std::endl;
+	}
+	
+	if(curNode->sibling != nullptr){
+		deletion(curNode->sibling);
 	}
 	
 	//If we did go down, remove on the way back up
 	while(curNode != removalEntry){ 
 		curNode = curNode->parent;
+		
+		if(curNode->sibling != nullptr){
+			deletion(curNode->sibling);
+		}
+		
+		deletionCount++;
 		delete curNode->child;
 		curNode->child = nullptr;
 	}
 	
 	//curNode = curNode->parent;
+	deletionCount++;
 	delete curNode;
 	nodeCount--;
 	//curNode->child = nullptr;
 	
-	//NOTE: Also need to remove from the indexed graph (if done after shuffle)
+	std::cout << "\tDeleted " << deletionCount << " nodes" << std::endl;
+	
 	
 	
 	return false;
@@ -540,7 +571,14 @@ bool simplexTree::deletion(treeNode* removalEntry) {
 
 double simplexTree::findWeight(std::set<unsigned> simplex){
 	
+	ut.writeLog("simplexTree","findWeight(std::set<unsigned>) not implemented!");
 	return 1;
 }
 
+
+std::vector<std::pair<double, std::vector<unsigned>>> simplexTree::getd0Pairs(){
+	std::vector<std::pair<double, std::vector<unsigned>>> ret;
+	ut.writeLog("simplexTree","getd0Pairs() not implemented!");
+	return ret;
+}
 

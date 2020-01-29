@@ -80,7 +80,7 @@ class simplexBase {
 	};
   
 	std::vector<unsigned> dimCounts = {6, 15, 20};
-	std::string simplexType;
+	std::string simplexType = "simplexBase";
 	double maxEpsilon;
 	int maxDimension;
 	std::vector<std::vector<double>> distMatrix;
@@ -112,6 +112,7 @@ class simplexBase {
 	virtual void expandDimensions(int);
 	virtual void reduceComplex();
     virtual bool streamEvaluator(std::vector<double>, std::vector<std::vector<double>>);
+    virtual std::vector<std::pair<double, std::vector<unsigned>>> getd0Pairs();
 	
 	//Unused, possibly future
 	virtual void outputSimplex();

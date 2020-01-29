@@ -348,6 +348,11 @@ void indSimplexTree::insertInductive(){
 //		
 void indSimplexTree::insert(std::vector<double>&) {
 	
+	if(distMatrix.size() == 0){
+		ut.writeDebug("simplexTree","Distance matrix is empty, skipping insertion");
+		return;
+	}
+	
 	//Create our new node to insert
 	indTreeNode* curNode = new indTreeNode;
 	curNode->index = indexCounter;
@@ -569,7 +574,11 @@ int indSimplexTree::simplexCount(){
 } 
 
 bool indSimplexTree::find(std::set<unsigned> simplex){
-	
+	if(dimensions.size() == 0){
+		ut.writeDebug("indSimplexTree","Complex is empty, skipping find");
+		return false;
+	}
+		
 	indTreeNode* curNode = dimensions[0][*simplex.begin()];
 	
 	for(auto i = simplex.begin() ; i != simplex.end(); i++){
@@ -660,12 +669,19 @@ void indSimplexTree::sortAndBuildGraph(){
 
 std::vector<std::vector<std::pair<std::set<unsigned>,double>>> indSimplexTree::getAllEdges(double epsilon){
 	
+	
+	
+	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> ret;
+	
+	if(dimensions.size() == 0){
+		ut.writeDebug("indSimplexTree","Complex is empty, no edges to return");
+		return ret;
+	}
+	
 	if(!isSorted){
 		sortAndBuildGraph();
 		isSorted = true;
 	}
-	
-	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> ret;
 	
 	for(std::vector<graphEntry> a : indexedGraph){
 		std::vector<std::pair<std::set<unsigned>,double>> tempEdges;
@@ -683,6 +699,12 @@ std::vector<std::vector<std::pair<std::set<unsigned>,double>>> indSimplexTree::g
 
 
 std::vector<std::vector<indSimplexTree::graphEntry>> indSimplexTree::getIndexEdges(double epsilon){
+	std::vector<std::vector<indSimplexTree::graphEntry>> ret;
+	
+	if(dimensions.size() == 0){
+			ut.writeDebug("indSimplexTree","Complex is empty, no edges to return");
+			return ret;
+	}
 
 	if(!isSorted){
 		sortAndBuildGraph();

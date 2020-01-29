@@ -93,7 +93,7 @@ std::vector<std::vector<indSimplexTree::graphEntry>> simplexBase::getIndexEdges(
 
 double simplexBase::getSize(){
 	ut.writeLog(simplexType,"No size function defined");
-	return 0;
+	return -1;
 }
 
 bool simplexBase::insertIterative(std::vector<double>&, std::vector<std::vector<double>>&){
@@ -114,12 +114,12 @@ void simplexBase::insert(std::vector<double>&){
 
 bool simplexBase::find(std::vector<unsigned>){
 	ut.writeLog(simplexType,"No find function defined");
-	return -1;
+	return false;
 }
 
 bool simplexBase::find(std::set<unsigned>){
 	ut.writeLog(simplexType,"No find function defined");
-	return -1;
+	return false;
 }
 
 int simplexBase::vertexCount(){
@@ -183,9 +183,6 @@ bool simplexBase::streamEvaluator(std::vector<double> vector, std::vector<std::v
 	
 	stats += std::to_string(k) + "," + std::to_string(mean_NN) + "," + std::to_string(stdev_NN) + ",";
 	
-	
-	
-	
 	if (true){//stdev_NN > 10000){
 		//std::cout << "\tAccept: (stdev > 0.5 , " << stdev << ")" << std::endl;
 		stats += "Accept\n";
@@ -195,3 +192,13 @@ bool simplexBase::streamEvaluator(std::vector<double> vector, std::vector<std::v
 	//std::cout << "\tReject: (stdev > 0.5 , " << stdev << ")" << std::endl;
 	return false;
 }
+
+
+std::vector<std::pair<double, std::vector<unsigned>>> simplexBase::getd0Pairs(){
+	std::vector<std::pair<double, std::vector<unsigned>>> ret;
+	ut.writeLog(simplexType,"No getd0Pairs function defined");
+	return ret;	
+}
+	
+	
+	

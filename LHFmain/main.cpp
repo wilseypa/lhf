@@ -54,9 +54,11 @@ void runPipeline(std::map<std::string, std::string> args, pipePacket* wD){
 	if(pipe != args.end()){
 		if (args["outputFile"] == "console"){
 			//ws->writeConsole(wD);
+		} else {
+			ws->writeStats(wD->stats, args["outputFile"]);
+			ws->writeBarcodes(wD->bettiOutput, args["outputFile"]);
+			
 		}
-		
-		ws->writeStats(wD->stats, args["outputFile"]);
 	}
 	
 	return;
@@ -95,7 +97,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		if(prePipe != 0 && prePipe->configPreprocessor(args)){
 			*wD = prePipe->runPreprocessorWrapper(*wD);
 		} else {
-			cout << "LHF : sFailed to configure pipeline: " << args["pipeline"] << endl;
+			cout << "LHF : Failed to configure pipeline: " << args["pipeline"] << endl;
 		}
 	}
 	
@@ -161,33 +163,12 @@ int main(int argc, char* argv[]){
     auto args = ap->parse(argc, argv);
     
     //Determine what pipe we will be running
-    if(args["pipeline"] == ""){
-		if(args["mode"] == "standard")
-			args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
-		else if(args["mode"] == "reduced"){
-			if(args["preprocessor"] == "")
-				args["preprocessor"] = "kmeans++";
-			args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
-		} else if(args["mode"] == "upscale"){
-			if(args["preprocessor"] == "")
-				args["preprocessor"] = "kmeans++";
-			args["upscale"] = "true";
-			args["pipeline"] = "distMatrix.neighGraph.rips.persistence.boundary.upscale";
-		} else if(args["mode"] == "stream"){
-			if(args["preprocessor"] == "")
-				args["preprocessor"] = "streamingkmeans";
-			args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
-		} else if(args["mode"] == "sw" || args["mode"] == "slidingwindow"){
-			args["preprocessor"] = "";
-			args["pipeline"] = "slidingwindow";
-			args["upscale"] = "false";
-			args["complexType"] = "simplexTree";
-		}
-	
-	}
+    ap->setPipeline(args);
+    
+    ap->printArguments(args);
     
 	//Create a pipePacket (datatype) to store the complex and pass between engines
-    auto *wD = new pipePacket(args["complexType"], stod(args["epsilon"]), stoi(args["dimensions"]));	//wD (workingData)
+    auto *wD = new pipePacket(args, args["complexType"]);	//wD (workingData)
 	
 	if(args["pipeline"] != "slidingwindow"){
 		//Read data from inputFile CSV

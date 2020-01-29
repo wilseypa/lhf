@@ -38,61 +38,61 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 	std::vector<std::vector<double>> windowValues;
 
 	std::vector<double> currentVector;
-	rp.streamInit(inputFile);
-	int pointCounter = 1;
-
-	while(rp.streamRead(currentVector)){
-
-		//Evaluate insertion into sliding window
-		if(windowValues.size() < windowMaxSize){
-			windowValues.push_back(currentVector);
-
-			//If we've reached window size, generate the initial complex
-			if(windowValues.size() == windowMaxSize){
-				std::cout << "Initializing complex" << std::endl;
-
-				inData.originalData = windowValues;
-				runComplexInitializer(inData);
-
-				std::cout << "Returning from complex initializer" << std::endl;
-			}
-
-		} else {
-			
-			if(inData.complex->insertIterative(currentVector, windowValues)){
-
-				windowValues.erase(windowValues.begin());
-
-				//Insert the point
+	if(rp.streamInit(inputFile)){
+		int pointCounter = 1;
+		
+		while(rp.streamRead(currentVector)){
+			//Evaluate insertion into sliding window
+			if(windowValues.size() < windowMaxSize){
 				windowValues.push_back(currentVector);
+
+				//If we've reached window size, generate the initial complex
+				if(windowValues.size() == windowMaxSize){
+					std::cout << "Initializing complex" << std::endl;
+
+					inData.originalData = windowValues;
+					runComplexInitializer(inData);
+
+					std::cout << "Returning from complex initializer" << std::endl;
+				}
+
+			} else {
+				
+				if(inData.complex->insertIterative(currentVector, windowValues)){
+
+					windowValues.erase(windowValues.begin());
+
+					//Insert the point
+					windowValues.push_back(currentVector);
+				}
 			}
-		}
 
-		//Check if we've gone through 100 points
-		if(pointCounter % 100 == 0 && pointCounter > windowMaxSize){
-			// Build and trigger remaining pipeline. It should only require the computation of persistence
-			// intervals from the complex being maintained.
+			//Check if we've gone through 100 points
+			if(pointCounter % 100 == 0 && pointCounter > windowMaxSize){
+				// Build and trigger remaining pipeline. It should only require the computation of persistence
+				// intervals from the complex being maintained.
+				std::cout << "pointCounter: " << pointCounter << "\tSimplex Count: " << inData.complex->simplexCount() << "\tVertex Count: " << inData.complex->vertexCount() << std::endl;
+				std::cout << "\tWindowSize: " << windowValues.size() << std::endl;
+				inData.originalData = windowValues;
+				runSubPipeline(inData);
+
+			}
+			pointCounter++;
+
+			currentVector.clear();
+
+		}
+		//Probably want to trigger the remaining pipeline one last time...
+		if((pointCounter - 1) % 100 != 0){
 			std::cout << "pointCounter: " << pointCounter << "\tSimplex Count: " << inData.complex->simplexCount() << "\tVertex Count: " << inData.complex->vertexCount() << std::endl;
-			std::cout << "\tWindowSize: " << windowValues.size() << std::endl;
-			inData.originalData = windowValues;
+
 			runSubPipeline(inData);
-
 		}
-		pointCounter++;
-
-		currentVector.clear();
-
-	}
-	//Probably want to trigger the remaining pipeline one last time...
-	if((pointCounter - 1) % 100 != 0){
-		std::cout << "pointCounter: " << pointCounter << "\tSimplex Count: " << inData.complex->simplexCount() << "\tVertex Count: " << inData.complex->vertexCount() << std::endl;
-
-		runSubPipeline(inData);
+		ut.writeLog("slidingWindow", "\tSuccessfully evaluated " + std::to_string(pointCounter) + " points");
+	
+		writeComplexStats(inData);
 	}
 
-	ut.writeLog("slidingWindow", "\tSuccessfully evaluated " + std::to_string(pointCounter) + " points");
-
-	writeComplexStats(inData);
 	return inData;
 }
 
@@ -200,6 +200,7 @@ bool slidingWindow::configPipe(std::map<std::string, std::string> configMap){
 	}
 	else return false;
 
+	configured = true;
 	ut.writeDebug("slidingWindow","Configured with parameters { input: " + configMap["inputFile"] + ", dim: " + configMap["dimensions"] + ", eps: " + configMap["epsilon"] + ", debug: " + strDebug + ", outputFile: " + outputFile + " }");
 
 	return true;

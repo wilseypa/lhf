@@ -175,6 +175,10 @@ pipePacket persistencePairs::runPipe(pipePacket inData){
 	//Get all edges for the simplexArrayList or simplexTree
 	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges = inData.complex->getAllEdges(maxEpsilon);
 	
+	//Get all dim 0 pairs
+	
+	
+	
 	
 	std::vector<std::pair<double,double>> temp;
 	std::vector<std::vector<std::pair<double,double>>> ret;
@@ -345,6 +349,7 @@ bool persistencePairs::configPipe(std::map<std::string, std::string> configMap){
 	if(pipe != configMap.end() && configMap["complexType"] == "indSimplexTree")
 		alterPipe = true;
 		
+	configured = true;
 	ut.writeDebug("persistence","Configured with parameters { dim: " + configMap["dimensions"] + ", twist: " + twist + ", complexType: " + configMap["complexType"] + ", eps: " + configMap["epsilon"]);
 	ut.writeDebug("persistence","\t\t\t\tdebug: " + strDebug + ", outputFile: " + outputFile + " }");
 	

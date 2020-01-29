@@ -60,6 +60,7 @@ bool neighGraphPipe::configPipe(std::map<std::string, std::string> configMap){
 	}
 	else return false;
 	
+	configured = true;
 	ut.writeDebug("neighGraphPipe","Configured with parameters { dim: " + std::to_string(dim) + " , eps: " + configMap["epsilon"] + " , debug: " + strDebug + ", outputFile: " + outputFile + " }");
 	
 	return true;
