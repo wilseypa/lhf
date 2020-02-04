@@ -2,11 +2,11 @@
 
 // Header file for kdTree class - see kdTree.cpp for descriptions
 #include <map>
-#include "preprocessor.hpp"
 #include <algorithm>
 #include <functional>
 #include <memory>
 #include <vector>
+#include "pipePacket.hpp"
 
 //github.com/crvs/KDTree/blob/master/KDTree.hpp
 using point = std::vector<double>;
@@ -46,25 +46,26 @@ using pointIndexArr = typename std::vector<pointIndex>;
 using pointVec = std::vector<point>;
 
 class kdTree{
-    kdNodePtr root;
-    kdNodePtr leaf;
+    public: //REMOVE ---------------------------------------------
+        kdNodePtr root;
+        kdNodePtr leaf;
 
-    kdNodePtr makeTree(const pointIndexArr::iterator &begin, const pointIndexArr::iterator &end, 
+        kdNodePtr makeTree(const pointIndexArr::iterator &begin, const pointIndexArr::iterator &end, 
                        const size_t &length, const size_t &level);
     public:
-        kdTree() = default;
-       explicit kdTree(pointVec pointArray, pipePacket inData); //vector of points, which are std::vector<doubles>. prevent implicit conversion
+        kdTree();
+        explicit kdTree(pipePacket inData); //Prevent implicit conversion
 
     private:
-      kdNodePtr findNearest(
-          const kdNodePtr &branch,
-          const point &pt,
-          const size_t &level,
-          const kdNodePtr &best,
-          const double &bestDist
-      );
+        kdNodePtr findNearest(
+            const kdNodePtr &branch,
+            const point &pt,
+            const size_t &level,
+            const kdNodePtr &best,
+            const double &bestDist
+        );
 
-    kdNodePtr nearest(const point &pt);
+        kdNodePtr nearest(const point &pt);
 
     public:
         point nearestPoint(const point &pt);
