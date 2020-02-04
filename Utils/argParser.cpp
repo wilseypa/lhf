@@ -11,7 +11,7 @@
 
 
 std::map<std::string, std::string> argMap = { {"mode","m"},{"dimensions","d"},{"iterations","r"},{"pipeline","p"},{"inputFile","i"},{"outputFile","o"},{"epsilon","e"},{"debug","x"},{"complexType","c"},{"clusters","k"},{"preprocessor","pre"},{"upscale","u"},{"twist","t"},{"collapse","z"}};
-std::map<std::string, std::string> defaultMap = { {"mode", "standard"},{"dimensions","2"},{"iterations","250"},{"pipeline",""},{"inputFile","None"},{"outputFile","console"},{"epsilon","5"},{"debug","0"},{"complexType","indSimplexTree"},{"clusters","5"},{"preprocessor",""},{"upscale","false"},{"twist","false"},{"collapse","false"}};
+std::map<std::string, std::string> defaultMap = { {"mode", "standard"},{"dimensions","1"},{"iterations","250"},{"pipeline",""},{"inputFile","None"},{"outputFile","output.csv"},{"epsilon","5"},{"debug","0"},{"complexType","simplexTree"},{"clusters","5"},{"preprocessor",""},{"upscale","false"},{"twist","false"},{"collapse","false"}};
 
 // argParse constructor, currently no needed information for the class constructor
 argParser::argParser(){
@@ -43,6 +43,28 @@ std::map<std::string, std::string> argParser::defaultArguments(std::map<std::str
 
 void argParser::printUsage(){
 	std::cout << "Usage: " << std::endl;
+	std::cout << std::endl;
+	std::cout << "\t ./LHF -i <inputfile> -o <outputfile>" << std::endl;
+	std::cout << std::endl;
+	std::cout << "Additional Options:" << std::endl;
+	std::cout << "\t -i,--inputFile <filename>" << std::endl;
+	std::cout << "\t\tFilename (csv) for LHF input"  << std::endl;
+	std::cout << std::endl; 
+	std::cout << "\t -o,--outputFile <filename>" << std::endl;
+	std::cout << "\t\tFilename for LHF output" << std::endl;
+	std::cout << std::endl; 
+	std::cout << "\t -e,--epsilon <int>" << std::endl;
+	std::cout << "\t\tMaximum epsilon threshold" << std::endl;
+	std::cout << "\t\tdefault: 5" << std::endl;
+	std::cout << std::endl;
+	std::cout << "\t -m,--mode (standard|reduced|upscale|sw)" << std::endl;
+	std::cout << "\t\tSets the mode for LHF to run in" << std::endl;
+	std::cout << "\t\t\tdefault: standard" << std::endl;
+	std::cout << std::endl;
+	std::cout << "\t -d,--dimensions <int>" << std::endl;
+	std::cout << "\t\tSets the maximum homology dimension to compute (H_d)" << std::endl;
+	std::cout << "\t\t\tdefault: 1" << std::endl;
+	std::cout << std::endl;
 	
 	return;
 }
@@ -54,7 +76,6 @@ void argParser::printUsage(){
 // 
 std::map<std::string, std::string> argParser::parse(int argc, char** argv){
 	std::map<std::string,std::string> retVal;
-	
 	//Remove and map the initial arguments (may be led with -- or -)
 	for(int i = 1; i < argc; i=i+2){
 		if (std::string(argv[i]).substr(0,2) == "--"){
@@ -62,24 +83,29 @@ std::map<std::string, std::string> argParser::parse(int argc, char** argv){
 		} else if (std::string(argv[i]).substr(0,1) == "-"){
 			retVal[std::string(argv[i]).substr(1)] = argv[i+1];
 		} else {
-				std::cout << "Invalid argument: " << argv[i] << std::endl;
+			std::cout << "Invalid argument: " << argv[i] << std::endl << std::endl;
+			printUsage();
 		}
 	}
 	
 	//Call defaultArguments to translate shorthand arguments and add defaults to map
-	argParser::defaultArguments(retVal);
-	
-	//Print the argument set
-	std::cout << "Arguments being used: " << std::endl;
-	for( const auto& sm_pair : retVal){
-		std::cout << "\t" << sm_pair.first << " (" << argMap[sm_pair.first] << ")   \t" << sm_pair.second << std::endl;
-	}
-	std::cout << std::endl;
+	defaultArguments(retVal);
+
 	return retVal;
 }
 
+void argParser::printArguments(std::map<std::string,std::string> args){
+	
+	//Print the argument set
+	std::cout << "Arguments being used: " << std::endl;
+	for( const auto& sm_pair : args	){
+		std::cout << "\t" << sm_pair.first << " (" << argMap[sm_pair.first] << ")   \t" << sm_pair.second << std::endl;
+	}
+	std::cout << std::endl;
+	return;
+}
 
-std::map<std::string, std::string> argParser::setPipeline(std::map<std::string, std::string> args){
+void argParser::setPipeline(std::map<std::string, std::string>& args){
 	if(args["pipeline"] == ""){
 		if(args["mode"] == "standard")
 			args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
@@ -101,9 +127,14 @@ std::map<std::string, std::string> argParser::setPipeline(std::map<std::string, 
 			args["pipeline"] = "slidingwindow";
 			args["upscale"] = "false";
 			args["complexType"] = "simplexTree";
-		}
-	
+		} else if(args["mode"] == "fast"){
+			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
+			args["upscale"] = "false";
+			args["complexType"] = "simplexTree";
+		}	
 	}
+	
+	return;
 }
 
 

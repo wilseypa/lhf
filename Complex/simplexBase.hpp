@@ -112,6 +112,7 @@ class simplexBase {
 	virtual void expandDimensions(int);
 	virtual void reduceComplex();
     virtual bool streamEvaluator(std::vector<double>, std::vector<std::vector<double>>);
+    virtual std::vector<std::pair<double, std::vector<unsigned>>> getd0Pairs();
 	
 	//Unused, possibly future
 	virtual void outputSimplex();

@@ -124,9 +124,13 @@ std::vector<std::vector<std::pair<std::set<unsigned>, double>>> simplexArrayList
 			dimGraph.push_back(std::make_pair(curSet, edge.second));			
 		}
 		
-		if(dimGraph.size() > 0)
+		
+		if(dimGraph.size() > 0){
+			std::sort(dimGraph.begin(), dimGraph.end(), ut.sortBySecond);
 			ret.push_back(dimGraph);
+		}
 	}
+	
 	
 	return ret;
 }
