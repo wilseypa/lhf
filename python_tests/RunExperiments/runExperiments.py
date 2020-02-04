@@ -1,6 +1,7 @@
 from sklearn import cluster as cs
 import sys
 import numpy as np
+import argparse
 import csv
 import subprocess
 import time
@@ -8,7 +9,7 @@ import os
 import gudhi
 import random
 np.set_printoptions(threshold=sys.maxsize) # for debugging
-tdaLibraries = ['ripser','Eirene','GUDHI']
+tdaLibraries = ['LHF','ripser','GUDHI']
 
 def geometricMean(tempData, originalData):
     
@@ -40,6 +41,8 @@ def geometricMean(tempData, originalData):
     #print ("geometric means :\n", reducedData)
     
     return reducedData
+    
+    
 def corePointExtract(tempData, originalData, centroids):
     unique, counts = np.unique(tempData.labels_, return_counts=True)
     countsDict = dict(zip(unique, counts))
@@ -178,30 +181,25 @@ def outputGudhiPersistence(data, label, maxedge):
 ''' MAIN LOOP HERE '''
 
 ''' Get CMD Arguments: [filename] [epsilon] [maxDim] [partitioner] [upscale 0/1] [centroids #] [reps]'''
-fileName = "Circles.csv"
-partitioner = "kmeans++"
-epsilon = 5
-maxDim = 5
-upscale = 1
-centroids = 50
-reps = 1
+parser = argparse.ArgumentParser(description='Run iterative testing for TDA tools')
+parser.add_argument('--filename','-f',type=str, help='Point cloud filename', default='Circles.csv')
+parser.add_argument('--partitioner', '-p', type=str, help='Partitioner for point cloud reduction', default='kmeans++')
+parser.add_argument('--epsilon','-e',type=float, help='Max epsilon to compute PH up to', default=5)
+parser.add_argument('--dim', '-d', type=int, help='Maximum homology dimension to compute (Hx)', default=1)
+parser.add_argument('--upscale', '-u', type=bool, help='Set whether to upscale data during processing', default=0)
+parser.add_argument('--centroids', '-k', type=int, help='Number of centroids to compute', default=50)
+parser.add_argument('--reps','-r',type=int,help='Number of experiment repititions', default = 1)
+args = parser.parse_args()
+
+fileName = args.filename
+partitioner = args.partitioner
+epsilon = args.epsilon
+maxDim = args.dim
+upscale = args.upscale
+centroids = args.centroids
+reps = args.reps
 timings = {}
 originalLabels = []
-
-if len(sys.argv) >= 2:
-    fileName = sys.argv[1]
-if len(sys.argv) >= 3:
-    epsilon = float(sys.argv[2])
-if len(sys.argv) >= 4:
-    maxDim = int(sys.argv[3])
-if len(sys.argv) >= 5:
-    partitioner = sys.argv[4]
-if len(sys.argv) >= 6:
-    upscale = sys.argv[5]
-if len(sys.argv) >= 7:
-    centroids = int(sys.argv[6])
-if len(sys.argv) >= 8:
-    reps = int(sys.argv[7])
 
 print "Running experiments with:\nFilename: ", fileName, "\nEpsilon: ", epsilon, "\nMaxDim", maxDim, "\nPartitioner: ",  partitioner, "\nUpscale: ", upscale, "\nCentroids: ", centroids
 
@@ -245,6 +243,7 @@ for i in range(0, int(reps)):
             tempData = cs.AgglomerativeClustering(n_clusters=centroids, linkage="single").fit(originalData)
             reducedData = geometricMean(tempData, originalData)
             #print reducedData
+            
         #DBSCAN ->For two-dimensional data: use default value of minPts=4 (Ester et al., 1996)
         #For more than 2 dimensions: minPts=2*dim (Sander et al., 1998)
         #using dbscan epsilon for multiple ranges because it can get very finicky..... very dependent on particular dataset in question
@@ -268,8 +267,6 @@ for i in range(0, int(reps)):
             reducedData = np.array(random.sample(originalData, centroids)) #random.sample = no duplicates
             #print len(reducedData)
             
-        
-    
         end = time.time()
 
         timings[partitioner] = (end - start)
@@ -329,7 +326,7 @@ for i in range(0, int(reps)):
             try:
                 if os.path.isfile("./ripser"):
                     start = time.time()
-                    proc = subprocess.check_output(["./ripser", "--format", "point-cloud", "--dim", str(maxDim), "--threshold", str(epsilon), os.getcwd(
+                    proc = subprocess.check_output(["./ripser", "--format", "point-cloud", "--dim", str(maxDim-1), "--threshold", str(epsilon), os.getcwd(
                     )+"/"+outDir + "reducedData.csv"])  # ,">>" + os.getcwd()+"/"+outDir+str(centroids)+"_Ripser.csv"])#, stdout=PIPE, stderr=PIPE)
                     end = time.time()
                     pers_time = (end - start)
@@ -361,6 +358,31 @@ for i in range(0, int(reps)):
                 outfile.close()
             except:
                 print "GUDHI processing failed"
+                
+                
+        ''' LHF configuration and execution '''
+        if(tdaType == "LHF"):
+            #try:
+            start = time.time()
+            proc = subprocess.check_output(["./LHF", "-m","fast","-d", str(maxDim), "-e", str(epsilon), "-i", os.getcwd()+"/"+outDir + "reducedData.csv"])  
+
+
+            end = time.time()
+            pers_time = (end - start)
+            outdata = np.genfromtxt("./output.csv.csv")
+            
+            outfile = file(os.getcwd() + "/" + outDir +tdaType+"_Output.csv", 'w')
+                    
+            outfile.write(outdata)
+                    
+            outfile.close()
+                    
+            outfile = file(os.getcwd() + "/aggResults.csv", 'a')
+            outfile.write(str(pers_time) + "," + str(outdata.size - 1) + ",")
+            outfile.close()
+           #except:
+                #print "LHF processing failed"    
+
 
         outfile = file(os.getcwd() + "/aggResults.csv", 'a')
         outfile.write("\n")

@@ -65,19 +65,19 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	//Get all dim 0 persistence intervals
 		//Kruskal's minimum spanning tree algorithm
 	
-	std::vector<std::pair<std::set<unsigned>,double>> mst;
-	std::set<unsigned> conSet;
-	std::set<unsigned> wset;
-	std::list<unsigned> pivots;
+	//std::vector<std::pair<std::set<unsigned>,double>> mst;			//Store the minimum spanning tree
+	std::vector<double> mst;										//Store the minimum spanning tree (weight only)
+	std::set<unsigned> conSet;										//Store the connected set
+	std::set<unsigned> wset;										//Store the intersection
+	std::list<unsigned> pivots;										//Store identified pivots
 	unsigned pivotIndex = 0;
 		
 	for(auto edge : edges[1]){
 		
 		if((wset = ut.setIntersect(edge.first, conSet, false)).size() < 2){
 			pivots.push_back(pivotIndex);
-			mst.push_back(edge);
+			mst.push_back(edge.second);
 			
-			//for(auto i = edge.first.begin(); i != edge.first.end(); i++){
 			auto i = edge.first.begin();
 			conSet.insert(*i);
 			
@@ -91,13 +91,9 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		
 	}
 	
-	std::cout << "D0: " << std::endl;
 	for(auto z : mst){
-		std::cout << "( 0 , " << z.second << ")\t";
-		ut.print1DVector(z.first);
+		bettis += "0,0," + std::to_string(z) + "\n";
 	}
-	std::cout << "( 0 , " << std::to_string(maxEpsilon) << ")";
-	std::cout << std::endl;
 	
 	
 	
@@ -153,7 +149,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 							//Emit the pair
 							
 							if(row_to_check.second != column_to_reduce.second)
-								std::cout << "( " << row_to_check.second << " , " << column_to_reduce.second << ")" << std::endl;
+								bettis += std::to_string(d) + "," + std::to_string(row_to_check.second) +"," + std::to_string(column_to_reduce.second) + "\n";
 							
 							//pivots.insert(pivotIndex);
 							nextPivots.push_back(columnIndex);
