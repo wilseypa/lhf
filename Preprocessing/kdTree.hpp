@@ -55,6 +55,7 @@ class kdTree{
     public:
         kdTree();
         explicit kdTree(pipePacket inData); //Prevent implicit conversion
+        kdTree(pointVec inData);
 
     private:
         kdNodePtr findNearest(
@@ -73,7 +74,7 @@ class kdTree{
         pointIndex nearestPointIndex(const point &pt);
     
     private:
-        pointIndexArr neighborhood_(
+        pointIndexArr neighborhood(
             const kdNodePtr &branch,
             const point &pt,
             const double &rad, //epsilon
@@ -85,11 +86,11 @@ class kdTree{
             const point &pt,      //
             const double &rad);
 
-        pointVec neighborhood_points( //
+        pointVec neighborhoodPoints( //
             const point &pt,        //
             const double &rad);
 
-        indexArr neighborhood_indices( //
+        indexArr neighborhoodIndices( //
             const point &pt,         //
             const double &rad);
 };

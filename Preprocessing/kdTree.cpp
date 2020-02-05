@@ -133,6 +133,23 @@ kdTree::kdTree(pipePacket inData){
 
 }
 
+kdTree::kdTree(pointVec inData){
+    pointIndexArr arr;
+
+    for(size_t i=0; i<inData.size(); i++){
+        arr.push_back(pointIndex(inData[i],  i));
+    }
+
+    auto begin = arr.begin();
+    auto end = arr.end();
+    
+    size_t length = arr.size();
+    size_t level = 0; 
+
+    root = kdTree::makeTree(begin, end, length, level);
+
+}
+
 //find nearest neighbor to points - need to pick correct branch
 
 kdNodePtr kdTree::findNearest(const kdNodePtr &branch, const point &pt, const size_t &level, const kdNodePtr &best, const double &bestDist){
@@ -213,7 +230,7 @@ pointIndex kdTree::nearestPointIndex(const point &pt){
     return pointIndex(*nearest(pt));
 }
 
-pointIndexArr kdTree::neighborhood_(const kdNodePtr &branch, const point &pt, const double &rad, const size_t &level){
+pointIndexArr kdTree::neighborhood(const kdNodePtr &branch, const point &pt, const double &rad, const size_t &level){
     double d, dx, dsquared;
 
     if(!bool(*branch)) {
@@ -241,10 +258,10 @@ pointIndexArr kdTree::neighborhood_(const kdNodePtr &branch, const point &pt, co
         other = branch -> left;
     }
 
-    nbh_s = neighborhood_(section, pt, rad, (level +1) % dim);
+    nbh_s = neighborhood(section, pt, rad, (level +1) % dim);
     nbh.insert(nbh.end(), nbh_s.begin(), nbh_s.end());
     if(abs(dx) < rad){
-        nbh_o = neighborhood_(other, pt, rad, (level+1)% dim);
+        nbh_o = neighborhood(other, pt, rad, (level+1)% dim);
         nbh.insert(nbh.end(), nbh_o.begin(), nbh_o.end());
     }
 
@@ -253,20 +270,18 @@ pointIndexArr kdTree::neighborhood_(const kdNodePtr &branch, const point &pt, co
 }
 
 pointIndexArr kdTree::neighborhood(const point &pt, const double &rad){
-    size_t level = 0;
-    return neighborhood_(root, pt, rad, level);
+    return neighborhood(root, pt, rad, 0);
 }
 
-pointVec kdTree::neighborhood_points(const point &pt, const double &rad){
+pointVec kdTree::neighborhoodPoints(const point &pt, const double &rad){
     pointIndexArr nbh = neighborhood(pt, rad);
     pointVec nbhp;
     nbhp.resize(nbh.size());
-    std::transform(nbh.begin(), nbh.end(), nbhp.begin(),
-                   [](pointIndex x) { return x.first; });
+    std::transform(nbh.begin(), nbh.end(), nbhp.begin(), [](pointIndex x) { return x.first; });
     return nbhp;
 }
 
-indexArr kdTree::neighborhood_indices(const point &pt, const double &rad){
+indexArr kdTree::neighborhoodIndices(const point &pt, const double &rad){
     pointIndexArr nbh = neighborhood(pt, rad);
     indexArr nbhi;
     nbhi.resize(nbh.size());

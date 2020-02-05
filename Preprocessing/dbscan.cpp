@@ -15,6 +15,7 @@
 #include <vector>
 #include "dbscan.hpp"
 #include "utils.hpp"
+#include "kdTree.hpp"
 //////// DBSCAN algorithm for standalone clustering or as an initialization step for DenStream /////////
 
 // basePipe constructor
@@ -24,63 +25,77 @@ dbscan::dbscan(){
 }
 //taking in preprocessor type
 
-std::vector<int> dbscan::cluster(std::vector<std::vector<double>> &data){
+std::vector<int> dbscan::cluster(const std::vector<std::vector<double>> &data){
+    std::vector<int> labels(data.size(), 0);
+    kdTree tree(data);
+    int clusterLabel = 0;
 
-   //add separate dbscan path here
+    int i=0;
+    for(int i=0; i<data.size(); i++){
+        if(labels[i] != 0) continue;
 
-}
-    // runPipe -> Run the configured functions of this pipeline segment
-    pipePacket
-    dbscan::runPreprocessor(pipePacket inData)
-{ //standalone preprocessor
-    // make labels for upscaling
-    std::vector<uint_least32_t> upscaleLabels(inData.originalData.size());
-    std::iota(std::begin(upscaleLabels), std::end(upscaleLabels), 0);
-    ////
-    std::cout << "got to outside \n";
-    /////////constants//////////
-    utils ut;
+        std::vector<size_t> neighbors = tree.neighborhoodIndices(data[i], epsilon);
+        if(neighbors.size() < minPoints) labels[i] = -1;
+        else{
+            clusterLabel++;
+            expandCluster(data, labels, neighbors, clusterLabel, tree);
+        }
+    }
 
-    //put all data points into the KDTree
-    //kdtree -> used for neighbors test
-
-    // while points unprocessed
-    //if getNodesinRadius == true (current point, eps, minPts)
-    //append to current cluster
-
-
-
-
-
-
-
-          
+    return labels;
 }
 
+void dbscan::expandCluster(const std::vector<std::vector<double>> &data, 
+                           std::vector<int> &labels, 
+                           std::vector<size_t> &neighbors, 
+                           int clusterLabel,
+                           kdTree &tree){
+    int i = 0;
+    while(i < neighbors.size()){
+        int pt = neighbors[i];
+        if(labels[pt] == -1) labels[pt] = clusterLabel;
+        else if(labels[pt] == 0){
+            labels[pt] = clusterLabel;
+            std::vector<size_t> ptNeighbors = tree.neighborhoodIndices(data[pt], epsilon);
+            
+            if(ptNeighbors.size() >= minPoints){
+                neighbors.insert(neighbors.end(), ptNeighbors.begin(), ptNeighbors.end());
+            }
+        }
+        ++i;
+    }
+}
 
-//getNodesinRadius
-//query current point in kdtree
-// count points near the current points (kd_nearest_range
-// if nearest points > minPts 
-
-
-
-
-
-
-
+// runPipe -> Run the configured functions of this pipeline segment
+pipePacket dbscan::runPreprocessor(pipePacket inData){ //standalone preprocessor
+    // inData.originalLabels = cluster(inData.originalData);
+    return inData;
+}
 
 // configPipe -> configure the function settings of this pipeline segment
 bool dbscan::configPreprocessor(std::map<std::string, std::string> configMap){
-  /*  auto preprocessor = configMap.find("clusters");
-     if(preprocessor !=configMap.end())
-        num_clusters = std::atoi(configMap["clusters"].c_str());
+    std::string strDebug;
+    
+    auto pipe = configMap.find("debug");
+    if(pipe != configMap.end()){
+        debug = std::atoi(configMap["debug"].c_str());
+        strDebug = configMap["debug"];
+    }
+    pipe = configMap.find("outputFile");
+    if(pipe != configMap.end())
+        outputFile = configMap["outputFile"].c_str();
+    
+    ut = utils(strDebug, outputFile);
+    
+    pipe = configMap.find("minPoints");
+    if(pipe !=configMap.end())
+        minPoints = std::stoi(configMap["minPoints"].c_str());
     else return false;
 
-    preprocessor = configMap.find("iterations");
-	if(preprocessor != configMap.end())
-		num_iterations = std::atoi(configMap["iterations"].c_str());
-	else return false;  */
-
-	return true;
+    pipe = configMap.find("epsilon");
+    if(pipe != configMap.end())
+        epsilon = std::stod(configMap["epsilon"].c_str());
+    else return false;  
+    
+    ut.writeDebug("dbscan","Configured with parameters { minPoints: " + configMap["minPoints"] + ", epsilon: " + configMap["epsilon"] + ", debug: " + strDebug + ", outputFile: " + outputFile + " }");
 }
