@@ -1,25 +1,20 @@
 #pragma once
 
-// Header file for densityUtils class - see densityUtils.cpp for descriptions
+// Header file for dbscan class - see dbscan.cpp for descriptions
 #include <map>
 #include <vector>
-#include "preprocessor.hpp"
 #include "kdTree.hpp"
 
-class dbscan : public preprocessor {
+class dbscan{
   private:
-    int minPoints;
-    double epsilon;
-  	
-    void expandCluster(const std::vector<std::vector<double>> &data, 
+    static void expandCluster(const std::vector<std::vector<double>> &data, 
                        std::vector<int> &labels, 
                        std::vector<size_t> &neighbors, 
                        int clusterLabel,
-                       kdTree &tree);
+                       kdTree &tree,
+                       int minPoints,
+                       double epsilon);
 
   public:
-    dbscan();
-    std::vector<int> cluster(const std::vector<std::vector<double>> &data);
-    pipePacket runPreprocessor(pipePacket inData);
-    bool configPreprocessor(std::map<std::string, std::string> configMap);
+    static std::vector<int> cluster(const std::vector<std::vector<double>> &data, int minPoints, double epsilon, int size);
 }; 

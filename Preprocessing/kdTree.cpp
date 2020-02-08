@@ -133,10 +133,14 @@ kdTree::kdTree(pipePacket inData){
 
 }
 
-kdTree::kdTree(pointVec inData){
+kdTree::kdTree(pointVec inData, int size = 0){
+    if(size == 0){
+        size = inData.size();
+    }
+
     pointIndexArr arr;
 
-    for(size_t i=0; i<inData.size(); i++){
+    for(size_t i=0; i<size; i++){
         arr.push_back(pointIndex(inData[i],  i));
     }
 

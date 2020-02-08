@@ -46,16 +46,15 @@ using pointIndexArr = typename std::vector<pointIndex>;
 using pointVec = std::vector<point>;
 
 class kdTree{
-    public: //REMOVE ---------------------------------------------
+    public: 
         kdNodePtr root;
-        kdNodePtr leaf;
 
         kdNodePtr makeTree(const pointIndexArr::iterator &begin, const pointIndexArr::iterator &end, 
                        const size_t &length, const size_t &level);
     public:
         kdTree();
         explicit kdTree(pipePacket inData); //Prevent implicit conversion
-        kdTree(pointVec inData);
+        kdTree(pointVec inData, int size);
 
     private:
         kdNodePtr findNearest(

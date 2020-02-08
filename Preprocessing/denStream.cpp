@@ -18,6 +18,30 @@
 #include "utils.hpp"
 /////// Based off algorithm outlined in Cao et al 06 "Density-Based Clustering over an Evolving Data Stream with Noise"/////
 
+microCluster::microCluster(int t = 0){
+  creationTime = t;
+}
+
+void microCluster::insertPoint(std::vector<double> point){
+
+}
+
+std::vector<double> microCluster::getCenter(){
+  return CF1; //----------------------------------------------------------------------
+}
+
+int microCluster::getCreationTime(){
+  return creationTime;
+}
+
+double microCluster::getWeight(){
+  return weight;
+}
+
+double microCluster::getRadius(){
+
+}
+
 // basePipe constructor
 denStream::denStream(){
 	procName = "DenStream";
@@ -28,103 +52,133 @@ denStream::denStream(){
 
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket denStream::runPreprocessor(pipePacket inData){
-utils ut;
-dbscan denseUt;
+  /////////constants//////////
+  initPoints = 20; // points to generate p clusters (large data sets, use 1000) //---------------
+  minPoints = 5; //For DBSCAN //---------------------------------------------------------------
+  lambda = 0.25; // decay factor
+  epsilon = 16;  //radius of cluster (same as DBSCAN epsilon)
+  mu = 10;   //weight of data points in cluster threshold
+  beta = 0.2; // outlier threshold
+  streamSpeed = 1; //number of points in one unit time
 
+  Tp = ceil((1/lambda)*log((beta*mu)/((beta*mu)-1)));
+  timestamp = 0;
+  double xi_den = pow(2, -Tp*lambda)-1; //Denominator for outlier lower weight limit
+  int numPerTime = 0;
 
-/////////constants//////////
-int initPoints = 20; // points to generate p clusters (large data sets, use 1000)
-double lambda = 0.25; // decay factor
-int epsilon = 16;  //radius of cluster (same as DBSCAN epsilon)
-int mu = 10;   //weight of data points in cluster threshold
-double beta = 0.2; // outlier threshold
-//int pClusterLabel = 0;
-int oClusterLabel = 0;
-int pClusterIndex;
-int oClusterIndex;
-double timestamp;
-///////initialize p micro clusters... DBSCAN first N points (N has to be less than size of input data to simulate stream)///////
-//this returns cluster labels corresponding to current points
+  ///////initialize p micro clusters... DBSCAN first N points (N has to be less than size of input data to simulate stream)///////
+  //this returns cluster labels corresponding to current points
+  std::vector<int> clusterLabels = dbscan::cluster(inData.originalData, minPoints, epsilon, initPoints);
+  int pClusters = *std::max_element(clusterLabels.begin(), clusterLabels.end()); //Number of clusters found
 
-std::vector<int>clusterLabels = denseUt.cluster(inData.originalData);
+  std::vector<microCluster> pMicroClusters(pClusters);
+  std::vector<microCluster> oMicroClusters;
 
+  //Take labels of each point and insert into appropriate microCluster
+  for(int i = 0; i<initPoints; i++){
+    if(clusterLabels[i] != -1){ //Not noise
+      pMicroClusters[clusterLabels[i]-1].insertPoint(inData.originalData[i]);
+    }
+  }
 
-int pClusterLabel = *std::max_element(clusterLabels.begin(), clusterLabels.end()); //start pClusters at highest cluster from DBSCAN
-double Tp = (1/lambda)* log((beta*mu)/((beta*mu)-1)); 
-//////////// adding points to p or o clusters and updating Tp///// 
-double time = 0.0; //placeholder for time measurement
-for(int i = initPoints+1; i<inData.originalData.size(); i++){
-     time++;
-     std::vector<int> tempLabels = merging(inData.originalData, i, clusterLabels, epsilon);  //do merging on point p --> either becomes p micro cluster or o microcluster
-     clusterLabels.insert(std::end( clusterLabels), std::begin(tempLabels), std::end(tempLabels));  //append templabels
-   if(fmod(time,Tp) == 0){  //prune clusters accordingly
-        for(int j = 0; j<clusterLabels.size(); j++){
-          for(int c = 1; c<pClusterIndex-1; c++){
-            //if weight of current p cluster < beta* mu, delete
+  for(int i = initPoints; i<inData.originalData.size(); i++){
+    numPerTime++;
+    if(numPerTime == streamSpeed){ //1 unit time has elapsed
+      numPerTime = 0;
+      timestamp++;
+    }
 
+    merging(inData.originalData, i);
 
-
-          }
-
+    if(timestamp % Tp == 0 && numPerTime == 0){
+      auto itP = pMicroClusters.begin();
+      while(itP != pMicroClusters.end()){
+        if(itP->getWeight() < beta*mu){ //Weight too low - no longer a pMicroCluster
+          itP = pMicroClusters.erase(itP);
+        } else{
+          ++itP;
         }
-        for(int j = 0; j<clusterLabels.size(); j++){
-          for(int o = 1; o<oClusterIndex-1; o++){
-            double outlierWeightThreshold = (pow(2,((-lambda)*(time -timestamp + Tp))-1))/(pow(2, (-lambda*Tp) -1));  //big epsilon
-              //if weight of current o cluster < big epsilon, delete
+      }
 
+      auto itO = oMicroClusters.begin();
+      while(itO != oMicroClusters.end()){
+        int T0 = itO->getCreationTime();
+        double xi_num = pow(2, -lambda*(timestamp - T0 + Tp)) - 1;
+        double xi = xi_num/xi_den; //Outlier lower weight limit
 
-
-          }
-
+        if(itO->getWeight() < xi){ //Weight too low - no longer an oMicroCluster
+          itO = oMicroClusters.erase(itO);
+        } else{
+          ++itO;
         }
-   }
+      }
+    }
 
+  }
 
-             
-}
-  
+  std::vector<std::vector<double>> centers(pMicroClusters.size());
+  for(int i=0; i<pMicroClusters.size(); i++){
+    centers[i] = pMicroClusters[i].getCenter();
+  }
 
+  inData.originalData = centers;
 	return inData;
 }
 
+int denStream::nearestPCluster(std::vector<std::vector<double>> &data, int p){
+  utils ut;
+
+  int min = 0;
+  double minDist = ut.vectors_distance(pMicroClusters[0].getCenter(), data[p]); 
+
+  for(int i=1; i<pMicroClusters.size(); i++){
+    double dist = ut.vectors_distance(pMicroClusters[i].getCenter(), data[p]);
+    if(dist < minDist){
+      minDist = dist;
+      min = i;
+    }
+  }
+
+  return min;
+}
+
+int denStream::nearestOCluster(std::vector<std::vector<double>> &data, int p){
+  utils ut;
+
+  int min = 0;
+  double minDist = ut.vectors_distance(oMicroClusters[0].getCenter(), data[p]); 
+
+  for(int i=1; i<oMicroClusters.size(); i++){
+    double dist = ut.vectors_distance(oMicroClusters[i].getCenter(), data[p]);
+    if(dist < minDist){
+      minDist = dist;
+      min = i;
+    }
+  }
+
+  return min;
+}
 
 //function merging (takes in point p, p micro clusters, o micro clusters )
-std::vector<int> denStream::merging(std::vector<std::vector<double>>& data, int i, std::vector<int> clusterLabels, double epsilon){
-    utils ut;
-    std::vector<double> dists(data.size(), 0);
-    for(int j = 0; j<data.size(); j++){   //checking for nearest p micro cluster to current point
-        if(clusterLabels[j] != 0){
-           double tempDist = ut.vectors_distance(data[i], data[j]);
-           dists[j] = tempDist;
-        }
+void denStream::merging(std::vector<std::vector<double>> &data, int p){
+  int nearestP = nearestPCluster(data, p);
+  if(pMicroClusters[nearestP].mergeRadius(data[p]) <= epsilon){
+    pMicroClusters[nearestP].insertPoint(data[p]);
+    return;
+  }
+
+  int nearestO = nearestOCluster(data, p);
+  if(oMicroClusters[nearestO].mergeRadius(data[p]) <= epsilon){
+    oMicroClusters[nearestO].insertPoint(data[p]);
+    if(oMicroClusters[nearestO].getWeight() > beta*mu){
+      //--------------------------------- ERASE + add to p
     }
-    int minIndex = std::min_element(dists.begin(), dists.end()) - dists.begin();
+    return;
+  }
 
-    if(ut.vectors_distance(data[i], data[minIndex]) < epsilon){   // if (new radius of nearest p microcluster cp < epsilon)
-        clusterLabels[i] = 1;       //merge p into cp
-    } 
-    else{
-        for(int j = 0; j<data.size(); j++){   //checking for nearest o micro cluster to current point
-            if(clusterLabels[j] == 0){
-                double tempDist = ut.vectors_distance(data[i], data[j]);
-                dists[j] = tempDist;
-            }   
-        }
-
-        int minIndex = std::min_element(dists.begin(), dists.end()) - dists.begin();
-
-        if(ut.vectors_distance(data[i], data[minIndex]) < epsilon){   // if (new radius of nearest p microcluster cp < epsilon)
-            clusterLabels[i] = 1;       //merge p into co
-            //count current cluster index, take weight
-            //if weight > beta*mu, remove labels from outlier buffer and make a new pmicro cluster 
-        }
-        
-       //if(new weight of co (w) > Beta*mu)
-          //remove co from outlier buffer and create new p micro cluster by co
-      //else create a new o micro cluster by p and insert into outlier buffer
-    }  
-
-return clusterLabels;
+  microCluster x(timestamp);
+  x.insertPoint(data[p]);
+  oMicroClusters.push_back(x);
 }
   
 
