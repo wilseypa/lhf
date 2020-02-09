@@ -7,24 +7,26 @@
 
 class microCluster{
 	private:
-		std::vector<double> CF1;
-		std::vector<double> CF2;
+		std::vector<double> center;
+		std::vector<double> avgSquares;
 		double weight;
+		double lambda;
 		int creationTime;
+		int editTime;
 
 	public:
-		microCluster(int t);
-		void insertPoint(std::vector<double> point);
+		microCluster(int t, int dim, double lambda);
+		void insertPoint(std::vector<double> point, int timestamp);
 		std::vector<double> getCenter();
-		double getRadius();
-		double getWeight();
-		double mergeRadius(std::vector<double>);
 		int getCreationTime();
+		double getRadius(int timestamp);
+		double getWeight(int timestamp);
+		double mergeRadius(std::vector<double> point, int timestamp);
 };
 
 class denStream : public preprocessor {
  	private:
-		int initPoints = 20;
+		int initPoints;
 		int minPoints;
 		double lambda;
 		double epsilon;
@@ -37,9 +39,9 @@ class denStream : public preprocessor {
 		std::vector<microCluster> pMicroClusters;
   		std::vector<microCluster> oMicroClusters;
 
-		void merging(std::vector<std::vector<double>> &data, int p);
-		int nearestPCluster(std::vector<std::vector<double>> &data, int p);
-		int nearestOCluster(std::vector<std::vector<double>> &data, int p);
+		void merging(std::vector<std::vector<double>> &data, int p, int timestamp);
+		int nearestPCluster(std::vector<double> point);
+		int nearestOCluster(std::vector<double> point);
   	
 	public:
 		denStream();
