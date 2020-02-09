@@ -1,0 +1,26 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches:
+      - master
+#      Commenting out MPI development, need to get MPI working on github actions
+#      - MPI_Development
+      - cmake_development
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+    # Checkout v2 : https://github.com/actions/checkout
+    - uses: actions/checkout@v2
+      
+    # Make the project
+    - name: cmake
+      run: cmake . && make
+  
+    # Run cmake tests
+    - name: ctest
+      run: make test

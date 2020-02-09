@@ -11,6 +11,8 @@ class simplexBase {
   private:
   public:
 	utils ut;
+	double minDist = 0.0;
+	double maxDist = 0.0;
   
 	struct indTreeNode{
 		unsigned index;
@@ -78,11 +80,15 @@ class simplexBase {
 	};
   
 	std::vector<unsigned> dimCounts = {6, 15, 20};
-	std::string simplexType;
+	std::string simplexType = "simplexBase";
 	double maxEpsilon;
 	int maxDimension;
 	std::vector<std::vector<double>> distMatrix;
 	std::vector<std::vector<std::pair<std::vector<unsigned>, double>>> weightedGraph;
+	int runningVectorCount = 0;
+	std::vector<int> runningVectorIndices;
+	int removedSimplices = 0;
+	std::string stats = "RVIndex,Mean,Stdev,k,kNN_Mean,kNN_Stdev,Result\n";
   
 	simplexBase();
 	simplexBase(std::map<std::string, std::string>);
@@ -93,6 +99,8 @@ class simplexBase {
 	
 	//virtual interface functions
 	virtual double getSize();
+	virtual bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&);
+	virtual void deleteIterative(int);
 	virtual void insert(std::vector<double>&);
 	virtual bool find(std::vector<unsigned>);
 	virtual bool find(std::set<unsigned>);
@@ -103,6 +111,8 @@ class simplexBase {
 	virtual std::vector<std::vector<graphEntry>> getIndexEdges(double);
 	virtual void expandDimensions(int);
 	virtual void reduceComplex();
+    virtual bool streamEvaluator(std::vector<double>, std::vector<std::vector<double>>);
+    virtual std::vector<std::pair<double, std::vector<unsigned>>> getd0Pairs();
 	
 	//Unused, possibly future
 	virtual void outputSimplex();

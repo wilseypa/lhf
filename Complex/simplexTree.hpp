@@ -32,9 +32,12 @@ class simplexTree : public simplexBase {
 	void printTree(treeNode*);	
 	void recurseInsert(treeNode*, unsigned, int, double, std::set<unsigned>);
 	double findWeight(std::set<unsigned>);
+	void deleteIndexRecurse(int, treeNode*);
 	
 	//virtual interface functions
 	double getSize();
+	bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&);
+	void deleteIterative(int);
 	void insert(std::vector<double>&);
 	bool find(std::set<unsigned>);
 	int simplexCount();
@@ -45,6 +48,7 @@ class simplexTree : public simplexBase {
 	bool deletion(treeNode*);
 	void expandDimensions(int){return;};
 	void reduceComplex();
+	std::vector<std::pair<double, std::vector<unsigned>>> getd0Pairs();
 	
 };
 

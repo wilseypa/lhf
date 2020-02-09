@@ -3,11 +3,15 @@
 *.lib
 Makefile
 *.cmake
+*.csv
 CMakeCache.txt
 CMakeFiles
 LHF
 install_manifest.txt
 test_functions
+test_*
+Testing
+*.mat
 
 # Prerequisites
 *.d

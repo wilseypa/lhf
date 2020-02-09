@@ -41,8 +41,8 @@ class utils {
 	static bool sortBySecond(const std::pair<std::set<unsigned>, double> &, const std::pair<std::set<unsigned>, double> &);
 	std::vector<std::set<unsigned>> getSubsets(std::set<unsigned> set);
 	std::vector<std::vector<unsigned>> getSubsets(std::vector<unsigned> set);
-
-
+	
+	std::vector<double> nearestNeighbors(std::vector<double>&, std::vector<std::vector<double>>&);
 };
 
 #endif

@@ -729,7 +729,10 @@ pipePacket optPersistencePairs::runPipe(pipePacket inData){
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
 void optPersistencePairs::outputData(pipePacket inData){
 	std::ofstream file;
-	file.open("output/" + pipeType + "_bettis_output.csv");
+	if(fnmod.size() > 0)
+		file.open("output/"+pipeType+"_bettis_output"+fnmod+".csv");
+	else
+		file.open("output/" + pipeType + "_bettis_output.csv");
 	
 	file << inData.bettiOutput;
 	
@@ -780,10 +783,15 @@ bool optPersistencePairs::configPipe(std::map<std::string, std::string> configMa
 		twist = configMap["twist"];
 	else return false;
 	
+	pipe = configMap.find("fn");
+	if(pipe != configMap.end())
+		fnmod = configMap["fn"];
+	
 	pipe = configMap.find("complexType");
 	if(pipe != configMap.end() && configMap["complexType"] == "indSimplexTree")
 		alterPipe = true;
 	
+	configured = true;
 	ut.writeDebug("optPersistence","Configured with parameters { dim: " + configMap["dimensions"] + ", twist: " + twist + ", complexType: " + configMap["complexType"] + ", eps: " + configMap["epsilon"]);
 	ut.writeDebug("optPersistence","\t\t\tdebug: " + strDebug + ", outputFile: " + outputFile + " }");
 	

@@ -45,9 +45,7 @@ pipePacket distMatrixPipe::runPipe(pipePacket inData){
 					if(dist < maxEpsilon)
 						inData.weights.insert(dist);
 					distMatrix[i][j] = dist;
-					//temp.push_back(dist);	
 			}
-			//distMatrix.push_back(temp);
 		}
 	}
 	
@@ -57,7 +55,7 @@ pipePacket distMatrixPipe::runPipe(pipePacket inData){
 	inData.weights.insert(maxEpsilon);
 	//std::sort(inData.weights.begin(), inData.weights.end(), std::greater<>());
 	
-	ut.writeDebug 	("distMatrix", "\tDist Matrix Size: " + std::to_string(distMatrix.size()) + " x " + std::to_string(distMatrix.size()));
+	ut.writeDebug("distMatrix", "\tDist Matrix Size: " + std::to_string(distMatrix.size()) + " x " + std::to_string(distMatrix.size()));
 	return inData;
 }
 
@@ -82,6 +80,7 @@ bool distMatrixPipe::configPipe(std::map<std::string, std::string> configMap){
 		maxEpsilon = std::atof(configMap["epsilon"].c_str());
 	else return false;
 	
+	configured = true;
 	ut.writeDebug("distMatrixPipe","Configured with parameters { eps: " + configMap["epsilon"] + " , debug: " + strDebug + ", outputFile: " + outputFile + " }");
 	
 	return true;
