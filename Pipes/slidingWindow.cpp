@@ -35,12 +35,28 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 	//
 	// Loop this subpipeline until there's no more data
 
+	std::vector<int> windowKeys;
 	std::vector<std::vector<double>> windowValues;
+
+	std::vector<int> partitionLabels;
+	std::vector<int> nnIndices;  // A container to store the index of each point's nearest neighbor within the window.
+	std::vector<double> nnDists;  // A container to store the nearest neighbor distances of each point within the window.
+	std::unordered_map<int, double> avgNNDistPartitions;
+
+	int key{ 0 };
+	float f1{ 4 };
+	float f2{ 0.25 };
+
+	// A partition is considered outdated if it did not receive any new point for more than the last 25 insertions.
+	int timeToBeOutdated{ 25 };
+
+	std::unordered_map<int, int> numPointsPartn;  // A dictionary to store the number of points in each partition.
+	std::unordered_map<int, int> maxKeys;  // A dictionary to store the maxKey of each partition.
 
 	std::vector<double> currentVector;
 	if(rp.streamInit(inputFile)){
 		int pointCounter = 1;
-		
+
 		while(rp.streamRead(currentVector)){
 			//Evaluate insertion into sliding window
 			if(windowValues.size() < windowMaxSize){
@@ -57,7 +73,7 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 				}
 
 			} else {
-				
+
 				if(inData.complex->insertIterative(currentVector, windowValues)){
 
 					windowValues.erase(windowValues.begin());
@@ -89,7 +105,7 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 			runSubPipeline(inData);
 		}
 		ut.writeLog("slidingWindow", "\tSuccessfully evaluated " + std::to_string(pointCounter) + " points");
-	
+
 		writeComplexStats(inData);
 	}
 
@@ -103,14 +119,14 @@ void slidingWindow::writeComplexStats(pipePacket &inData){
 		file << inData.complex->stats << std::endl;
 
 		file.close();
-		
-	}	
+
+	}
 }
 
 void slidingWindow::runSubPipeline(pipePacket wrData){
     if(wrData.originalData.size() == 0)
 		return;
-		
+
 	pipePacket inData = wrData;
 	outputData(inData);
 
