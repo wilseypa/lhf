@@ -40,7 +40,7 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 
 	std::vector<int> partitionLabels;
 	std::vector<int> nnIndices;  // A container to store the index of each point's nearest neighbor within the window.
-	std::vector<double> nnDists;  // A container to store the nearest neighbor distances of each point within the window.
+	std::vector<double> nnDists;  // A container to store the nearest neighbor distance of each point within the window.
 	std::unordered_map<int, double> avgNNDistPartitions;
 
 	int key{ 0 };
@@ -56,13 +56,18 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 	std::vector<double> currentVector;
 	if(rp.streamInit(inputFile)){
 		int pointCounter = 1;
+		int label{ 0 };
 
 		while(rp.streamRead(currentVector)){
-			//Evaluate insertion into sliding window
+			// Initialize the sliding window. During the initialization, let's assume all points from the stream
+			// belong to Partition 0.
 			if(windowValues.size() < windowMaxSize){
 				windowValues.push_back(currentVector);
+				windowKeys.push_back(key);
+				partitionLabels.push_back(label);
+				key++;
 
-				//If we've reached window size, generate the initial complex
+				//If we've reached window max size, generate the initial complex
 				if(windowValues.size() == windowMaxSize){
 					std::cout << "Initializing complex" << std::endl;
 
