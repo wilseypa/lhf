@@ -81,33 +81,9 @@ class kdTree{
         );
 
     public:
-        pointIndexArr neighborhood( //
-            const point &pt,      //
-            const double &rad);
+        pointIndexArr neighborhood(const point &pt, const double &rad);
 
-        pointVec neighborhoodPoints( //
-            const point &pt,        //
-            const double &rad);
+        pointVec neighborhoodPoints(const point &pt, const double &rad);
 
-        indexArr neighborhoodIndices( //
-            const point &pt,         //
-            const double &rad);
+        indexArr neighborhoodIndices(const point &pt, const double &rad);
 };
-
-
-
-    /*class kdTree : public preprocessor
-{
-private:
-  
-
-public:
-    void makePointList(pipePacket inData);
-    kdNodePtr makeTree(const pointIndexArr::iterator &begin, //
-                       const pointIndexArr::iterator &end,   //
-                       const size_t &length,                 //
-                       const size_t &level);
-
-    pipePacket runPreprocessor(pipePacket inData);
-    bool configPreprocessor(std::map<std::string, std::string> configMap);
-};  */

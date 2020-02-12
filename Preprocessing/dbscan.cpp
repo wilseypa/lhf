@@ -19,7 +19,8 @@
 //////// DBSCAN algorithm for standalone clustering or as an initialization step for DenStream /////////
 
 std::vector<int> dbscan::cluster(const std::vector<std::vector<double>> &data, int minPoints = 20, double epsilon = 16, int size = 0){
-    if(size == 0){
+    //Run DBSCAN on the first size points - to initiate DenStream
+    if(size == 0){ //If not specified, cluster whole data set
         size = data.size();
     }
 
@@ -51,13 +52,13 @@ void dbscan::expandCluster(const std::vector<std::vector<double>> &data,
     int i = 0;
     while(i < neighbors.size()){
         int pt = neighbors[i];
-        if(labels[pt] == -1) labels[pt] = clusterLabel;
+        if(labels[pt] == -1) labels[pt] = clusterLabel; //Add noise points to cluster
         else if(labels[pt] == 0){ //Not yet visited
             labels[pt] = clusterLabel;
             std::vector<size_t> ptNeighbors = tree.neighborhoodIndices(data[pt], epsilon);
             
             if(ptNeighbors.size() >= minPoints){ //Also a core point
-                neighbors.insert(neighbors.end(), ptNeighbors.begin(), ptNeighbors.end()); //Add all neighbors to cluster
+                neighbors.insert(neighbors.end(), ptNeighbors.begin(), ptNeighbors.end()); //Add all neighbors of core point to queue to traverse
             }
         }
         ++i;

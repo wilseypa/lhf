@@ -24,7 +24,7 @@ microCluster::microCluster(int t, int dim, double l){
   center = std::vector<double>(dim, 0); //Maintain center (CF1/w) instead of sum of points (CF1) to prevent overflow
   avgSquares = std::vector<double>(dim, 0); //Maintain average of squares (CF2/w) instead sum of squares (CF2) to prevent overflow
   weight = 0;
-  editTime = 0;
+  editTime = 0; //Maintain last edited time to decay weight correctly
 }
 
 void microCluster::insertPoint(std::vector<double> point, int timestamp){
@@ -35,7 +35,7 @@ void microCluster::insertPoint(std::vector<double> point, int timestamp){
     for(int i=0; i<point.size(); i++){
       avgSquares[i] = point[i]*point[i];
     }    
-  } else{ //Add point to cluster
+  } else{ //Add point to cluster - update center and average sum of squares
     for(int i=0; i<point.size(); i++){
       center[i] = center[i] + (point[i]-center[i])/newWeight;
       avgSquares[i] = avgSquares[i] + (point[i]*point[i]-avgSquares[i])/newWeight;
@@ -58,10 +58,10 @@ double microCluster::getWeight(int timestamp){ //Weight decays depending on acce
   return weight * pow(2, -lambda*(timestamp-editTime));
 }
 
-double microCluster::getRadius(int timestamp){
+double microCluster::getRadius(){
   double r2 = 0;
   for(int i=0; i<center.size(); i++){
-    r2 += avgSquares[i] - center[i]*center[i]; 
+    r2 += avgSquares[i] - center[i]*center[i]; //(CF2/w)-(CF1/w)^2
   }
 
   return sqrt(r2);
@@ -74,7 +74,7 @@ double microCluster::mergeRadius(std::vector<double> point, int timestamp){ //Ra
   for(int i=0; i<center.size(); i++){
     double newCenter = center[i] + (point[i]-center[i])/newWeight;
     double newAvgSquare = avgSquares[i] + (point[i]*point[i]-avgSquares[i])/newWeight;
-    r2 += newAvgSquare - newCenter*newCenter;
+    r2 += newAvgSquare - newCenter*newCenter; //Use updated center and average sum of squares
   }
 
   return sqrt(r2);
@@ -129,7 +129,7 @@ pipePacket denStream::runPreprocessor(pipePacket inData){
 
     merging(inData.originalData, i, timestamp);
 
-    if(timestamp % Tp == 0 && numPerTime == 0){
+    if(timestamp % Tp == 0 && numPerTime == 0){ //Check microclusters after Tp units of time
       auto itP = pMicroClusters.begin();
       while(itP != pMicroClusters.end()){
         if(itP->getWeight(timestamp) < beta*mu){ //Weight too low - no longer a pMicroCluster
@@ -171,7 +171,7 @@ int denStream::nearestPCluster(std::vector<double> point){
   double minDist = ut.vectors_distance(pMicroClusters[0].getCenter(), point); 
 
   for(int i=1; i<pMicroClusters.size(); i++){
-    double dist = ut.vectors_distance(pMicroClusters[i].getCenter(), point);
+    double dist = ut.vectors_distance(pMicroClusters[i].getCenter(), point); //Find microcluster with least distance from center to point
     if(dist < minDist){
       minDist = dist;
       min = i;
@@ -189,7 +189,7 @@ int denStream::nearestOCluster(std::vector<double> point){
   double minDist = ut.vectors_distance(oMicroClusters[0].getCenter(), point); 
 
   for(int i=1; i<oMicroClusters.size(); i++){
-    double dist = ut.vectors_distance(oMicroClusters[i].getCenter(), point);
+    double dist = ut.vectors_distance(oMicroClusters[i].getCenter(), point); //Find microcluster with least distance from center to point
     if(dist < minDist){
       minDist = dist;
       min = i;
@@ -243,15 +243,15 @@ bool denStream::configPreprocessor(std::map<std::string, std::string> configMap)
   
   ut = utils(strDebug, outputFile);
   
-  pipe = configMap.find("epsilon");
+  pipe = configMap.find("epsilon"); //Maximum radius of micro clusters
   if(pipe !=configMap.end())
     epsilon = std::stod(configMap["epsilon"].c_str());
-  else epsilon = 16; //Same as DBSCAN
+  else return false;
 
-  pipe = configMap.find("lambda");
+  pipe = configMap.find("lambda"); //Decay factor
   if(pipe !=configMap.end())
     lambda = std::stod(configMap["lambda"].c_str());
-  else lambda = .25; //Decay Factor
+  else return false;
 
   configured = true;
   ut.writeDebug("DenStream","Configured with parameters { epsilon: " + std::to_string(epsilon) + ", debug: " + strDebug + ", outputFile: " + outputFile + " }");

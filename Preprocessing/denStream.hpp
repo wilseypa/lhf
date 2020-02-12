@@ -19,7 +19,7 @@ class microCluster{
 		void insertPoint(std::vector<double> point, int timestamp);
 		std::vector<double> getCenter();
 		int getCreationTime();
-		double getRadius(int timestamp);
+		double getRadius();
 		double getWeight(int timestamp);
 		double mergeRadius(std::vector<double> point, int timestamp);
 };
