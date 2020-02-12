@@ -40,11 +40,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	//Get all edges for the simplexArrayList or simplexTree
 	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges = inData.complex->getAllEdges(maxEpsilon);
 	
-	if(edges.size() < dim + 1){
-		ut.writeLog("FastPersistence","Failed to provide the fastPersistence pipe with edges from complex");
-		return inData;
-	}
-	
+		
 	std::vector<std::pair<double,double>> temp;
 	std::vector<std::vector<std::pair<double,double>>> ret;
 	for(int i = 0; i < dim; i++){
@@ -67,19 +63,54 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	
 	//std::vector<std::pair<std::set<unsigned>,double>> mst;			//Store the minimum spanning tree
 	std::vector<double> mst;										//Store the minimum spanning tree (weight only)
-	std::set<unsigned> conSet;										//Store the connected set
+	std::vector<std::set<unsigned>> conSet;										//Store the connected set
+	
 	std::set<unsigned> wset;										//Store the intersection
+	std::set<unsigned> tempset;
 	std::list<unsigned> pivots;										//Store identified pivots
 	unsigned pivotIndex = 0;
 		
-	for(auto edge : edges[1]){
-		
-		if((wset = ut.setIntersect(edge.first, conSet, false)).size() < 2){
+	//For each edge set 
+	for(auto edge : edges[1]){		
+		bool foundPivot = false;
+		bool br = false;
+		std::vector<std::set<unsigned>> conSetTemp;										//Store the connected set
+		//Check if the current set intersects with any existing connected sets
+		for(std::set<unsigned> cSet : conSet){
+			wset = ut.setIntersect(edge.first, cSet, false);
+			
+			//If one element intersects with a set and we haven't found a pivot...
+			if(!foundPivot && wset.size() == 1){
+				foundPivot = true;
+				pivots.push_back(pivotIndex);
+				mst.push_back(edge.second);
+				set_union(edge.first.begin(), edge.first.end(), cSet.begin(), cSet.end(), std::inserter(tempset, tempset.end()));
+				
+			//If one element intersects with a set (and we already found a pivot, join sets)
+			} else if (wset.size() == 1){
+				//Keep updating our wset with a joint set
+				//wset = ut.symmetricDiff(edge.first, cSet, false);
+				auto ts = ut.symmetricDiff(edge.first, cSet, false);
+				std::copy(ts.begin(), ts.end(), std::inserter(tempset, tempset.end()));
+			//Otherwise write the set back to the connected set
+			// Either both elements are already contained in an existing set
+			// 
+			} else if (wset.size() == 2){
+				
+				conSetTemp.push_back(cSet);
+				br = true;
+			} else {
+				conSetTemp.push_back(cSet);
+			}
+				
+		}
+		if(foundPivot){
+			conSetTemp.push_back(tempset);
+			
+		}else if (!br){
+			conSetTemp.push_back(edge.first);
 			pivots.push_back(pivotIndex);
 			mst.push_back(edge.second);
-			
-			auto i = edge.first.begin();
-			conSet.insert(*i);
 			
 		}
 		
@@ -89,11 +120,14 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		}
 		pivotIndex++;
 		
+		conSet = conSetTemp;
+		tempset.clear();
 	}
 	
 	for(auto z : mst){
 		bettis += "0,0," + std::to_string(z) + "\n";
 	}
+	bettis += "0,0," + std::to_string(maxEpsilon) + "\n";
 	
 	
 	
@@ -111,7 +145,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		//		boundary simplices; we may not track this currently but will eventually
 		
 		
-		for(int d = 1; d < dim; d++){
+		for(int d = 1; d < dim && d < edges.size()-1; d++){
 			
 			//Track the current pivots located into an unordered map
 			std::unordered_map<unsigned, std::set<unsigned>> v;
@@ -189,11 +223,13 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 				columnIndex++;
 				
 			}
+			
+			pivots = nextPivots;
 		}
 		
 	}
 	
-	std::cout << std::endl;
+	std::cout << bettis << std::endl;
 	//
 	
 	
