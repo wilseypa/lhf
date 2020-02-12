@@ -38,6 +38,7 @@ Additional pipelines have been created for preprocessing, approximations of the 
  |  "--clusters" | "-k" | Number of preprocessing clusters | 5 |
  |  "--dimensions" | "-d" | Max dimensions to run at | 3 |
  |  "--epsilon" | "-e" | Epsilon value for simplicial complexes| 5 |
+ |  "--lambda" | "-l" | Lambda value (decay factor) for DenStream | .25 |
  |  "--mode" | "-m" | Mode to run LHF in (fast, slidingwindow, upscaling, etc.) | default |
  |  "--complexType" | "-c" | Simplicial complex constructed| SimplexArrayList |
  |  "--inputFile" | "-i" | File to read into pipeline | None |
