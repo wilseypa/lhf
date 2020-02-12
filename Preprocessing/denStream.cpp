@@ -21,14 +21,14 @@
 microCluster::microCluster(int t, int dim, double l){
   creationTime = t;
   lambda = l;
-  center = std::vector<double>(dim, 0);
-  avgSquares = std::vector<double>(dim, 0);
+  center = std::vector<double>(dim, 0); //Maintain center (CF1/w) instead of sum of points (CF1) to prevent overflow
+  avgSquares = std::vector<double>(dim, 0); //Maintain average of squares (CF2/w) instead sum of squares (CF2) to prevent overflow
   weight = 0;
   editTime = 0;
 }
 
 void microCluster::insertPoint(std::vector<double> point, int timestamp){
-  double newWeight = weight*pow(2, -lambda*(timestamp - editTime)) + 1;
+  double newWeight = weight*pow(2, -lambda*(timestamp - editTime)) + 1; //Weight decays before new point is inserted
 
   if(weight == 0){ //No points in cluster
     center = point;
@@ -54,20 +54,20 @@ int microCluster::getCreationTime(){
   return creationTime;
 }
 
-double microCluster::getWeight(int timestamp){
+double microCluster::getWeight(int timestamp){ //Weight decays depending on access time
   return weight * pow(2, -lambda*(timestamp-editTime));
 }
 
 double microCluster::getRadius(int timestamp){
   double r2 = 0;
   for(int i=0; i<center.size(); i++){
-    r2 += avgSquares[i] - center[i]*center[i];
+    r2 += avgSquares[i] - center[i]*center[i]; 
   }
 
   return sqrt(r2);
 }
 
-double microCluster::mergeRadius(std::vector<double> point, int timestamp){
+double microCluster::mergeRadius(std::vector<double> point, int timestamp){ //Radius if new point would be merged in
   double newWeight = weight*pow(2, -lambda*(timestamp - editTime)) + 1;
   double r2 = 0;
 
@@ -91,16 +91,15 @@ denStream::denStream(){
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket denStream::runPreprocessor(pipePacket inData){
   /////////constants//////////
-  initPoints = 1000; // points to generate p clusters (large data sets, use 1000) //---------------
-  minPoints = 20; //For DBSCAN //---------------------------------------------------------------
-  lambda = 0.25; // decay factor
+  initPoints = 1000; // points to generate p clusters (large data sets, use 1000) 
+  minPoints = 20; //For DBSCAN 
   mu = 10;   //weight of data points in cluster threshold
   beta = 0.2; // outlier threshold
   streamSpeed = 20; //number of points in one unit time
 
   Tp = ceil((1/lambda)*log((beta*mu)/((beta*mu)-1)));
   timestamp = 0; //Current time
-  int numPerTime = 0; //Number of points processed in this unit time
+  int numPerTime = 0; //Number of points processed so far in this unit time
   double xi_den = pow(2, -Tp*lambda)-1; //Denominator for outlier lower weight limit
 
   ///////initialize p micro clusters... DBSCAN first N points (N has to be less than size of input data to simulate stream)///////
@@ -245,11 +244,17 @@ bool denStream::configPreprocessor(std::map<std::string, std::string> configMap)
   ut = utils(strDebug, outputFile);
   
   pipe = configMap.find("epsilon");
-    if(pipe !=configMap.end())
-      epsilon = std::stod(configMap["epsilon"].c_str());
-    else epsilon = 16; //Same as DBSCAN
+  if(pipe !=configMap.end())
+    epsilon = std::stod(configMap["epsilon"].c_str());
+  else epsilon = 16; //Same as DBSCAN
 
-  ut.writeDebug("StreamKMeans","Configured with parameters { epsilon: " + std::to_string(epsilon) + ", debug: " + strDebug + ", outputFile: " + outputFile + " }");
+  pipe = configMap.find("lambda");
+  if(pipe !=configMap.end())
+    lambda = std::stod(configMap["lambda"].c_str());
+  else lambda = .25; //Decay Factor
+
+  configured = true;
+  ut.writeDebug("DenStream","Configured with parameters { epsilon: " + std::to_string(epsilon) + ", debug: " + strDebug + ", outputFile: " + outputFile + " }");
 
 	return true;
 }

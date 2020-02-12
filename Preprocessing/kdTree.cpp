@@ -279,16 +279,14 @@ pointIndexArr kdTree::neighborhood(const point &pt, const double &rad){
 
 pointVec kdTree::neighborhoodPoints(const point &pt, const double &rad){
     pointIndexArr nbh = neighborhood(pt, rad);
-    pointVec nbhp;
-    nbhp.resize(nbh.size());
+    pointVec nbhp(nbh.size());
     std::transform(nbh.begin(), nbh.end(), nbhp.begin(), [](pointIndex x) { return x.first; });
     return nbhp;
 }
 
 indexArr kdTree::neighborhoodIndices(const point &pt, const double &rad){
     pointIndexArr nbh = neighborhood(pt, rad);
-    indexArr nbhi;
-    nbhi.resize(nbh.size());
+    indexArr nbhi(nbh.size());
     std::transform(nbh.begin(), nbh.end(), nbhi.begin(), [](pointIndex x) { return x.second; });
     return nbhi;
 }
