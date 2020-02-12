@@ -59,7 +59,12 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	auto startTime = std::chrono::high_resolution_clock::now();
 	
 	//Get all dim 0 persistence intervals
-		//Kruskal's minimum spanning tree algorithm
+	//Kruskal's minimum spanning tree algorithm
+	//		Track the current connected sets (conSet)
+	//		Check edges; if contained in current set ignore
+	//			if joins into a single set, insert to set
+	//			if joins multiple sets, join all sets
+	//		Until all edges evaluated or MST found (size - 1)	
 	
 	//std::vector<std::pair<std::set<unsigned>,double>> mst;			//Store the minimum spanning tree
 	std::vector<double> mst;										//Store the minimum spanning tree (weight only)
@@ -90,8 +95,10 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			} else if (wset.size() == 1){
 				//Keep updating our wset with a joint set
 				//wset = ut.symmetricDiff(edge.first, cSet, false);
-				auto ts = ut.symmetricDiff(edge.first, cSet, false);
-				std::copy(ts.begin(), ts.end(), std::inserter(tempset, tempset.end()));
+				//auto ts = ut.symmetricDiff(edge.first, cSet, false);
+				//std::copy(ts.begin(), ts.end(), std::inserter(tempset, tempset.end()));
+				set_union(tempset.begin(), tempset.end(), cSet.begin(), cSet.end(), std::inserter(tempset, tempset.end()));
+				set_union(edge.first.begin(), edge.first.end(), tempset.begin(), tempset.end(), std::inserter(tempset, tempset.end()));
 			//Otherwise write the set back to the connected set
 			// Either both elements are already contained in an existing set
 			// 
@@ -104,9 +111,12 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			}
 				
 		}
+		
+		//If we found our pivot we need to push back the joined set
 		if(foundPivot){
 			conSetTemp.push_back(tempset);
 			
+		//If we didn't find a pivot, and the edge wasn't contained in an existing set
 		}else if (!br){
 			conSetTemp.push_back(edge.first);
 			pivots.push_back(pivotIndex);
@@ -115,7 +125,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		}
 		
 		//Check if we've filled our MST and can break...
-		if(mst.size() == edges[0].size()){
+		if(mst.size() == edges[0].size()-1){
 			break;
 		}
 		pivotIndex++;
@@ -151,6 +161,14 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			std::unordered_map<unsigned, std::set<unsigned>> v;
 			std::cout << "D" << d << ": " << std::endl;
 			
+			std::cout << "\tEdges[d]: " << edges[d].size() << "\tEdges[d+1]: " << edges[d+1].size() << std::endl;
+			
+			std::cout << "Pivots: " << pivots.size() << std::endl;
+			/*for(auto z : pivots){
+				std::cout << z << "\t";
+			}
+			std::cout << std::endl;*/
+			
 			std::list<unsigned> nextPivots;
 			unsigned columnIndex = 0;
 			
@@ -165,7 +183,6 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 				
 				//Begin checking each vector from lowest weight for a pivot; skip previous pivots
 				for(auto row_to_check : edges[d]){
-					
 					// 1 of 3 things can happen here:
 					//		-The row is a pivot of the column, closing an interval
 					//		-The row is not a pivot, needing to be XOR with the stored pivot
@@ -181,19 +198,18 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						//Row is a pivot
 						if(!needReduced && !foundPivot && isCoface && v.find(pivotIndex) == v.end()){
 							//Emit the pair
-							
 							if(row_to_check.second != column_to_reduce.second)
 								bettis += std::to_string(d) + "," + std::to_string(row_to_check.second) +"," + std::to_string(column_to_reduce.second) + "\n";
 							
 							//pivots.insert(pivotIndex);
 							nextPivots.push_back(columnIndex);
 							foundPivot = true;
-						} else if (isCoface && !needReduced) {
+							
+						} else if (isCoface && !needReduced && !foundPivot) {
 							//Reduce by XOR
 							needReduced = true;
 						}
 					
-						
 					} else {
 						pivotPointer++;
 					}				
@@ -207,15 +223,16 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 				if(needReduced){
 					//Reduce until pivot or 0
 					std::set<unsigned int>::iterator pIndex;
-					
 					while((pIndex = cofaceList.begin()) != cofaceList.end()){
 						if(v.find(*pIndex) == v.end()){
 							v[*pIndex] = cofaceList;
+							nextPivots.push_back(columnIndex);							
 							break;
 						} else {
 							cofaceList = ut.setXOR(v[*pIndex],cofaceList);
 						}
 					}
+					
 				} else if (foundPivot) {
 					v[*cofaceList.begin()] = cofaceList;
 				}
