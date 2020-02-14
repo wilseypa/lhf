@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <iterator>
 #include <vector>
+#include <algorithm>
 #include <chrono>
 #include <functional>
 #include "slidingWindow.hpp"
@@ -73,8 +74,8 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 					std::cout << "Initializing complex" << std::endl;
 
 					inData.originalData = windowValues;
-					runComplexInitializer(inData);
-					
+					runComplexInitializer(inData, nnIndices, nnDists);
+
 					std::cout << "Returning from complex initializer" << std::endl;
 				}
 
@@ -163,60 +164,73 @@ void slidingWindow::runSubPipeline(pipePacket wrData){
 	return;
 }
 
-void slidingWindow::runComplexInitializer(pipePacket &inData){
+void slidingWindow::runComplexInitializer(pipePacket &inData, std::vector<int> &nnIndices, std::vector<double> &nnDists){
 	//Initialize the complex and build other structures for maintaining NN, etc.
 	//
-	//	We need to exit this function by covering the distMatrix and neighGraph 
+	//	We need to exit this function by covering the distMatrix and neighGraph
 	//		pipe functions
-	
-	
-	
+
+
+
 	//	1.	Create distance matrix (and compute other info)-------------
-	
+
+	utils ut;
+
 	//Store our distance matrix
 	std::vector<std::vector<double>> distMatrix (inData.originalData.size(), std::vector<double>(inData.originalData.size(),0));
-	
+
 	//Iterate through each vector
 	for(unsigned i = 0; i < inData.originalData.size(); i++){
 		if(!inData.originalData[i].empty()){
-		
-			//Grab a second vector to compare to 
-			std::vector<double> temp;
-			for(unsigned j = i+1; j < inData.originalData.size(); j++){
+		    std::vector<double> distsFromCurrVect;
 
-					//Calculate vector distance 
-					auto dist = ut.vectors_distance(inData.originalData[i],inData.originalData[j]);
-					
-					if(dist < epsilon)
-						inData.weights.insert(dist);
-					distMatrix[i][j] = dist;
+			for(unsigned j = 0; j < inData.originalData.size(); j++){
+			    if (j < i) {
+                    distsFromCurrVect.push_back( distMatrix[j][i] );
+			    } else if (j > i) {
+			        //Calculate vector distance
+			        auto dist = ut.vectors_distance(inData.originalData[i], inData.originalData[j]);
+			        if(dist < epsilon)
+                        inData.weights.insert(dist);
+                    distMatrix[i][j] = dist;
+                    distsFromCurrVect.push_back( dist );
+			    }
 			}
+
+			int tempIndex = std::min_element(distsFromCurrVect.begin(), distsFromCurrVect.end()) - distsFromCurrVect.begin();
+			if (tempIndex < i)
+                nnIndices.push_back(tempIndex);
+            else
+                nnIndices.push_back(tempIndex+1);
+
+            auto nnDistFromCurrVect = *std::min_element( distsFromCurrVect.begin(), distsFromCurrVect.end() );
+            nnDists.push_back( nnDistFromCurrVect );
 		}
 	}
-	
+
 	inData.complex->setDistanceMatrix(distMatrix);
-	
+
 	inData.weights.insert(0.0);
 	inData.weights.insert(epsilon);
 	//std::sort(inData.weights.begin(), inData.weights.end(), std::greater<>());
-	
+
 	//------------------------------------------------------------------
-	
-	
-	
+
+
+
 	// 2. Insert into complex (build neighborhood graph) ---------------
-	
+
 	//Iterate through each vector, inserting into simplex storage
 	for(unsigned i = 0; i < inData.originalData.size(); i++){
 		if(!inData.originalData[i].empty()){
 			//insert data into the complex (SimplexArrayList, SimplexTree)
-			inData.complex->insert(inData.originalData[i]);	
+			inData.complex->insert(inData.originalData[i]);
 		}
 	}
-	
+
 	//------------------------------------------------------------------
-	
-	
+
+
 	return;
 }
 
