@@ -74,16 +74,8 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 					std::cout << "Initializing complex" << std::endl;
 
 					inData.originalData = windowValues;
-<<<<<<< HEAD
 					runComplexInitializer(inData, nnIndices, nnDists);
 
-||||||| merged common ancestors
-					runComplexInitializer(inData);
-
-=======
-					runComplexInitializer(inData);
-					
->>>>>>> 00d97d39de0eaf84f57395618f207f2c26692531
 					std::cout << "Returning from complex initializer" << std::endl;
 				}
 
@@ -172,7 +164,6 @@ void slidingWindow::runSubPipeline(pipePacket wrData){
 	return;
 }
 
-<<<<<<< HEAD
 void slidingWindow::runComplexInitializer(pipePacket &inData, std::vector<int> &nnIndices, std::vector<double> &nnDists){
 	//Initialize the complex and build other structures for maintaining NN, etc.
 	//
@@ -234,92 +225,12 @@ void slidingWindow::runComplexInitializer(pipePacket &inData, std::vector<int> &
 		if(!inData.originalData[i].empty()){
 			//insert data into the complex (SimplexArrayList, SimplexTree)
 			inData.complex->insert(inData.originalData[i]);
-||||||| merged common ancestors
-void slidingWindow::runComplexInitializer(pipePacket &inData){
-	if(inData.originalData.size() == 0)
-		return;
-
-	std::string pipeFuncts = "distMatrix.neighGraph";
-	auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
-	//For each '.' separated pipeline function (count of '.' + 1 -> lim)
-	for(unsigned i = 0; i < lim; i++){
-		auto curFunct = pipeFuncts.substr(0,pipeFuncts.find('.'));
-		pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
-
-		//Build the pipe component, configure and run
-		auto *bp = new basePipe();
-		auto *cp = bp->newPipe(curFunct, "simplexTree");
-
-		//Check if the pipe was created and configure
-		if(cp != 0 && cp->configPipe(subConfigMap)){
-			//Run the pipe function (wrapper)
-			inData = cp->runPipeWrapper(inData);
-		} else {
-			std::cout << "LHF : Failed to configure pipeline: " << curFunct << std::endl;
-=======
-void slidingWindow::runComplexInitializer(pipePacket &inData){
-	//Initialize the complex and build other structures for maintaining NN, etc.
-	//
-	//	We need to exit this function by covering the distMatrix and neighGraph 
-	//		pipe functions
-	
-	
-	
-	//	1.	Create distance matrix (and compute other info)-------------
-	
-	//Store our distance matrix
-	std::vector<std::vector<double>> distMatrix (inData.originalData.size(), std::vector<double>(inData.originalData.size(),0));
-	
-	//Iterate through each vector
-	for(unsigned i = 0; i < inData.originalData.size(); i++){
-		if(!inData.originalData[i].empty()){
-		
-			//Grab a second vector to compare to 
-			std::vector<double> temp;
-			for(unsigned j = i+1; j < inData.originalData.size(); j++){
-
-					//Calculate vector distance 
-					auto dist = ut.vectors_distance(inData.originalData[i],inData.originalData[j]);
-					
-					if(dist < epsilon)
-						inData.weights.insert(dist);
-					distMatrix[i][j] = dist;
-			}
->>>>>>> 00d97d39de0eaf84f57395618f207f2c26692531
 		}
 	}
-<<<<<<< HEAD
 
 	//------------------------------------------------------------------
 
 
-||||||| merged common ancestors
-=======
-	
-	inData.complex->setDistanceMatrix(distMatrix);
-	
-	inData.weights.insert(0.0);
-	inData.weights.insert(epsilon);
-	//std::sort(inData.weights.begin(), inData.weights.end(), std::greater<>());
-	
-	//------------------------------------------------------------------
-	
-	
-	
-	// 2. Insert into complex (build neighborhood graph) ---------------
-	
-	//Iterate through each vector, inserting into simplex storage
-	for(unsigned i = 0; i < inData.originalData.size(); i++){
-		if(!inData.originalData[i].empty()){
-			//insert data into the complex (SimplexArrayList, SimplexTree)
-			inData.complex->insert(inData.originalData[i]);	
-		}
-	}
-	
-	//------------------------------------------------------------------
-	
-	
->>>>>>> 00d97d39de0eaf84f57395618f207f2c26692531
 	return;
 }
 
