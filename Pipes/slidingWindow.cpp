@@ -63,23 +63,56 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
 		while(rp.streamRead(currentVector)){
 			// Initialize the sliding window. During the initialization, let's assume all points from the stream
 			// belong to Partition 0.
-			if(windowValues.size() < windowMaxSize){
+			if (windowValues.size() < windowMaxSize){
 				windowValues.push_back(currentVector);
 				windowKeys.push_back(key);
 				partitionLabels.push_back(label);
 				key++;
 
 				//If we've reached window max size, generate the initial complex
-				if(windowValues.size() == windowMaxSize){
+				if (windowValues.size() == windowMaxSize){
 					std::cout << "Initializing complex" << std::endl;
 
 					inData.originalData = windowValues;
 					runComplexInitializer(inData, nnIndices, nnDists);
 
 					std::cout << "Returning from complex initializer" << std::endl;
+
+					// Find the average nearest neighbor distance in the existing partition (i.e. Partition 0).
+					auto avgNNDistPartition0 = std::accumulate(nnDists.begin(), nnDists.end(), 0.0) / nnDists.size();
+					avgNNDistPartitions[label] = avgNNDistPartition0;
+					numPointsPartn[label] = windowMaxSize;
+					maxKeys[label] = key - 1;
 				}
 
 			} else {
+
+			    if (avgNNDistPartitions.size() == 1) {   // If the window is 'pure':
+                    // Compute the distances from the current vector to the existing ones in the window.
+                    std::vector<double> distsFromCurrVec;
+                    for(unsigned i = 0; i < windowValues.size(); i++) {
+                        auto dist = ut.vectors_distance(windowValues[i], currentVector);
+                        distsFromCurrVec.push_back(dist);
+                    }
+
+                    // Sort the distances from the current vector (to the existing ones in the window) in increasing order.
+                    std::vector<double> ascendingDists = distsFromCurrVec;
+                    std::sort( ascendingDists.begin(), ascendingDists.end() );
+
+                    // Find the distance from the current vector to its nearest neighbor in the window.
+                    auto nnDistCurrVec = ascendingDists[0];
+
+                    if (nnDistCurrVec == 0)
+                        continue;
+
+                    // Find the average nearest neighbor distance in the single 'partition' in the window.
+                    int currentLabel = partitionLabels[0];
+                    auto avgNNDistSinglePartition = avgNNDistPartitions[currentLabel];
+
+                    if (avgNNDistSinglePartition < f2 && nnDistCurrVec <= 1)
+                        continue;
+
+			    }
 
 				if(inData.complex->insertIterative(currentVector, windowValues)){
 
