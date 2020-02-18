@@ -2,13 +2,14 @@
 # project specific logic here.
 #
 
-IF(DEFINED MPI_CXX_COMPILER)
-  SET(CMAKE_CXX_COMPILER "${MPI_CXX_COMPILER}" CACHE FILEPATH "CXX compiler overridden with MPI C++ wrapper")
-ENDIF(DEFINED MPI_CXX_COMPILER)
+#IF(DEFINED MPI_CXX_COMPILER)
+#  SET(CMAKE_CXX_COMPILER "${MPI_CXX_COMPILER}" CACHE FILEPATH "CXX compiler overridden with MPI C++ wrapper")
+#ENDIF(DEFINED MPI_CXX_COMPILER)
 
 cmake_minimum_required(VERSION 3.5)
 
 find_package(MPI REQUIRED)
+add_definitions(-DOMPI_SKIP_MPICXX)
 include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 
 set (CMAKE_CXX_STANDARD 14)
