@@ -112,6 +112,19 @@ pipePacket slidingWindow::runPipe(pipePacket inData){
                     if (avgNNDistSinglePartition < f2 && nnDistCurrVec <= 1)
                         continue;
 
+                    if (avgNNDistSinglePartition == 0 || nnDistCurrVec / avgNNDistSinglePartition > f1) {
+                        // Delete the key (the lowest key) from the front of the list.
+                        int deletedKey = windowKeys[0];
+                        windowKeys.erase( windowKeys.begin() );
+
+                        // Delete the label from the front of the list.
+                        int deletedLabel = partitionLabels[0];
+                        partitionLabels.erase( partitionLabels.begin() );
+
+                        // Delete the vector from the front of the sliding window.
+                        windowValues.erase( windowValues.begin() );
+                    }
+
 			    }
 
 				if(inData.complex->insertIterative(currentVector, windowValues)){
