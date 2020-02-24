@@ -96,6 +96,9 @@ class simplexBase {
 	void setConfig(std::map<std::string, std::string>);
 	void setDistanceMatrix(std::vector<std::vector<double>> _distMatrix);
 	simplexBase* newSimplex(const std::string &simplexT, std::map<std::string, std::string> configMap);
+	bool (*streamEval) (std::vector<double>&, std::vector<std::vector<double>>&);
+    bool streamEvaluator(std::vector<double>&, std::vector<std::vector<double>>&);
+	void setStreamEvaluator(bool (*f) (std::vector<double>&, std::vector<std::vector<double>>&)); 
 	
 	//virtual interface functions
 	virtual double getSize();
@@ -111,7 +114,6 @@ class simplexBase {
 	virtual std::vector<std::vector<graphEntry>> getIndexEdges(double);
 	virtual void expandDimensions(int);
 	virtual void reduceComplex();
-    virtual bool streamEvaluator(std::vector<double>, std::vector<std::vector<double>>);
     virtual std::vector<std::pair<double, std::vector<unsigned>>> getd0Pairs();
 	
 	//Unused, possibly future
