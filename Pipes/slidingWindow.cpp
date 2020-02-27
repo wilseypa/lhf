@@ -9,6 +9,8 @@
 #include <unordered_map>
 #include <iterator>
 #include <vector>
+#include <cmath>
+#include <numeric>
 #include <algorithm>
 #include <chrono>
 #include <functional>
@@ -18,320 +20,365 @@
 
 
 // basePipe constructor
-slidingWindow::slidingWindow(){
-	pipeType = "SlidingWindow";
-	return;
+slidingWindow::slidingWindow()
+{
+    pipeType = "SlidingWindow";
+    return;
+}
+
+bool nnBasedEvaluator(std::vector<double>& vector, std::vector<std::vector<double>>& window)
+{
+    if (avgNNDistPartitions.size() == 1)
+    {
+        // If the window is 'pure':
+        // Compute the distances from the current vector to the existing ones in the window.
+        std::vector<double> distsFromCurrVec;
+        for(unsigned i = 0; i < windowValues.size(); i++)
+        {
+            auto dist = ut.vectors_distance(windowValues[i], currentVector);
+            distsFromCurrVec.push_back(dist);
+        }
+
+        // Sort the distances from the current vector (to the existing ones in the window) in increasing order.
+        std::vector<double> ascendingDists = distsFromCurrVec;
+        std::sort( ascendingDists.begin(), ascendingDists.end() );
+
+        // Find the distance from the current vector to its nearest neighbor in the window.
+        auto nnDistCurrVec = ascendingDists[0];
+
+        if (nnDistCurrVec == 0)
+            return false;
+
+        // Find the average nearest neighbor distance in the single 'partition' in the window.
+        int currentLabel = partitionLabels[0];
+        auto avgNNDistSinglePartition = avgNNDistPartitions[currentLabel];
+
+        if (avgNNDistSinglePartition < f2 && nnDistCurrVec <= 1)
+            return false;
+
+        if (avgNNDistSinglePartition == 0 || nnDistCurrVec / avgNNDistSinglePartition > f1)
+        {
+            // Delete the key (the lowest key) from the front of the list.
+            int deletedKey = windowKeys[0];
+            windowKeys.erase( windowKeys.begin() );
+
+            // Delete the label from the front of the list.
+            int deletedLabel = partitionLabels[0];
+            partitionLabels.erase( partitionLabels.begin() );
+
+            // Delete the vector from the front of the sliding window.
+            windowValues.erase( windowValues.begin() );
+        }
+
+    }
+
+    return false;
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
-pipePacket slidingWindow::runPipe(pipePacket inData){
-	utils ut;
-	readInput rp;
+pipePacket slidingWindow::runPipe(pipePacket inData)
+{
+    utils ut;
+    readInput rp;
 
-	int windowMaxSize = 50;
+    int windowMaxSize = 50;
 
-	// For this pipe, we construct a sub-pipeline:
-	//		1. Read data vector by vector, push into slidingWindow evaluation
-	//		2. IF the point is to be inserted, push into the simplexTree (LRU ordered)
-	//		3. IF 100 points have passed, generate persistence intervals
-	//
-	// Loop this subpipeline until there's no more data
+    // For this pipe, we construct a sub-pipeline:
+    //		1. Read data vector by vector, push into slidingWindow evaluation
+    //		2. IF the point is to be inserted, push into the simplexTree (LRU ordered)
+    //		3. IF 100 points have passed, generate persistence intervals
+    //
+    // Loop this subpipeline until there's no more data
 
-	std::vector<int> windowKeys;
-	std::vector<std::vector<double>> windowValues;
+    std::vector<int> windowKeys;
+    std::vector<std::vector<double>> windowValues;
 
-	std::vector<int> partitionLabels;
-	std::vector<int> nnIndices;  // A container to store the index of each point's nearest neighbor within the window.
-	std::vector<double> nnDists;  // A container to store the nearest neighbor distance of each point within the window.
-	std::unordered_map<int, double> avgNNDistPartitions;
+    std::vector<int> partitionLabels;
+    std::vector<int> nnIndices;  // A container to store the index of each point's nearest neighbor within the window.
+    std::vector<double> nnDists;  // A container to store the nearest neighbor distance of each point within the window.
+    std::unordered_map<int, double> avgNNDistPartitions;
 
-	int key{ 0 };
-	float f1{ 4 };
-	float f2{ 0.25 };
+    int key{ 0 };
+    float f1{ 4 };
+    float f2{ 0.25 };
 
-	// A partition is considered outdated if it did not receive any new point for more than the last 25 insertions.
-	int timeToBeOutdated{ 25 };
+    // A partition is considered outdated if it did not receive any new point for more than the last 25 insertions.
+    int timeToBeOutdated{ 25 };
 
-	std::unordered_map<int, int> numPointsPartn;  // A dictionary to store the number of points in each partition.
-	std::unordered_map<int, int> maxKeys;  // A dictionary to store the maxKey of each partition.
+    std::unordered_map<int, int> numPointsPartn;  // A dictionary to store the number of points in each partition.
+    std::unordered_map<int, int> maxKeys;  // A dictionary to store the maxKey of each partition.
 
-	std::vector<double> currentVector;
-	if(rp.streamInit(inputFile)){
-		int pointCounter = 1;
-		int label{ 0 };
+    std::vector<double> currentVector;
+    if(rp.streamInit(inputFile))
+    {
+        int pointCounter = 1;
+        int label{ 0 };
 
-		while(rp.streamRead(currentVector)){
-			// Initialize the sliding window. During the initialization, let's assume all points from the stream
-			// belong to Partition 0.
-			if (windowValues.size() < windowMaxSize){
-				windowValues.push_back(currentVector);
-				windowKeys.push_back(key);
-				partitionLabels.push_back(label);
-				key++;
+        while(rp.streamRead(currentVector))
+        {
+            // Initialize the sliding window. During the initialization, let's assume all points from the stream
+            // belong to Partition 0.
+            if (windowValues.size() < windowMaxSize)
+            {
+                windowValues.push_back(currentVector);
+                windowKeys.push_back(key);
+                partitionLabels.push_back(label);
+                key++;
 
-				//If we've reached window max size, generate the initial complex
-				if (windowValues.size() == windowMaxSize){
-					std::cout << "Initializing complex" << std::endl;
+                //If we've reached window max size, generate the initial complex
+                if (windowValues.size() == windowMaxSize)
+                {
+                    std::cout << "Initializing complex" << std::endl;
 
-					inData.originalData = windowValues;
-					runComplexInitializer(inData, nnIndices, nnDists);
+                    inData.originalData = windowValues;
+                    runComplexInitializer(inData, nnIndices, nnDists);
 
-					std::cout << "Returning from complex initializer" << std::endl;
+                    // Set the stream evaluator
+                    inData.complex->setStreamEvaluator(&sampleStreamEvaluator);
 
-					// Find the average nearest neighbor distance in the existing partition (i.e. Partition 0).
-					auto avgNNDistPartition0 = std::accumulate(nnDists.begin(), nnDists.end(), 0.0) / nnDists.size();
-					avgNNDistPartitions[label] = avgNNDistPartition0;
-					numPointsPartn[label] = windowMaxSize;
-					maxKeys[label] = key - 1;
-				}
+                    std::cout << "Returning from complex initializer" << std::endl;
 
-			} else {
+                    // Find the average nearest neighbor distance in the existing partition (i.e. Partition 0).
+                    auto avgNNDistPartition0 = std::accumulate(nnDists.begin(), nnDists.end(), 0.0) / nnDists.size();
+                    avgNNDistPartitions[label] = avgNNDistPartition0;
+                    numPointsPartn[label] = windowMaxSize;
+                    maxKeys[label] = key - 1;
+                }
 
-			    if (avgNNDistPartitions.size() == 1) {   // If the window is 'pure':
-                    // Compute the distances from the current vector to the existing ones in the window.
-                    std::vector<double> distsFromCurrVec;
-                    for(unsigned i = 0; i < windowValues.size(); i++) {
-                        auto dist = ut.vectors_distance(windowValues[i], currentVector);
-                        distsFromCurrVec.push_back(dist);
-                    }
+            }
+            else
+            {
 
-                    // Sort the distances from the current vector (to the existing ones in the window) in increasing order.
-                    std::vector<double> ascendingDists = distsFromCurrVec;
-                    std::sort( ascendingDists.begin(), ascendingDists.end() );
+                if(inData.complex->insertIterative(currentVector, windowValues))
+                {
 
-                    // Find the distance from the current vector to its nearest neighbor in the window.
-                    auto nnDistCurrVec = ascendingDists[0];
+                    windowValues.erase(windowValues.begin());
 
-                    if (nnDistCurrVec == 0)
-                        continue;
+                    //Insert the point
+                    windowValues.push_back(currentVector);
+                }
+            }
 
-                    // Find the average nearest neighbor distance in the single 'partition' in the window.
-                    int currentLabel = partitionLabels[0];
-                    auto avgNNDistSinglePartition = avgNNDistPartitions[currentLabel];
+            //Check if we've gone through 100 points
+            if(pointCounter % 100 == 0 && pointCounter > windowMaxSize)
+            {
+                // Build and trigger remaining pipeline. It should only require the computation of persistence
+                // intervals from the complex being maintained.
+                std::cout << "pointCounter: " << pointCounter << "\tSimplex Count: " << inData.complex->simplexCount() << "\tVertex Count: " << inData.complex->vertexCount() << std::endl;
+                std::cout << "\tWindowSize: " << windowValues.size() << std::endl;
+                inData.originalData = windowValues;
+                runSubPipeline(inData);
 
-                    if (avgNNDistSinglePartition < f2 && nnDistCurrVec <= 1)
-                        continue;
+            }
+            pointCounter++;
 
-                    if (avgNNDistSinglePartition == 0 || nnDistCurrVec / avgNNDistSinglePartition > f1) {
-                        // Delete the key (the lowest key) from the front of the list.
-                        int deletedKey = windowKeys[0];
-                        windowKeys.erase( windowKeys.begin() );
+            currentVector.clear();
 
-                        // Delete the label from the front of the list.
-                        int deletedLabel = partitionLabels[0];
-                        partitionLabels.erase( partitionLabels.begin() );
+        }
+        //Probably want to trigger the remaining pipeline one last time...
+        if((pointCounter - 1) % 100 != 0)
+        {
+            std::cout << "pointCounter: " << pointCounter << "\tSimplex Count: " << inData.complex->simplexCount() << "\tVertex Count: " << inData.complex->vertexCount() << std::endl;
 
-                        // Delete the vector from the front of the sliding window.
-                        windowValues.erase( windowValues.begin() );
-                    }
+            runSubPipeline(inData);
+        }
+        ut.writeLog("slidingWindow", "\tSuccessfully evaluated " + std::to_string(pointCounter) + " points");
 
-			    }
+        writeComplexStats(inData);
+    }
 
-				if(inData.complex->insertIterative(currentVector, windowValues)){
-
-					windowValues.erase(windowValues.begin());
-
-					//Insert the point
-					windowValues.push_back(currentVector);
-				}
-			}
-
-			//Check if we've gone through 100 points
-			if(pointCounter % 100 == 0 && pointCounter > windowMaxSize){
-				// Build and trigger remaining pipeline. It should only require the computation of persistence
-				// intervals from the complex being maintained.
-				std::cout << "pointCounter: " << pointCounter << "\tSimplex Count: " << inData.complex->simplexCount() << "\tVertex Count: " << inData.complex->vertexCount() << std::endl;
-				std::cout << "\tWindowSize: " << windowValues.size() << std::endl;
-				inData.originalData = windowValues;
-				runSubPipeline(inData);
-
-			}
-			pointCounter++;
-
-			currentVector.clear();
-
-		}
-		//Probably want to trigger the remaining pipeline one last time...
-		if((pointCounter - 1) % 100 != 0){
-			std::cout << "pointCounter: " << pointCounter << "\tSimplex Count: " << inData.complex->simplexCount() << "\tVertex Count: " << inData.complex->vertexCount() << std::endl;
-
-			runSubPipeline(inData);
-		}
-		ut.writeLog("slidingWindow", "\tSuccessfully evaluated " + std::to_string(pointCounter) + " points");
-
-		writeComplexStats(inData);
-	}
-
-	return inData;
+    return inData;
 }
 
-void slidingWindow::writeComplexStats(pipePacket &inData){
-	if(inData.complex->stats.size() > 30){
-		std::ofstream file ("output/complexStats.csv");
+void slidingWindow::writeComplexStats(pipePacket &inData)
+{
+    if(inData.complex->stats.size() > 30)
+    {
+        std::ofstream file ("output/complexStats.csv");
 
-		file << inData.complex->stats << std::endl;
+        file << inData.complex->stats << std::endl;
 
-		file.close();
+        file.close();
 
-	}
+    }
 }
 
-void slidingWindow::runSubPipeline(pipePacket wrData){
+void slidingWindow::runSubPipeline(pipePacket wrData)
+{
     if(wrData.originalData.size() == 0)
-		return;
+        return;
 
-	pipePacket inData = wrData;
-	outputData(inData);
+    pipePacket inData = wrData;
+    outputData(inData);
 
-	std::string pipeFuncts = "rips.persistence";
-	auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
-	subConfigMap["fn"] = "_" + std::to_string(repCounter);
-	repCounter++;
+    std::string pipeFuncts = "rips.persistence";
+    auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
+    subConfigMap["fn"] = "_" + std::to_string(repCounter);
+    repCounter++;
 
-	//For each '.' separated pipeline function (count of '.' + 1 -> lim)
-	for(unsigned i = 0; i < lim; i++){
-		auto curFunct = pipeFuncts.substr(0,pipeFuncts.find('.'));
-		pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
+    //For each '.' separated pipeline function (count of '.' + 1 -> lim)
+    for(unsigned i = 0; i < lim; i++)
+    {
+        auto curFunct = pipeFuncts.substr(0,pipeFuncts.find('.'));
+        pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
 
-		//Build the pipe component, configure and run
-		auto *bp = new basePipe();
-		auto *cp = bp->newPipe(curFunct, "simplexTree");
+        //Build the pipe component, configure and run
+        auto *bp = new basePipe();
+        auto *cp = bp->newPipe(curFunct, "simplexTree");
 
-		//Check if the pipe was created and configure
-		if(cp != 0 && cp->configPipe(subConfigMap)){
-			//Run the pipe function (wrapper)
-			inData = cp->runPipeWrapper(inData);
-		} else {
-			std::cout << "LHF : Failed to configure pipeline: " << curFunct << std::endl;
-		}
-	}
+        //Check if the pipe was created and configure
+        if(cp != 0 && cp->configPipe(subConfigMap))
+        {
+            //Run the pipe function (wrapper)
+            inData = cp->runPipeWrapper(inData);
+        }
+        else
+        {
+            std::cout << "LHF : Failed to configure pipeline: " << curFunct << std::endl;
+        }
+    }
 
 
-	return;
+    return;
 }
 
-void slidingWindow::runComplexInitializer(pipePacket &inData, std::vector<int> &nnIndices, std::vector<double> &nnDists){
-	//Initialize the complex and build other structures for maintaining NN, etc.
-	//
-	//	We need to exit this function by covering the distMatrix and neighGraph
-	//		pipe functions
+void slidingWindow::runComplexInitializer(pipePacket &inData, std::vector<int> &nnIndices, std::vector<double> &nnDists)
+{
+    //Initialize the complex and build other structures for maintaining NN, etc.
+    //
+    //	We need to exit this function by covering the distMatrix and neighGraph
+    //		pipe functions
 
 
 
-	//	1.	Create distance matrix (and compute other info)-------------
+    //	1.	Create distance matrix (and compute other info)-------------
 
-	utils ut;
+    utils ut;
 
-	//Store our distance matrix
-	std::vector<std::vector<double>> distMatrix (inData.originalData.size(), std::vector<double>(inData.originalData.size(),0));
+    //Store our distance matrix
+    std::vector<std::vector<double>> distMatrix (inData.originalData.size(), std::vector<double>(inData.originalData.size(),0));
 
-	//Iterate through each vector
-	for(unsigned i = 0; i < inData.originalData.size(); i++){
-		if(!inData.originalData[i].empty()){
-		    std::vector<double> distsFromCurrVect;
+    //Iterate through each vector
+    for(unsigned i = 0; i < inData.originalData.size(); i++)
+    {
+        if(!inData.originalData[i].empty())
+        {
+            std::vector<double> distsFromCurrVect;
 
-			for(unsigned j = 0; j < inData.originalData.size(); j++){
-			    if (j < i) {
+            for(unsigned j = 0; j < inData.originalData.size(); j++)
+            {
+                if (j < i)
+                {
                     distsFromCurrVect.push_back( distMatrix[j][i] );
-			    } else if (j > i) {
-			        //Calculate vector distance
-			        auto dist = ut.vectors_distance(inData.originalData[i], inData.originalData[j]);
-			        if(dist < epsilon)
+                }
+                else if (j > i)
+                {
+                    //Calculate vector distance
+                    auto dist = ut.vectors_distance(inData.originalData[i], inData.originalData[j]);
+                    if(dist < epsilon)
                         inData.weights.insert(dist);
                     distMatrix[i][j] = dist;
                     distsFromCurrVect.push_back( dist );
-			    }
-			}
+                }
+            }
 
-			int tempIndex = std::min_element(distsFromCurrVect.begin(), distsFromCurrVect.end()) - distsFromCurrVect.begin();
-			if (tempIndex < i)
+            int tempIndex = std::min_element(distsFromCurrVect.begin(), distsFromCurrVect.end()) - distsFromCurrVect.begin();
+            if (tempIndex < i)
                 nnIndices.push_back(tempIndex);
             else
                 nnIndices.push_back(tempIndex+1);
 
             auto nnDistFromCurrVect = *std::min_element( distsFromCurrVect.begin(), distsFromCurrVect.end() );
             nnDists.push_back( nnDistFromCurrVect );
-		}
-	}
+        }
+    }
 
-	inData.complex->setDistanceMatrix(distMatrix);
+    inData.complex->setDistanceMatrix(distMatrix);
 
-	inData.weights.insert(0.0);
-	inData.weights.insert(epsilon);
-	//std::sort(inData.weights.begin(), inData.weights.end(), std::greater<>());
+    inData.weights.insert(0.0);
+    inData.weights.insert(epsilon);
+    //std::sort(inData.weights.begin(), inData.weights.end(), std::greater<>());
 
-	//------------------------------------------------------------------
-
-
-
-	// 2. Insert into complex (build neighborhood graph) ---------------
-
-	//Iterate through each vector, inserting into simplex storage
-	for(unsigned i = 0; i < inData.originalData.size(); i++){
-		if(!inData.originalData[i].empty()){
-			//insert data into the complex (SimplexArrayList, SimplexTree)
-			inData.complex->insert(inData.originalData[i]);
-		}
-	}
-
-	//------------------------------------------------------------------
+    //------------------------------------------------------------------
 
 
-	return;
+
+    // 2. Insert into complex (build neighborhood graph) ---------------
+
+    //Iterate through each vector, inserting into simplex storage
+    for(unsigned i = 0; i < inData.originalData.size(); i++)
+    {
+        if(!inData.originalData[i].empty())
+        {
+            //insert data into the complex (SimplexArrayList, SimplexTree)
+            inData.complex->insert(inData.originalData[i]);
+        }
+    }
+
+    //------------------------------------------------------------------
+
+
+    return;
 }
 
 
 
 // configPipe -> configure the function settings of this pipeline segment
-bool slidingWindow::configPipe(std::map<std::string, std::string> configMap){
-	std::string strDebug;
-	subConfigMap = configMap;
+bool slidingWindow::configPipe(std::map<std::string, std::string> configMap)
+{
+    std::string strDebug;
+    subConfigMap = configMap;
 
-	auto pipe = configMap.find("debug");
-	if(pipe != configMap.end()){
-		debug = std::atoi(configMap["debug"].c_str());
-		strDebug = configMap["debug"];
-	}
-	pipe = configMap.find("outputFile");
-	if(pipe != configMap.end())
-		outputFile = configMap["outputFile"].c_str();
+    auto pipe = configMap.find("debug");
+    if(pipe != configMap.end())
+    {
+        debug = std::atoi(configMap["debug"].c_str());
+        strDebug = configMap["debug"];
+    }
+    pipe = configMap.find("outputFile");
+    if(pipe != configMap.end())
+        outputFile = configMap["outputFile"].c_str();
 
-	ut = utils(strDebug, outputFile);
+    ut = utils(strDebug, outputFile);
 
-	pipe = configMap.find("inputFile");
-	if(pipe != configMap.end())
-		inputFile = configMap["inputFile"].c_str();
+    pipe = configMap.find("inputFile");
+    if(pipe != configMap.end())
+        inputFile = configMap["inputFile"].c_str();
 
-	pipe = configMap.find("epsilon");
-	if(pipe != configMap.end())
-		epsilon = std::atof(configMap["epsilon"].c_str());
-	else return false;
+    pipe = configMap.find("epsilon");
+    if(pipe != configMap.end())
+        epsilon = std::atof(configMap["epsilon"].c_str());
+    else return false;
 
-	pipe = configMap.find("dimensions");
-	if(pipe != configMap.end()){
-		dim = std::atoi(configMap["dimensions"].c_str());
-	}
-	else return false;
+    pipe = configMap.find("dimensions");
+    if(pipe != configMap.end())
+    {
+        dim = std::atoi(configMap["dimensions"].c_str());
+    }
+    else return false;
 
-	configured = true;
-	ut.writeDebug("slidingWindow","Configured with parameters { input: " + configMap["inputFile"] + ", dim: " + configMap["dimensions"] + ", eps: " + configMap["epsilon"] + ", debug: " + strDebug + ", outputFile: " + outputFile + " }");
+    configured = true;
+    ut.writeDebug("slidingWindow","Configured with parameters { input: " + configMap["inputFile"] + ", dim: " + configMap["dimensions"] + ", eps: " + configMap["epsilon"] + ", debug: " + strDebug + ", outputFile: " + outputFile + " }");
 
-	return true;
+    return true;
 }
 
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-void slidingWindow::outputData(pipePacket inData){
-	std::ofstream file ("output/" + pipeType + "_" + std::to_string(repCounter) + "_output.csv");
+void slidingWindow::outputData(pipePacket inData)
+{
+    std::ofstream file ("output/" + pipeType + "_" + std::to_string(repCounter) + "_output.csv");
 
-	for(auto a : inData.originalData){
-		for(auto d : a){
-			file << d << ",";
-		}
-		file << "\n";
-	}
-	file << std::endl;
+    for(auto a : inData.originalData)
+    {
+        for(auto d : a)
+        {
+            file << d << ",";
+        }
+        file << "\n";
+    }
+    file << std::endl;
 
-	file.close();
-	return;
+    file.close();
+    return;
 }
