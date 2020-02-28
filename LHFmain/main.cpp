@@ -101,6 +101,20 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		}
 	}
 	
+	//Notes from Nick:
+	//	After preprocessor, need to separate the data into bins by index (partition)
+	//		-Look at each point, label retrieved from preprocessor
+	//			-bin points and send to a respective MPI node / slave
+	//	
+	//	Each node/slave will process at least 1 partition
+	//		NOTE: the partition may contain points outside that are within 2*Rmax
+	
+	// Once we have X data sets to process, along with the original centroid dataset
+	//		Distribute work to slaves (run fastPersistence on given data)
+	//		Retrieve results
+	//		Merge Barcodes
+	
+	
 	do{
 		if(wD->boundaries.size() > 0){
 			
@@ -165,7 +179,8 @@ int main(int argc, char* argv[]){
     //Determine what pipe we will be running
     ap->setPipeline(args);
     
-    ap->printArguments(args);
+    for(auto z : args)
+		std::cout << z.first << "\t" << z.second << std::endl;
     
 	//Create a pipePacket (datatype) to store the complex and pass between engines
     auto *wD = new pipePacket(args, args["complexType"]);	//wD (workingData)
