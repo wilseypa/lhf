@@ -13,6 +13,10 @@ import string
 np.set_printoptions(threshold=sys.maxsize) # for debugging
 tdaLibraries = ['LHF','ripser','GUDHI']
 
+
+
+## HELPER FUNCTIONS --------------------------------------------#
+
 def geometricMean(tempData, originalData):
     
     tracker = max(tempData.labels_)
@@ -191,6 +195,14 @@ def outputGudhiPersistence(data, label, maxedge):
     return
 
 
+
+
+
+
+
+
+
+
 ''' MAIN LOOP HERE '''
 
 ''' Get CMD Arguments: [filename] [epsilon] [maxDim] [partitioner] [upscale 0/1] [centroids #] [reps]'''
@@ -365,7 +377,7 @@ for i in range(0, int(reps)):
         if(tdaType == "LHF"):
             #try:
             start = time.time()
-            proc = subprocess.check_output(["./LHF", "-m","fast","-d", str(maxDim), "-e", str(epsilon), "-i", os.getcwd()+"/"+outDir + "reducedData.csv"])  
+            proc = subprocess.check_output(["./LHF", "-m","fast","-d", str(maxDim+1), "-e", str(epsilon), "-i", os.getcwd()+"/"+outDir + "reducedData.csv"])  
 
 
             end = time.time()
