@@ -26,7 +26,7 @@ slidingWindow::slidingWindow()
     return;
 }
 
-bool nnBasedEvaluator(std::vector<double>& vector, std::vector<std::vector<double>>& window)
+bool nnBasedEvaluator(std::vector<double>& vector, std::vector<std::vector<double>>& window, EvalParams& defaultVals)
 {
     if (avgNNDistPartitions.size() == 1)
     {
@@ -81,8 +81,6 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
     utils ut;
     readInput rp;
 
-    int windowMaxSize = 50;
-
     // For this pipe, we construct a sub-pipeline:
     //		1. Read data vector by vector, push into slidingWindow evaluation
     //		2. IF the point is to be inserted, push into the simplexTree (LRU ordered)
@@ -90,51 +88,42 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
     //
     // Loop this subpipeline until there's no more data
 
-    std::vector<int> windowKeys;
+    EvalParams defaultVals{ 200, 0, 0 };
+
     std::vector<std::vector<double>> windowValues;
 
-    std::vector<int> partitionLabels;
-    std::vector<int> nnIndices;  // A container to store the index of each point's nearest neighbor within the window.
-    std::vector<double> nnDists;  // A container to store the nearest neighbor distance of each point within the window.
-    std::unordered_map<int, double> avgNNDistPartitions;
-
-    int key{ 0 };
-    float f1{ 4 };
-    float f2{ 0.25 };
+    // float f1{ 4 };
+    // float f2{ 0.25 };
 
     // A partition is considered outdated if it did not receive any new point for more than the last 25 insertions.
-    int timeToBeOutdated{ 25 };
-
-    std::unordered_map<int, int> numPointsPartn;  // A dictionary to store the number of points in each partition.
-    std::unordered_map<int, int> maxKeys;  // A dictionary to store the maxKey of each partition.
+    // int timeToBeOutdated{ 25 };
 
     std::vector<double> currentVector;
     if(rp.streamInit(inputFile))
     {
         int pointCounter = 1;
-        int label{ 0 };
 
         while(rp.streamRead(currentVector))
         {
             // Initialize the sliding window. During the initialization, let's assume all points from the stream
             // belong to Partition 0.
-            if (windowValues.size() < windowMaxSize)
+            if (windowValues.size() < defaultVals.windowMaxSize)
             {
                 windowValues.push_back(currentVector);
-                windowKeys.push_back(key);
-                partitionLabels.push_back(label);
-                key++;
+                defaultVals.windowKeys.push_back(defaultVals.key);
+                defaultVals.partitionLabels.push_back(defaultVals.label);
+                defaultVals.key++;
 
                 //If we've reached window max size, generate the initial complex
-                if (windowValues.size() == windowMaxSize)
+                if (windowValues.size() == defaultVals.windowMaxSize)
                 {
                     std::cout << "Initializing complex" << std::endl;
 
                     inData.originalData = windowValues;
-                    runComplexInitializer(inData, nnIndices, nnDists);
+                    runComplexInitializer(inData, defaultVals.nnIndices, defaultVals.nnDists);
 
                     // Set the stream evaluator
-                    inData.complex->setStreamEvaluator(&sampleStreamEvaluator);
+                    inData.complex->setStreamEvaluator(&nnBasedEvaluator);
 
                     std::cout << "Returning from complex initializer" << std::endl;
 
@@ -149,7 +138,7 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
             else
             {
 
-                if(inData.complex->insertIterative(currentVector, windowValues))
+                if(inData.complex->insertIterative(currentVector, windowValues, defaultVals))
                 {
 
                     windowValues.erase(windowValues.begin());

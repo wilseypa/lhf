@@ -4,6 +4,7 @@
 #include <set>
 #include <iostream>
 #include "utils.hpp"
+#include "slidingWindow.hpp"
 
 // Header file for simplexBase class - see simplexTree.cpp for descriptions
 
@@ -96,9 +97,9 @@ class simplexBase {
 	void setConfig(std::map<std::string, std::string>);
 	void setDistanceMatrix(std::vector<std::vector<double>> _distMatrix);
 	simplexBase* newSimplex(const std::string &simplexT, std::map<std::string, std::string> configMap);
-	bool (*streamEval) (std::vector<double>&, std::vector<std::vector<double>>&);
-    bool streamEvaluator(std::vector<double>&, std::vector<std::vector<double>>&);
-	void setStreamEvaluator(bool (*f) (std::vector<double>&, std::vector<std::vector<double>>&));
+	bool (*streamEval) (std::vector<double>&, std::vector<std::vector<double>>&, EvalParams&);
+    bool streamEvaluator(std::vector<double>&, std::vector<std::vector<double>>&, EvalParams&);
+	void setStreamEvaluator(bool (*f) (std::vector<double>&, std::vector<std::vector<double>>&, EvalParams&));
 
 	//virtual interface functions
 	virtual double getSize();
