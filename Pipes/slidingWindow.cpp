@@ -128,10 +128,10 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
                     std::cout << "Returning from complex initializer" << std::endl;
 
                     // Find the average nearest neighbor distance in the existing partition (i.e. Partition 0).
-                    auto avgNNDistPartition0 = std::accumulate(nnDists.begin(), nnDists.end(), 0.0) / nnDists.size();
-                    avgNNDistPartitions[label] = avgNNDistPartition0;
-                    numPointsPartn[label] = windowMaxSize;
-                    maxKeys[label] = key - 1;
+                    auto avgNNDistPartition0 = std::accumulate(defaultVals.nnDists.begin(), defaultVals.nnDists.end(), 0.0) / defaultVals.nnDists.size();
+                    defaultVals.avgNNDistPartitions[defaultVals.label] = avgNNDistPartition0;
+                    defaultVals.numPointsPartn[defaultVals.label] = defaultVals.windowMaxSize;
+                    defaultVals.maxKeys[defaultVals.label] = defaultVals.key - 1;
                 }
 
             }
