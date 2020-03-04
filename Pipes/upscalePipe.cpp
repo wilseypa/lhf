@@ -48,7 +48,7 @@ pipePacket upscalePipe::runPipe(pipePacket inData){
 			currentData.push_back(inData.originalData[inData.originalLabels[point]]);
 		}
 	}
-	inData.reducedData = currentData;
+	inData.fullData = currentData;
 	return inData;
 }
 

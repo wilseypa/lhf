@@ -102,28 +102,27 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		}
 	}
 	
-	utils ut;
-	auto partitionedData = ut.separatePartitions(std::atoi(args["clusters"].c_str()), wD->originalData, wD->originalLabels);
-	
-	std::cout << "Partitions: " << partitionedData.size() << std::endl << "Counts: ";
-	
-	for(auto a : partitionedData){
-		std::cout << a.size() << "\t";
-	}
 	
 	//Notes from Nick:
 	//	After preprocessor, need to separate the data into bins by index (partition)
 	//		-Look at each point, label retrieved from preprocessor
 	//			-bin points and send to a respective MPI node / slave
-	//	
+	utils ut;
+	auto partitionedData = ut.separatePartitions(std::atoi(args["clusters"].c_str()), wD->fullData, wD->originalLabels);
+	
 	//	Each node/slave will process at least 1 partition
 	//		NOTE: the partition may contain points outside that are within 2*Rmax
+	std::cout << "Partitions: " << partitionedData.size() << std::endl << "Counts: ";
+	
+	for(auto a : partitionedData){
+		std::cout << a.size() << "\t";
+	}
+	std::cout << std::endl;
 	
 	// Once we have X data sets to process, along with the original centroid dataset
 	//		Distribute work to slaves (run fastPersistence on given data)
 	//		Retrieve results
 	//		Merge Barcodes	
-	
 	do{
 		if(wD->boundaries.size() > 0){
 			
@@ -197,6 +196,7 @@ int main(int argc, char* argv[]){
 	if(args["pipeline"] != "slidingwindow"){
 		//Read data from inputFile CSV
 		wD->originalData = rs->readCSV(args["inputFile"]);
+		wD->fullData = wD->originalData;
 	}
 	//If data was found in the inputFile
 	if(wD->originalData.size() > 0 || args["pipeline"] == "slidingwindow"){
