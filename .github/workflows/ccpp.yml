@@ -16,7 +16,7 @@ jobs:
     steps:
     # Get openMPI
     - name: Get OpenMPI
-      run: sudo apt-get install -y openmpi-bin openmpi-common
+      run: sudo apt-get install -y openmpi-bin openmpi-common libopenmpi-dev
           
     # Checkout v2 : https://github.com/actions/checkout
     - uses: actions/checkout@v2
