@@ -4,8 +4,7 @@ on:
   push:
     branches:
       - master
-#      Commenting out MPI development, need to get MPI working on github actions
-#      - MPI_Development
+      - MPI_Development
       - cmake_development
 
 jobs:
@@ -14,6 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+    # Get openMPI
+    - name: Get OpenMPI
+      run: sudo apt-get install -y openmpi-bin openmpi-common libopenmpi-dev
+          
     # Checkout v2 : https://github.com/actions/checkout
     - uses: actions/checkout@v2
       

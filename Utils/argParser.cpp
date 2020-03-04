@@ -9,9 +9,8 @@
 #include <iostream>
 #include "argParser.hpp"
 
-
-std::map<std::string, std::string> argMap = { {"mode","m"},{"dimensions","d"},{"iterations","r"},{"pipeline","p"},{"inputFile","i"},{"outputFile","o"},{"epsilon","e"},{"lambda","l"},{"debug","x"},{"complexType","c"},{"clusters","k"},{"preprocessor","pre"},{"upscale","u"},{"twist","t"},{"collapse","z"}};
-std::map<std::string, std::string> defaultMap = { {"mode", "standard"},{"dimensions","1"},{"iterations","250"},{"pipeline",""},{"inputFile","None"},{"outputFile","output.csv"},{"epsilon","5"},{"lambda",".25"},{"debug","0"},{"complexType","simplexTree"},{"clusters","5"},{"preprocessor",""},{"upscale","false"},{"twist","false"},{"collapse","false"}};
+std::map<std::string, std::string> argMap = { {"mpi","mpi"},{"mode","m"},{"dimensions","d"},{"iterations","r"},{"pipeline","p"},{"inputFile","i"},{"outputFile","o"},{"epsilon","e"},{"lambda","l"},{"debug","x"},{"complexType","c"},{"clusters","k"},{"preprocessor","pre"},{"upscale","u"},{"twist","t"},{"collapse","z"}};
+std::map<std::string, std::string> defaultMap = { {"mpi", "1"},{"mode", "standard"},{"dimensions","1"},{"iterations","250"},{"pipeline",""},{"inputFile","None"},{"outputFile","output.csv"},{"epsilon","5"},{"lambda",".25"},{"debug","0"},{"complexType","simplexTree"},{"clusters","5"},{"preprocessor",""},{"upscale","false"},{"twist","false"},{"collapse","false"}};
 
 // argParse constructor, currently no needed information for the class constructor
 argParser::argParser(){
@@ -110,7 +109,15 @@ void argParser::printArguments(std::map<std::string,std::string> args){
 }
 
 void argParser::setPipeline(std::map<std::string, std::string>& args){
-	if(args["pipeline"] == ""){
+	if(args["mpi"] == "1"){
+		//Set up our pipeline
+		args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
+		if(args["preprocessor"] == ""){
+			args["preprocessor"] = "kmeans++";
+		}
+		args["upscale"] = "true";
+		
+	} else if(args["pipeline"] == ""){
 		if(args["mode"] == "standard")
 			args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
 		else if(args["mode"] == "reduced"){
