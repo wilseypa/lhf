@@ -195,8 +195,7 @@ bool simplexTree::insertIterative(std::vector<double> &vector, std::vector<std::
 		return true;
 	}
 	
-	
-	if(streamEvaluator(vector, window)){
+	if(streamEval(vector, window)){
 		
 		//Point is deemed 'significant' - need to remove last window point and insert new point
 		std::vector<double> distMatrixRow = ut.nearestNeighbors(vector, window);	

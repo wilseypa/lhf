@@ -36,7 +36,12 @@ pipePacket streamingKmeans::runPreprocessor(pipePacket inData){
 	}
 	
 	//Arguments - num_clusters, num_iterations
+
   int numClusters = 20;
+
+ // int numClusters = 20;
+	utils ut;
+
 	streamingUtils streamUt;
   //int n = 5;
   int size = inData.originalData.size();
@@ -66,7 +71,7 @@ std::vector<double> approxFacilitiesHat(0);
 
 double f = 1/(numClusters*(1 + log(size))); //facility cost f = 1/(k(1+log n))  k clusters, n points, empty set K  //facility==centroid 
 
-std::vector<double> summedClusters(num_clusters, 0);
+std::vector<double> summedClusters(numClusters, 0);
 
 std::vector<double> counts(maxFacilities, 0);
 std::vector<int> tempCounts(maxFacilities, 0);
@@ -292,6 +297,7 @@ std::vector<std::vector<double>> summedCentroidVectors(numClusters, std::vector<
 
 
 
+
 // configPipe -> configure the function settings of this pipeline segment
 bool streamingKmeans::configPreprocessor(std::map<std::string, std::string> configMap){
 	std::string strDebug;
@@ -309,7 +315,7 @@ bool streamingKmeans::configPreprocessor(std::map<std::string, std::string> conf
 	
 	pipe = configMap.find("clusters");
     if(pipe !=configMap.end())
-        num_clusters = std::atoi(configMap["clusters"].c_str());
+        numClusters = std::atoi(configMap["clusters"].c_str());
     else return false;
 
     pipe = configMap.find("iterations");
@@ -322,6 +328,7 @@ bool streamingKmeans::configPreprocessor(std::map<std::string, std::string> conf
 	
 	return true;
 }
+
 
 std::vector<double> streamingKmeans::approxNearestNeighbor(std::vector<std::vector<double>>& facilities, std::vector<std::pair <double, int>>& sortedApproxFacils, std::vector<double> omega, int x, int size, pipePacket(inData)){
   //based on random projection, x is current point being examined, n is number of centroids/facilities
@@ -473,4 +480,18 @@ int streamingKmeans::random(int low, int high){
 	return low + ( rand() % (high - low) );
 }
 
+/*// configPipe -> configure the function settings of this pipeline segment
+bool streamingKmeans::configPreprocessor(std::map<std::string, std::string> configMap){
+  auto preprocessor = configMap.find("clusters");
+    if(preprocessor !=configMap.end())
+        numClusters = std::atoi(configMap["clusters"].c_str());
+    else return false;
 
+    preprocessor = configMap.find("iterations");
+	if(preprocessor != configMap.end())
+		num_iterations = std::atoi(configMap["iterations"].c_str());
+	else return false;	
+	
+	
+	return true;
+}  */

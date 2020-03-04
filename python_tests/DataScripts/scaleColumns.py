@@ -46,7 +46,7 @@ rawData = np.loadtxt(inFile, delimiter = ",", comments="#")
 scaler = sklearn.preprocessing.MinMaxScaler(feature_range=(-1.0,1.0))
 scaledData = scaler.fit_transform(rawData)
 
-outFile = inFile[0:len(inFile)-4] + "-scaled.csv"
+outFile = inFile + "-scaled"
 
 with open(outFile, 'w') as of :
     np.savetxt(of, scaledData, delimiter=',')
@@ -55,7 +55,7 @@ of.close()
 standardizer = sklearn.preprocessing.StandardScaler().fit(rawData)
 standardizedData = standardizer.transform(rawData)
 
-outFile = inFile[0:len(inFile)-4] + "-standardized.csv"
+outFile = inFile + "-standardized"
 
 with open(outFile, 'w') as of :
     np.savetxt(of, standardizedData, delimiter=',')

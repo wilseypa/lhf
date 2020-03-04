@@ -9,9 +9,8 @@
 #include <iostream>
 #include "argParser.hpp"
 
-
-std::map<std::string, std::string> argMap = { {"mpi","mpi"}, {"mode","m"},{"dimensions","d"},{"iterations","r"},{"pipeline","p"},{"inputFile","i"},{"outputFile","o"},{"epsilon","e"},{"debug","x"},{"complexType","c"},{"clusters","k"},{"preprocessor","pre"},{"upscale","u"},{"twist","t"},{"collapse","z"}};
-std::map<std::string, std::string> defaultMap = { {"mpi", "1"}, {"mode", "standard"},{"dimensions","1"},{"iterations","250"},{"pipeline",""},{"inputFile","None"},{"outputFile","output.csv"},{"epsilon","5"},{"debug","0"},{"complexType","simplexTree"},{"clusters","5"},{"preprocessor",""},{"upscale","false"},{"twist","false"},{"collapse","false"}};
+std::map<std::string, std::string> argMap = { {"mpi","mpi"},{"mode","m"},{"dimensions","d"},{"iterations","r"},{"pipeline","p"},{"inputFile","i"},{"outputFile","o"},{"epsilon","e"},{"lambda","l"},{"debug","x"},{"complexType","c"},{"clusters","k"},{"preprocessor","pre"},{"upscale","u"},{"twist","t"},{"collapse","z"}};
+std::map<std::string, std::string> defaultMap = { {"mpi", "1"},{"mode", "standard"},{"dimensions","1"},{"iterations","250"},{"pipeline",""},{"inputFile","None"},{"outputFile","output.csv"},{"epsilon","5"},{"lambda",".25"},{"debug","0"},{"complexType","simplexTree"},{"clusters","5"},{"preprocessor",""},{"upscale","false"},{"twist","false"},{"collapse","false"}};
 
 // argParse constructor, currently no needed information for the class constructor
 argParser::argParser(){
@@ -56,6 +55,10 @@ void argParser::printUsage(){
 	std::cout << "\t -e,--epsilon <int>" << std::endl;
 	std::cout << "\t\tMaximum epsilon threshold" << std::endl;
 	std::cout << "\t\tdefault: 5" << std::endl;
+	std::cout << std::endl;
+	std::cout << "\t -l,--lambda <double>" << std::endl;
+	std::cout << "\t\tDecay factor lambda for DenStream" << std::endl;
+	std::cout << "\t\tdefault: .25" << std::endl;
 	std::cout << std::endl;
 	std::cout << "\t -m,--mode (standard|reduced|upscale|sw)" << std::endl;
 	std::cout << "\t\tSets the mode for LHF to run in" << std::endl;

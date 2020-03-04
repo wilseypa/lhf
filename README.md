@@ -1,5 +1,9 @@
 # LHF: Lightweight Homology Framework
 
+LHF is a homology framework designed for enabling modular pipelines for preprocessing and experiments around computing persistent homology. The base pipelines enable LHF to compute persistence intervals of an input point cloud by evaluating the distance matrix, building the simplicial complex, and reducing the complex to identify the persistence intervals at different dimensions. 
+
+Additional pipelines have been created for preprocessing, approximations of the boundary matrix, approximate simplicial complexes representing the input point cloud, boundary extraction, and upscaling based on previous studies detailed in several of the references below. The intent for LHF is to provide a modular framework to continue exploring, developing, and evaluating mechanisms for approximating or optimizing the computation of persistent homology over an input point cloud.
+
 ---
 
 ### REQUIREMENTS 
@@ -7,6 +11,8 @@
 - C++14
   
 - CMake
+
+- OpenMPI (if build / run for distributed)
 
 ---
 			  
@@ -32,10 +38,9 @@
  |  "--clusters" | "-k" | Number of preprocessing clusters | 5 |
  |  "--dimensions" | "-d" | Max dimensions to run at | 3 |
  |  "--epsilon" | "-e" | Epsilon value for simplicial complexes| 5 |
+ |  "--lambda" | "-l" | Lambda value (decay factor) for DenStream | .25 |
+ |  "--mode" | "-m" | Mode to run LHF in (fast, slidingwindow, upscaling, etc.) | default |
  |  "--complexType" | "-c" | Simplicial complex constructed| SimplexArrayList |
- |  "--upscaling" | "-u" | Upscaling selection (T/F) | True |
- |  "--iterations" | "-r" | Number of iterations to run | 1000 |
- |  "--pipeline" | "-p" | Pipeline structure | default |
  |  "--inputFile" | "-i" | File to read into pipeline | None |
  |  "--outputFile" | "-o" | File to output to | None |
  |  "--debug" | "-x" | Debug mode|0|
@@ -44,7 +49,7 @@
  
 ### EXAMPLES:
 
-	##    ./LHF -p distMatrix --inputFile testData.csv
+	##    ./LHF -m fast --inputFile testData.csv
 	##    ./LHF --pipeline distMatrix.distMatrix.distMatrix -i testData.csv -o output.csv
 
 ---

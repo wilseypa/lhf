@@ -87,6 +87,41 @@ void t_simp_functions(std::string &log){
 	return;
 }
 
+// Test simplexTree insertion, removal, etc. functions for sliding window
+void t_simp_tree_functions(std::string &log){
+	std::map<std::string, std::string> config;
+	std::string failLog = "";
+	std::vector<std::vector<double>> testValueArray = {{0.0, 1.0, 2.0},{2.0, 1.0, 0.0}, {1.0, 1.0, 2.0}, \
+													 {1.1, 1.1, 1.2},{0.0, 0.4, 1.0}, {1.5, 1.5, 0.0}	};
+	
+	std::vector<std::vector<double>> distMatrix = {};
+	simplexBase* testComplex = new simplexBase();
+	testComplex = testComplex->newSimplex("simplexTree", config);
+	
+	
+	
+	//Insert values from testValueArray into the complex to build the distance matrix
+	for(auto testValue : testValueArray){
+		//Insert iterative into uninitialized complex
+		//	RET: void
+		if(testComplex->insertIterative(testValue, distMatrix)) { failLog += "simplexTree insertIterative failed\n"; }
+	}
+	
+	//Attempt to delete values from the complex
+	testComplex->deleteIterative(0);
+	testComplex->deleteIterative(5);
+	testComplex->deleteIterative(3);
+	
+	//Output log status to calling function
+	if(failLog.size() > 0){
+		log += "FAILED: simplexTree Test Functions---------------------------\n" + failLog;	
+	} else {
+		 log += "PASSED: simplexTree Test Functions---------------------------\n";
+	}
+	
+}
+	
+
 
 // TEST simplexArrayList Functions
 void t_simp_base_functions(std::string &log, std::string type){

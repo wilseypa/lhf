@@ -147,7 +147,13 @@ void simplexBase::reduceComplex(){
 	return;
 }
 
-bool simplexBase::streamEvaluator(std::vector<double> vector, std::vector<std::vector<double>> window){
+void simplexBase::setStreamEvaluator(bool (*f) (std::vector<double>&, std::vector<std::vector<double>>&)){ 
+	streamEval = f;
+	std::cout << "changed stream evaluator" << std::endl;
+	return;	
+}
+
+bool simplexBase::streamEvaluator(std::vector<double>& vector, std::vector<std::vector<double>>& window){
 	
 	
 	//Do some evaluation of whether the point should stay or not
