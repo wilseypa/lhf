@@ -9,6 +9,7 @@
 #include "writeOutput.hpp"
 #include "pipePacket.hpp"
 #include "preprocessor.hpp"
+#include "utils.hpp"
 
 using namespace std;
 
@@ -99,6 +100,19 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 			cout << "LHF : Failed to configure pipeline: " << args["pipeline"] << endl;
 		}
 	}
+	
+	
+	utils ut;
+	auto partitionedData = ut.separatePartitions(std::atoi(args["clusters"].c_str()), wD->originalData, wD->originalLabels);
+	
+	std::cout << "Partitions: " << partitionedData.size() << std::endl << "Counts: ";
+	
+	for(auto a : partitionedData){
+		std::cout << a.size() << "\t";
+	}
+	
+	
+	
 	
 	do{
 		if(wD->boundaries.size() > 0){
