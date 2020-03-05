@@ -190,14 +190,15 @@ void simplexTree::insertInductive(){
 
 
 // Insert a node into the tree using the distance matrix and a vector index to track changes
-bool simplexTree::insertIterative(std::vector<double> &vector, std::vector<std::vector<double>> &window, EvalParams &defaultVals){
+bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vector<std::vector<double>> &window, EvalParams &defaultVals){
 	if(window.size() == 0){
 		return true;
 	}
 
-	if(streamEval(vector, window, defaultVals)){
+	if(streamEval(currentVector, window, defaultVals)){
 
-		//Point is deemed 'significant' - need to remove last window point and insert new point
+		// Point is deemed 'significant'.
+
 		std::vector<double> distMatrixRow = ut.nearestNeighbors(vector, window);
 		distMatrix.push_back(distMatrixRow);
 

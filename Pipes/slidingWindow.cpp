@@ -26,21 +26,20 @@ slidingWindow::slidingWindow()
     return;
 }
 
-bool nnBasedEvaluator(std::vector<double>& vector, std::vector<std::vector<double>>& window, EvalParams& defaultVals)
+bool nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vector<double>>& windowValues, EvalParams& defaultVals)
 {
-    if (avgNNDistPartitions.size() == 1)
+    utils ut;
+    float f1{ 4 };
+    float f2{ 0.25 };
+    defaultVals.distsFromCurrVec.clear();
+
+    if (defaultVals.avgNNDistPartitions.size() == 1)  // If the window is 'pure':
     {
-        // If the window is 'pure':
         // Compute the distances from the current vector to the existing ones in the window.
-        std::vector<double> distsFromCurrVec;
-        for(unsigned i = 0; i < windowValues.size(); i++)
-        {
-            auto dist = ut.vectors_distance(windowValues[i], currentVector);
-            distsFromCurrVec.push_back(dist);
-        }
+        defaultVals.distsFromCurrVec = ut.nearestNeighbors(currentVector, windowValues);
 
         // Sort the distances from the current vector (to the existing ones in the window) in increasing order.
-        std::vector<double> ascendingDists = distsFromCurrVec;
+        std::vector<double> ascendingDists = defaultVals.distsFromCurrVec;
         std::sort( ascendingDists.begin(), ascendingDists.end() );
 
         // Find the distance from the current vector to its nearest neighbor in the window.
@@ -50,24 +49,18 @@ bool nnBasedEvaluator(std::vector<double>& vector, std::vector<std::vector<doubl
             return false;
 
         // Find the average nearest neighbor distance in the single 'partition' in the window.
-        int currentLabel = partitionLabels[0];
-        auto avgNNDistSinglePartition = avgNNDistPartitions[currentLabel];
+        int currentLabel = defaultVals.partitionLabels[0];
+        auto avgNNDistSinglePartition = defaultVals.avgNNDistPartitions[currentLabel];
 
-        if (avgNNDistSinglePartition < f2 && nnDistCurrVec <= 1)
+        if (avgNNDistSinglePartition <= f2 && nnDistCurrVec <= 1)
             return false;
 
         if (avgNNDistSinglePartition == 0 || nnDistCurrVec / avgNNDistSinglePartition > f1)
         {
-            // Delete the key (the lowest key) from the front of the list.
-            int deletedKey = windowKeys[0];
-            windowKeys.erase( windowKeys.begin() );
-
-            // Delete the label from the front of the list.
-            int deletedLabel = partitionLabels[0];
-            partitionLabels.erase( partitionLabels.begin() );
 
             // Delete the vector from the front of the sliding window.
-            windowValues.erase( windowValues.begin() );
+            // windowValues.erase( windowValues.begin() );
+            return true;
         }
 
     }
@@ -91,9 +84,6 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
     EvalParams defaultVals{ 200, 0, 0 };
 
     std::vector<std::vector<double>> windowValues;
-
-    // float f1{ 4 };
-    // float f2{ 0.25 };
 
     // A partition is considered outdated if it did not receive any new point for more than the last 25 insertions.
     // int timeToBeOutdated{ 25 };
@@ -137,11 +127,18 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
             }
             else
             {
-
                 if(inData.complex->insertIterative(currentVector, windowValues, defaultVals))
                 {
+                    // Delete the key (the lowest key) from the front of the list.
+                    int deletedKey = defaultVals.windowKeys[0];
+                    defaultVals.windowKeys.erase( defaultVals.windowKeys.begin() );
 
-                    windowValues.erase(windowValues.begin());
+                    // Delete the label from the front of the list.
+                    int deletedLabel = defaultVals.partitionLabels[0];
+                    defaultVals.partitionLabels.erase( defaultVals.partitionLabels.begin() );
+
+                    // Delete the vector from the front of the sliding window.
+                    windowValues.erase( windowValues.begin() );
 
                     //Insert the point
                     windowValues.push_back(currentVector);
