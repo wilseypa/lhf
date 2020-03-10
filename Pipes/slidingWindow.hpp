@@ -28,6 +28,9 @@ public:
         std::unordered_map<int, int> numPointsPartn;  // A dictionary to store the number of points in each partition.
         std::unordered_map<int, int> maxKeys;  // A dictionary to store the maxKey of each partition.
         std::vector<double> distsFromCurrVec;
+        int keyToBeDeleted;
+        int labelToBeDeleted;
+        int indexToBeDeleted;
     };
     slidingWindow();
     pipePacket runPipe(pipePacket);

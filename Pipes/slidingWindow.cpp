@@ -57,9 +57,26 @@ bool nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vecto
 
         if (avgNNDistSinglePartition == 0 || nnDistCurrVec / avgNNDistSinglePartition > f1)
         {
+            // Delete the key (the lowest key) from the front of the list.
+            defaultVals.keyToBeDeleted = defaultVals.windowKeys[0];
+            defaultVals.windowKeys.erase( defaultVals.windowKeys.begin() );
+
+            // Delete the label from the front of the list.
+            defaultVals.labelToBeDeleted = defaultVals.partitionLabels[0];
+            defaultVals.partitionLabels.erase( defaultVals.partitionLabels.begin() );
+
+            defaultVals.indexToBeDeleted = 0; // In this case, the oldest point will be deleted from the window.
+
+            defaultVals.nnIndices.erase( defaultVals.nnIndices.begin() );
+		    defaultVals.nnDists.erase( defaultVals.nnDists.begin() );
+
+            // Delete the corresponding distance value from the list of distances from the current vector
+            // to the existing ones in the window.
+            defaultVals.distsFromCurrVec.erase( defaultVals.distsFromCurrVec.begin() );
 
             // Delete the vector from the front of the sliding window.
-            // windowValues.erase( windowValues.begin() );
+            windowValues.erase( windowValues.begin() );
+
             return true;
         }
 
@@ -129,16 +146,6 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
             {
                 if(inData.complex->insertIterative(currentVector, windowValues, defaultVals))
                 {
-                    // Delete the key (the lowest key) from the front of the list.
-                    int deletedKey = defaultVals.windowKeys[0];
-                    defaultVals.windowKeys.erase( defaultVals.windowKeys.begin() );
-
-                    // Delete the label from the front of the list.
-                    int deletedLabel = defaultVals.partitionLabels[0];
-                    defaultVals.partitionLabels.erase( defaultVals.partitionLabels.begin() );
-
-                    // Delete the vector from the front of the sliding window.
-                    windowValues.erase( windowValues.begin() );
 
                     //Insert the point
                     windowValues.push_back(currentVector);

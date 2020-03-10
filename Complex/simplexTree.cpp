@@ -195,18 +195,24 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 		return true;
 	}
 
-	if(streamEval(currentVector, window, defaultVals)){
+	if(streamEval(currentVector, window, defaultVals)){   // Point is deemed 'significant'
 
-		// Point is deemed 'significant'.
+		deleteIterative( defaultVals.keyToBeDeleted, defaultVals.indexToBeDeleted );  // Delete from distance matrix and complex.
+		runningVectorIndices.erase( runningVectorIndices.begin() + defaultVals.indexToBeDeleted );
 
-		std::vector<double> distMatrixRow = ut.nearestNeighbors(vector, window);
-		distMatrix.push_back(distMatrixRow);
+		// Add a new column and row to the end of the upper triangular distance matrix.
+		for(unsigned int i = 0; i < distMatrix.size(); i++) {
+            distMatrix[i].push_back( defaultVals.distsFromCurrVec[i] );
 
-		deleteIterative(runningVectorIndices[0]);
+            if ( defaultVals.distsFromCurrVec[i] < defaultVals.nnDists[i] ) {
+                defaultVals.nnDists[i] = defaultVals.distsFromCurrVec[i];
+                defaultVals.nnIndices[i] = distMatrix.size() + 1;
+            } else{}
+		}
 
 		insert(distMatrixRow);
 
-		runningVectorIndices.erase(runningVectorIndices.begin());
+
 
 		removedSimplices++;
 
@@ -217,32 +223,22 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 }
 
 // Delete a node from the tree and from the distance matrix using a vector index
-void simplexTree::deleteIterative(int vectorIndex){
-	//Find what row/column of our distance matrix pertain to the vector index
+void simplexTree::deleteIterative(int keyToBeDeleted, int indexToBeDeleted)
+{
+    // Delete the corresponding row and column from the distance matrix.
+    distMatrix.erase(distMatrix.begin() + indexToBeDeleted);
 
-	std::vector<int>::iterator it;
-	if((it = std::find(runningVectorIndices.begin(), runningVectorIndices.end(), vectorIndex)) != runningVectorIndices.end()){
-		//std::cout << "Found vector at index " << it - runningVectorIndices.begin() + 1 << std::endl;
+    for(auto z : distMatrix)
+    {
+        if(z.size() >= indexToBeDeleted)
+            z.erase(z.begin() + indexToBeDeleted);
+    }
 
-		int index = it - runningVectorIndices.begin();
+    //Delete all entries in the simplex tree with the index...
+    // TODO :)
+    deleteIndexRecurse(keyToBeDeleted, head);
 
-		//Delete the row and column from the distance matrix based on vector index
-		distMatrix.erase(distMatrix.begin() + index);
-
-		for(auto z : distMatrix){
-			if(z.size() >= index)
-				z.erase(z.begin() + index);
-		}
-
-		//Delete all entries in the simplex tree with the index...
-		// TODO :)
-		deleteIndexRecurse(vectorIndex, head);
-
-
-	} else {
-		ut.writeDebug("simplexTree","Failed to find vector by index");
-	}
-	return;
+    return;
 }
 
 
