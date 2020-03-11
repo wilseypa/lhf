@@ -275,11 +275,11 @@ void slidingWindow::runComplexInitializer(pipePacket &inData, std::vector<int> &
                 }
             }
 
-            int tempIndex = std::min_element(distsFromCurrVect.begin(), distsFromCurrVect.end()) - distsFromCurrVect.begin();
+            auto tempIndex = std::min_element(distsFromCurrVect.begin(), distsFromCurrVect.end()) - distsFromCurrVect.begin();
             if (tempIndex < i)
                 nnIndices.push_back(tempIndex);
             else
-                nnIndices.push_back(tempIndex+1);
+                nnIndices.push_back(tempIndex + 1);
 
             auto nnDistFromCurrVect = *std::min_element( distsFromCurrVect.begin(), distsFromCurrVect.end() );
             nnDists.push_back( nnDistFromCurrVect );

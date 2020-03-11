@@ -31,6 +31,7 @@ public:
         int keyToBeDeleted;
         int labelToBeDeleted;
         int indexToBeDeleted;
+        std::vector<double> distMatLastRow(windowMaxSize, 0);
     };
     slidingWindow();
     pipePacket runPipe(pipePacket);

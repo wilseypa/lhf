@@ -204,11 +204,33 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 		for(unsigned int i = 0; i < distMatrix.size(); i++) {
             distMatrix[i].push_back( defaultVals.distsFromCurrVec[i] );
 
+            // Update nnIndices and nnDists.
             if ( defaultVals.distsFromCurrVec[i] < defaultVals.nnDists[i] ) {
                 defaultVals.nnDists[i] = defaultVals.distsFromCurrVec[i];
                 defaultVals.nnIndices[i] = distMatrix.size() + 1;
-            } else{}
+            } else {
+                if ( defaultVals.nnIndices[i] == defaultVals.indexToBeDeleted ) {
+                    std::vector<double> newDistsFromVect;
+                    for(unsigned int j = 0; j < distMatrix.size()+1; j++) {
+                        if (j < i)
+                            newDistsFromVect.push_back( distMatrix[j][i] );
+                        else if (j > i)
+                            newDistsFromVect.push_back( distMatrix[i][j] );
+                    }
+                    auto tempIdx = std::min_element(newDistsFromVect.begin(), newDistsFromVect.end()) - newDistsFromVect.begin();
+                    if (tempIdx < i)
+                        defaultVals.nnIndices[i] = tempIdx;
+                    else
+                        defaultVals.nnIndices[i] = tempIdx + 1;
+
+                    auto newNNdistFromVect = *std::min_element( newDistsFromVect.begin(), newDistsFromVect.end() );
+                    defaultVals.nnDists[i] = newNNdistFromVect;
+                }
+            }
 		}
+		distMatrix.push_back( defaultVals.distMatLastRow );
+
+
 
 		insert(distMatrixRow);
 
