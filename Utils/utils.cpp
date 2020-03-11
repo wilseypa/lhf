@@ -19,15 +19,28 @@ utils::utils(std::string _debug, std::string _outputFile){
 }
 
 std::vector<std::vector<std::vector<double>>> utils::separatePartitions(int k, std::vector<std::vector<double>> originalData, std::vector<unsigned> labels){
-	
 	std::vector<std::vector<double>> a;
-	
 	std::vector<std::vector<std::vector<double>>> res(k, a);
 	
+	for(unsigned i = 0; i < labels.size(); i++){
+		std::cout << labels[i] << std::endl;
+		res[labels[i]].push_back(originalData[i]);
+	}
+	
+	return res;
+}
+
+std::vector<std::vector<std::vector<double>>> utils::separateBoundaryPartitions(std::vector<std::set<unsigned>> boundaryLists, std::vector<std::vector<double>> originalData, std::vector<unsigned> labels){
+	std::vector<std::vector<double>> a;
+	std::vector<std::vector<std::vector<double>>> res(boundaryLists.size(), a);
+		
 	for(unsigned i = 0; i < originalData.size(); i++){
 		
-		res[labels[i]].push_back(originalData[i]);
-		
+		for(unsigned j = 0; j < boundaryLists.size(); j++){
+			
+			if(boundaryLists[j].find(labels[i]) != boundaryLists[j].end())
+				res[j].push_back(originalData[i]);
+		}
 	}
 	
 	return res;

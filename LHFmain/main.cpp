@@ -87,6 +87,45 @@ void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD)
 	return;
 }	
 
+void processReducedWrapper(std::map<std::string, std::string> args, pipePacket* wD){
+    
+	//Start with the preprocessing function, if enabled
+	auto pre = args["preprocessor"];
+	if(pre != ""){
+		auto *preprocess = new preprocessor();
+		auto *prePipe = preprocess->newPreprocessor(pre);
+		
+		if(prePipe != 0 && prePipe->configPreprocessor(args)){
+			*wD = prePipe->runPreprocessorWrapper(*wD);
+		} else {
+			cout << "LHF : Failed to configure pipeline: " << args["pipeline"] << endl;
+		}
+	}
+	
+	utils ut;
+	auto partitionedData = ut.separatePartitions(std::atoi(args["clusters"].c_str()), wD->fullData, wD->originalLabels);
+	
+	std::cout << "Partitions: " << partitionedData.size() << std::endl << "Counts: ";
+	for(auto z : partitionedData){
+		if(z.size() > 0){
+			std::cout << "Running Pipeline with : " << z.size() << " vectors" << std::endl;
+			wD->originalData = z;
+			
+			
+			runPipeline(args, wD);
+		} else 
+			std::cout << "skipping" << std::endl;
+	}
+	
+	
+		
+	return;
+}	
+
+
+
+
+
 void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* wD){
     
 	//Start with the preprocessing function, if enabled
@@ -123,7 +162,20 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 	//		Distribute work to slaves (run fastPersistence on given data)
 	//		Retrieve results
 	//		Merge Barcodes	
-	do{
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	// OLD----- (but keeep for reference later)
+	
+	/*do{
 		if(wD->boundaries.size() > 0){
 			
 			std::vector<std::thread> threads;
@@ -142,7 +194,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		}
 	} while (wD->boundaries.size() > 0);
 		
-	return;
+	return;*/
 }	
 
 int main(int argc, char* argv[]){
@@ -204,9 +256,10 @@ int main(int argc, char* argv[]){
 		//Add data to our pipePacket
 		wD->originalData = wD->originalData;
 		
-		auto ar = args["upscale"];
-		if(ar == "true"){
+		if(args["upscale"] == "true"){
 			processUpscaleWrapper(args, wD);
+		} else if (args["mode"] == "reduced"){
+			processReducedWrapper(args,wD);			
 		} else {
 			processDataWrapper(args, wD);
 		}

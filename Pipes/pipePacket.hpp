@@ -5,7 +5,7 @@
 // Header file for pipePacket class - see pipePacket.cpp for descriptions
 
 struct bettiBoundaryTableEntry{
-	int bettiDim;
+	unsigned bettiDim;
 	double birth;
 	double death;
 	std::set<unsigned> boundaryPoints;
