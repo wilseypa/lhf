@@ -15,6 +15,7 @@ class utils {
   public:
 	utils();
 	utils(std::string, std::string);
+	std::vector<std::vector<std::vector<double>>> separatePartitions(int, std::vector<std::vector<double>>, std::vector<unsigned>);
 	void print2DVector(const std::vector<std::vector<unsigned>>&);
 	void print1DVector(const std::vector<unsigned>&);
 	void print1DVector(const std::set<unsigned>&);

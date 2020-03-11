@@ -30,7 +30,7 @@ void simplexBase::setConfig(std::map<std::string, std::string> configMap){
 		debug = std::atoi(configMap["debug"].c_str());
 	pipe = configMap.find("outputFile");
 	if(pipe != configMap.end())
-		outputFile = std::atoi(configMap["outputFile"].c_str());
+		outputFile = configMap["outputFile"].c_str();
 	pipe = configMap.find("dimensions");
 	if(pipe != configMap.end())
 		maxDimension = std::atoi(configMap["dimensions"].c_str());

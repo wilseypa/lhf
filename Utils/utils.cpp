@@ -18,6 +18,21 @@ utils::utils(std::string _debug, std::string _outputFile){
 	outputFile = _outputFile;
 }
 
+std::vector<std::vector<std::vector<double>>> utils::separatePartitions(int k, std::vector<std::vector<double>> originalData, std::vector<unsigned> labels){
+	
+	std::vector<std::vector<double>> a;
+	
+	std::vector<std::vector<std::vector<double>>> res(k, a);
+	
+	for(unsigned i = 0; i < originalData.size(); i++){
+		
+		res[labels[i]].push_back(originalData[i]);
+		
+	}
+	
+	return res;
+}
+
 void utils::print2DVector(const std::vector<std::vector<unsigned>>& a){
 	for(unsigned i = 0; i < a.size(); i++){
 		for(unsigned j = 0; j < a[i].size(); j++){

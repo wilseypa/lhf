@@ -6,8 +6,12 @@ cmake_minimum_required(VERSION 3.5)
 
 add_library(preprocessor "preprocessor.cpp" "preprocessor.hpp")
 add_library(kMeansPlusPlus "kMeansPlusPlus.cpp" "kMeansPlusPlus.hpp")
-add_library(streamingKmeans "streamingKmeans.cpp" "streamingKmeans.cpp")
+add_library(streamingKmeans "streamingKmeans.cpp" "streamingKmeans.hpp")
 add_library(streamingUtils "streamingUtils.cpp" "streamingUtils.hpp")
+add_library(denStream "denStream.cpp" "denStream.hpp")
+add_library(dbscan "dbscan.cpp" "dbscan.hpp")
+add_library(kdTree "kdTree.cpp" "kdTree.hpp")
+
 
 include_directories(../Complex)
 link_directories(../Complex)
@@ -21,7 +25,9 @@ link_directories(../Utils)
 target_link_libraries(preprocessor kMeansPlusPlus)
 target_link_libraries(preprocessor streamingKmeans)
 target_link_libraries(preprocessor streamingUtils)
-
+target_link_libraries(preprocessor denStream)
+target_link_libraries(preprocessor dbscan)
+target_link_libraries(preprocessor kdTree)
 
 INSTALL (TARGETS preprocessor
 	LIBRARY DESTINATION lib
