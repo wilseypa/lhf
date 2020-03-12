@@ -204,7 +204,21 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 		for(unsigned int i = 0; i < distMatrix.size(); i++) {
             distMatrix[i].push_back( defaultVals.distsFromCurrVec[i] );
 
-            // Update nnIndices and nnDists.
+            // Update nnIndices and nnDists for only those partitions from which the point was deleted or to which the new point is to be added.
+            if ( defaultVals.partitionLabels[i] == defaultVals.labelToBeDeleted ||  defaultVals.partitionLabels[i] == defaultVals.targetPartition ) {
+
+                // If the partition from which the point was deleted is the same as the target partition of the new point to be added:
+                if ( defaultVals.labelToBeDeleted == defaultVals.targetPartition ) {
+                    if ( defaultVals.distsFromCurrVec[i] < defaultVals.nnDists[i] ) {
+                        defaultVals.nnDists[i] = defaultVals.distsFromCurrVec[i];
+                        defaultVals.nnIndices[i] = distMatrix.size();
+
+
+                    }
+                }
+            }
+
+
             if ( defaultVals.distsFromCurrVec[i] < defaultVals.nnDists[i] ) {
                 defaultVals.nnDists[i] = defaultVals.distsFromCurrVec[i];
                 defaultVals.nnIndices[i] = distMatrix.size() + 1;

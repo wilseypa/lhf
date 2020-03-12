@@ -77,6 +77,9 @@ bool nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vecto
             // Delete the vector from the front of the sliding window.
             windowValues.erase( windowValues.begin() );
 
+            // Since the window was 'pure', the partition label of the new point to be added is (existing label + 1).
+            defaultVals.targetPartition = defaultVals.labelToBeDeleted + 1;
+
             return true;
         }
 
