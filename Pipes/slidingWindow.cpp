@@ -80,6 +80,9 @@ bool nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vecto
             // Since the window was 'pure', the partition label of the new point to be added is (existing label + 1).
             defaultVals.targetPartition = defaultVals.labelToBeDeleted + 1;
 
+            // Decrement the number of points in the existing partition by 1.
+            defaultVals.numPointsPartn[defaultVals.labelToBeDeleted] = defaultVals.windowMaxSize - 1;
+
             return true;
         }
 

@@ -204,43 +204,28 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 		for(unsigned int i = 0; i < distMatrix.size(); i++) {
             distMatrix[i].push_back( defaultVals.distsFromCurrVec[i] );
 
-            // Update nnIndices and nnDists for only those partitions from which the point was deleted or to which the new point is to be added.
-            if ( defaultVals.partitionLabels[i] == defaultVals.labelToBeDeleted ||  defaultVals.partitionLabels[i] == defaultVals.targetPartition ) {
+            // Update NN statistics for only those partitions from which the point was deleted or to which the new point is to be added.
+            // Case 1: i-th point belongs to a partition the last point was deleted from, but not to the partition the new point is to be added to.
+            // And, the point that was deleted was the nearest neighbor of the i-th point.
+            if ( defaultVals.partitionLabels[i] == defaultVals.labelToBeDeleted
+                    &&  defaultVals.partitionLabels[i] != defaultVals.targetPartition
+                    && defaultVals.nnIndices[i] == defaultVals.indexToBeDeleted )
+            {
 
-                // If the partition from which the point was deleted is the same as the target partition of the new point to be added:
-                if ( defaultVals.labelToBeDeleted == defaultVals.targetPartition ) {
-                    if ( defaultVals.distsFromCurrVec[i] < defaultVals.nnDists[i] ) {
-                        defaultVals.nnDists[i] = defaultVals.distsFromCurrVec[i];
-                        defaultVals.nnIndices[i] = distMatrix.size();
+                // If only one point remains in the partition from which the last point was deleted:
+                if ( defaultVals.numPointsPartn[defaultVals.labelToBeDeleted] == 1 )
+                {
+                    defaultVals.avgNNDistPartitions[defaultVals.labelToBeDeleted] = -1;
+                    defaultVals.nnIndices[i] = -1;
+                    defaultVals.nnDists[i] = -1;
+                } else {
 
-
-                    }
                 }
+
+
             }
 
 
-            if ( defaultVals.distsFromCurrVec[i] < defaultVals.nnDists[i] ) {
-                defaultVals.nnDists[i] = defaultVals.distsFromCurrVec[i];
-                defaultVals.nnIndices[i] = distMatrix.size() + 1;
-            } else {
-                if ( defaultVals.nnIndices[i] == defaultVals.indexToBeDeleted ) {
-                    std::vector<double> newDistsFromVect;
-                    for(unsigned int j = 0; j < distMatrix.size()+1; j++) {
-                        if (j < i)
-                            newDistsFromVect.push_back( distMatrix[j][i] );
-                        else if (j > i)
-                            newDistsFromVect.push_back( distMatrix[i][j] );
-                    }
-                    auto tempIdx = std::min_element(newDistsFromVect.begin(), newDistsFromVect.end()) - newDistsFromVect.begin();
-                    if (tempIdx < i)
-                        defaultVals.nnIndices[i] = tempIdx;
-                    else
-                        defaultVals.nnIndices[i] = tempIdx + 1;
-
-                    auto newNNdistFromVect = *std::min_element( newDistsFromVect.begin(), newDistsFromVect.end() );
-                    defaultVals.nnDists[i] = newNNdistFromVect;
-                }
-            }
 		}
 		distMatrix.push_back( defaultVals.distMatLastRow );
 
