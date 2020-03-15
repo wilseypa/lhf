@@ -31,6 +31,7 @@ public:
         int keyToBeDeleted;
         int labelToBeDeleted;
         int indexToBeDeleted;
+        double nnDistToBeDeleted;
         std::vector<double> distMatLastRow(windowMaxSize, 0);  // The last row of the upper triangular distance matrix is a vector of 0's.
         int targetPartition;  // The partition membership of a new vector, if the new vector is to be added to the window.
     };

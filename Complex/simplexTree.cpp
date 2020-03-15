@@ -200,6 +200,8 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 		deleteIterative( defaultVals.keyToBeDeleted, defaultVals.indexToBeDeleted );  // Delete from distance matrix and complex.
 		runningVectorIndices.erase( runningVectorIndices.begin() + defaultVals.indexToBeDeleted );
 
+		int twoPointPartition = 0;  // A flag which, if zero, indicates that none of the points in a two-point partition has been processed.
+		double sumOldNNdists = 0.0;
 		// Add a new column and row to the end of the upper triangular distance matrix.
 		for(unsigned int i = 0; i < distMatrix.size(); i++) {
             distMatrix[i].push_back( defaultVals.distsFromCurrVec[i] );
@@ -218,10 +220,43 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
                     defaultVals.avgNNDistPartitions[defaultVals.labelToBeDeleted] = -1;
                     defaultVals.nnIndices[i] = -1;
                     defaultVals.nnDists[i] = -1;
-                } else {
 
                 }
+                else if ( defaultVals.numPointsPartn[defaultVals.labelToBeDeleted] == 2 &&  twoPointPartition == 0 )
+                {
+                    // If only two points remain in the partition from which the last point was deleted, and if none of the points in the
+                    // two-point partition has been processed:
 
+                    // Set up an iterator to the (i+1)-th position.
+                    std::vector<int>::iterator it = defaultVals.partitionLabels.begin() + (i+1);
+
+                    // Find the position of the second member of the two-point partition. Since i is the position of the first member, the
+                    // search for the other member can begin at the (i+1)-th position.
+                    // https://stackoverflow.com/questions/12990148/get-all-positions-of-elements-in-stl-vector-that-are-greater-than-a-value
+                    // https://stackoverflow.com/questions/671423/c-stl-vectors-get-iterator-from-index
+                    // https://stackoverflow.com/questions/30217956/error-variable-cannot-be-implicitly-captured-because-no-default-capture-mode-h
+                    it = std::find_if( it, defaultVals.partitionLabels.end(),
+                                       [&defaultVals.labelToBeDeleted](int j)
+                    {
+                        return (j == defaultVals.labelToBeDeleted);
+                    } );
+
+                    int secondMemberIndex = it - defaultVals.partitionLabels.begin();
+
+
+                    // Update the NN statistics for both the members of the two-point partition.
+                    defaultVals.nnIndices[i] = secondMemberIndex;
+                    defaultVals.nnIndices[secondMemberIndex] = i;
+
+                    defaultVals.nnDists[i] = distMatrix[i][secondMemberIndex];  // Because secondMemberIndex > i
+                    defaultVals.nnDists[secondMemberIndex] = defaultVals.nnDists[i];
+
+                    defaultVals.avgNNDistPartitions[defaultVals.labelToBeDeleted] = defaultVals.nnDists[i];
+
+                    twoPointPartition = 1;  // Set the flag to 1 so that the second member of the two-point partition is not processed again.
+
+                } else {
+                }
 
             }
 

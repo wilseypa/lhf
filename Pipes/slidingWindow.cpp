@@ -68,6 +68,8 @@ bool nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vecto
             defaultVals.indexToBeDeleted = 0; // In this case, the oldest point will be deleted from the window.
 
             defaultVals.nnIndices.erase( defaultVals.nnIndices.begin() );
+
+            defaultVals.nnDistToBeDeleted = defaultVals.nnDists[0];
 		    defaultVals.nnDists.erase( defaultVals.nnDists.begin() );
 
             // Delete the corresponding distance value from the list of distances from the current vector
