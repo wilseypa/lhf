@@ -202,6 +202,7 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 
 		int twoPointPartition = 0;  // A flag which, if zero, indicates that none of the points in a two-point partition has been processed.
 		double sumOldNNdists = 0.0;
+		double sumNewNNdists = 0.0;
 		// Add a new column and row to the end of the upper triangular distance matrix.
 		for(unsigned int i = 0; i < distMatrix.size(); i++) {
             distMatrix[i].push_back( defaultVals.distsFromCurrVec[i] );
@@ -256,10 +257,58 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
                     twoPointPartition = 1;  // Set the flag to 1 so that the second member of the two-point partition is not processed again.
 
                 } else {
+                    sumOldNNdists = sumOldNNdists + defaultVals.nnDists[i];
+                    std::vector<double> newDistsFromVect;
+                    for(unsigned int j = 0; j < distMatrix.size(); j++) {
+                        if ( defaultVals.partitionLabels[j] == defaultVals.labelToBeDeleted ) {
+                            if (j < i)
+                                newDistsFromVect.push_back( distMatrix[j][i] );
+                            else if (j > i)
+                                newDistsFromVect.push_back( distMatrix[i][j] );
+                        }
+                    }
+                    auto tempIdx = std::min_element(newDistsFromVect.begin(), newDistsFromVect.end()) - newDistsFromVect.begin();
+                    if (tempIdx < i)
+                        defaultVals.nnIndices[i] = tempIdx;
+                    else
+                        defaultVals.nnIndices[i] = tempIdx + 1;
+
+                    auto newNNdistFromVect = *std::min_element( newDistsFromVect.begin(), newDistsFromVect.end() );
+                    defaultVals.nnDists[i] = newNNdistFromVect;
+                    sumNewNNdists = sumNewNNdists + newNNdistFromVect;
                 }
 
             }
 
+            // Case 2: i-th point belongs to the partition the new point is to be added to, but not to the partition the last point was deleted from.
+            // In this case, is it possible that the point that was deleted was the nearest neighbor of the i-th point?
+            else if ( defaultVals.partitionLabels[i] != defaultVals.labelToBeDeleted && defaultVals.partitionLabels[i] == defaultVals.targetPartition ) {
+
+                // If, previously, there was only one point in the target partition:
+                if ( defaultVals.avgNNDistPartitions[defaultVals.targetPartition] == -1 ) {
+
+                    // Update the NN statistics for the "new" two-point partition.
+                    defaultVals.nnIndices[i] = defaultVals.windowMaxSize;
+                    defaultVals.nnIndices[defaultVals.windowMaxSize] = i;
+
+                    defaultVals.nnDists[i] = defaultVals.distsFromCurrVec[i];
+                    defaultVals.nnDists[defaultVals.windowMaxSize] = defaultVals.nnDists[i];
+
+                    defaultVals.avgNNDistPartitions[defaultVals.targetPartition] = defaultVals.nnDists[i];
+                }
+                else {
+                    if ( defaultVals.distsFromCurrVec[i] < defaultVals.nnDists[i] ) {
+                        sumOldNNdists = sumOldNNdists + defaultVals.nnDists[i];
+
+                        defaultVals.nnDists[i] = defaultVals.distsFromCurrVec[i];
+                        defaultVals.nnIndices[i] = defaultVals.windowMaxSize;
+
+                        sumNewNNdists = sumNewNNdists + newNNdistFromVect;
+
+                    }
+                }
+
+            }
 
 		}
 		distMatrix.push_back( defaultVals.distMatLastRow );
