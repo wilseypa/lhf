@@ -115,6 +115,7 @@ class simplexBase {
 	virtual void expandDimensions(int);
 	virtual void reduceComplex();
     virtual std::vector<std::pair<double, std::vector<unsigned>>> getd0Pairs();
+    virtual void clear();
 	
 	//Unused, possibly future
 	virtual void outputSimplex();

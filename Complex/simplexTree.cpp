@@ -581,3 +581,22 @@ std::vector<std::pair<double, std::vector<unsigned>>> simplexTree::getd0Pairs(){
 	return ret;
 }
 
+
+void simplexTree::clear(){
+	
+	//Clear the simplexTree structure
+	
+	
+	
+	//Clear the weighed edge graph
+	
+	for(auto z : weightEdgeGraph){
+		z.clear();
+	}
+	
+	weightEdgeGraph.clear();
+	
+	
+	
+}
+

@@ -113,6 +113,8 @@ void processReducedWrapper(std::map<std::string, std::string> args, pipePacket* 
 			
 			
 			runPipeline(args, wD);
+			
+			wD->complex->clear();
 		} else 
 			std::cout << "skipping" << std::endl;
 	}

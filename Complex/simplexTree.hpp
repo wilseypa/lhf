@@ -49,6 +49,7 @@ class simplexTree : public simplexBase {
 	void expandDimensions(int){return;};
 	void reduceComplex();
 	std::vector<std::pair<double, std::vector<unsigned>>> getd0Pairs();
+	void clear();
 	
 };
 
