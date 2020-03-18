@@ -118,6 +118,20 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		std::cout << a.size() << "\t";
 	}
 	std::cout << std::endl;
+        int nprocs,rank;
+	MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
+	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+	auto numberofslaves = args["clusters"];
+        if(rank == 0)
+	{
+          
+        std::cout << partitionedData[rank].size()<<std::endl;
+	}
+        else
+	{
+	std::cout << partitionedData[rank].size()<<std::endl;
+	}
+        MPI_Finalize();
 	
 	// Once we have X data sets to process, along with the original centroid dataset
 	//		Distribute work to slaves (run fastPersistence on given data)
@@ -178,7 +192,8 @@ int main(int argc, char* argv[]){
 	
 	
 	//Define external classes used for reading input, parsing arguments, writing output
-	auto *rs = new readInput();
+    MPI_Init(NULL,NULL);
+    auto *rs = new readInput();
     auto *ap = new argParser();
     
     //Parse the command-line arguments
