@@ -125,7 +125,7 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 				args["preprocessor"] = "kmeans++";
 			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
 			args["upscale"] = "false";
-			args["complexType"] = "simplexTree";
+			args["complexType"] = "simplexArrayList";
 		} else if(args["mode"] == "upscaleBound"){
 			if(args["preprocessor"] == "")
 				args["preprocessor"] = "kmeans++";

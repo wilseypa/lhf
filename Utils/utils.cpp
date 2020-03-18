@@ -18,12 +18,24 @@ utils::utils(std::string _debug, std::string _outputFile){
 	outputFile = _outputFile;
 }
 
+double utils::computeMaxRadius(int k, std::vector<std::vector<double>> centroids, std::vector<std::vector<double>> originalData, std::vector<unsigned> labels){
+	double maxRadius = 0;
+	
+	for(unsigned i = 0; i < labels.size(); i++){
+		double curRadius = vectors_distance(originalData[i], centroids[labels[i]]);
+		
+		if(curRadius > maxRadius)
+			maxRadius = curRadius;
+	}
+	
+	return maxRadius;	
+}
+
 std::vector<std::vector<std::vector<double>>> utils::separatePartitions(int k, std::vector<std::vector<double>> originalData, std::vector<unsigned> labels){
 	std::vector<std::vector<double>> a;
 	std::vector<std::vector<std::vector<double>>> res(k, a);
 	
 	for(unsigned i = 0; i < labels.size(); i++){
-		std::cout << labels[i] << std::endl;
 		res[labels[i]].push_back(originalData[i]);
 	}
 	

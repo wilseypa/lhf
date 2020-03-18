@@ -91,6 +91,9 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 				foundPivot = true;
 				pivots.push_back(pivotIndex);
 				mst.push_back(edge.second);
+				bettiBoundaryTableEntry des = { 0, 0, edge.second, wset };
+				inData.bettiTable.push_back(des);
+				
 				set_union(edge.first.begin(), edge.first.end(), cSet.begin(), cSet.end(), std::inserter(tempset, tempset.end()));
 				
 			//If one element intersects with a set (and we already found a pivot, join sets)
@@ -138,8 +141,11 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	
 	for(auto z : mst){
 		bettis += "0,0," + std::to_string(z) + "\n";
+		
 	}
 	bettis += "0,0," + std::to_string(maxEpsilon) + "\n";
+	bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {} };
+	inData.bettiTable.push_back(des);
 	
 	
 	
@@ -161,11 +167,11 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			
 			//Track the current pivots located into an unordered map
 			std::unordered_map<unsigned, std::set<unsigned>> v;
-			std::cout << "D" << d << ": " << std::endl;
+			//std::cout << "D" << d << ": " << std::endl;
 			
-			std::cout << "\tEdges[d]: " << edges[d].size() << "\tEdges[d+1]: " << edges[d+1].size() << std::endl;
+			//std::cout << "\tEdges[d]: " << edges[d].size() << "\tEdges[d+1]: " << edges[d+1].size() << std::endl;
 			
-			std::cout << "Pivots: " << pivots.size() << std::endl;
+			//std::cout << "Pivots: " << pivots.size() << std::endl;
 			/*for(auto z : pivots){
 				std::cout << z << "\t";
 			}
@@ -215,11 +221,12 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						v[*pIndex] = cofaceList;
 						nextPivots.push_back(columnIndex);		
 						
-						if(edges[d][*pIndex].second != edges[d+1][columnIndex].second)
+						if(edges[d][*pIndex].second != edges[d+1][columnIndex].second){
 								bettis += std::to_string(d) + "," + std::to_string(edges[d][*pIndex].second) +"," + std::to_string(edges[d+1][columnIndex].second) + "\n";
 								
-						bettiBoundaryTableEntry des = { d, edges[d][*pIndex].second, edges[d+1][columnIndex].second, cofaceList };
-						inData.bettiTable.push_back(des);
+							bettiBoundaryTableEntry des = { d, edges[d][*pIndex].second, edges[d+1][columnIndex].second, cofaceList };
+							inData.bettiTable.push_back(des);
+						}
 											
 						break;
 					} else {
@@ -241,7 +248,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		
 	}
 	
-	std::cout << bettis << std::endl;
+	//std::cout << bettis << std::endl;
 	//
 	
 	
@@ -255,8 +262,13 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	ut.writeDebug("persistence","Bettis executed in " + std::to_string(elapsed.count()/1000.0) + " seconds (physical time)");;
 	
 	//Print the bettis
-	if(debug)
-		std::cout << std::endl << bettis << std::endl;
+	//if(debug){
+		//std::cout << std::endl << bettis << std::endl;
+		//for(auto a : inData.bettiTable){
+			//std::cout << a.bettiDim << "," << a.birth << "," << a.death << ",";
+			//ut.print1DVector(a.boundaryPoints);
+		//}
+	//}
 		
 	inData.bettiOutput = bettis;
 		

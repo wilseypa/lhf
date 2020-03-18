@@ -585,7 +585,7 @@ std::vector<std::pair<double, std::vector<unsigned>>> simplexTree::getd0Pairs(){
 void simplexTree::clear(){
 	
 	//Clear the simplexTree structure
-	
+	deletion(head);
 	
 	
 	//Clear the weighed edge graph

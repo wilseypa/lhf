@@ -103,6 +103,11 @@ void processReducedWrapper(std::map<std::string, std::string> args, pipePacket* 
 	}
 	
 	utils ut;
+	
+	auto maxRadius = ut.computeMaxRadius(std::atoi(args["clusters"].c_str()), wD->originalData, wD->fullData, wD->originalLabels);
+	auto centroids = wD->originalData;
+	std::cout << "Using maxRadius: " << maxRadius << std::endl;
+	
 	auto partitionedData = ut.separatePartitions(std::atoi(args["clusters"].c_str()), wD->fullData, wD->originalLabels);
 	
 	std::cout << "Partitions: " << partitionedData.size() << std::endl << "Counts: ";
@@ -119,6 +124,22 @@ void processReducedWrapper(std::map<std::string, std::string> args, pipePacket* 
 			std::cout << "skipping" << std::endl;
 	}
 	
+	std::cout << "Full Data: " << centroids.size() << std::endl;
+	if(centroids.size() > 0){
+		std::cout << "Running Pipeline with : " << centroids.size() << " vectors" << std::endl;
+		wD->originalData = centroids;
+		runPipeline(args, wD);
+		
+		wD->complex->clear();
+	} else 
+		std::cout << "skipping" << std::endl;
+	
+	std::cout << std::endl << "_______BETTIS_______" << std::endl;
+	
+	for(auto a : wD->bettiTable){
+		std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
+		ut.print1DVector(a.boundaryPoints);
+	}
 	
 		
 	return;
