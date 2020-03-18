@@ -301,7 +301,7 @@ void simplexTree::insert(std::vector<double>&) {
 	
 	//Check if this is the first node (i.e. head)
 	//	If so, initialize the head node
-	if(head == nullptr){		
+	if(head == nullptr){
 		head = curNode;
 		indexCounter++;
 		runningVectorCount++;
@@ -344,6 +344,7 @@ void simplexTree::insert(std::vector<double>&) {
 	do{
 		recurseInsert(temp, indexCounter, 0, 0, tempSet);
 	}while(temp->sibling != nullptr && (temp = temp->sibling) != nullptr);
+	
 	
 	//Insert into the right of the tree
 	temp = dimensions[0];
@@ -531,7 +532,7 @@ bool simplexTree::deletion(treeNode* removalEntry) {
 	treeNode* curNode = removalEntry;
 	int deletionCount = 0;
 	
-	//Iterate to the bottom of branch
+	//Iterate to the bottom of branch in the current node
 	while(curNode->child != nullptr){ 
 		curNode->child->parent = curNode;
 		curNode=curNode->child;
@@ -559,9 +560,7 @@ bool simplexTree::deletion(treeNode* removalEntry) {
 	deletionCount++;
 	delete curNode;
 	nodeCount--;
-	//curNode->child = nullptr;
-	
-	std::cout << "\tDeleted " << deletionCount << " nodes" << std::endl;
+	removalEntry->child = nullptr;
 	
 	
 	
@@ -586,17 +585,19 @@ void simplexTree::clear(){
 	
 	//Clear the simplexTree structure
 	deletion(head);
-	
+	head = nullptr;
 	
 	//Clear the weighed edge graph
-	
 	for(auto z : weightEdgeGraph){
 		z.clear();
 	}
-	
 	weightEdgeGraph.clear();
+	dimensions.clear();
 	
 	
+	//runningVectorCount = 0;
+	runningVectorIndices.clear();
+	//indexCounter = 0;
 	
 }
 
