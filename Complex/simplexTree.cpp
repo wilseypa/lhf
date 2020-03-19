@@ -200,14 +200,21 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 		deleteIterative( defaultVals.keyToBeDeleted, defaultVals.indexToBeDeleted );  // Delete from distance matrix and complex.
 		runningVectorIndices.erase( runningVectorIndices.begin() + defaultVals.indexToBeDeleted );
 
-		int twoPointPartition = 0;  // A flag which, if zero, indicates that none of the points in a two-point partition has been processed.
 		double sumOldNNdists = 0.0;
 		double sumNewNNdists = 0.0;
+
+		double sumDelOldNNdists = 0.0;
+		double sumDelNewdists = 0.0;
+
+		double sumAddOldNNdists = 0.0;
+		double sumAddNewdists = 0.0;
+
 		std::vector<double> distsFromCurrVecTP;  // A vector to store the distances from the current vector to the ones in the target partition.
 		std::vector<int> tpIndices; // A vector to store the positions of the existing members of the target partition.
 
 		// Add a new column and row to the end of the upper triangular distance matrix.
-		for(unsigned int i = 0; i < distMatrix.size(); i++) {
+        for(unsigned int i = 0; i < distMatrix.size(); i++)
+        {
             distMatrix[i].push_back( defaultVals.distsFromCurrVec[i] );
 
             // Update NN statistics for only those partitions from which the point was deleted or to which the new point is to be added.
@@ -226,19 +233,24 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
                     defaultVals.nnDists[i] = -1;
 
                 }
-                else {
-                    sumOldNNdists = sumOldNNdists + defaultVals.nnDists[i];
+                else
+                {
+                    sumDelOldNNdists = sumDelOldNNdists + defaultVals.nnDists[i];
 
                     std::vector<double> memberDistsFromVect;
                     std::vector<int> memberIndices;
 
-                    for(unsigned int j = 0; j < distMatrix.size(); j++) {
-                        if ( defaultVals.partitionLabels[j] == defaultVals.labelToBeDeleted ) {
-                            if (j < i) {
+                    for(unsigned int j = 0; j < distMatrix.size(); j++)
+                    {
+                        if ( defaultVals.partitionLabels[j] == defaultVals.labelToBeDeleted )
+                        {
+                            if (j < i)
+                            {
                                 memberDistsFromVect.push_back( distMatrix[j][i] );
                                 memberIndices.push_back(j);
                             }
-                            else if (j > i) {
+                            else if (j > i)
+                            {
                                 memberDistsFromVect.push_back( distMatrix[i][j] );
                                 memberIndices.push_back(j);
                             }
@@ -249,40 +261,44 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 
                     auto newNNdistFromVect = *std::min_element( memberDistsFromVect.begin(), memberDistsFromVect.end() );
                     defaultVals.nnDists[i] = newNNdistFromVect;
-                    sumNewNNdists = sumNewNNdists + newNNdistFromVect;
+                    sumDelNewdists = sumDelNewdists + newNNdistFromVect;
                 }
 
             }
 
             // Case 2: The i-th point belongs to the partition the new point is to be added to, but not to the partition the last point
             // was deleted from. In this case, is it possible that the point that was deleted was the nearest neighbor of the i-th point?
-            else if ( defaultVals.partitionLabels[i] != defaultVals.labelToBeDeleted && defaultVals.partitionLabels[i] == defaultVals.targetPartition ) {
+            else if ( defaultVals.partitionLabels[i] != defaultVals.labelToBeDeleted && defaultVals.partitionLabels[i] == defaultVals.targetPartition )
+            {
 
                 // If, previously, there was only one point in the target partition:
-                if ( defaultVals.numPointsPartn[defaultVals.targetPartition] == 1 ) {
+                if ( defaultVals.numPointsPartn[defaultVals.targetPartition] == 1 )
+                {
 
                     // Update the NN statistics for the "new" two-point partition.
                     defaultVals.nnIndices[i] = defaultVals.windowMaxSize - 1;
-                    defaultVals.nnIndices[defaultVals.windowMaxSize - 1] = i;
+                    defaultVals.nnIndices.push_back(i);
 
                     defaultVals.nnDists[i] = defaultVals.distsFromCurrVec[i];
-                    defaultVals.nnDists[defaultVals.windowMaxSize - 1] = defaultVals.nnDists[i];
+                    defaultVals.nnDists.push_back(defaultVals.nnDists[i]);
 
                     defaultVals.avgNNDistPartitions[defaultVals.targetPartition] = defaultVals.nnDists[i];
                 }
 
-                else {
+                else
+                {
 
                     distsFromCurrVecTP.push_back( defaultVals.distsFromCurrVec[i] );
                     tpIndices.push_back(i);
 
-                    if ( defaultVals.distsFromCurrVec[i] < defaultVals.nnDists[i] ) {
-                        sumOldNNdists = sumOldNNdists + defaultVals.nnDists[i];
+                    if ( defaultVals.distsFromCurrVec[i] < defaultVals.nnDists[i] )
+                    {
+                        sumAddOldNNdists = sumAddOldNNdists + defaultVals.nnDists[i];
 
                         defaultVals.nnDists[i] = defaultVals.distsFromCurrVec[i];
                         defaultVals.nnIndices[i] = defaultVals.windowMaxSize - 1;
 
-                        sumNewNNdists = sumNewNNdists + defaultVals.nnDists[i];
+                        sumAddNewdists = sumAddNewdists + defaultVals.nnDists[i];
                     }
                 }
 
@@ -291,23 +307,25 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
             // Case 3: The partition the last point was deleted from is the same as the target partition of the new point to be added to,
             // and the i-th point belongs to that partition (i.e. at least one point remained in the partition after the deletion and before
             // the addition).
-
-            else if (defaultVals.labelToBeDeleted == defaultVals.targetPartition && defaultVals.partitionLabels[i] == defaultVals.targetPartition) {
+            else if (defaultVals.labelToBeDeleted == defaultVals.targetPartition && defaultVals.partitionLabels[i] == defaultVals.targetPartition)
+            {
 
                 // If only one point remained in the partition after the deletion and before the addition:
-                if ( defaultVals.numPointsPartn[defaultVals.targetPartition] == 1 ) {
+                if ( defaultVals.numPointsPartn[defaultVals.targetPartition] == 1 )
+                {
 
                     // Update the NN statistics for the "new" two-point partition.
                     defaultVals.nnIndices[i] = defaultVals.windowMaxSize - 1;
-                    defaultVals.nnIndices[defaultVals.windowMaxSize - 1] = i;
+                    defaultVals.nnIndices.push_back(i);
 
                     defaultVals.nnDists[i] = defaultVals.distsFromCurrVec[i];
-                    defaultVals.nnDists[defaultVals.windowMaxSize - 1] = defaultVals.nnDists[i];
+                    defaultVals.nnDists.push_back(defaultVals.nnDists[i]);
 
                     defaultVals.avgNNDistPartitions[defaultVals.targetPartition] = defaultVals.nnDists[i];
                 }
 
-                else if ( defaultVals.distsFromCurrVec[i] < defaultVals.nnDists[i] ) {
+                else if ( defaultVals.distsFromCurrVec[i] < defaultVals.nnDists[i] )
+                {
                     distsFromCurrVecTP.push_back( defaultVals.distsFromCurrVec[i] );
                     tpIndices.push_back(i);
 
@@ -319,7 +337,8 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
                     sumNewNNdists = sumNewNNdists + defaultVals.nnDists[i];
                 }
 
-                else if ( defaultVals.nnIndices[i] == defaultVals.indexToBeDeleted ) {
+                else if ( defaultVals.nnIndices[i] == defaultVals.indexToBeDeleted )
+                {
                     distsFromCurrVecTP.push_back( defaultVals.distsFromCurrVec[i] );
                     tpIndices.push_back(i);
 
@@ -328,13 +347,17 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
                     std::vector<double> memberDistsFromVect;
                     std::vector<int> memberIndices;
 
-                    for(unsigned int j = 0; j < defaultVals.windowMaxSize; j++) {
-                        if ( defaultVals.partitionLabels[j] == defaultVals.labelToBeDeleted ) {
-                            if (j < i) {
+                    for(unsigned int j = 0; j < defaultVals.windowMaxSize; j++)
+                    {
+                        if ( defaultVals.partitionLabels[j] == defaultVals.labelToBeDeleted )
+                        {
+                            if (j < i)
+                            {
                                 memberDistsFromVect.push_back( distMatrix[j][i] );
                                 memberIndices.push_back(j);
                             }
-                            else if (j > i) {
+                            else if (j > i)
+                            {
                                 memberDistsFromVect.push_back( distMatrix[i][j] );
                                 memberIndices.push_back(j);
                             }
@@ -347,11 +370,23 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
                     defaultVals.nnDists[i] = newNNdistFromVect;
                     sumNewNNdists = sumNewNNdists + newNNdistFromVect;
                 }
+
+                else
+                {
+                    distsFromCurrVecTP.push_back( defaultVals.distsFromCurrVec[i] );
+                    tpIndices.push_back(i);
+                }
             }
 
-		}
+        }
 		distMatrix.push_back( defaultVals.distMatLastRow );
 
+        // If the new point is being added to a partition that does not exist in window (after the last deletion):
+        if ( defaultVals.avgNNDistPartitions.count( defaultVals.targetPartition ) == 0 ) {
+            defaultVals.avgNNDistPartitions[defaultVals.targetPartition] = -1;
+            defaultVals.nnIndices.push_back(-1);
+            defaultVals.nnDists.push_back(-1);
+        }
 
 
 		insert(distMatrixRow);
