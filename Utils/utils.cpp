@@ -83,6 +83,23 @@ std::vector<std::vector<std::vector<double>>> utils::separateBoundaryPartitions(
 	return res;
 }
 
+void utils::mapPartitionIndexing(std::vector<unsigned> partitionedLabels, std::vector<bettiBoundaryTableEntry>& bettiTable){
+	
+	//std::cout << "Part Labels: " << partitionedLabels.size() << std::endl;
+	
+	for(auto bet : bettiTable){
+		std::set<unsigned> convBound;
+		
+		for(auto ind : bet.boundaryPoints){
+			convBound.insert(partitionedLabels[ind]);
+			//std::cout << "Converted point : " << ind << " to index: " << partitionedLabels[ind] << std::endl;
+		}			
+		bet.boundaryPoints = convBound;
+		
+	}
+	return;
+}
+
 void utils::print2DVector(const std::vector<std::vector<unsigned>>& a){
 	for(unsigned i = 0; i < a.size(); i++){
 		for(unsigned j = 0; j < a[i].size(); j++){

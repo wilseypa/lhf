@@ -124,7 +124,10 @@ void processReducedWrapper(std::map<std::string, std::string> args, pipePacket* 
 			wD->complex->clear();
 			
 			//Map partitions back to original point indexing
-			//indexedBoundaries = ut.mapPartitionIndexing(partitionedData, wD->bettiTable);
+			ut.mapPartitionIndexing(partitionedData.first[z], wD->bettiTable);
+			
+			for(auto betEntry : wD->bettiTable)
+				mergedBettiTable.push_back(betEntry);
 			
 		} else 
 			std::cout << "skipping" << std::endl;
