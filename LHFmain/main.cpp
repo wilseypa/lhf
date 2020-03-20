@@ -89,6 +89,8 @@ void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD)
 
 void processReducedWrapper(std::map<std::string, std::string> args, pipePacket* wD){
     
+    std::vector<bettiBoundaryTableEntry> mergedBettiTable;
+    
 	//Start with the preprocessing function, if enabled
 	auto pre = args["preprocessor"];
 	if(pre != ""){
@@ -108,18 +110,22 @@ void processReducedWrapper(std::map<std::string, std::string> args, pipePacket* 
 	auto centroids = wD->originalData;
 	std::cout << "Using maxRadius: " << maxRadius << std::endl;
 	
-	auto partitionedData = ut.separatePartitions(std::atoi(args["clusters"].c_str()), wD->fullData, wD->originalLabels);
+	auto partitionedData = ut.separatePartitions(2*maxRadius, wD->originalData, wD->fullData, wD->originalLabels);
 	
-	std::cout << "Partitions: " << partitionedData.size() << std::endl << "Counts: ";
-	for(auto z : partitionedData){
-		if(z.size() > 0){
-			std::cout << "Running Pipeline with : " << z.size() << " vectors" << std::endl;
-			wD->originalData = z;
+	std::cout << "Partitions: " << partitionedData.second.size() << std::endl << "Counts: ";
+	for(unsigned z = 0; z < partitionedData.second.size(); z++){
+		if(partitionedData.second[z].size() > 0){
+			std::cout << "Running Pipeline with : " << partitionedData.second[z].size() << " vectors" << std::endl;
+			wD->originalData = partitionedData.second[z];
 			
 			
 			runPipeline(args, wD);
 			
 			wD->complex->clear();
+			
+			//Map partitions back to original point indexing
+			//indexedBoundaries = ut.mapPartitionIndexing(partitionedData, wD->bettiTable);
+			
 		} else 
 			std::cout << "skipping" << std::endl;
 	}
@@ -174,9 +180,9 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 	
 	//	Each node/slave will process at least 1 partition
 	//		NOTE: the partition may contain points outside that are within 2*Rmax
-	std::cout << "Partitions: " << partitionedData.size() << std::endl << "Counts: ";
+	std::cout << "Partitions: " << partitionedData.second.size() << std::endl << "Counts: ";
 	
-	for(auto a : partitionedData){
+	for(auto a : partitionedData.second){
 		std::cout << a.size() << "\t";
 	}
 	std::cout << std::endl;
