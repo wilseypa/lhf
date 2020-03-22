@@ -205,6 +205,10 @@ std::vector<std::pair<double, std::vector<unsigned>>> simplexBase::getd0Pairs(){
 	ut.writeLog(simplexType,"No getd0Pairs function defined");
 	return ret;	
 }
-	
+
+void simplexBase::clear(){
+	ut.writeLog(simplexType,"No clear function defined");
+	return;
+}
 	
 	

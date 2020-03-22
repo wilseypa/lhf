@@ -87,6 +87,77 @@ void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD)
 	return;
 }	
 
+void processReducedWrapper(std::map<std::string, std::string> args, pipePacket* wD){
+    
+    std::vector<bettiBoundaryTableEntry> mergedBettiTable;
+    
+	//Start with the preprocessing function, if enabled
+	auto pre = args["preprocessor"];
+	if(pre != ""){
+		auto *preprocess = new preprocessor();
+		auto *prePipe = preprocess->newPreprocessor(pre);
+		
+		if(prePipe != 0 && prePipe->configPreprocessor(args)){
+			*wD = prePipe->runPreprocessorWrapper(*wD);
+		} else {
+			cout << "LHF : Failed to configure pipeline: " << args["pipeline"] << endl;
+		}
+	}
+	
+	utils ut;
+	
+	auto maxRadius = ut.computeMaxRadius(std::atoi(args["clusters"].c_str()), wD->originalData, wD->fullData, wD->originalLabels);
+	auto centroids = wD->originalData;
+	std::cout << "Using maxRadius: " << maxRadius << std::endl;
+	
+	auto partitionedData = ut.separatePartitions(2*maxRadius, wD->originalData, wD->fullData, wD->originalLabels);
+	
+	std::cout << "Partitions: " << partitionedData.second.size() << std::endl << "Counts: ";
+	for(unsigned z = 0; z < partitionedData.second.size(); z++){
+		if(partitionedData.second[z].size() > 0){
+			std::cout << "Running Pipeline with : " << partitionedData.second[z].size() << " vectors" << std::endl;
+			wD->originalData = partitionedData.second[z];
+			
+			
+			runPipeline(args, wD);
+			
+			wD->complex->clear();
+			
+			//Map partitions back to original point indexing
+			ut.mapPartitionIndexing(partitionedData.first[z], wD->bettiTable);
+			
+			for(auto betEntry : wD->bettiTable)
+				mergedBettiTable.push_back(betEntry);
+			
+		} else 
+			std::cout << "skipping" << std::endl;
+	}
+	
+	std::cout << "Full Data: " << centroids.size() << std::endl;
+	if(centroids.size() > 0){
+		std::cout << "Running Pipeline with : " << centroids.size() << " vectors" << std::endl;
+		wD->originalData = centroids;
+		runPipeline(args, wD);
+		
+		wD->complex->clear();
+	} else 
+		std::cout << "skipping" << std::endl;
+	
+	std::cout << std::endl << "_______BETTIS_______" << std::endl;
+	
+	for(auto a : wD->bettiTable){
+		std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
+		ut.print1DVector(a.boundaryPoints);
+	}
+	
+		
+	return;
+}	
+
+
+
+
+
 void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* wD){
     
 	//Start with the preprocessing function, if enabled
@@ -112,9 +183,9 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 	
 	//	Each node/slave will process at least 1 partition
 	//		NOTE: the partition may contain points outside that are within 2*Rmax
-	std::cout << "Partitions: " << partitionedData.size() << std::endl << "Counts: ";
+	std::cout << "Partitions: " << partitionedData.second.size() << std::endl << "Counts: ";
 	
-	for(auto a : partitionedData){
+	for(auto a : partitionedData.second){
 		std::cout << a.size() << "\t";
 	}
 	std::cout << std::endl;
@@ -123,7 +194,20 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 	//		Distribute work to slaves (run fastPersistence on given data)
 	//		Retrieve results
 	//		Merge Barcodes	
-	do{
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	// OLD----- (but keeep for reference later)
+	
+	/*do{
 		if(wD->boundaries.size() > 0){
 			
 			std::vector<std::thread> threads;
@@ -142,7 +226,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		}
 	} while (wD->boundaries.size() > 0);
 		
-	return;
+	return;*/
 }	
 
 int main(int argc, char* argv[]){
@@ -204,9 +288,10 @@ int main(int argc, char* argv[]){
 		//Add data to our pipePacket
 		wD->originalData = wD->originalData;
 		
-		auto ar = args["upscale"];
-		if(ar == "true"){
+		if(args["upscale"] == "true"){
 			processUpscaleWrapper(args, wD);
+		} else if (args["mode"] == "reduced"){
+			processReducedWrapper(args,wD);			
 		} else {
 			processDataWrapper(args, wD);
 		}
