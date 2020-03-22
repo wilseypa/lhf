@@ -38,12 +38,8 @@ bool nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vecto
         // Compute the distances from the current vector to the existing ones in the window.
         defaultVals.distsFromCurrVec = ut.nearestNeighbors(currentVector, windowValues);
 
-        // Sort the distances from the current vector (to the existing ones in the window) in increasing order.
-        std::vector<double> ascendingDists = defaultVals.distsFromCurrVec;
-        std::sort( ascendingDists.begin(), ascendingDists.end() );
-
         // Find the distance from the current vector to its nearest neighbor in the window.
-        auto nnDistCurrVec = ascendingDists[0];
+        auto nnDistCurrVec = *std::min_element( defaultVals.distsFromCurrVec.begin(), defaultVals.distsFromCurrVec.end() );
 
         if (nnDistCurrVec == 0)
             return false;
@@ -155,8 +151,14 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
                 if(inData.complex->insertIterative(currentVector, windowValues, defaultVals))
                 {
 
-                    //Insert the point
+                    //Insert the point.
+                    defaultVals.label = defaultVals.labelToBeDeleted + 1;
                     windowValues.push_back(currentVector);
+                    defaultVals.windowKeys.push_back(defaultVals.key);
+                    defaultVals.partitionLabels.push_back(defaultVals.label);
+                    defaultVals.maxKeys[defaultVals.label] = defaultVals.key;
+                    defaultVals.key++;
+
                 }
             }
 

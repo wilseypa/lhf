@@ -195,7 +195,7 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 		return true;
 	}
 
-	if(streamEval(currentVector, window, defaultVals)){   // Point is deemed 'significant'
+	if(streamEval(currentVector, window, defaultVals)) {   // Point is deemed 'significant'
 
 		deleteIterative( defaultVals.keyToBeDeleted, defaultVals.indexToBeDeleted );  // Delete from distance matrix and complex.
 		runningVectorIndices.erase( runningVectorIndices.begin() + defaultVals.indexToBeDeleted );
