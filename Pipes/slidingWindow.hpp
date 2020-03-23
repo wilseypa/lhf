@@ -19,7 +19,7 @@ public:
     {
         int windowMaxSize;
         int key;
-        int label;
+        int targetPartition;  // The partition membership of a new vector, if the new vector is to be added to the window.
         std::vector<int> windowKeys;
         std::vector<int> partitionLabels;
         std::vector<int> nnIndices;  // A container to store the index of each point's nearest neighbor within the window.
@@ -32,8 +32,7 @@ public:
         int labelToBeDeleted;
         int indexToBeDeleted;
         double nnDistToBeDeleted;
-        std::vector<double> distMatLastRow(windowMaxSize, 0);  // The last row of the upper triangular distance matrix is a vector of 0's.
-        int targetPartition;  // The partition membership of a new vector, if the new vector is to be added to the window.
+        std::vector<double> distMatLastRow(windowMaxSize, 0);  // The last row of the upper triangular distance matrix is a vector of 0s.
     };
     slidingWindow();
     pipePacket runPipe(pipePacket);

@@ -33,11 +33,11 @@ bool nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vecto
     float f2{ 0.25 };
     defaultVals.distsFromCurrVec.clear();
 
+    // Compute the distances from the current vector to the existing ones in the window.
+    defaultVals.distsFromCurrVec = ut.nearestNeighbors(currentVector, windowValues);
+
     if (defaultVals.avgNNDistPartitions.size() == 1)  // If the window is 'pure':
     {
-        // Compute the distances from the current vector to the existing ones in the window.
-        defaultVals.distsFromCurrVec = ut.nearestNeighbors(currentVector, windowValues);
-
         // Find the distance from the current vector to its nearest neighbor in the window.
         auto nnDistCurrVec = *std::min_element( defaultVals.distsFromCurrVec.begin(), defaultVals.distsFromCurrVec.end() );
 
@@ -122,7 +122,7 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
             {
                 windowValues.push_back(currentVector);
                 defaultVals.windowKeys.push_back(defaultVals.key);
-                defaultVals.partitionLabels.push_back(defaultVals.label);
+                defaultVals.partitionLabels.push_back(defaultVals.targetPartition);
                 defaultVals.key++;
 
                 //If we've reached window max size, generate the initial complex
@@ -140,9 +140,9 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
 
                     // Find the average nearest neighbor distance in the existing partition (i.e. Partition 0).
                     auto avgNNDistPartition0 = std::accumulate(defaultVals.nnDists.begin(), defaultVals.nnDists.end(), 0.0) / defaultVals.nnDists.size();
-                    defaultVals.avgNNDistPartitions[defaultVals.label] = avgNNDistPartition0;
-                    defaultVals.numPointsPartn[defaultVals.label] = defaultVals.windowMaxSize;
-                    defaultVals.maxKeys[defaultVals.label] = defaultVals.key - 1;
+                    defaultVals.avgNNDistPartitions[defaultVals.targetPartition] = avgNNDistPartition0;
+                    defaultVals.numPointsPartn[defaultVals.targetPartition] = defaultVals.windowMaxSize;
+                    defaultVals.maxKeys[defaultVals.targetPartition] = defaultVals.key - 1;
                 }
 
             }
@@ -152,11 +152,10 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
                 {
 
                     //Insert the point.
-                    defaultVals.label = defaultVals.labelToBeDeleted + 1;
                     windowValues.push_back(currentVector);
                     defaultVals.windowKeys.push_back(defaultVals.key);
-                    defaultVals.partitionLabels.push_back(defaultVals.label);
-                    defaultVals.maxKeys[defaultVals.label] = defaultVals.key;
+                    defaultVals.partitionLabels.push_back(defaultVals.targetPartition);
+                    defaultVals.maxKeys[defaultVals.targetPartition] = defaultVals.key;
                     defaultVals.key++;
 
                 }
