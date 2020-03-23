@@ -2,6 +2,8 @@
 
 // Header file for slidingWindow class - see slidingWindow.cpp for descriptions
 #include <map>
+#include <unordered_map>
+#include <vector>
 #include "basePipe.hpp"
 
 class slidingWindow : public basePipe

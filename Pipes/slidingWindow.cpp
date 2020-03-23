@@ -6,9 +6,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-#include <unordered_map>
 #include <iterator>
-#include <vector>
 #include <cmath>
 #include <numeric>
 #include <algorithm>
@@ -84,6 +82,23 @@ bool nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vecto
             return true;
         }
 
+    }
+
+    else {   // If the window is not "pure":
+
+        // Create a dictionary to store the nearest neighbor distance from the current vector to each
+        // partition in the window.
+        std::unordered_map<int, double> nnDistsFrmCurrVecToPartns;
+        for(unsigned int i = 0; i < defaultVals.windowMaxSize; i++) {
+
+            // If the partition label of the i-th point does not already exist in nnDistsFrmCurrVecToPartns:
+            if ( nnDistsFrmCurrVecToPartns.count(defaultVals.partitionLabels[i] == 0) ) {
+                nnDistsFrmCurrVecToPartns[defaultVals.partitionLabels[i]] = defaultVals.distsFromCurrVec[i];
+            }
+            else if ( defaultVals.distsFromCurrVec[i] < nnDistsFrmCurrVecToPartns[defaultVals.partitionLabels[i]] ) {
+                nnDistsFrmCurrVecToPartns[defaultVals.partitionLabels[i]] = defaultVals.distsFromCurrVec[i];
+            }
+        }
     }
 
     return false;
