@@ -24,21 +24,23 @@ slidingWindow::slidingWindow()
     return;
 }
 
+
 bool nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vector<double>>& windowValues, EvalParams& defaultVals)
 {
     utils ut;
     float f1{ 4 };
     float f2{ 0.25 };
+    float f3{ 5 };
     defaultVals.distsFromCurrVec.clear();
 
     // Compute the distances from the current vector to the existing ones in the window.
     defaultVals.distsFromCurrVec = ut.nearestNeighbors(currentVector, windowValues);
 
+    // Find the distance from the current vector to its nearest neighbor in the window.
+    auto nnDistCurrVec = *std::min_element( defaultVals.distsFromCurrVec.begin(), defaultVals.distsFromCurrVec.end() );
+
     if (defaultVals.avgNNDistPartitions.size() == 1)  // If the window is 'pure':
     {
-        // Find the distance from the current vector to its nearest neighbor in the window.
-        auto nnDistCurrVec = *std::min_element( defaultVals.distsFromCurrVec.begin(), defaultVals.distsFromCurrVec.end() );
-
         if (nnDistCurrVec == 0)
             return false;
 
@@ -86,19 +88,52 @@ bool nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vecto
 
     else {   // If the window is not "pure":
 
-        // Create a dictionary to store the nearest neighbor distance from the current vector to each
-        // partition in the window.
-        std::unordered_map<int, double> nnDistsFrmCurrVecToPartns;
-        for(unsigned int i = 0; i < defaultVals.windowMaxSize; i++) {
+//        // Create a dictionary to store the nearest neighbor distance from the current vector to each partition in the window.
+//        std::unordered_map<int, double> nnDistsFrmCurrVecToPartns;
+//        for(unsigned int i = 0; i < defaultVals.windowMaxSize; i++) {
+//
+//            // If the partition label of the i-th point does not already exist in nnDistsFrmCurrVecToPartns:
+//            if ( nnDistsFrmCurrVecToPartns.count(defaultVals.partitionLabels[i] == 0) ) {
+//                nnDistsFrmCurrVecToPartns[defaultVals.partitionLabels[i]] = defaultVals.distsFromCurrVec[i];
+//            }
+//            else if ( defaultVals.distsFromCurrVec[i] < nnDistsFrmCurrVecToPartns[defaultVals.partitionLabels[i]] ) {
+//                nnDistsFrmCurrVecToPartns[defaultVals.partitionLabels[i]] = defaultVals.distsFromCurrVec[i];
+//            }
+//        }
 
-            // If the partition label of the i-th point does not already exist in nnDistsFrmCurrVecToPartns:
-            if ( nnDistsFrmCurrVecToPartns.count(defaultVals.partitionLabels[i] == 0) ) {
-                nnDistsFrmCurrVecToPartns[defaultVals.partitionLabels[i]] = defaultVals.distsFromCurrVec[i];
-            }
-            else if ( defaultVals.distsFromCurrVec[i] < nnDistsFrmCurrVecToPartns[defaultVals.partitionLabels[i]] ) {
-                nnDistsFrmCurrVecToPartns[defaultVals.partitionLabels[i]] = defaultVals.distsFromCurrVec[i];
-            }
+
+        // Determine the membership of the current vector to one of the existing partitions in the window. If the current vector
+        // cannot be assigned to any of the existing partitions, create a new partition with only the current vector.
+
+        // Find the partition that is nearest to the current vector.
+        auto nearestPartnIdx = std::min_element(defaultVals.distsFromCurrVec.begin(), defaultVals.distsFromCurrVec.end()) - defaultVals.distsFromCurrVec.begin();
+        int nearestPartition = defaultVals.partitionLabels[nearestPartnIdx];
+
+        // Find the max. of the existing partition labels.
+        int maxLabel = *std::max_element( defaultVals.partitionLabels.begin(), defaultVals.partitionLabels.end() );
+
+        // If the (nearest neighbor) distance from the current vector to any partition is 0, assign the current vector to that partition.
+        if ( nnDistCurrVec == 0 ) {
+           defaultVals.targetPartition = nearestPartition;
         }
+
+        // If the minimum distance from the current vector to existing partitions is higher than f3, assign a new partition to the current vector.
+        else if ( nnDistCurrVec > f3 ) {
+            defaultVals.targetPartition = maxLabel + 1;
+        }
+        else if ( defaultVals.avgNNDistPartitions[nearestPartition] == -1 && nnDistCurrVec <= f3 ) {
+            defaultVals.targetPartition = nearestPartition;
+        }
+        else if ( defaultVals.avgNNDistPartitions[nearestPartition] <= f2 && nnDistCurrVec <= 1 ) {
+            defaultVals.targetPartition = nearestPartition;
+        }
+        else if ( defaultVals.avgNNDistPartitions[nearestPartition] > 0 && nnDistCurrVec / defaultVals.avgNNDistPartitions[nearestPartition] <= f1 ) {
+            defaultVals.targetPartition = nearestPartition;
+        }
+        else {
+            defaultVals.targetPartition = maxLabel + 1;
+        }
+
     }
 
     return false;
