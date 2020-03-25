@@ -28,7 +28,7 @@ public:
         std::vector<double> nnDists;  // A container to store the nearest neighbor distance of each point within the window.
         std::unordered_map<int, double> avgNNDistPartitions;
         std::unordered_map<int, int> numPointsPartn;  // A dictionary to store the number of points in each partition.
-        std::unordered_map<int, int> maxKeys;  // A dictionary to store the maxKey of each partition.
+        std::map<int, int> maxKeys;  // A dictionary to store the maxKey of each partition.
         std::vector<double> distsFromCurrVec;
         int keyToBeDeleted;
         int labelToBeDeleted;

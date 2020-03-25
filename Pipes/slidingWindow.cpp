@@ -88,12 +88,15 @@ bool nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vecto
 
     else {   // If the window is not "pure":
 
+        // A partition is considered outdated if it did not receive any new point for more than the last 25 insertions.
+        int timeToBeOutdated{ 25 };
+
 //        // Create a dictionary to store the nearest neighbor distance from the current vector to each partition in the window.
 //        std::unordered_map<int, double> nnDistsFrmCurrVecToPartns;
 //        for(unsigned int i = 0; i < defaultVals.windowMaxSize; i++) {
 //
 //            // If the partition label of the i-th point does not already exist in nnDistsFrmCurrVecToPartns:
-//            if ( nnDistsFrmCurrVecToPartns.count(defaultVals.partitionLabels[i] == 0) ) {
+//            if ( nnDistsFrmCurrVecToPartns.count(defaultVals.partitionLabels[i]) == 0 ) {
 //                nnDistsFrmCurrVecToPartns[defaultVals.partitionLabels[i]] = defaultVals.distsFromCurrVec[i];
 //            }
 //            else if ( defaultVals.distsFromCurrVec[i] < nnDistsFrmCurrVecToPartns[defaultVals.partitionLabels[i]] ) {
@@ -102,8 +105,9 @@ bool nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vecto
 //        }
 
 
-        // Determine the membership of the current vector to one of the existing partitions in the window. If the current vector
-        // cannot be assigned to any of the existing partitions, create a new partition with only the current vector.
+
+        // Determine the partition membership of the current vector. In particular, check if the current vector can be assigned to
+        // its nearest partition. If it cannot be assigned to its nearest partition, create a new partition with only the current vector.
 
         // Find the partition that is nearest to the current vector.
         auto nearestPartnIdx = std::min_element(defaultVals.distsFromCurrVec.begin(), defaultVals.distsFromCurrVec.end()) - defaultVals.distsFromCurrVec.begin();
@@ -134,6 +138,25 @@ bool nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vecto
             defaultVals.targetPartition = maxLabel + 1;
         }
 
+        // Determine which point would be deleted from the sliding window.
+
+        int smallestOutdated;   // This will store the label of the smallest outdated partition.
+        int numPtsSmallestOutdated{ -1 };  // This will store the number of points in the smallest outdated partition.
+
+        for(auto op : defaultVals.maxKeys) {
+            if ( (defaultVals.key - op.second) > timeToBeOutdated ) {   // If op is outdated:
+                if ( numPtsSmallestOutdated == -1 ) {   // If this is the first time an outdated partition is encountered:
+                    numPtsSmallestOutdated = defaultVals.numPointsPartn[op.first];
+                    smallestOutdated = op.first;
+                }
+                else if ( defaultVals.numPointsPartn[op.first] < numPtsSmallestOutdated ) {   // If a smaller outdated partition is encountered:
+                    // Update our records for the smallest outdated partition.
+                    numPtsSmallestOutdated = defaultVals.numPointsPartn[op.first];
+                    smallestOutdated = op.first;
+                }
+            }
+        }
+
     }
 
     return false;
@@ -155,9 +178,6 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
     EvalParams defaultVals{ 200, 0, 0 };
 
     std::vector<std::vector<double>> windowValues;
-
-    // A partition is considered outdated if it did not receive any new point for more than the last 25 insertions.
-    // int timeToBeOutdated{ 25 };
 
     std::vector<double> currentVector;
     if(rp.streamInit(inputFile))
