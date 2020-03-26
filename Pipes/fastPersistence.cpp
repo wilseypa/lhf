@@ -17,8 +17,10 @@
 #include <functional>
 #include <algorithm>
 #include <set>
+#include <bitset>
 #include "fastPersistence.hpp"
 
+#define maxInput 10000 //The size of a bitset needs to be specified at compile time
 
 // basePipe constructor
 fastPersistence::fastPersistence(){
@@ -38,9 +40,13 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	std::string bettis = "";
 	
 	//Get all edges for the simplexArrayList or simplexTree
-	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges = inData.complex->getAllEdges(maxEpsilon);
-	
-	if(edges.size() == 0)
+	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edgesSet = inData.complex->getAllEdges(maxEpsilon);
+
+	int nPoints = inData.originalData.size();
+	std::vector<std::vector<std::pair<std::bitset<maxInput>,double>>> edges;
+
+
+	if(edgesSet.size() == 0)
 		return inData;
 		
 	std::vector<std::pair<double,double>> temp;
@@ -70,44 +76,61 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	
 	//std::vector<std::pair<std::set<unsigned>,double>> mst;			//Store the minimum spanning tree
 	std::vector<double> mst;										//Store the minimum spanning tree (weight only)
-	std::vector<std::set<unsigned>> conSet;										//Store the connected set
+	std::vector<std::bitset<maxInput>> conSet;										//Store the connected set
 	
-	std::set<unsigned> wset;										//Store the intersection
-	std::set<unsigned> tempset;
+	std::bitset<maxInput> wset;										//Store the intersection
+	std::bitset<maxInput> tempset;
 	std::list<unsigned> pivots;										//Store identified pivots
 	unsigned pivotIndex = 0;
 		
+	for(auto dimEdges : edgesSet){ //Convert all sets to bitsets
+		std::vector<std::pair<std::bitset<maxInput>,double>> tempvec;
+		for(auto pairSet : dimEdges){
+			std::bitset<maxInput> tempbits;
+			for(auto vertex : pairSet.first){
+				tempbits[vertex]=1; //Insert vertices of set into bitsset
+			}
+			tempvec.push_back(make_pair(tempbits, pairSet.second));
+		}
+		edges.push_back(tempvec);
+	}
+
 	//For each edge set 
 	for(auto edge : edges[1]){		
 		bool foundPivot = false;
 		bool br = false;
-		std::vector<std::set<unsigned>> conSetTemp;										//Store the connected set
+		std::vector<std::bitset<maxInput>> conSetTemp;	//Store the connected set
 		//Check if the current set intersects with any existing connected sets
-		for(std::set<unsigned> cSet : conSet){
-			wset = ut.setIntersect(edge.first, cSet, false);
-			
+		for(std::bitset<maxInput> cSet : conSet){
+			// wset = ut.setIntersect(edge.first, cSet, false);
+			wset = edge.first & cSet;
+
 			//If one element intersects with a set and we haven't found a pivot...
-			if(!foundPivot && wset.size() == 1){
+			if(!foundPivot && wset.count() == 1){
 				foundPivot = true;
 				pivots.push_back(pivotIndex);
 				mst.push_back(edge.second);
-				bettiBoundaryTableEntry des = { 0, 0, edge.second, wset };
+//----------------------------------------------------------------------------------------
+				bettiBoundaryTableEntry des = { 0, 0, edge.second, {} }; //TODO: Change {} to wset (need to convert wset from bitset back to set)
+//----------------------------------------------------------------------------------------
 				inData.bettiTable.push_back(des);
 				
-				set_union(edge.first.begin(), edge.first.end(), cSet.begin(), cSet.end(), std::inserter(tempset, tempset.end()));
+				tempset = edge.first | cSet;
+				// set_union(edge.first.begin(), edge.first.end(), cSet.begin(), cSet.end(), std::inserter(tempset, tempset.end()));
 				
 			//If one element intersects with a set (and we already found a pivot, join sets)
-			} else if (wset.size() == 1){
+			} else if (wset.count() == 1){
 				//Keep updating our wset with a joint set
 				//wset = ut.symmetricDiff(edge.first, cSet, false);
 				//auto ts = ut.symmetricDiff(edge.first, cSet, false);
 				//std::copy(ts.begin(), ts.end(), std::inserter(tempset, tempset.end()));
-				set_union(tempset.begin(), tempset.end(), cSet.begin(), cSet.end(), std::inserter(tempset, tempset.end()));
-				set_union(edge.first.begin(), edge.first.end(), tempset.begin(), tempset.end(), std::inserter(tempset, tempset.end()));
+				tempset = tempset | cSet | edge.first;
+				// set_union(tempset.begin(), tempset.end(), cSet.begin(), cSet.end(), std::inserter(tempset, tempset.end()));
+				// set_union(edge.first.begin(), edge.first.end(), tempset.begin(), tempset.end(), std::inserter(tempset, tempset.end()));
 			//Otherwise write the set back to the connected set
 			// Either both elements are already contained in an existing set
 			// 
-			} else if (wset.size() == 2){
+			} else if (wset.count() == 2){
 				
 				conSetTemp.push_back(cSet);
 				br = true;
@@ -136,7 +159,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		pivotIndex++;
 		
 		conSet = conSetTemp;
-		tempset.clear();
+		tempset.reset();
 	}
 	
 	for(auto z : mst){
@@ -149,104 +172,104 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	
 	
 	
-	//For higher dimensional persistence intervals
-	//	
-	if(dim > 0){
-		//Build next dimension of ordered simplices, ignoring previous dimension pivots
+	// //For higher dimensional persistence intervals
+	// //	
+	// if(dim > 0){
+	// 	//Build next dimension of ordered simplices, ignoring previous dimension pivots
 		
-		//Represent the ordered simplices as indexed sets; similar to the approach in indSimplexTree
+	// 	//Represent the ordered simplices as indexed sets; similar to the approach in indSimplexTree
 		
-		//Identify apparent pairs - i.e. d is the youngest face of d+1, and d+1 is the oldest coface of d
-		//		This indicates a feature represents a persistence interval
+	// 	//Identify apparent pairs - i.e. d is the youngest face of d+1, and d+1 is the oldest coface of d
+	// 	//		This indicates a feature represents a persistence interval
 		
-		//Track V (reduction matrix) for each column j that has been reduced to identify the constituent 
-		//		boundary simplices; we may not track this currently but will eventually
+	// 	//Track V (reduction matrix) for each column j that has been reduced to identify the constituent 
+	// 	//		boundary simplices; we may not track this currently but will eventually
 		
 		
-		for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
+	// 	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
 			
-			//Track the current pivots located into an unordered map
-			std::unordered_map<unsigned, std::set<unsigned>> v;
-			//std::cout << "D" << d << ": " << std::endl;
+	// 		//Track the current pivots located into an unordered map
+	// 		std::unordered_map<unsigned, std::set<unsigned>> v;
+	// 		//std::cout << "D" << d << ": " << std::endl;
 			
-			//std::cout << "\tEdges[d]: " << edges[d].size() << "\tEdges[d+1]: " << edges[d+1].size() << std::endl;
+	// 		//std::cout << "\tEdges[d]: " << edges[d].size() << "\tEdges[d+1]: " << edges[d+1].size() << std::endl;
 			
-			//std::cout << "Pivots: " << pivots.size() << std::endl;
-			/*for(auto z : pivots){
-				std::cout << z << "\t";
-			}
-			std::cout << std::endl;*/
+	// 		//std::cout << "Pivots: " << pivots.size() << std::endl;
+	// 		/*for(auto z : pivots){
+	// 			std::cout << z << "\t";
+	// 		}
+	// 		std::cout << std::endl;*/
 			
-			std::list<unsigned> nextPivots;
-			unsigned columnIndex = 0;
+	// 		std::list<unsigned> nextPivots;
+	// 		unsigned columnIndex = 0;
 			
-			//Iterate the columns of the boundary matrix (i.e. the nextEdges)
-			for(auto column_to_reduce : edges[d+1]){
-				pivotIndex = 0;
-				int foundCol = 0;
-				int foundPiv = 0;
-				bool foundPivot = false;
-				bool needReduced = false;
-				std::set<unsigned> cofaceList;
+	// 		//Iterate the columns of the boundary matrix (i.e. the nextEdges)
+	// 		for(auto column_to_reduce : edges[d+1]){
+	// 			pivotIndex = 0;
+	// 			int foundCol = 0;
+	// 			int foundPiv = 0;
+	// 			bool foundPivot = false;
+	// 			bool needReduced = false;
+	// 			std::set<unsigned> cofaceList;
 				
-				auto pivotPointer = pivots.begin();
+	// 			auto pivotPointer = pivots.begin();
 				
-				//Begin checking each vector from lowest weight for a pivot; skip previous pivots
-				//	We want to build the vector before attempting to reduce/store
-				for(auto row_to_check : edges[d]){
-					// 1 of 3 things can happen here:
-					//		-The row is a pivot of the column, closing an interval
-					//		-The row is not a pivot, needing to be XOR with the stored pivot
-					//		-The row does not intersect (0 or cleared from previous dimension)
-					if(*pivotPointer != pivotIndex){
+	// 			//Begin checking each vector from lowest weight for a pivot; skip previous pivots
+	// 			//	We want to build the vector before attempting to reduce/store
+	// 			for(auto row_to_check : edges[d]){
+	// 				// 1 of 3 things can happen here:
+	// 				//		-The row is a pivot of the column, closing an interval
+	// 				//		-The row is not a pivot, needing to be XOR with the stored pivot
+	// 				//		-The row does not intersect (0 or cleared from previous dimension)
+	// 				if(*pivotPointer != pivotIndex){
 						
-						//Check for intersection
-						bool isCoface = std::includes(column_to_reduce.first.begin(), column_to_reduce.first.end(), row_to_check.first.begin(), row_to_check.first.end());
+	// 					//Check for intersection
+	// 					bool isCoface = std::includes(column_to_reduce.first.begin(), column_to_reduce.first.end(), row_to_check.first.begin(), row_to_check.first.end());
 						
-						if(isCoface) {
-							cofaceList.insert(pivotIndex);
-						}
-					} else {
-						pivotPointer++;
-					}				
+	// 					if(isCoface) {
+	// 						cofaceList.insert(pivotIndex);
+	// 					}
+	// 				} else {
+	// 					pivotPointer++;
+	// 				}				
 					
-					pivotIndex++;
+	// 				pivotIndex++;
 					
-				}
-				//Reduce the column or store into the unordered map
+	// 			}
+	// 			//Reduce the column or store into the unordered map
 								
-				std::set<unsigned int>::iterator pIndex;
-				while((pIndex = cofaceList.begin()) != cofaceList.end()){
-					if(v.find(*pIndex) == v.end()){
-						v[*pIndex] = cofaceList;
-						nextPivots.push_back(columnIndex);		
+	// 			std::set<unsigned int>::iterator pIndex;
+	// 			while((pIndex = cofaceList.begin()) != cofaceList.end()){
+	// 				if(v.find(*pIndex) == v.end()){
+	// 					v[*pIndex] = cofaceList;
+	// 					nextPivots.push_back(columnIndex);		
 						
-						if(edges[d][*pIndex].second != edges[d+1][columnIndex].second){
-								bettis += std::to_string(d) + "," + std::to_string(edges[d][*pIndex].second) +"," + std::to_string(edges[d+1][columnIndex].second) + "\n";
+	// 					if(edges[d][*pIndex].second != edges[d+1][columnIndex].second){
+	// 							bettis += std::to_string(d) + "," + std::to_string(edges[d][*pIndex].second) +"," + std::to_string(edges[d+1][columnIndex].second) + "\n";
 								
-							bettiBoundaryTableEntry des = { d, edges[d][*pIndex].second, edges[d+1][columnIndex].second, cofaceList };
-							inData.bettiTable.push_back(des);
-						}
+	// 						bettiBoundaryTableEntry des = { d, edges[d][*pIndex].second, edges[d+1][columnIndex].second, cofaceList };
+	// 						inData.bettiTable.push_back(des);
+	// 					}
 											
-						break;
-					} else {
-						auto oldCofaceList = ut.setXOR(v[*pIndex],cofaceList);
+	// 					break;
+	// 				} else {
+	// 					auto oldCofaceList = ut.setXOR(v[*pIndex],cofaceList);
 						
 						
-						if(oldCofaceList == cofaceList)
-							break;
-						cofaceList = oldCofaceList;
-					}
-				}
+	// 					if(oldCofaceList == cofaceList)
+	// 						break;
+	// 					cofaceList = oldCofaceList;
+	// 				}
+	// 			}
 				
-				columnIndex++;
+	// 			columnIndex++;
 				
-			}
+	// 		}
 			
-			pivots = nextPivots;
-		}
+	// 		pivots = nextPivots;
+	// 	}
 		
-	}
+	// }
 	
 	//std::cout << bettis << std::endl;
 	//
