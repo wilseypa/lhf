@@ -119,7 +119,7 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 		
 	} else if(args["pipeline"] == ""){
 		if(args["mode"] == "standard")
-			args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
+			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
 		else if(args["mode"] == "reduced"){
 			if(args["preprocessor"] == "")
 				args["preprocessor"] = "kmeans++";
@@ -134,7 +134,7 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 		} else if(args["mode"] == "stream"){
 			if(args["preprocessor"] == "")
 				args["preprocessor"] = "streamingkmeans";
-			args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
+			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
 		} else if(args["mode"] == "sw" || args["mode"] == "slidingwindow"){
 			args["preprocessor"] = "";
 			args["pipeline"] = "slidingwindow";
