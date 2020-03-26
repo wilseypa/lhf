@@ -437,10 +437,11 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
             auto nnDistFromNewVect = *std::min_element( distsFromCurrVecTP.begin(), distsFromCurrVecTP.end() );
             defaultVals.nnDists.push_back( nnDistFromNewVect );
 
-            int n = defaultVals.numPointsPartn[defaultVals.targetPartition];
+            int n = defaultVals.numPointsPartn[defaultVals.targetPartition] + 1;
             double avgNNd = defaultVals.avgNNDistPartitions[defaultVals.targetPartition];
 
             defaultVals.avgNNDistPartitions[defaultVals.targetPartition] = ( n*avgNNd - defaultVals.nnDistToBeDeleted - sumOldNNdists + sumNewNNdists + nnDistFromNewVect ) / n;
+            defaultVals.numPointsPartn[defaultVals.targetPartition] = n;
         }
 
 		insert(defaultVals.distsFromCurrVec);

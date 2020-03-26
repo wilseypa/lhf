@@ -176,20 +176,19 @@ bool nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vecto
 
             windowValues.erase( windowValues.begin() + defaultVals.indexToBeDeleted );
 
-            if (defaultVals.labelToBeDeleted != defaultVals.targetPartition) {
-                defaultVals.numPointsPartn[defaultVals.labelToBeDeleted] = defaultVals.numPointsPartn[defaultVals.labelToBeDeleted] - 1;
+            defaultVals.numPointsPartn[defaultVals.labelToBeDeleted] = defaultVals.numPointsPartn[defaultVals.labelToBeDeleted] - 1;
 
-                if (defaultVals.numPointsPartn[defaultVals.labelToBeDeleted] == 0) {
-                    defaultVals.avgNNDistPartitions.erase(defaultVals.labelToBeDeleted);
-                    defaultVals.numPointsPartn.erase(defaultVals.labelToBeDeleted);
-                    defaultVals.maxKeys.erase(defaultVals.labelToBeDeleted);
-                }
+            // If there are no more points left in the partition from which the deletion took place:
+            if (defaultVals.numPointsPartn[defaultVals.labelToBeDeleted] == 0)
+            {
+                defaultVals.avgNNDistPartitions.erase(defaultVals.labelToBeDeleted);
+                defaultVals.numPointsPartn.erase(defaultVals.labelToBeDeleted);
+                defaultVals.maxKeys.erase(defaultVals.labelToBeDeleted);
             }
 
         }
 
-
-
+        return true;
     }
 
     return false;
@@ -254,11 +253,11 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
                 if(inData.complex->insertIterative(currentVector, windowValues, defaultVals))
                 {
 
-                    //Insert the point.
+                    // Insert the current vector, its key and partition label into the rear ends of the corresponding containers.
                     windowValues.push_back(currentVector);
                     defaultVals.windowKeys.push_back(defaultVals.key);
                     defaultVals.partitionLabels.push_back(defaultVals.targetPartition);
-                    defaultVals.maxKeys[defaultVals.targetPartition] = defaultVals.key;
+                    defaultVals.maxKeys[defaultVals.targetPartition] = defaultVals.key;  // Insert or update the maxKey of the target partition.
                     defaultVals.key++;
 
                 }
