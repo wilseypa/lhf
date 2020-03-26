@@ -86,10 +86,7 @@ bool nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vecto
 
     }
 
-    else {   // If the window is not "pure":
-
-        // A partition is considered outdated if it did not receive any new point for more than the last 25 insertions.
-        int timeToBeOutdated{ 25 };
+    else {   // If the window is NOT "pure":
 
 //        // Create a dictionary to store the nearest neighbor distance from the current vector to each partition in the window.
 //        std::unordered_map<int, double> nnDistsFrmCurrVecToPartns;
@@ -139,8 +136,11 @@ bool nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vecto
         }
 
         // Determine which point would be deleted from the sliding window.
+        // A partition is considered outdated if it did not receive any new point for more than the last 25 insertions.
+        int timeToBeOutdated{ 25 };
 
-        int smallestOutdated;   // This will store the label of the smallest outdated partition.
+        // First check if there are outdated partitions. If there are, find the smallest one of them.
+        int smallestOutdated{ -1 };   // This will store the label of the smallest outdated partition.
         int numPtsSmallestOutdated{ -1 };  // This will store the number of points in the smallest outdated partition.
 
         for(auto op : defaultVals.maxKeys) {
@@ -156,6 +156,39 @@ bool nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vecto
                 }
             }
         }
+
+        if (smallestOutdated != -1) {   // If there is (are) outdated partition(s):
+
+            // Delete the oldest point of the smallest outdated partition (and its associated statistics) from the sliding window.
+            defaultVals.labelToBeDeleted = smallestOutdated;
+            defaultVals.indexToBeDeleted = std::find( defaultVals.partitionLabels.begin(), defaultVals.partitionLabels.end(), smallestOutdated ) - defaultVals.partitionLabels.begin();
+            defaultVals.keyToBeDeleted = defaultVals.windowKeys[defaultVals.indexToBeDeleted];
+
+            defaultVals.windowKeys.erase( defaultVals.windowKeys.begin() + defaultVals.indexToBeDeleted );
+            defaultVals.partitionLabels.erase( defaultVals.partitionLabels.begin() + defaultVals.indexToBeDeleted );
+
+            defaultVals.nnIndices.erase( defaultVals.nnIndices.begin() + defaultVals.indexToBeDeleted );
+
+            defaultVals.nnDistToBeDeleted = defaultVals.nnDists[defaultVals.indexToBeDeleted];
+            defaultVals.nnDists.erase( defaultVals.nnDists.begin() + defaultVals.indexToBeDeleted );
+
+            defaultVals.distsFromCurrVec.erase( defaultVals.distsFromCurrVec.begin() + defaultVals.indexToBeDeleted );
+
+            windowValues.erase( windowValues.begin() + defaultVals.indexToBeDeleted );
+
+            if (defaultVals.labelToBeDeleted != defaultVals.targetPartition) {
+                defaultVals.numPointsPartn[defaultVals.labelToBeDeleted] = defaultVals.numPointsPartn[defaultVals.labelToBeDeleted] - 1;
+
+                if (defaultVals.numPointsPartn[defaultVals.labelToBeDeleted] == 0) {
+                    defaultVals.avgNNDistPartitions.erase(defaultVals.labelToBeDeleted);
+                    defaultVals.numPointsPartn.erase(defaultVals.labelToBeDeleted);
+                    defaultVals.maxKeys.erase(defaultVals.labelToBeDeleted);
+                }
+            }
+
+        }
+
+
 
     }
 
