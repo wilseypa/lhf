@@ -2,11 +2,20 @@
 
 // Header file for bettiPipe class - see bettiPipe.cpp for descriptions
 #include <map>
+#include <vector>
 #include <queue>
 #include <unordered_map>
 #include "basePipe.hpp"
 #include "utils.hpp"
 
+class unionFind{
+	private:
+		std::vector<int> rank, parent;
+	public:
+		unionFind(int n);
+		int find(int i);
+		bool join(int x, int y);
+};
 
 class fastPersistence : public basePipe {
   private:

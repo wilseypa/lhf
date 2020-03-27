@@ -20,7 +20,30 @@
 #include <bitset>
 #include "fastPersistence.hpp"
 
-#define maxInput 10000 //The size of a bitset needs to be specified at compile time
+unionFind::unionFind(int n) : rank(n, 0), parent(n, 0) {
+	for(int i=0; i<n; i++) parent[i]=i;
+}
+
+int unionFind::find(int i){
+	if(i == parent[i]) return i;
+	parent[i] = find(parent[i]); //Path Compression
+	return parent[i];
+}
+
+bool unionFind::join(int x, int y){ //Union by rank
+	x = find(x);
+	y = find(y);
+	if(x == y) return false;
+	if(rank[x] == rank[y]){
+		rank[y]++;
+		parent[x] = y;
+	} else if(rank[x] < rank[y]){
+		parent[x] = y;
+	} else{
+		parent[y] = x;
+	}
+	return true;
+}
 
 // basePipe constructor
 fastPersistence::fastPersistence(){
@@ -33,20 +56,16 @@ fastPersistence::fastPersistence(){
 //	FastPersistence: For computing the persistence pairs from simplicial complex:
 //		1. See Bauer-19 for algorithm/description
 pipePacket fastPersistence::runPipe(pipePacket inData){
-	
 	if(dim > 0)
 		inData.complex->expandDimensions(dim + 1);	
 	
 	std::string bettis = "";
 	
 	//Get all edges for the simplexArrayList or simplexTree
-	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edgesSet = inData.complex->getAllEdges(maxEpsilon);
-
+	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges = inData.complex->getAllEdges(maxEpsilon);
 	int nPoints = inData.originalData.size();
-	std::vector<std::vector<std::pair<std::bitset<maxInput>,double>>> edges;
 
-
-	if(edgesSet.size() == 0)
+	if(edges.size() == 0)
 		return inData;
 		
 	std::vector<std::pair<double,double>> temp;
@@ -68,109 +87,41 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	
 	//Get all dim 0 persistence intervals
 	//Kruskal's minimum spanning tree algorithm
-	//		Track the current connected sets (conSet)
+	//		Track the current connected components (uf)
 	//		Check edges; if contained in current set ignore
-	//			if joins into a single set, insert to set
 	//			if joins multiple sets, join all sets
 	//		Until all edges evaluated or MST found (size - 1)	
 	
-	//std::vector<std::pair<std::set<unsigned>,double>> mst;			//Store the minimum spanning tree
-	std::vector<double> mst;										//Store the minimum spanning tree (weight only)
-	std::vector<std::bitset<maxInput>> conSet;										//Store the connected set
-	
-	std::bitset<maxInput> wset;										//Store the intersection
-	std::bitset<maxInput> tempset;
-	std::list<unsigned> pivots;										//Store identified pivots
+	std::list<unsigned> pivots;	//Store identified pivots
 	unsigned pivotIndex = 0;
-		
-	for(auto dimEdges : edgesSet){ //Convert all sets to bitsets
-		std::vector<std::pair<std::bitset<maxInput>,double>> tempvec;
-		for(auto pairSet : dimEdges){
-			std::bitset<maxInput> tempbits;
-			for(auto vertex : pairSet.first){
-				tempbits[vertex]=1; //Insert vertices of set into bitsset
-			}
-			tempvec.push_back(make_pair(tempbits, pairSet.second));
-		}
-		edges.push_back(tempvec);
-	}
+	unsigned mstSize = 0;
 
-	//For each edge set 
-	for(auto edge : edges[1]){		
-		bool foundPivot = false;
-		bool br = false;
-		std::vector<std::bitset<maxInput>> conSetTemp;	//Store the connected set
-		//Check if the current set intersects with any existing connected sets
-		for(std::bitset<maxInput> cSet : conSet){
-			// wset = ut.setIntersect(edge.first, cSet, false);
-			wset = edge.first & cSet;
+	unionFind uf(nPoints);
 
-			//If one element intersects with a set and we haven't found a pivot...
-			if(!foundPivot && wset.count() == 1){
-				foundPivot = true;
-				pivots.push_back(pivotIndex);
-				mst.push_back(edge.second);
-//----------------------------------------------------------------------------------------
-				bettiBoundaryTableEntry des = { 0, 0, edge.second, {} }; //TODO: Change {} to wset (need to convert wset from bitset back to set)
-//----------------------------------------------------------------------------------------
-				inData.bettiTable.push_back(des);
-				
-				tempset = edge.first | cSet;
-				// set_union(edge.first.begin(), edge.first.end(), cSet.begin(), cSet.end(), std::inserter(tempset, tempset.end()));
-				
-			//If one element intersects with a set (and we already found a pivot, join sets)
-			} else if (wset.count() == 1){
-				//Keep updating our wset with a joint set
-				//wset = ut.symmetricDiff(edge.first, cSet, false);
-				//auto ts = ut.symmetricDiff(edge.first, cSet, false);
-				//std::copy(ts.begin(), ts.end(), std::inserter(tempset, tempset.end()));
-				tempset = tempset | cSet | edge.first;
-				// set_union(tempset.begin(), tempset.end(), cSet.begin(), cSet.end(), std::inserter(tempset, tempset.end()));
-				// set_union(edge.first.begin(), edge.first.end(), tempset.begin(), tempset.end(), std::inserter(tempset, tempset.end()));
-			//Otherwise write the set back to the connected set
-			// Either both elements are already contained in an existing set
-			// 
-			} else if (wset.count() == 2){
-				
-				conSetTemp.push_back(cSet);
-				br = true;
-			} else {
-				conSetTemp.push_back(cSet);
-			}
-				
-		}
-		
-		//If we found our pivot we need to push back the joined set
-		if(foundPivot){
-			conSetTemp.push_back(tempset);
-			
-		//If we didn't find a pivot, and the edge wasn't contained in an existing set
-		}else if (!br){
-			conSetTemp.push_back(edge.first);
+	for(auto edge : edges[1]){ //For each edge
+		std::set<unsigned>::iterator it = edge.first.begin();
+		int v1 = uf.find(*it), v2 = uf.find(*(++it)); //Find which connected component each vertex belongs to
+		if(v1 != v2){ //Edge connects two different components -> add to the MST
+			uf.join(v1, v2);
 			pivots.push_back(pivotIndex);
-			mst.push_back(edge.second);
-			
+			mstSize++;
+			bettis += "0,0," + std::to_string(edge.second) + "\n";
+// //----------------------------------------------------------------------------------------
+			// bettiBoundaryTableEntry des = { 0, 0, edge.second, {} }; //TODO: Change {} to wset (need to convert wset from bitset back to set)
+// //----------------------------------------------------------------------------------------
 		}
-		
+
 		//Check if we've filled our MST and can break...
-		if(mst.size() == edges[0].size()-1){
+		if(mstSize == edges[0].size()-1){
 			break;
 		}
+
 		pivotIndex++;
-		
-		conSet = conSetTemp;
-		tempset.reset();
 	}
 	
-	for(auto z : mst){
-		bettis += "0,0," + std::to_string(z) + "\n";
-		
-	}
 	bettis += "0,0," + std::to_string(maxEpsilon) + "\n";
 	bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {} };
 	inData.bettiTable.push_back(des);
-	
-	
 	
 	// //For higher dimensional persistence intervals
 	// //	
