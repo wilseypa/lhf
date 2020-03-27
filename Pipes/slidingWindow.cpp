@@ -24,6 +24,33 @@ slidingWindow::slidingWindow()
     return;
 }
 
+void deleteNNstats(EvalParams& defaultVals)
+{
+    defaultVals.keyToBeDeleted = defaultVals.windowKeys[defaultVals.indexToBeDeleted];
+
+    defaultVals.windowKeys.erase( defaultVals.windowKeys.begin() + defaultVals.indexToBeDeleted );
+    defaultVals.partitionLabels.erase( defaultVals.partitionLabels.begin() + defaultVals.indexToBeDeleted );
+
+    defaultVals.nnIndices.erase( defaultVals.nnIndices.begin() + defaultVals.indexToBeDeleted );
+
+    defaultVals.nnDistToBeDeleted = defaultVals.nnDists[defaultVals.indexToBeDeleted];
+    defaultVals.nnDists.erase( defaultVals.nnDists.begin() + defaultVals.indexToBeDeleted );
+
+    defaultVals.distsFromCurrVec.erase( defaultVals.distsFromCurrVec.begin() + defaultVals.indexToBeDeleted );
+
+    defaultVals.numPointsPartn[defaultVals.labelToBeDeleted] = defaultVals.numPointsPartn[defaultVals.labelToBeDeleted] - 1;
+
+    // If there are no more points left in the partition from which the deletion took place:
+    if (defaultVals.numPointsPartn[defaultVals.labelToBeDeleted] == 0)
+    {
+        defaultVals.avgNNDistPartitions.erase(defaultVals.labelToBeDeleted);
+        defaultVals.numPointsPartn.erase(defaultVals.labelToBeDeleted);
+        defaultVals.maxKeys.erase(defaultVals.labelToBeDeleted);
+    }
+
+    return;
+
+}
 
 bool nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vector<double>>& windowValues, EvalParams& defaultVals)
 {
@@ -53,33 +80,17 @@ bool nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vecto
 
         if (avgNNDistSinglePartition == 0 || nnDistCurrVec / avgNNDistSinglePartition > f1)
         {
-            // Delete the key (the lowest key) from the front of the list.
-            defaultVals.keyToBeDeleted = defaultVals.windowKeys[0];
-            defaultVals.windowKeys.erase( defaultVals.windowKeys.begin() );
-
-            // Delete the label from the front of the list.
+            // In this case, the oldest point will be deleted from the window.
             defaultVals.labelToBeDeleted = defaultVals.partitionLabels[0];
-            defaultVals.partitionLabels.erase( defaultVals.partitionLabels.begin() );
-
-            defaultVals.indexToBeDeleted = 0; // In this case, the oldest point will be deleted from the window.
-
-            defaultVals.nnIndices.erase( defaultVals.nnIndices.begin() );
-
-            defaultVals.nnDistToBeDeleted = defaultVals.nnDists[0];
-		    defaultVals.nnDists.erase( defaultVals.nnDists.begin() );
-
-            // Delete the corresponding distance value from the list of distances from the current vector
-            // to the existing ones in the window.
-            defaultVals.distsFromCurrVec.erase( defaultVals.distsFromCurrVec.begin() );
-
-            // Delete the vector from the front of the sliding window.
-            windowValues.erase( windowValues.begin() );
+            defaultVals.indexToBeDeleted = 0;
 
             // Since the window was 'pure', the partition label of the new point to be added is (existing label + 1).
             defaultVals.targetPartition = defaultVals.labelToBeDeleted + 1;
 
-            // Decrement the number of points in the existing partition by 1.
-            defaultVals.numPointsPartn[defaultVals.labelToBeDeleted] = defaultVals.windowMaxSize - 1;
+            deleteNNstats(defaultVals);
+
+            // Delete the vector from the front of the sliding window.
+            windowValues.erase( windowValues.begin() );
 
             return true;
         }
@@ -87,21 +98,6 @@ bool nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vecto
     }
 
     else {   // If the window is NOT "pure":
-
-//        // Create a dictionary to store the nearest neighbor distance from the current vector to each partition in the window.
-//        std::unordered_map<int, double> nnDistsFrmCurrVecToPartns;
-//        for(unsigned int i = 0; i < defaultVals.windowMaxSize; i++) {
-//
-//            // If the partition label of the i-th point does not already exist in nnDistsFrmCurrVecToPartns:
-//            if ( nnDistsFrmCurrVecToPartns.count(defaultVals.partitionLabels[i]) == 0 ) {
-//                nnDistsFrmCurrVecToPartns[defaultVals.partitionLabels[i]] = defaultVals.distsFromCurrVec[i];
-//            }
-//            else if ( defaultVals.distsFromCurrVec[i] < nnDistsFrmCurrVecToPartns[defaultVals.partitionLabels[i]] ) {
-//                nnDistsFrmCurrVecToPartns[defaultVals.partitionLabels[i]] = defaultVals.distsFromCurrVec[i];
-//            }
-//        }
-
-
 
         // Determine the partition membership of the current vector. In particular, check if the current vector can be assigned to
         // its nearest partition. If it cannot be assigned to its nearest partition, create a new partition with only the current vector.
@@ -162,30 +158,36 @@ bool nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vecto
             // Delete the oldest point of the smallest outdated partition (and its associated statistics) from the sliding window.
             defaultVals.labelToBeDeleted = smallestOutdated;
             defaultVals.indexToBeDeleted = std::find( defaultVals.partitionLabels.begin(), defaultVals.partitionLabels.end(), smallestOutdated ) - defaultVals.partitionLabels.begin();
-            defaultVals.keyToBeDeleted = defaultVals.windowKeys[defaultVals.indexToBeDeleted];
 
-            defaultVals.windowKeys.erase( defaultVals.windowKeys.begin() + defaultVals.indexToBeDeleted );
-            defaultVals.partitionLabels.erase( defaultVals.partitionLabels.begin() + defaultVals.indexToBeDeleted );
-
-            defaultVals.nnIndices.erase( defaultVals.nnIndices.begin() + defaultVals.indexToBeDeleted );
-
-            defaultVals.nnDistToBeDeleted = defaultVals.nnDists[defaultVals.indexToBeDeleted];
-            defaultVals.nnDists.erase( defaultVals.nnDists.begin() + defaultVals.indexToBeDeleted );
-
-            defaultVals.distsFromCurrVec.erase( defaultVals.distsFromCurrVec.begin() + defaultVals.indexToBeDeleted );
+            deleteNNstats(defaultVals);
 
             windowValues.erase( windowValues.begin() + defaultVals.indexToBeDeleted );
 
-            defaultVals.numPointsPartn[defaultVals.labelToBeDeleted] = defaultVals.numPointsPartn[defaultVals.labelToBeDeleted] - 1;
+        }
 
-            // If there are no more points left in the partition from which the deletion took place:
-            if (defaultVals.numPointsPartn[defaultVals.labelToBeDeleted] == 0)
-            {
-                defaultVals.avgNNDistPartitions.erase(defaultVals.labelToBeDeleted);
-                defaultVals.numPointsPartn.erase(defaultVals.labelToBeDeleted);
-                defaultVals.maxKeys.erase(defaultVals.labelToBeDeleted);
+        else {   // There is no outdated partition in the window:
+            if ( defaultVals.targetPartition != nearestPartition ) {   // If the current vector was assigned a new partition:
+
+                // In this case, the oldest point will be deleted from the window.
+                defaultVals.labelToBeDeleted = defaultVals.partitionLabels[0];
+                defaultVals.indexToBeDeleted = 0;
+
+                deleteNNstats(defaultVals);
+
+                // Delete the vector from the front of the sliding window.
+                windowValues.erase( windowValues.begin() );
             }
+            else {   // The current vector is assigned to one of the existing partitions:
+                // In this case, make sure the point to be deleted does not belong to the target partition. In particular,
+                // we'll delete the oldest point from a partition label != targetPartition label.
 
+                // Find the first occurrence of a partition label != targetPartition label.
+                defaultVals.indexToBeDeleted = std::find( defaultVals.partitionLabels.begin(), defaultVals.partitionLabels.end(), !defaultVals.targetPartition ) - defaultVals.partitionLabels.begin();
+                defaultVals.labelToBeDeleted = defaultVals.partitionLabels[defaultVals.indexToBeDeleted];
+
+                deleteNNstats(defaultVals);
+                windowValues.erase( windowValues.begin() + defaultVals.indexToBeDeleted );
+            }
         }
 
         return true;
