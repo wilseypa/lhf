@@ -15,6 +15,7 @@ add_library(persistencePairs "persistencePairs.cpp" "persistencePairs.hpp")
 add_library(optPersistencePairs "optPersistencePairs.cpp" "optPersistencePairs.hpp")
 add_library(slidingWindow "slidingWindow.cpp" "slidingWindow.hpp")
 add_library(fastPersistence "fastPersistence.cpp" "fastPersistence.hpp")
+add_library(naiveWindow "naiveWindow.cpp" "naiveWindow.hpp")
 
 include_directories(../Complex)
 link_directories(../Complex)
@@ -26,7 +27,7 @@ include_directories(../Utils)
 link_directories(../Utils)
 
 # target_link_libraries(LHF PipeFunctions)
-target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe ripsPipe upscalePipe boundaryPipe persistencePairs optPersistencePairs slidingWindow fastPersistence)
+target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe ripsPipe upscalePipe boundaryPipe persistencePairs optPersistencePairs slidingWindow fastPersistence naiveWindow)
 
 INSTALL (TARGETS basePipe
 	LIBRARY DESTINATION lib
