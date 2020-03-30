@@ -4,9 +4,14 @@
 
 // Header file for pipePacket class - see pipePacket.cpp for descriptions
 
+
+
+
 class pipePacket {
   private:
   public:
+	std::vector<bettiBoundaryTableEntry> bettiTable;
+  
 	pipePacket(const std::string &, const double, const int);
 	pipePacket(const std::map<std::string, std::string>, const std::string&);
 	std::string stats;

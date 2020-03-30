@@ -18,19 +18,86 @@ utils::utils(std::string _debug, std::string _outputFile){
 	outputFile = _outputFile;
 }
 
-std::vector<std::vector<std::vector<double>>> utils::separatePartitions(int k, std::vector<std::vector<double>> originalData, std::vector<unsigned> labels){
+double utils::computeMaxRadius(int k, std::vector<std::vector<double>> centroids, std::vector<std::vector<double>> originalData, std::vector<unsigned> labels){
+	double maxRadius = 0;
 	
+	for(unsigned i = 0; i < labels.size(); i++){
+		double curRadius = vectors_distance(originalData[i], centroids[labels[i]]);
+		
+		if(curRadius > maxRadius)
+			maxRadius = curRadius;
+	}
+	
+	return maxRadius;	
+}
+
+std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> utils::separatePartitions(int k, std::vector<std::vector<double>> originalData, std::vector<unsigned> labels){
 	std::vector<std::vector<double>> a;
-	
+	std::vector<unsigned> b;
 	std::vector<std::vector<std::vector<double>>> res(k, a);
+	std::vector<std::vector<unsigned>> labres(k, b);
 	
+	for(unsigned i = 0; i < labels.size(); i++){
+		res[labels[i]].push_back(originalData[i]);
+		labres[labels[i]].push_back(i);
+	}
+	
+	return std::make_pair(labres, res);
+}
+
+std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> utils::separatePartitions(double rad, std::vector<std::vector<double>> centroids, std::vector<std::vector<double>> originalData, std::vector<unsigned> labels){
+	std::vector<std::vector<double>> a;
+	std::vector<unsigned> b;
+	std::vector<std::vector<std::vector<double>>> res(centroids.size(), a);
+	std::vector<std::vector<unsigned>> labres(centroids.size(), b);
+	
+	for(unsigned i = 0; i < labels.size(); i++){
+		//Check for this point belonging to each centroid
+		for(unsigned j = 0; j < centroids.size(); j++){
+			double curRad = vectors_distance(originalData[i], centroids[j]);
+			
+			//If this distance is less than our radius cutoff
+			if(curRad < rad){
+				res[j].push_back(originalData[i]);
+				labres[j].push_back(i);	
+			}	
+		}
+	}
+	
+	return std::make_pair(labres, res);
+}
+
+std::vector<std::vector<std::vector<double>>> utils::separateBoundaryPartitions(std::vector<std::set<unsigned>> boundaryLists, std::vector<std::vector<double>> originalData, std::vector<unsigned> labels){
+	std::vector<std::vector<double>> a;
+	std::vector<std::vector<std::vector<double>>> res(boundaryLists.size(), a);
+		
 	for(unsigned i = 0; i < originalData.size(); i++){
 		
-		res[labels[i]].push_back(originalData[i]);
-		
+		for(unsigned j = 0; j < boundaryLists.size(); j++){
+			
+			if(boundaryLists[j].find(labels[i]) != boundaryLists[j].end())
+				res[j].push_back(originalData[i]);
+		}
 	}
 	
 	return res;
+}
+
+void utils::mapPartitionIndexing(std::vector<unsigned> partitionedLabels, std::vector<bettiBoundaryTableEntry>& bettiTable){
+	
+	//std::cout << "Part Labels: " << partitionedLabels.size() << std::endl;
+	
+	for(auto bet : bettiTable){
+		std::set<unsigned> convBound;
+		
+		for(auto ind : bet.boundaryPoints){
+			convBound.insert(partitionedLabels[ind]);
+			//std::cout << "Converted point : " << ind << " to index: " << partitionedLabels[ind] << std::endl;
+		}			
+		bet.boundaryPoints = convBound;
+		
+	}
+	return;
 }
 
 void utils::print2DVector(const std::vector<std::vector<unsigned>>& a){

@@ -385,3 +385,13 @@ bool simplexArrayList::deletion(std::vector<unsigned> vector){
 	}
 	return false;
 }
+
+void simplexArrayList::clear(){
+	
+	for(auto z : weightedGraph){
+		z.clear();
+	}
+	
+	weightedGraph.clear();
+	
+}

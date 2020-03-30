@@ -25,5 +25,6 @@ class simplexArrayList : public simplexBase{
 	bool deletion(std::vector<unsigned>);
 	void expandDimensions(int);
 	void reduceComplex();
+	void clear();
 };
 
