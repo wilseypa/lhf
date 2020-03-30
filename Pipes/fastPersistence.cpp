@@ -28,6 +28,11 @@ int unionFind::find(int i){
 	if(i == parent[i]) return i;
 	parent[i] = find(parent[i]); //Path Compression
 	return parent[i];
+	// while(parent[i] != i){
+	// 	parent[i] = parent[parent[i]];
+	// 	i = parent[i];
+	// }
+	// return i;
 }
 
 bool unionFind::join(int x, int y){ //Union by rank
@@ -123,106 +128,150 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {} };
 	inData.bettiTable.push_back(des);
 	
-	// //For higher dimensional persistence intervals
-	// //	
-	// if(dim > 0){
-	// 	//Build next dimension of ordered simplices, ignoring previous dimension pivots
+	//For higher dimensional persistence intervals
+	//	
+		//Build next dimension of ordered simplices, ignoring previous dimension pivots
 		
-	// 	//Represent the ordered simplices as indexed sets; similar to the approach in indSimplexTree
+		//Represent the ordered simplices as indexed sets; similar to the approach in indSimplexTree
 		
-	// 	//Identify apparent pairs - i.e. d is the youngest face of d+1, and d+1 is the oldest coface of d
-	// 	//		This indicates a feature represents a persistence interval
+		//Identify apparent pairs - i.e. d is the youngest face of d+1, and d+1 is the oldest coface of d
+		//		This indicates a feature represents a persistence interval
 		
-	// 	//Track V (reduction matrix) for each column j that has been reduced to identify the constituent 
-	// 	//		boundary simplices; we may not track this currently but will eventually
+		//Track V (reduction matrix) for each column j that has been reduced to identify the constituent 
+		//		boundary simplices; we may not track this currently but will eventually
 		
 		
-	// 	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
-			
-	// 		//Track the current pivots located into an unordered map
-	// 		std::unordered_map<unsigned, std::set<unsigned>> v;
-	// 		//std::cout << "D" << d << ": " << std::endl;
-			
-	// 		//std::cout << "\tEdges[d]: " << edges[d].size() << "\tEdges[d+1]: " << edges[d+1].size() << std::endl;
-			
-	// 		//std::cout << "Pivots: " << pivots.size() << std::endl;
-	// 		/*for(auto z : pivots){
-	// 			std::cout << z << "\t";
-	// 		}
-	// 		std::cout << std::endl;*/
-			
-	// 		std::list<unsigned> nextPivots;
-	// 		unsigned columnIndex = 0;
-			
-	// 		//Iterate the columns of the boundary matrix (i.e. the nextEdges)
-	// 		for(auto column_to_reduce : edges[d+1]){
-	// 			pivotIndex = 0;
-	// 			int foundCol = 0;
-	// 			int foundPiv = 0;
-	// 			bool foundPivot = false;
-	// 			bool needReduced = false;
-	// 			std::set<unsigned> cofaceList;
-				
-	// 			auto pivotPointer = pivots.begin();
-				
-	// 			//Begin checking each vector from lowest weight for a pivot; skip previous pivots
-	// 			//	We want to build the vector before attempting to reduce/store
-	// 			for(auto row_to_check : edges[d]){
-	// 				// 1 of 3 things can happen here:
-	// 				//		-The row is a pivot of the column, closing an interval
-	// 				//		-The row is not a pivot, needing to be XOR with the stored pivot
-	// 				//		-The row does not intersect (0 or cleared from previous dimension)
-	// 				if(*pivotPointer != pivotIndex){
-						
-	// 					//Check for intersection
-	// 					bool isCoface = std::includes(column_to_reduce.first.begin(), column_to_reduce.first.end(), row_to_check.first.begin(), row_to_check.first.end());
-						
-	// 					if(isCoface) {
-	// 						cofaceList.insert(pivotIndex);
-	// 					}
-	// 				} else {
-	// 					pivotPointer++;
-	// 				}				
+	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
+		unsigned columnIndex = 0;
+		std::unordered_map<unsigned, std::set<unsigned>> v;
+		std::list<unsigned>::iterator pivotPointer = pivots.begin();
+		std::list<unsigned> nextPivots;
+
+		for(std::pair<std::set<unsigned>,double> simplex : edges[d]){ //Iterate over columns to reduce
+			std::set<unsigned> cofaceList;
+
+			if(*pivotPointer != columnIndex){ //Not a pivot -> need to reduce
+				unsigned cofacetIndex = 0;
+
+				for(std::pair<std::set<unsigned>,double> cofacetCandidate : edges[d+1]){ //Iterate over possible cofacets
+					bool isCofacet = std::includes(cofacetCandidate.first.begin(), cofacetCandidate.first.end(), simplex.first.begin(), simplex.first.end());
 					
-	// 				pivotIndex++;
-					
-	// 			}
-	// 			//Reduce the column or store into the unordered map
-								
-	// 			std::set<unsigned int>::iterator pIndex;
-	// 			while((pIndex = cofaceList.begin()) != cofaceList.end()){
-	// 				if(v.find(*pIndex) == v.end()){
-	// 					v[*pIndex] = cofaceList;
-	// 					nextPivots.push_back(columnIndex);		
+					if(isCofacet) cofaceList.insert(cofacetIndex);
+					++cofacetIndex;
+				}
+
+				while(!cofaceList.empty()){
+					auto pIndex = cofaceList.begin();
+
+					if(v.find(*pIndex) == v.end()){
+						v[*pIndex] = cofaceList;
+						nextPivots.push_back(columnIndex);		
 						
-	// 					if(edges[d][*pIndex].second != edges[d+1][columnIndex].second){
-	// 							bettis += std::to_string(d) + "," + std::to_string(edges[d][*pIndex].second) +"," + std::to_string(edges[d+1][columnIndex].second) + "\n";
+						if(edges[d][*pIndex].second != edges[d+1][columnIndex].second){
+								bettis += std::to_string(d) + "," + std::to_string(edges[d][*pIndex].second) +"," + std::to_string(edges[d+1][columnIndex].second) + "\n";
 								
-	// 						bettiBoundaryTableEntry des = { d, edges[d][*pIndex].second, edges[d+1][columnIndex].second, cofaceList };
-	// 						inData.bettiTable.push_back(des);
-	// 					}
+							bettiBoundaryTableEntry des = { d, edges[d][*pIndex].second, edges[d+1][columnIndex].second, cofaceList };
+							inData.bettiTable.push_back(des);
+						}
 											
-	// 					break;
-	// 				} else {
-	// 					auto oldCofaceList = ut.setXOR(v[*pIndex],cofaceList);
+						break;
+					} else {
+						auto oldCofaceList = ut.setXOR(v[*pIndex], cofaceList);
 						
-						
-	// 					if(oldCofaceList == cofaceList)
-	// 						break;
-	// 					cofaceList = oldCofaceList;
-	// 				}
-	// 			}
-				
-	// 			columnIndex++;
-				
-	// 		}
-			
-	// 		pivots = nextPivots;
-	// 	}
+						if(oldCofaceList == cofaceList)
+							break;
+						cofaceList = oldCofaceList;
+					}
+				}
+
+			} else ++pivotPointer;
+
+			columnIndex++;
+		}
 		
-	// }
-	
-	//std::cout << bettis << std::endl;
+		// //Track the current pivots located into an unordered map
+		// std::unordered_map<unsigned, std::set<unsigned>> v;
+		// //std::cout << "D" << d << ": " << std::endl;
+		
+		// //std::cout << "\tEdges[d]: " << edges[d].size() << "\tEdges[d+1]: " << edges[d+1].size() << std::endl;
+		
+		// //std::cout << "Pivots: " << pivots.size() << std::endl;
+		// /*for(auto z : pivots){
+		// 	std::cout << z << "\t";
+		// }
+		// std::cout << std::endl;*/
+		
+		// std::list<unsigned> nextPivots;
+		
+		// pivotIndex = 0;
+
+		// //Iterate the columns of the boundary matrix (i.e. the nextEdges)
+		// for(auto row_to_check : edges[d]){
+		// 	unsigned columnIndex = 0;
+		// 	int foundCol = 0;
+		// 	int foundPiv = 0;
+		// 	bool foundPivot = false;
+		// 	bool needReduced = false;
+		// 	std::set<unsigned> cofaceList;
+			
+		// 	auto pivotPointer = pivots.begin();
+			
+		// 	//Begin checking each vector from lowest weight for a pivot; skip previous pivots
+		// 	//	We want to build the vector before attempting to reduce/store
+		// 	for(auto column_to_reduce : edges[d+1]){
+		// 		// 1 of 3 things can happen here:
+		// 		//		-The row is a pivot of the column, closing an interval
+		// 		//		-The row is not a pivot, needing to be XOR with the stored pivot
+		// 		//		-The row does not intersect (0 or cleared from previous dimension)
+		// 		if(*pivotPointer != pivotIndex){
+					
+		// 			//Check for intersection
+		// 			bool isCoface = std::includes(column_to_reduce.first.begin(), column_to_reduce.first.end(), row_to_check.first.begin(), row_to_check.first.end());
+					
+		// 			if(isCoface) {
+		// 				cofaceList.insert(pivotIndex);
+		// 			}
+		// 		} else {
+		// 			pivotPointer++;
+		// 		}				
+				
+		// 		pivotIndex++;
+				
+		// 	}
+		// 	//Reduce the column or store into the unordered map
+							
+		// 	std::set<unsigned int>::iterator pIndex;
+		// 	while((pIndex = cofaceList.begin()) != cofaceList.end()){
+		// 		if(v.find(*pIndex) == v.end()){
+		// 			v[*pIndex] = cofaceList;
+		// 			nextPivots.push_back(columnIndex);		
+					
+		// 			if(edges[d][*pIndex].second != edges[d+1][columnIndex].second){
+		// 					bettis += std::to_string(d) + "," + std::to_string(edges[d][*pIndex].second) +"," + std::to_string(edges[d+1][columnIndex].second) + "\n";
+							
+		// 				bettiBoundaryTableEntry des = { d, edges[d][*pIndex].second, edges[d+1][columnIndex].second, cofaceList };
+		// 				inData.bettiTable.push_back(des);
+		// 			}
+										
+		// 			break;
+		// 		} else {
+		// 			auto oldCofaceList = ut.setXOR(v[*pIndex],cofaceList);
+					
+					
+		// 			if(oldCofaceList == cofaceList)
+		// 				break;
+		// 			cofaceList = oldCofaceList;
+		// 		}
+		// 	}
+			
+		// 	columnIndex++;
+			
+		// }
+		
+		pivots = nextPivots;
+	}
+			
+	std::cout << bettis << std::endl;
 	//
 	
 	
