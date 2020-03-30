@@ -179,8 +179,12 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 	//		-Look at each point, label retrieved from preprocessor
 	//			-bin points and send to a respective MPI node / slave
 	utils ut;
-	auto partitionedData = ut.separatePartitions(std::atoi(args["clusters"].c_str()), wD->fullData, wD->originalLabels);
 	
+	auto maxRadius = ut.computeMaxRadius(std::atoi(args["clusters"].c_str()), wD->originalData, wD->fullData, wD->originalLabels);
+	auto centroids = wD->originalData;
+	std::cout << "Using maxRadius: " << maxRadius << std::endl;
+	
+	auto partitionedData = ut.separatePartitions(2*maxRadius, wD->originalData, wD->fullData, wD->originalLabels);
 	//	Each node/slave will process at least 1 partition
 	//		NOTE: the partition may contain points outside that are within 2*Rmax
 	std::cout << "Partitions: " << partitionedData.second.size() << std::endl << "Counts: ";
@@ -189,18 +193,23 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		std::cout << a.size() << "\t";
 	}
 	std::cout << std::endl;
-        int nprocs,rank;
+	
+	
+    int nprocs,rank;
 	MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 	auto numberofslaves = args["clusters"];
+	
+	std::cout <<  "Rank: " << rank << std::endl;
+	
         if(rank == 0)
 	{
           
-        std::cout << partitionedData[rank].size()<<std::endl;
+        std::cout << partitionedData.second[rank].size()<<std::endl;
 	}
         else
 	{
-	std::cout << partitionedData[rank].size()<<std::endl;
+	std::cout << partitionedData.second[rank].size()<<std::endl;
 	}
         MPI_Finalize();
 	
