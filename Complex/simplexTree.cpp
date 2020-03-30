@@ -758,9 +758,9 @@ bool simplexTree::deletion(std::set<unsigned> removalEntry) {
 bool simplexTree::deletion(treeNode* removalEntry) {
 	treeNode* curNode = removalEntry;
 	int deletionCount = 0;
-
-	//Iterate to the bottom of branch
-	while(curNode->child != nullptr){
+	
+	//Iterate to the bottom of branch in the current node
+	while(curNode->child != nullptr){ 
 		curNode->child->parent = curNode;
 		curNode=curNode->child;
 		std::cout << "\t\t@ " << curNode->index << std::endl;
@@ -787,12 +787,7 @@ bool simplexTree::deletion(treeNode* removalEntry) {
 	deletionCount++;
 	delete curNode;
 	nodeCount--;
-	//curNode->child = nullptr;
-
-	std::cout << "\tDeleted " << deletionCount << " nodes" << std::endl;
-
-
-
+	removalEntry->child = nullptr;
 	return false;
 }
 
@@ -807,5 +802,26 @@ std::vector<std::pair<double, std::vector<unsigned>>> simplexTree::getd0Pairs(){
 	std::vector<std::pair<double, std::vector<unsigned>>> ret;
 	ut.writeLog("simplexTree","getd0Pairs() not implemented!");
 	return ret;
+}
+
+
+void simplexTree::clear(){
+	
+	//Clear the simplexTree structure
+	deletion(head);
+	head = nullptr;
+	
+	//Clear the weighed edge graph
+	for(auto z : weightEdgeGraph){
+		z.clear();
+	}
+	weightEdgeGraph.clear();
+	dimensions.clear();
+	
+	
+	//runningVectorCount = 0;
+	runningVectorIndices.clear();
+	//indexCounter = 0;
+	
 }
 

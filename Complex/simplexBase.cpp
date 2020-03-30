@@ -30,7 +30,7 @@ void simplexBase::setConfig(std::map<std::string, std::string> configMap){
 		debug = std::atoi(configMap["debug"].c_str());
 	pipe = configMap.find("outputFile");
 	if(pipe != configMap.end())
-		outputFile = std::atoi(configMap["outputFile"].c_str());
+		outputFile = configMap["outputFile"].c_str();
 	pipe = configMap.find("dimensions");
 	if(pipe != configMap.end())
 		maxDimension = std::atoi(configMap["dimensions"].c_str());
@@ -154,8 +154,6 @@ void simplexBase::setStreamEvaluator(bool (*f) (std::vector<double>&, std::vecto
 }
 
 bool simplexBase::streamEvaluator(std::vector<double>& vector, std::vector<std::vector<double>>& window, EvalParams& defaultVals){
-
-
 	//Do some evaluation of whether the point should stay or not
 	//		For now, let's look at the deviation of connections
 
@@ -206,5 +204,8 @@ std::vector<std::pair<double, std::vector<unsigned>>> simplexBase::getd0Pairs(){
 	return ret;
 }
 
-
-
+void simplexBase::clear(){
+	ut.writeLog(simplexType,"No clear function defined");
+	return;
+}
+	

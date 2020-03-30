@@ -1,3 +1,4 @@
+#include "mpi.h"
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -9,6 +10,7 @@
 #include "writeOutput.hpp"
 #include "pipePacket.hpp"
 #include "preprocessor.hpp"
+#include "utils.hpp"
 
 using namespace std;
 
@@ -85,6 +87,77 @@ void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD)
 	return;
 }	
 
+void processReducedWrapper(std::map<std::string, std::string> args, pipePacket* wD){
+    
+    std::vector<bettiBoundaryTableEntry> mergedBettiTable;
+    
+	//Start with the preprocessing function, if enabled
+	auto pre = args["preprocessor"];
+	if(pre != ""){
+		auto *preprocess = new preprocessor();
+		auto *prePipe = preprocess->newPreprocessor(pre);
+		
+		if(prePipe != 0 && prePipe->configPreprocessor(args)){
+			*wD = prePipe->runPreprocessorWrapper(*wD);
+		} else {
+			cout << "LHF : Failed to configure pipeline: " << args["pipeline"] << endl;
+		}
+	}
+	
+	utils ut;
+	
+	auto maxRadius = ut.computeMaxRadius(std::atoi(args["clusters"].c_str()), wD->originalData, wD->fullData, wD->originalLabels);
+	auto centroids = wD->originalData;
+	std::cout << "Using maxRadius: " << maxRadius << std::endl;
+	
+	auto partitionedData = ut.separatePartitions(2*maxRadius, wD->originalData, wD->fullData, wD->originalLabels);
+	
+	std::cout << "Partitions: " << partitionedData.second.size() << std::endl << "Counts: ";
+	for(unsigned z = 0; z < partitionedData.second.size(); z++){
+		if(partitionedData.second[z].size() > 0){
+			std::cout << "Running Pipeline with : " << partitionedData.second[z].size() << " vectors" << std::endl;
+			wD->originalData = partitionedData.second[z];
+			
+			
+			runPipeline(args, wD);
+			
+			wD->complex->clear();
+			
+			//Map partitions back to original point indexing
+			ut.mapPartitionIndexing(partitionedData.first[z], wD->bettiTable);
+			
+			for(auto betEntry : wD->bettiTable)
+				mergedBettiTable.push_back(betEntry);
+			
+		} else 
+			std::cout << "skipping" << std::endl;
+	}
+	
+	std::cout << "Full Data: " << centroids.size() << std::endl;
+	if(centroids.size() > 0){
+		std::cout << "Running Pipeline with : " << centroids.size() << " vectors" << std::endl;
+		wD->originalData = centroids;
+		runPipeline(args, wD);
+		
+		wD->complex->clear();
+	} else 
+		std::cout << "skipping" << std::endl;
+	
+	std::cout << std::endl << "_______BETTIS_______" << std::endl;
+	
+	for(auto a : wD->bettiTable){
+		std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
+		ut.print1DVector(a.boundaryPoints);
+	}
+	
+		
+	return;
+}	
+
+
+
+
+
 void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* wD){
     
 	//Start with the preprocessing function, if enabled
@@ -100,7 +173,41 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		}
 	}
 	
-	do{
+	
+	//Notes from Nick:
+	//	After preprocessor, need to separate the data into bins by index (partition)
+	//		-Look at each point, label retrieved from preprocessor
+	//			-bin points and send to a respective MPI node / slave
+	utils ut;
+	auto partitionedData = ut.separatePartitions(std::atoi(args["clusters"].c_str()), wD->fullData, wD->originalLabels);
+	
+	//	Each node/slave will process at least 1 partition
+	//		NOTE: the partition may contain points outside that are within 2*Rmax
+	std::cout << "Partitions: " << partitionedData.second.size() << std::endl << "Counts: ";
+	
+	for(auto a : partitionedData.second){
+		std::cout << a.size() << "\t";
+	}
+	std::cout << std::endl;
+	
+	// Once we have X data sets to process, along with the original centroid dataset
+	//		Distribute work to slaves (run fastPersistence on given data)
+	//		Retrieve results
+	//		Merge Barcodes	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	// OLD----- (but keeep for reference later)
+	
+	/*do{
 		if(wD->boundaries.size() > 0){
 			
 			std::vector<std::thread> threads;
@@ -119,7 +226,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		}
 	} while (wD->boundaries.size() > 0);
 		
-	return;
+	return;*/
 }	
 
 int main(int argc, char* argv[]){
@@ -164,7 +271,8 @@ int main(int argc, char* argv[]){
     //Determine what pipe we will be running
     ap->setPipeline(args);
     
-    ap->printArguments(args);
+    for(auto z : args)
+		std::cout << z.first << "\t" << z.second << std::endl;
     
 	//Create a pipePacket (datatype) to store the complex and pass between engines
     auto *wD = new pipePacket(args, args["complexType"]);	//wD (workingData)
@@ -172,6 +280,7 @@ int main(int argc, char* argv[]){
 	if(args["pipeline"] != "slidingwindow"){
 		//Read data from inputFile CSV
 		wD->originalData = rs->readCSV(args["inputFile"]);
+		wD->fullData = wD->originalData;
 	}
 	//If data was found in the inputFile
 	if(wD->originalData.size() > 0 || args["pipeline"] == "slidingwindow"){
@@ -179,9 +288,10 @@ int main(int argc, char* argv[]){
 		//Add data to our pipePacket
 		wD->originalData = wD->originalData;
 		
-		auto ar = args["upscale"];
-		if(ar == "true"){
+		if(args["upscale"] == "true"){
 			processUpscaleWrapper(args, wD);
+		} else if (args["mode"] == "reduced"){
+			processReducedWrapper(args,wD);			
 		} else {
 			processDataWrapper(args, wD);
 		}

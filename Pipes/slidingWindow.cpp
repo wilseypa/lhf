@@ -11,6 +11,8 @@
 #include <numeric>
 #include <algorithm>
 #include <chrono>
+#include <cmath>
+#include <numeric>
 #include <functional>
 #include "slidingWindow.hpp"
 #include "utils.hpp"
@@ -194,6 +196,46 @@ bool nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vecto
     }
 
     return false;
+}
+
+bool sampleStreamEvaluator(std::vector<double>& vector, std::vector<std::vector<double>>& window){
+	utils ut;
+	
+	//Do some evaluation of whether the point should stay or not
+	//		For now, let's look at the deviation of connections
+	
+	auto reps = ut.nearestNeighbors(vector, window);
+	
+	double sum = std::accumulate(reps.begin(), reps.end(), 0.0);
+	double mean = sum / reps.size();
+	
+	std::vector<double> diff(reps.size());
+	std::transform(reps.begin(), reps.end(), diff.begin(),std::bind2nd(std::minus<double>(), mean));
+	double sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
+	double stdev = std::sqrt(sq_sum / reps.size());
+	
+	std::sort(reps.begin(), reps.end());
+	std::vector<double> kNN;
+	int k = 20;
+	
+	for(int i = 0; i < k; i++){
+		kNN.push_back(reps[i]);
+	}
+	
+	double sum_NN = std::accumulate(kNN.begin(), kNN.end(), 0.0);
+	double mean_NN = sum_NN / kNN.size();
+	
+	std::vector<double> diff_NN(kNN.size());
+	std::transform(kNN.begin(), kNN.end(), diff_NN.begin(),std::bind2nd(std::minus<double>(), mean_NN));
+	double sq_sum_NN = std::inner_product(diff_NN.begin(), diff_NN.end(), diff_NN.begin(), 0.0);
+	double stdev_NN = std::sqrt(sq_sum_NN / kNN.size());
+	
+	if (true){//stdev_NN > 10000){
+		//std::cout << "\tAccept: (stdev > 0.5 , " << stdev << ")" << std::endl;
+		return true;
+	}
+	//std::cout << "\tReject: (stdev > 0.5 , " << stdev << ")" << std::endl;
+	return false;
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
@@ -468,6 +510,7 @@ bool slidingWindow::configPipe(std::map<std::string, std::string> configMap)
 
     return true;
 }
+
 
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime

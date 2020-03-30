@@ -38,17 +38,12 @@ upscalePipe::upscalePipe(){
 //
 pipePacket upscalePipe::runPipe(pipePacket inData){
 	
-	std::vector<std::vector<double>> currentData;
-		
-	// Iterate each set of boundary points
-	for(auto bound : inData.boundaries) {
-		
-		for(auto point : bound){
-			
-			currentData.push_back(inData.originalData[inData.originalLabels[point]]);
-		}
-	}
-	inData.reducedData = currentData;
+	std::vector<std::vector<std::vector<double>>> upscaledBoundaries;
+	utils ut;
+	
+	//TODO: Update this to work with the bettiTable information
+	//upscaledBoundaries = ut.separateBoundaryPartitions(wD->bettiTable);
+	
 	return inData;
 }
 
