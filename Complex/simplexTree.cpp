@@ -190,17 +190,17 @@ void simplexTree::insertInductive(){
 
 
 // Insert a node into the tree using the distance matrix and a vector index to track changes
-bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vector<std::vector<double>> &window, EvalParams &defaultVals){
+bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vector<std::vector<double>> &window){
 	if(window.size() == 0){
 		return true;
 	}
 
-	if(streamEval(currentVector, window, defaultVals)) {   // Point is deemed 'significant'
+	if(streamEval(currentVector, window)) {   // Point is deemed 'significant'
 
-		deleteIterative( defaultVals.keyToBeDeleted, defaultVals.indexToBeDeleted );  // Delete from distance matrix and complex.
-		runningVectorIndices.erase( runningVectorIndices.begin() + defaultVals.indexToBeDeleted );
+		//deleteIterative( defaultVals.keyToBeDeleted, defaultVals.indexToBeDeleted );  // Delete from distance matrix and complex.
+		//runningVectorIndices.erase( runningVectorIndices.begin() + defaultVals.indexToBeDeleted );
 
-		insert(defaultVals.distsFromCurrVec);
+		//insert(defaultVals.distsFromCurrVec);
 		removedSimplices++;
 
 		return true;

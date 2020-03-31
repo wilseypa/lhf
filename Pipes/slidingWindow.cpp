@@ -25,35 +25,35 @@ slidingWindow::slidingWindow()
     return;
 }
 
-void slidingWindow::deleteNNstats(EvalParams& defaultVals)
+void slidingWindow::deleteNNstats()
 {
-    defaultVals.keyToBeDeleted = defaultVals.windowKeys[defaultVals.indexToBeDeleted];
+    defaultVals->keyToBeDeleted = defaultVals->windowKeys[defaultVals->indexToBeDeleted];
 
-    defaultVals.windowKeys.erase( defaultVals.windowKeys.begin() + defaultVals.indexToBeDeleted );
-    defaultVals.partitionLabels.erase( defaultVals.partitionLabels.begin() + defaultVals.indexToBeDeleted );
+    defaultVals->windowKeys.erase( defaultVals->windowKeys.begin() + defaultVals->indexToBeDeleted );
+    defaultVals->partitionLabels.erase( defaultVals->partitionLabels.begin() + defaultVals->indexToBeDeleted );
 
-    defaultVals.nnIndices.erase( defaultVals.nnIndices.begin() + defaultVals.indexToBeDeleted );
+    defaultVals->nnIndices.erase( defaultVals->nnIndices.begin() + defaultVals->indexToBeDeleted );
 
-    defaultVals.nnDistToBeDeleted = defaultVals.nnDists[defaultVals.indexToBeDeleted];
-    defaultVals.nnDists.erase( defaultVals.nnDists.begin() + defaultVals.indexToBeDeleted );
+    defaultVals->nnDistToBeDeleted = defaultVals->nnDists[defaultVals->indexToBeDeleted];
+    defaultVals->nnDists.erase( defaultVals->nnDists.begin() + defaultVals->indexToBeDeleted );
 
-    defaultVals.distsFromCurrVec.erase( defaultVals.distsFromCurrVec.begin() + defaultVals.indexToBeDeleted );
+    defaultVals->distsFromCurrVec.erase( defaultVals->distsFromCurrVec.begin() + defaultVals->indexToBeDeleted );
 
-    defaultVals.numPointsPartn[defaultVals.labelToBeDeleted] = defaultVals.numPointsPartn[defaultVals.labelToBeDeleted] - 1;
+    defaultVals->numPointsPartn[defaultVals->labelToBeDeleted] = defaultVals->numPointsPartn[defaultVals->labelToBeDeleted] - 1;
 
     // If there are no more points left in the partition from which the deletion took place:
-    if (defaultVals.numPointsPartn[defaultVals.labelToBeDeleted] == 0)
+    if (defaultVals->numPointsPartn[defaultVals->labelToBeDeleted] == 0)
     {
-        defaultVals.avgNNDistPartitions.erase(defaultVals.labelToBeDeleted);
-        defaultVals.numPointsPartn.erase(defaultVals.labelToBeDeleted);
-        defaultVals.maxKeys.erase(defaultVals.labelToBeDeleted);
+        defaultVals->avgNNDistPartitions.erase(defaultVals->labelToBeDeleted);
+        defaultVals->numPointsPartn.erase(defaultVals->labelToBeDeleted);
+        defaultVals->maxKeys.erase(defaultVals->labelToBeDeleted);
     }
 
     return;
 
 }
 
-void slidingWindow::updateStats(EvalParams& defaultVals, pipePacket& inData)
+void slidingWindow::updateStats()
 {
 
     double sumOldNNdists = 0.0;
@@ -71,54 +71,54 @@ void slidingWindow::updateStats(EvalParams& defaultVals, pipePacket& inData)
     std::vector<int> tpIndices; // A vector to store the positions of the existing members of the target partition.
 
     // Add a new column and row to the end of the upper triangular distance matrix.
-    for(unsigned int i = 0; i < inData.complex->distMatrix.size(); i++)
+    for(unsigned int i = 0; i < pPack->complex->distMatrix.size(); i++)
     {
-        inData.complex->distMatrix[i].push_back( defaultVals.distsFromCurrVec[i] );
+        pPack->complex->distMatrix[i].push_back( defaultVals->distsFromCurrVec[i] );
 
         // Update NN statistics for only those partitions from which the point was deleted or to which the new point is to be added.
         // Case 1: The i-th point belongs to the partition the last point was deleted from, but not to the partition the new point is
         // to be added to. And, the point that was deleted was the nearest neighbor of the i-th point.
-        if ( defaultVals.partitionLabels[i] == defaultVals.labelToBeDeleted
-                &&  defaultVals.partitionLabels[i] != defaultVals.targetPartition
-                && defaultVals.nnIndices[i] == defaultVals.indexToBeDeleted )
+        if ( defaultVals->partitionLabels[i] == defaultVals->labelToBeDeleted
+                &&  defaultVals->partitionLabels[i] != defaultVals->targetPartition
+                && defaultVals->nnIndices[i] == defaultVals->indexToBeDeleted )
         {
 
             // If only one point remains in the partition from which the last point was deleted:
-            if ( defaultVals.numPointsPartn[defaultVals.labelToBeDeleted] == 1 )
+            if ( defaultVals->numPointsPartn[defaultVals->labelToBeDeleted] == 1 )
             {
-                defaultVals.avgNNDistPartitions[defaultVals.labelToBeDeleted] = -1;
-                defaultVals.nnIndices[i] = -1;
-                defaultVals.nnDists[i] = -1;
+                defaultVals->avgNNDistPartitions[defaultVals->labelToBeDeleted] = -1;
+                defaultVals->nnIndices[i] = -1;
+                defaultVals->nnDists[i] = -1;
 
             }
             else
             {
-                sumDelOldNNdists = sumDelOldNNdists + defaultVals.nnDists[i];
+                sumDelOldNNdists = sumDelOldNNdists + defaultVals->nnDists[i];
 
                 std::vector<double> memberDistsFromVect;
                 std::vector<int> memberIndices;
 
-                for(unsigned int j = 0; j < inData.complex->distMatrix.size(); j++)
+                for(unsigned int j = 0; j < pPack->complex->distMatrix.size(); j++)
                 {
-                    if ( defaultVals.partitionLabels[j] == defaultVals.labelToBeDeleted )
+                    if ( defaultVals->partitionLabels[j] == defaultVals->labelToBeDeleted )
                     {
                         if (j < i)
                         {
-                            memberDistsFromVect.push_back( inData.complex->distMatrix[j][i] );
+                            memberDistsFromVect.push_back( pPack->complex->distMatrix[j][i] );
                             memberIndices.push_back(j);
                         }
                         else if (j > i)
                         {
-                            memberDistsFromVect.push_back( inData.complex->distMatrix[i][j] );
+                            memberDistsFromVect.push_back( pPack->complex->distMatrix[i][j] );
                             memberIndices.push_back(j);
                         }
                     }
                 }
                 auto tempIdx = std::min_element(memberDistsFromVect.begin(), memberDistsFromVect.end()) - memberDistsFromVect.begin();
-                defaultVals.nnIndices[i] = memberIndices[tempIdx];
+                defaultVals->nnIndices[i] = memberIndices[tempIdx];
 
                 auto newNNdistFromVect = *std::min_element( memberDistsFromVect.begin(), memberDistsFromVect.end() );
-                defaultVals.nnDists[i] = newNNdistFromVect;
+                defaultVals->nnDists[i] = newNNdistFromVect;
                 sumDelNewdists = sumDelNewdists + newNNdistFromVect;
             }
 
@@ -126,39 +126,39 @@ void slidingWindow::updateStats(EvalParams& defaultVals, pipePacket& inData)
 
         // Case 2: The i-th point belongs to the partition the new point is to be added to, but not to the partition the last point
         // was deleted from. In this case, is it possible that the point that was deleted was the nearest neighbor of the i-th point?
-        else if ( defaultVals.partitionLabels[i] != defaultVals.labelToBeDeleted && defaultVals.partitionLabels[i] == defaultVals.targetPartition )
+        else if ( defaultVals->partitionLabels[i] != defaultVals->labelToBeDeleted && defaultVals->partitionLabels[i] == defaultVals->targetPartition )
         {
 
             // If, previously, there was only one point in the target partition:
-            if ( defaultVals.numPointsPartn[defaultVals.targetPartition] == 1 )
+            if ( defaultVals->numPointsPartn[defaultVals->targetPartition] == 1 )
             {
 
                 // Update the NN statistics for the "new" two-point partition.
-                defaultVals.nnIndices[i] = defaultVals.windowMaxSize - 1;
-                defaultVals.nnIndices.push_back(i);
+                defaultVals->nnIndices[i] = defaultVals->windowMaxSize - 1;
+                defaultVals->nnIndices.push_back(i);
 
-                defaultVals.nnDists[i] = defaultVals.distsFromCurrVec[i];
-                defaultVals.nnDists.push_back(defaultVals.nnDists[i]);
+                defaultVals->nnDists[i] = defaultVals->distsFromCurrVec[i];
+                defaultVals->nnDists.push_back(defaultVals->nnDists[i]);
 
-                defaultVals.avgNNDistPartitions[defaultVals.targetPartition] = defaultVals.nnDists[i];
-                defaultVals.numPointsPartn[defaultVals.targetPartition] = 2;
+                defaultVals->avgNNDistPartitions[defaultVals->targetPartition] = defaultVals->nnDists[i];
+                defaultVals->numPointsPartn[defaultVals->targetPartition] = 2;
                 twoPointPartition = 1;
             }
 
             else
             {
 
-                distsFromCurrVecTP.push_back( defaultVals.distsFromCurrVec[i] );
+                distsFromCurrVecTP.push_back( defaultVals->distsFromCurrVec[i] );
                 tpIndices.push_back(i);
 
-                if ( defaultVals.distsFromCurrVec[i] < defaultVals.nnDists[i] )
+                if ( defaultVals->distsFromCurrVec[i] < defaultVals->nnDists[i] )
                 {
-                    sumAddOldNNdists = sumAddOldNNdists + defaultVals.nnDists[i];
+                    sumAddOldNNdists = sumAddOldNNdists + defaultVals->nnDists[i];
 
-                    defaultVals.nnDists[i] = defaultVals.distsFromCurrVec[i];
-                    defaultVals.nnIndices[i] = defaultVals.windowMaxSize - 1;
+                    defaultVals->nnDists[i] = defaultVals->distsFromCurrVec[i];
+                    defaultVals->nnIndices[i] = defaultVals->windowMaxSize - 1;
 
-                    sumAddNewdists = sumAddNewdists + defaultVals.nnDists[i];
+                    sumAddNewdists = sumAddNewdists + defaultVals->nnDists[i];
                 }
             }
 
@@ -167,164 +167,164 @@ void slidingWindow::updateStats(EvalParams& defaultVals, pipePacket& inData)
         // Case 3: The partition the last point was deleted from is the same as the target partition of the new point to be added to,
         // and the i-th point belongs to that partition (i.e. at least one point remained in the partition after the deletion and before
         // the addition).
-        else if (defaultVals.labelToBeDeleted == defaultVals.targetPartition && defaultVals.partitionLabels[i] == defaultVals.targetPartition)
+        else if (defaultVals->labelToBeDeleted == defaultVals->targetPartition && defaultVals->partitionLabels[i] == defaultVals->targetPartition)
         {
 
             // If only one point remained in the partition after the deletion and before the addition:
-            if ( defaultVals.numPointsPartn[defaultVals.targetPartition] == 1 )
+            if ( defaultVals->numPointsPartn[defaultVals->targetPartition] == 1 )
             {
 
                 // Update the NN statistics for the "new" two-point partition.
-                defaultVals.nnIndices[i] = defaultVals.windowMaxSize - 1;
-                defaultVals.nnIndices.push_back(i);
+                defaultVals->nnIndices[i] = defaultVals->windowMaxSize - 1;
+                defaultVals->nnIndices.push_back(i);
 
-                defaultVals.nnDists[i] = defaultVals.distsFromCurrVec[i];
-                defaultVals.nnDists.push_back(defaultVals.nnDists[i]);
+                defaultVals->nnDists[i] = defaultVals->distsFromCurrVec[i];
+                defaultVals->nnDists.push_back(defaultVals->nnDists[i]);
 
-                defaultVals.avgNNDistPartitions[defaultVals.targetPartition] = defaultVals.nnDists[i];
-                defaultVals.numPointsPartn[defaultVals.targetPartition] = 2;
+                defaultVals->avgNNDistPartitions[defaultVals->targetPartition] = defaultVals->nnDists[i];
+                defaultVals->numPointsPartn[defaultVals->targetPartition] = 2;
                 twoPointPartition = 1;
             }
 
-            else if ( defaultVals.distsFromCurrVec[i] < defaultVals.nnDists[i] )
+            else if ( defaultVals->distsFromCurrVec[i] < defaultVals->nnDists[i] )
             {
-                distsFromCurrVecTP.push_back( defaultVals.distsFromCurrVec[i] );
+                distsFromCurrVecTP.push_back( defaultVals->distsFromCurrVec[i] );
                 tpIndices.push_back(i);
 
-                sumOldNNdists = sumOldNNdists + defaultVals.nnDists[i];
+                sumOldNNdists = sumOldNNdists + defaultVals->nnDists[i];
 
-                defaultVals.nnDists[i] = defaultVals.distsFromCurrVec[i];
-                defaultVals.nnIndices[i] = defaultVals.windowMaxSize - 1;
+                defaultVals->nnDists[i] = defaultVals->distsFromCurrVec[i];
+                defaultVals->nnIndices[i] = defaultVals->windowMaxSize - 1;
 
-                sumNewNNdists = sumNewNNdists + defaultVals.nnDists[i];
+                sumNewNNdists = sumNewNNdists + defaultVals->nnDists[i];
             }
 
-            else if ( defaultVals.nnIndices[i] == defaultVals.indexToBeDeleted )
+            else if ( defaultVals->nnIndices[i] == defaultVals->indexToBeDeleted )
             {
-                distsFromCurrVecTP.push_back( defaultVals.distsFromCurrVec[i] );
+                distsFromCurrVecTP.push_back( defaultVals->distsFromCurrVec[i] );
                 tpIndices.push_back(i);
 
-                sumOldNNdists = sumOldNNdists + defaultVals.nnDists[i];
+                sumOldNNdists = sumOldNNdists + defaultVals->nnDists[i];
 
                 std::vector<double> memberDistsFromVect;
                 std::vector<int> memberIndices;
 
-                for(unsigned int j = 0; j < defaultVals.windowMaxSize; j++)
+                for(unsigned int j = 0; j < defaultVals->windowMaxSize; j++)
                 {
-                    if ( defaultVals.partitionLabels[j] == defaultVals.labelToBeDeleted )
+                    if ( defaultVals->partitionLabels[j] == defaultVals->labelToBeDeleted )
                     {
                         if (j < i)
                         {
-                            memberDistsFromVect.push_back( inData.complex->distMatrix[j][i] );
+                            memberDistsFromVect.push_back( pPack->complex->distMatrix[j][i] );
                             memberIndices.push_back(j);
                         }
                         else if (j > i)
                         {
-                            memberDistsFromVect.push_back( inData.complex->distMatrix[i][j] );
+                            memberDistsFromVect.push_back( pPack->complex->distMatrix[i][j] );
                             memberIndices.push_back(j);
                         }
                     }
                 }
                 auto tempIdx = std::min_element(memberDistsFromVect.begin(), memberDistsFromVect.end()) - memberDistsFromVect.begin();
-                defaultVals.nnIndices[i] = memberIndices[tempIdx];
+                defaultVals->nnIndices[i] = memberIndices[tempIdx];
 
                 auto newNNdistFromVect = *std::min_element( memberDistsFromVect.begin(), memberDistsFromVect.end() );
-                defaultVals.nnDists[i] = newNNdistFromVect;
+                defaultVals->nnDists[i] = newNNdistFromVect;
                 sumNewNNdists = sumNewNNdists + newNNdistFromVect;
             }
 
             else
             {
-                distsFromCurrVecTP.push_back( defaultVals.distsFromCurrVec[i] );
+                distsFromCurrVecTP.push_back( defaultVals->distsFromCurrVec[i] );
                 tpIndices.push_back(i);
             }
         }
 
     }
-    inData.complex->distMatrix.push_back( defaultVals.distMatLastRow );
+    pPack->complex->distMatrix.push_back( defaultVals->distMatLastRow );
 
     // Update the average NN distance of the partition from which the last point was deleted and of the one to which the new point
     // is being added.
     // If the new point is being added to a partition that does not exist in the window (after the last deletion):
-    if ( defaultVals.avgNNDistPartitions.count( defaultVals.targetPartition ) == 0 )
+    if ( defaultVals->avgNNDistPartitions.count( defaultVals->targetPartition ) == 0 )
     {
-        defaultVals.avgNNDistPartitions[defaultVals.targetPartition] = -1;
-        defaultVals.nnIndices.push_back(-1);
-        defaultVals.nnDists.push_back(-1);
-        defaultVals.numPointsPartn[defaultVals.targetPartition] = 1;
+        defaultVals->avgNNDistPartitions[defaultVals->targetPartition] = -1;
+        defaultVals->nnIndices.push_back(-1);
+        defaultVals->nnDists.push_back(-1);
+        defaultVals->numPointsPartn[defaultVals->targetPartition] = 1;
 
     }
-    if ( defaultVals.labelToBeDeleted != defaultVals.targetPartition )
+    if ( defaultVals->labelToBeDeleted != defaultVals->targetPartition )
     {
 
         // Update the average NN distance of the partition from which the last point was deleted.
-        if ( defaultVals.numPointsPartn[defaultVals.labelToBeDeleted] > 1 )
+        if ( defaultVals->numPointsPartn[defaultVals->labelToBeDeleted] > 1 )
         {
 
-            int n = defaultVals.numPointsPartn[defaultVals.labelToBeDeleted];
-            double avgDel = defaultVals.avgNNDistPartitions[defaultVals.labelToBeDeleted];
-            defaultVals.avgNNDistPartitions[defaultVals.labelToBeDeleted] = ( (n+1)*avgDel - defaultVals.nnDistToBeDeleted - sumDelOldNNdists + sumDelNewdists ) / n;
+            int n = defaultVals->numPointsPartn[defaultVals->labelToBeDeleted];
+            double avgDel = defaultVals->avgNNDistPartitions[defaultVals->labelToBeDeleted];
+            defaultVals->avgNNDistPartitions[defaultVals->labelToBeDeleted] = ( (n+1)*avgDel - defaultVals->nnDistToBeDeleted - sumDelOldNNdists + sumDelNewdists ) / n;
         }
 
         // Update the average NN distance of the partition to which the new point is being added.
-        if ( defaultVals.numPointsPartn[defaultVals.targetPartition] >= 2 && twoPointPartition == 0 )
+        if ( defaultVals->numPointsPartn[defaultVals->targetPartition] >= 2 && twoPointPartition == 0 )
         {
             auto tempNNidx = std::min_element(distsFromCurrVecTP.begin(), distsFromCurrVecTP.end()) - distsFromCurrVecTP.begin();
-            defaultVals.nnIndices.push_back( tpIndices[tempNNidx] );
+            defaultVals->nnIndices.push_back( tpIndices[tempNNidx] );
 
             auto nnDistFromNewVect = *std::min_element( distsFromCurrVecTP.begin(), distsFromCurrVecTP.end() );
-            defaultVals.nnDists.push_back( nnDistFromNewVect );
+            defaultVals->nnDists.push_back( nnDistFromNewVect );
 
-            int n = defaultVals.numPointsPartn[defaultVals.targetPartition];
-            double avgAdd = defaultVals.avgNNDistPartitions[defaultVals.targetPartition];
-            defaultVals.avgNNDistPartitions[defaultVals.targetPartition] = ( n*avgAdd + nnDistFromNewVect - sumAddOldNNdists + sumAddNewdists ) / (n+1);
+            int n = defaultVals->numPointsPartn[defaultVals->targetPartition];
+            double avgAdd = defaultVals->avgNNDistPartitions[defaultVals->targetPartition];
+            defaultVals->avgNNDistPartitions[defaultVals->targetPartition] = ( n*avgAdd + nnDistFromNewVect - sumAddOldNNdists + sumAddNewdists ) / (n+1);
 
-            defaultVals.numPointsPartn[defaultVals.targetPartition] = n + 1;
+            defaultVals->numPointsPartn[defaultVals->targetPartition] = n + 1;
 
         }
     }
-    else if ( defaultVals.labelToBeDeleted == defaultVals.targetPartition
-              && defaultVals.numPointsPartn[defaultVals.targetPartition] >= 2
+    else if ( defaultVals->labelToBeDeleted == defaultVals->targetPartition
+              && defaultVals->numPointsPartn[defaultVals->targetPartition] >= 2
               && twoPointPartition == 0 )
     {
         auto tempNNidx = std::min_element(distsFromCurrVecTP.begin(), distsFromCurrVecTP.end()) - distsFromCurrVecTP.begin();
-        defaultVals.nnIndices.push_back( tpIndices[tempNNidx] );
+        defaultVals->nnIndices.push_back( tpIndices[tempNNidx] );
 
         auto nnDistFromNewVect = *std::min_element( distsFromCurrVecTP.begin(), distsFromCurrVecTP.end() );
-        defaultVals.nnDists.push_back( nnDistFromNewVect );
+        defaultVals->nnDists.push_back( nnDistFromNewVect );
 
-        int n = defaultVals.numPointsPartn[defaultVals.targetPartition] + 1;
-        double avgNNd = defaultVals.avgNNDistPartitions[defaultVals.targetPartition];
+        int n = defaultVals->numPointsPartn[defaultVals->targetPartition] + 1;
+        double avgNNd = defaultVals->avgNNDistPartitions[defaultVals->targetPartition];
 
-        defaultVals.avgNNDistPartitions[defaultVals.targetPartition] = ( n*avgNNd - defaultVals.nnDistToBeDeleted - sumOldNNdists + sumNewNNdists + nnDistFromNewVect ) / n;
-        defaultVals.numPointsPartn[defaultVals.targetPartition] = n;
+        defaultVals->avgNNDistPartitions[defaultVals->targetPartition] = ( n*avgNNd - defaultVals->nnDistToBeDeleted - sumOldNNdists + sumNewNNdists + nnDistFromNewVect ) / n;
+        defaultVals->numPointsPartn[defaultVals->targetPartition] = n;
     }
 
     return;
 }
 
-bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vector<double>>& windowValues, EvalParams& defaultVals, pipePacket& inData)
+bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vector<double>>& windowValues)//, pipePacket& inData)
 {
     utils ut;
     float f1{ 4 };
     float f2{ 0.25 };
     float f3{ 5 };
-    defaultVals.distsFromCurrVec.clear();
+    defaultVals->distsFromCurrVec.clear();
 
     // Compute the distances from the current vector to the existing ones in the window.
-    defaultVals.distsFromCurrVec = ut.nearestNeighbors(currentVector, windowValues);
+    defaultVals->distsFromCurrVec = ut.nearestNeighbors(currentVector, windowValues);
 
     // Find the distance from the current vector to its nearest neighbor in the window.
-    auto nnDistCurrVec = *std::min_element( defaultVals.distsFromCurrVec.begin(), defaultVals.distsFromCurrVec.end() );
+    auto nnDistCurrVec = *std::min_element( defaultVals->distsFromCurrVec.begin(), defaultVals->distsFromCurrVec.end() );
 
-    if (defaultVals.avgNNDistPartitions.size() == 1)  // If the window is 'pure':
+    if (defaultVals->avgNNDistPartitions.size() == 1)  // If the window is 'pure':
     {
         if (nnDistCurrVec == 0)
             return false;
 
         // Find the average nearest neighbor distance in the single 'partition' in the window.
-        int currentLabel = defaultVals.partitionLabels[0];
-        auto avgNNDistSinglePartition = defaultVals.avgNNDistPartitions[currentLabel];
+        int currentLabel = defaultVals->partitionLabels[0];
+        auto avgNNDistSinglePartition = defaultVals->avgNNDistPartitions[currentLabel];
 
         if (avgNNDistSinglePartition <= f2 && nnDistCurrVec <= 1)
             return false;
@@ -332,19 +332,19 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
         if (avgNNDistSinglePartition == 0 || nnDistCurrVec / avgNNDistSinglePartition > f1)
         {
             // In this case, the oldest point will be deleted from the window.
-            defaultVals.labelToBeDeleted = defaultVals.partitionLabels[0];
-            defaultVals.indexToBeDeleted = 0;
+            defaultVals->labelToBeDeleted = defaultVals->partitionLabels[0];
+            defaultVals->indexToBeDeleted = 0;
 
             // Since the window was 'pure', the partition label of the new point to be added is (existing label + 1).
-            defaultVals.targetPartition = defaultVals.labelToBeDeleted + 1;
+            defaultVals->targetPartition = defaultVals->labelToBeDeleted + 1;
 
-            deleteNNstats(defaultVals);
+            deleteNNstats();
 
             // Delete the vector from the front of the sliding window.
             windowValues.erase( windowValues.begin() );
 
             // Add to the distance matrix and update the NN statistics.
-            updateStats(defaultVals, inData);
+            updateStats();//inData);
 
 
             return true;
@@ -358,32 +358,32 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
         // its nearest partition. If it cannot be assigned to its nearest partition, create a new partition with only the current vector.
 
         // Find the partition that is nearest to the current vector.
-        auto nearestPartnIdx = std::min_element(defaultVals.distsFromCurrVec.begin(), defaultVals.distsFromCurrVec.end()) - defaultVals.distsFromCurrVec.begin();
-        int nearestPartition = defaultVals.partitionLabels[nearestPartnIdx];
+        auto nearestPartnIdx = std::min_element(defaultVals->distsFromCurrVec.begin(), defaultVals->distsFromCurrVec.end()) - defaultVals->distsFromCurrVec.begin();
+        int nearestPartition = defaultVals->partitionLabels[nearestPartnIdx];
 
         // Find the max. of the existing partition labels.
-        int maxLabel = *std::max_element( defaultVals.partitionLabels.begin(), defaultVals.partitionLabels.end() );
+        int maxLabel = *std::max_element( defaultVals->partitionLabels.begin(), defaultVals->partitionLabels.end() );
 
         // If the (nearest neighbor) distance from the current vector to any partition is 0, assign the current vector to that partition.
         if ( nnDistCurrVec == 0 ) {
-           defaultVals.targetPartition = nearestPartition;
+           defaultVals->targetPartition = nearestPartition;
         }
 
         // If the minimum distance from the current vector to existing partitions is higher than f3, assign a new partition to the current vector.
         else if ( nnDistCurrVec > f3 ) {
-            defaultVals.targetPartition = maxLabel + 1;
+            defaultVals->targetPartition = maxLabel + 1;
         }
-        else if ( defaultVals.avgNNDistPartitions[nearestPartition] == -1 && nnDistCurrVec <= f3 ) {
-            defaultVals.targetPartition = nearestPartition;
+        else if ( defaultVals->avgNNDistPartitions[nearestPartition] == -1 && nnDistCurrVec <= f3 ) {
+            defaultVals->targetPartition = nearestPartition;
         }
-        else if ( defaultVals.avgNNDistPartitions[nearestPartition] <= f2 && nnDistCurrVec <= 1 ) {
-            defaultVals.targetPartition = nearestPartition;
+        else if ( defaultVals->avgNNDistPartitions[nearestPartition] <= f2 && nnDistCurrVec <= 1 ) {
+            defaultVals->targetPartition = nearestPartition;
         }
-        else if ( defaultVals.avgNNDistPartitions[nearestPartition] > 0 && nnDistCurrVec / defaultVals.avgNNDistPartitions[nearestPartition] <= f1 ) {
-            defaultVals.targetPartition = nearestPartition;
+        else if ( defaultVals->avgNNDistPartitions[nearestPartition] > 0 && nnDistCurrVec / defaultVals->avgNNDistPartitions[nearestPartition] <= f1 ) {
+            defaultVals->targetPartition = nearestPartition;
         }
         else {
-            defaultVals.targetPartition = maxLabel + 1;
+            defaultVals->targetPartition = maxLabel + 1;
         }
 
         // Determine which point would be deleted from the sliding window.
@@ -394,15 +394,15 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
         int smallestOutdated{ -1 };   // This will store the label of the smallest outdated partition.
         int numPtsSmallestOutdated{ -1 };  // This will store the number of points in the smallest outdated partition.
 
-        for(auto op : defaultVals.maxKeys) {
-            if ( (defaultVals.key - op.second) > timeToBeOutdated ) {   // If op is outdated:
+        for(auto op : defaultVals->maxKeys) {
+            if ( (defaultVals->key - op.second) > timeToBeOutdated ) {   // If op is outdated:
                 if ( numPtsSmallestOutdated == -1 ) {   // If this is the first time an outdated partition is encountered:
-                    numPtsSmallestOutdated = defaultVals.numPointsPartn[op.first];
+                    numPtsSmallestOutdated = defaultVals->numPointsPartn[op.first];
                     smallestOutdated = op.first;
                 }
-                else if ( defaultVals.numPointsPartn[op.first] < numPtsSmallestOutdated ) {   // If a smaller outdated partition is encountered:
+                else if ( defaultVals->numPointsPartn[op.first] < numPtsSmallestOutdated ) {   // If a smaller outdated partition is encountered:
                     // Update our records for the smallest outdated partition.
-                    numPtsSmallestOutdated = defaultVals.numPointsPartn[op.first];
+                    numPtsSmallestOutdated = defaultVals->numPointsPartn[op.first];
                     smallestOutdated = op.first;
                 }
             }
@@ -411,23 +411,23 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
         if (smallestOutdated != -1) {   // If there is (are) outdated partition(s):
 
             // Delete the oldest point of the smallest outdated partition (and its associated statistics) from the sliding window.
-            defaultVals.labelToBeDeleted = smallestOutdated;
-            defaultVals.indexToBeDeleted = std::find( defaultVals.partitionLabels.begin(), defaultVals.partitionLabels.end(), smallestOutdated ) - defaultVals.partitionLabels.begin();
+            defaultVals->labelToBeDeleted = smallestOutdated;
+            defaultVals->indexToBeDeleted = std::find( defaultVals->partitionLabels.begin(), defaultVals->partitionLabels.end(), smallestOutdated ) - defaultVals->partitionLabels.begin();
 
-            deleteNNstats(defaultVals);
+            deleteNNstats();
 
-            windowValues.erase( windowValues.begin() + defaultVals.indexToBeDeleted );
+            windowValues.erase( windowValues.begin() + defaultVals->indexToBeDeleted );
 
         }
 
         else {   // There is no outdated partition in the window:
-            if ( defaultVals.targetPartition != nearestPartition ) {   // If the current vector was assigned a new partition:
+            if ( defaultVals->targetPartition != nearestPartition ) {   // If the current vector was assigned a new partition:
 
                 // In this case, the oldest point will be deleted from the window.
-                defaultVals.labelToBeDeleted = defaultVals.partitionLabels[0];
-                defaultVals.indexToBeDeleted = 0;
+                defaultVals->labelToBeDeleted = defaultVals->partitionLabels[0];
+                defaultVals->indexToBeDeleted = 0;
 
-                deleteNNstats(defaultVals);
+                deleteNNstats();
 
                 // Delete the vector from the front of the sliding window.
                 windowValues.erase( windowValues.begin() );
@@ -437,11 +437,11 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
                 // we'll delete the oldest point from a partition label != targetPartition label.
 
                 // Find the first occurrence of a partition label != targetPartition label.
-                defaultVals.indexToBeDeleted = std::find( defaultVals.partitionLabels.begin(), defaultVals.partitionLabels.end(), !defaultVals.targetPartition ) - defaultVals.partitionLabels.begin();
-                defaultVals.labelToBeDeleted = defaultVals.partitionLabels[defaultVals.indexToBeDeleted];
+                defaultVals->indexToBeDeleted = std::find( defaultVals->partitionLabels.begin(), defaultVals->partitionLabels.end(), !defaultVals->targetPartition ) - defaultVals->partitionLabels.begin();
+                defaultVals->labelToBeDeleted = defaultVals->partitionLabels[defaultVals->indexToBeDeleted];
 
-                deleteNNstats(defaultVals);
-                windowValues.erase( windowValues.begin() + defaultVals.indexToBeDeleted );
+                deleteNNstats();
+                windowValues.erase( windowValues.begin() + defaultVals->indexToBeDeleted );
             }
         }
 
@@ -491,12 +491,17 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
 //	return false;
 //}
 
+slidingWindow::EvalParams* slidingWindow::defaultVals = new EvalParams{ 200, 0, 0 };
+pipePacket* slidingWindow::pPack;
+
 
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket slidingWindow::runPipe(pipePacket inData)
 {
     utils ut;
     readInput rp;
+	pPack = &inData;
+	
 
     // For this pipe, we construct a sub-pipeline:
     //		1. Read data vector by vector, push into slidingWindow evaluation
@@ -504,8 +509,6 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
     //		3. IF 100 points have passed, generate persistence intervals
     //
     // Loop this subpipeline until there's no more data
-
-    EvalParams defaultVals{ 200, 0, 0 };
 
     std::vector<std::vector<double>> windowValues;
 
@@ -518,20 +521,20 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
         {
             // Initialize the sliding window. During the initialization, let's assume all points from the stream
             // belong to Partition 0.
-            if (windowValues.size() < defaultVals.windowMaxSize)
+            if (windowValues.size() < defaultVals->windowMaxSize)
             {
                 windowValues.push_back(currentVector);
-                defaultVals.windowKeys.push_back(defaultVals.key);
-                defaultVals.partitionLabels.push_back(defaultVals.targetPartition);
-                defaultVals.key++;
+                defaultVals->windowKeys.push_back(defaultVals->key);
+                defaultVals->partitionLabels.push_back(defaultVals->targetPartition);
+                defaultVals->key++;
 
                 //If we've reached window max size, generate the initial complex
-                if (windowValues.size() == defaultVals.windowMaxSize)
+                if (windowValues.size() == defaultVals->windowMaxSize)
                 {
                     std::cout << "Initializing complex" << std::endl;
 
                     inData.originalData = windowValues;
-                    runComplexInitializer(inData, defaultVals.nnIndices, defaultVals.nnDists);
+                    runComplexInitializer(inData, defaultVals->nnIndices, defaultVals->nnDists);
 
                     // Set the stream evaluator
                     inData.complex->setStreamEvaluator(&this->nnBasedEvaluator);
@@ -539,30 +542,30 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
                     std::cout << "Returning from complex initializer" << std::endl;
 
                     // Find the average nearest neighbor distance in the existing partition (i.e. Partition 0).
-                    auto avgNNDistPartition0 = std::accumulate(defaultVals.nnDists.begin(), defaultVals.nnDists.end(), 0.0) / defaultVals.nnDists.size();
-                    defaultVals.avgNNDistPartitions[defaultVals.targetPartition] = avgNNDistPartition0;
-                    defaultVals.numPointsPartn[defaultVals.targetPartition] = defaultVals.windowMaxSize;
-                    defaultVals.maxKeys[defaultVals.targetPartition] = defaultVals.key - 1;
+                    auto avgNNDistPartition0 = std::accumulate(defaultVals->nnDists.begin(), defaultVals->nnDists.end(), 0.0) / defaultVals->nnDists.size();
+                    defaultVals->avgNNDistPartitions[defaultVals->targetPartition] = avgNNDistPartition0;
+                    defaultVals->numPointsPartn[defaultVals->targetPartition] = defaultVals->windowMaxSize;
+                    defaultVals->maxKeys[defaultVals->targetPartition] = defaultVals->key - 1;
                 }
 
             }
             else
             {
-                if(inData.complex->insertIterative(currentVector, windowValues, defaultVals))
+                if(inData.complex->insertIterative(currentVector, windowValues))
                 {
 
                     // Insert the current vector, its key and partition label into the rear ends of the corresponding containers.
                     windowValues.push_back(currentVector);
-                    defaultVals.windowKeys.push_back(defaultVals.key);
-                    defaultVals.partitionLabels.push_back(defaultVals.targetPartition);
-                    defaultVals.maxKeys[defaultVals.targetPartition] = defaultVals.key;  // Insert or update the maxKey of the target partition.
-                    defaultVals.key++;
+                    defaultVals->windowKeys.push_back(defaultVals->key);
+                    defaultVals->partitionLabels.push_back(defaultVals->targetPartition);
+                    defaultVals->maxKeys[defaultVals->targetPartition] = defaultVals->key;  // Insert or update the maxKey of the target partition.
+                    defaultVals->key++;
 
                 }
             }
 
             //Check if we've gone through 100 points
-            if(pointCounter % 100 == 0 && pointCounter > windowMaxSize)
+            if(pointCounter % 100 == 0 && pointCounter > defaultVals->windowMaxSize)
             {
                 // Build and trigger remaining pipeline. It should only require the computation of persistence
                 // intervals from the complex being maintained.

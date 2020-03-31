@@ -6,7 +6,6 @@
 #include <functional>
 #include <memory>
 #include <vector>
-#include "pipePacket.hpp"
 
 //github.com/crvs/KDTree/blob/master/KDTree.hpp
 using point = std::vector<double>;
@@ -53,7 +52,7 @@ class kdTree{
                        const size_t &length, const size_t &level);
     public:
         kdTree();
-        explicit kdTree(pipePacket inData); //Prevent implicit conversion
+        //explicit kdTree(pipePacket inData); //Prevent implicit conversion
         kdTree(pointVec inData, int size);
 
     private:
