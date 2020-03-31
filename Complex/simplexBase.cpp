@@ -96,7 +96,7 @@ double simplexBase::getSize(){
 	return -1;
 }
 
-bool simplexBase::insertIterative(std::vector<double>&, std::vector<std::vector<double>>&, EvalParams&){
+bool simplexBase::insertIterative(std::vector<double>&, std::vector<std::vector<double>>&){
 	ut.writeLog(simplexType,"No insert iterative function defined");
 	return false;
 }
@@ -147,13 +147,13 @@ void simplexBase::reduceComplex(){
 	return;
 }
 
-void simplexBase::setStreamEvaluator(bool (*f) (std::vector<double>&, std::vector<std::vector<double>>&, EvalParams&, pipePacket&)){
+void simplexBase::setStreamEvaluator(bool (*f) (std::vector<double>&, std::vector<std::vector<double>>&)){
 	streamEval = f;
 	std::cout << "changed stream evaluator" << std::endl;
 	return;
 }
 
-bool simplexBase::streamEvaluator(std::vector<double>& vector, std::vector<std::vector<double>>& window, EvalParams& defaultVals, pipePacket &inData){
+bool simplexBase::streamEvaluator(std::vector<double>& vector, std::vector<std::vector<double>>& window){
 	//Do some evaluation of whether the point should stay or not
 	//		For now, let's look at the deviation of connections
 

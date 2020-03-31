@@ -4,7 +4,6 @@
 #include <set>
 #include <iostream>
 #include "utils.hpp"
-#include "slidingWindow.hpp"
 
 // Header file for simplexBase class - see simplexTree.cpp for descriptions
 
@@ -97,13 +96,13 @@ class simplexBase {
 	void setConfig(std::map<std::string, std::string>);
 	void setDistanceMatrix(std::vector<std::vector<double>> _distMatrix);
 	simplexBase* newSimplex(const std::string &simplexT, std::map<std::string, std::string> configMap);
-	bool (*streamEval) (std::vector<double>&, std::vector<std::vector<double>>&, EvalParams&, pipePacket&);
-    bool streamEvaluator(std::vector<double>&, std::vector<std::vector<double>>&, EvalParams&, pipePacket&);
-	void setStreamEvaluator(bool (*f) (std::vector<double>&, std::vector<std::vector<double>>&, EvalParams&, pipePacket&));
+	bool (*streamEval) (std::vector<double>&, std::vector<std::vector<double>>&);
+    bool streamEvaluator(std::vector<double>&, std::vector<std::vector<double>>&);
+	void setStreamEvaluator(bool (*f) (std::vector<double>&, std::vector<std::vector<double>>&));
 
 	//virtual interface functions
 	virtual double getSize();
-	virtual bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&, EvalParams&);
+	virtual bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&);
 	virtual void deleteIterative(int, int);
 	virtual void insert(std::vector<double>&);
 	virtual bool find(std::vector<unsigned>);
@@ -115,8 +114,8 @@ class simplexBase {
 	virtual std::vector<std::vector<graphEntry>> getIndexEdges(double);
 	virtual void expandDimensions(int);
 	virtual void reduceComplex();
-  virtual std::vector<std::pair<double, std::vector<unsigned>>> getd0Pairs();
-  virtual void clear();
+	virtual std::vector<std::pair<double, std::vector<unsigned>>> getd0Pairs();
+	virtual void clear();
 
 	//Unused, possibly future
 	virtual void outputSimplex();

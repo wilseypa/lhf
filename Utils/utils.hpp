@@ -4,6 +4,7 @@
 #define UTILS_HPP_INCL
 
 #include <set>
+#include <vector>
 
 // Header file for utils class - see utils.cpp for descriptions
 
