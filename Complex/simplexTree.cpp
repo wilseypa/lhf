@@ -197,7 +197,9 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 
 	if(streamEval(currentVector, window, defaultVals)) {   // Point is deemed 'significant'
 
-		deleteIterative( defaultVals.keyToBeDeleted, defaultVals.indexToBeDeleted );  // Delete from distance matrix and complex.
+		//Delete all entries in the simplex tree with the index...
+        // TODO :)
+		deleteIndexRecurse( defaultVals.keyToBeDeleted, head );
 		runningVectorIndices.erase( runningVectorIndices.begin() + defaultVals.indexToBeDeleted );
 
 		insert(defaultVals.distsFromCurrVec);
@@ -207,25 +209,6 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 	}
 
 	return false;
-}
-
-// Delete a node from the tree and from the distance matrix using a vector index
-void simplexTree::deleteIterative(int keyToBeDeleted, int indexToBeDeleted)
-{
-    // Delete the corresponding row and column from the distance matrix.
-    distMatrix.erase(distMatrix.begin() + indexToBeDeleted);
-
-    for(auto z : distMatrix)
-    {
-        if(z.size() >= indexToBeDeleted)
-            z.erase(z.begin() + indexToBeDeleted);
-    }
-
-    //Delete all entries in the simplex tree with the index...
-    // TODO :)
-    deleteIndexRecurse(keyToBeDeleted, head);
-
-    return;
 }
 
 

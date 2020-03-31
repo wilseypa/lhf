@@ -56,6 +56,9 @@ void slidingWindow::deleteNNstats(EvalParams& defaultVals)
 void slidingWindow::updateStats(EvalParams& defaultVals, pipePacket& inData)
 {
 
+    // Delete the corresponding row from the distance matrix.
+    inData.complex->distMatrix.erase(inData.complex->distMatrix.begin() + defaultVals.indexToBeDeleted);
+
     double sumOldNNdists = 0.0;
     double sumNewNNdists = 0.0;
 
@@ -73,6 +76,10 @@ void slidingWindow::updateStats(EvalParams& defaultVals, pipePacket& inData)
     // Add a new column and row to the end of the upper triangular distance matrix.
     for(unsigned int i = 0; i < inData.complex->distMatrix.size(); i++)
     {
+        // Delete the corresponding entry from each row.
+        inData.complex->distMatrix[i].erase( inData.complex->distMatrix[i].begin() + defaultVals.indexToBeDeleted );
+
+        // Add the new distance value to the end of each row.
         inData.complex->distMatrix[i].push_back( defaultVals.distsFromCurrVec[i] );
 
         // Update NN statistics for only those partitions from which the point was deleted or to which the new point is to be added.
@@ -343,9 +350,8 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
             // Delete the vector from the front of the sliding window.
             windowValues.erase( windowValues.begin() );
 
-            // Add to the distance matrix and update the NN statistics.
+            // Update the distance matrix and the NN statistics.
             updateStats(defaultVals, inData);
-
 
             return true;
         }
@@ -418,6 +424,9 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
 
             windowValues.erase( windowValues.begin() + defaultVals.indexToBeDeleted );
 
+            // Update the distance matrix and the NN statistics.
+            updateStats(defaultVals, inData);
+
         }
 
         else {   // There is no outdated partition in the window:
@@ -431,6 +440,10 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
 
                 // Delete the vector from the front of the sliding window.
                 windowValues.erase( windowValues.begin() );
+
+                // Update the distance matrix and the NN statistics.
+                updateStats(defaultVals, inData);
+
             }
             else {   // The current vector is assigned to one of the existing partitions:
                 // In this case, make sure the point to be deleted does not belong to the target partition. In particular,
@@ -442,6 +455,9 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
 
                 deleteNNstats(defaultVals);
                 windowValues.erase( windowValues.begin() + defaultVals.indexToBeDeleted );
+
+                // Update the distance matrix and the NN statistics.
+                updateStats(defaultVals, inData);
             }
         }
 

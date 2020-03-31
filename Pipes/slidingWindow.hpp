@@ -44,7 +44,7 @@ public:
     void runSubPipeline(pipePacket);
     void writeComplexStats(pipePacket &);
     static bool nnBasedEvaluator(std::vector<double>&, std::vector<std::vector<double>>&, EvalParams&, pipePacket&);
-    static void deleteNNstats(EvalParams &);
-    static void updateStats(EvalParams&, pipePacket&);
+    void deleteNNstats(EvalParams &);
+    void updateStats(EvalParams&, pipePacket&);
 };
 
