@@ -147,13 +147,13 @@ void simplexBase::reduceComplex(){
 	return;
 }
 
-void simplexBase::setStreamEvaluator(bool (*f) (std::vector<double>&, std::vector<std::vector<double>>&, EvalParams&)){
+void simplexBase::setStreamEvaluator(bool (*f) (std::vector<double>&, std::vector<std::vector<double>>&, EvalParams&, pipePacket&)){
 	streamEval = f;
 	std::cout << "changed stream evaluator" << std::endl;
 	return;
 }
 
-bool simplexBase::streamEvaluator(std::vector<double>& vector, std::vector<std::vector<double>>& window, EvalParams& defaultVals){
+bool simplexBase::streamEvaluator(std::vector<double>& vector, std::vector<std::vector<double>>& window, EvalParams& defaultVals, pipePacket &inData){
 	//Do some evaluation of whether the point should stay or not
 	//		For now, let's look at the deviation of connections
 
@@ -208,4 +208,3 @@ void simplexBase::clear(){
 	ut.writeLog(simplexType,"No clear function defined");
 	return;
 }
-	

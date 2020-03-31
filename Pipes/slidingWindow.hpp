@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <vector>
 #include "basePipe.hpp"
+#include "utils.hpp"
 
 class slidingWindow : public basePipe
 {
@@ -42,5 +43,8 @@ public:
     bool configPipe(std::map<std::string, std::string>);
     void runSubPipeline(pipePacket);
     void writeComplexStats(pipePacket &);
+    static bool nnBasedEvaluator(std::vector<double>&, std::vector<std::vector<double>>&, EvalParams&, pipePacket&);
+    static void deleteNNstats(EvalParams &);
+    static void updateStats(EvalParams&, pipePacket&);
 };
 
