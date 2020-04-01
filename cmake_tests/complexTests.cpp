@@ -28,8 +28,8 @@ void t_simp_functions(std::string &log){
 	
 	//Delete iterative from uninitialized complex
 	//	RET: void
-	try{ testComplex->deleteIterative(0); }
-	catch(const std::exception){ failLog += "simplexBase deleteIterative failed \n"; }
+	//try{ testComplex->deleteIterative(0,0); }
+	//catch(const std::exception){ failLog += "simplexBase deleteIterative failed \n"; }
 	
 	//Find vector unsigned in uninitialized complex
 	//	RET: bool
@@ -108,9 +108,9 @@ void t_simp_tree_functions(std::string &log){
 	}
 	
 	//Attempt to delete values from the complex
-	testComplex->deleteIterative(0);
-	testComplex->deleteIterative(5);
-	testComplex->deleteIterative(3);
+	//testComplex->deleteIterative(0,0);
+	//testComplex->deleteIterative(5,0);
+	//testComplex->deleteIterative(3,0);
 	
 	//Output log status to calling function
 	if(failLog.size() > 0){
@@ -156,8 +156,8 @@ void t_simp_base_functions(std::string &log, std::string type){
 	
 	//Delete iterative from uninitialized complex
 	//	RET: void
-	try{ testComplex->deleteIterative(0); }
-	catch(const std::exception){ failLog += type + " deleteIterative failed \n"; }
+	//try{ testComplex->deleteIterative(0,0); }
+	//catch(const std::exception){ failLog += type + " deleteIterative failed \n"; }
 	
 	//Find vector unsigned in uninitialized complex
 	//	RET: bool
@@ -234,8 +234,8 @@ void t_simp_empty_functions(std::string &log, std::string type){
 	
 	//Delete iterative from empty complex
 	//	RET: void
-	try{ testComplex->deleteIterative(0); }
-	catch(const std::exception){ failLog += type + " deleteIterative failed \n"; }
+	//try{ testComplex->deleteIterative(0,0); }
+	//catch(const std::exception){ failLog += type + " deleteIterative failed \n"; }
 	
 	//Find vector unsigned in empty complex
 	//	RET: bool (false)

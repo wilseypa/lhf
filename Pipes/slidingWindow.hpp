@@ -1,14 +1,12 @@
 #pragma once
 
-// Header file for slidingWindow class - see slidingWindow.cpp for descriptions
+// Header file for naiveWindow class - see slidingWindow.cpp for descriptions
 #include <map>
 #include <unordered_map>
-#include <vector>
 #include "basePipe.hpp"
 #include "utils.hpp"
 
-class slidingWindow : public basePipe
-{
+class slidingWindow : public basePipe {
 private:
     double epsilon;
     int dim;
@@ -16,7 +14,8 @@ private:
     std::string inputFile;
     void runSubPipeline();
     std::map<std::string, std::string> subConfigMap;
-    void runComplexInitializer(pipePacket &);
+	void runComplexInitializer(pipePacket &, std::vector<int> &, std::vector<double> &);
+
 public:
     struct EvalParams
     {
@@ -35,8 +34,12 @@ public:
         int labelToBeDeleted;
         int indexToBeDeleted;
         double nnDistToBeDeleted;
-        std::vector<double> distMatLastRow(windowMaxSize, 0);  // The last row of the upper triangular distance matrix is a vector of 0s.
+        std::vector<double> distMatLastRow;//(windowMaxSize, 0);  // The last row of the upper triangular distance matrix is a vector of 0s.
     };
+
+    static EvalParams* defaultVals;
+    static pipePacket* pPack;
+
     slidingWindow();
     pipePacket runPipe(pipePacket);
     void outputData(pipePacket);

@@ -116,7 +116,7 @@ kdNodePtr kdTree::makeTree(const pointIndexArr::iterator &begin, const pointInde
 }
 
 //driver code, push back inData.originalData to point vec so we can put in tree
-kdTree::kdTree(pipePacket inData){
+/*kdTree::kdTree(pipePacket inData){
     pointIndexArr arr;
 
     for(size_t i=0; i<inData.originalData.size(); i++){
@@ -131,7 +131,7 @@ kdTree::kdTree(pipePacket inData){
 
     root = kdTree::makeTree(begin, end, length, level);
 
-}
+}*/
 
 kdTree::kdTree(pointVec inData, int size = 0){
     //Construct tree only using the first 'size' points
