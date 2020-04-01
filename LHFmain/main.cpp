@@ -14,7 +14,8 @@
 
 using namespace std;
 
-
+int nprocs,id;
+ 
 void runPipeline(std::map<std::string, std::string> args, pipePacket* wD){
 	auto *ws = new writeOutput();
 
@@ -161,6 +162,18 @@ void processReducedWrapper(std::map<std::string, std::string> args, pipePacket* 
 void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* wD){
     
 	//Start with the preprocessing function, if enabled
+	
+ 	if(id == 0)
+	{
+	auto *rs = new readInput();
+	wD->originalData = rs->readCSV(args["inputFile"]);
+    wD->fullData = wD->originalData;
+	
+
+     for(auto z : args)
+         std::cout << z.first << "\t" << z.second << std::endl;
+	 
+	 
 	auto pre = args["preprocessor"];
 	if(pre != ""){
 		auto *preprocess = new preprocessor();
@@ -173,7 +186,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		}
 	}
 	
-	
+	std::cout<<"I am here"<<endl;
 	//Notes from Nick:
 	//	After preprocessor, need to separate the data into bins by index (partition)
 	//		-Look at each point, label retrieved from preprocessor
@@ -187,31 +200,178 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 	auto partitionedData = ut.separatePartitions(2*maxRadius, wD->originalData, wD->fullData, wD->originalLabels);
 	//	Each node/slave will process at least 1 partition
 	//		NOTE: the partition may contain points outside that are within 2*Rmax
-	std::cout << "Partitions: " << partitionedData.second.size() << std::endl << "Counts: ";
 	
-	for(auto a : partitionedData.second){
-		std::cout << a.size() << "\t";
-	}
-	std::cout << std::endl;
+	int number_of_partitions_per_slave = partitionedData.second.size() / (nprocs-1);
+	int dimension = partitionedData.second[0][0].size();
+	std::vector<int> partitionsize;
 	
 	
-    int nprocs,rank;
-	MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
-	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-	auto numberofslaves = args["clusters"];
+	for(auto a:partitionedData.second)
+		 partitionsize.push_back(a.size());
+//Sending the data dimensions to slaves	 
+	for(int i=1;i<nprocs;i++)
+		MPI_Send(&dimension,1,MPI_INT,i,1,MPI_COMM_WORLD);
+//Sending size of each partition to slaves	
+	for(int i=1;i<nprocs;i++)
+		MPI_Send(&partitionsize[0],20,MPI_INT,i,1,MPI_COMM_WORLD);
+//Sending number of partitions each slave has to do	
+	for(int i=1;i<nprocs;i++)
+		MPI_Send(&number_of_partitions_per_slave,1,MPI_INT,i,1,MPI_COMM_WORLD);
 	
-	std::cout <<  "Rank: " << rank << std::endl;
-	
-        if(rank == 0)
+// Sending partitions to slaves
+   for(int k=1;k<nprocs;k++)	
+	for(int j=0;j<number_of_partitions_per_slave;j++)
 	{
-          
-        std::cout << partitionedData.second[rank].size()<<std::endl;
+		for(int i=0;i< partitionedData.second[((k-1)*number_of_partitions_per_slave)+j].size();i++)
+        	MPI_Send( &partitionedData.second[((k-1)*number_of_partitions_per_slave)+j][i][0],dimension, MPI_DOUBLE, k, 1, MPI_COMM_WORLD);	 
 	}
-        else
+	}
+	else if(id==1)
+    {
+		int dim;
+		MPI_Status status;
+		MPI_Recv(&dim,1,MPI_INT,0,1,MPI_COMM_WORLD,&status);
+	    std::vector<int> partsize;
+        partsize.resize(20);
+        MPI_Recv(&partsize[0],20,MPI_INT,0,1,MPI_COMM_WORLD,&status);
+        int perslavepartitions;
+		MPI_Recv(&perslavepartitions,1,MPI_INT,0,1,MPI_COMM_WORLD,&status);
+	    
+		
+		std::vector<std::vector<std::vector<double>>> input;
+		input.resize(perslavepartitions);
+        for(int i=0;i<input.size();i++)
+			input[i].resize(partsize[((id-1)*perslavepartitions)+i]);
+		
+		for(int j=0;j<input.size();j++)
+    		for(int i=0;i<input[j].size();i++)
+     			input[j][i].resize(dim);
+	for(int j=0;j<perslavepartitions;j++)
+	{		
+	 for(int i=0;i<partsize[(id-1)*perslavepartitions+j];i++)
+	    	MPI_Recv (&input[j][i][0] ,dim, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &status );
+	}	
+	/*	
+		for(unsigned z = 0; z < perslavepartitions; z++){
+		if(input[z].size() > 0){
+			std::cout << "Running Pipeline with : " << input[z].size() << " vectors" << std::endl;
+			wD->originalData = input[z];
+			
+			
+			runPipeline(args, wD);
+			
+			wD->complex->clear();
+			
+			//Map partitions back to original point indexing
+		//	ut.mapPartitionIndexing(partitionedData.first[z], wD->bettiTable);
+			cout<<"Doing Fine "<<id<<endl;
+		//	for(auto betEntry : wD->bettiTable)
+		//		mergedBettiTable.push_back(betEntry);
+			
+		} else 
+			std::cout << "skipping" << std::endl;
+    	}
+	*/
+	}
+	else if(id==2)
 	{
-	std::cout << partitionedData.second[rank].size()<<std::endl;
+		
+		int dim;
+		MPI_Status status;
+		MPI_Recv(&dim,1,MPI_INT,0,1,MPI_COMM_WORLD,&status);
+		std::vector<int> partsize;
+        partsize.resize(20);
+        MPI_Recv(&partsize[0],20,MPI_INT,0,1,MPI_COMM_WORLD,&status);
+        int perslavepartitions;
+		MPI_Recv(&perslavepartitions,1,MPI_INT,0,1,MPI_COMM_WORLD,&status);
+		
+		std::vector<std::vector<std::vector<double>>> input;
+		input.resize(perslavepartitions);
+        for(int i=0;i<input.size();i++)
+			input[i].resize(partsize[((id-1)*perslavepartitions)+i]);
+		
+		for(int j=0;j<input.size();j++)
+    		for(int i=0;i<input[j].size();i++)
+     			input[j][i].resize(dim);
+	for(int j=0;j<perslavepartitions;j++)
+	{		
+	 for(int i=0;i<partsize[(id-1)*perslavepartitions+j];i++)
+	    	MPI_Recv (&input[j][i][0] ,dim, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &status );
+	}	
+	
+	/*for(unsigned z = 0; z < perslavepartitions; z++){
+		if(input[z].size() > 0){
+			std::cout << "Running Pipeline with : " << input[z].size() << " vectors" << std::endl;
+			wD->originalData = input[z];
+			
+			
+			runPipeline(args, wD);
+			
+			wD->complex->clear();
+			
+			//Map partitions back to original point indexing
+		//	ut.mapPartitionIndexing(partitionedData.first[z], wD->bettiTable);
+			cout<<"Doing Fine "<<id<<endl;
+		//	for(auto betEntry : wD->bettiTable)
+		//		mergedBettiTable.push_back(betEntry);
+			
+		} else 
+			std::cout << "skipping" << std::endl;
+    	}
+	*/
+
 	}
-        MPI_Finalize();
+	else if(id==3)
+	{
+	int dim;
+		MPI_Status status;
+		MPI_Recv(&dim,1,MPI_INT,0,1,MPI_COMM_WORLD,&status);
+		std::vector<int> partsize;
+        partsize.resize(20);
+        MPI_Recv(&partsize[0],20,MPI_INT,0,1,MPI_COMM_WORLD,&status);
+        int perslavepartitions;
+		MPI_Recv(&perslavepartitions,1,MPI_INT,0,1,MPI_COMM_WORLD,&status);
+		
+		std::vector<std::vector<std::vector<double>>> input;
+		input.resize(perslavepartitions);
+        for(int i=0;i<input.size();i++)
+			input[i].resize(partsize[((id-1)*perslavepartitions)+i]);
+		
+		for(int j=0;j<input.size();j++)
+    		for(int i=0;i<input[j].size();i++)
+     			input[j][i].resize(dim);
+	for(int j=0;j<perslavepartitions;j++)
+	{		
+	 for(int i=0;i<partsize[(id-1)*perslavepartitions+j];i++)
+	    	MPI_Recv (&input[j][i][0] ,dim, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &status );
+	}	
+	/*
+	for(unsigned z = 0; z < perslavepartitions; z++){
+		if(input[z].size() > 0){
+			std::cout << "Running Pipeline with : " << input[z].size() << " vectors" << std::endl;
+			wD->originalData = input[z];
+			
+			
+			runPipeline(args, wD);
+			
+			wD->complex->clear();
+			
+			//Map partitions back to original point indexing
+		//	ut.mapPartitionIndexing(partitionedData.first[z], wD->bettiTable);
+			cout<<"Doing Fine "<<id<<endl;
+		//	for(auto betEntry : wD->bettiTable)
+		//		mergedBettiTable.push_back(betEntry);
+			
+		} else 
+			std::cout << "skipping" << std::endl;
+    	}
+	*/
+	}
+	else
+	{
+		cout<<"Nothing to do"<<endl;
+	}
+       
 	
 	// Once we have X data sets to process, along with the original centroid dataset
 	//		Distribute work to slaves (run fastPersistence on given data)
@@ -286,8 +446,11 @@ int main(int argc, char* argv[]){
 	
 	//Define external classes used for reading input, parsing arguments, writing output
     MPI_Init(NULL,NULL);
-    auto *rs = new readInput();
-    auto *ap = new argParser();
+   	MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
+	MPI_Comm_rank(MPI_COMM_WORLD,&id);
+	
+	auto *rs = new readInput();
+	auto *ap = new argParser();
     
     //Parse the command-line arguments
     auto args = ap->parse(argc, argv);
@@ -295,19 +458,20 @@ int main(int argc, char* argv[]){
     //Determine what pipe we will be running
     ap->setPipeline(args);
     
-    for(auto z : args)
-		std::cout << z.first << "\t" << z.second << std::endl;
+ //   for(auto z : args)
+	//	std::cout << z.first << "\t" << z.second << std::endl;
     
 	//Create a pipePacket (datatype) to store the complex and pass between engines
     auto *wD = new pipePacket(args, args["complexType"]);	//wD (workingData)
 	
-	if(args["pipeline"] != "slidingwindow"){
+	if(args["pipeline"] != "slidingwindow"&&args["mode"] != "mpi"){
 		//Read data from inputFile CSV
 		wD->originalData = rs->readCSV(args["inputFile"]);
 		wD->fullData = wD->originalData;
 	}
+	
 	//If data was found in the inputFile
-	if(wD->originalData.size() > 0 || args["pipeline"] == "slidingwindow"){
+	if(wD->originalData.size() > 0 || args["pipeline"] == "slidingwindow" || args["mode"] == "mpi"){
 		
 		//Add data to our pipePacket
 		wD->originalData = wD->originalData;
@@ -324,6 +488,6 @@ int main(int argc, char* argv[]){
 	}
 	
 	
-	
+	 MPI_Finalize();
     return 0;
 }
