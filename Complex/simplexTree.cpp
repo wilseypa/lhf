@@ -199,8 +199,8 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 
 		//Delete all entries in the simplex tree with the index...
         // TODO :)
-		deleteIndexRecurse( defaultVals.keyToBeDeleted, head );
-		runningVectorIndices.erase( runningVectorIndices.begin() + defaultVals.indexToBeDeleted );
+		// deleteIndexRecurse( defaultVals.keyToBeDeleted, head );
+		// runningVectorIndices.erase( runningVectorIndices.begin() + defaultVals.indexToBeDeleted );
 
 		//insert(defaultVals.distsFromCurrVec);
 		removedSimplices++;

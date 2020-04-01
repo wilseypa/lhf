@@ -34,7 +34,6 @@ public:
         int labelToBeDeleted;
         int indexToBeDeleted;
         double nnDistToBeDeleted;
-        std::vector<double> distMatLastRow;//(windowMaxSize, 0);  // The last row of the upper triangular distance matrix is a vector of 0s.
     };
 
     static EvalParams* defaultVals;
@@ -46,8 +45,8 @@ public:
     bool configPipe(std::map<std::string, std::string>);
     void runSubPipeline(pipePacket);
     void writeComplexStats(pipePacket &);
-    static bool nnBasedEvaluator(std::vector<double>&, std::vector<std::vector<double>>&, EvalParams&, pipePacket&);
-    void deleteNNstats(EvalParams &);
-    void updateStats(EvalParams&, pipePacket&);
+    static bool nnBasedEvaluator(std::vector<double>&, std::vector<std::vector<double>>&);
+    static void deleteNNstats();
+    static void updateStats();
 };
 
