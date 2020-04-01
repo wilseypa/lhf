@@ -10,9 +10,9 @@ class simplexTree : public simplexBase {
 	unsigned indexCounter;
 	int nodeCount;
 	std::vector<std::vector<std::pair<std::set<unsigned>, double>>> weightEdgeGraph;
-	
+
 	void insertInductive();
-  
+
   public:
 	struct treeNode{
 		unsigned index;
@@ -22,22 +22,22 @@ class simplexTree : public simplexBase {
 		treeNode* parent = nullptr;
 		double weight = 0;
 	};
-	
+
 	treeNode* head;
 	std::vector<treeNode*> dimensions;
-		
+
 	simplexTree(std::vector<std::vector<double>>);
 	simplexTree(double, std::vector<std::vector<double>>, int);
 	std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(std::pair<std::set<unsigned>,double>, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
-	void printTree(treeNode*);	
+	void printTree(treeNode*);
 	void recurseInsert(treeNode*, unsigned, int, double, std::set<unsigned>);
 	double findWeight(std::set<unsigned>);
 	void deleteIndexRecurse(int, treeNode*);
-	
+
 	//virtual interface functions
 	double getSize();
 	bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&);
-	void deleteIterative(int);
+	void deleteIterative(int, int);
 	void insert(std::vector<double>&);
 	bool find(std::set<unsigned>);
 	int simplexCount();
@@ -50,6 +50,5 @@ class simplexTree : public simplexBase {
 	void reduceComplex();
 	std::vector<std::pair<double, std::vector<unsigned>>> getd0Pairs();
 	void clear();
-	
 };
 

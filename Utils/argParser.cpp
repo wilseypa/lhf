@@ -119,7 +119,7 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 			args["upscale"] = "true";
 		}
 		if(args["mode"] == "standard")
-			args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
+			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
 		else if(args["mode"] == "reduced"){
 			if(args["preprocessor"] == "")
 				args["preprocessor"] = "kmeans++";
@@ -134,7 +134,7 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 		} else if(args["mode"] == "stream"){
 			if(args["preprocessor"] == "")
 				args["preprocessor"] = "streamingkmeans";
-			args["pipeline"] = "distMatrix.neighGraph.rips.persistence";
+			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
 		} else if(args["mode"] == "sw" || args["mode"] == "slidingwindow"){
 			args["preprocessor"] = "";
 			args["pipeline"] = "slidingwindow";
@@ -144,7 +144,12 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
 			args["upscale"] = "false";
 			args["complexType"] = "simplexTree";
-		}	
+		} else if(args["mode"] == "naive" || args["mode"] == "naivewindow"){
+			args["preprocessor"] = "";
+			args["pipeline"] = "naivewindow";
+			args["upscale"] = "false";
+			args["complexType"] = "simplexTree";
+		}
 	}
 	
 	return;
