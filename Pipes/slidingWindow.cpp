@@ -569,7 +569,7 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
             }
             else
             {
-                if(inData.complex->insertIterative(currentVector, windowValues))
+                if(inData.complex->streamEval(currentVector, windowValues))
                 {
 
                     //Delete all entries in the simplex tree with the index...
@@ -578,6 +578,7 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
 		            inData.complex->runningVectorIndices.erase( inData.complex->runningVectorIndices.begin() + defaultVals->indexToBeDeleted );
 
 		            inData.complex->insert(defaultVals->distsFromCurrVec);
+		            inData.complex->removedSimplices++;
 
                     // Insert the current vector, its key and partition label into the rear ends of the corresponding containers.
                     windowValues.push_back(currentVector);
