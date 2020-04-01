@@ -3,10 +3,7 @@
 // Header file for bettiPipe class - see bettiPipe.cpp for descriptions
 #include <map>
 #include <vector>
-#include <queue>
-#include <unordered_map>
 #include "basePipe.hpp"
-#include "utils.hpp"
 
 class unionFind{
 	private:
@@ -19,22 +16,9 @@ class unionFind{
 
 class fastPersistence : public basePipe {
   private:
-  
 	utils ut;
 	double maxEpsilon;
-	std::string twist;
-  public:
-	struct tArrayEntry_t{
-		bool marked = false;
-		int ti = -1;
-		double birth;
-		double death = -1;
-		std::set<unsigned> simplex;
-	};
-	bool alterPipe = false;
-	
-	std::vector<tArrayEntry_t> tArray;
-	
+  public:		
 	int dim;
     fastPersistence();
     pipePacket runPipe(pipePacket inData);

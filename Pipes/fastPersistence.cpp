@@ -18,6 +18,8 @@
 #include <algorithm>
 #include <set>
 #include <map>
+#include <unordered_map>
+#include <queue>
 #include "fastPersistence.hpp"
 
 unionFind::unionFind(int n) : rank(n, 0), parent(n, 0) {
@@ -68,23 +70,16 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	
 	//Get all edges for the simplexArrayList or simplexTree
 	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges = inData.complex->getAllEdges(maxEpsilon);
-	int nPoints = inData.originalData.size();
 
 	if(edges.size() == 0)
 		return inData;
 		
-	std::vector<std::pair<double,double>> temp;
-	std::vector<std::vector<std::pair<double,double>>> ret;
-	for(int i = 0; i < dim; i++){
-		ret.push_back(temp);
-	}
-	
 	//Some notes on fast persistence:
 	
 	//	-Vectors need to be stored in a lexicograhically ordered set of decreasing (d+1)-tuples (e.g. {3, 1, 0})
 	//		-These vectors are replaced with their indices (e.g. {{2,1,0} = 0, {3,1,0} = 1, {3,2,0} = 2, etc.})
 	
-	//	-Reduction matrix (V) stores collection of non-zero entries for each column (indexed)
+	//	-Boundary matrix stores reduced collection of cofaces for each column (indexed)
 	
 	
 	//Start a timer for physical time passed during the pipe's function
@@ -97,29 +92,28 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	//			if joins multiple sets, join all sets
 	//		Until all edges evaluated or MST found (size - 1)	
 	
-	std::list<unsigned> pivots;	//Store identified pivots
-	unsigned pivotIndex = 0;
+	std::priority_queue<unsigned> pivots; //Store identified pivots
+	unsigned edgeIndex = 0;
 	unsigned mstSize = 0;
 
-	unionFind uf(nPoints);
+	unionFind uf(inData.originalData.size());
 
 	for(auto edge : edges[1]){ //For each edge
 		std::set<unsigned>::iterator it = edge.first.begin();
 		int v1 = uf.find(*it), v2 = uf.find(*(++it)); //Find which connected component each vertex belongs to
 		if(v1 != v2){ //Edge connects two different components -> add to the MST
 			uf.join(v1, v2);
-			pivots.push_back(pivotIndex);
+			pivots.push(edgeIndex);
 			mstSize++;
 			bettis += "0,0," + std::to_string(edge.second) + "\n";
 			bettiBoundaryTableEntry des = { 0, 0, edge.second, { *it } };
+			inData.bettiTable.push_back(des);
 		}
 
 		//Check if we've filled our MST and can break...
-		if(mstSize == edges[0].size()-1){
-			break;
-		}
+		if(mstSize == edges[0].size()-1) break;
 
-		pivotIndex++;
+		edgeIndex++;
 	}
 	
 	bettis += "0,0," + std::to_string(maxEpsilon) + "\n";
@@ -140,29 +134,29 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		
 		
 	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
-		unsigned columnIndex = edges[d].size()-1;
 		std::unordered_map<unsigned, std::set<unsigned>> boundary;
-		// std::unordered_map<unsigned, std::set<unsigned>> v;
-		std::list<unsigned>::reverse_iterator pivotPointer = pivots.rbegin();
-		std::list<unsigned> nextPivots;
-		std::unordered_map<unsigned, unsigned> pivotPairs;
+		std::unordered_map<unsigned, unsigned> pivotPairs; //For each pivot, which column has that pivot
+		std::priority_queue<unsigned> nextPivots; //Pivots for the next dimension
 
 		for(unsigned columnIndex = edges[d].size()-1; columnIndex-- != 0; ){ //Iterate over columns to reduce in reverse order
 			std::pair<std::set<unsigned>, double> simplex = edges[d][columnIndex];
 			std::set<unsigned> cofaceList;
-			// std::set<unsigned> vColumn;
 
-			if(*pivotPointer != columnIndex){ //Not a pivot -> need to reduce
+			if(pivots.top() != columnIndex){ //Not a pivot -> need to reduce
 				unsigned cofacetIndex = 0;
 
+				// for(unsigned cofacetIndex = edges[d+1].size()-1; cofacetIndex-- != 0; ){
+					// auto cofacetCandidate = edges[d+1][cofacetIndex];
 				for(std::pair<std::set<unsigned>,double> cofacetCandidate : edges[d+1]){ //Iterate over possible cofacets
 					bool isCofacet = std::includes(cofacetCandidate.first.begin(), cofacetCandidate.first.end(), simplex.first.begin(), simplex.first.end());
 
 					if(isCofacet){
 						cofaceList.insert(cofacetIndex);
-						if(cofacetCandidate.second == simplex.second){
-							break; //Apparent Pair -> Don't need to enumerate the rest of the cofacets
-						}
+						// if(check_apparent && cofacetCandidate.second == simplex.second){
+						// 	if(pivotPairs.find(cofacetIndex) == pivotPairs.end()) break;
+						// 	check_apparent = false;
+						// // 	break; //Apparent Pair -> Don't need to enumerate the rest of the cofacets
+						// }
 					}
 					++cofacetIndex;
 				}
@@ -174,33 +168,26 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 				}
 
 				while(!cofaceList.empty()){
-					auto pIndex = cofaceList.begin();
+					unsigned pivotIndex = *cofaceList.begin();
 
-					if(pivotPairs.find(*pIndex) == pivotPairs.end()){
+					if(pivotPairs.find(pivotIndex) == pivotPairs.end()){
+						nextPivots.push(pivotIndex);
+						pivotPairs.insert({pivotIndex, columnIndex});	
 						boundary[columnIndex] = cofaceList;
-						nextPivots.push_back(*pIndex);
-						pivotPairs.insert({*pIndex, columnIndex});	
-						// v[columnIndex] = vColumn;
 						
-						if(edges[d][columnIndex].second != edges[d+1][*pIndex].second){
-							bettis += std::to_string(d) + "," + std::to_string(simplex.second) +"," + std::to_string(edges[d+1][*pIndex].second) + "\n";
-							bettiBoundaryTableEntry des = { d, simplex.second, edges[d+1][*pIndex].second, cofaceList };
+						if(edges[d][columnIndex].second != edges[d+1][pivotIndex].second){
+							bettis += std::to_string(d) + "," + std::to_string(simplex.second) +"," + std::to_string(edges[d+1][pivotIndex].second) + "\n";
+							bettiBoundaryTableEntry des = { d, simplex.second, edges[d+1][pivotIndex].second, cofaceList };
 							inData.bettiTable.push_back(des);
 						}
 
 						break;
 					} else {
-						// vColumn.insert(pivotPairs[*pIndex]);
-						cofaceList = ut.setXOR(cofaceList, boundary[pivotPairs[*pIndex]]);
-
-						// for(unsigned i : v[pivotPairs[*pIndex]]){
-						// 	vColumn = ut.setXOR(vColumn, v[i]);
-						// 	cofaceList = ut.setXOR(cofaceList, edges[d+1][i].first);
-						// }
+						cofaceList = ut.setXOR(cofaceList, boundary[pivotPairs[pivotIndex]]);
 					}
 				}
 
-			} else ++pivotPointer;
+			} else pivots.pop();
 		}
 		
 		pivots = nextPivots;
@@ -247,10 +234,10 @@ void fastPersistence::outputData(pipePacket inData){
 	
 	file.open("output/tArray.csv");
 	
-	file << "ti,Dim,Marked,Birth,Death,Simplex\n";
-	for(auto tStruct : tArray){
-		file << tStruct.ti << "," << tStruct.simplex.size()-1 << "," << tStruct.marked << "," << tStruct.birth << "," << tStruct.death << ",";
-		for(auto index : tStruct.simplex)
+	file << "Dim,Birth,Death,Simplex\n";
+	for(auto tStruct : inData.bettiTable){
+		file << tStruct.bettiDim << "," << tStruct.birth << "," << tStruct.death << ",";
+		for(auto index : tStruct.boundaryPoints)
 			file << index << " ";
 		file << "\n";
 	}
@@ -285,21 +272,12 @@ bool fastPersistence::configPipe(std::map<std::string, std::string> configMap){
 		maxEpsilon = std::atof(configMap["epsilon"].c_str());
 	else return false;	
 	
-	pipe = configMap.find("twist");
-	if(pipe != configMap.end())
-		twist = configMap["twist"];
-	else return false;
-	
 	pipe = configMap.find("fn");
 	if(pipe != configMap.end())
 		fnmod = configMap["fn"];
-	
-	pipe = configMap.find("complexType");
-	if(pipe != configMap.end() && configMap["complexType"] == "indSimplexTree")
-		alterPipe = true;
 		
 	configured = true;
-	ut.writeDebug("fastPersistence","Configured with parameters { dim: " + configMap["dimensions"] + ", twist: " + twist + ", complexType: " + configMap["complexType"] + ", eps: " + configMap["epsilon"]);
+	ut.writeDebug("fastPersistence","Configured with parameters { dim: " + configMap["dimensions"] + ", complexType: " + configMap["complexType"] + ", eps: " + configMap["epsilon"]);
 	ut.writeDebug("fastPersistence","\t\t\t\tdebug: " + strDebug + ", outputFile: " + outputFile + " }");
 	
 	return true;
