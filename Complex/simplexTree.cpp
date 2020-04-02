@@ -190,27 +190,35 @@ void simplexTree::insertInductive(){
 
 
 // Insert a node into the tree using the distance matrix and a vector index to track changes
-//bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vector<std::vector<double>> &window){
-//	if(window.size() == 0){
-//		return true;
-//	}
-//
-//	if(streamEval(currentVector, window)) {   // Point is deemed 'significant'
-//
-//		//Delete all entries in the simplex tree with the index...
-//        // TODO :)
-//		// deleteIndexRecurse( defaultVals.keyToBeDeleted, head );
-//		// runningVectorIndices.erase( runningVectorIndices.begin() + defaultVals.indexToBeDeleted );
-//
-//		//insert(defaultVals.distsFromCurrVec);
-//		removedSimplices++;
-//
-//		return true;
-//	}
-//
-//	return false;
-//}
+bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vector<std::vector<double>> &window, int keyToBeDeleted, int indexToBeDeleted, std::vector<double> &distsFromCurrVec){
+	if(window.size() == 0){
+		return true;
+	}
 
+	if(streamEval(currentVector, window)) {   // Point is deemed 'significant'
+
+		deleteIterative( keyToBeDeleted );  // Delete from the complex.
+		runningVectorIndices.erase( runningVectorIndices.begin() + indexToBeDeleted );
+
+		insert(distsFromCurrVec);
+		removedSimplices++;
+
+		return true;
+	}
+
+	return false;
+}
+
+
+// Delete a node from the tree.
+void simplexTree::deleteIterative(int keyToBeDeleted) {
+
+    //Delete all entries in the simplex tree.
+    // TODO :)
+    deleteIndexRecurse(keyToBeDeleted, head);
+
+    return;
+}
 
 void simplexTree::deleteIndexRecurse(int vectorIndex, treeNode* curNode){
 
