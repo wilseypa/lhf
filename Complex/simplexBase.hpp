@@ -10,6 +10,7 @@
 class simplexBase {
   private:
   public:
+	unsigned indexCounter;
 	utils ut;
 	double minDist = 0.0;
 	double maxDist = 0.0;

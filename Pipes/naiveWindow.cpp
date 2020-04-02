@@ -64,7 +64,8 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 					
 					// Set the stream evaluator
 					inData.complex->setStreamEvaluator(&this->sampleStreamEvaluator);
-
+					inData.complex->indexCounter = windowMaxSize;
+					std::cout << "StreamSize: " << inData.complex->indexCounter << std::endl;
 				}
 
 			//Window is full, evaluate and add to window
@@ -84,9 +85,9 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 			if(pointCounter % 10 == 0 && pointCounter > windowMaxSize){
 				// Build and trigger remaining pipeline. It should only require the computation of persistence
 				// intervals from the complex being maintained.
-				//std::cout << "pointCounter: " << pointCounter << "\tSimplex Count: " << inData.complex->simplexCount() << "\tVertex Count: " << inData.complex->vertexCount() << std::endl;
-				//std::cout << "\tWindowSize: " << windowValues.size() << std::endl;
-				//std::cout << "matrixSize: " << inData.complex->distMatrix.size() << std::endl;
+				std::cout << "pointCounter: " << pointCounter << "\tSimplex Count: " << inData.complex->simplexCount() << "\tVertex Count: " << inData.complex->vertexCount() << std::endl;
+				std::cout << "\tWindowSize: " << windowValues.size() << std::endl;
+				std::cout << "matrixSize: " << inData.complex->distMatrix.size() << std::endl;
 				inData.originalData = windowValues;
 				runSubPipeline(inData);
 
@@ -98,8 +99,8 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 		}
 		//Probably want to trigger the remaining pipeline one last time...
 		if((pointCounter - 1) % 10 != 0){
-			//std::cout << "pointCounter: " << pointCounter << "\tSimplex Count: " << inData.complex->simplexCount() << "\tVertex Count: " << inData.complex->vertexCount() << std::endl;
-			//std::cout << "matrixSize: " << inData.complex->distMatrix.size() << std::endl;
+			std::cout << "pointCounter: " << pointCounter << "\tSimplex Count: " << inData.complex->simplexCount() << "\tVertex Count: " << inData.complex->vertexCount() << std::endl;
+			std::cout << "matrixSize: " << inData.complex->distMatrix.size() << std::endl;
 			runSubPipeline(inData);
 		}
 		ut.writeLog("slidingWindow", "\tSuccessfully evaluated " + std::to_string(pointCounter) + " points");
