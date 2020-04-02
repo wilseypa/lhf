@@ -23,7 +23,7 @@ naiveWindow::naiveWindow(){
 }
 
 bool naiveWindow::sampleStreamEvaluator(std::vector<double>& vector, std::vector<std::vector<double>>& window){
-	//Return true to accept all points into the complex	
+	//Return true to accept all points into the complex
 	return true;
 }
 
@@ -41,22 +41,27 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 	//
 	// Loop this subpipeline until there's no more data
 
+	int key = 0;
+	std::vector<int> windowKeys;
 	std::vector<std::vector<double>> windowValues;
 	std::vector<double> currentVector;
-	
+	int indexToBeDeleted = 0;
+
 	// Initialize the read stream using the input file
 	if(rp.streamInit(inputFile)){
-		
+
 		int pointCounter = 1;
 		//Get the next point from the stream
 		while(rp.streamRead(currentVector)){
 			std::cout << "Point: " << pointCounter << std::endl;
-			
+
 			//Evaluate insertion into sliding window
-			
+
 			//Window hasn't filled
 			if(windowValues.size() < windowMaxSize){
 				windowValues.push_back(currentVector);
+				windowKeys.push_back(key);
+				key++;
 
 				//If we've reached window size, generate the initial complex
 				if(windowValues.size() == windowMaxSize){
@@ -64,7 +69,7 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 
 					inData.originalData = windowValues;
 					runComplexInitializer(inData);
-					
+
 					// Set the stream evaluator
 					inData.complex->setStreamEvaluator(&this->sampleStreamEvaluator);
 
@@ -73,14 +78,36 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 
 			//Window is full, evaluate and add to window
 			} else {
-				
+
+				int keyToBeDeleted = windowKeys[0];
+				std::vector<double> distsFromCurrVec = ut.nearestNeighbors(currentVector, windowValues);
+				distsFromCurrVec.erase( distsFromCurrVec.begin() );
+
+				// Update the distance matrix.
+				inData.complex->distMatrix.erase(inData.complex->distMatrix.begin());
+
+				for(unsigned int i = 0; i < inData.complex->distMatrix.size(); i++) {
+                    // Delete the first entry from each row.
+                    inData.complex->distMatrix[i].erase( inData.complex->distMatrix[i].begin() );
+
+                    // Add the new distance value to the end of each row.
+                    inData.complex->distMatrix[i].push_back( distsFromCurrVec[i] );
+				}
+
+				std::vector<double> distMatLastRow(windowMaxSize);  // The last row of the upper triangular distance matrix is a vector of 0s.
+				inData.complex->distMatrix.push_back( distMatLastRow );
+
+				windowKeys.erase(windowKeys.begin());
+
 				std::cout << "Insert Iterative" << std::endl;
-				if(inData.complex->insertIterative(currentVector, windowValues)){
+				if(inData.complex->insertIterative(currentVector, windowValues, keyToBeDeleted, indexToBeDeleted, distsFromCurrVec)){
 
 					windowValues.erase(windowValues.begin());
 
 					//Insert the point
 					windowValues.push_back(currentVector);
+					windowKeys.push_back(key);
+					key++;
 				}
 			}
 
@@ -107,7 +134,7 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 			//runSubPipeline(inData);
 		}
 		ut.writeLog("slidingWindow", "\tSuccessfully evaluated " + std::to_string(pointCounter) + " points");
-	
+
 		writeComplexStats(inData);
 	}
 
@@ -121,14 +148,14 @@ void naiveWindow::writeComplexStats(pipePacket &inData){
 		file << inData.complex->stats << std::endl;
 
 		file.close();
-		
-	}	
+
+	}
 }
 
 void naiveWindow::runSubPipeline(pipePacket wrData){
     if(wrData.originalData.size() == 0)
 		return;
-		
+
 	pipePacket inData = wrData;
 	outputData(inData);
 
