@@ -150,8 +150,6 @@ void processReducedWrapper(std::map<std::string, std::string> args, pipePacket* 
 		std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
 		ut.print1DVector(a.boundaryPoints);
 	}
-	
-		
 	return;
 }	
 
@@ -166,6 +164,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
     utils ut;
  	if(id == 0)
 	{
+	std::vector<bettiBoundaryTableEntry> mergedMasterBettiTable;	
 	auto *rs = new readInput();
 	wD->originalData = rs->readCSV(args["inputFile"]);
     wD->fullData = wD->originalData;
@@ -231,11 +230,13 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 	{
         	MPI_Send( &partitionedData.first[((k-1)*number_of_partitions_per_slave)+j][0],dimension, MPI_DOUBLE, k, 1, MPI_COMM_WORLD);	 
 	}
+   
+  
 	
 	for(unsigned z = ((nprocs-1)*number_of_partitions_per_slave);z<partitionedData.second.size();z++)
 	{
 		if(partitionedData.second[z].size() > 0){
-			std::cout << "Running Pipeline with : " << partitionedData.second[z].size() << " vectors" << std::endl;
+			std::cout << "Running Pipeline with : " << partitionedData.second[z].size() << " vectors" << " id :: "<<id<<std::endl;
 			wD->originalData = partitionedData.second[z];
 			
 			
@@ -247,11 +248,41 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 			ut.mapPartitionIndexing(partitionedData.first[z], wD->bettiTable);
 			
 			for(auto betEntry : wD->bettiTable)
-				mergedBettiTable.push_back(betEntry);
+    			mergedBettiTable.push_back(betEntry);
 			
 		} else 
 			std::cout << "skipping" << std::endl;
 	}
+ 
+  for(int k=1;k<nprocs;k++)	
+   {
+	int p=0;
+	for(int j=0;j<number_of_partitions_per_slave;j++)
+	{
+	  int sizeOfBettiTable;
+      MPI_Status status;
+      MPI_Recv(&sizeOfBettiTable,1,MPI_INT,k,((k-1)*number_of_partitions_per_slave)+j,MPI_COMM_WORLD,&status);
+	  for(int i=0;i<sizeOfBettiTable;i++)
+	  {
+		  int boundarysize;
+		  MPI_Recv(&boundarysize,1,MPI_INT,k,k*10000+p+1,MPI_COMM_WORLD,&status);
+		  bettiBoundaryTableEntry bettiEntry;
+		  MPI_Recv(&bettiEntry.bettiDim,1,MPI_UNSIGNED,k,k*10000+p+2,MPI_COMM_WORLD,&status);
+		  MPI_Recv(&bettiEntry.birth,1,MPI_DOUBLE,k,k*10000+p+3,MPI_COMM_WORLD,&status);
+		  MPI_Recv(&bettiEntry.death,1,MPI_DOUBLE,k,k*10000+p+4,MPI_COMM_WORLD,&status);
+		  std:vector<unsigned> boundaryvector;
+		  boundaryvector.resize(boundarysize);
+		  MPI_Recv(&boundaryvector[0],boundarysize,MPI_UNSIGNED,k,k*10000+p+5,MPI_COMM_WORLD,&status);
+		  for(auto a:boundaryvector)
+			  bettiEntry.boundaryPoints.insert(a);
+		  mergedMasterBettiTable.push_back(bettiEntry);
+		  p=p+5;
+	  }
+	}
+   }
+	
+	
+	
 	std::cout << "Full Data: " << centroids.size() << std::endl;
 	if(centroids.size() > 0){
 		std::cout << "Running Pipeline with : " << centroids.size() << " vectors" << std::endl;
@@ -259,18 +290,20 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		runPipeline(args, wD);
 		
 		wD->complex->clear();
+	
+	
 	} else 
 		std::cout << "skipping" << std::endl;
 	
 	std::cout << std::endl << "_______BETTIS_______" << std::endl;
 	
-	for(auto a : wD->bettiTable){
+	for(auto a : mergedMasterBettiTable){
 		std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
 		ut.print1DVector(a.boundaryPoints);
 	}
+	cout<<endl<<"mergedMasterBettiTable size is :: "<<mergedMasterBettiTable.size()<<endl;
 	}
-	else if(id==1)
-    {
+	else    {
 		int dim;
 		MPI_Status status;
 		MPI_Recv(&dim,1,MPI_INT,0,1,MPI_COMM_WORLD,&status);
@@ -307,10 +340,10 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
      	   {		
 	    	   MPI_Recv (&inputlabel[j][0] ,partsize[((id-1)*perslavepartitions)+j], MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &status );
            }	
-		
+		int p=id*10000;			
 		for(unsigned z = 0; z < perslavepartitions; z++){
 		if(input[z].size() > 0){
-			std::cout << "Running Pipeline with : " << input[z].size() << " vectors" << std::endl;
+			std::cout << "Running Pipeline with : " << input[z].size() << " vectors" << " id :: "<<id<<std::endl;
 			wD->originalData = input[z];
 			
 			
@@ -320,157 +353,37 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 			
 			//Map partitions back to original point indexing
 			ut.mapPartitionIndexing(inputlabel[z], wD->bettiTable);
-		//	cout<<"Doing Fine "<<id<<endl;
-			for(auto betEntry : wD->bettiTable)
-				mergedBettiTable.push_back(betEntry);
-			
+	        int bettiTableSize = wD->bettiTable.size();
+			MPI_Send(&bettiTableSize,1,MPI_INT,0,(id-1)*perslavepartitions+z,MPI_COMM_WORLD);
+            for(auto betEntry : wD->bettiTable)
+			{  
+			   int boundary_size = betEntry.boundaryPoints.size();	
+               MPI_Send(&boundary_size,1,MPI_INT,0,p+1,MPI_COMM_WORLD);
+			   MPI_Send(&betEntry.bettiDim,1,MPI_UNSIGNED,0,p+2,MPI_COMM_WORLD);
+			   MPI_Send(&betEntry.birth,1,MPI_DOUBLE,0,p+3,MPI_COMM_WORLD);
+    		   MPI_Send(&betEntry.death,1,MPI_DOUBLE,0,p+4,MPI_COMM_WORLD);
+	    	   vector<unsigned> boundaryvector;
+               boundaryvector.assign(betEntry.boundaryPoints.begin(), betEntry.boundaryPoints.end());
+			   MPI_Send(&boundaryvector[0],boundary_size,MPI_UNSIGNED,0,p+5,MPI_COMM_WORLD);
+			   p=p+5;
+			}		
+	
+	
+	
+	
 		} else 
 			std::cout << "skipping" << std::endl;
+
     	}
-	std::cout << std::endl << "_______BETTIS_______" << std::endl;
+		   		
+
+/*	std::cout << std::endl << "_______BETTIS_______" << std::endl;
 	
-	for(auto a : wD->bettiTable){
+	for(auto a : mergedBettiTable){
 		std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
 		ut.print1DVector(a.boundaryPoints);
 	}
-	
-	}
-	else if(id==2)
-	{
-		
-		int dim;
-		MPI_Status status;
-		MPI_Recv(&dim,1,MPI_INT,0,1,MPI_COMM_WORLD,&status);
-		std::vector<int> partsize;
-        partsize.resize(20);
-        MPI_Recv(&partsize[0],20,MPI_INT,0,1,MPI_COMM_WORLD,&status);
-        int perslavepartitions;
-		MPI_Recv(&perslavepartitions,1,MPI_INT,0,1,MPI_COMM_WORLD,&status);
-		
-		std::vector<std::vector<std::vector<double>>> input;
-		std::vector<std::vector<unsigned>> inputlabel;
-		
-		input.resize(perslavepartitions);
-        for(int i=0;i<input.size();i++)
-			input[i].resize(partsize[((id-1)*perslavepartitions)+i]);
-		
-		for(int j=0;j<input.size();j++)
-    		for(int i=0;i<input[j].size();i++)
-     			input[j][i].resize(dim);
-
-		inputlabel.resize(perslavepartitions);
-		for(int i=0;i<inputlabel.size();i++)
-			 inputlabel[i].resize(partsize[((id-1)*perslavepartitions)+i]);
-	
-			
-     	for(int j=0;j<perslavepartitions;j++)
-	     {		
-	      for(int i=0;i<partsize[(id-1)*perslavepartitions+j];i++)
-	    	MPI_Recv (&input[j][i][0] ,dim, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &status );
-       	 }	 
-		 
-		 for(int j=0;j<perslavepartitions;j++)
-     	   {		
-	    	   MPI_Recv (&inputlabel[j][0] ,partsize[((id-1)*perslavepartitions)+j], MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &status );
-           }	
-		
-	
-	for(unsigned z = 0; z < perslavepartitions; z++){
-		if(input[z].size() > 0){
-			std::cout << "Running Pipeline with : " << input[z].size() << " vectors" << std::endl;
-			wD->originalData = input[z];
-			
-			
-			runPipeline(args, wD);
-			
-			wD->complex->clear();
-			
-			//Map partitions back to original point indexing
-			ut.mapPartitionIndexing(inputlabel[z], wD->bettiTable);
-		//	cout<<"Doing Fine "<<id<<endl;
-			for(auto betEntry : wD->bettiTable)
-				mergedBettiTable.push_back(betEntry);
-			
-		} else 
-			std::cout << "skipping" << std::endl;
-    	}
-	std::cout << std::endl << "_______BETTIS_______" << std::endl;
-	
-	for(auto a : wD->bettiTable){
-		std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
-		ut.print1DVector(a.boundaryPoints);
-	}
-
-	}
-	else if(id==3)
-	{
-	int dim;
-		MPI_Status status;
-		MPI_Recv(&dim,1,MPI_INT,0,1,MPI_COMM_WORLD,&status);
-		std::vector<int> partsize;
-        partsize.resize(20);
-        MPI_Recv(&partsize[0],20,MPI_INT,0,1,MPI_COMM_WORLD,&status);
-        int perslavepartitions;
-		MPI_Recv(&perslavepartitions,1,MPI_INT,0,1,MPI_COMM_WORLD,&status);
-		
-		std::vector<std::vector<std::vector<double>>> input;
-		std::vector<std::vector<unsigned>> inputlabel;
-		
-		input.resize(perslavepartitions);
-        for(int i=0;i<input.size();i++)
-			input[i].resize(partsize[((id-1)*perslavepartitions)+i]);
-		
-		for(int j=0;j<input.size();j++)
-    		for(int i=0;i<input[j].size();i++)
-     			input[j][i].resize(dim);
-			
-			
-		inputlabel.resize(perslavepartitions);
-		for(int i=0;i<inputlabel.size();i++)
-			 inputlabel[i].resize(partsize[((id-1)*perslavepartitions)+i]);
-
-		 
-	    for(int j=0;j<perslavepartitions;j++)
-	     {		
-	        for(int i=0;i<partsize[(id-1)*perslavepartitions+j];i++)
-	        	MPI_Recv (&input[j][i][0] ,dim, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &status );
-	     }	
-		 
-		 for(int j=0;j<perslavepartitions;j++)
-     	   {		
-	    	   MPI_Recv (&inputlabel[j][0] ,partsize[((id-1)*perslavepartitions)+j], MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &status );
-           }	
-		
-	
-	for(unsigned z = 0; z < perslavepartitions; z++){
-		if(input[z].size() > 0){
-			std::cout << "Running Pipeline with : " << input[z].size() << " vectors" << std::endl;
-			wD->originalData = input[z];
-			
-			
-			runPipeline(args, wD);
-			
-			wD->complex->clear();
-			
-			//Map partitions back to original point indexing
-			ut.mapPartitionIndexing(inputlabel[z], wD->bettiTable);
-		//	cout<<"Doing Fine "<<id<<endl;
-			for(auto betEntry : wD->bettiTable)
-				mergedBettiTable.push_back(betEntry);
-			
-		} else 
-			std::cout << "skipping" << std::endl;
-    	}
-	std::cout << std::endl << "_______BETTIS_______" << std::endl;
-	
-	for(auto a : wD->bettiTable){
-		std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
-		ut.print1DVector(a.boundaryPoints);
-	}
-	}
-	else
-	{
-		cout<<"Nothing to do"<<endl;
+	*/
 	}
        
 	
