@@ -173,25 +173,26 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			simplexIndex++;
 		}
 
-		std::unordered_map<unsigned, std::set<unsigned>> boundary;
+		std::unordered_map<unsigned, std::vector<unsigned>> boundary;
 		std::unordered_map<unsigned, unsigned> pivotPairs; //For each pivot, which column has that pivot
 		std::priority_queue<unsigned> nextPivots; //Pivots for the next dimension
 
 		for(unsigned columnIndex = edges[d].size()-1; columnIndex-- != 0; ){ //Iterate over columns to reduce in reverse order
 			std::pair<std::set<unsigned>, double> simplex = edges[d][columnIndex];
 			double simplexWeight = simplex.second;
-			std::set<unsigned> cofaceList;
+			std::vector<unsigned> cofaceList; //Store cofaceList as a min heap
 
 			if(pivots.top() != columnIndex){ //Not a pivot -> need to reduce
 				unsigned cofacetIndex = 0;
 
 				std::set<unsigned> cofacet;
-				for(unsigned i=0; i<inData.originalData.size(); i++){ //Try inserting other vertices into the vertex
+				for(unsigned i=0; i<inData.originalData.size(); i++){ //Try inserting other vertices into the simplex
 					cofacet = simplex.first;
 					if(cofacet.insert(i).second){ //New vertex was added to the simplex
 						auto simplexIndex = indexConverter.find(ripsIndex(cofacet, bin)); //Convert our set to its index using the ripsIndex as an intermediate hash
-						if(simplexIndex != indexConverter.end()){
-							cofaceList.insert(simplexIndex->second);
+						if(simplexIndex != indexConverter.end()){ //If this is a valid simplex, add it to the heap
+							cofaceList.push_back(simplexIndex->second);
+							std::push_heap(cofaceList.begin(), cofaceList.end(), std::greater<unsigned>());
 						}
 					}
 				}
@@ -203,7 +204,16 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 				}
 
 				while(!cofaceList.empty()){
-					unsigned pivotIndex = *cofaceList.begin();
+					unsigned pivotIndex; //Get minimum coface from heap
+					while(true){
+						pivotIndex = cofaceList.front();
+						std::pop_heap(cofaceList.begin(), cofaceList.end(), std::greater<unsigned>());
+						cofaceList.pop_back();
+						if(pivotIndex == cofaceList.front()){ //Coface is in twice -> evaluates to 0 mod 2
+							std::pop_heap(cofaceList.begin(), cofaceList.end(), std::greater<unsigned>());
+							cofaceList.pop_back();
+						} else break;
+					}
 
 					if(pivotPairs.find(pivotIndex) == pivotPairs.end()){
 						nextPivots.push(pivotIndex);
@@ -212,13 +222,14 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						
 						if(edges[d][columnIndex].second != edges[d+1][pivotIndex].second){
 							bettis += std::to_string(d) + "," + std::to_string(simplexWeight) +"," + std::to_string(edges[d+1][pivotIndex].second) + "\n";
-							bettiBoundaryTableEntry des = { d, simplexWeight, edges[d+1][pivotIndex].second, cofaceList };
+							bettiBoundaryTableEntry des = { d, simplexWeight, edges[d+1][pivotIndex].second, std::set<unsigned>(cofaceList.begin(), cofaceList.end()) };
 							inData.bettiTable.push_back(des);
 						}
 
 						break;
 					} else {
-						cofaceList = ut.setXOR(cofaceList, boundary[pivotPairs[pivotIndex]]);
+						cofaceList.insert(cofaceList.end(), boundary[pivotPairs[pivotIndex]].begin(), boundary[pivotPairs[pivotIndex]].end()); //Lazy set XOR
+						std::make_heap(cofaceList.begin(), cofaceList.end(), std::greater<unsigned>());
 					}
 				}
 
