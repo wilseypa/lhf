@@ -10,7 +10,7 @@
 #include <fstream>
 #include <vector>
 #include <cmath>
-#include <list>
+#include <utility>
 #include <iterator>
 #include <algorithm>
 #include <numeric>
@@ -18,9 +18,12 @@
 #include <algorithm>
 #include <set>
 #include <map>
+#include <stdexcept>
 #include <unordered_map>
 #include <queue>
 #include "fastPersistence.hpp"
+
+typedef std::priority_queue<unsigned, std::vector<unsigned>, std::greater<unsigned>> min_priority_queue;
 
 unionFind::unionFind(int n) : rank(n, 0), parent(n, 0) {
 	for(int i=0; i<n; i++) parent[i]=i;
@@ -52,10 +55,38 @@ bool unionFind::join(int x, int y){ //Union by rank
 	return true;
 }
 
+binomialTable::binomialTable(unsigned n, unsigned k) : v(n+1, std::vector<long long>(k+1, 0)){ //Fast computation of binomials with precomputed table
+	v[0][0] = 1;
+	for(int i=1; i<=n; i++){
+		v[i][0] = 1;
+		for(int j=1; j<=k; j++){
+			v[i][j] = v[i-1][j-1] + v[i-1][j]; //Pascal's Rule
+			if(v[i][j] < 0) throw std::overflow_error("Binomial overflow");
+		}
+	}
+}
+
+long long binomialTable::binom(unsigned n, unsigned k){ //Return binomial coefficient
+	if(k>n) return 0;
+	return v[n][k];
+}
+
 // basePipe constructor
 fastPersistence::fastPersistence(){
 	pipeType = "FastPersistence";
 	return;
+}
+
+long long fastPersistence::ripsIndex(std::set<unsigned>& simplex, binomialTable& bin){ //Hash the set by converting to the index described by the paper
+	long long simplexIndex = 0;
+	unsigned i = 0;
+	auto it = simplex.begin();
+	while(it != simplex.end()){
+		simplexIndex += bin.binom(*it, ++i);
+		if(simplexIndex < 0) throw std::overflow_error("Binomial overflow");
+		++it;
+	}
+	return simplexIndex;
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
@@ -97,6 +128,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	unsigned mstSize = 0;
 
 	unionFind uf(inData.originalData.size());
+	binomialTable bin(inData.originalData.size(), dim+1);
 
 	for(auto edge : edges[1]){ //For each edge
 		std::set<unsigned>::iterator it = edge.first.begin();
@@ -134,36 +166,39 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		
 		
 	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
+		std::unordered_map<long long, unsigned> indexConverter; //Convert our hashed set (ripsIndex) to the index from our complex
+		unsigned simplexIndex = 0;
+		for(auto simplex : edges[d+1]){
+			indexConverter.insert(std::make_pair(ripsIndex(simplex.first, bin), simplexIndex));
+			simplexIndex++;
+		}
+
 		std::unordered_map<unsigned, std::set<unsigned>> boundary;
 		std::unordered_map<unsigned, unsigned> pivotPairs; //For each pivot, which column has that pivot
 		std::priority_queue<unsigned> nextPivots; //Pivots for the next dimension
 
 		for(unsigned columnIndex = edges[d].size()-1; columnIndex-- != 0; ){ //Iterate over columns to reduce in reverse order
 			std::pair<std::set<unsigned>, double> simplex = edges[d][columnIndex];
+			double simplexWeight = simplex.second;
 			std::set<unsigned> cofaceList;
 
 			if(pivots.top() != columnIndex){ //Not a pivot -> need to reduce
 				unsigned cofacetIndex = 0;
 
-				// for(unsigned cofacetIndex = edges[d+1].size()-1; cofacetIndex-- != 0; ){
-					// auto cofacetCandidate = edges[d+1][cofacetIndex];
-				for(std::pair<std::set<unsigned>,double> cofacetCandidate : edges[d+1]){ //Iterate over possible cofacets
-					bool isCofacet = std::includes(cofacetCandidate.first.begin(), cofacetCandidate.first.end(), simplex.first.begin(), simplex.first.end());
-
-					if(isCofacet){
-						cofaceList.insert(cofacetIndex);
-						// if(check_apparent && cofacetCandidate.second == simplex.second){
-						// 	if(pivotPairs.find(cofacetIndex) == pivotPairs.end()) break;
-						// 	check_apparent = false;
-						// // 	break; //Apparent Pair -> Don't need to enumerate the rest of the cofacets
-						// }
+				std::set<unsigned> cofacet;
+				for(unsigned i=0; i<inData.originalData.size(); i++){ //Try inserting other vertices into the vertex
+					cofacet = simplex.first;
+					if(cofacet.insert(i).second){ //New vertex was added to the simplex
+						auto simplexIndex = indexConverter.find(ripsIndex(cofacet, bin)); //Convert our set to its index using the ripsIndex as an intermediate hash
+						if(simplexIndex != indexConverter.end()){
+							cofaceList.insert(simplexIndex->second);
+						}
 					}
-					++cofacetIndex;
 				}
 
 				if(cofaceList.empty()){
-					bettis += std::to_string(d) + "," + std::to_string(simplex.second) +"," + std::to_string(maxEpsilon) + "\n";
-					bettiBoundaryTableEntry des = { d, simplex.second, maxEpsilon, {} };
+					bettis += std::to_string(d) + "," + std::to_string(simplexWeight) +"," + std::to_string(maxEpsilon) + "\n";
+					bettiBoundaryTableEntry des = { d, simplexWeight, maxEpsilon, {} };
 					inData.bettiTable.push_back(des);
 				}
 
@@ -176,8 +211,8 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						boundary[columnIndex] = cofaceList;
 						
 						if(edges[d][columnIndex].second != edges[d+1][pivotIndex].second){
-							bettis += std::to_string(d) + "," + std::to_string(simplex.second) +"," + std::to_string(edges[d+1][pivotIndex].second) + "\n";
-							bettiBoundaryTableEntry des = { d, simplex.second, edges[d+1][pivotIndex].second, cofaceList };
+							bettis += std::to_string(d) + "," + std::to_string(simplexWeight) +"," + std::to_string(edges[d+1][pivotIndex].second) + "\n";
+							bettiBoundaryTableEntry des = { d, simplexWeight, edges[d+1][pivotIndex].second, cofaceList };
 							inData.bettiTable.push_back(des);
 						}
 

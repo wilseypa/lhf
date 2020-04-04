@@ -14,10 +14,19 @@ class unionFind{
 		bool join(int x, int y);
 };
 
+class binomialTable{
+	private:
+		std::vector<std::vector<long long>> v; 
+	public:
+		binomialTable(unsigned n, unsigned k);
+		long long binom(unsigned n, unsigned k);
+};
+
 class fastPersistence : public basePipe {
   private:
 	utils ut;
 	double maxEpsilon;
+	long long ripsIndex(std::set<unsigned>& simplex, binomialTable& bin);
   public:		
 	int dim;
     fastPersistence();
