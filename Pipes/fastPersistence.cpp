@@ -177,22 +177,36 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		std::unordered_map<unsigned, unsigned> pivotPairs; //For each pivot, which column has that pivot
 		std::priority_queue<unsigned> nextPivots; //Pivots for the next dimension
 
-		for(unsigned columnIndex = edges[d].size()-1; columnIndex-- != 0; ){ //Iterate over columns to reduce in reverse order
+		for(unsigned columnIndex = edges[d].size(); columnIndex-- != 0; ){ //Iterate over columns to reduce in reverse order
 			std::pair<std::set<unsigned>, double> simplex = edges[d][columnIndex];
 			double simplexWeight = simplex.second;
 			std::vector<unsigned> cofaceList; //Store cofaceList as a min heap
+			// unsigned apparentIndex;
+			// bool foundApparent = false;
 
 			if(pivots.top() != columnIndex){ //Not a pivot -> need to reduce
-				unsigned cofacetIndex = 0;
-
-				std::set<unsigned> cofacet;
-				for(unsigned i=0; i<inData.originalData.size(); i++){ //Try inserting other vertices into the simplex
-					cofacet = simplex.first;
-					if(cofacet.insert(i).second){ //New vertex was added to the simplex
-						auto simplexIndex = indexConverter.find(ripsIndex(cofacet, bin)); //Convert our set to its index using the ripsIndex as an intermediate hash
-						if(simplexIndex != indexConverter.end()){ //If this is a valid simplex, add it to the heap
-							cofaceList.push_back(simplexIndex->second);
+				std::set<unsigned>::reverse_iterator it = simplex.first.rbegin();
+				unsigned k = simplex.first.size() + 1;
+				long long index = ripsIndex(simplex.first, bin);
+				for(unsigned i=inData.originalData.size(); i-- != 0; ){ //Try inserting other vertices into the simplex
+					if(it != simplex.first.rend() && i == *it){
+						index -= bin.binom(i, k-1);
+						index += bin.binom(i, k);
+						--k;
+						++it;
+					} else{
+						auto cofacetIndex = indexConverter.find(index + bin.binom(i, k));
+						if(cofacetIndex != indexConverter.end()){ //If this is a valid simplex, add it to the heap
+							cofaceList.push_back(cofacetIndex->second);
 							std::push_heap(cofaceList.begin(), cofaceList.end(), std::greater<unsigned>());
+
+							// if(edges[d+1][cofacetIndex->second].second == simplex.second && pivotPairs.find(cofacetIndex->second) == pivotPairs.end()){
+							// 	foundApparent = true;
+							// 	apparentIndex = cofacetIndex->second;
+								// cofaceList.clear();
+								// cofaceList.push_back(cofacetIndex->second);
+								// break;
+							// }
 						}
 					}
 				}
@@ -205,6 +219,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 
 				while(!cofaceList.empty()){
 					unsigned pivotIndex; //Get minimum coface from heap
+					// if(!foundApparent){
 					while(true){
 						pivotIndex = cofaceList.front();
 						std::pop_heap(cofaceList.begin(), cofaceList.end(), std::greater<unsigned>());
@@ -214,6 +229,9 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 							cofaceList.pop_back();
 						} else break;
 					}
+					// } else{
+					// 	pivotIndex = apparentIndex;
+					// }
 
 					if(pivotPairs.find(pivotIndex) == pivotPairs.end()){
 						nextPivots.push(pivotIndex);
