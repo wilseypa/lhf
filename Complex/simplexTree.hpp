@@ -7,7 +7,6 @@
 class simplexTree : public simplexBase {
   private:
 	bool isSorted = false;
-	unsigned indexCounter;
 	int nodeCount;
 	std::vector<std::vector<std::pair<std::set<unsigned>, double>>> weightEdgeGraph;
 
@@ -36,6 +35,7 @@ class simplexTree : public simplexBase {
 
 	//virtual interface functions
 	double getSize();
+	bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&);
 	bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&, int&, int&, std::vector<double>&);
 	void deleteIterative(int);
 	void insert(std::vector<double>&);

@@ -10,6 +10,7 @@
 class simplexBase {
   private:
   public:
+	unsigned indexCounter;
 	utils ut;
 	double minDist = 0.0;
 	double maxDist = 0.0;
@@ -102,6 +103,7 @@ class simplexBase {
 
 	//virtual interface functions
 	virtual double getSize();
+	virtual bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&);
 	virtual bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&, int&, int&, std::vector<double>&);
 	virtual void deleteIterative(int);
 	virtual void insert(std::vector<double>&);
