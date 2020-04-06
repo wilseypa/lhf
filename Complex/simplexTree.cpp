@@ -205,7 +205,6 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 	}
 
 	if(streamEval(currentVector, window)) {   // Point is deemed 'significant'
-
 		std::vector<double> distMatrixRow = ut.nearestNeighbors(currentVector, window);
 		
 		deleteIterative(runningVectorIndices[0]);
@@ -213,8 +212,28 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 		
 		distMatrix.push_back(distMatrixRow);
 		insert(distMatrixRow);
+
+		removedSimplices++;
+
+		return true;
+	}
+
+	return false;
+}
+
+// Insert a node into the tree using the distance matrix and a vector index to track changes
+bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vector<std::vector<double>> &window, int &keyToBeDeleted, int &indexToBeDeleted, std::vector<double> &distsFromCurrVec){
+	if(window.size() == 0){
+		return true;
+	}
+
+	if(streamEval(currentVector, window)) {   // Point is deemed 'significant'
 		
+		deleteIterative(keyToBeDeleted);
+		runningVectorIndices.erase(runningVectorIndices.begin() + indexToBeDeleted);
 		
+		insert(distsFromCurrVec);
+
 		removedSimplices++;
 
 		return true;
@@ -252,7 +271,6 @@ void simplexTree::deleteIterative(int vectorIndex){
 	}
 	return;
 }
-
 
 void simplexTree::deleteIndexRecurse(int vectorIndex, treeNode* curNode){
 

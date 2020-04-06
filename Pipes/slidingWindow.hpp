@@ -15,7 +15,7 @@ private:
     void runSubPipeline();
     std::map<std::string, std::string> subConfigMap;
 	void runComplexInitializer(pipePacket &, std::vector<int> &, std::vector<double> &);
-	
+
 public:
     struct EvalParams
     {
@@ -34,19 +34,18 @@ public:
         int labelToBeDeleted;
         int indexToBeDeleted;
         double nnDistToBeDeleted;
-        std::vector<double> distMatLastRow;//(windowMaxSize, 0);  // The last row of the upper triangular distance matrix is a vector of 0s.
     };
-    
+
     static EvalParams* defaultVals;
     static pipePacket* pPack;
-    
+
     slidingWindow();
     pipePacket runPipe(pipePacket);
     void outputData(pipePacket);
     bool configPipe(std::map<std::string, std::string>);
     void runSubPipeline(pipePacket);
     void writeComplexStats(pipePacket &);
-    static bool nnBasedEvaluator(std::vector<double>&, std::vector<std::vector<double>>&);//, EvalParams&, pipePacket&);
+    static bool nnBasedEvaluator(std::vector<double>&, std::vector<std::vector<double>>&);
     static void deleteNNstats();
     static void updateStats();
 };

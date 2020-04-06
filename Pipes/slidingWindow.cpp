@@ -56,6 +56,9 @@ void slidingWindow::deleteNNstats()
 void slidingWindow::updateStats()
 {
 
+    // Delete the corresponding row from the distance matrix.
+    pPack->complex->distMatrix.erase(pPack->complex->distMatrix.begin() + defaultVals->indexToBeDeleted);
+
     double sumOldNNdists = 0.0;
     double sumNewNNdists = 0.0;
 
@@ -73,6 +76,10 @@ void slidingWindow::updateStats()
     // Add a new column and row to the end of the upper triangular distance matrix.
     for(unsigned int i = 0; i < pPack->complex->distMatrix.size(); i++)
     {
+        // Delete the corresponding entry from each row.
+        pPack->complex->distMatrix[i].erase( pPack->complex->distMatrix[i].begin() + defaultVals->indexToBeDeleted );
+
+        // Add the new distance value to the end of each row.
         pPack->complex->distMatrix[i].push_back( defaultVals->distsFromCurrVec[i] );
 
         // Update NN statistics for only those partitions from which the point was deleted or to which the new point is to be added.
@@ -241,7 +248,9 @@ void slidingWindow::updateStats()
         }
 
     }
-    pPack->complex->distMatrix.push_back( defaultVals->distMatLastRow );
+
+    std::vector<double> distMatLastRow(defaultVals->windowMaxSize);  // The last row of the upper triangular distance matrix is a vector of 0s.
+    pPack->complex->distMatrix.push_back( distMatLastRow );
 
     // Update the average NN distance of the partition from which the last point was deleted and of the one to which the new point
     // is being added.
@@ -303,7 +312,7 @@ void slidingWindow::updateStats()
     return;
 }
 
-bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vector<double>>& windowValues)//, pipePacket& inData)
+bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vector<double>>& windowValues)
 {
     utils ut;
     float f1{ 4 };
@@ -343,9 +352,8 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
             // Delete the vector from the front of the sliding window.
             windowValues.erase( windowValues.begin() );
 
-            // Add to the distance matrix and update the NN statistics.
-            updateStats();//inData);
-
+            // Update the distance matrix and the NN statistics.
+            updateStats();
 
             return true;
         }
@@ -418,6 +426,9 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
 
             windowValues.erase( windowValues.begin() + defaultVals->indexToBeDeleted );
 
+            // Update the distance matrix and the NN statistics.
+            updateStats();
+
         }
 
         else {   // There is no outdated partition in the window:
@@ -431,6 +442,10 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
 
                 // Delete the vector from the front of the sliding window.
                 windowValues.erase( windowValues.begin() );
+
+                // Update the distance matrix and the NN statistics.
+                updateStats();
+
             }
             else {   // The current vector is assigned to one of the existing partitions:
                 // In this case, make sure the point to be deleted does not belong to the target partition. In particular,
@@ -442,6 +457,9 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
 
                 deleteNNstats();
                 windowValues.erase( windowValues.begin() + defaultVals->indexToBeDeleted );
+
+                // Update the distance matrix and the NN statistics.
+                updateStats();
             }
         }
 
@@ -501,7 +519,7 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
     utils ut;
     readInput rp;
 	pPack = &inData;
-	
+
 
     // For this pipe, we construct a sub-pipeline:
     //		1. Read data vector by vector, push into slidingWindow evaluation
@@ -551,9 +569,8 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
             }
             else
             {
-                if(inData.complex->insertIterative(currentVector, windowValues))
+                if(inData.complex->insertIterative(currentVector, windowValues, defaultVals->keyToBeDeleted, defaultVals->indexToBeDeleted, defaultVals->distsFromCurrVec))
                 {
-
                     // Insert the current vector, its key and partition label into the rear ends of the corresponding containers.
                     windowValues.push_back(currentVector);
                     defaultVals->windowKeys.push_back(defaultVals->key);

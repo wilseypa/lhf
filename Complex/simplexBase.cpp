@@ -96,12 +96,18 @@ double simplexBase::getSize(){
 	return -1;
 }
 
+bool simplexBase::insertIterative(std::vector<double>&, std::vector<std::vector<double>>&, int&, int&, std::vector<double>&){
+	ut.writeLog(simplexType,"No insert iterative function defined");
+	return false;
+}
+
 bool simplexBase::insertIterative(std::vector<double>&, std::vector<std::vector<double>>&){
 	ut.writeLog(simplexType,"No insert iterative function defined");
 	return false;
 }
 
-void simplexBase::deleteIterative(int, int){
+
+void simplexBase::deleteIterative(int){
 	ut.writeLog(simplexType,"No delete iterative function defined");
 	return;
 }
