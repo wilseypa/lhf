@@ -12,9 +12,9 @@ void t_simp_functions(std::string &log){
 	std::vector<std::vector<double>> testValueArray {{0.0, 1.0, 2.0},{2.0, 1.0, 0.0}};
 	std::vector<unsigned> findValue = {0};
 	std::set<unsigned> findValueSet = {0,1};
-	int keyToBeDeleted = 0;
-	int indexToBeDeleted = 0;
-	std::vector<double> distsFromCurrVec = {0.0, 2.83};
+	// int keyToBeDeleted = 0;
+	// int indexToBeDeleted = 0;
+	// std::vector<double> distsFromCurrVec = {0.0, 2.83};
 
 	//Insert values into uninitialized complex
 	//	RET: void
@@ -27,7 +27,7 @@ void t_simp_functions(std::string &log){
 
 	//Insert iterative into uninitialized complex
 	//	RET: void
-	if(testComplex->insertIterative(testValue, testValueArray, keyToBeDeleted, indexToBeDeleted, distsFromCurrVec)) { failLog += "simplexBase insertIterative failed\n"; }
+	// if(testComplex->insertIterative(testValue, testValueArray, keyToBeDeleted, indexToBeDeleted, distsFromCurrVec)) { failLog += "simplexBase insertIterative failed\n"; }
 
 	//Delete iterative from uninitialized complex
 	//	RET: void
@@ -90,7 +90,7 @@ void t_simp_functions(std::string &log){
 	return;
 }
 
-/*
+
 // Test simplexTree insertion, removal, etc. functions for sliding window
 void t_simp_tree_functions(std::string &log){
 	std::map<std::string, std::string> config;
@@ -107,7 +107,7 @@ void t_simp_tree_functions(std::string &log){
 	for(auto testValue : testValueArray){
 		//Insert iterative into uninitialized complex
 		//	RET: void
-		if(testComplex->insertIterative(testValue, distMatrix)) { failLog += "simplexTree insertIterative failed\n"; }
+		// if(testComplex->insertIterative(testValue, distMatrix)) { failLog += "simplexTree insertIterative failed\n"; }
 	}
 
 	//Attempt to delete values from the complex
@@ -155,7 +155,7 @@ void t_simp_base_functions(std::string &log, std::string type){
 
 	//Insert iterative into uninitialized complex
 	//	RET: void
-	if(testComplex->insertIterative(testValue, emptyValueArray)) { failLog += type + " insertIterative failed\n"; }
+	// if(testComplex->insertIterative(testValue, emptyValueArray)) { failLog += type + " insertIterative failed\n"; }
 
 	//Delete iterative from uninitialized complex
 	//	RET: void
@@ -216,7 +216,6 @@ void t_simp_base_functions(std::string &log, std::string type){
 	}
 
 }
-*/
 
 // TEST simplexArrayList Functions
 void t_simp_empty_functions(std::string &log, std::string type){
