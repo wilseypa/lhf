@@ -40,13 +40,14 @@ void runPipeline(std::map<std::string, std::string> args, pipePacket* wD){
 				//Run the pipe function (wrapper)
 				*wD = cp->runPipeWrapper(*wD);
 			} else {
-				cout << "LHF : Failed to configure pipeline: " << args["pipeline"] << endl;
+				std::cout << cp << std::endl;
+				cout << "LHF runPipeline: Failed to configure pipeline: " << args["pipeline"] << endl;
 			}
 		}
 	}
 	//If the pipeline was undefined...
 	else {
-		cout << "LHF : Failed to find a suitable pipeline, exiting..." << endl;
+		cout << "LHF runPipeline: Failed to find a suitable pipeline, exiting..." << endl;
 		return;
 	}
 	
@@ -78,7 +79,7 @@ void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD)
 		if(prePipe != 0 && prePipe->configPreprocessor(args)){
 			*wD = prePipe->runPreprocessorWrapper(*wD);
 		} else {
-			cout << "LHF : Failed to configure pipeline: " << args["pipeline"] << endl;
+			cout << "LHF processData: Failed to configure pipeline: " << args["pipeline"] << endl;
 		}
 	}
 	
@@ -100,7 +101,7 @@ void processReducedWrapper(std::map<std::string, std::string> args, pipePacket* 
 		if(prePipe != 0 && prePipe->configPreprocessor(args)){
 			*wD = prePipe->runPreprocessorWrapper(*wD);
 		} else {
-			cout << "LHF : Failed to configure pipeline: " << args["pipeline"] << endl;
+			cout << "LHF processReduced: Failed to configure pipeline: " << args["pipeline"] << endl;
 		}
 	}
 	
@@ -277,13 +278,13 @@ int main(int argc, char* argv[]){
 	//Create a pipePacket (datatype) to store the complex and pass between engines
     auto *wD = new pipePacket(args, args["complexType"]);	//wD (workingData)
 	
-	if(args["pipeline"] != "slidingwindow"){
+	if(args["pipeline"] != "slidingwindow" && args["pipeline"] != "naivewindow"){
 		//Read data from inputFile CSV
 		wD->originalData = rs->readCSV(args["inputFile"]);
 		wD->fullData = wD->originalData;
 	}
 	//If data was found in the inputFile
-	if(wD->originalData.size() > 0 || args["pipeline"] == "slidingwindow"){
+	if(wD->originalData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow"){
 		
 		//Add data to our pipePacket
 		wD->originalData = wD->originalData;

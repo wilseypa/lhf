@@ -7,6 +7,7 @@
 
 simplexTree::simplexTree(double _maxEpsilon, std::vector<std::vector<double>> _distMatrix, int _maxDim){
 	indexCounter = 0;
+	std::cout << "simplexTree set indexCounter" << std::endl;
 	distMatrix = _distMatrix;
 	maxDimension = _maxDim;
 	maxEpsilon = _maxEpsilon;
@@ -24,10 +25,18 @@ void simplexTree::recurseInsert(treeNode* node, unsigned curIndex, int depth, do
 	std::set<unsigned> currentSimp = simp;
 
 	double curE = 0;
-
+	
+	//std::cout << runningVectorIndices.size() << "\t" << runningVectorCount << "\t" << indexCounter << "\t" << distMatrix.size() << "\t" << node->index << std::endl;
 	if(runningVectorIndices.size() < runningVectorCount+1){
 		int offset = runningVectorCount+1 - runningVectorIndices.size();
-		curE = distMatrix[node->index - offset][indexCounter - offset];
+		if((node->index - offset) > distMatrix.size() || (indexCounter-offset) > distMatrix[node->index - offset].size()){
+			std::cout << "DistMatrix access error:" << std::endl;
+			std::cout << "DistMatrix size: " << distMatrix.size() << "\tAccess Index: " << (node->index - offset) << std::endl;
+			std::cout << "Node Index: " << node->index << "\tOffset: " << offset << std::endl;
+			std::cout << "nodeCount: " << nodeCount << "\tindexCount: " << indexCounter << std::endl;
+		}
+		else
+			curE = distMatrix[node->index - offset][indexCounter - offset];
 
 	}else{
 		curE = distMatrix[node->index][indexCounter];
@@ -197,10 +206,15 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 
 	if(streamEval(currentVector, window)) {   // Point is deemed 'significant'
 
-		//deleteIterative( defaultVals.keyToBeDeleted, defaultVals.indexToBeDeleted );  // Delete from distance matrix and complex.
-		//runningVectorIndices.erase( runningVectorIndices.begin() + defaultVals.indexToBeDeleted );
-
-		//insert(defaultVals.distsFromCurrVec);
+		std::vector<double> distMatrixRow = ut.nearestNeighbors(currentVector, window);
+		
+		deleteIterative(runningVectorIndices[0]);
+		runningVectorIndices.erase(runningVectorIndices.begin());
+		
+		distMatrix.push_back(distMatrixRow);
+		insert(distMatrixRow);
+		
+		
 		removedSimplices++;
 
 		return true;
@@ -209,23 +223,34 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 	return false;
 }
 
+
 // Delete a node from the tree and from the distance matrix using a vector index
-void simplexTree::deleteIterative(int keyToBeDeleted, int indexToBeDeleted)
-{
-    // Delete the corresponding row and column from the distance matrix.
-    distMatrix.erase(distMatrix.begin() + indexToBeDeleted);
-
-    for(auto z : distMatrix)
-    {
-        if(z.size() >= indexToBeDeleted)
-            z.erase(z.begin() + indexToBeDeleted);
-    }
-
-    //Delete all entries in the simplex tree with the index...
-    // TODO :)
-    deleteIndexRecurse(keyToBeDeleted, head);
-
-    return;
+void simplexTree::deleteIterative(int vectorIndex){
+	//Find what row/column of our distance matrix pertain to the vector index
+	
+	std::vector<int>::iterator it;
+	if((it = std::find(runningVectorIndices.begin(), runningVectorIndices.end(), vectorIndex)) != runningVectorIndices.end()){
+		//std::cout << "Found vector at index " << it - runningVectorIndices.begin() + 1 << std::endl;
+	
+		int index = it - runningVectorIndices.begin();
+		
+		//Delete the row and column from the distance matrix based on vector index
+		distMatrix.erase(distMatrix.begin() + index);
+		
+		for(auto z : distMatrix){
+			if(z.size() >= index)
+				z.erase(z.begin() + index);
+		}
+	
+		//Delete all entries in the simplex tree with the index...
+		// TODO :)
+		deleteIndexRecurse(vectorIndex, head);
+	
+	
+	} else {
+		ut.writeDebug("simplexTree","Failed to find vector by index");
+	}
+	return;
 }
 
 
