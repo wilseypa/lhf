@@ -38,6 +38,7 @@ class simplexTree : public simplexBase {
 	bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&);
 	bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&, int&, int&, std::vector<double>&);
 	void deleteIterative(int);
+	void deleteIndexRecurse(int);  // A wrapper for the actual deleteIndexRecurse method.
 	void insert(std::vector<double>&);
 	bool find(std::set<unsigned>);
 	int simplexCount();

@@ -25,7 +25,7 @@ void simplexTree::recurseInsert(treeNode* node, unsigned curIndex, int depth, do
 	std::set<unsigned> currentSimp = simp;
 
 	double curE = 0;
-	
+
 	//std::cout << runningVectorIndices.size() << "\t" << runningVectorCount << "\t" << indexCounter << "\t" << distMatrix.size() << "\t" << node->index << std::endl;
 	if(runningVectorIndices.size() < runningVectorCount+1){
 		int offset = runningVectorCount+1 - runningVectorIndices.size();
@@ -206,10 +206,10 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 
 	if(streamEval(currentVector, window)) {   // Point is deemed 'significant'
 		std::vector<double> distMatrixRow = ut.nearestNeighbors(currentVector, window);
-		
+
 		deleteIterative(runningVectorIndices[0]);
 		runningVectorIndices.erase(runningVectorIndices.begin());
-		
+
 		distMatrix.push_back(distMatrixRow);
 		insert(distMatrixRow);
 
@@ -228,10 +228,10 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 	}
 
 	if(streamEval(currentVector, window)) {   // Point is deemed 'significant'
-		
-		deleteIterative(keyToBeDeleted);
+
+		// deleteIterative(keyToBeDeleted);
 		runningVectorIndices.erase(runningVectorIndices.begin() + indexToBeDeleted);
-		
+
 		insert(distsFromCurrVec);
 
 		removedSimplices++;
@@ -246,31 +246,39 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 // Delete a node from the tree and from the distance matrix using a vector index
 void simplexTree::deleteIterative(int vectorIndex){
 	//Find what row/column of our distance matrix pertain to the vector index
-	
+
 	std::vector<int>::iterator it;
 	if((it = std::find(runningVectorIndices.begin(), runningVectorIndices.end(), vectorIndex)) != runningVectorIndices.end()){
 		//std::cout << "Found vector at index " << it - runningVectorIndices.begin() + 1 << std::endl;
-	
+
 		int index = it - runningVectorIndices.begin();
-		
+
 		//Delete the row and column from the distance matrix based on vector index
 		distMatrix.erase(distMatrix.begin() + index);
-		
+
 		for(auto z : distMatrix){
 			if(z.size() >= index)
 				z.erase(z.begin() + index);
 		}
-	
+
 		//Delete all entries in the simplex tree with the index...
 		// TODO :)
 		deleteIndexRecurse(vectorIndex, head);
-	
-	
+
+
 	} else {
 		ut.writeDebug("simplexTree","Failed to find vector by index");
 	}
 	return;
 }
+
+
+void simplexTree::deleteIndexRecurse(int vectorIndex) {
+
+    deleteIndexRecurse(vectorIndex, head);
+    return;
+}
+
 
 void simplexTree::deleteIndexRecurse(int vectorIndex, treeNode* curNode){
 
