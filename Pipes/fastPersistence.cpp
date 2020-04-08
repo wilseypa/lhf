@@ -286,18 +286,6 @@ void fastPersistence::outputData(pipePacket inData){
 		file.open("output/" + pipeType + "_bettis_output.csv");
 	
 	file << inData.bettiOutput;
-	
-	file.close();
-	
-	file.open("output/tArray.csv");
-	
-	file << "ti,Dim,Marked,Birth,Death,Simplex\n";
-	for(auto tStruct : tArray){
-		file << tStruct.ti << "," << tStruct.simplex.size()-1 << "," << tStruct.marked << "," << tStruct.birth << "," << tStruct.death << ",";
-		for(auto index : tStruct.simplex)
-			file << index << " ";
-		file << "\n";
-	}
 	file.close();
 	
 	return;

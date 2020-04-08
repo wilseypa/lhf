@@ -633,32 +633,28 @@ void slidingWindow::runSubPipeline(pipePacket wrData)
     pipePacket inData = wrData;
     outputData(inData);
 
-    std::string pipeFuncts = "rips.persistence";
-    auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
-    subConfigMap["fn"] = "_" + std::to_string(repCounter);
+    std::string pipeFuncts = "rips.fast";
+	auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
+	subConfigMap["fn"] = "_" + std::to_string(repCounter);
     repCounter++;
+    
+	//For each '.' separated pipeline function (count of '.' + 1 -> lim)
+	for(unsigned i = 0; i < lim; i++){
+		auto curFunct = pipeFuncts.substr(0,pipeFuncts.find('.'));
+		pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
 
-    //For each '.' separated pipeline function (count of '.' + 1 -> lim)
-    for(unsigned i = 0; i < lim; i++)
-    {
-        auto curFunct = pipeFuncts.substr(0,pipeFuncts.find('.'));
-        pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
+		//Build the pipe component, configure and run
+		auto *bp = new basePipe();
+		auto *cp = bp->newPipe(curFunct, "simplexTree");
 
-        //Build the pipe component, configure and run
-        auto *bp = new basePipe();
-        auto *cp = bp->newPipe(curFunct, "simplexTree");
-
-        //Check if the pipe was created and configure
-        if(cp != 0 && cp->configPipe(subConfigMap))
-        {
-            //Run the pipe function (wrapper)
-            inData = cp->runPipeWrapper(inData);
-        }
-        else
-        {
-            std::cout << "LHF : Failed to configure pipeline: " << curFunct << std::endl;
-        }
-    }
+		//Check if the pipe was created and configure
+		if(cp != 0 && cp->configPipe(subConfigMap)){
+			//Run the pipe function (wrapper)
+			inData = cp->runPipeWrapper(inData);
+		} else {
+			std::cout << "LHF subPipe: Failed to configure pipeline: " << curFunct << std::endl;
+		}
+	}
 
 
     return;

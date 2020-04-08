@@ -139,7 +139,6 @@ void naiveWindow::runSubPipeline(pipePacket wrData){
 	std::string pipeFuncts = "rips.fast";
 	auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
 	subConfigMap["fn"] = "_" + std::to_string(repCounter);
-	
 	repCounter++;
 
 	//For each '.' separated pipeline function (count of '.' + 1 -> lim)
