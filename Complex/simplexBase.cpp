@@ -113,6 +113,12 @@ void simplexBase::deleteIterative(int){
 }
 
 
+void simplexBase::deleteIndexRecurse(int){
+	ut.writeLog(simplexType,"No recursive delete function defined");
+	return;
+}
+
+
 void simplexBase::insert(std::vector<double>&){
 	ut.writeLog(simplexType,"No insert function defined");
 	return;
@@ -158,6 +164,7 @@ void simplexBase::setStreamEvaluator(bool (*f) (std::vector<double>&, std::vecto
 	std::cout << "changed stream evaluator" << std::endl;
 	return;
 }
+
 
 bool simplexBase::streamEvaluator(std::vector<double>& vector, std::vector<std::vector<double>>& window){
 	//Do some evaluation of whether the point should stay or not
