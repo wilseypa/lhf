@@ -516,3 +516,49 @@ std::vector<double> utils::nearestNeighbors(std::vector<double>& point, std::vec
 	return retVal;
 
 }
+
+
+std::vector<std::vector<double>> utils::deserialize(std::vector<double> &serialData, unsigned &dim){
+	std::vector<std::vector<double>> ret;
+	
+	//First check if the vector size matches the dimension
+	if(serialData.size() % dim != 0){
+		std::cout << "Error occurred when deserializing data: invalid size" << std::endl;
+		return ret;
+	}
+	
+	//Deduce the number of vectors
+	auto n = serialData.size() / dim;
+	auto begin = serialData.begin();
+	
+	for(unsigned i = 0; i < n; i++){
+		ret.push_back({begin + ( i * dim ), begin + ((i+1) * dim) });
+	}
+	
+	return ret;
+}
+
+
+std::vector<double> utils::serialize(std::vector<std::vector<double>> &origData){
+	
+	//Make sure we have data to serialize
+	if(origData.size() == 0){
+		std::cout << "Error occurred when serializing data: empty vector argument" << std::endl;
+		return {};
+	}
+	
+	auto n = origData.size();
+	auto d = origData[0].size();
+	
+	//Preallocate our vector to prevent resizing
+	std::vector<double> ret(n*d);
+	
+	//Copy element by element
+	for(unsigned i = 0; i < n; i++){
+		for(unsigned k = 0; k < d; k++){
+			ret[(i*d)+k] = origData[i][k];
+		}
+	}
+	
+	return ret;
+}
