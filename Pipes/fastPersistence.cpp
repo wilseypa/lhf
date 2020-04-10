@@ -33,11 +33,6 @@ int unionFind::find(int i){
 	if(i == parent[i]) return i;
 	parent[i] = find(parent[i]); //Path Compression
 	return parent[i];
-	// while(parent[i] != i){
-	// 	parent[i] = parent[parent[i]];
-	// 	i = parent[i];
-	// }
-	// return i;
 }
 
 bool unionFind::join(int x, int y){ //Union by rank
@@ -89,6 +84,45 @@ long long fastPersistence::ripsIndex(std::set<unsigned>& simplex, binomialTable&
 	return simplexIndex;
 }
 
+unsigned fastPersistence::maxVertex(long long ripsIndex, unsigned high, unsigned low, unsigned k, binomialTable &bin){
+	while(high > low){ //Binary search for the max vertex for this simplex
+		unsigned mid = (high + low)/2;
+		if(bin.binom(mid, k) <= ripsIndex) low = mid + 1;
+		else high = mid;
+	}
+	return high - 1;
+}
+
+std::vector<unsigned> fastPersistence::getVertices(long long ripsIndex, int dim, unsigned n, binomialTable &bin){
+	std::vector<unsigned> v;
+	for(unsigned k = dim+1; k>0; k--){ //Get all vertices by repeated binary search for max vertex
+		n = maxVertex(ripsIndex, n, k-1, k, bin);
+		v.push_back(n);
+		ripsIndex -= bin.binom(n, k);
+	}
+	return v;
+}
+
+// void fastPersistence::pushCofacets(std::vector<unsigned> heap, std::vector<unsigned> simplex, long long index, unsigned nPts, binomialTable &bin, ){
+// 	std::vector<unsigned>::iterator it = simplex.begin();
+// 	unsigned k = simplex.size() + 1;
+// 	columnV.push_back(index);
+// 	for(unsigned i=nPts; i-- != 0; ){ //Try inserting other vertices into the simplex
+// 		if(it != simplex.end() && i == *it){
+// 			index -= bin.binom(i, k-1);
+// 			index += bin.binom(i, k);
+// 			--k;
+// 			++it;
+// 		} else{
+// 			auto cofacetIndex = indexConverter.find(index + bin.binom(i, k));
+// 			if(cofacetIndex != indexConverter.end()){ //If this is a valid simplex, add it to the heap
+// 				cofaceList.push_back(cofacetIndex->second);
+// 				std::push_heap(cofaceList.begin(), cofaceList.end(), std::greater<unsigned>());
+// 			}
+// 		}
+// 	}
+// }
+
 // runPipe -> Run the configured functions of this pipeline segment
 //
 //	FastPersistence: For computing the persistence pairs from simplicial complex:
@@ -126,11 +160,12 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	std::priority_queue<unsigned> pivots; //Store identified pivots
 	unsigned edgeIndex = 0;
 	unsigned mstSize = 0;
+	unsigned nPts = inData.originalData.size();
 
-	unionFind uf(inData.originalData.size());
-	binomialTable bin(inData.originalData.size(), dim+1);
+	unionFind uf(nPts);
+	binomialTable bin(nPts, dim+1);
 
-	for(auto edge : edges[1]){ //For each edge
+	for(auto& edge : edges[1]){ //For each edge
 		std::set<unsigned>::iterator it = edge.first.begin();
 		int v1 = uf.find(*it), v2 = uf.find(*(++it)); //Find which connected component each vertex belongs to
 		if(v1 != v2){ //Edge connects two different components -> add to the MST
@@ -143,7 +178,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		}
 
 		//Check if we've filled our MST and can break...
-		if(mstSize == edges[0].size()-1) break;
+		if(mstSize >= edges[0].size()-1) break;
 
 		edgeIndex++;
 	}
@@ -168,27 +203,29 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
 		std::unordered_map<long long, unsigned> indexConverter; //Convert our hashed set (ripsIndex) to the index from our complex
 		unsigned simplexIndex = 0;
-		for(auto simplex : edges[d+1]){
+		for(auto& simplex : edges[d+1]){
 			indexConverter.insert(std::make_pair(ripsIndex(simplex.first, bin), simplexIndex));
 			simplexIndex++;
 		}
 
+		std::unordered_map<unsigned, std::vector<long long>> v;
 		std::unordered_map<unsigned, std::vector<unsigned>> boundary;
 		std::unordered_map<unsigned, unsigned> pivotPairs; //For each pivot, which column has that pivot
 		std::priority_queue<unsigned> nextPivots; //Pivots for the next dimension
 
 		for(unsigned columnIndex = edges[d].size(); columnIndex-- != 0; ){ //Iterate over columns to reduce in reverse order
-			std::pair<std::set<unsigned>, double> simplex = edges[d][columnIndex];
+			std::pair<std::set<unsigned>, double>& simplex = edges[d][columnIndex];
 			double simplexWeight = simplex.second;
 			std::vector<unsigned> cofaceList; //Store cofaceList as a min heap
-			// unsigned apparentIndex;
-			// bool foundApparent = false;
+			std::vector<long long> columnV;
 
 			if(pivots.top() != columnIndex){ //Not a pivot -> need to reduce
 				std::set<unsigned>::reverse_iterator it = simplex.first.rbegin();
 				unsigned k = simplex.first.size() + 1;
 				long long index = ripsIndex(simplex.first, bin);
-				for(unsigned i=inData.originalData.size(); i-- != 0; ){ //Try inserting other vertices into the simplex
+				long long a = index;
+				columnV.push_back(index);
+				for(unsigned i=nPts; i-- != 0; ){ //Try inserting other vertices into the simplex
 					if(it != simplex.first.rend() && i == *it){
 						index -= bin.binom(i, k-1);
 						index += bin.binom(i, k);
@@ -198,18 +235,10 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						auto cofacetIndex = indexConverter.find(index + bin.binom(i, k));
 						if(cofacetIndex != indexConverter.end()){ //If this is a valid simplex, add it to the heap
 							cofaceList.push_back(cofacetIndex->second);
-							std::push_heap(cofaceList.begin(), cofaceList.end(), std::greater<unsigned>());
-
-							// if(edges[d+1][cofacetIndex->second].second == simplex.second && pivotPairs.find(cofacetIndex->second) == pivotPairs.end()){
-							// 	foundApparent = true;
-							// 	apparentIndex = cofacetIndex->second;
-								// cofaceList.clear();
-								// cofaceList.push_back(cofacetIndex->second);
-								// break;
-							// }
 						}
 					}
 				}
+				std::make_heap(cofaceList.begin(), cofaceList.end(), std::greater<unsigned>());
 
 				if(cofaceList.empty()){
 					bettis += std::to_string(d) + "," + std::to_string(simplexWeight) +"," + std::to_string(maxEpsilon) + "\n";
@@ -219,25 +248,26 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 
 				while(!cofaceList.empty()){
 					unsigned pivotIndex; //Get minimum coface from heap
-					// if(!foundApparent){
-					while(true){
+					while(!cofaceList.empty()){
 						pivotIndex = cofaceList.front();
 						std::pop_heap(cofaceList.begin(), cofaceList.end(), std::greater<unsigned>());
 						cofaceList.pop_back();
-						if(pivotIndex == cofaceList.front()){ //Coface is in twice -> evaluates to 0 mod 2
+						if(!cofaceList.empty() && pivotIndex == cofaceList.front()){ //Coface is in twice -> evaluates to 0 mod 2
 							std::pop_heap(cofaceList.begin(), cofaceList.end(), std::greater<unsigned>());
 							cofaceList.pop_back();
-						} else break;
+						} else{
+							cofaceList.push_back(pivotIndex);
+							std::push_heap(cofaceList.begin(), cofaceList.end(), std::greater<unsigned>());
+							break;
+						}
 					}
-					// } else{
-					// 	pivotIndex = apparentIndex;
-					// }
 
-					if(pivotPairs.find(pivotIndex) == pivotPairs.end()){
+					if(!cofaceList.empty() && pivotPairs.find(pivotIndex) == pivotPairs.end()){
 						nextPivots.push(pivotIndex);
-						pivotPairs.insert({pivotIndex, columnIndex});	
+						pivotPairs.insert({pivotIndex, columnIndex});
 						boundary[columnIndex] = cofaceList;
-						
+						v[columnIndex] = columnV;
+
 						if(edges[d][columnIndex].second != edges[d+1][pivotIndex].second){
 							bettis += std::to_string(d) + "," + std::to_string(simplexWeight) +"," + std::to_string(edges[d+1][pivotIndex].second) + "\n";
 							bettiBoundaryTableEntry des = { d, simplexWeight, edges[d+1][pivotIndex].second, std::set<unsigned>(cofaceList.begin(), cofaceList.end()) };
@@ -245,8 +275,27 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						}
 
 						break;
-					} else {
-						cofaceList.insert(cofaceList.end(), boundary[pivotPairs[pivotIndex]].begin(), boundary[pivotPairs[pivotIndex]].end()); //Lazy set XOR
+					} else{
+						for(long long index : v[pivotPairs[pivotIndex]]){
+							a = index;
+							columnV.push_back(index);
+							std::vector<unsigned> facet = getVertices(index, d, nPts, bin);
+							std::vector<unsigned>::iterator it = facet.begin();
+							unsigned k = facet.size() + 1;
+							for(unsigned i = nPts; i-- != 0; ){ //Try inserting other vertices into the simplex
+								if(it != facet.end() && i == *it){
+									index -= bin.binom(i, k-1);
+									index += bin.binom(i, k);
+									--k;
+									++it;
+								} else{
+									auto cofacetIndex = indexConverter.find(index + bin.binom(i, k));
+									if(cofacetIndex != indexConverter.end()){ //If this is a valid simplex, add it to the heap
+										cofaceList.push_back(cofacetIndex->second);
+									}
+								}
+							}
+						}
 						std::make_heap(cofaceList.begin(), cofaceList.end(), std::greater<unsigned>());
 					}
 				}

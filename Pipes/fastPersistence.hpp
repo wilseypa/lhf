@@ -27,7 +27,9 @@ class fastPersistence : public basePipe {
 	utils ut;
 	double maxEpsilon;
 	long long ripsIndex(std::set<unsigned>& simplex, binomialTable& bin);
-  public:		
+	unsigned maxVertex(long long ripsIndex, unsigned high, unsigned low, unsigned k, binomialTable &bin);
+	std::vector<unsigned> getVertices(long long ripsIndex, int dim, unsigned n, binomialTable &bin);
+  public:
 	int dim;
     fastPersistence();
     pipePacket runPipe(pipePacket inData);
