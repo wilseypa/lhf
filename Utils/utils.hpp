@@ -58,7 +58,7 @@ class utils {
 	
 	
 	std::vector<double> serialize(std::vector<std::vector<double>>& origData);
-	std::vector<std::vector<double>> deserialize(std::vector<double> &, unsigned &);
+	std::vector<std::vector<double>> deserialize(std::vector<double> , unsigned);
 	
 	std::vector<double> nearestNeighbors(std::vector<double>&, std::vector<std::vector<double>>&);
 };

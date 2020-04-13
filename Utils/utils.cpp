@@ -518,23 +518,31 @@ std::vector<double> utils::nearestNeighbors(std::vector<double>& point, std::vec
 }
 
 
-std::vector<std::vector<double>> utils::deserialize(std::vector<double> &serialData, unsigned &dim){
-	std::vector<std::vector<double>> ret;
+std::vector<std::vector<double>> utils::deserialize(std::vector<double> serialData, unsigned dim){
 	
 	//First check if the vector size matches the dimension
 	if(serialData.size() % dim != 0){
 		std::cout << "Error occurred when deserializing data: invalid size" << std::endl;
-		return ret;
+		return {};
 	}
 	
 	//Deduce the number of vectors
 	auto n = serialData.size() / dim;
 	auto begin = serialData.begin();
 	
-	for(unsigned i = 0; i < n; i++){
-		ret.push_back({begin + ( i * dim ), begin + ((i+1) * dim) });
-	}
+	std::vector<std::vector<double>> ret(n, std::vector<double>(dim));
 	
+	std::cout << "Decoding serialdata " << serialData.size() << " len " << n << std::endl;
+	
+	for(unsigned i = 0; i < n; i++){
+		for(unsigned j = 0; j < dim; j++){
+			std::cout << "\t" << i*dim << " - " << j << " -- " << (serialData[0]) << std::endl;
+		//std::vector<double> b(begin + ( i * (dim) ), begin + ((i+1) * (dim)) - 1);
+		//ret.push_back(b);
+			ret[i][j] = (serialData)[(i*dim) + j];
+		}
+	}
+	std::cout << "Returning decoded size : " << ret.size() << " x " << ret[0].size() << std::endl;
 	return ret;
 }
 
