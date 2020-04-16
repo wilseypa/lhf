@@ -13,9 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    # Get openMPI
-    - name: Get OpenMPI
-      run: sudo apt-get install -y openmpi-bin openmpi-common libopenmpi-dev
+    # Get dependencies
+    - name: Get dependencies
+      run: sudo apt-get install -y openmpi-bin openmpi-common libopenmpi-dev cppcheck
           
     # Checkout v2 : https://github.com/actions/checkout
     - uses: actions/checkout@v2
@@ -27,3 +27,6 @@ jobs:
     # Run cmake tests
     - name: ctest
       run: make test
+    
+    - name: cppcheck
+      run: cppcheck --enable=all --force .

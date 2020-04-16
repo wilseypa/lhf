@@ -23,7 +23,7 @@ naiveWindow::naiveWindow(){
 }
 
 bool naiveWindow::sampleStreamEvaluator(std::vector<double>& vector, std::vector<std::vector<double>>& window){
-	//Return true to accept all points into the complex	
+	//Return true to accept all points into the complex
 	return true;
 }
 
@@ -41,27 +41,32 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 	//
 	// Loop this subpipeline until there's no more data
 
+	int key = 0;
+	std::vector<int> windowKeys;
 	std::vector<std::vector<double>> windowValues;
 	std::vector<double> currentVector;
-	
+	int indexToBeDeleted = 0;
+
 	// Initialize the read stream using the input file
 	if(rp.streamInit(inputFile)){
-		
+
 		int pointCounter = 1;
 		//Get the next point from the stream
 		while(rp.streamRead(currentVector)){
 			//Evaluate insertion into sliding window
-			
+
 			//Window hasn't filled
 			if(windowValues.size() < windowMaxSize){
 				windowValues.push_back(currentVector);
+				windowKeys.push_back(key);
+				key++;
 
 				//If we've reached window size, generate the initial complex
 				if(windowValues.size() == windowMaxSize){
 
 					inData.originalData = windowValues;
 					runComplexInitializer(inData);
-					
+
 					// Set the stream evaluator
 					inData.complex->setStreamEvaluator(&this->sampleStreamEvaluator);
 					inData.complex->indexCounter = windowMaxSize;
@@ -77,6 +82,8 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 
 					//Insert the point
 					windowValues.push_back(currentVector);
+					windowKeys.push_back(key);
+					key++;
 				}
 			}
 
@@ -103,8 +110,8 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 			std::cout << "matrixSize: " << inData.complex->distMatrix.size() << std::endl;
 			runSubPipeline(inData);
 		}
-		ut.writeLog("slidingWindow", "\tSuccessfully evaluated " + std::to_string(pointCounter) + " points");
-	
+		ut.writeLog("naiveWindow", "\tSuccessfully evaluated " + std::to_string(pointCounter) + " points");
+
 		writeComplexStats(inData);
 	}
 
@@ -118,14 +125,14 @@ void naiveWindow::writeComplexStats(pipePacket &inData){
 		file << inData.complex->stats << std::endl;
 
 		file.close();
-		
-	}	
+
+	}
 }
 
 void naiveWindow::runSubPipeline(pipePacket wrData){
     if(wrData.originalData.size() == 0)
 		return;
-		
+
 	pipePacket inData = wrData;
 	outputData(inData);
 
