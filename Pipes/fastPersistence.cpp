@@ -9,16 +9,54 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <cmath>
-#include <list>
-#include <iterator>
-#include <algorithm>
-#include <numeric>
-#include <functional>
 #include <algorithm>
 #include <set>
+#include <map>
+#include <stdexcept>
+#include <unordered_map>
+#include <queue>
 #include "fastPersistence.hpp"
 
+unionFind::unionFind(int n) : rank(n, 0), parent(n, 0) {
+	for(int i=0; i<n; i++) parent[i]=i;
+}
+
+int unionFind::find(int i){
+	if(i == parent[i]) return i;
+	parent[i] = find(parent[i]); //Path Compression
+	return parent[i];
+}
+
+bool unionFind::join(int x, int y){ //Union by rank
+	x = find(x);
+	y = find(y);
+	if(x == y) return false;
+	if(rank[x] == rank[y]){
+		rank[y]++;
+		parent[x] = y;
+	} else if(rank[x] < rank[y]){
+		parent[x] = y;
+	} else{
+		parent[y] = x;
+	}
+	return true;
+}
+
+binomialTable::binomialTable(unsigned n, unsigned k) : v(n+1, std::vector<long long>(k+1, 0)){ //Fast computation of binomials with precomputed table
+	v[0][0] = 1;
+	for(int i=1; i<=n; i++){
+		v[i][0] = 1;
+		for(int j=1; j<=k; j++){
+			v[i][j] = v[i-1][j-1] + v[i-1][j]; //Pascal's Rule
+			if(v[i][j] < 0) throw std::overflow_error("Binomial overflow");
+		}
+	}
+}
+
+long long binomialTable::binom(unsigned n, unsigned k){ //Return binomial coefficient
+	if(k>n) return 0;
+	return v[n][k];
+}
 
 // basePipe constructor
 fastPersistence::fastPersistence(){
@@ -26,12 +64,42 @@ fastPersistence::fastPersistence(){
 	return;
 }
 
+long long fastPersistence::ripsIndex(std::set<unsigned>& simplex, binomialTable& bin){ //Hash the set by converting to the index described by the paper
+	long long simplexIndex = 0;
+	unsigned i = 0;
+	auto it = simplex.begin();
+	while(it != simplex.end()){
+		simplexIndex += bin.binom(*it, ++i);
+		if(simplexIndex < 0) throw std::overflow_error("Binomial overflow");
+		++it;
+	}
+	return simplexIndex;
+}
+
+unsigned fastPersistence::maxVertex(long long ripsIndex, unsigned high, unsigned low, unsigned k, binomialTable &bin){
+	while(high > low){ //Binary search for the max vertex for this simplex
+		unsigned mid = (high + low)/2;
+		if(bin.binom(mid, k) <= ripsIndex) low = mid + 1;
+		else high = mid;
+	}
+	return high - 1;
+}
+
+std::vector<unsigned> fastPersistence::getVertices(long long ripsIndex, int dim, unsigned n, binomialTable &bin){
+	std::vector<unsigned> v;
+	for(unsigned k = dim+1; k>0; k--){ //Get all vertices by repeated binary search for max vertex
+		n = maxVertex(ripsIndex, n, k-1, k, bin);
+		v.push_back(n);
+		ripsIndex -= bin.binom(n, k);
+	}
+	return v;
+}
+
 // runPipe -> Run the configured functions of this pipeline segment
 //
 //	FastPersistence: For computing the persistence pairs from simplicial complex:
 //		1. See Bauer-19 for algorithm/description
 pipePacket fastPersistence::runPipe(pipePacket inData){
-	
 	if(dim > 0)
 		inData.complex->expandDimensions(dim + 1);	
 	
@@ -39,22 +107,16 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	
 	//Get all edges for the simplexArrayList or simplexTree
 	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges = inData.complex->getAllEdges(maxEpsilon);
-	
+
 	if(edges.size() == 0)
 		return inData;
 		
-	std::vector<std::pair<double,double>> temp;
-	std::vector<std::vector<std::pair<double,double>>> ret;
-	for(int i = 0; i < dim; i++){
-		ret.push_back(temp);
-	}
-	
 	//Some notes on fast persistence:
 	
 	//	-Vectors need to be stored in a lexicograhically ordered set of decreasing (d+1)-tuples (e.g. {3, 1, 0})
 	//		-These vectors are replaced with their indices (e.g. {{2,1,0} = 0, {3,1,0} = 1, {3,2,0} = 2, etc.})
 	
-	//	-Reduction matrix (V) stores collection of non-zero entries for each column (indexed)
+	//	-Boundary matrix stores reduced collection of cofaces for each column (indexed)
 	
 	
 	//Start a timer for physical time passed during the pipe's function
@@ -62,96 +124,47 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	
 	//Get all dim 0 persistence intervals
 	//Kruskal's minimum spanning tree algorithm
-	//		Track the current connected sets (conSet)
+	//		Track the current connected components (uf)
 	//		Check edges; if contained in current set ignore
-	//			if joins into a single set, insert to set
 	//			if joins multiple sets, join all sets
 	//		Until all edges evaluated or MST found (size - 1)	
 	
-	//std::vector<std::pair<std::set<unsigned>,double>> mst;			//Store the minimum spanning tree
-	std::vector<double> mst;										//Store the minimum spanning tree (weight only)
-	std::vector<std::set<unsigned>> conSet;										//Store the connected set
-	
-	std::set<unsigned> wset;										//Store the intersection
-	std::set<unsigned> tempset;
-	std::list<unsigned> pivots;										//Store identified pivots
-	unsigned pivotIndex = 0;
-		
-	//For each edge set 
-	for(auto edge : edges[1]){		
-		bool foundPivot = false;
-		bool br = false;
-		std::vector<std::set<unsigned>> conSetTemp;										//Store the connected set
-		//Check if the current set intersects with any existing connected sets
-		for(std::set<unsigned> cSet : conSet){
-			wset = ut.setIntersect(edge.first, cSet, false);
-			
-			//If one element intersects with a set and we haven't found a pivot...
-			if(!foundPivot && wset.size() == 1){
-				foundPivot = true;
-				pivots.push_back(pivotIndex);
-				mst.push_back(edge.second);
-				bettiBoundaryTableEntry des = { 0, 0, edge.second, wset };
-				inData.bettiTable.push_back(des);
-				
-				set_union(edge.first.begin(), edge.first.end(), cSet.begin(), cSet.end(), std::inserter(tempset, tempset.end()));
-				
-			//If one element intersects with a set (and we already found a pivot, join sets)
-			} else if (wset.size() == 1){
-				//Keep updating our wset with a joint set
-				//wset = ut.symmetricDiff(edge.first, cSet, false);
-				//auto ts = ut.symmetricDiff(edge.first, cSet, false);
-				//std::copy(ts.begin(), ts.end(), std::inserter(tempset, tempset.end()));
-				set_union(tempset.begin(), tempset.end(), cSet.begin(), cSet.end(), std::inserter(tempset, tempset.end()));
-				set_union(edge.first.begin(), edge.first.end(), tempset.begin(), tempset.end(), std::inserter(tempset, tempset.end()));
-			//Otherwise write the set back to the connected set
-			// Either both elements are already contained in an existing set
-			// 
-			} else if (wset.size() == 2){
-				
-				conSetTemp.push_back(cSet);
-				br = true;
-			} else {
-				conSetTemp.push_back(cSet);
-			}
-				
+	std::priority_queue<unsigned> pivots; //Store identified pivots
+	unsigned edgeIndex = 0;
+	unsigned mstSize = 0;
+	unsigned nPts = inData.originalData.size();
+
+	unionFind uf(nPts);
+	binomialTable bin(nPts, dim+1);
+
+	for(auto& edge : edges[1]){ //For each edge
+		std::set<unsigned>::iterator it = edge.first.begin();
+		int v1 = uf.find(*it), v2 = uf.find(*(++it)); //Find which connected component each vertex belongs to
+		if(v1 != v2){ //Edge connects two different components -> add to the MST
+			uf.join(v1, v2);
+			pivots.push(edgeIndex);
+			mstSize++;
+			bettis += "0,0," + std::to_string(edge.second) + "\n";
+			bettiBoundaryTableEntry des = { 0, 0, edge.second, { *it } };
+			inData.bettiTable.push_back(des);
 		}
-		
-		//If we found our pivot we need to push back the joined set
-		if(foundPivot){
-			conSetTemp.push_back(tempset);
-			
-		//If we didn't find a pivot, and the edge wasn't contained in an existing set
-		}else if (!br){
-			conSetTemp.push_back(edge.first);
-			pivots.push_back(pivotIndex);
-			mst.push_back(edge.second);
-			
-		}
-		
+
 		//Check if we've filled our MST and can break...
-		if(mst.size() == edges[0].size()-1){
-			break;
+		if(mstSize >= edges[0].size()-1) break;
+
+		edgeIndex++;
+	}
+
+	for(int i=0; i<inData.originalData.size(); i++){
+		if(uf.find(i) == i){ //i is the name of a connected component
+			bettis += "0,0," + std::to_string(maxEpsilon) + "\n"; //Each connected component has an open persistence interval
+			bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {} };
+			inData.bettiTable.push_back(des);
 		}
-		pivotIndex++;
-		
-		conSet = conSetTemp;
-		tempset.clear();
 	}
-	
-	for(auto z : mst){
-		bettis += "0,0," + std::to_string(z) + "\n";
-		
-	}
-	bettis += "0,0," + std::to_string(maxEpsilon) + "\n";
-	bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {} };
-	inData.bettiTable.push_back(des);
-	
-	
 	
 	//For higher dimensional persistence intervals
 	//	
-	if(dim > 0){
 		//Build next dimension of ordered simplices, ignoring previous dimension pivots
 		
 		//Represent the ordered simplices as indexed sets; similar to the approach in indSimplexTree
@@ -160,97 +173,132 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		//		This indicates a feature represents a persistence interval
 		
 		//Track V (reduction matrix) for each column j that has been reduced to identify the constituent 
-		//		boundary simplices; we may not track this currently but will eventually
+		//		boundary simplices
 		
 		
-		for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
-			
-			//Track the current pivots located into an unordered map
-			std::unordered_map<unsigned, std::set<unsigned>> v;
-			//std::cout << "D" << d << ": " << std::endl;
-			
-			//std::cout << "\tEdges[d]: " << edges[d].size() << "\tEdges[d+1]: " << edges[d+1].size() << std::endl;
-			
-			//std::cout << "Pivots: " << pivots.size() << std::endl;
-			/*for(auto z : pivots){
-				std::cout << z << "\t";
-			}
-			std::cout << std::endl;*/
-			
-			std::list<unsigned> nextPivots;
-			unsigned columnIndex = 0;
-			
-			//Iterate the columns of the boundary matrix (i.e. the nextEdges)
-			for(auto column_to_reduce : edges[d+1]){
-				pivotIndex = 0;
-				int foundCol = 0;
-				int foundPiv = 0;
-				bool foundPivot = false;
-				bool needReduced = false;
-				std::set<unsigned> cofaceList;
-				
-				auto pivotPointer = pivots.begin();
-				
-				//Begin checking each vector from lowest weight for a pivot; skip previous pivots
-				//	We want to build the vector before attempting to reduce/store
-				for(auto row_to_check : edges[d]){
-					// 1 of 3 things can happen here:
-					//		-The row is a pivot of the column, closing an interval
-					//		-The row is not a pivot, needing to be XOR with the stored pivot
-					//		-The row does not intersect (0 or cleared from previous dimension)
-					if(*pivotPointer != pivotIndex){
-						
-						//Check for intersection
-						bool isCoface = std::includes(column_to_reduce.first.begin(), column_to_reduce.first.end(), row_to_check.first.begin(), row_to_check.first.end());
-						
-						if(isCoface) {
-							cofaceList.insert(pivotIndex);
+	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
+		std::unordered_map<long long, unsigned> indexConverter; //Convert our hashed set (ripsIndex) to the index from our complex
+		unsigned simplexIndex = 0;
+		for(auto& simplex : edges[d+1]){
+			indexConverter.insert(std::make_pair(ripsIndex(simplex.first, bin), simplexIndex));
+			simplexIndex++;
+		}
+
+		std::unordered_map<unsigned, std::vector<long long>> v; //Store only the reduction matrix V and compute R implicity
+		std::unordered_map<unsigned, unsigned> pivotPairs; //For each pivot, which column has that pivot
+		std::priority_queue<unsigned> nextPivots; //Pivots for the next dimension
+
+		for(unsigned columnIndex = edges[d].size(); columnIndex-- != 0; ){ //Iterate over columns to reduce in reverse order
+			std::pair<std::set<unsigned>, double>& simplex = edges[d][columnIndex];
+			double simplexWeight = simplex.second;
+			std::vector<unsigned> cofaceList; //Store cofaceList as a min heap
+			std::vector<long long> columnV;
+			bool foundEmergentCandidate = false; //Found the lexicographically maximum cofacet with the same diameter
+
+			if(pivots.top() != columnIndex){ //Not a pivot -> need to reduce
+				std::set<unsigned>::reverse_iterator it = simplex.first.rbegin();
+				unsigned k = simplex.first.size() + 1;
+				long long index = ripsIndex(simplex.first, bin);
+				columnV.push_back(index);
+
+				for(unsigned i=nPts; i-- != 0; ){ //Try inserting other vertices into the simplex
+					if(it != simplex.first.rend() && i == *it){
+						index -= bin.binom(i, k-1);
+						index += bin.binom(i, k);
+						--k;
+						++it;
+					} else{
+						auto cofacetIndex = indexConverter.find(index + bin.binom(i, k));
+						if(cofacetIndex != indexConverter.end()){ //If this is a valid simplex, add it to the heap
+							cofaceList.push_back(cofacetIndex->second);
+
+							if(!foundEmergentCandidate && edges[d+1][cofacetIndex->second].second == simplex.second){
+								if(pivotPairs.find(cofacetIndex->second) == pivotPairs.end()) break; //Found an emergent cofacet pair -> we can break
+								foundEmergentCandidate = true;
+							}
 						}
-					} else {
-						pivotPointer++;
-					}				
-					
-					pivotIndex++;
-					
+					}
 				}
-				//Reduce the column or store into the unordered map
-								
-				std::set<unsigned int>::iterator pIndex;
-				while((pIndex = cofaceList.begin()) != cofaceList.end()){
-					if(v.find(*pIndex) == v.end()){
-						v[*pIndex] = cofaceList;
-						nextPivots.push_back(columnIndex);		
-						
-						if(edges[d][*pIndex].second != edges[d+1][columnIndex].second){
-								bettis += std::to_string(d) + "," + std::to_string(edges[d][*pIndex].second) +"," + std::to_string(edges[d+1][columnIndex].second) + "\n";
-								
-							bettiBoundaryTableEntry des = { d, edges[d][*pIndex].second, edges[d+1][columnIndex].second, cofaceList };
+
+				std::make_heap(cofaceList.begin(), cofaceList.end(), std::greater<unsigned>());
+
+				while(!cofaceList.empty()){
+					unsigned pivotIndex; //Get minimum coface from heap
+					while(!cofaceList.empty()){
+						pivotIndex = cofaceList.front();
+						std::pop_heap(cofaceList.begin(), cofaceList.end(), std::greater<unsigned>());
+						cofaceList.pop_back();
+						if(!cofaceList.empty() && pivotIndex == cofaceList.front()){ //Coface is in twice -> evaluates to 0 mod 2
+							std::pop_heap(cofaceList.begin(), cofaceList.end(), std::greater<unsigned>());
+							cofaceList.pop_back();
+						} else{
+							cofaceList.push_back(pivotIndex);
+							std::push_heap(cofaceList.begin(), cofaceList.end(), std::greater<unsigned>());
+							break;
+						}
+					}
+
+					if(cofaceList.empty()){ //Column completely reduced
+						break;
+					} else if(pivotPairs.find(pivotIndex) == pivotPairs.end()){ //Column cannot be reduced
+						nextPivots.push(pivotIndex);
+						pivotPairs.insert({pivotIndex, columnIndex});
+
+						// std::sort(columnV.begin(),columnV.end());
+						// auto it = columnV.begin();
+						// while(it != columnV.end()){
+						// 	if((it+1)!=columnV.end() && *it==*(it+1)) ++it;
+						// 	else{
+						// 		v[columnIndex].push_back(*it);
+						// 	}
+						// 	++it;
+						// }
+						v[columnIndex] = columnV;
+
+						if(edges[d][columnIndex].second != edges[d+1][pivotIndex].second){
+							bettis += std::to_string(d) + "," + std::to_string(simplexWeight) +"," + std::to_string(edges[d+1][pivotIndex].second) + "\n";
+							bettiBoundaryTableEntry des = { d, simplexWeight, edges[d+1][pivotIndex].second, std::set<unsigned>(cofaceList.begin(), cofaceList.end()) };
 							inData.bettiTable.push_back(des);
 						}
-											
+
 						break;
-					} else {
-						auto oldCofaceList = ut.setXOR(v[*pIndex],cofaceList);
-						
-						
-						if(oldCofaceList == cofaceList)
-							break;
-						cofaceList = oldCofaceList;
+					} else{
+						for(long long index : v[pivotPairs[pivotIndex]]){ //Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
+							columnV.push_back(index);
+							std::vector<unsigned> facet = getVertices(index, d, nPts, bin); //Enumerate cofacets of this simplex like above
+							std::vector<unsigned>::iterator it = facet.begin();
+							unsigned k = facet.size() + 1;
+							for(unsigned i = nPts; i-- != 0; ){ //Try inserting other vertices into the simplex
+								if(it != facet.end() && i == *it){
+									index -= bin.binom(i, k-1);
+									index += bin.binom(i, k);
+									--k;
+									++it;
+								} else{
+									auto cofacetIndex = indexConverter.find(index + bin.binom(i, k));
+									if(cofacetIndex != indexConverter.end()){ //If this is a valid simplex, add it to the heap
+										cofaceList.push_back(cofacetIndex->second);
+									}
+								}
+							}
+						}
+						std::make_heap(cofaceList.begin(), cofaceList.end(), std::greater<unsigned>());
 					}
 				}
 				
-				columnIndex++;
-				
-			}
-			
-			pivots = nextPivots;
+				if(cofaceList.empty()){
+					bettis += std::to_string(d) + "," + std::to_string(simplexWeight) +"," + std::to_string(maxEpsilon) + "\n";
+					bettiBoundaryTableEntry des = { d, simplexWeight, maxEpsilon, {} };
+					inData.bettiTable.push_back(des);
+				}
+
+			} else pivots.pop();
 		}
 		
+		pivots = nextPivots;
 	}
-	
-	//std::cout << bettis << std::endl;
-	//
-	
+			
+	std::cout << bettis << std::endl;
 	
 	//Stop the timer for time passed during the pipe's function
 	auto endTime = std::chrono::high_resolution_clock::now();
@@ -291,10 +339,10 @@ void fastPersistence::outputData(pipePacket inData){
 	
 	file.open("output/tArray.csv");
 	
-	file << "ti,Dim,Marked,Birth,Death,Simplex\n";
-	for(auto tStruct : tArray){
-		file << tStruct.ti << "," << tStruct.simplex.size()-1 << "," << tStruct.marked << "," << tStruct.birth << "," << tStruct.death << ",";
-		for(auto index : tStruct.simplex)
+	file << "Dim,Birth,Death,Simplex\n";
+	for(auto tStruct : inData.bettiTable){
+		file << tStruct.bettiDim << "," << tStruct.birth << "," << tStruct.death << ",";
+		for(auto index : tStruct.boundaryPoints)
 			file << index << " ";
 		file << "\n";
 	}
@@ -329,23 +377,13 @@ bool fastPersistence::configPipe(std::map<std::string, std::string> configMap){
 		maxEpsilon = std::atof(configMap["epsilon"].c_str());
 	else return false;	
 	
-	pipe = configMap.find("twist");
-	if(pipe != configMap.end())
-		twist = configMap["twist"];
-	else return false;
-	
 	pipe = configMap.find("fn");
 	if(pipe != configMap.end())
 		fnmod = configMap["fn"];
-	
-	pipe = configMap.find("complexType");
-	if(pipe != configMap.end() && configMap["complexType"] == "indSimplexTree")
-		alterPipe = true;
 		
 	configured = true;
-	ut.writeDebug("fastPersistence","Configured with parameters { dim: " + configMap["dimensions"] + ", twist: " + twist + ", complexType: " + configMap["complexType"] + ", eps: " + configMap["epsilon"]);
+	ut.writeDebug("fastPersistence","Configured with parameters { dim: " + configMap["dimensions"] + ", complexType: " + configMap["complexType"] + ", eps: " + configMap["epsilon"]);
 	ut.writeDebug("fastPersistence","\t\t\t\tdebug: " + strDebug + ", outputFile: " + outputFile + " }");
 	
 	return true;
 }
-
