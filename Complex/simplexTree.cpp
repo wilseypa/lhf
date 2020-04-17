@@ -271,8 +271,15 @@ void simplexTree::deleteIterative(int vectorIndex){
 			}
 		}
 
+		auto curNodeCount = nodeCount;
+
 		//Delete all entries in the simplex tree with the index...
 		deleteIndexRecurse(vectorIndex, head);
+		
+		deleteWeightEdgeGraph(vectorIndex);
+		
+		//std::cout << "Node Count reduced from " << curNodeCount << " to " << nodeCount << std::endl;
+		
 
 	} else {
 		ut.writeDebug("simplexTree","Failed to find vector by index");
@@ -416,6 +423,27 @@ void simplexTree::insert(std::vector<double>&) {
 	return;
 }
 
+void simplexTree::deleteWeightEdgeGraph(int index){
+	
+	for(unsigned dim = 0; dim < weightEdgeGraph.size(); dim++){
+		std::vector<unsigned> d_indices;
+		
+		for(int vInd = weightEdgeGraph[dim].size()-1; vInd >= 0; vInd--){
+			//std::cout << "vInd: " << vInd << std::endl;
+			
+			if(weightEdgeGraph[dim][vInd].first.find(index) != weightEdgeGraph[dim][vInd].first.end())
+				d_indices.push_back(vInd);
+		}
+		
+		int rem = 0;
+		for(auto del : d_indices){
+			rem++;
+			weightEdgeGraph[dim].erase(weightEdgeGraph[dim].begin() + del);
+		}
+	}
+	return;
+}
+
 
 int simplexTree::vertexCount(){
 	//Return the number of vertices currently represented in the tree
@@ -431,6 +459,10 @@ int simplexTree::simplexCount(){
 
 double simplexTree::getSize(){
 	//Size of node: [int + byte (*) + byte (*)] = 18 Bytes
+	std::cout << "WEG Sizes: \t";
+	for(auto d : weightEdgeGraph)
+		std::cout << d.size() << " ";
+	std::cout << std::endl;
 	return nodeCount * sizeof(treeNode);
 }
 
@@ -582,15 +614,16 @@ bool simplexTree::deletion(std::set<unsigned> removalEntry) {
 // A recursive function to delete a simplex (and sub-branches) from the tree.
 bool simplexTree::deletion(treeNode* removalEntry) {
 	treeNode* curNode = removalEntry;
-	int deletionCount = 0;
 
 	//Iterate to the bottom of branch in the current node
 	while(curNode->child != nullptr){
 		curNode->child->parent = curNode;
 		curNode=curNode->child;
 	}
-
 	
+	if(curNode == removalEntry && curNode->sibling != nullptr){
+		deletion(curNode->sibling);
+	}
 
 	//If we did go down, remove on the way back up
 	while(curNode != removalEntry){
@@ -599,15 +632,12 @@ bool simplexTree::deletion(treeNode* removalEntry) {
 		}
 		curNode = curNode->parent;
 
-
-		deletionCount++;
 		nodeCount--;
 		delete curNode->child;
 		curNode->child = nullptr;
 	}
 
 	//curNode = curNode->parent;
-	deletionCount++;
 	nodeCount--;
 	delete curNode;
 	return false;
