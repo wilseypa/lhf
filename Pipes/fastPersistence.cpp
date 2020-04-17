@@ -154,10 +154,14 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 
 		edgeIndex++;
 	}
-	
-	bettis += "0,0," + std::to_string(maxEpsilon) + "\n";
-	bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {} };
-	inData.bettiTable.push_back(des);
+
+	for(int i=0; i<inData.originalData.size(); i++){
+		if(uf.find(i) == i){ //i is the name of a connected component
+			bettis += "0,0," + std::to_string(maxEpsilon) + "\n"; //Each connected component has an open persistence interval
+			bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {} };
+			inData.bettiTable.push_back(des);
+		}
+	}
 	
 	//For higher dimensional persistence intervals
 	//	
@@ -189,7 +193,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			double simplexWeight = simplex.second;
 			std::vector<unsigned> cofaceList; //Store cofaceList as a min heap
 			std::vector<long long> columnV;
-			bool foundEmergent = false;
+			bool foundEmergentCandidate = false; //Found the lexicographically maximum cofacet with the same diameter
 
 			if(pivots.top() != columnIndex){ //Not a pivot -> need to reduce
 				std::set<unsigned>::reverse_iterator it = simplex.first.rbegin();
@@ -208,12 +212,9 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						if(cofacetIndex != indexConverter.end()){ //If this is a valid simplex, add it to the heap
 							cofaceList.push_back(cofacetIndex->second);
 
-							if(!foundEmergent && edges[d+1][cofacetIndex->second].second == simplex.second){
-								if(pivotPairs.find(cofacetIndex->second) == pivotPairs.end()){
-									// std::cout<<ripsIndex(simplex.first, bin)<<' '<<index + bin.binom(i, k)<<'\n';
-									// break;
-								}
-								foundEmergent = true;
+							if(!foundEmergentCandidate && edges[d+1][cofacetIndex->second].second == simplex.second){
+								if(pivotPairs.find(cofacetIndex->second) == pivotPairs.end()) break; //Found an emergent cofacet pair -> we can break
+								foundEmergentCandidate = true;
 							}
 						}
 					}
@@ -237,12 +238,9 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						}
 					}
 
-					if(cofaceList.empty()){
-						bettis += std::to_string(d) + "," + std::to_string(simplexWeight) +"," + std::to_string(maxEpsilon) + "\n";
-						bettiBoundaryTableEntry des = { d, simplexWeight, maxEpsilon, {} };
-						inData.bettiTable.push_back(des);
+					if(cofaceList.empty()){ //Column completely reduced
 						break;
-					} else if(pivotPairs.find(pivotIndex) == pivotPairs.end()){
+					} else if(pivotPairs.find(pivotIndex) == pivotPairs.end()){ //Column cannot be reduced
 						nextPivots.push(pivotIndex);
 						pivotPairs.insert({pivotIndex, columnIndex});
 
@@ -286,6 +284,12 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						}
 						std::make_heap(cofaceList.begin(), cofaceList.end(), std::greater<unsigned>());
 					}
+				}
+				
+				if(cofaceList.empty()){
+					bettis += std::to_string(d) + "," + std::to_string(simplexWeight) +"," + std::to_string(maxEpsilon) + "\n";
+					bettiBoundaryTableEntry des = { d, simplexWeight, maxEpsilon, {} };
+					inData.bettiTable.push_back(des);
 				}
 
 			} else pivots.pop();
@@ -383,4 +387,3 @@ bool fastPersistence::configPipe(std::map<std::string, std::string> configMap){
 	
 	return true;
 }
-
