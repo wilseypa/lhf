@@ -32,6 +32,7 @@ class simplexTree : public simplexBase {
 	void recurseInsert(treeNode*, unsigned, int, double, std::set<unsigned>);
 	double findWeight(std::set<unsigned>);
 	void deleteIndexRecurse(int, treeNode*);
+	void deleteWeightEdgeGraph(int index);
 
 	//virtual interface functions
 	double getSize();

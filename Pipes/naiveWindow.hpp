@@ -13,7 +13,7 @@ class naiveWindow : public basePipe {
 	std::string inputFile;
 	void runSubPipeline();
 	std::map<std::string, std::string> subConfigMap;
-	void runComplexInitializer(pipePacket &);
+	//void runComplexInitializer(pipePacket &);
   public:
     naiveWindow();
     pipePacket runPipe(pipePacket);

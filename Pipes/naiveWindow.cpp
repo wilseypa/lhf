@@ -65,12 +65,35 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 				if(windowValues.size() == windowMaxSize){
 
 					inData.originalData = windowValues;
-					runComplexInitializer(inData);
+					
+					//Store our distance matrix
+					std::vector<std::vector<double>> distMatrix (inData.originalData.size(), std::vector<double>(inData.originalData.size(),0));
+					
+					//Iterate through each vector
+					for(unsigned i = 0; i < inData.originalData.size(); i++){
+						if(!inData.originalData[i].empty()){
+						
+							//Grab a second vector to compare to 
+							std::vector<double> temp;
+							for(unsigned j = i+1; j < inData.originalData.size(); j++){
 
+									//Calculate vector distance 
+									auto dist = ut.vectors_distance(inData.originalData[i],inData.originalData[j]);
+									
+									if(dist < epsilon)
+										inData.weights.insert(dist);
+									distMatrix[i][j] = dist;
+							}
+						}
+					}
+					
+					inData.complex->setDistanceMatrix(distMatrix);
+										
+					for(auto a : windowValues)
+						inData.complex->insert(a);
+					
 					// Set the stream evaluator
 					inData.complex->setStreamEvaluator(&this->sampleStreamEvaluator);
-					inData.complex->indexCounter = windowMaxSize;
-					std::cout << "StreamSize: " << inData.complex->indexCounter << std::endl;
 				}
 
 			//Window is full, evaluate and add to window
@@ -92,9 +115,6 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 			if(pointCounter % 10 == 0 && pointCounter > windowMaxSize){
 				// Build and trigger remaining pipeline. It should only require the computation of persistence
 				// intervals from the complex being maintained.
-				std::cout << "pointCounter: " << pointCounter << "\tSimplex Count: " << inData.complex->simplexCount() << "\tVertex Count: " << inData.complex->vertexCount() << std::endl;
-				std::cout << "\tWindowSize: " << windowValues.size() << std::endl;
-				std::cout << "matrixSize: " << inData.complex->distMatrix.size() << std::endl;
 				inData.originalData = windowValues;
 				runSubPipeline(inData);
 
@@ -106,8 +126,6 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 		}
 		//Probably want to trigger the remaining pipeline one last time...
 		if((pointCounter - 1) % 10 != 0){
-			std::cout << "pointCounter: " << pointCounter << "\tSimplex Count: " << inData.complex->simplexCount() << "\tVertex Count: " << inData.complex->vertexCount() << std::endl;
-			std::cout << "matrixSize: " << inData.complex->distMatrix.size() << std::endl;
 			runSubPipeline(inData);
 		}
 		ut.writeLog("naiveWindow", "\tSuccessfully evaluated " + std::to_string(pointCounter) + " points");
@@ -135,6 +153,8 @@ void naiveWindow::runSubPipeline(pipePacket wrData){
 
 	pipePacket inData = wrData;
 	outputData(inData);
+	
+	std::cout << "StreamSize: " << inData.complex->indexCounter << std::endl;
 
 	std::string pipeFuncts = "rips.fast";
 	auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
@@ -164,7 +184,7 @@ void naiveWindow::runSubPipeline(pipePacket wrData){
 	return;
 }
 
-void naiveWindow::runComplexInitializer(pipePacket &inData){
+/*void naiveWindow::runComplexInitializer(pipePacket &inData){
 	if(inData.originalData.size() == 0)
 		return;
 
@@ -188,7 +208,7 @@ void naiveWindow::runComplexInitializer(pipePacket &inData){
 		}
 	}
 	return;
-}
+}*/
 
 
 
