@@ -25,6 +25,7 @@ class binomialTable{
 class fastPersistence : public basePipe {
   private:
 	utils ut;
+	int shift = 0;
 	double maxEpsilon;
 	long long ripsIndex(std::set<unsigned>& simplex, binomialTable& bin);
 	unsigned maxVertex(long long ripsIndex, unsigned high, unsigned low, unsigned k, binomialTable &bin);

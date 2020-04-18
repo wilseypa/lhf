@@ -472,7 +472,7 @@ std::vector<std::vector<std::pair<std::set<unsigned>,double>>> simplexTree::getA
 	if(!isSorted){
 		for (int i = 0; i < weightEdgeGraph.size(); i++)
 			std::sort(weightEdgeGraph[i].begin(), weightEdgeGraph[i].end(), ut.sortBySecond);
-		isSorted = true;
+		// isSorted = true;
 	}
 
 	return weightEdgeGraph;

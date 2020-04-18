@@ -69,7 +69,7 @@ long long fastPersistence::ripsIndex(std::set<unsigned>& simplex, binomialTable&
 	unsigned i = 0;
 	auto it = simplex.begin();
 	while(it != simplex.end()){
-		simplexIndex += bin.binom(*it, ++i);
+		simplexIndex += bin.binom(*it - shift, ++i);
 		if(simplexIndex < 0) throw std::overflow_error("Binomial overflow");
 		++it;
 	}
@@ -108,7 +108,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	//Get all edges for the simplexArrayList or simplexTree
 	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges = inData.complex->getAllEdges(maxEpsilon);
 
-	if(edges.size() == 0)
+	if(edges.size() <= 1)
 		return inData;
 		
 	//Some notes on fast persistence:
@@ -136,16 +136,17 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 
 	unionFind uf(nPts);
 	binomialTable bin(nPts, dim+1);
+	shift = *edges[0][nPts-1].first.begin();
 
 	for(auto& edge : edges[1]){ //For each edge
 		std::set<unsigned>::iterator it = edge.first.begin();
-		int v1 = uf.find(*it), v2 = uf.find(*(++it)); //Find which connected component each vertex belongs to
+		int v1 = uf.find(*it - shift), v2 = uf.find(*(++it) - shift); //Find which connected component each vertex belongs to
 		if(v1 != v2){ //Edge connects two different components -> add to the MST
 			uf.join(v1, v2);
 			pivots.push(edgeIndex);
 			mstSize++;
 			bettis += "0,0," + std::to_string(edge.second) + "\n";
-			bettiBoundaryTableEntry des = { 0, 0, edge.second, { *it } };
+			bettiBoundaryTableEntry des = { 0, 0, edge.second, { *it - shift } };
 			inData.bettiTable.push_back(des);
 		}
 
@@ -202,7 +203,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 				columnV.push_back(index);
 
 				for(unsigned i=nPts; i-- != 0; ){ //Try inserting other vertices into the simplex
-					if(it != simplex.first.rend() && i == *it){
+					if(it != simplex.first.rend() && i == *it - shift){
 						index -= bin.binom(i, k-1);
 						index += bin.binom(i, k);
 						--k;
@@ -259,6 +260,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 							bettis += std::to_string(d) + "," + std::to_string(simplexWeight) +"," + std::to_string(edges[d+1][pivotIndex].second) + "\n";
 							bettiBoundaryTableEntry des = { d, simplexWeight, edges[d+1][pivotIndex].second, std::set<unsigned>(cofaceList.begin(), cofaceList.end()) };
 							inData.bettiTable.push_back(des);
+							//TODO - unshift bettiTable Entries
 						}
 
 						break;
