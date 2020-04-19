@@ -57,8 +57,11 @@ class utils {
 	std::vector<std::vector<unsigned>> getSubsets(std::vector<unsigned> set);
 	
 	
-	std::vector<double> serialize(std::vector<std::vector<double>>& origData);
+	std::vector<double> serialize(std::vector<std::vector<double>>& );
 	std::vector<std::vector<double>> deserialize(std::vector<double> , unsigned);
+	
+	std::vector<double> serializetwo(std::vector<std::vector<std::vector<double>>> &, int  ,int );
+	std::vector<std::vector<std::vector<double>>> deserializetwo(std::vector<double>, int,int,std::vector<int>,int);
 	
 	std::vector<double> nearestNeighbors(std::vector<double>&, std::vector<std::vector<double>>&);
 };

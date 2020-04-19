@@ -215,6 +215,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		}
 		
 		// Sending partitions to slaves
+		/*
 		for(int k=1;k<nprocs;k++){
 			for(int j=0; j < number_of_partitions_per_slave; j++){
 				std::vector<double> part = ut.serialize(partitionedData.second[((k-1) * number_of_partitions_per_slave) + j]);
@@ -222,7 +223,15 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 				MPI_Send(&part[0], part.size(), MPI_DOUBLE, k, 1, MPI_COMM_WORLD);
 			}
 		}
-			
+		*/
+		
+		for(int k=1;k<nprocs;k++){
+			{
+				std::vector<double> part = ut.serializetwo(partitionedData.second,k,number_of_partitions_per_slave);
+				MPI_Send(&part[0], part.size(), MPI_DOUBLE, k, 1, MPI_COMM_WORLD);
+			}
+		}
+		
 		for(int k=1;k<nprocs;k++){	
 			for(int j=0; j < number_of_partitions_per_slave; j++)
 				MPI_Send( &partitionedData.first[((k-1)*number_of_partitions_per_slave)+j][0],dimension, MPI_DOUBLE, k, 1, MPI_COMM_WORLD);	 
@@ -306,18 +315,26 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 	    
 	    //Start retrieving data; Preallocate data vectors for retrieval
 		std::vector<double> flatPartitions;
-		std::vector<std::vector<std::vector<double>>> partitionedData;
+		//std::vector<std::vector<std::vector<double>>> partitionedData;
 		std::vector<std::vector<unsigned>> partitionedLabels;
 		partitionedLabels.resize(perslavepartitions);
-		
+		/*
 		for(int j=0;j<perslavepartitions;j++){		
 			//Resize our retrieval array
 			flatPartitions.resize(dim*partsize[j]);
 			//Receive a partition and deserialize
 			MPI_Recv(&flatPartitions[0], dim * partsize[j], MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &status); 
 			partitionedData.push_back(ut.deserialize(flatPartitions, dim));
-			
 		}	
+		*/
+		unsigned chunksize=0;
+		for(unsigned i=0;i<perslavepartitions;i++)
+			chunksize += partsize[(id-1)*perslavepartitions+i] * dim;
+		flatPartitions.resize(chunksize);
+		
+		MPI_Recv(&flatPartitions[0], chunksize, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &status); 
+		auto partitionedData = ut.deserializetwo(flatPartitions, dim,id,partsize,perslavepartitions);
+        
 		
 		for(int i=0;i<partitionedLabels.size();i++)
 			 partitionedLabels[i].resize(partsize[((id-1)*perslavepartitions)+i]);

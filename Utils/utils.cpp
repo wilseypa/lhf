@@ -564,3 +564,33 @@ std::vector<double> utils::serialize(std::vector<std::vector<double>> &origData)
 	
 	return ret;
 }
+
+std::vector<double> utils::serializetwo(std::vector<std::vector<std::vector<double>>> &origData,int np, int per_slave_part){
+	std::vector<double> ret;
+	for(unsigned i = 0; i < per_slave_part; i++){
+		for(unsigned j = 0; j < origData[(np-1)*per_slave_part+i].size(); j++){
+			for(unsigned k = 0; k < origData[(np-1)*per_slave_part+i][j].size(); k++){
+				ret.push_back(origData[(np-1)*per_slave_part+i][j][k]);
+			}
+		}
+	}
+	return ret;
+}
+
+std::vector<std::vector<std::vector<double>>> utils::deserializetwo(std::vector<double> flatdata, int dim,int id,std::vector<int> partsize,int per_slave_part){
+	std::vector<std::vector<std::vector<double>>> ret;
+	int t=0;
+	for(unsigned i = 0; i < per_slave_part; i++){
+		std::vector<std::vector<double>> part;
+		for(unsigned j = 0; j < partsize[(id-1)*per_slave_part + i];j++){
+			std::vector<double> row;
+			for(unsigned k = 0; k < dim ; k++){
+				row.push_back(flatdata[t]);
+				t++;
+			}
+			part.push_back(row);
+		}
+		ret.push_back(part);
+	}
+	return ret;
+}
