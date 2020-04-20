@@ -565,9 +565,15 @@ std::vector<double> utils::serialize(std::vector<std::vector<double>> &origData)
 	return ret;
 }
 
-std::vector<double> utils::serializeTwo(std::vector<std::vector<std::vector<double>>> &origData,int id, int per_slave_part){
+std::vector<double> utils::serializeTwo(std::vector<std::vector<std::vector<double>>> &origData,int id, int per_slave_part,int last_part){
 	std::vector<double> ret;
-	for(unsigned i = 0; i < per_slave_part; i++){
+	int part_size;
+	if(last_part!=0)
+		part_size = last_part;
+	else
+		part_size = per_slave_part;
+	
+	for(unsigned i = 0; i < part_size; i++){
 		for(unsigned j = 0; j < origData[(id-1)*per_slave_part+i].size(); j++){
 			for(unsigned k = 0; k < origData[(id-1)*per_slave_part+i][j].size(); k++){
 				ret.push_back(origData[(id-1)*per_slave_part+i][j][k]);
@@ -577,10 +583,16 @@ std::vector<double> utils::serializeTwo(std::vector<std::vector<std::vector<doub
 	return ret;
 }
 
-std::vector<std::vector<std::vector<double>>> utils::deserializeTwo(std::vector<double> flatdata, int dim,int id,std::vector<unsigned> partsize,int per_slave_part){
+std::vector<std::vector<std::vector<double>>> utils::deserializeTwo(std::vector<double> flatdata, int dim,int id,std::vector<unsigned> partsize,int per_slave_part,int last_part){
 	std::vector<std::vector<std::vector<double>>> ret;
 	int t=0;
-	for(unsigned i = 0; i < per_slave_part; i++){
+	int part_size;
+	if(last_part!=0)
+		part_size = last_part;
+	else
+		part_size = per_slave_part;
+	
+	for(unsigned i = 0; i < part_size; i++){
 		std::vector<std::vector<double>> part;
 		for(unsigned j = 0; j < partsize[(id-1)*per_slave_part + i];j++){
 			std::vector<double> row;
@@ -595,10 +607,15 @@ std::vector<std::vector<std::vector<double>>> utils::deserializeTwo(std::vector<
 	return ret;
 }
 
-std::vector<unsigned> utils::serializeLabel(std::vector<std::vector<unsigned>> &origLabel,int id,int per_slave_part){
+std::vector<unsigned> utils::serializeLabel(std::vector<std::vector<unsigned>> &origLabel,int id,int per_slave_part,int last_part){
 	std::vector<unsigned> ret;
+	int part_size;
+	if(last_part!=0)
+		part_size = last_part;
+	else
+		part_size = per_slave_part;
 	
-	for( unsigned i = 0; i < per_slave_part; i++){
+	for( unsigned i = 0; i < part_size; i++){
 		for(unsigned j = 0; j < origLabel[(id-1)*per_slave_part + i].size(); j++){
 			ret.push_back(origLabel[(id-1)*per_slave_part + i][j]);	
 		}
@@ -607,10 +624,18 @@ std::vector<unsigned> utils::serializeLabel(std::vector<std::vector<unsigned>> &
 	return ret;
 }
 
-std::vector<std::vector<unsigned>> utils::deserializeLabel(std::vector<unsigned> flatLabel,int id,std::vector<unsigned> partsize, int per_slave_part){
+std::vector<std::vector<unsigned>> utils::deserializeLabel(std::vector<unsigned> flatLabel,int id,std::vector<unsigned> partsize, int per_slave_part,int last_part){
+	
+	int part_size;
+	if(last_part!=0)
+		part_size = last_part;
+	else
+		part_size = per_slave_part;
+	
 	std::vector<std::vector<unsigned>> ret;
     int t=0;	
-	for(unsigned i = 0; i < per_slave_part ; i++){
+	
+	for(unsigned i = 0; i < part_size ; i++){
 		std::vector<unsigned> row;
 		for(unsigned j = 0; j < partsize[(id-1)*per_slave_part + i]; j++){
 			row.push_back(flatLabel[t]);
