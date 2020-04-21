@@ -163,7 +163,19 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 	std::vector<bettiBoundaryTableEntry> mergedBettiTable;
     utils ut;
     
-    
+    // check if 1 process only
+      if(nprocs==1)
+      {
+		 //Read our input data
+		auto *rs = new readInput();
+		wD->originalData = rs->readCSV(args["inputFile"]);
+		wD->fullData = wD->originalData;
+		
+		processReducedWrapper(args,wD);
+		 
+		return ;
+		
+		  }
     //Check if we are the master process for upscaling   
  	if(id == 0){
 		std::vector<bettiBoundaryTableEntry> mergedMasterBettiTable;
