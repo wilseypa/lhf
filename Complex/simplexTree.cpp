@@ -23,6 +23,8 @@ void simplexTree::recurseInsert(treeNode* node, unsigned curIndex, int depth, do
 	//Recurse to each child (which we'll use the parent pointer for...)
 	treeNode* temp;
 	std::set<unsigned> currentSimp = simp;
+	
+	isSorted = false;
 
 	double curE = 0;
 
@@ -348,7 +350,7 @@ void simplexTree::deleteIndexRecurse(int vectorIndex, treeNode* curNode){
 // Insert a node into the tree
 //
 void simplexTree::insert(std::vector<double>&) {
-
+	
 	if(distMatrix.size() == 0){
 		ut.writeDebug("simplexTree","Distance matrix is empty, skipping insertion");
 		return;
@@ -472,7 +474,7 @@ std::vector<std::vector<std::pair<std::set<unsigned>,double>>> simplexTree::getA
 	if(!isSorted){
 		for (int i = 0; i < weightEdgeGraph.size(); i++)
 			std::sort(weightEdgeGraph[i].begin(), weightEdgeGraph[i].end(), ut.sortBySecond);
-		// isSorted = true;
+		isSorted = true;
 	}
 
 	return weightEdgeGraph;
