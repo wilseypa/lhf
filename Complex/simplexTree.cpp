@@ -480,6 +480,89 @@ std::vector<std::vector<std::pair<std::set<unsigned>,double>>> simplexTree::getA
 	return weightEdgeGraph;
 }
 
+simplexTree::treeNode* simplexTree::find(std::set<unsigned>::iterator it, std::set<unsigned>::iterator end, treeNode* curNode){
+	if(curNode == nullptr) return nullptr;
+	while(true){
+		while(curNode->index != *it){
+			if(curNode->index == *it){
+				break;
+			} else{
+				curNode = curNode->sibling;
+				if(curNode == nullptr) return nullptr;
+			}
+		}
+
+		// std::cout<<curNode->child->parent->index<<'\n';
+
+		++it;
+		if(it != end) curNode = curNode->child;
+		else return curNode;
+	}
+}
+
+std::vector<std::pair<std::set<unsigned>, double>> simplexTree::getAllCofacets(const std::set<unsigned>& simplex){
+	std::vector<std::pair<std::set<unsigned>, double>> ret;
+	std::set<unsigned> tempSimplex;
+	treeNode* parentNode = find(simplex.begin(), simplex.end(), head);
+	if(parentNode == nullptr) return ret;
+
+
+	// for(auto i : parentNode->simplex){
+	// 	std::cout<<i<<'\n';
+	// }	
+
+	treeNode* curNode;
+	treeNode* tempNode;
+	auto it = --simplex.end();
+
+	// for(auto i : parentNode->simplex) std::cout<<i<<' ';
+	// std::cout<<'\n';
+
+	curNode = head;
+	while(curNode != nullptr){
+		tempNode = find(it, simplex.end(), curNode->child);
+		if(tempNode != nullptr){
+			tempSimplex = simplex;
+			tempSimplex.insert(curNode->index);
+			ret.push_back(make_pair(tempSimplex, tempNode->weight));
+		}
+		curNode = curNode->sibling;
+	}
+
+	while(true){
+		curNode = parentNode->child;
+
+	// 	std::cout<<curNode->index<<'\n';
+
+		while(curNode != nullptr){
+			tempNode = find(it, simplex.end(), curNode->child);
+			if(tempNode != nullptr){
+				tempSimplex = simplex;
+				tempSimplex.insert(curNode->index);
+				ret.push_back(make_pair(tempSimplex, tempNode->weight));
+			}
+			curNode = curNode->sibling;
+		}
+
+		if(parentNode->parent != nullptr){
+			parentNode = parentNode->parent;
+			--it;
+		} else{
+			break;
+		}
+	}
+
+	// while(parentNode->sibling != nullptr){
+	// 	parentNode = parentNode->sibling;
+	// 	tempNode = find(simplex.begin(), simplex.end(), parentNode);
+	// 	if(tempNode != nullptr){
+	// 		ret.push_back(make_pair(tempNode->simplex, tempNode->weight));
+	// 	}
+	// }
+
+	return ret;
+}
+
 void simplexTree::reduceComplex(){
 	if(weightEdgeGraph.size() == 0){
 		ut.writeDebug("simplexTree","Complex is empty, skipping reduction");
