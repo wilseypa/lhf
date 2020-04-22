@@ -195,10 +195,10 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		
 		//	Each node/slave will process at least 1 partition
 		//		NOTE: the partition may contain points outside partition that are within 2*Rmax
-		int number_of_partitions_per_slave = partitionedData.second.size() / (nprocs-1);
-		number_of_partitions_per_slave +=1;
+	//	int number_of_partitions_per_slave = partitionedData.second.size() / (nprocs-1);
+	//	number_of_partitions_per_slave +=1;
 		
-		int number_of_partitions_last_slave = partitionedData.second.size() - (number_of_partitions_per_slave*(nprocs-2)); 
+	//	int number_of_partitions_last_slave = partitionedData.second.size() - (number_of_partitions_per_slave*(nprocs-2)); 
 		
 		int dimension = partitionedData.second[0][0].size();
 		std::vector<unsigned> partitionsize;
@@ -207,59 +207,26 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		for(auto a: partitionedData.second)
 			 partitionsize.push_back(a.size());
 			 
-		ut.print1DVector(partitionsize);
+	//	ut.print1DVector(partitionsize);
 		int partitionsize_size = partitionsize.size();
 		
 		//Sending the data dimensions to slaves	 
 		for(int i=1;i<nprocs;i++){			
 			MPI_Send(&dimension,1,MPI_INT,i,1,MPI_COMM_WORLD);
 			MPI_Send(&partitionsize_size,1, MPI_INT,i,1,MPI_COMM_WORLD);
-			MPI_Send(&partitionsize[0],partitionsize_size,MPI_INT,i,1,MPI_COMM_WORLD);
-			if(i==nprocs-1)		
-     			MPI_Send(&number_of_partitions_last_slave,1,MPI_INT,i,1,MPI_COMM_WORLD);
-			MPI_Send(&number_of_partitions_per_slave,1,MPI_INT,i,1,MPI_COMM_WORLD);
-		
+			MPI_Send(&partitionsize[0],partitionsize_size,MPI_INT,i,1,MPI_COMM_WORLD);	
 		}
 		
-		// Sending partitions to slaves
-		/*
-		for(int k=1;k<nprocs;k++){
-			for(int j=0; j < number_of_partitions_per_slave; j++){
-				std::vector<double> part = ut.serialize(partitionedData.second[((k-1) * number_of_partitions_per_slave) + j]);
-			
-				MPI_Send(&part[0], part.size(), MPI_DOUBLE, k, 1, MPI_COMM_WORLD);
-			}
-		}
-		*/
 		
 		for(int k=1;k<nprocs;k++){			
-			if(k==nprocs-1){
-				std::vector<double> part = ut.serializeTwo(partitionedData.second,k,number_of_partitions_per_slave,number_of_partitions_last_slave);
+				std::vector<double> part = ut.serializeTwo(partitionedData.second,k,nprocs);
 		    	MPI_Send(&part[0], part.size(), MPI_DOUBLE, k, 1, MPI_COMM_WORLD);
-		    }
-			else{
-				std::vector<double> part = ut.serializeTwo(partitionedData.second,k,number_of_partitions_per_slave,0);
-		    	MPI_Send(&part[0], part.size(), MPI_DOUBLE, k, 1, MPI_COMM_WORLD);
-			}
 		}
-		/*
-		for(int k=1;k<nprocs;k++){	
-			for(int j=0; j < number_of_partitions_per_slave; j++){
-				int sze = partitionedData.first[((k-1)*number_of_partitions_per_slave)+j].size();
-				MPI_Send( &partitionedData.first[((k-1)*number_of_partitions_per_slave)+j][0],sze, MPI_DOUBLE, k, 1, MPI_COMM_WORLD);	 
-			}
-		}		
-		*/
+		
 		for(int k=1;k<nprocs;k++){
-			if(k==nprocs-1){
-			std::vector<unsigned> part = ut.serializeLabel(partitionedData.first,k,number_of_partitions_per_slave,number_of_partitions_last_slave);
+		    std::vector<unsigned> part = ut.serializeLabel(partitionedData.first,k,nprocs);
 			MPI_Send(&part[0], part.size(), MPI_UNSIGNED, k, 1, MPI_COMM_WORLD);
-            }
-			else{
-		    std::vector<unsigned> part = ut.serializeLabel(partitionedData.first,k,number_of_partitions_per_slave,0);
-			MPI_Send(&part[0], part.size(), MPI_UNSIGNED, k, 1, MPI_COMM_WORLD);
-     		}
-	    }
+		}
 		
 		std::cout << "Full Data: " << centroids.size() << std::endl;
 		if(centroids.size() > 0){
@@ -271,15 +238,16 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		} else 
 			std::cout << "skipping" << std::endl;
 		
-		int number_partition;
+		int minPartitions = partitionedData.second.size() / (nprocs-1);
+		int firstk = partitionedData.second.size() - (minPartitions*(nprocs-1));
+		int number_partition =0;
 		for(int k=1; k < nprocs; k++){
 			int p=0;
-			
 			//Receive betti results
-			if(k==nprocs-1)
-				number_partition = number_of_partitions_last_slave;
+			if(k<=firstk)
+				number_partition = minPartitions +1;
 			else
-				number_partition = number_of_partitions_per_slave;
+				number_partition = minPartitions;
 			
 			for(int j=0;j<number_partition;j++){
 				int sizeOfBettiTable;
@@ -290,14 +258,14 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 				
 				for(int i=0;i<sizeOfBettiTable;i++){
 					int boundarysize;
-					MPI_Recv(&boundarysize,1,MPI_INT,k,number_of_partitions_per_slave+(p++),MPI_COMM_WORLD,&status);
+					MPI_Recv(&boundarysize,1,MPI_INT,k,p++,MPI_COMM_WORLD,&status);
 					bettiBoundaryTableEntry bettiEntry;
-					MPI_Recv(&bettiEntry.bettiDim,1,MPI_UNSIGNED,k,number_of_partitions_per_slave+(p++),MPI_COMM_WORLD,&status);
-					MPI_Recv(&bettiEntry.birth,1,MPI_DOUBLE,k,number_of_partitions_per_slave+(p++),MPI_COMM_WORLD,&status);
-					MPI_Recv(&bettiEntry.death,1,MPI_DOUBLE,k,number_of_partitions_per_slave+(p++),MPI_COMM_WORLD,&status);
+					MPI_Recv(&bettiEntry.bettiDim,1,MPI_UNSIGNED,k,p++,MPI_COMM_WORLD,&status);
+					MPI_Recv(&bettiEntry.birth,1,MPI_DOUBLE,k,p++,MPI_COMM_WORLD,&status);
+					MPI_Recv(&bettiEntry.death,1,MPI_DOUBLE,k,p++,MPI_COMM_WORLD,&status);
 					std:vector<unsigned> boundaryvector(boundarysize);
 					boundaryvector.resize(boundarysize);
-					MPI_Recv(&boundaryvector[0],boundarysize,MPI_UNSIGNED,k,number_of_partitions_per_slave+(p++),MPI_COMM_WORLD,&status);
+					MPI_Recv(&boundaryvector[0],boundarysize,MPI_UNSIGNED,k,p++,MPI_COMM_WORLD,&status);
 					
 					for(auto a:boundaryvector)
 						bettiEntry.boundaryPoints.insert(a);
@@ -322,8 +290,6 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 	} else {
 		int dim;
 		MPI_Status status;
-		int perslavepartitions;
-		int lastslavepartitions = 0;	
 		//NOTE: need to have dynamic partition size; whether that means serializing and sending
 		//	the partition table and size or dynamically allocating the partsize vector here (push_back)
 		std::vector<unsigned> partsize;
@@ -339,18 +305,13 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		
 		//Get the partition sizes
 		MPI_Recv(&partsize[0],partsize_size,MPI_UNSIGNED,0,1,MPI_COMM_WORLD,&status);
-	
-		//Get the number of partitions slave has to do
-		if(id==nprocs-1)
-			MPI_Recv(&lastslavepartitions,1,MPI_INT,0,1,MPI_COMM_WORLD,&status);
-			
-		MPI_Recv(&perslavepartitions,1,MPI_INT,0,1,MPI_COMM_WORLD,&status);
-	    
+		    
 	    //Start retrieving data; Preallocate data vectors for retrieval
+		
 		std::vector<double> flatPartitions;
-		std::vector<std::vector<std::vector<double>>> partitionedData;
+		//std::vector<std::vector<std::vector<double>>> partitionedData;
 		std::vector<unsigned> flatLabels;
-		std::vector<std::vector<unsigned>> partitionedLabels;
+		//std::vector<std::vector<unsigned>> partitionedLabels;
 		//partitionedLabels.resize(perslavepartitions);
 		/*
 		for(int j=0;j<perslavepartitions;j++){		
@@ -362,57 +323,26 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		}	
 		*/
 		unsigned chunksize=0;
-		if(id==nprocs-1){
-		for(unsigned i=0;i<lastslavepartitions;i++)
-			chunksize += partsize[(id-1)*perslavepartitions+i] * dim;
+		for(unsigned i=0;i<partsize_size;i++)
+			if(i%(nprocs-1) == id-1)
+    			chunksize += partsize[i] * dim;
 		flatPartitions.resize(chunksize);		
-		}
-		else{
-		for(unsigned i=0;i<perslavepartitions;i++)
-			chunksize += partsize[(id-1)*perslavepartitions+i] * dim;
-		flatPartitions.resize(chunksize);
-		}
 		
 		MPI_Recv(&flatPartitions[0], chunksize, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &status); 
-		if(id==nprocs-1)
-			partitionedData = ut.deserializeTwo(flatPartitions, dim,id,partsize,perslavepartitions,lastslavepartitions);
-		else
-        	partitionedData = ut.deserializeTwo(flatPartitions, dim,id,partsize,perslavepartitions,0);
+		auto partitionedData = ut.deserializeTwo(flatPartitions,partsize,dim,id,nprocs);
 		
-		/*
-		for(int i=0;i<partitionedLabels.size();i++)
-			 partitionedLabels[i].resize(partsize[((id-1)*perslavepartitions)+i]);
-		
-		for(int j=0;j<perslavepartitions;j++){		
-			MPI_Recv (&partitionedLabels[j][0] ,partsize[((id-1)*perslavepartitions)+j], MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &status );
-		}	
-		*/
 		unsigned chunk_size_label=0;
-		if(id==nprocs-1){
-			for(unsigned i=0;i<lastslavepartitions;i++)
-				chunk_size_label += partsize[(id-1)*perslavepartitions+i];
-			flatLabels.resize(chunk_size_label);
-		}
-		else{
-			for(unsigned i=0;i<perslavepartitions;i++)
-				chunk_size_label += partsize[(id-1)*perslavepartitions+i];
-			flatLabels.resize(chunk_size_label);
-		}
+		for(unsigned i=0;i<partsize_size;i++)
+			if(i%(nprocs-1) == id-1)
+				chunk_size_label += partsize[i];
+		flatLabels.resize(chunk_size_label);
 		
 		MPI_Recv(&flatLabels[0], chunk_size_label, MPI_UNSIGNED, 0, 1, MPI_COMM_WORLD, &status); 
-        if(id==nprocs-1)
-			partitionedLabels = ut.deserializeLabel(flatLabels,id,partsize,perslavepartitions,lastslavepartitions);
-		else
-        	partitionedLabels = ut.deserializeLabel(flatLabels,id,partsize,perslavepartitions,0);
+        auto partitionedLabels = ut.deserializeLabel(flatLabels,partsize,id,nprocs);
 			
 		int p=0;	
-		int slavepartitions;
-        if(id==nprocs-1)
-			slavepartitions = lastslavepartitions;
-		else
-			slavepartitions = perslavepartitions;
 		
-		for(unsigned z = 0; z < slavepartitions; z++){
+		for(unsigned z = 0; z < partitionedData.size(); z++){
 		if(partitionedData[z].size() > 0){
 			std::cout << "Running Pipeline with : " << partitionedData[z].size() << " vectors" << " id :: "<<id<<std::endl;
 			wD->originalData = partitionedData[z];
@@ -428,13 +358,13 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 			MPI_Send(&bettiTableSize,1,MPI_INT,0,z,MPI_COMM_WORLD);
 			for(auto betEntry : wD->bettiTable){  
 				int boundary_size = betEntry.boundaryPoints.size();	
-				MPI_Send(&boundary_size,1,MPI_INT,0,perslavepartitions+(p++),MPI_COMM_WORLD);
-				MPI_Send(&betEntry.bettiDim,1,MPI_UNSIGNED,0,perslavepartitions+(p++),MPI_COMM_WORLD);
-				MPI_Send(&betEntry.birth,1,MPI_DOUBLE,0,perslavepartitions+(p++),MPI_COMM_WORLD);
-				MPI_Send(&betEntry.death,1,MPI_DOUBLE,0,perslavepartitions+(p++),MPI_COMM_WORLD);
+				MPI_Send(&boundary_size,1,MPI_INT,0,p++,MPI_COMM_WORLD);
+				MPI_Send(&betEntry.bettiDim,1,MPI_UNSIGNED,0,p++,MPI_COMM_WORLD);
+				MPI_Send(&betEntry.birth,1,MPI_DOUBLE,0,p++,MPI_COMM_WORLD);
+				MPI_Send(&betEntry.death,1,MPI_DOUBLE,0,p++,MPI_COMM_WORLD);
 				vector<unsigned> boundaryvector;
 				boundaryvector.assign(betEntry.boundaryPoints.begin(), betEntry.boundaryPoints.end());
-				MPI_Send(&boundaryvector[0],boundary_size,MPI_UNSIGNED,0,perslavepartitions+(p++),MPI_COMM_WORLD);
+				MPI_Send(&boundaryvector[0],boundary_size,MPI_UNSIGNED,0,p++,MPI_COMM_WORLD);
 			}		
 		} else 
 			std::cout << "skipping" << std::endl;
