@@ -70,9 +70,10 @@ void simplexTree::recurseInsert(treeNode* node, unsigned curIndex, int depth, do
 			weightEdgeGraph[simp.size() - 1].push_back(std::make_pair(simp, maxE));
 		}
 
-		//Check if the node has children already... (remember parent == child for incremental)
+		//Check if the node has children already...
 		if(node->child == nullptr){
 			node->child = insNode;
+			insNode->parent = node;
 
 		} else {
 			temp = node->child;
@@ -80,7 +81,7 @@ void simplexTree::recurseInsert(treeNode* node, unsigned curIndex, int depth, do
 				temp = temp->sibling;
 			
 			temp->sibling = insNode;
-
+			insNode->parent = temp->parent;
 			temp = node->child;
 			//Have to check the children now...
 			if(simp.size() <= maxDimension){
@@ -111,7 +112,7 @@ void simplexTree::printTree(treeNode* head){
 		current = dimensions[i];
 
 		do{
-			std::cout << current->index << "\t" << current << "\t" << current->sibling << "\t" << current->child << std::endl;
+			std::cout << current->index << "\t" << current << "\t" << current->sibling << "\t" << current->child << "\t" << current->parent << std::endl;
 		} while(current->sibling != nullptr && (current = current->sibling) != nullptr);
 
 		std::cout << std::endl;
@@ -470,6 +471,8 @@ double simplexTree::getSize(){
 
 
 std::vector<std::vector<std::pair<std::set<unsigned>,double>>> simplexTree::getAllEdges(double epsilon){
+
+	printTree(head);
 
 	if(!isSorted){
 		for (int i = 0; i < weightEdgeGraph.size(); i++)
