@@ -58,7 +58,7 @@ void runPipeline(std::map<std::string, std::string> args, pipePacket* wD){
 			//ws->writeConsole(wD);
 		} else {
 			ws->writeStats(wD->stats, args["outputFile"]);
-			ws->writeBarcodes(wD->bettiOutput, args["outputFile"]);
+			ws->writeBarcodes(wD->bettiTable, args["outputFile"]);
 			
 		}
 	}
@@ -90,6 +90,7 @@ void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD)
 
 void processReducedWrapper(std::map<std::string, std::string> args, pipePacket* wD){
     
+	auto *ws = new writeOutput();
     std::vector<bettiBoundaryTableEntry> mergedBettiTable;
     
 	//Start with the preprocessing function, if enabled
@@ -149,6 +150,18 @@ void processReducedWrapper(std::map<std::string, std::string> args, pipePacket* 
 	for(auto a : wD->bettiTable){
 		std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
 		ut.print1DVector(a.boundaryPoints);
+	}
+	
+	//Output the data using writeOutput library
+	auto pipe = args.find("outputFile");
+	if(pipe != args.end()){
+		if (args["outputFile"] == "console"){
+			//ws->writeConsole(wD);
+		} else {
+			ws->writeStats(wD->stats, args["outputFile"]);
+			ws->writeBarcodes(wD->bettiTable, args["outputFile"]);
+			
+		}
 	}
 	
 		
