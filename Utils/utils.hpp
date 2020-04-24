@@ -60,12 +60,6 @@ class utils {
 	std::vector<double> serialize(std::vector<std::vector<double>>& );
 	std::vector<std::vector<double>> deserialize(std::vector<double> , unsigned);
 	
-	std::vector<double> serializeTwo(std::vector<std::vector<std::vector<double>>> &, int  ,int);
-	std::vector<std::vector<std::vector<double>>> deserializeTwo(std::vector<double>,std::vector<unsigned>,int,int,int);
-	
-	std::vector<unsigned> serializeLabel(std::vector<std::vector<unsigned>> &,int,int);
-    std::vector<std::vector<unsigned>> deserializeLabel(std::vector<unsigned>,std::vector<unsigned>, int,int);
-
 	std::vector<double> nearestNeighbors(std::vector<double>&, std::vector<std::vector<double>>&);
 };
 
