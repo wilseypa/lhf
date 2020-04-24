@@ -471,9 +471,6 @@ double simplexTree::getSize(){
 
 
 std::vector<std::vector<std::pair<std::set<unsigned>,double>>> simplexTree::getAllEdges(double epsilon){
-
-	printTree(head);
-
 	if(!isSorted){
 		for (int i = 0; i < weightEdgeGraph.size(); i++)
 			std::sort(weightEdgeGraph[i].begin(), weightEdgeGraph[i].end(), ut.sortBySecond);
@@ -483,85 +480,58 @@ std::vector<std::vector<std::pair<std::set<unsigned>,double>>> simplexTree::getA
 	return weightEdgeGraph;
 }
 
+//Search for a simplex from a node in the tree
 simplexTree::treeNode* simplexTree::find(std::set<unsigned>::iterator it, std::set<unsigned>::iterator end, treeNode* curNode){
 	if(curNode == nullptr) return nullptr;
-	while(true){
+	while(it != end){
 		while(curNode->index != *it){
-			if(curNode->index == *it){
+			if(curNode->index == *it){ //Found the vertex
 				break;
 			} else{
 				curNode = curNode->sibling;
-				if(curNode == nullptr) return nullptr;
+				if(curNode == nullptr) return nullptr; //Can't locate the next vertex in the cofacet
 			}
 		}
 
-		// std::cout<<curNode->child->parent->index<<'\n';
-
 		++it;
-		if(it != end) curNode = curNode->child;
-		else return curNode;
+		if(it != end) curNode = curNode->child; //Search for the next vertex in the next level
 	}
+	return curNode;
 }
 
 std::vector<std::pair<std::set<unsigned>, double>> simplexTree::getAllCofacets(const std::set<unsigned>& simplex){
 	std::vector<std::pair<std::set<unsigned>, double>> ret;
 	std::set<unsigned> tempSimplex;
 	treeNode* parentNode = find(simplex.begin(), simplex.end(), head);
-	if(parentNode == nullptr) return ret;
-
-
-	// for(auto i : parentNode->simplex){
-	// 	std::cout<<i<<'\n';
-	// }	
+	if(parentNode == nullptr) return ret; //Simplex isn't in the simplex tree	
 
 	treeNode* curNode;
 	treeNode* tempNode;
-	auto it = --simplex.end();
-
-	// for(auto i : parentNode->simplex) std::cout<<i<<' ';
-	// std::cout<<'\n';
-
-	curNode = head;
-	while(curNode != nullptr){
-		tempNode = find(it, simplex.end(), curNode->child);
-		if(tempNode != nullptr){
-			tempSimplex = simplex;
-			tempSimplex.insert(curNode->index);
-			ret.push_back(make_pair(tempSimplex, tempNode->weight));
-		}
-		curNode = curNode->sibling;
-	}
+	auto it = simplex.end();
 
 	while(true){
-		curNode = parentNode->child;
-
-	// 	std::cout<<curNode->index<<'\n';
+		if(it != simplex.begin()) curNode = parentNode->child; 
+		else curNode = head;
 
 		while(curNode != nullptr){
-			tempNode = find(it, simplex.end(), curNode->child);
-			if(tempNode != nullptr){
+			if(it == simplex.end()) tempNode = curNode;
+			else tempNode = find(it, simplex.end(), curNode->child); //See if the cofacet is in the tree
+			
+			if(tempNode != nullptr){ //Cofacet exists
 				tempSimplex = simplex;
 				tempSimplex.insert(curNode->index);
 				ret.push_back(make_pair(tempSimplex, tempNode->weight));
 			}
-			curNode = curNode->sibling;
+			curNode = curNode->sibling; //Iterate over which extra index to add
 		}
 
-		if(parentNode->parent != nullptr){
+		if(parentNode->parent != nullptr){ //Recurse backwards up the tree and try adding vertices at each level
 			parentNode = parentNode->parent;
-			--it;
-		} else{
+		} else if(it == simplex.begin()){
 			break;
 		}
+		--it;
 	}
-
-	// while(parentNode->sibling != nullptr){
-	// 	parentNode = parentNode->sibling;
-	// 	tempNode = find(simplex.begin(), simplex.end(), parentNode);
-	// 	if(tempNode != nullptr){
-	// 		ret.push_back(make_pair(tempNode->simplex, tempNode->weight));
-	// 	}
-	// }
 
 	return ret;
 }
