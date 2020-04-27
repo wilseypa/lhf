@@ -109,15 +109,15 @@ void argParser::printArguments(std::map<std::string,std::string> args){
 }
 
 void argParser::setPipeline(std::map<std::string, std::string>& args){
-	if(args["mpi"] == "1"){
-		//Set up our pipeline
-		args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
-		if(args["preprocessor"] == ""){
-			args["preprocessor"] = "kmeans++";
+	if(args["pipeline"] == ""){
+		if(args["mode"] == "mpi"){
+			//Set up our pipeline
+			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
+			if(args["preprocessor"] == ""){
+				args["preprocessor"] = "kmeans++";
+			}
+			args["upscale"] = "true";
 		}
-		args["upscale"] = "true";
-		
-	} else if(args["pipeline"] == ""){
 		if(args["mode"] == "standard")
 			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
 		else if(args["mode"] == "reduced"){
