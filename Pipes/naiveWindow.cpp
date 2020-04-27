@@ -23,7 +23,7 @@ naiveWindow::naiveWindow(){
 }
 
 bool naiveWindow::sampleStreamEvaluator(std::vector<double>& vector, std::vector<std::vector<double>>& window){
-	//Return true to accept all points into the complex	
+	//Return true to accept all points into the complex
 	return true;
 }
 
@@ -35,64 +35,88 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 	int windowMaxSize = 50;
 
 	// For this pipe, we construct a sub-pipeline:
-	//		1. Read data vector by vector, push into slidingWindow evaluation
+	//		1. Read data vector by vector, push into stream evaluation in complex
 	//		2. IF the point is to be inserted, push into the simplexTree (LRU ordered)
 	//		3. IF 100 points have passed, generate persistence intervals
 	//
 	// Loop this subpipeline until there's no more data
 
+	int key = 0;
+	std::vector<int> windowKeys;
 	std::vector<std::vector<double>> windowValues;
 	std::vector<double> currentVector;
-	
+	int indexToBeDeleted = 0;
+
 	// Initialize the read stream using the input file
 	if(rp.streamInit(inputFile)){
-		
+
 		int pointCounter = 1;
 		//Get the next point from the stream
 		while(rp.streamRead(currentVector)){
-			std::cout << "Point: " << pointCounter << std::endl;
-			
 			//Evaluate insertion into sliding window
-			
+
 			//Window hasn't filled
 			if(windowValues.size() < windowMaxSize){
 				windowValues.push_back(currentVector);
+				windowKeys.push_back(key);
+				key++;
 
 				//If we've reached window size, generate the initial complex
 				if(windowValues.size() == windowMaxSize){
-					std::cout << "Initializing complex" << std::endl;
 
 					inData.originalData = windowValues;
-					runComplexInitializer(inData);
+					
+					//Store our distance matrix
+					std::vector<std::vector<double>> distMatrix (inData.originalData.size(), std::vector<double>(inData.originalData.size(),0));
+					
+					//Iterate through each vector
+					for(unsigned i = 0; i < inData.originalData.size(); i++){
+						if(!inData.originalData[i].empty()){
+						
+							//Grab a second vector to compare to 
+							std::vector<double> temp;
+							for(unsigned j = i+1; j < inData.originalData.size(); j++){
+
+									//Calculate vector distance 
+									auto dist = ut.vectors_distance(inData.originalData[i],inData.originalData[j]);
+									
+									if(dist < epsilon)
+										inData.weights.insert(dist);
+									distMatrix[i][j] = dist;
+							}
+						}
+					}
+					
+					inData.complex->setDistanceMatrix(distMatrix);
+										
+					for(auto a : windowValues)
+						inData.complex->insert(a);
 					
 					// Set the stream evaluator
 					inData.complex->setStreamEvaluator(&this->sampleStreamEvaluator);
-
-					std::cout << "Returning from complex initializer" << std::endl;
 				}
 
 			//Window is full, evaluate and add to window
 			} else {
 				
-				std::cout << "Insert Iterative" << std::endl;
 				if(inData.complex->insertIterative(currentVector, windowValues)){
 
 					windowValues.erase(windowValues.begin());
 
 					//Insert the point
 					windowValues.push_back(currentVector);
+					windowKeys.push_back(key);
+					key++;
 				}
 			}
 
 
 			//Check if we've gone through 100 points
-			if(pointCounter % 100 == 0 && pointCounter > windowMaxSize){
+			if(pointCounter % 10 == 0 && pointCounter > windowMaxSize){
 				// Build and trigger remaining pipeline. It should only require the computation of persistence
 				// intervals from the complex being maintained.
-				std::cout << "pointCounter: " << pointCounter << "\tSimplex Count: " << inData.complex->simplexCount() << "\tVertex Count: " << inData.complex->vertexCount() << std::endl;
-				std::cout << "\tWindowSize: " << windowValues.size() << std::endl;
 				inData.originalData = windowValues;
-				//runSubPipeline(inData);
+				runSubPipeline(inData);
 
 			}
 			pointCounter++;
@@ -101,13 +125,11 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 
 		}
 		//Probably want to trigger the remaining pipeline one last time...
-		if((pointCounter - 1) % 100 != 0){
-			std::cout << "pointCounter: " << pointCounter << "\tSimplex Count: " << inData.complex->simplexCount() << "\tVertex Count: " << inData.complex->vertexCount() << std::endl;
-
-			//runSubPipeline(inData);
+		if((pointCounter - 1) % 10 != 0){
+			runSubPipeline(inData);
 		}
-		ut.writeLog("slidingWindow", "\tSuccessfully evaluated " + std::to_string(pointCounter) + " points");
-	
+		ut.writeLog("naiveWindow", "\tSuccessfully evaluated " + std::to_string(pointCounter) + " points");
+
 		writeComplexStats(inData);
 	}
 
@@ -121,20 +143,23 @@ void naiveWindow::writeComplexStats(pipePacket &inData){
 		file << inData.complex->stats << std::endl;
 
 		file.close();
-		
-	}	
+
+	}
 }
 
 void naiveWindow::runSubPipeline(pipePacket wrData){
     if(wrData.originalData.size() == 0)
 		return;
-		
+
 	pipePacket inData = wrData;
 	outputData(inData);
+	
+	std::cout << "StreamSize: " << inData.complex->indexCounter << std::endl;
 
-	std::string pipeFuncts = "rips.fastpersistence";
+	std::string pipeFuncts = "rips.fast";
 	auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
 	subConfigMap["fn"] = "_" + std::to_string(repCounter);
+	
 	repCounter++;
 
 	//For each '.' separated pipeline function (count of '.' + 1 -> lim)
@@ -151,7 +176,7 @@ void naiveWindow::runSubPipeline(pipePacket wrData){
 			//Run the pipe function (wrapper)
 			inData = cp->runPipeWrapper(inData);
 		} else {
-			std::cout << "LHF : Failed to configure pipeline: " << curFunct << std::endl;
+			std::cout << "LHF subPipe: Failed to configure pipeline: " << curFunct << std::endl;
 		}
 	}
 
@@ -159,7 +184,7 @@ void naiveWindow::runSubPipeline(pipePacket wrData){
 	return;
 }
 
-void naiveWindow::runComplexInitializer(pipePacket &inData){
+/*void naiveWindow::runComplexInitializer(pipePacket &inData){
 	if(inData.originalData.size() == 0)
 		return;
 
@@ -183,7 +208,7 @@ void naiveWindow::runComplexInitializer(pipePacket &inData){
 		}
 	}
 	return;
-}
+}*/
 
 
 
@@ -219,7 +244,7 @@ bool naiveWindow::configPipe(std::map<std::string, std::string> configMap){
 	else return false;
 
 	configured = true;
-	ut.writeDebug("slidingWindow","Configured with parameters { input: " + configMap["inputFile"] + ", dim: " + configMap["dimensions"] + ", eps: " + configMap["epsilon"] + ", debug: " + strDebug + ", outputFile: " + outputFile + " }");
+	ut.writeDebug("naiveWindow","Configured with parameters { input: " + configMap["inputFile"] + ", dim: " + configMap["dimensions"] + ", eps: " + configMap["epsilon"] + ", debug: " + strDebug + ", outputFile: " + outputFile + " }");
 
 	return true;
 }

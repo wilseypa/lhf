@@ -41,13 +41,14 @@ void runPipeline(std::map<std::string, std::string> args, pipePacket* wD){
 				//Run the pipe function (wrapper)
 				*wD = cp->runPipeWrapper(*wD);
 			} else {
-				cout << "LHF : Failed to configure pipeline: " << args["pipeline"] << endl;
+				std::cout << cp << std::endl;
+				cout << "LHF runPipeline: Failed to configure pipeline: " << args["pipeline"] << endl;
 			}
 		}
 	}
 	//If the pipeline was undefined...
 	else {
-		cout << "LHF : Failed to find a suitable pipeline, exiting..." << endl;
+		cout << "LHF runPipeline: Failed to find a suitable pipeline, exiting..." << endl;
 		return;
 	}
 	
@@ -58,7 +59,7 @@ void runPipeline(std::map<std::string, std::string> args, pipePacket* wD){
 			//ws->writeConsole(wD);
 		} else {
 			ws->writeStats(wD->stats, args["outputFile"]);
-			ws->writeBarcodes(wD->bettiOutput, args["outputFile"]);
+			ws->writeBarcodes(wD->bettiTable, args["outputFile"]);
 			
 		}
 	}
@@ -79,7 +80,7 @@ void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD)
 		if(prePipe != 0 && prePipe->configPreprocessor(args)){
 			*wD = prePipe->runPreprocessorWrapper(*wD);
 		} else {
-			cout << "LHF : Failed to configure pipeline: " << args["pipeline"] << endl;
+			cout << "LHF processData: Failed to configure pipeline: " << args["pipeline"] << endl;
 		}
 	}
 	
@@ -90,6 +91,7 @@ void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD)
 
 void processReducedWrapper(std::map<std::string, std::string> args, pipePacket* wD){
     
+	auto *ws = new writeOutput();
     std::vector<bettiBoundaryTableEntry> mergedBettiTable;
     
 	//Start with the preprocessing function, if enabled
@@ -101,7 +103,7 @@ void processReducedWrapper(std::map<std::string, std::string> args, pipePacket* 
 		if(prePipe != 0 && prePipe->configPreprocessor(args)){
 			*wD = prePipe->runPreprocessorWrapper(*wD);
 		} else {
-			cout << "LHF : Failed to configure pipeline: " << args["pipeline"] << endl;
+			cout << "LHF processReduced: Failed to configure pipeline: " << args["pipeline"] << endl;
 		}
 	}
 	
@@ -149,6 +151,18 @@ void processReducedWrapper(std::map<std::string, std::string> args, pipePacket* 
 	for(auto a : wD->bettiTable){
 		std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
 		ut.print1DVector(a.boundaryPoints);
+	}
+	
+	//Output the data using writeOutput library
+	auto pipe = args.find("outputFile");
+	if(pipe != args.end()){
+		if (args["outputFile"] == "console"){
+			//ws->writeConsole(wD);
+		} else {
+			ws->writeStats(wD->stats, args["outputFile"]);
+			ws->writeBarcodes(wD->bettiTable, args["outputFile"]);
+			
+		}
 	}
 	return;
 }	
@@ -559,15 +573,15 @@ int main(int argc, char* argv[]){
 	//Create a pipePacket (datatype) to store the complex and pass between engines
     auto *wD = new pipePacket(args, args["complexType"]);	//wD (workingData)
 	
-	if(args["pipeline"] != "slidingwindow"&&args["mode"] != "mpi"){
+	if(args["pipeline"] != "slidingwindow" && args["pipeline"] != "naivewindow" && args["mode"] != "mpi"){
 		//Read data from inputFile CSV
 		wD->originalData = rs->readCSV(args["inputFile"]);
 		wD->fullData = wD->originalData;
 	}
 	
 	//If data was found in the inputFile
-	if(wD->originalData.size() > 0 || args["pipeline"] == "slidingwindow" || args["mode"] == "mpi"){
-		
+	if(wD->originalData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
+
 		//Add data to our pipePacket
 		wD->originalData = wD->originalData;
 		

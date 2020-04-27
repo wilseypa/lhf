@@ -434,11 +434,17 @@ void utils::writeFile(std::string fullMessage){
 
 
 bool utils::sortBySecond(const std::pair<std::set<unsigned>, double> &a, const std::pair<std::set<unsigned>, double> &b){
-	return (a.second < b.second);
+	if(a.second == b.second){ //If the simplices have the same weight, sort by reverse lexicographic order for fastPersistence
+		auto itA = a.first.rbegin(), itB = b.first.rbegin();
+		while(itA != a.first.rend()){
+			if(*itA != *itB) return *itA>*itB;
+			++itA; ++itB;
+		}
+		return false;
+	} else{
+		return a.second<b.second;
+	}
 }
-
-
-
 
 //Iteratively build subsets (faces) of the simplex set
 std::vector<std::set<unsigned>> utils::getSubsets(std::set<unsigned> set){
