@@ -22,7 +22,7 @@ class simplexTree : public simplexBase {
 		double weight = 0;
 	};
 
-	treeNode* head;
+	treeNode* head = nullptr;
 	std::vector<treeNode*> dimensions;
 
 	simplexTree(std::vector<std::vector<double>>);

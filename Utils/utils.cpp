@@ -47,19 +47,31 @@ std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vecto
 std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> utils::separatePartitions(double rad, std::vector<std::vector<double>> centroids, std::vector<std::vector<double>> originalData, std::vector<unsigned> labels){
 	std::vector<std::vector<double>> a;
 	std::vector<unsigned> b;
+	
+	//Store the results to return
 	std::vector<std::vector<std::vector<double>>> res(centroids.size(), a);
 	std::vector<std::vector<unsigned>> labres(centroids.size(), b);
-	
+
+	//Iterate through each label
 	for(unsigned i = 0; i < labels.size(); i++){
+		
 		//Check for this point belonging to each centroid
 		for(unsigned j = 0; j < centroids.size(); j++){
-			double curRad = vectors_distance(originalData[i], centroids[j]);
-			
-			//If this distance is less than our radius cutoff
-			if(curRad < rad){
-				res[j].push_back(originalData[i]);
-				labres[j].push_back(i);	
-			}	
+			if(labels[i] == j){
+				//If this is a labeled constituent put to front of array
+				res[j].insert(res[j].begin(), originalData[i]);
+				labres[j].insert(labres[j].begin(), i);
+				
+			}else{
+				
+				double curRad = vectors_distance(originalData[i], centroids[j]);
+				
+				//If this distance is less than our radius cutoff push to back
+				if(curRad < rad){
+					res[j].push_back(originalData[i]);
+					labres[j].push_back(i);	
+				}	
+			}
 		}
 	}
 	
@@ -521,4 +533,52 @@ std::vector<double> utils::nearestNeighbors(std::vector<double>& point, std::vec
 	
 	return retVal;
 
+}
+
+
+std::vector<std::vector<double>> utils::deserialize(std::vector<double> serialData, unsigned dim){
+	
+	//First check if the vector size matches the dimension
+	if(serialData.size() % dim != 0){
+		std::cout << "Error occurred when deserializing data: invalid size" << std::endl;
+		return {};
+	}
+	
+	//Deduce the number of vectors
+	auto n = serialData.size() / dim;
+	auto begin = serialData.begin();
+	
+	std::vector<std::vector<double>> ret(n, std::vector<double>(dim));
+	
+	for(unsigned i = 0; i < n; i++){
+		for(unsigned j = 0; j < dim; j++){
+			ret[i][j] = (serialData)[(i*dim) + j];
+		}
+	}
+	return ret;
+}
+
+
+std::vector<double> utils::serialize(std::vector<std::vector<double>> &origData){
+	
+	//Make sure we have data to serialize
+	if(origData.size() == 0){
+		std::cout << "Error occurred when serializing data: empty vector argument" << std::endl;
+		return {};
+	}
+	
+	auto n = origData.size();
+	auto d = origData[0].size();
+	
+	//Preallocate our vector to prevent resizing
+	std::vector<double> ret(n*d);
+	
+	//Copy element by element
+	for(unsigned i = 0; i < n; i++){
+		for(unsigned k = 0; k < d; k++){
+			ret[(i*d)+k] = origData[i][k];
+		}
+	}
+	
+	return ret;
 }
