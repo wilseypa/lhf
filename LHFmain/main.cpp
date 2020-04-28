@@ -290,11 +290,11 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 			MPI_Irecv(&bound_size[k-1],1,MPI_INT,k,5,MPI_COMM_WORLD,&reqr6[k-1]);
 		}
 		
-		MPI_Request reqr2;
-		MPI_Request reqr3;
-		MPI_Request reqr4;
-		MPI_Request reqr5;
-		MPI_Request reqr7;
+		MPI_Request reqr2[nprocs-1];
+		MPI_Request reqr3[nprocs-1];
+		MPI_Request reqr4[nprocs-1];
+		MPI_Request reqr5[nprocs-1];
+		MPI_Request reqr7[nprocs-1];
 		
 		for(int k=1; k < nprocs; k++){
             int flag=0;
@@ -318,10 +318,10 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 			betti_birth[received_slave].resize(sizeOfBettiTable[received_slave]);
 			betti_death[received_slave].resize(sizeOfBettiTable[received_slave]);
 			betti_boundarysize[received_slave].resize(sizeOfBettiTable[received_slave]);
-			MPI_Irecv(&betti_dim[received_slave][0],sizeOfBettiTable[received_slave],MPI_UNSIGNED,received_slave+1,1,MPI_COMM_WORLD,&reqr2);
-			MPI_Irecv(&betti_birth[received_slave][0],sizeOfBettiTable[received_slave],MPI_DOUBLE,received_slave+1,2,MPI_COMM_WORLD,&reqr3);
-			MPI_Irecv(&betti_death[received_slave][0],sizeOfBettiTable[received_slave],MPI_DOUBLE,received_slave+1,3,MPI_COMM_WORLD,&reqr4);
-			MPI_Irecv(&betti_boundarysize[received_slave][0],sizeOfBettiTable[received_slave],MPI_INT,received_slave+1,4,MPI_COMM_WORLD,&reqr5);
+			MPI_Irecv(&betti_dim[received_slave][0],sizeOfBettiTable[received_slave],MPI_UNSIGNED,received_slave+1,1,MPI_COMM_WORLD,&reqr2[received_slave]);
+			MPI_Irecv(&betti_birth[received_slave][0],sizeOfBettiTable[received_slave],MPI_DOUBLE,received_slave+1,2,MPI_COMM_WORLD,&reqr3[received_slave]);
+			MPI_Irecv(&betti_death[received_slave][0],sizeOfBettiTable[received_slave],MPI_DOUBLE,received_slave+1,3,MPI_COMM_WORLD,&reqr4[received_slave]);
+			MPI_Irecv(&betti_boundarysize[received_slave][0],sizeOfBettiTable[received_slave],MPI_INT,received_slave+1,4,MPI_COMM_WORLD,&reqr5[received_slave]);
 	    	int flag1=0;
 			MPI_Status statusr2;
 			int received_slave1;
@@ -338,16 +338,17 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 					break;
 			}
 			betti_boundaries[received_slave1].resize(bound_size[received_slave1]);
-			MPI_Irecv(&betti_boundaries[received_slave1][0],bound_size[received_slave1],MPI_UNSIGNED,received_slave1+1,6,MPI_COMM_WORLD,&reqr7);
+			MPI_Irecv(&betti_boundaries[received_slave1][0],bound_size[received_slave1],MPI_UNSIGNED,received_slave1+1,6,MPI_COMM_WORLD,&reqr7[received_slave1]);
 			
 	    }	
 		MPI_Status status;
-		MPI_Wait(&reqr2,&status);
-		MPI_Wait(&reqr3,&status);
-		MPI_Wait(&reqr4,&status);
-		MPI_Wait(&reqr5,&status);
-		MPI_Wait(&reqr7,&status);
-		
+		for(int i=0;i<nprocs-1;i++){
+			MPI_Wait(&reqr2[i],&status);
+			MPI_Wait(&reqr3[i],&status);
+			MPI_Wait(&reqr4[i],&status);
+			MPI_Wait(&reqr5[i],&status);
+			MPI_Wait(&reqr7[i],&status);
+		}
 			for(int p =0;p<nprocs-1;p++){
 				int beg = 0;
 				for(int i=0;i<sizeOfBettiTable[p];i++){
