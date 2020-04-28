@@ -482,26 +482,24 @@ std::vector<std::vector<std::pair<std::set<unsigned>,double>>> simplexTree::getA
 
 //Search for a simplex from a node in the tree
 simplexTree::treeNode* simplexTree::find(std::set<unsigned>::iterator it, std::set<unsigned>::iterator end, treeNode* curNode){
-	if(curNode == nullptr) return nullptr;
 	while(it != end){
-		while(curNode->index != *it){
-			if(curNode->index == *it){ //Found the vertex
-				break;
-			} else{
-				curNode = curNode->sibling;
-				if(curNode == nullptr) return nullptr; //Can't locate the next vertex in the cofacet
-			}
+		if(curNode == nullptr) return nullptr;
+		while(curNode->index < *it){ //Haven't yet found the vertex
+			curNode = curNode->sibling;
+			if(curNode == nullptr) return nullptr; //Can't locate the next vertex in the cofacet
 		}
 
-		++it;
-		if(it != end) curNode = curNode->child; //Search for the next vertex in the next level
+		if(curNode->index == *it){
+			++it;
+			if(it != end) curNode = curNode->child; //Search for the next vertex in the next level
+		} else return nullptr;
 	}
+
 	return curNode;
 }
 
-std::vector<std::pair<std::set<unsigned>, double>> simplexTree::getAllCofacets(const std::set<unsigned>& simplex){
-	std::vector<std::pair<std::set<unsigned>, double>> ret;
-	std::set<unsigned> tempSimplex;
+std::vector<simplexTree::treeNode*> simplexTree::getAllCofacets(const std::set<unsigned>& simplex){
+	std::vector<treeNode*> ret;
 	treeNode* parentNode = find(simplex.begin(), simplex.end(), head);
 	if(parentNode == nullptr) return ret; //Simplex isn't in the simplex tree	
 
@@ -513,15 +511,11 @@ std::vector<std::pair<std::set<unsigned>, double>> simplexTree::getAllCofacets(c
 		if(it != simplex.begin()) curNode = parentNode->child; 
 		else curNode = head;
 
-		while(curNode != nullptr){
+		while(curNode != nullptr && (it == simplex.end() ? true : curNode->index < *it)){
 			if(it == simplex.end()) tempNode = curNode;
 			else tempNode = find(it, simplex.end(), curNode->child); //See if the cofacet is in the tree
-			
-			if(tempNode != nullptr){ //Cofacet exists
-				tempSimplex = simplex;
-				tempSimplex.insert(curNode->index);
-				ret.push_back(make_pair(tempSimplex, tempNode->weight));
-			}
+
+			if(tempNode != nullptr) ret.push_back(tempNode); //Cofacet exists
 			curNode = curNode->sibling; //Iterate over which extra index to add
 		}
 
