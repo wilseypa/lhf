@@ -7,7 +7,7 @@
 class simplexTree : public simplexBase {
   private:
 	bool isSorted = false;
-	int nodeCount;
+	long long nodeCount = 0;
 	std::vector<std::vector<std::pair<std::set<unsigned>, double>>> weightEdgeGraph;
 
 	void insertInductive();
