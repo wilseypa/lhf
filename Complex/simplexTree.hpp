@@ -10,12 +10,20 @@ class simplexTree : public simplexBase {
 	int nodeCount;
 	std::vector<std::vector<std::pair<std::set<unsigned>, double>>> weightEdgeGraph;
 
-	void insertInductive();
+	// void insertInductive();
 
   public:
 	struct treeNode{
 		unsigned index;
+		
+		struct cmpByIndex{
+			bool operator()(const treeNode* lhs, const treeNode* rhs) const{
+				return lhs->index < rhs->index;
+			}
+		};
+		
 		std::set<unsigned> simplex;
+		std::set<treeNode*, cmpByIndex> children;
 		treeNode* child = nullptr;
 		treeNode* sibling = nullptr;
 		treeNode* parent = nullptr;
@@ -23,6 +31,7 @@ class simplexTree : public simplexBase {
 	};
 
 	treeNode* head;
+	treeNode* root;
 	std::vector<treeNode*> dimensions;
 
 	simplexTree(std::vector<std::vector<double>>);
