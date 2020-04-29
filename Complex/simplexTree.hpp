@@ -43,7 +43,7 @@ class simplexTree : public simplexBase {
 	void deleteIndexRecurse(int, treeNode*);
 	void deleteWeightEdgeGraph(int index);
 	treeNode* find(std::set<unsigned>::iterator, std::set<unsigned>::iterator, treeNode*);
-	std::vector<treeNode*> getAllCofacets(const std::set<unsigned>&);
+	std::vector<treeNode*> getAllCofacets(const std::set<unsigned>&, bool = false, double = 0);
 
 	//virtual interface functions
 	double getSize();
