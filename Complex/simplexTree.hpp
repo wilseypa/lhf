@@ -30,7 +30,7 @@ class simplexTree : public simplexBase {
 		double weight = 0;
 	};
 
-	treeNode* head;
+	treeNode* head = nullptr;
 	treeNode* root;
 	std::vector<treeNode*> dimensions;
 

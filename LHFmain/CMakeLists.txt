@@ -13,7 +13,7 @@ add_definitions(-DOMPI_SKIP_MPICXX)
 include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 
 set (CMAKE_CXX_STANDARD 14)
-set (CMAKE_CXX_STANDARD_LIBRARIES "-lpthread")
+set (CMAKE_CXX_STANDARD_LIBRARIES "-lpthread -lmpi")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
 include_directories(../Complex)

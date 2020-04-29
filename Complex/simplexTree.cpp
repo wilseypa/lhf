@@ -470,6 +470,7 @@ double simplexTree::getSize(){
 
 
 std::vector<std::vector<std::pair<std::set<unsigned>,double>>> simplexTree::getAllEdges(double epsilon){
+  
 	if(!isSorted){
 		for (int i = 0; i < weightEdgeGraph.size(); i++)
 			std::sort(weightEdgeGraph[i].begin(), weightEdgeGraph[i].end(), ut.sortBySecond);

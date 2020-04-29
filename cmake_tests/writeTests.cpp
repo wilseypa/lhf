@@ -3,6 +3,7 @@
 #include <vector>
 #include "writeOutput.hpp"
 #include "readInput.hpp"
+#include "utils.hpp"
 
 // TEST write Functions
 void t_write_functions(std::string &log){
@@ -10,6 +11,7 @@ void t_write_functions(std::string &log){
 	std::string failLog = "";
 	std::vector<std::vector<double>> testValueArray {{0.0, 1.0, 2.0},{2.0, 1.0, 0.0}, {1.0, 1.0, 2.0}, \
 													 {1.1, 1.1, 1.2},{0.0, 0.4, 1.0}, {1.5, 1.5, 0.0}	};
+	std::vector<bettiBoundaryTableEntry> bettiTable;
 	
 	//Attempt to write stats
 	// RET: bool
@@ -40,11 +42,7 @@ void t_write_functions(std::string &log){
 	
 	//Attempt to write Barcodes
 	// RET: bool
-	if(!ws->writeBarcodes(testValueArray,"test")){ failLog += "writeOutput writeBarcodes failed\n"; }
-	
-	//Attempt to write Barcodes
-	// RET: bool
-	if(!ws->writeBarcodes("test","test")){ failLog += "writeOutput writeBarcodes(str,str) failed\n"; }
+	if(!ws->writeBarcodes(bettiTable,"barcodeOutput")){ failLog += "writeOutput writeBarcodes(str,str) failed\n"; }
 	
 	//Remove the files
 	std::remove("test.csv");
