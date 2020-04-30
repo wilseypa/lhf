@@ -10,8 +10,6 @@ class simplexTree : public simplexBase {
 	long long nodeCount = 0;
 	std::vector<std::vector<std::pair<std::set<unsigned>, double>>> weightEdgeGraph;
 
-	void insertInductive();
-
   public:
 	struct treeNode{
 		unsigned index;
