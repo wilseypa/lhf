@@ -10,12 +10,20 @@ class simplexTree : public simplexBase {
 	int nodeCount;
 	std::vector<std::vector<std::pair<std::set<unsigned>, double>>> weightEdgeGraph;
 
-	void insertInductive();
+	// void insertInductive();
 
   public:
 	struct treeNode{
 		unsigned index;
+		
+		struct cmpByIndex{
+			bool operator()(const treeNode* lhs, const treeNode* rhs) const{
+				return lhs->index < rhs->index;
+			}
+		};
+		
 		std::set<unsigned> simplex;
+		std::set<treeNode*, cmpByIndex> children;
 		treeNode* child = nullptr;
 		treeNode* sibling = nullptr;
 		treeNode* parent = nullptr;
@@ -23,6 +31,7 @@ class simplexTree : public simplexBase {
 	};
 
 	treeNode* head = nullptr;
+	treeNode* root;
 	std::vector<treeNode*> dimensions;
 
 	simplexTree(std::vector<std::vector<double>>);
@@ -33,6 +42,8 @@ class simplexTree : public simplexBase {
 	double findWeight(std::set<unsigned>);
 	void deleteIndexRecurse(int, treeNode*);
 	void deleteWeightEdgeGraph(int index);
+	treeNode* find(std::set<unsigned>::iterator, std::set<unsigned>::iterator, treeNode*);
+	std::vector<treeNode*> getAllCofacets(const std::set<unsigned>&);
 
 	//virtual interface functions
 	double getSize();

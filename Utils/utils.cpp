@@ -47,19 +47,31 @@ std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vecto
 std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> utils::separatePartitions(double rad, std::vector<std::vector<double>> centroids, std::vector<std::vector<double>> originalData, std::vector<unsigned> labels){
 	std::vector<std::vector<double>> a;
 	std::vector<unsigned> b;
+	
+	//Store the results to return
 	std::vector<std::vector<std::vector<double>>> res(centroids.size(), a);
 	std::vector<std::vector<unsigned>> labres(centroids.size(), b);
-	
+
+	//Iterate through each label
 	for(unsigned i = 0; i < labels.size(); i++){
+		
 		//Check for this point belonging to each centroid
 		for(unsigned j = 0; j < centroids.size(); j++){
-			double curRad = vectors_distance(originalData[i], centroids[j]);
-			
-			//If this distance is less than our radius cutoff
-			if(curRad < rad){
-				res[j].push_back(originalData[i]);
-				labres[j].push_back(i);	
-			}	
+			if(labels[i] == j){
+				//If this is a labeled constituent put to front of array
+				res[j].insert(res[j].begin(), originalData[i]);
+				labres[j].insert(labres[j].begin(), i);
+				
+			}else{
+				
+				double curRad = vectors_distance(originalData[i], centroids[j]);
+				
+				//If this distance is less than our radius cutoff push to back
+				if(curRad < rad){
+					res[j].push_back(originalData[i]);
+					labres[j].push_back(i);	
+				}	
+			}
 		}
 	}
 	
