@@ -498,15 +498,10 @@ simplexTree::treeNode* simplexTree::find(std::set<unsigned>::iterator it, std::s
 	}
 
 	delete temp;
-
 	return curNode;
 }
 
-std::vector<simplexBase::treeNode*> simplexTree::getAllCofacets(const std::set<unsigned>& simplex){
-	return getAllCofacets(simplex, false, 0);
-}
-
-std::vector<simplexBase::treeNode*> simplexTree::getAllCofacets(const std::set<unsigned>& simplex, bool checkEmergent, double simplexWeight){
+std::vector<simplexBase::treeNode*> simplexTree::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<treeNode*, unsigned>& pivotPairs, bool checkEmergent){
 	std::vector<treeNode*> ret;
 	treeNode* parentNode = find(simplex.begin(), simplex.end(), root);
 	if(parentNode == nullptr) return ret; //Simplex isn't in the simplex tree	
@@ -520,7 +515,18 @@ std::vector<simplexBase::treeNode*> simplexTree::getAllCofacets(const std::set<u
 			if(it == simplex.end()) ret.push_back(*itS); //All children of simplex are cofacets
 			else{
 				tempNode = find(it, simplex.end(), *itS); //See if cofacet is in the tree
-				if(tempNode != nullptr) ret.push_back(tempNode);
+				if(tempNode != nullptr){
+					ret.push_back(tempNode);
+
+
+					//If we haven't found an emergent candidate and the weight of the maximal cofacet is equal to the simplex's weight
+					//		we have identified an emergent pair; at this point we can break because the interval is born and dies at the 
+					//		same epsilon
+					if(checkEmergent && tempNode->weight == simplexWeight){
+						if(pivotPairs.find(tempNode) == pivotPairs.end()) return ret; //Check to make sure the identified cofacet isn't a pivot
+						checkEmergent = false;
+					}
+				}
 			}
 		}
 

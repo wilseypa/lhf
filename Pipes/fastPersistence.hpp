@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 #include "basePipe.hpp"
+#include "simplexBase.hpp"
 
 class unionFind{
 	private:
@@ -14,12 +15,19 @@ class unionFind{
 		bool join(int x, int y);
 };
 
-class binomialTable{
-	private:
-		std::vector<std::vector<long long>> v; 
-	public:
-		binomialTable(unsigned n, unsigned k);
-		long long binom(unsigned n, unsigned k);
+struct cmpBySecond{ //Sort nodes by weight, then by lexicographic order
+	bool operator()(simplexBase::treeNode* a, simplexBase::treeNode* b) const{
+		if(a->weight == b->weight){ //If the simplices have the same weight, sort by reverse lexicographic order for fastPersistence
+			auto itA = a->simplex.rbegin(), itB = b->simplex.rbegin();
+			while(itA != a->simplex.rend()){
+				if(*itA != *itB) return *itA < *itB;
+				++itA; ++itB;
+			}
+			return false;
+		} else{
+			return a->weight > b->weight;
+		}
+	}
 };
 
 class fastPersistence : public basePipe {
@@ -27,9 +35,6 @@ class fastPersistence : public basePipe {
 	utils ut;
 	int shift = 0;
 	double maxEpsilon;
-	long long ripsIndex(std::set<unsigned>& simplex, binomialTable& bin);
-	unsigned maxVertex(long long ripsIndex, unsigned high, unsigned low, unsigned k, binomialTable &bin);
-	std::vector<unsigned> getVertices(long long ripsIndex, int dim, unsigned n, binomialTable &bin);
   public:
 	int dim;
     fastPersistence();

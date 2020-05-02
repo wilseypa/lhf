@@ -1,6 +1,7 @@
 #pragma once
 #include "simplexBase.hpp"
 #include <set>
+#include <unordered_map>
 
 // Header file for simplexTree class - see simplexTree.cpp for descriptions
 
@@ -39,8 +40,7 @@ class simplexTree : public simplexBase {
 	int vertexCount();
 	std::vector<std::vector<unsigned>> getDimEdges(int,double);
 	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> getAllEdges(double);
-	std::vector<treeNode*> getAllCofacets(const std::set<unsigned>&);
-	std::vector<treeNode*> getAllCofacets(const std::set<unsigned>&, bool, double);
+	std::vector<treeNode*> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<treeNode*, unsigned>&, bool);
 	bool deletion(std::set<unsigned>);
 	bool deletion(treeNode*);
 	void expandDimensions(int){return;};
