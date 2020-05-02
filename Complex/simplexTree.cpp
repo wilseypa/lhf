@@ -61,6 +61,7 @@ void simplexTree::recurseInsert(treeNode* node, unsigned curIndex, int depth, do
 
 		//Get the largest weight of this simplex
 		insNode->weight = curE > node->weight ? curE : node->weight;
+		maxE = insNode->weight;
 		
 		//if depth (i.e. 1 for first iteration) is LT weightGraphSize (starts at 1)
 		if(weightEdgeGraph.size() < simp.size()){
