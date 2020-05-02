@@ -109,8 +109,11 @@
 		
 		utils ut;
 		
+		//Separate our partitions for distribution
 		auto maxRadius = ut.computeMaxRadius(std::atoi(args["clusters"].c_str()), wD->originalData, wD->fullData, wD->originalLabels);
-		
+		auto avgRadius = ut.computeAvgRadius(std::atoi(args["clusters"].c_str()), wD->originalData, wD->fullData, wD->originalLabels);
+			
+		std::cout << "Using maxRadius: " << maxRadius << "\tavgRadius: " << avgRadius<< std::endl;
 		std:vector<unsigned> binCounts;
 		for(unsigned a = 0; a < std::atoi(args["clusters"].c_str()); a++){
 			binCounts.push_back(std::count(wD->originalLabels.begin(), wD->originalLabels.end(), a));
@@ -119,11 +122,20 @@
 		ut.print1DVector(binCounts);
 		
 		auto centroids = wD->originalData;
-		std::cout << "Using maxRadius: " << maxRadius << std::endl;
 		
-		auto partitionedData = ut.separatePartitions(2*maxRadius, wD->originalData, wD->fullData, wD->originalLabels);
+		auto partitionedData = ut.separatePartitions(avgRadius, wD->originalData, wD->fullData, wD->originalLabels);
 		
 		std::cout << "Partitions: " << partitionedData.second.size() << std::endl << "Counts: ";
+		
+		
+		std::vector<unsigned> partitionsize;
+		//Get the partition sizes
+		for(auto a: partitionedData.second)
+			 partitionsize.push_back(a.size());
+
+		int partitionsize_size = partitionsize.size();
+		ut.print1DVector(partitionsize);
+		
 		for(unsigned z = 0; z < partitionedData.second.size(); z++){
 			if(partitionedData.second[z].size() > 0){
 				std::cout << "Running Pipeline with : " << partitionedData.second[z].size() << " vectors" << std::endl;
@@ -163,7 +175,7 @@
 			std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
 			ut.print1DVector(a.boundaryPoints);
 		}
-		
+    
 		//Output the data using writeOutput library
 		auto pipe = args.find("outputFile");
 		if(pipe != args.end()){
@@ -216,7 +228,7 @@
 			if(pre != ""){
 				auto *preprocess = new preprocessor();
 				auto *prePipe = preprocess->newPreprocessor(pre);
-				
+        
 				if(prePipe != 0 && prePipe->configPreprocessor(args)){
 					*wD = prePipe->runPreprocessorWrapper(*wD);
 				} else {
@@ -226,9 +238,11 @@
 			
 			//Separate our partitions for distribution
 			auto maxRadius = ut.computeMaxRadius(std::atoi(args["clusters"].c_str()), wD->originalData, wD->fullData, wD->originalLabels);
+			auto avgRadius = ut.computeAvgRadius(std::atoi(args["clusters"].c_str()), wD->originalData, wD->fullData, wD->originalLabels);
 			auto centroids = wD->originalData;
-			auto partitionedData = ut.separatePartitions(2*maxRadius, wD->originalData, wD->fullData, wD->originalLabels);
+			auto partitionedData = ut.separatePartitions(2*avgRadius, wD->originalData, wD->fullData, wD->originalLabels);
 			
+			std::cout << "Using maxRadius: " << maxRadius << "\tavgRadius: " << avgRadius<< std::endl;
 			//	Each node/slave will process at least 1 partition
 			//		NOTE: the partition may contain points outside partition that are within 2*Rmax
 			int minPartitions = partitionedData.second.size() / (nprocs-1);
@@ -246,6 +260,7 @@
 			
 			
 			MPI_Request req;
+			int part_size;
 			//Sending the data dimensions to slaves	; Asynchronous, send all data at once
 			for(int i=1;i<nprocs;i++){			
 				MPI_Isend(&dimension,1,MPI_INT,i,1,MPI_COMM_WORLD,&req);				//Data dimension
@@ -254,21 +269,29 @@
 				
 				//For first k partitions, use minPartitions + 1 partitions
 				if(i<=firstk){
-					int part_size = minPartitions +1;
+					part_size = minPartitions +1;
 					MPI_Isend(&part_size,1,MPI_INT,i,1,MPI_COMM_WORLD,&req);			
 				}
 				//For remaining n-k partitions, use minPartitions
 				else
 					MPI_Isend(&minPartitions,1,MPI_INT,i,1,MPI_COMM_WORLD,&req);			
 			}
+			std::vector<std::vector<std::vector<double>>> part(nprocs-1);
 			
 			//Sending Partitions and labels to slaves
 			for(int k =1; k < nprocs; k++){
+				if(k<=firstk)
+     				part[k-1].resize(minPartitions+1);
+				else
+					part[k-1].resize(minPartitions);
+				int p=0;
 				for(int i=k-1; i<partitionsize_size; i += (nprocs-1)){
-					std::vector<double> part = ut.serialize(partitionedData.second[i]);
-					MPI_Isend(&part[0], part.size(), MPI_DOUBLE, k, 1, MPI_COMM_WORLD,&req);		//Partition
-					MPI_Isend(&partitionedData.first[i],partitionedData.first[i].size(),MPI_UNSIGNED,k,1,MPI_COMM_WORLD,&req);	//Labels
-				}
+					part[k-1][p].resize(partitionedData.second[i].size()*dimension);
+					part[k-1][p] = ut.serialize(partitionedData.second[i]);
+					MPI_Isend(&part[k-1][p][0], part[k-1][p].size(), MPI_DOUBLE, k, 1, MPI_COMM_WORLD,&req);		//Partition
+					MPI_Isend(&partitionedData.first[i][0],partitionedData.first[i].size(),MPI_UNSIGNED,k,1,MPI_COMM_WORLD,&req);	//Labels
+	        		p++;					
+     			}
 			}
 			
 			//Run the centroid replaced data set through master while other processes execute on partitions
@@ -298,12 +321,12 @@
 			MPI_Request reqr1[nprocs-1];
 			MPI_Request reqr6[nprocs-1];
 			
-			std::vector<int> ck1(nprocs-1);
-			for(int i=0;i<nprocs-1;i++)
+			std::vector<unsigned> ck1(nprocs-1);
+			for(unsigned i=0;i<nprocs-1;i++)
 				ck1[i]=i;
 			
-			std::vector<int> ck2(nprocs-1);
-			for(int i=0;i<nprocs-1;i++)
+			std::vector<unsigned> ck2(nprocs-1);
+			for(unsigned i=0;i<nprocs-1;i++)
 				ck2[i]=i;
 				
 			
@@ -311,74 +334,75 @@
 				MPI_Irecv(&sizeOfBettiTable[k-1],1,MPI_INT,k,0,MPI_COMM_WORLD,&reqr1[k-1]);
 				MPI_Irecv(&bound_size[k-1],1,MPI_INT,k,5,MPI_COMM_WORLD,&reqr6[k-1]);
 			}
-			
-			MPI_Request reqr2;
-			MPI_Request reqr3;
-			MPI_Request reqr4;
-			MPI_Request reqr5;
-			MPI_Request reqr7;
-			
-			for(int k=1; k < nprocs; k++){
-				int flag=0;
-				MPI_Status statusr1;
-				int received_slave;
-				while(ck1.size()>0){
-					for(auto c : ck1){
-						MPI_Test(&reqr1[c],&flag,&statusr1);
-						if(flag==1){
-							ck1.erase(std::remove(ck1.begin(), ck1.end(), c), ck1.end());
-							received_slave = c;
-							break;
-						}					
-					}
-					if(flag==1)
+	
+		MPI_Request reqr2[nprocs-1];
+		MPI_Request reqr3[nprocs-1];
+		MPI_Request reqr4[nprocs-1];
+		MPI_Request reqr5[nprocs-1];
+		MPI_Request reqr7[nprocs-1];
+		
+		for(int k=1; k < nprocs; k++){
+            int flag=0;
+			int received_slave;
+			while(ck1.size()>0){
+				for(auto c : ck1){
+					MPI_Test(&reqr1[c],&flag,MPI_SUCCESS);
+					if(flag!=0){
+						received_slave = c;
+						ck1.erase(std::remove(ck1.begin(), ck1.end(), c), ck1.end());
 						break;
-				}
-			std::cout << "Receiving data from slaves..."<<received_slave+1<< std::endl;
-				
-				betti_dim[received_slave].resize(sizeOfBettiTable[received_slave]);
-				betti_birth[received_slave].resize(sizeOfBettiTable[received_slave]);
-				betti_death[received_slave].resize(sizeOfBettiTable[received_slave]);
-				betti_boundarysize[received_slave].resize(sizeOfBettiTable[received_slave]);
-				MPI_Irecv(&betti_dim[received_slave][0],sizeOfBettiTable[received_slave],MPI_UNSIGNED,received_slave+1,1,MPI_COMM_WORLD,&reqr2);
-				MPI_Irecv(&betti_birth[received_slave][0],sizeOfBettiTable[received_slave],MPI_DOUBLE,received_slave+1,2,MPI_COMM_WORLD,&reqr3);
-				MPI_Irecv(&betti_death[received_slave][0],sizeOfBettiTable[received_slave],MPI_DOUBLE,received_slave+1,3,MPI_COMM_WORLD,&reqr4);
-				MPI_Irecv(&betti_boundarysize[received_slave][0],sizeOfBettiTable[received_slave],MPI_INT,received_slave+1,4,MPI_COMM_WORLD,&reqr5);
-				int flag1=0;
-				MPI_Status statusr2;
-				int received_slave1;
-				while(ck2.size()>0){
-					for(auto c : ck2){
-						MPI_Test(&reqr6[c],&flag1,&statusr2);
-						if(flag1==1){
-							ck2.erase(std::remove(ck2.begin(), ck2.end(), c), ck2.end());
-							received_slave1 = c;
-							break;
-						}					
-					}
-					if(flag1==1)
-						break;
-				}
-				betti_boundaries[received_slave1].resize(bound_size[received_slave1]);
-				MPI_Irecv(&betti_boundaries[received_slave1][0],bound_size[received_slave1],MPI_UNSIGNED,received_slave1+1,6,MPI_COMM_WORLD,&reqr7);
-				
-			}	
-			MPI_Status status;
-			MPI_Wait(&reqr2,&status);
-			MPI_Wait(&reqr3,&status);
-			MPI_Wait(&reqr4,&status);
-			MPI_Wait(&reqr5,&status);
-			MPI_Wait(&reqr7,&status);
+					}					
+			    }
+				if(flag!=0)
+					break;
+			}
+		std::cout << "Receiving data from slaves..."<<received_slave+1<< std::endl;
+    		
+			betti_dim[received_slave].resize(sizeOfBettiTable[received_slave]);
+			betti_birth[received_slave].resize(sizeOfBettiTable[received_slave]);
+			betti_death[received_slave].resize(sizeOfBettiTable[received_slave]);
+			betti_boundarysize[received_slave].resize(sizeOfBettiTable[received_slave]);
+			MPI_Irecv(&betti_dim[received_slave][0],sizeOfBettiTable[received_slave],MPI_UNSIGNED,received_slave+1,1,MPI_COMM_WORLD,&reqr2[received_slave]);
+			MPI_Irecv(&betti_birth[received_slave][0],sizeOfBettiTable[received_slave],MPI_DOUBLE,received_slave+1,2,MPI_COMM_WORLD,&reqr3[received_slave]);
+			MPI_Irecv(&betti_death[received_slave][0],sizeOfBettiTable[received_slave],MPI_DOUBLE,received_slave+1,3,MPI_COMM_WORLD,&reqr4[received_slave]);
+			MPI_Irecv(&betti_boundarysize[received_slave][0],sizeOfBettiTable[received_slave],MPI_INT,received_slave+1,4,MPI_COMM_WORLD,&reqr5[received_slave]);
+	    	int flag1=0;
+			int received_slave1;
 			
-				for(int p =0;p<nprocs-1;p++){
-					int beg = 0;
-					for(int i=0;i<sizeOfBettiTable[p];i++){
-						bettiBoundaryTableEntry bettiEntry;
-						bettiEntry.bettiDim = betti_dim[p][i];
-						bettiEntry.birth = betti_birth[p][i];
-						bettiEntry.death = betti_death[p][i];
-					
-						for(int bi = beg;bi<(beg+betti_boundarysize[p][i]);bi++)
+			while(ck2.size()>0){
+				for(auto c : ck2){
+					MPI_Test(&reqr6[c],&flag1,MPI_SUCCESS);
+					if(flag1!=0){
+						ck2.erase(std::remove(ck2.begin(), ck2.end(), c), ck2.end());
+						received_slave1 = c;
+						break;
+					}					
+			    }
+				if(flag1!=0)
+					break;
+			}
+			betti_boundaries[received_slave1].resize(bound_size[received_slave1]);
+			MPI_Irecv(&betti_boundaries[received_slave1][0],bound_size[received_slave1],MPI_UNSIGNED,received_slave1+1,6,MPI_COMM_WORLD,&reqr7[received_slave1]);
+			
+	    }	
+		for(int i=0;i<nprocs-1;i++){
+			MPI_Wait(&reqr1[i],MPI_SUCCESS);
+			MPI_Wait(&reqr2[i],MPI_SUCCESS);
+			MPI_Wait(&reqr3[i],MPI_SUCCESS);
+			MPI_Wait(&reqr4[i],MPI_SUCCESS);
+			MPI_Wait(&reqr5[i],MPI_SUCCESS);		
+			MPI_Wait(&reqr6[i],MPI_SUCCESS);
+			MPI_Wait(&reqr7[i],MPI_SUCCESS);
+		}
+		
+		for(int p =0;p<nprocs-1;p++){
+				int beg = 0;
+				for(int i=0;i<sizeOfBettiTable[p];i++){
+					bettiBoundaryTableEntry bettiEntry;
+					bettiEntry.bettiDim = betti_dim[p][i];
+					bettiEntry.birth = betti_birth[p][i];
+					bettiEntry.death = betti_death[p][i];
+					for(int bi = beg;bi<(beg+betti_boundarysize[p][i]);bi++)
 							bettiEntry.boundaryPoints.insert(betti_boundaries[p][bi]);
 					
 						beg +=betti_boundarysize[p][i];
@@ -387,8 +411,6 @@
 				}
 				
 			
-			
-		
 			std::cout << std::endl << "_______BETTIS_______" << std::endl;
 		
 			std::cout << std::endl << "mergedMasterBettiTable size is :: " << mergedMasterBettiTable.size() << std::endl;
@@ -413,35 +435,28 @@
 			//	the partition table and size or dynamically allocating the partsize vector here (push_back)
 			std::vector<unsigned> partsize;
 			int partsize_size;
-			MPI_Status status;
 			MPI_Request req;
 			//MPI_RECV( &Data, Size, 
 			//Get the dimension of data coming in
-			MPI_Status status1;
 			MPI_Request req1;
 			MPI_Irecv(&dim,1,MPI_INT,0,1,MPI_COMM_WORLD,&req1);
 			
 			//Get the total number of partitions
-			MPI_Status status2;
 			MPI_Request req2;
 			MPI_Irecv(&partsize_size,1,MPI_INT,0,1,MPI_COMM_WORLD,&req2);
-			MPI_Wait(&req2,&status2);
+			MPI_Wait(&req2,MPI_SUCCESS);
 			partsize.resize(partsize_size);
 			
 			//Get the partition sizes
-			MPI_Status status3;
 			MPI_Request req3;
 			MPI_Irecv(&partsize[0],partsize_size,MPI_UNSIGNED,0,1,MPI_COMM_WORLD,&req3);
 			
 			int no_of_partition;
-			MPI_Status status4;
 			MPI_Request req4;
 			MPI_Irecv(&no_of_partition,1,MPI_INT,0,1,MPI_COMM_WORLD,&req4);
 			
 			std::vector<std::vector<double>> flatPartitions(no_of_partition);
-			std::vector<std::vector<unsigned>> labels(no_of_partition);
-
-			int p=0;	
+			std::vector<std::vector<unsigned>> labels(no_of_partition);	
 		
 			//std::vector<bettiBoundaryTableEntry> mergedBettiTableSlave;
 			std::vector<unsigned> betti_dim;
@@ -450,9 +465,9 @@
 			std::vector<unsigned> betti_boundarysize;
 			std::vector<unsigned> betti_boundaries;
 		
-			MPI_Wait(&req1,&status1);
-			MPI_Wait(&req3,&status3);
-			MPI_Wait(&req4,&status4);
+			MPI_Wait(&req1,MPI_SUCCESS);
+			MPI_Wait(&req3,MPI_SUCCESS);
+			MPI_Wait(&req4,MPI_SUCCESS);
 			MPI_Request req5[no_of_partition];	
 			MPI_Request req6[no_of_partition];			
 			for(unsigned z = 0; z < no_of_partition; z++){
@@ -465,27 +480,25 @@
 				MPI_Irecv(&labels[z][0],lsize,MPI_UNSIGNED,0,1,MPI_COMM_WORLD,&req6[z]);
 			}
 			
-			std::vector<int> ck(no_of_partition);
-			for(int i=0;i<no_of_partition;i++)
+			std::vector<unsigned> ck(no_of_partition);
+			for(unsigned i=0;i<no_of_partition;i++)
 				ck[i]=i;
 			
 			for(unsigned z = 0; z < no_of_partition; z++){
 				int flag =0;
 				int received_partition;
-				MPI_Status status6;			
-				MPI_Status status5;			
 				//Look for partition to recieve
 				while(ck.size()>0){
 					for(auto c : ck){
-						MPI_Test(&req5[c],&flag,&status5);
-						if(flag==1){
-							MPI_Wait(&req6[c],&status6);
-							ck.erase(std::remove(ck.begin(), ck.end(), c), ck.end());
+						MPI_Test(&req5[c],&flag,MPI_SUCCESS);
+						if(flag!=0){
+							MPI_Wait(&req6[c],MPI_SUCCESS);
 							received_partition = c;
+							ck.erase(std::remove(ck.begin(), ck.end(), c), ck.end());
 							break;
 						}					
 					}
-					if(flag==1)
+					if(flag!=0)
 						break;
 				}
 			auto partitionedData = ut.deserialize(flatPartitions[received_partition],dim);
@@ -512,45 +525,38 @@
 			
 				//Sending of merged betti results back to master (but this should be done after all partitions are finished)
 				int bettiTableSize = betti_dim.size();
-				MPI_Status statuss1;
-				MPI_Request reqs1;
-				MPI_Isend(&bettiTableSize,1,MPI_INT,0,p++,MPI_COMM_WORLD,&reqs1);
+			    MPI_Request reqs1;
+				MPI_Isend(&bettiTableSize,1,MPI_INT,0,0,MPI_COMM_WORLD,&reqs1);
 				
-				MPI_Status statuss2;
 				MPI_Request reqs2;
-				MPI_Isend(&betti_dim[0],bettiTableSize,MPI_UNSIGNED,0,p++,MPI_COMM_WORLD,&reqs2);
+				MPI_Isend(&betti_dim[0],bettiTableSize,MPI_UNSIGNED,0,1,MPI_COMM_WORLD,&reqs2);
 				
-				MPI_Status statuss3;
 				MPI_Request reqs3;
-				MPI_Isend(&betti_birth[0],bettiTableSize,MPI_DOUBLE,0,p++,MPI_COMM_WORLD,&reqs3);
+				MPI_Isend(&betti_birth[0],bettiTableSize,MPI_DOUBLE,0,2,MPI_COMM_WORLD,&reqs3);
 				
-				MPI_Status statuss4;
 				MPI_Request reqs4;
-				MPI_Isend(&betti_death[0],bettiTableSize,MPI_DOUBLE,0,p++,MPI_COMM_WORLD,&reqs4);
+				MPI_Isend(&betti_death[0],bettiTableSize,MPI_DOUBLE,0,3,MPI_COMM_WORLD,&reqs4);
 				
-				MPI_Status statuss5;
 				MPI_Request reqs5;
-				MPI_Isend(&betti_boundarysize[0],bettiTableSize,MPI_UNSIGNED,0,p++,MPI_COMM_WORLD,&reqs5);
+				MPI_Isend(&betti_boundarysize[0],bettiTableSize,MPI_UNSIGNED,0,4,MPI_COMM_WORLD,&reqs5);
 				
 				int bound_size = 0;
 				for(auto e :betti_boundarysize)
 					bound_size += e;
 				
-				MPI_Status statuss6;
 				MPI_Request reqs6;
-				MPI_Isend(&bound_size,1,MPI_INT,0,p++,MPI_COMM_WORLD,&reqs6);
+				MPI_Isend(&bound_size,1,MPI_INT,0,5,MPI_COMM_WORLD,&reqs6);
 				
-				MPI_Status statuss7;
 				MPI_Request reqs7;
-				MPI_Isend(&betti_boundaries[0],bound_size,MPI_UNSIGNED,0,p++,MPI_COMM_WORLD,&reqs7);
+				MPI_Isend(&betti_boundaries[0],bound_size,MPI_UNSIGNED,0,6,MPI_COMM_WORLD,&reqs7);
 		
-				MPI_Wait(&reqs1,&statuss1);	
-				MPI_Wait(&reqs2,&statuss2);
-				MPI_Wait(&reqs3,&statuss3);
-				MPI_Wait(&reqs4,&statuss4);
-				MPI_Wait(&reqs5,&statuss5);
-				MPI_Wait(&reqs6,&statuss6);
-				MPI_Wait(&reqs7,&statuss7);
+				MPI_Wait(&reqs1,MPI_SUCCESS);	
+				MPI_Wait(&reqs2,MPI_SUCCESS);
+				MPI_Wait(&reqs3,MPI_SUCCESS);
+				MPI_Wait(&reqs4,MPI_SUCCESS);
+				MPI_Wait(&reqs5,MPI_SUCCESS);
+				MPI_Wait(&reqs6,MPI_SUCCESS);
+				MPI_Wait(&reqs7,MPI_SUCCESS);
 					
 		}
 	}	
