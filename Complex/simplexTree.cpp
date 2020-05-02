@@ -18,6 +18,89 @@ simplexTree::simplexTree(double _maxEpsilon, std::vector<std::vector<double>> _d
 //**													**//
 //** 				Private Functions 					**//
 //**													**//
+/*
+void simplexTree::insertInductive(){
+	//Create our new node to insert
+	treeNode* curNode = new treeNode;
+	curNode->index = indexCounter;
+
+	//Loop each dimensional list; start at dn, then dn-1, ..., d0 (OLD WAY, INDUCTIVE VR)
+	for(int i = (dimensions.size()-1 < maxDimension ? dimensions.size() - 1 : maxDimension); i >= 0; i--){
+
+		//Loop each sibling in the current dimensional list (as a do-while, break when no more siblings)
+		curNode = dimensions[i];
+		do{
+
+			//Determine if the index needs to inserted below the current node
+			//	First, check the distance matrix for curNodeIndex v. curIndex
+			//	Second (if first is true), check all parents dist matrix of parentNodeIndex v. curIndex
+			if(distMatrix[curNode->index][indexCounter] < maxEpsilon){
+
+				//	This node is a candidate, now we need to check each parent of the current branch
+				//		to ensure the distance matrix entry for parentNodeindex v. curIndex is < maxEpsilon
+				bool ins = true;
+				treeNode* parentNode = curNode; //Temporarily store the parent so we don't lose track of our current
+
+				// This loop will check each parent and set whether to insert a node
+				do{
+					if(distMatrix[parentNode->index][indexCounter] > maxEpsilon){
+						ins = false;
+					}
+				}while(ins && parentNode->parent != nullptr && (parentNode = parentNode->parent) != nullptr);
+
+				//Insert the node; the distance to each parent is less than epsilon
+				if(ins){
+					//Allocate a new node to be inserted into the tree
+					treeNode* insNode = new treeNode;
+
+					//This new node's parent is the current node we're indexing on
+					insNode->parent = curNode;
+					insNode->index = indexCounter;
+					insNode->sibling = nullptr;
+
+					//Check the dimensional list
+					//	if no nodes exist at the dimension, this is the first
+					if(i == dimensions.size() - 1){
+						dimensions.push_back(insNode);
+
+					//	Nodes currently exist at the dimension, insert as a sibling
+					//		This should be inserted with nodes of the same parent
+					} else {
+						treeNode* iterateNode = dimensions[i+1];
+						ins = false; //Store if we've inserted this node while looping through siblings
+
+						//Loop through dimensional node siblings
+						do{
+							//Check if we've found parent nodes...
+							if(iterateNode->parent == insNode->parent){
+								ins = true;
+
+								//perform an insertion of the node...
+								insNode->sibling = iterateNode->sibling;
+								iterateNode->sibling = insNode;
+
+								nodeCount++;
+							}
+						} while(!ins && iterateNode->sibling != nullptr && (iterateNode = iterateNode->sibling) != nullptr);
+
+						// Check if we successfully inserted a node; if not, insert to end
+						if(!ins){
+							iterateNode->sibling = insNode;
+						}
+					}
+				}
+			}
+
+		}while(curNode->sibling != nullptr && (curNode = curNode->sibling) != nullptr);
+	}
+
+	return;
+}
+*/
+
+//**													**//
+//** 				Public Functions 					**//
+//**													**//
 void simplexTree::recurseInsert(treeNode* node, unsigned curIndex, int depth, double maxE, std::set<unsigned> simp){
 	//Incremental insertion
 	//Recurse to each child (which we'll use the parent pointer for...)
@@ -53,7 +136,6 @@ void simplexTree::recurseInsert(treeNode* node, unsigned curIndex, int depth, do
 		insNode->sibling = nullptr;
 		insNode->child = nullptr;
 		nodeCount++;
-		simp.insert(node->index);
 
 		//Get the largest weight of this simplex
 		insNode->weight = curE > node->weight ? curE : node->weight;
@@ -70,15 +152,14 @@ void simplexTree::recurseInsert(treeNode* node, unsigned curIndex, int depth, do
 		//Check if the node has children already...
 		if(node->child == nullptr){
 			node->child = insNode;
+			node->children.insert(insNode);
 			insNode->parent = node;
 
 		} else {
-			temp = node->child;
-			while(temp->sibling != nullptr)
-				temp = temp->sibling;
-			
+			temp = *node->children.rbegin();
 			temp->sibling = insNode;
 			insNode->parent = temp->parent;
+			node->children.insert(insNode);
 			temp = node->child;
 			//Have to check the children now...
 			if(simp.size() <= maxDimension){
@@ -119,12 +200,9 @@ void simplexTree::printTree(treeNode* head){
 	return;
 }
 
-
-
 //**													**//
 //** 				Public Functions 					**//
 //**													**//
-
 
 // Insert a node into the tree using the distance matrix and a vector index to track changes
 bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vector<std::vector<double>> &window){
@@ -285,7 +363,10 @@ void simplexTree::insert(std::vector<double>&) {
 	//Check if this is the first node (i.e. head)
 	//	If so, initialize the head node
 	if(head == nullptr){
+		root = new treeNode;
 		head = curNode;
+		head->parent = root;
+		root->children.insert(head);
 		indexCounter++;
 		runningVectorCount++;
 		nodeCount++;
@@ -332,10 +413,11 @@ void simplexTree::insert(std::vector<double>&) {
 	//Insert into the right of the tree
 	temp = dimensions[0];
 	treeNode* ins = new treeNode();
-	while(temp->sibling != nullptr && (temp = temp->sibling) != nullptr);
+	temp = *root->children.rbegin();
 	ins->index = indexCounter;
 	ins->sibling = nullptr;
-	ins->parent = nullptr;
+	ins->parent = root;
+	root->children.insert(ins);
 	temp->sibling = ins;
 	weightEdgeGraph[0].push_back(std::make_pair(tempSet, 0));
 
@@ -386,7 +468,7 @@ double simplexTree::getSize(){
 
 
 std::vector<std::vector<std::pair<std::set<unsigned>,double>>> simplexTree::getAllEdges(double epsilon){
-
+  
 	if(!isSorted){
 		for (int i = 0; i < weightEdgeGraph.size(); i++)
 			std::sort(weightEdgeGraph[i].begin(), weightEdgeGraph[i].end(), ut.sortBySecond);
@@ -394,6 +476,76 @@ std::vector<std::vector<std::pair<std::set<unsigned>,double>>> simplexTree::getA
 	}
 
 	return weightEdgeGraph;
+}
+
+//Search for a simplex from a node in the tree
+simplexTree::treeNode* simplexTree::find(std::set<unsigned>::iterator it, std::set<unsigned>::iterator end, treeNode* curNode){
+	treeNode* temp = new treeNode;
+	temp->index = *it;
+
+	while(it != end){
+		if(curNode == nullptr){
+			delete temp;
+			return nullptr;
+		}
+
+		auto x = curNode->parent->children.find(temp);
+		if(x == curNode->parent->children.end()){
+			delete temp;
+			return nullptr;
+		} else{
+			++it;
+			temp->index = *it;
+			if(it != end) curNode = (*x)->child;
+			else curNode = *x;
+		}
+
+		// while(curNode->index < *it){ //Haven't yet found the vertex
+		// 	curNode = curNode->sibling;
+		// 	if(curNode == nullptr) return nullptr; //Can't locate the next vertex in the cofacet
+		// }
+
+		// if(curNode->index == *it){
+		// 	++it;
+		// 	if(it != end) curNode = curNode->child; //Search for the next vertex in the next level
+		// } else return nullptr;
+	}
+
+	delete temp;
+
+	return curNode;
+}
+
+std::vector<simplexTree::treeNode*> simplexTree::getAllCofacets(const std::set<unsigned>& simplex){
+	std::vector<treeNode*> ret;
+	treeNode* parentNode = find(simplex.begin(), simplex.end(), head);
+	if(parentNode == nullptr) return ret; //Simplex isn't in the simplex tree	
+
+	treeNode* curNode;
+	treeNode* tempNode;
+	auto it = simplex.end();
+
+	while(true){
+		if(it != simplex.begin()) curNode = parentNode->child; 
+		else curNode = head;
+
+		while(curNode != nullptr && (it == simplex.end() ? true : curNode->index < *it)){
+			if(it == simplex.end()) tempNode = curNode;
+			else tempNode = find(it, simplex.end(), curNode->child); //See if the cofacet is in the tree
+
+			if(tempNode != nullptr) ret.push_back(tempNode); //Cofacet exists
+			curNode = curNode->sibling; //Iterate over which extra index to add
+		}
+
+		if(parentNode->parent != nullptr){ //Recurse backwards up the tree and try adding vertices at each level
+			parentNode = parentNode->parent;
+		} else if(it == simplex.begin()){
+			break;
+		}
+		--it;
+	}
+
+	return ret;
 }
 
 void simplexTree::reduceComplex(){
