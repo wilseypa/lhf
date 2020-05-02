@@ -107,7 +107,6 @@ void simplexTree::recurseInsert(treeNode* node, unsigned curIndex, int depth, do
 	treeNode* temp;
 	
 	isSorted = false;
-
 	double curE = 0;
 
 	//std::cout << runningVectorIndices.size() << "\t" << runningVectorCount << "\t" << indexCounter << "\t" << distMatrix.size() << "\t" << node->index << std::endl;
@@ -131,17 +130,16 @@ void simplexTree::recurseInsert(treeNode* node, unsigned curIndex, int depth, do
 	//Check if the node needs inserted at this level
 	if(curE < maxEpsilon){
 		treeNode* insNode = new treeNode();
-		simp.insert(node->index);
 		insNode->index = curIndex;
 		insNode->simplex = simp;
+		insNode->simplex.insert(curIndex);
 		insNode->sibling = nullptr;
 		insNode->child = nullptr;
 		nodeCount++;
 
 		//Get the largest weight of this simplex
-		maxE = curE > node->weight ? curE : node->weight;
-		insNode->weight = maxE;
-
+		insNode->weight = curE > node->weight ? curE : node->weight;
+		
 		//if depth (i.e. 1 for first iteration) is LT weightGraphSize (starts at 1)
 		if(weightEdgeGraph.size() < simp.size()){
 			std::vector<std::pair<std::set<unsigned>,double>> tempWEG;
@@ -201,6 +199,10 @@ void simplexTree::printTree(treeNode* head){
 	std::cout << "_____________________________________" << std::endl;
 	return;
 }
+
+//**													**//
+//** 				Public Functions 					**//
+//**													**//
 
 // Insert a node into the tree using the distance matrix and a vector index to track changes
 bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vector<std::vector<double>> &window){
@@ -461,10 +463,6 @@ int simplexTree::simplexCount(){
 
 double simplexTree::getSize(){
 	//Size of node: [int + byte (*) + byte (*)] = 18 Bytes
-	std::cout << "WEG Sizes: \t";
-	for(auto d : weightEdgeGraph)
-		std::cout << d.size() << " ";
-	std::cout << std::endl;
 	return nodeCount * sizeof(treeNode);
 }
 

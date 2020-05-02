@@ -16,7 +16,6 @@
 #include "upscalePipe.hpp"
 #include "boundaryPipe.hpp"
 #include "persistencePairs.hpp"
-#include "optPersistencePairs.hpp"
 #include "slidingWindow.hpp"
 #include "fastPersistence.hpp"
 #include "naiveWindow.hpp"
@@ -34,10 +33,8 @@ basePipe* basePipe::newPipe(const std::string &pipeT, const std::string &complex
 		return new upscalePipe();
 	} else if (pipeType == "boundary"){
 		return new boundaryPipe();
-	} else if (pipeType == "persistence" && (complexType == "simplexArrayList" || complexType == "simplexTree")){
+	} else if (pipeType == "persistence"){
 		return new persistencePairs();
-	} else if (pipeType == "persistence" && complexType == "indSimplexTree"){
-		return new optPersistencePairs();
 	} else if (pipeType == "slidingwindow" || pipeType == "sliding"){
 		return new slidingWindow();
 	} else if (pipeType == "fastPersistence" || pipeType == "fast"){

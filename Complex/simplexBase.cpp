@@ -6,7 +6,6 @@
 #include "simplexBase.hpp"
 #include "simplexTree.hpp"
 #include "simplexArrayList.hpp"
-#include "indSimplexTree.hpp"
 
 simplexBase::simplexBase(){return;}
 
@@ -64,10 +63,6 @@ simplexBase* simplexBase::newSimplex(const std::string &simplexT, std::map<std::
 		auto t = new simplexArrayList(maxEpsilon, maxDimension, distMatrix);
 		t->setConfig(configMap);
 		return t;
-	} else if (simplexType == "indSimplexTree"){
-		auto t = new indSimplexTree(maxEpsilon, distMatrix, maxDimension);
-		t->setConfig(configMap);
-		return t;
 	}
 	return 0;
 }
@@ -82,12 +77,6 @@ std::vector<std::vector<unsigned>> simplexBase::getDimEdges(int dim, double epsi
 std::vector<std::vector<std::pair<std::set<unsigned>,double>>> simplexBase::getAllEdges(double epsilon){
 	ut.writeLog(simplexType,"No get edges function defined");
 	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> a;
-	return a;
-}
-
-std::vector<std::vector<indSimplexTree::graphEntry>> simplexBase::getIndexEdges(double epsilon){
-	ut.writeLog(simplexType,"No get index edges function defined");
-	std::vector<std::vector<indSimplexTree::graphEntry>> a;
 	return a;
 }
 

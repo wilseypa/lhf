@@ -226,9 +226,11 @@
 			
 			//Separate our partitions for distribution
 			auto maxRadius = ut.computeMaxRadius(std::atoi(args["clusters"].c_str()), wD->originalData, wD->fullData, wD->originalLabels);
+			auto avgRadius = ut.computeAvgRadius(std::atoi(args["clusters"].c_str()), wD->originalData, wD->fullData, wD->originalLabels);
 			auto centroids = wD->originalData;
-			auto partitionedData = ut.separatePartitions(2*maxRadius, wD->originalData, wD->fullData, wD->originalLabels);
+			auto partitionedData = ut.separatePartitions(2*avgRadius, wD->originalData, wD->fullData, wD->originalLabels);
 			
+			std::cout << "Using maxRadius: " << maxRadius << "\tavgRadius: " << avgRadius<< std::endl;
 			//	Each node/slave will process at least 1 partition
 			//		NOTE: the partition may contain points outside partition that are within 2*Rmax
 			int minPartitions = partitionedData.second.size() / (nprocs-1);

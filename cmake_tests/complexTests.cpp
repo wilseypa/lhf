@@ -69,11 +69,6 @@ void t_simp_functions(std::string &log){
 	std::cout << "\tTesting get all edges from uninitialized complex" << std::endl;
 	if(testComplex->getAllEdges(5.0).size() != 0) { failLog += "simplexBase getAllEdges failed\n"; }
 
-	//Get indexed edges from uninitialized complex
-	//	RET: std::vector<std::vector<graphEntry>>
-	std::cout << "\tTesting get indexed edges from uninitialized complex" << std::endl;
-	if(testComplex->getIndexEdges(1).size() != 0) { failLog += "simplexBase getIndexEdges failed\n"; }
-
 	//Expand the dimensions of the uninitialized complex
 	//	RET: void
 	std::cout << "\tTesting expand the dimensions of the uninitialized complex" << std::endl;
@@ -223,11 +218,6 @@ void t_simp_base_functions(std::string &log, std::string type){
 	std::cout << "\t" << type << "\tTesting get all edges from complex" << std::endl;
 	if(testComplex->getAllEdges(5.0).size() != 0) { failLog += type + " getAllEdges failed\n"; }
 
-	//Get indexed edges from complex
-	//	RET: std::vector<std::vector<graphEntry>>
-	std::cout << "\t" << type << "\tTesting get indexed edges from complex" << std::endl;
-	if(testComplex->getIndexEdges(1).size() != 0) { failLog += type + " getIndexEdges failed\n"; }
-
 	//Expand the dimensions of the complex
 	//	RET: void
 	std::cout << "\t" << type << "\tTesting expand the dimensions of the complex" << std::endl;
@@ -307,10 +297,6 @@ void t_simp_empty_functions(std::string &log, std::string type){
 	//	RET: std::vector<std::vector<std::pair<std::set<unsigned>, double>>>
 	if(testComplex->getAllEdges(5.0).size() != 0) { failLog += type + " getAllEdges failed\n"; }
 
-	//Get indexed edges from empty complex
-	//	RET: std::vector<std::vector<graphEntry>>
-	if(testComplex->getIndexEdges(1).size() != 0) { failLog += type + " getIndexEdges failed\n"; }
-
 	//Expand the dimensions of the empty complex
 	//	RET: void
 	try{ testComplex->expandDimensions(2); }
@@ -337,7 +323,7 @@ int main (int, char**){
 	std::string log;
 	t_simp_functions(log);
 
-	for(std::string type : {"simplexArrayList","simplexTree","indSimplexTree"}){
+	for(std::string type : {"simplexArrayList","simplexTree"}){
 		try{t_simp_empty_functions(log, type);}
 		catch(const std::exception){log += "FAILED: " + type + " Empty Test Functions---------------------------\n";}
 
