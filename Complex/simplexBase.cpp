@@ -85,6 +85,18 @@ std::vector<std::vector<std::pair<std::set<unsigned>,double>>> simplexBase::getA
 	return a;
 }
 
+std::vector<simplexBase::treeNode*> simplexBase::getAllCofacets(const std::set<unsigned>& simplex){
+	ut.writeLog(simplexType,"No get cofacets function defined");
+	std::vector<simplexBase::treeNode*> ret;
+	return ret;
+}
+
+std::vector<simplexBase::treeNode*> simplexBase::getAllCofacets(const std::set<unsigned>& simplex, bool checkEmergent, double simplexWeight){
+	ut.writeLog(simplexType,"No get cofacets function defined");
+	std::vector<simplexBase::treeNode*> ret;
+	return ret;
+}
+
 std::vector<std::vector<indSimplexTree::graphEntry>> simplexBase::getIndexEdges(double epsilon){
 	ut.writeLog(simplexType,"No get index edges function defined");
 	std::vector<std::vector<indSimplexTree::graphEntry>> a;

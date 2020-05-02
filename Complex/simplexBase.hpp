@@ -15,6 +15,23 @@ class simplexBase {
 	double minDist = 0.0;
 	double maxDist = 0.0;
 
+	struct treeNode{
+		unsigned index;
+		
+		struct cmpByIndex{
+			bool operator()(const treeNode* lhs, const treeNode* rhs) const{
+				return lhs->index < rhs->index;
+			}
+		};
+		
+		std::set<unsigned> simplex;
+		std::set<treeNode*, cmpByIndex> children;
+		treeNode* child = nullptr;
+		treeNode* sibling = nullptr;
+		treeNode* parent = nullptr;
+		double weight = 0;
+	};
+
 	struct indTreeNode{
 		unsigned index;
 		unsigned sortedIndex;
@@ -114,6 +131,8 @@ class simplexBase {
 	virtual int vertexCount();
 	virtual std::vector<std::vector<unsigned>> getDimEdges(int,double);
 	virtual std::vector<std::vector<std::pair<std::set<unsigned>, double>>> getAllEdges(double);
+	virtual std::vector<treeNode*> getAllCofacets(const std::set<unsigned>&);
+	virtual std::vector<treeNode*> getAllCofacets(const std::set<unsigned>&, bool, double);
 	virtual std::vector<std::vector<graphEntry>> getIndexEdges(double);
 	virtual void expandDimensions(int);
 	virtual void reduceComplex();

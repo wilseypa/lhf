@@ -502,12 +502,15 @@ simplexTree::treeNode* simplexTree::find(std::set<unsigned>::iterator it, std::s
 	return curNode;
 }
 
-std::vector<simplexTree::treeNode*> simplexTree::getAllCofacets(const std::set<unsigned>& simplex, bool checkEmergent, double simplexWeight){
+std::vector<simplexBase::treeNode*> simplexTree::getAllCofacets(const std::set<unsigned>& simplex){
+	return getAllCofacets(simplex, false, 0);
+}
+
+std::vector<simplexBase::treeNode*> simplexTree::getAllCofacets(const std::set<unsigned>& simplex, bool checkEmergent, double simplexWeight){
 	std::vector<treeNode*> ret;
 	treeNode* parentNode = find(simplex.begin(), simplex.end(), root);
 	if(parentNode == nullptr) return ret; //Simplex isn't in the simplex tree	
 
-	treeNode* curNode;
 	treeNode* tempNode;
 	auto it = simplex.end();
 
