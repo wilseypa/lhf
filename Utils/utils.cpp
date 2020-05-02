@@ -17,17 +17,35 @@ utils::utils(std::string _debug, std::string _outputFile){
 	outputFile = _outputFile;
 }
 
-double utils::computeMaxRadius(int k, std::vector<std::vector<double>> centroids, std::vector<std::vector<double>> originalData, std::vector<unsigned> labels){
+double utils::computeMaxRadius(int k, std::vector<std::vector<double>> &centroids, std::vector<std::vector<double>> &originalData, std::vector<unsigned> &labels){
 	double maxRadius = 0;
+	double curRadius = 0;
 	
-	for(unsigned i = 0; i < labels.size(); i++){
-		double curRadius = vectors_distance(originalData[i], centroids[labels[i]]);
+	//Iterate through each point
+	for(unsigned i = 0; i < originalData.size(); i++){
+		
+		//Check the distance of this point to it's centroid
+		curRadius = vectors_distance(originalData[i], centroids[labels[i]]);
 		
 		if(curRadius > maxRadius)
 			maxRadius = curRadius;
 	}
 	
 	return maxRadius;	
+}
+
+double utils::computeAvgRadius(int k, std::vector<std::vector<double>> &centroids, std::vector<std::vector<double>> &originalData, std::vector<unsigned> &labels){
+	double totalRadius = 0;
+	
+	//Iterate through each point
+	for(unsigned i = 0; i < originalData.size(); i++){
+		
+		//Check the distance of this point to it's centroid
+		totalRadius += vectors_distance(originalData[i], centroids[labels[i]]);
+	}
+	
+	return totalRadius / originalData.size();	
+	
 }
 
 std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> utils::separatePartitions(int k, std::vector<std::vector<double>> originalData, std::vector<unsigned> labels){
