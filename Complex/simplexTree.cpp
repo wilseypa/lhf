@@ -15,14 +15,6 @@ simplexTree::simplexTree(double _maxEpsilon, std::vector<std::vector<double>> _d
 	return;
 }
 
-//**													**//
-//** 				Private Functions 					**//
-//**													**//
-
-
-//**													**//
-//** 				Public Functions 					**//
-//**													**//
 void simplexTree::recurseInsert(treeNode* node, unsigned curIndex, int depth, double maxE, std::set<unsigned> simp){
 	//Incremental insertion
 	//Recurse to each child (which we'll use the parent pointer for...)
@@ -122,10 +114,6 @@ void simplexTree::printTree(treeNode* head){
 	std::cout << "_____________________________________" << std::endl;
 	return;
 }
-
-//**													**//
-//** 				Public Functions 					**//
-//**													**//
 
 // Insert a node into the tree using the distance matrix and a vector index to track changes
 bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vector<std::vector<double>> &window){

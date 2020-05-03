@@ -12,8 +12,8 @@ class simplexTree : public simplexBase {
 	std::vector<std::vector<std::pair<std::set<unsigned>, double>>> weightEdgeGraph;
 
   public:
-	treeNode* head = nullptr;
-	treeNode* root = nullptr;
+	treeNode* head = nullptr; //First simplex in the tree (0 vertex)
+	treeNode* root = nullptr; //Empty node at root of tree (empty simplex)
 	std::vector<treeNode*> dimensions;
 
 	simplexTree(std::vector<std::vector<double>>);

@@ -77,7 +77,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	//			if joins components, add them
 	//		Until all edges evaluated or MST found (size - 1)	
 	
-	std::priority_queue<unsigned> pivots; //Store identified pivots
+	std::vector<simplexBase::treeNode*> pivots; //Store identified pivots
 	unsigned edgeIndex = 0;
 	unsigned mstSize = 0;
 	unsigned nPts = inData.originalData.size();
@@ -94,8 +94,12 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		//Edge connects two different components -> add to the MST
 		if(v1 != v2){ 
 			uf.join(v1, v2);
-			pivots.push(edgeIndex);
 			mstSize++;
+
+			simplexBase::treeNode* temp = new simplexBase::treeNode;
+			temp->simplex = edge.first;
+			temp->weight = edge.second;
+			pivots.push_back(temp);
 
 			std::cout<<edge.second<<'\n';
 			bettiBoundaryTableEntry des = { 0, 0, edge.second, { *it - shift } };
@@ -130,8 +134,10 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		//		boundary simplices
 	
 	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
-		//TODO - Fix nextPivots for higher dimensional homology
-		std::priority_queue<unsigned> nextPivots;	 						//Pivots for the next dimension
+		std::sort(pivots.begin(), pivots.end(), cmpBySecond());
+		std::vector<simplexBase::treeNode*>::iterator it = pivots.begin();
+
+		std::vector<simplexBase::treeNode*> nextPivots;	 					//Pivots for the next dimension
 		std::unordered_map<unsigned, std::vector<unsigned>> v;				//Store only the reduction matrix V and compute R implicity
 		std::unordered_map<simplexBase::treeNode*, unsigned> pivotPairs;	//For each pivot, which column has that pivot
 
@@ -142,7 +148,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			double simplexWeight = simplex.second;										//Current simplex weight
 
 			//Not a pivot -> need to reduce
-			if(pivots.top() != columnIndex){ 
+			if((*it)->weight != simplexWeight && (*it)->simplex != simplex.first){ 
 				//Get all cofacets using emergent pair optimization
 				std::vector<simplexBase::treeNode*> cofaceList = inData.complex->getAllCofacets(simplex.first, simplexWeight, pivotPairs);
 				std::vector<unsigned> columnV;	//Reduction column of matrix V
@@ -178,6 +184,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						break;
 					} else if(pivotPairs.find(pivot) == pivotPairs.end()){ //Column cannot be reduced
 						pivotPairs.insert({pivot, columnIndex});
+						nextPivots.push_back(pivot);
 						v[columnIndex] = columnV;
 
 						if(simplexWeight != pivot->weight){
@@ -203,7 +210,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 				}
 			
 			//Was a pivot, skip the evaluation and queue next pivot
-			} else pivots.pop();
+			} else ++it;
 		}
 		
 		pivots = nextPivots;
@@ -211,10 +218,10 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	
 	//Stop the timer for time passed during the pipe's function
 	auto endTime = std::chrono::high_resolution_clock::now();
-	
+
 	//Calculate the duration (physical time) for the pipe's function
 	std::chrono::duration<double, std::milli> elapsed = endTime - startTime;
-	
+
 	//Output the time and memory used for this pipeline segment
 	ut.writeDebug("persistence","Bettis executed in " + std::to_string(elapsed.count()/1000.0) + " seconds (physical time)");;
 		
