@@ -5,6 +5,7 @@
 #include <vector>
 #include "basePipe.hpp"
 #include "simplexBase.hpp"
+#include "utils.hpp"
 
 class unionFind{
 	private:
@@ -16,7 +17,7 @@ class unionFind{
 };
 
 struct cmpBySecond{ //Sort nodes by weight, then by lexicographic order
-	bool operator()(simplexBase::treeNode* a, simplexBase::treeNode* b) const{
+	bool operator()(treeNode* a, treeNode* b) const{
 		if(a->weight == b->weight){ //If the simplices have the same weight, sort by reverse lexicographic order for fastPersistence
 			auto itA = a->simplex.rbegin(), itB = b->simplex.rbegin();
 			while(itA != a->simplex.rend()){

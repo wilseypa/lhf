@@ -16,23 +16,6 @@ class simplexBase {
 	double minDist = 0.0;
 	double maxDist = 0.0;
 
-	struct treeNode{
-		unsigned index;
-		
-		struct cmpByIndex{
-			bool operator()(const treeNode* lhs, const treeNode* rhs) const{
-				return lhs->index < rhs->index;
-			}
-		};
-		
-		std::set<unsigned> simplex;
-		std::set<treeNode*, cmpByIndex> children;
-		treeNode* child = nullptr;
-		treeNode* sibling = nullptr;
-		treeNode* parent = nullptr;
-		double weight = 0;
-	};
-
 	std::vector<unsigned> dimCounts = {6, 15, 20};
 	std::string simplexType = "simplexBase";
 	double maxEpsilon;

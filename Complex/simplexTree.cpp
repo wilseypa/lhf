@@ -397,7 +397,7 @@ std::vector<std::vector<std::pair<std::set<unsigned>,double>>> simplexTree::getA
 }
 
 //Search for a simplex from a node in the tree
-simplexTree::treeNode* simplexTree::find(std::set<unsigned>::iterator it, std::set<unsigned>::iterator end, treeNode* curNode){
+treeNode* simplexTree::find(std::set<unsigned>::iterator it, std::set<unsigned>::iterator end, treeNode* curNode){
 	treeNode* temp = new treeNode;
 	temp->index = *it;
 
@@ -417,7 +417,7 @@ simplexTree::treeNode* simplexTree::find(std::set<unsigned>::iterator it, std::s
 	return curNode;
 }
 
-std::vector<simplexBase::treeNode*> simplexTree::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<treeNode*, unsigned>& pivotPairs, bool checkEmergent){
+std::vector<treeNode*> simplexTree::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<treeNode*, unsigned>& pivotPairs, bool checkEmergent){
 	std::vector<treeNode*> ret;
 	treeNode* parentNode = find(simplex.begin(), simplex.end(), root);
 	if(parentNode == nullptr) return ret; //Simplex isn't in the simplex tree	

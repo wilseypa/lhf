@@ -80,13 +80,13 @@ std::vector<std::vector<std::pair<std::set<unsigned>,double>>> simplexBase::getA
 	return a;
 }
 
-std::vector<simplexBase::treeNode*> simplexBase::getAllCofacets(const std::set<unsigned>& simplex){
+std::vector<treeNode*> simplexBase::getAllCofacets(const std::set<unsigned>& simplex){
 	return getAllCofacets(simplex, 0, std::unordered_map<treeNode*, unsigned>(), false);
 }
 
-std::vector<simplexBase::treeNode*> simplexBase::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<treeNode*, unsigned>& pivotPairs, bool checkEmergent){
+std::vector<treeNode*> simplexBase::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<treeNode*, unsigned>& pivotPairs, bool checkEmergent){
 	ut.writeLog(simplexType,"No get cofacets function defined");
-	std::vector<simplexBase::treeNode*> ret;
+	std::vector<treeNode*> ret;
 	return ret;
 }
 

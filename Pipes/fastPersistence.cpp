@@ -77,7 +77,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	//			if joins components, add them
 	//		Until all edges evaluated or MST found (size - 1)	
 	
-	std::vector<simplexBase::treeNode*> pivots; //Store identified pivots
+	std::vector<treeNode*> pivots; //Store identified pivots
 	unsigned edgeIndex = 0;
 	unsigned mstSize = 0;
 	unsigned nPts = inData.originalData.size();
@@ -96,13 +96,13 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			uf.join(v1, v2);
 			mstSize++;
 
-			simplexBase::treeNode* temp = new simplexBase::treeNode;
+			treeNode* temp = new treeNode;
 			temp->simplex = edge.first;
 			temp->weight = edge.second;
 			pivots.push_back(temp);
 
 			std::cout<<edge.second<<'\n';
-			bettiBoundaryTableEntry des = { 0, 0, edge.second, { *it - shift } };
+			bettiBoundaryTableEntry des = { 0, 0, edge.second, {}, {temp} };
 			inData.bettiTable.push_back(des);
 		}
 
@@ -116,7 +116,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		if(uf.find(i) == i){ //i is the name of a connected component
 			//Each connected component has an open persistence interval
 			std::cout<<maxEpsilon<<'\n';
-			bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {} };
+			bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
 			inData.bettiTable.push_back(des);
 		}
 	}
@@ -135,11 +135,11 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	
 	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
 		std::sort(pivots.begin(), pivots.end(), cmpBySecond());
-		std::vector<simplexBase::treeNode*>::iterator it = pivots.begin();
+		std::vector<treeNode*>::iterator it = pivots.begin();
 
-		std::vector<simplexBase::treeNode*> nextPivots;	 					//Pivots for the next dimension
+		std::vector<treeNode*> nextPivots;	 					//Pivots for the next dimension
 		std::unordered_map<unsigned, std::vector<unsigned>> v;				//Store only the reduction matrix V and compute R implicity
-		std::unordered_map<simplexBase::treeNode*, unsigned> pivotPairs;	//For each pivot, which column has that pivot
+		std::unordered_map<treeNode*, unsigned> pivotPairs;	//For each pivot, which column has that pivot
 
 		//Iterate over columns to reduce in reverse order
 		for(unsigned columnIndex = edges[d].size(); columnIndex-- != 0; ){ 
@@ -150,7 +150,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			//Not a pivot -> need to reduce
 			if((*it)->weight != simplexWeight && (*it)->simplex != simplex.first){ 
 				//Get all cofacets using emergent pair optimization
-				std::vector<simplexBase::treeNode*> cofaceList = inData.complex->getAllCofacets(simplex.first, simplexWeight, pivotPairs);
+				std::vector<treeNode*> cofaceList = inData.complex->getAllCofacets(simplex.first, simplexWeight, pivotPairs);
 				std::vector<unsigned> columnV;	//Reduction column of matrix V
 				columnV.push_back(columnIndex); //Initially V=I -> 1's along diagonal
 
@@ -158,7 +158,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 				std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
 
 				while(!cofaceList.empty()){
-					simplexBase::treeNode* pivot;
+					treeNode* pivot;
 
 					while(!cofaceList.empty()){
 						pivot = cofaceList.front();
@@ -196,7 +196,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						break;
 					} else{ //Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
 						for(unsigned i : v[pivotPairs[pivot]]){
-							std::vector<simplexBase::treeNode*> cofaces = inData.complex->getAllCofacets(edges[d][i].first);
+							std::vector<treeNode*> cofaces = inData.complex->getAllCofacets(edges[d][i].first);
 							cofaceList.insert(cofaceList.end(), cofaces.begin(), cofaces.end());
 						}
 						std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
@@ -205,7 +205,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 
 				if(cofaceList.empty()){
 					std::cout<<simplexWeight<<' '<<maxEpsilon<<'\n';
-					bettiBoundaryTableEntry des = { d, simplexWeight, maxEpsilon, {} };
+					bettiBoundaryTableEntry des = { d, simplexWeight, maxEpsilon, {}, cofaceList };
 					inData.bettiTable.push_back(des);
 				}
 			

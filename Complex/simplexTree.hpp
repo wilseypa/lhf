@@ -1,4 +1,5 @@
 #pragma once
+#include "utils.hpp"
 #include "simplexBase.hpp"
 #include <set>
 #include <unordered_map>
