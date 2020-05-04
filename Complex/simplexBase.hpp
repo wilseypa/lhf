@@ -10,12 +10,22 @@
 class simplexBase {
   private:
   public:
-	unsigned indexCounter;
-	utils ut;
-	double minDist = 0.0;
-	double maxDist = 0.0;
-
-	std::vector<unsigned> dimCounts = {6, 15, 20};
+	struct simplexNode{
+		unsigned index;
+		std::set<unsigned> simplex;
+		simplexNode* child = nullptr;
+		simplexNode* sibling = nullptr;
+		simplexNode* parent = nullptr;
+		double weight = 0;
+	};
+	std::vector<std::vector<simplexNode*>> simplexList;		//Holds ordered list of simplices in each dimension
+																//Needs to sort by the weight for insertion
+  
+	long long nodeCount = 0;			//Total number of nodes stored
+	long long indexCounter;				//Current insertion index
+	
+	utils ut;							//Utilities functions
+	
 	std::string simplexType = "simplexBase";
 	double maxEpsilon;
 	int maxDimension;
@@ -47,11 +57,10 @@ class simplexBase {
 	virtual bool find(std::set<unsigned>);
 	virtual int simplexCount();
 	virtual int vertexCount();
-	virtual std::vector<std::vector<unsigned>> getDimEdges(int,double);
-	virtual std::vector<std::vector<std::pair<std::set<unsigned>, double>>> getAllEdges(double);
+	virtual std::vector<simplexNode*> getDimEdges(int,double);
+	virtual std::vector<std::vector<simplexNode*>> getAllEdges();
 	virtual void expandDimensions(int);
 	virtual void reduceComplex();
-	virtual std::vector<std::pair<double, std::vector<unsigned>>> getd0Pairs();
 	virtual void clear();
 
 	//Unused, possibly future

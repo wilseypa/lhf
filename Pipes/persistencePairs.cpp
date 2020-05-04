@@ -173,7 +173,7 @@ std::set<unsigned> persistencePairs::createBoundaryMatrix(std::vector<std::vecto
 pipePacket persistencePairs::runPipe(pipePacket inData){
 	
 	//Get all edges for the simplexArrayList or simplexTree
-	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges = inData.complex->getAllEdges(maxEpsilon);
+	std::vector<std::vector<simplexBase::simplexNode*>> edges = inData.complex->getAllEdges();
 	
 	//Get all dim 0 pairs
 	
@@ -198,7 +198,7 @@ pipePacket persistencePairs::runPipe(pipePacket inData){
 	//		Success!
 	
 	//Generate our boundary matrix and retrieve pivots
-	std::set<unsigned> kPivots = createBoundaryMatrix(edges);
+	/*//std::set<unsigned> kPivots = createBoundaryMatrix(edges);
 	
 	std::string bettis = "dim,birth,death\n";
 	
@@ -279,7 +279,7 @@ pipePacket persistencePairs::runPipe(pipePacket inData){
 		std::cout << std::endl << bettis << std::endl;
 		
 	inData.bettiOutput = bettis;
-		
+		*/
 	return inData;
 }
 

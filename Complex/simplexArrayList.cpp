@@ -81,60 +81,6 @@ void simplexArrayList::insert(std::vector<double> &vector){
 	return;
 }
 
-
-// Wrapper to expose edges
-std::vector<std::vector<unsigned>> simplexArrayList::getDimEdges(int dim, double epsilon){
-	std::vector<std::vector<unsigned>> ret;
-	if(dim - 1 < 0)
-		return ret;
-	if(weightedGraph.size() < dim)
-		return ret;	
-
-	for(auto a : weightedGraph[dim-1]){
-		
-		bool isTrue = true;
-		for(int i = 0; i < a.first.size(); i++){
-			for(int j = i+1; j < a.first.size(); j++){
-				if(distMatrix[a.first[i]][a.first[j]] > epsilon){
-					isTrue =false;
-					//weightedGraph[dim-1].erase(weightedGraph[dim-1].begin() + a);
-					break;
-				}
-			}
-		}
-		
-		if(isTrue){
-			ret.push_back(a.first);
-		}
-	}
-	
-	return ret;
-}
-
-// Wrapper to expose edges
-std::vector<std::vector<std::pair<std::set<unsigned>, double>>> simplexArrayList::getAllEdges(double epsilon){
-	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> ret;
-	
-	for(auto dim : weightedGraph){
-		std::vector<std::pair<std::set<unsigned>,double>> dimGraph;
-		
-		for(auto edge : dim){
-			std::set<unsigned> curSet;
-			std::copy(edge.first.begin(), edge.first.end(), std::inserter(curSet, curSet.end()));
-			dimGraph.push_back(std::make_pair(curSet, edge.second));			
-		}
-		
-		
-		if(dimGraph.size() > 0){
-			std::sort(dimGraph.begin(), dimGraph.end(), ut.sortBySecond);
-			ret.push_back(dimGraph);
-		}
-	}
-	
-	
-	return ret;
-}
-
 // Search function to find a specific vector in the simplexArrayList
 // weightedGraph[d][v][p] dimension d stores vectors v of point elements p of simplexes formed
 bool simplexArrayList::find(std::vector<unsigned> vector){

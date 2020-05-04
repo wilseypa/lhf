@@ -68,16 +68,19 @@ simplexBase* simplexBase::newSimplex(const std::string &simplexT, std::map<std::
 }
 
 
-std::vector<std::vector<unsigned>> simplexBase::getDimEdges(int dim, double epsilon){
-	ut.writeLog(simplexType,"No get edges function defined");
-	std::vector<std::vector<unsigned>> a;
-	return a;
+std::vector<simplexBase::simplexNode*> simplexBase::getDimEdges(int dim, double epsilon){
+	if(dim > simplexList.size()){
+		ut.writeLog(simplexType,"Error: requested dimension beyond complex");
+		std::vector<simplexBase::simplexNode*> a;
+		return a;
+		
+	}
+		
+	return simplexList[dim];
 }
 
-std::vector<std::vector<std::pair<std::set<unsigned>,double>>> simplexBase::getAllEdges(double epsilon){
-	ut.writeLog(simplexType,"No get edges function defined");
-	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> a;
-	return a;
+std::vector<std::vector<simplexBase::simplexNode*>> simplexBase::getAllEdges(){
+	return simplexList;
 }
 
 double simplexBase::getSize(){
@@ -197,13 +200,6 @@ bool simplexBase::streamEvaluator(std::vector<double>& vector, std::vector<std::
 	stats += "Reject\n";
 	//std::cout << "\tReject: (stdev > 0.5 , " << stdev << ")" << std::endl;
 	return false;
-}
-
-
-std::vector<std::pair<double, std::vector<unsigned>>> simplexBase::getd0Pairs(){
-	std::vector<std::pair<double, std::vector<unsigned>>> ret;
-	ut.writeLog(simplexType,"No getd0Pairs function defined");
-	return ret;
 }
 
 void simplexBase::clear(){

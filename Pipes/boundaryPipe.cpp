@@ -208,7 +208,7 @@ pipePacket boundaryPipe::runPipe(pipePacket inData){
 	std::vector<int> bettiNumbers;
 	std::vector<float> lifeSpans[dim];
 	
-	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges;
+	std::vector<std::vector<simplexBase::simplexNode*>> edges;
 	
 	//Retrieve
 	auto local_weights = inData.weights;
@@ -224,7 +224,7 @@ pipePacket boundaryPipe::runPipe(pipePacket inData){
 	//For each edge
 	for(auto eps : local_weights){
 		//Reload the buffers with the current edges
-		edges = inData.complex->getAllEdges(eps);
+		edges = inData.complex->getAllEdges();
 		
 		//Get the weights (increasing order)
 		//Check if we've already processed or not

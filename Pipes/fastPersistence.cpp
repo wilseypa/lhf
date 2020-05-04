@@ -109,7 +109,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		inData.complex->expandDimensions(dim + 1);	
 	
 	//Get all edges for the simplexArrayList or simplexTree
-	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> edges = inData.complex->getAllEdges(maxEpsilon);
+	std::vector<std::vector<simplexBase::simplexNode*>> edges = inData.complex->getAllEdges();
 
 	if(edges.size() <= 1)
 		return inData;
@@ -137,10 +137,10 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	unsigned nPts = inData.originalData.size();
 
 	unionFind uf(nPts);
-	shift = *edges[0][nPts-1].first.begin();
+	shift = *edges[0][nPts-1]->simplex.begin();
 
 	for(auto& edge : edges[1]){ //For each edge
-		std::set<unsigned>::iterator it = edge.first.begin();
+		std::set<unsigned>::iterator it = edge->simplex.begin();
 		
 		//Find which connected component each vertex belongs to
 		int v1 = uf.find(*it - shift), v2 = uf.find(*(++it) - shift); 
@@ -151,7 +151,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			pivots.push(edgeIndex);
 			mstSize++;
 			
-			bettiBoundaryTableEntry des = { 0, 0, edge.second, { *it - shift } };
+			bettiBoundaryTableEntry des = { 0, 0, edge->weight, { *it - shift } };
 			inData.bettiTable.push_back(des);
 		}
 
@@ -191,7 +191,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		
 		unsigned simplexIndex = 0;
 		for(auto& simplex : edges[d+1]){
-			indexConverter.insert(std::make_pair(ripsIndex(simplex.first, bin), simplexIndex));
+			indexConverter.insert(std::make_pair(ripsIndex(simplex->simplex, bin), simplexIndex));
 			simplexIndex++;
 		}
 
@@ -202,26 +202,26 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		//Iterate over columns to reduce in reverse order
 		for(unsigned columnIndex = edges[d].size(); columnIndex-- != 0; ){ 
 			
-			std::pair<std::set<unsigned>, double>& simplex = edges[d][columnIndex];		//Pointer to the current simplex
-			double simplexWeight = simplex.second;										//Current simplex weight
+			simplexBase::simplexNode* simplex = edges[d][columnIndex];		//Pointer to the current simplex
+			double simplexWeight = simplex->weight;										//Current simplex weight
 			std::vector<unsigned> cofaceList; 											//Store cofaceList as a min heap
 			std::vector<long long> columnV;												
 			bool foundEmergentCandidate = false; 	//Found the lexicographically maximum cofacet with the same diameter
 
 			//Not a pivot -> need to reduce
 			if(pivots.top() != columnIndex){ 
-				std::set<unsigned>::reverse_iterator it = simplex.first.rbegin();
-				unsigned k = simplex.first.size() + 1;
+				std::set<unsigned>::reverse_iterator it = simplex->simplex.rbegin();
+				unsigned k = simplex->simplex.size() + 1;
 				
 				//Push back the remapped index for the current simplex
-				long long index = ripsIndex(simplex.first, bin);
+				long long index = ripsIndex(simplex->simplex, bin);
 				columnV.push_back(index);
 
 				//Try inserting other vertices into the simplex
 				for(unsigned i=nPts; i-- != 0; ){ 
 					
 					
-					if(it != simplex.first.rend() && i == *it - shift){
+					if(it != simplex->simplex.rend() && i == *it - shift){
 						//Subtract the remapped coefficient in d-1
 						index -= bin.binom(i, k-1);
 						
@@ -243,7 +243,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 							//If we haven't found an emergent candidate and the weight of the maximal cofacet is equal to the simplex's weight
 							//		we have identified an emergent pair; at this point we can break because the interval is born and dies at the 
 							//		same epsilon
-							if(!foundEmergentCandidate && edges[d+1][cofacetIndex->second].second == simplex.second){
+							if(!foundEmergentCandidate && edges[d+1][cofacetIndex->second]->weight == simplex->weight){
 								
 								//Check to make sure the identified cofacet isn't a pivot?
 								if(pivotPairs.find(cofacetIndex->second) == pivotPairs.end()) 
@@ -302,8 +302,8 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						// }
 						v[columnIndex] = columnV;
 
-						if(edges[d][columnIndex].second != edges[d+1][pivotIndex].second){
-							bettiBoundaryTableEntry des = { d, simplexWeight, edges[d+1][pivotIndex].second, std::set<unsigned>(cofaceList.begin(), cofaceList.end()) };
+						if(edges[d][columnIndex]->weight != edges[d+1][pivotIndex]->weight){
+							bettiBoundaryTableEntry des = { d, simplexWeight, edges[d+1][pivotIndex]->weight, std::set<unsigned>(cofaceList.begin(), cofaceList.end()) };
 							inData.bettiTable.push_back(des);
 							//TODO - unshift bettiTable Entries
 						}

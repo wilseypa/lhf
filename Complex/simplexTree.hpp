@@ -7,29 +7,17 @@
 class simplexTree : public simplexBase {
   private:
 	bool isSorted = false;
-	long long nodeCount = 0;
-	std::vector<std::vector<std::pair<std::set<unsigned>, double>>> weightEdgeGraph;
 
   public:
-	struct treeNode{
-		unsigned index;
-		std::set<unsigned> simplex;
-		treeNode* child = nullptr;
-		treeNode* sibling = nullptr;
-		treeNode* parent = nullptr;
-		double weight = 0;
-	};
 
-	treeNode* head = nullptr;
-	std::vector<treeNode*> dimensions;
-
-	simplexTree(std::vector<std::vector<double>>);
+	simplexBase::simplexNode* head = nullptr;
+	//simplexBase::simplexTree(std::vector<std::vector<double>>);
 	simplexTree(double, std::vector<std::vector<double>>, int);
-	std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(std::pair<std::set<unsigned>,double>, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
-	void printTree(treeNode*);
-	void recurseInsert(treeNode*, unsigned, int, double, std::set<unsigned>);
+	std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(simplexBase::simplexNode*, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
+	void printTree(simplexBase::simplexNode*);
+	void recurseInsert(simplexBase::simplexNode*, unsigned, int, double, std::set<unsigned>);
 	double findWeight(std::set<unsigned>);
-	void deleteIndexRecurse(int, treeNode*);
+	void deleteIndexRecurse(int, simplexBase::simplexNode*);
 	void deleteWeightEdgeGraph(int index);
 
 	//virtual interface functions
@@ -42,13 +30,10 @@ class simplexTree : public simplexBase {
 	bool find(std::set<unsigned>);
 	int simplexCount();
 	int vertexCount();
-	std::vector<std::vector<unsigned>> getDimEdges(int,double);
-	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> getAllEdges(double);
 	bool deletion(std::set<unsigned>);
-	bool deletion(treeNode*);
+	bool deletion(simplexBase::simplexNode*);
 	void expandDimensions(int){return;};
 	void reduceComplex();
-	std::vector<std::pair<double, std::vector<unsigned>>> getd0Pairs();
 	void clear();
 };
 

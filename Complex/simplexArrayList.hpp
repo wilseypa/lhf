@@ -20,8 +20,6 @@ class simplexArrayList : public simplexBase{
 	bool find(std::vector<unsigned>);
 	int simplexCount();
 	int vertexCount();
-	std::vector<std::vector<unsigned>> getDimEdges(int,double);
-	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> getAllEdges(double);
 	bool deletion(std::vector<unsigned>);
 	void expandDimensions(int);
 	void reduceComplex();
