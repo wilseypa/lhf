@@ -12,13 +12,16 @@ class simplexTree : public simplexBase {
 
 	simplexBase::simplexNode* head = nullptr;
 	//simplexBase::simplexTree(std::vector<std::vector<double>>);
+
 	simplexTree(double, std::vector<std::vector<double>>, int);
 	std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(simplexBase::simplexNode*, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
 	void printTree(simplexBase::simplexNode*);
 	void recurseInsert(simplexBase::simplexNode*, unsigned, int, double, std::set<unsigned>);
 	double findWeight(std::set<unsigned>);
-	void deleteIndexRecurse(int, simplexBase::simplexNode*);
+	void deleteIndexRecurse(int, simplexBase::simplexNode*); 
 	void deleteWeightEdgeGraph(int index);
+	simplexNode* find(std::set<unsigned>::iterator, std::set<unsigned>::iterator, simplexNode*);
+	std::vector<simplexNode*> getAllCofacets(const std::set<unsigned>&);
 
 	//virtual interface functions
 	double getSize();

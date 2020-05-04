@@ -12,7 +12,15 @@ class simplexBase {
   public:
 	struct simplexNode{
 		unsigned index;
+		
+		struct cmpByIndex{
+			bool operator()(const simplexNode* lhs, const simplexNode* rhs) const{
+				return lhs->index < rhs->index;
+			}
+		};
+		
 		std::set<unsigned> simplex;
+		std::set<simplexNode*, cmpByIndex> children;
 		simplexNode* child = nullptr;
 		simplexNode* sibling = nullptr;
 		simplexNode* parent = nullptr;
@@ -26,6 +34,8 @@ class simplexBase {
 	
 	utils ut;							//Utilities functions
 	
+	
+	simplexNode* root;
 	std::string simplexType = "simplexBase";
 	double maxEpsilon;
 	int maxDimension;

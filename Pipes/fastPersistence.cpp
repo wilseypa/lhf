@@ -16,6 +16,7 @@
 #include <unordered_map>
 #include <queue>
 #include "fastPersistence.hpp"
+#include "simplexTree.hpp"
 
 unionFind::unionFind(int n) : rank(n, 0), parent(n, 0) {
 	for(int i=0; i<n; i++) parent[i]=i;
@@ -181,7 +182,15 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		//Track V (reduction matrix) for each column j that has been reduced to identify the constituent 
 		//		boundary simplices
 		
-	
+	// if(true){
+	// 	for(unsigned d = 1; d < dim; d++){
+	// 		for(unsigned columnIndex = edges[d].size(); columnIndex-- != 0; ){
+	// 			std::pair<std::set<unsigned>, double>& simplex = edges[d][columnIndex];
+	// 			((simplexTree*)inData.complex)->getAllCofacets(simplex.first);
+	// 		}
+	// 	}
+	// } else{
+
 	binomialTable bin(nPts, dim+1);
 	
 	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
@@ -220,18 +229,16 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 				//Try inserting other vertices into the simplex
 				for(unsigned i=nPts; i-- != 0; ){ 
 					
-					
-					if(it != simplex->simplex.rend() && i == *it - shift){
-						//Subtract the remapped coefficient in d-1
-						index -= bin.binom(i, k-1);
-						
-						//Add the remapped coefficient in d
-						index += bin.binom(i, k);
+					if(it != simplex->simplex.rend() && i == *it - shift){ //Vertex i is already in the simplex
+						//Now adding vertices less than i -> i is now the kth largest vertex in the simplex instead of the (k-1)th
 
-						//Decrease the dimension to continue mapping in d-1?
+						index -= bin.binom(i, k-1);
+						index += bin.binom(i, k); //Recompute the index accordingly
+
+						//Now need to check for the (k-1)th vertex in the simplex
 						--k;
 						
-						//iterate to the next simplex
+						//Check for the previous vertex in the simplex (it is a reverse iterator)
 						++it;
 					} else{
 						
@@ -245,7 +252,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 							//		same epsilon
 							if(!foundEmergentCandidate && edges[d+1][cofacetIndex->second]->weight == simplex->weight){
 								
-								//Check to make sure the identified cofacet isn't a pivot?
+								//Check to make sure the identified cofacet isn't a pivot
 								if(pivotPairs.find(cofacetIndex->second) == pivotPairs.end()) 
 									break; //Found an emergent cofacet pair -> we can break
 									
@@ -305,7 +312,6 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						if(edges[d][columnIndex]->weight != edges[d+1][pivotIndex]->weight){
 							bettiBoundaryTableEntry des = { d, simplexWeight, edges[d+1][pivotIndex]->weight, std::set<unsigned>(cofaceList.begin(), cofaceList.end()) };
 							inData.bettiTable.push_back(des);
-							//TODO - unshift bettiTable Entries
 						}
 
 						break;
@@ -344,7 +350,6 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		
 		pivots = nextPivots;
 	}
-			
 	
 	//Stop the timer for time passed during the pipe's function
 	auto endTime = std::chrono::high_resolution_clock::now();
