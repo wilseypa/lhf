@@ -80,12 +80,12 @@ void ripsPipe::outputData(pipePacket inData){
 	
 	if(inData.complex->simplexType == "simplexArrayList"){
 		file.open("output/" + pipeType + "_output.csv");
-		for (int i = 0; i < inData.complex->weightedGraph.size(); i++){
-			for(auto a : inData.complex->weightedGraph[i]){
-				for(auto d : a.first){
+		for (int i = 0; i < inData.complex->simplexList.size(); i++){
+			for(auto a : inData.complex->simplexList[i]){
+				for(auto d : a->simplex){
 					file << d << ",";
 				}
-				file << a.second << "\n";
+				file << a->weight << "\n";
 			}
 		}
 		

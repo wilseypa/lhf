@@ -5,7 +5,7 @@
 #include <iostream>
 #include "simplexTree.hpp"
 
-simplexTree::simplexTree(double _maxEpsilon, std::vector<std::vector<double>> _distMatrix, int _maxDim){
+simplexTree::simplexTree(double _maxEpsilon, std::vector<std::vector<double>>* _distMatrix, int _maxDim){
 	indexCounter = 0;
 	std::cout << "simplexTree set indexCounter" << std::endl;
 	distMatrix = _distMatrix;
@@ -29,17 +29,17 @@ void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth,
 	//std::cout << runningVectorIndices.size() << "\t" << runningVectorCount << "\t" << indexCounter << "\t" << distMatrix.size() << "\t" << node->index << std::endl;
 	if(runningVectorIndices.size() < runningVectorCount+1){
 		int offset = runningVectorCount+1 - runningVectorIndices.size();
-		if(((int)node->index - offset) > distMatrix.size() || (indexCounter-offset) > distMatrix[(int)node->index - offset].size()){
+		if(((int)node->index - offset) > distMatrix->size() || (indexCounter-offset) > distMatrix[(int)node->index - offset].size()){
 			std::cout << "DistMatrix access error:" << std::endl;
-			std::cout << "DistMatrix size: " << distMatrix.size() << "\tAccess Index: " << ((int)node->index - offset) << std::endl;
+			std::cout << "DistMatrix size: " << distMatrix->size() << "\tAccess Index: " << ((int)node->index - offset) << std::endl;
 			std::cout << "Node Index: " << node->index << "\tOffset: " << offset << std::endl;
 			std::cout << "nodeCount: " << nodeCount << "\tindexCount: " << indexCounter << std::endl;
 		}
 		else
-			curE = distMatrix[(int)node->index - offset][indexCounter - offset];
+			curE = (*distMatrix)[(unsigned)node->index - offset][indexCounter - offset];
 
 	}else{
-		curE = distMatrix[node->index][indexCounter];
+		curE = (*distMatrix)[node->index][indexCounter];
 	}
 
 	curE = curE > maxE ? curE : maxE;
@@ -136,7 +136,7 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 		
 		runningVectorIndices.erase(runningVectorIndices.begin());
 
-		distMatrix.push_back(distMatrixRow);
+		distMatrix->push_back(distMatrixRow);
 		insert(distMatrixRow);
 
 		removedSimplices++;
@@ -170,19 +170,19 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 
 
 // Delete a node from the tree and from the distance matrix using a vector index
-void simplexTree::deleteIterative(int vectorIndex){
+void simplexTree::deleteIterative(simplexBase::simplexNode* simplex){
 	//Find what row/column of our distance matrix pertain to the vector index
-	std::vector<int>::iterator it;
-	if((it = std::find(runningVectorIndices.begin(), runningVectorIndices.end(), vectorIndex)) != runningVectorIndices.end()){
+	std::vector<simplexBase::simplexNode*>::iterator it;
+	if((it = std::find(runningVectorIndices.begin(), runningVectorIndices.end(), simplex)) != runningVectorIndices.end()){
 
 		int index = it - runningVectorIndices.begin();
 
 		//Delete the row and column from the distance matrix based on vector index
 		if(index > 0){
 			
-			distMatrix.erase(distMatrix.begin() + index);
+			distMatrix->erase(distMatrix->begin() + index);
 		
-			for(auto z : distMatrix){
+			for(auto z : *(distMatrix)){
 				if(z.size() >= index)
 					z.erase(z.begin() + index);
 			}
@@ -191,9 +191,9 @@ void simplexTree::deleteIterative(int vectorIndex){
 		auto curNodeCount = nodeCount;
 
 		//Delete all entries in the simplex tree with the index...
-		deleteIndexRecurse(vectorIndex, head);
+		deleteIndexRecurse(simplex->index, head);
 		
-		deleteWeightEdgeGraph(vectorIndex);
+		deleteWeightEdgeGraph(simplex->index);
 		
 		//std::cout << "Node Count reduced from " << curNodeCount << " to " << nodeCount << std::endl;
 		
@@ -265,8 +265,7 @@ void simplexTree::deleteIndexRecurse(int vectorIndex, simplexNode* curNode){
 // Insert a node into the tree
 //
 void simplexTree::insert(std::vector<double>&) {
-	
-	if(distMatrix.size() == 0){
+	if(distMatrix->size() == 0){
 		ut.writeDebug("simplexTree","Distance matrix is empty, skipping insertion");
 		return;
 	}
@@ -275,7 +274,9 @@ void simplexTree::insert(std::vector<double>&) {
 	simplexNode* curNode = new simplexNode;
 	curNode->index = indexCounter;
 	std::set<unsigned> tempSet = {curNode->index};
-	runningVectorIndices.push_back(indexCounter);
+	
+	//Track this index in our current window (for sliding window)
+	runningVectorIndices.push_back(curNode);
 
 	//Check if this is the first node (i.e. head)
 	//	If so, initialize the head node

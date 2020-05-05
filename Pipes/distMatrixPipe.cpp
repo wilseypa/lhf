@@ -29,7 +29,7 @@ pipePacket distMatrixPipe::runPipe(pipePacket inData){
 	utils ut;
 	
 	//Store our distance matrix
-	std::vector<std::vector<double>> distMatrix (inData.originalData.size(), std::vector<double>(inData.originalData.size(),0));
+	inData.distMatrix.resize(inData.originalData.size(), std::vector<double>(inData.originalData.size(),0));
 	
 	//Iterate through each vector
 	for(unsigned i = 0; i < inData.originalData.size(); i++){
@@ -44,18 +44,18 @@ pipePacket distMatrixPipe::runPipe(pipePacket inData){
 					
 					if(dist < maxEpsilon)
 						inData.weights.insert(dist);
-					distMatrix[i][j] = dist;
+					inData.distMatrix[i][j] = dist;
 			}
 		}
 	}
 	
-	inData.complex->setDistanceMatrix(distMatrix);
+	inData.complex->setDistanceMatrix(&inData.distMatrix);
 	
 	inData.weights.insert(0.0);
 	inData.weights.insert(maxEpsilon);
 	//std::sort(inData.weights.begin(), inData.weights.end(), std::greater<>());
 	
-	ut.writeDebug("distMatrix", "\tDist Matrix Size: " + std::to_string(distMatrix.size()) + " x " + std::to_string(distMatrix.size()));
+	ut.writeDebug("distMatrix", "\tDist Matrix Size: " + std::to_string(inData.distMatrix.size()) + " x " + std::to_string(inData.distMatrix.size()));
 	return inData;
 }
 
@@ -91,7 +91,7 @@ void distMatrixPipe::outputData(pipePacket inData){
 	std::ofstream file;
 	file.open("output/" + pipeType + "_output.csv");
 	
-	for(auto a : inData.complex->distMatrix){
+	for(std::vector<double> a : inData.distMatrix){
 		for(auto d : a){
 			file << d << ",";
 		}

@@ -43,8 +43,9 @@ class utils {
 	std::vector<unsigned> setIntersect(std::vector<unsigned>, std::vector<unsigned>, bool);
 	std::vector<std::set<unsigned>> getSubsets(std::set<unsigned>, int);
 	std::vector<unsigned> symmetricDiff(std::vector<unsigned>, std::vector<unsigned>, bool);
-	std::vector<unsigned> symmetricDiff(std::set<unsigned>, std::set<unsigned>, bool);
+	std::set<unsigned> symmetricDiff(std::set<unsigned>, std::set<unsigned>, bool);
 	std::vector<unsigned> setUnion(std::vector<unsigned>, std::vector<unsigned>, bool);
+	std::set<unsigned> setUnion(std::set<unsigned>, std::set<unsigned>, bool);
 	std::pair<std::vector<unsigned>, std::vector<unsigned>> intersect(std::vector<unsigned>, std::vector<unsigned>, bool);
 	
 	//Utility functions for writing to console/debug file

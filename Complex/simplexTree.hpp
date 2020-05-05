@@ -13,7 +13,7 @@ class simplexTree : public simplexBase {
 	simplexBase::simplexNode* head = nullptr;
 	//simplexBase::simplexTree(std::vector<std::vector<double>>);
 
-	simplexTree(double, std::vector<std::vector<double>>, int);
+	simplexTree(double, std::vector<std::vector<double>>*, int);
 	std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(simplexBase::simplexNode*, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
 	void printTree(simplexBase::simplexNode*);
 	void recurseInsert(simplexBase::simplexNode*, unsigned, int, double, std::set<unsigned>);
@@ -27,7 +27,7 @@ class simplexTree : public simplexBase {
 	double getSize();
 	bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&);
 	bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&, int&, int&, std::vector<double>&);
-	void deleteIterative(int);
+	void deleteIterative(simplexBase::simplexNode*);
 	void deleteIndexRecurse(int);  // A wrapper for the actual deleteIndexRecurse method.
 	void insert(std::vector<double>&);
 	bool find(std::set<unsigned>);

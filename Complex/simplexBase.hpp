@@ -29,29 +29,39 @@ class simplexBase {
 	std::vector<std::vector<simplexNode*>> simplexList;		//Holds ordered list of simplices in each dimension
 																//Needs to sort by the weight for insertion
   
-	long long nodeCount = 0;			//Total number of nodes stored
-	long long indexCounter;				//Current insertion index
+	long long nodeCount = 0;					//Total number of nodes stored
+	long long indexCounter;						//Current insertion index
 	
-	utils ut;							//Utilities functions
+	utils ut;									//Utilities functions
+	std::string simplexType = "simplexBase";	//Complex Type Identifier
+	
+	simplexNode* root;							//Root of the simplexNode tree (if applicable)
+	
+	double maxEpsilon;							//Maximum epsilon, loaded from configuration
+	int maxDimension;							//Maximum dimension, loaded from configuration
+	std::vector<std::vector<double>>* distMatrix;	//Pointer to distance matrix for current complex
 	
 	
-	simplexNode* root;
-	std::string simplexType = "simplexBase";
-	double maxEpsilon;
-	int maxDimension;
-	std::vector<std::vector<double>> distMatrix;
-	std::vector<std::vector<std::pair<std::vector<unsigned>, double>>> weightedGraph;
-	int runningVectorCount = 0;
-	std::vector<int> runningVectorIndices;
+	//For sliding window implementation, tracks the current vectors inserted into the window
+	//		Note - these point to the d0 simplexNodes; index, weight, etc. can be obtained
+	std::vector<simplexNode*> runningVectorIndices;
+	int runningVectorCount = 0;		//How many total points have been inserted into complex?
+									//		Is this different than indexCounter?
+	
 	int removedSimplices = 0;
 	std::string stats = "RVIndex,Mean,Stdev,k,kNN_Mean,kNN_Stdev,Result\n";
 
+	//Constructors
 	simplexBase();
 	simplexBase(std::map<std::string, std::string>);
 	simplexBase(double, int);
+	
+	//Configurations of the complex
 	void setConfig(std::map<std::string, std::string>);
-	void setDistanceMatrix(std::vector<std::vector<double>> _distMatrix);
+	void setDistanceMatrix(std::vector<std::vector<double>>* _distMatrix);
 	simplexBase* newSimplex(const std::string &simplexT, std::map<std::string, std::string> configMap);
+	
+	//Stream evaluator - this uses a function to determine if points should be inserted into the complex
 	bool (*streamEval) (std::vector<double>&, std::vector<std::vector<double>>&);
     bool streamEvaluator(std::vector<double>&, std::vector<std::vector<double>>&);
 	void setStreamEvaluator(bool (*f) (std::vector<double>&, std::vector<std::vector<double>>&));
@@ -61,13 +71,13 @@ class simplexBase {
 	virtual bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&);
 	virtual bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&, int&, int&, std::vector<double>&);
 	virtual void deleteIterative(int);
-	virtual void deleteIndexRecurse(int);  // A wrapper for the actual deleteIndexRecurse method.
+	virtual void deleteIndexRecurse(int);  				// A wrapper for the actual deleteIndexRecurse method.
 	virtual void insert(std::vector<double>&);
 	virtual bool find(std::vector<unsigned>);
 	virtual bool find(std::set<unsigned>);
 	virtual int simplexCount();
 	virtual int vertexCount();
-	virtual std::vector<simplexNode*> getDimEdges(int,double);
+	virtual std::vector<simplexNode*> getDimEdges(int);
 	virtual std::vector<std::vector<simplexNode*>> getAllEdges();
 	virtual void expandDimensions(int);
 	virtual void reduceComplex();

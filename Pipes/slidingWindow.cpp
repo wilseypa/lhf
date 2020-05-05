@@ -57,7 +57,7 @@ void slidingWindow::updateStats()
 {
 
     // Delete the corresponding row from the distance matrix.
-    pPack->complex->distMatrix.erase(pPack->complex->distMatrix.begin() + defaultVals->indexToBeDeleted);
+    pPack->distMatrix.erase(pPack->distMatrix.begin() + defaultVals->indexToBeDeleted);
 
     double sumOldNNdists = 0.0;
     double sumNewNNdists = 0.0;
@@ -74,13 +74,13 @@ void slidingWindow::updateStats()
     std::vector<int> tpIndices; // A vector to store the positions of the existing members of the target partition.
 
     // Add a new column and row to the end of the upper triangular distance matrix.
-    for(unsigned int i = 0; i < pPack->complex->distMatrix.size(); i++)
+    for(unsigned int i = 0; i < pPack->distMatrix.size(); i++)
     {
         // Delete the corresponding entry from each row.
-        pPack->complex->distMatrix[i].erase( pPack->complex->distMatrix[i].begin() + defaultVals->indexToBeDeleted );
+        pPack->distMatrix[i].erase( pPack->distMatrix[i].begin() + defaultVals->indexToBeDeleted );
 
         // Add the new distance value to the end of each row.
-        pPack->complex->distMatrix[i].push_back( defaultVals->distsFromCurrVec[i] );
+        pPack->distMatrix[i].push_back( defaultVals->distsFromCurrVec[i] );
 
         // Update NN statistics for only those partitions from which the point was deleted or to which the new point is to be added.
         // Case 1: The i-th point belongs to the partition the last point was deleted from, but not to the partition the new point is
@@ -105,18 +105,18 @@ void slidingWindow::updateStats()
                 std::vector<double> memberDistsFromVect;
                 std::vector<int> memberIndices;
 
-                for(unsigned int j = 0; j < pPack->complex->distMatrix.size(); j++)
+                for(unsigned int j = 0; j < pPack->distMatrix.size(); j++)
                 {
                     if ( defaultVals->partitionLabels[j] == defaultVals->labelToBeDeleted )
                     {
                         if (j < i)
                         {
-                            memberDistsFromVect.push_back( pPack->complex->distMatrix[j][i] );
+                            memberDistsFromVect.push_back( pPack->distMatrix[j][i] );
                             memberIndices.push_back(j);
                         }
                         else if (j > i)
                         {
-                            memberDistsFromVect.push_back( pPack->complex->distMatrix[i][j] );
+                            memberDistsFromVect.push_back( pPack->distMatrix[i][j] );
                             memberIndices.push_back(j);
                         }
                     }
@@ -222,12 +222,12 @@ void slidingWindow::updateStats()
                     {
                         if (j < i)
                         {
-                            memberDistsFromVect.push_back( pPack->complex->distMatrix[j][i] );
+                            memberDistsFromVect.push_back( pPack->distMatrix[j][i] );
                             memberIndices.push_back(j);
                         }
                         else if (j > i)
                         {
-                            memberDistsFromVect.push_back( pPack->complex->distMatrix[i][j] );
+                            memberDistsFromVect.push_back( pPack->distMatrix[i][j] );
                             memberIndices.push_back(j);
                         }
                     }
@@ -250,7 +250,7 @@ void slidingWindow::updateStats()
     }
 
     std::vector<double> distMatLastRow(defaultVals->windowMaxSize);  // The last row of the upper triangular distance matrix is a vector of 0s.
-    pPack->complex->distMatrix.push_back( distMatLastRow );
+    pPack->distMatrix.push_back( distMatLastRow );
 
     // Update the average NN distance of the partition from which the last point was deleted and of the one to which the new point
     // is being added.
@@ -717,7 +717,7 @@ void slidingWindow::runComplexInitializer(pipePacket &inData, std::vector<int> &
         }
     }
 
-    inData.complex->setDistanceMatrix(distMatrix);
+    inData.complex->setDistanceMatrix(&inData.distMatrix);
 
     inData.weights.insert(0.0);
     inData.weights.insert(epsilon);

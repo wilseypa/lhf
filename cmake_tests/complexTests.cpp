@@ -62,7 +62,7 @@ void t_simp_functions(std::string &log){
 	//Get dimensional edges from uninitialized complex
 	//	RET: std::vector<std::vector<unsigned>>
 	std::cout << "\tTesting get dimensional edges from uninitialized complex" << std::endl;
-	if(testComplex->getDimEdges(2, 5.0).size() != 0) { failLog += "simplexBase getDimEdges failed\n"; }
+	if(testComplex->getDimEdges(2).size() != 0) { failLog += "simplexBase getDimEdges failed\n"; }
 
 	//Get all edges from uninitialized complex
 	//	RET: std::vector<std::vector<std::pair<std::set<unsigned>, double>>>
@@ -206,7 +206,7 @@ void t_simp_base_functions(std::string &log, std::string type){
 	//Get dimensional edges from complex
 	//	RET: std::vector<std::vector<unsigned>>
 	std::cout << "\t" << type << "\tTesting get dimensional edges from complex" << std::endl;
-	if(testComplex->getDimEdges(2, 5.0).size() != 0) { failLog += type + " getDimEdges failed\n"; }
+	if(testComplex->getDimEdges(2).size() != 0) { failLog += type + " getDimEdges failed\n"; }
 
 	//Get all edges from complex
 	//	RET: std::vector<std::vector<std::pair<std::set<unsigned>, double>>>
@@ -281,7 +281,7 @@ void t_simp_empty_functions(std::string &log, std::string type){
 
 	//Get dimensional edges from empty complex
 	//	RET: std::vector<std::vector<unsigned>>
-	if(testComplex->getDimEdges(2, 5.0).size() != 0) { failLog += type + " getDimEdges failed\n"; }
+	if(testComplex->getDimEdges(2).size() != 0) { failLog += type + " getDimEdges failed\n"; }
 
 	//Get all edges from empty complex
 	//	RET: std::vector<std::vector<std::pair<std::set<unsigned>, double>>>

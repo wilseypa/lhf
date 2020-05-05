@@ -46,7 +46,7 @@ void simplexBase::setConfig(std::map<std::string, std::string> configMap){
 }
 
 
-void simplexBase::setDistanceMatrix(std::vector<std::vector<double>> _distMatrix){
+void simplexBase::setDistanceMatrix(std::vector<std::vector<double>>* _distMatrix){
 	distMatrix = _distMatrix;
 	return;
 }
@@ -68,14 +68,12 @@ simplexBase* simplexBase::newSimplex(const std::string &simplexT, std::map<std::
 }
 
 
-std::vector<simplexBase::simplexNode*> simplexBase::getDimEdges(int dim, double epsilon){
+std::vector<simplexBase::simplexNode*> simplexBase::getDimEdges(int dim){
 	if(dim > simplexList.size()){
 		ut.writeLog(simplexType,"Error: requested dimension beyond complex");
 		std::vector<simplexBase::simplexNode*> a;
 		return a;
-		
 	}
-		
 	return simplexList[dim];
 }
 
