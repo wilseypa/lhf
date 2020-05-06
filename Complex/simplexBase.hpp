@@ -26,7 +26,14 @@ class simplexBase {
 		simplexNode* parent = nullptr;
 		double weight = 0;
 	};
-	std::vector<std::vector<simplexNode*>> simplexList;		//Holds ordered list of simplices in each dimension
+	
+	
+	struct cmpByWeight{
+		bool operator()(const simplexNode* lhs, const simplexNode* rhs) const{
+			return lhs->weight < rhs->weight;
+		}
+	};
+	std::vector<std::set<simplexNode*, cmpByWeight>> simplexList;		//Holds ordered list of simplices in each dimension
 																//Needs to sort by the weight for insertion
   
 	long long nodeCount = 0;					//Total number of nodes stored

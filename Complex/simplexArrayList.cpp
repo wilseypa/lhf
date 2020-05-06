@@ -20,7 +20,7 @@ double simplexArrayList::getSize(){
 	for(int i = 0; i < simplexList.size(); i++){
 		
 		//Size is the ([# weighted graph entries] x [std::pair size]) + ([dimension of graph] * [vector entry size]) 
-		size += (simplexList[i].size() * sizeof(simplexList[i][0]));
+		size += (simplexList[i].size() * sizeof((*simplexList[i].begin())));
 	}
 	
 	return size;
@@ -78,14 +78,14 @@ void simplexArrayList::insert(std::vector<double> &vector){
 					if(simplexList.size() == 1)
 						simplexList.push_back({insNode});
 					else
-						simplexList[1].push_back(insNode);
+						simplexList[1].insert(insNode);
 				}
 			}
 		}
 		
 		insNode->simplex = vertex;
 		insNode->weight = 0.0;
-		simplexList[0].push_back(insNode);
+		simplexList[0].insert(insNode);
 		
 	}	
 	
@@ -95,15 +95,9 @@ void simplexArrayList::insert(std::vector<double> &vector){
 // Search function to find a specific vector in the simplexArrayList
 // weightedGraph[d][v][p] dimension d stores vectors v of point elements p of simplexes formed
 bool simplexArrayList::find(std::set<unsigned> vector){
-	
-	if(simplexList.size() >= vector.size()){
-		//Search the weighted graph from the size of the vector
-		for(auto v = 0; v < simplexList[vector.size() - 1].size(); v++){
-			//ut.print1DVector(weightedGraph[vector.size() - 1][v]);
-			
-			if(simplexList[vector.size() - 1][v]->simplex == vector){
-				return true;
-			}
+	for(auto simplexSetIter = simplexList[vector.size() - 1].begin(); simplexSetIter != simplexList[vector.size() - 1].end(); simplexSetIter++){
+		if((*simplexSetIter)->simplex == vector){
+			return true;
 		}
 	}
 	return false;
@@ -113,11 +107,9 @@ bool simplexArrayList::find(std::set<unsigned> vector){
 // weightedGraph[d][v][p] dimension d stores vectors v of point elements p of simplexes formed
 double simplexArrayList::findWeight(std::set<unsigned> vector){
 	//Search the weighted graph from the size of the vector
-	for(auto v = 0; v < simplexList[vector.size() - 1].size(); v++){
-		//ut.print1DVector(weightedGraph[vector.size() - 1][v]);
-		
-		if(simplexList[vector.size() - 1][v]->simplex == vector){
-			return simplexList[vector.size() - 1][v]->weight;
+	for(auto simplexSetIter = simplexList[vector.size() - 1].begin(); simplexSetIter != simplexList[vector.size() - 1].end(); simplexSetIter++){
+		if((*simplexSetIter)->simplex == vector){
+			return (*simplexSetIter)->weight;
 		}
 	}
 	return -1;
@@ -164,16 +156,23 @@ void simplexArrayList::expandDimensions(int dim){
 		//Store d-dimensional simplices
 		std::vector<std::set<unsigned>> test;
 		
+		auto jSimplexIter = simplexList[d-1].begin();
+		auto tSimplexIter = simplexList[d-1].begin();
+		
 		//Iterate through each element in the current dimension's edges
-		for(unsigned j = 0; j < simplexList[d-1].size(); j++){
+		for(unsigned j = 0; j < simplexList[d-1].size(); j++, jSimplexIter++){
+			
+			//Reset our t iterator to j+1
+			tSimplexIter = jSimplexIter;
+			tSimplexIter++;
 			
 			//First search for intersections of the current element
-			for(unsigned t = j+1; t < simplexList[d-1].size(); t++){
-					
+			for(unsigned t = j+1; t < simplexList[d-1].size(); t++, tSimplexIter++){
+				
 				//Symmetric Diff will give us the 
-				auto simp = ut.symmetricDiff(simplexList[d-1][j]->simplex, simplexList[d-1][t]->simplex,true);
+				auto simp = ut.symmetricDiff((*jSimplexIter)->simplex, (*tSimplexIter)->simplex,true);
 				std::set<unsigned> totalVector = simp;
-				double maxWeight = simplexList[d-1][j]->weight > simplexList[d-1][t]->weight ? simplexList[d-1][j]->weight : simplexList[d-1][t]->weight;
+				double maxWeight = (*jSimplexIter)->weight > (*tSimplexIter)->weight ? (*jSimplexIter)->weight : (*tSimplexIter)->weight;
 				
 				
 				//This point intersects; potential candidate for a higher-level simplice
@@ -181,7 +180,7 @@ void simplexArrayList::expandDimensions(int dim){
 				if (simp.size() == 2){
 					
 					bool create = true;
-					auto m = ut.setIntersect(simplexList[d-1][j]->simplex,simplexList[d-1][t]->simplex,true);
+					auto m = ut.setIntersect((*jSimplexIter)->simplex,(*tSimplexIter)->simplex,true);
 					
 					//Case that we have a single vertex as the intersect
 					if(m.size() == 1){
@@ -227,18 +226,14 @@ void simplexArrayList::expandDimensions(int dim){
 						if(simplexList.size() == d){
 							simplexList.push_back({tot});
 						}else{
-							simplexList[d].push_back(tot);
+							simplexList[d].insert(tot);
 						}
 					}
 				}
 			}
+			
 		}
 	} 
-	
-	//Sort the simplices by weight
-	for(auto a : simplexList){
-		std::sort(a.begin(), a.end(), std::greater<>());
-	}
 	
 	return;
 }
@@ -330,11 +325,9 @@ std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> simp
 
 bool simplexArrayList::deletion(std::set<unsigned> vector){
 	//Search the weighted graph from the size of the vector
-	for(auto v = 0; v < simplexList[vector.size() - 1].size(); v++){
-		//ut.print1DVector(weightedGraph[vector.size() - 1][v]);
-		
-		if(simplexList[vector.size() - 1][v]->simplex == vector){
-			simplexList[vector.size() - 1].erase(simplexList[vector.size() - 1].begin() + v);
+	for(auto simplexSetIter = simplexList[vector.size() - 1].begin(); simplexSetIter != simplexList[vector.size() - 1].end(); simplexSetIter++){
+		if((*simplexSetIter)->simplex == vector){
+			simplexList[vector.size() - 1].erase(simplexSetIter);
 			return true;
 		}
 	}
