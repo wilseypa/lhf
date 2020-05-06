@@ -46,10 +46,10 @@ void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth,
 
 	//Check if the node needs inserted at this level
 	if(curE < maxEpsilon){
+		simp.insert(node->index);		
 		simplexNode* insNode = new simplexNode();
 		insNode->index = curIndex;
 		insNode->simplex = simp;
-		insNode->simplex.insert(curIndex);
 		insNode->sibling = nullptr;
 		insNode->child = nullptr;
 		nodeCount++;
@@ -98,15 +98,18 @@ void simplexTree::printTree(simplexNode* head){
 	}
 
 	std::cout << "HEAD: " << head->index << "\t" << head << "\t" << head->child << "\t" << head->sibling << std::endl;
+	std::cout << "sList Size: " << simplexList.size() << std::endl;
+
 
 	simplexNode* current;
+	
 	for(int i = 0; i < simplexList.size() ; i++){
-		std::cout << std::endl << "Dim: " << i << std::endl << std::endl;
-		current = (*simplexList[i].begin());
-
-		do{
-			std::cout << current->index << "\t" << current << "\t" << current->sibling << "\t" << current->child << "\t" << current->parent << std::endl;
-		} while(current->sibling != nullptr && (current = current->sibling) != nullptr);
+		std::cout << std::endl << "Dim: " << i << "\tSize: " << simplexList[i].size() << std::endl; 
+		std::cout << "[index , address, sibling, child, parent]" << std::endl << std::endl;
+		
+		for(auto simplexIter = simplexList[i].begin(); simplexIter != simplexList[i].end(); simplexIter++){
+			std::cout << (*simplexIter)->index << "\t" << &(*simplexIter) << "\t" << (*simplexIter)->sibling << "\t" << (*simplexIter)->child << "\t" << (*simplexIter)->parent << std::endl;
+		} 
 
 		std::cout << std::endl;
 	}
@@ -295,19 +298,18 @@ void simplexTree::insert(std::vector<double>&) {
 	//		if the node has a child, recurse
 	//		if the node has a sibling, recurse
 	//
-	//d0 -->          ({!})
+	//root            ({!})
 	//			       /
 	//			      /
-	//d1 -->	   | 0 | 1 | ... |
+	//d0 -->	   | 0 | 1 | ... |
 	//		        /
 	//             /
-	//d2 -->    | 1 | 2 | 3 |
+	//d1 -->    | 1 | 2 | 3 |
 	//           /         \
 	//	        /           \
-	//d3 --> | 2 | 3 |     | 4 | 5 |
+	//d2 --> | 2 | 3 |     | 4 | 5 |
 	//
 
-	simplexNode* temp = (*simplexList[0].begin());
 
 	//Now let's do it the new way - incremental VR;
 	//	Start at the first dimension (d0);
@@ -317,24 +319,29 @@ void simplexTree::insert(std::vector<double>&) {
 	//			insert to current
 	//	iterate to d0->sibling
 
-	do{
-		recurseInsert(temp, indexCounter, 0, 0, tempSet);
-	}while(temp->sibling != nullptr && (temp = temp->sibling) != nullptr);
+	for(auto simplexListIter = simplexList[0].begin(); simplexListIter != simplexList[0].end(); simplexListIter++){
+		recurseInsert((*simplexListIter), indexCounter, 0, 0, tempSet);
+	}
 
 	//Insert into the right of the tree
-	temp = (*simplexList[0].begin());
 	simplexNode* ins = new simplexNode();
-	temp = *root->children.rbegin();
+	auto temp = *root->children.rbegin();
 	ins->index = indexCounter;
 	ins->sibling = nullptr;
 	ins->parent = root;
 	root->children.insert(ins);
-	temp->sibling = ins;
+	
+	auto tempIter = simplexList[0].end();
+	std::advance(tempIter, -1);
+	(*tempIter)->sibling = ins;
 	simplexList[0].insert(ins);
 
 	nodeCount++;
 	indexCounter++;
 	runningVectorCount++;
+	
+	//printTree(root);
+	
 	return;
 }
 

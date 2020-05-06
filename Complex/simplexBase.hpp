@@ -30,7 +30,7 @@ class simplexBase {
 	
 	struct cmpByWeight{
 		bool operator()(const simplexNode* lhs, const simplexNode* rhs) const{
-			return lhs->weight < rhs->weight;
+			return lhs->weight <= rhs->weight;
 		}
 	};
 	std::vector<std::set<simplexNode*, cmpByWeight>> simplexList;		//Holds ordered list of simplices in each dimension
