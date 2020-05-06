@@ -101,7 +101,6 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			temp->weight = edge.second;
 			pivots.push_back(temp);
 
-			std::cout<<edge.second<<'\n';
 			bettiBoundaryTableEntry des = { 0, 0, edge.second, {}, {temp} };
 			inData.bettiTable.push_back(des);
 		}
@@ -115,7 +114,6 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	for(int i=0; i<inData.originalData.size(); i++){
 		if(uf.find(i) == i){ //i is the name of a connected component
 			//Each connected component has an open persistence interval
-			std::cout<<maxEpsilon<<'\n';
 			bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
 			inData.bettiTable.push_back(des);
 		}
@@ -188,8 +186,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						v[columnIndex] = columnV;
 
 						if(simplexWeight != pivot->weight){
-							std::cout<<simplexWeight<<' '<<pivot->weight<<'\n';
-							bettiBoundaryTableEntry des = { d, simplexWeight, pivot->weight, {} }; //TODO: update betti boundary table with coface list
+							bettiBoundaryTableEntry des = { d, simplexWeight, pivot->weight, {}, cofaceList };
 							inData.bettiTable.push_back(des);
 						}
 
@@ -204,8 +201,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 				}
 
 				if(cofaceList.empty()){
-					std::cout<<simplexWeight<<' '<<maxEpsilon<<'\n';
-					bettiBoundaryTableEntry des = { d, simplexWeight, maxEpsilon, {}, cofaceList };
+					bettiBoundaryTableEntry des = { d, simplexWeight, maxEpsilon, {}, {} };
 					inData.bettiTable.push_back(des);
 				}
 			
