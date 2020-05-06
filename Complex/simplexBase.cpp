@@ -68,16 +68,16 @@ simplexBase* simplexBase::newSimplex(const std::string &simplexT, std::map<std::
 }
 
 
-std::vector<simplexBase::simplexNode*> simplexBase::getDimEdges(int dim){
+std::set<simplexBase::simplexNode*, simplexBase::cmpByWeight> simplexBase::getDimEdges(int dim){
 	if(dim > simplexList.size()){
 		ut.writeLog(simplexType,"Error: requested dimension beyond complex");
-		std::vector<simplexBase::simplexNode*> a;
+		std::set<simplexBase::simplexNode*, cmpByWeight> a;
 		return a;
 	}
 	return simplexList[dim];
 }
 
-std::vector<std::vector<simplexBase::simplexNode*>> simplexBase::getAllEdges(){
+std::vector<std::set<simplexBase::simplexNode*, simplexBase::cmpByWeight>> simplexBase::getAllEdges(){
 	return simplexList;
 }
 

@@ -110,7 +110,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		inData.complex->expandDimensions(dim + 1);	
 	
 	//Get all edges for the simplexArrayList or simplexTree
-	std::vector<std::vector<simplexBase::simplexNode*>> edges = inData.complex->getAllEdges();
+	std::vector<std::set<simplexBase::simplexNode*, simplexBase::cmpByWeight>> edges = inData.complex->getAllEdges();
 
 	if(edges.size() <= 1)
 		return inData;
@@ -138,7 +138,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	unsigned nPts = inData.originalData.size();
 
 	unionFind uf(nPts);
-	shift = *edges[0][nPts-1]->simplex.begin();
+	shift = *(*edges[0].end())->simplex.begin();
 
 	for(auto& edge : edges[1]){ //For each edge
 		std::set<unsigned>::iterator it = edge->simplex.begin();
@@ -208,10 +208,17 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		std::unordered_map<unsigned, unsigned> pivotPairs; 			//For each pivot, which column has that pivot
 		std::priority_queue<unsigned> nextPivots; 					//Pivots for the next dimension
 
+		unsigned columnIndex = edges[d].size();
+
 		//Iterate over columns to reduce in reverse order
-		for(unsigned columnIndex = edges[d].size(); columnIndex-- != 0; ){ 
+		for(auto columnIndexIter = edges[d].end(); columnIndexIter != edges[d].begin();  ){ 
+			//Immediately decrease the iterator (because we're pointing to the end)
+			columnIndexIter--;
 			
-			simplexBase::simplexNode* simplex = edges[d][columnIndex];		//Pointer to the current simplex
+			//Keep track of the column index for the pivots (for now)
+			columnIndex--;
+			
+			simplexBase::simplexNode* simplex = *columnIndexIter;		//Pointer to the current simplex
 			double simplexWeight = simplex->weight;										//Current simplex weight
 			std::vector<unsigned> cofaceList; 											//Store cofaceList as a min heap
 			std::vector<long long> columnV;												
@@ -246,11 +253,12 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						auto cofacetIndex = indexConverter.find(index + bin.binom(i, k));
 						if(cofacetIndex != indexConverter.end()){ //If this is a valid simplex, add it to the heap
 							cofaceList.push_back(cofacetIndex->second);
-
+							auto edgeCofaceIter = edges[d+1].begin();
+							std::advance(edgeCofaceIter, cofacetIndex->second);
 							//If we haven't found an emergent candidate and the weight of the maximal cofacet is equal to the simplex's weight
 							//		we have identified an emergent pair; at this point we can break because the interval is born and dies at the 
 							//		same epsilon
-							if(!foundEmergentCandidate && edges[d+1][cofacetIndex->second]->weight == simplex->weight){
+							if(!foundEmergentCandidate && (*edgeCofaceIter)->weight == simplex->weight){
 								
 								//Check to make sure the identified cofacet isn't a pivot
 								if(pivotPairs.find(cofacetIndex->second) == pivotPairs.end()) 
@@ -269,7 +277,6 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 				while(!cofaceList.empty()){
 					
 					unsigned pivotIndex; //Get minimum coface from heap
-								
 					
 					while(!cofaceList.empty()){
 						pivotIndex = cofaceList.front();
@@ -309,8 +316,11 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						// }
 						v[columnIndex] = columnV;
 
-						if(edges[d][columnIndex]->weight != edges[d+1][pivotIndex]->weight){
-							bettiBoundaryTableEntry des = { d, simplexWeight, edges[d+1][pivotIndex]->weight, std::set<unsigned>(cofaceList.begin(), cofaceList.end()) };
+						auto edgeCofaceIter = edges[d+1].begin();
+						std::advance(edgeCofaceIter, pivotIndex);
+
+						if((*columnIndexIter)->weight != (*edgeCofaceIter)->weight){
+							bettiBoundaryTableEntry des = { d, simplexWeight, (*edgeCofaceIter)->weight, std::set<unsigned>(cofaceList.begin(), cofaceList.end()) };
 							inData.bettiTable.push_back(des);
 						}
 

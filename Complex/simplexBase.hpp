@@ -84,8 +84,8 @@ class simplexBase {
 	virtual bool find(std::set<unsigned>);
 	virtual int simplexCount();
 	virtual int vertexCount();
-	virtual std::vector<simplexNode*> getDimEdges(int);
-	virtual std::vector<std::vector<simplexNode*>> getAllEdges();
+	virtual std::set<simplexNode*, cmpByWeight> getDimEdges(int);
+	virtual std::vector<std::set<simplexNode*, cmpByWeight>> getAllEdges();
 	virtual void expandDimensions(int);
 	virtual void reduceComplex();
 	virtual void clear();

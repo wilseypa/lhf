@@ -59,11 +59,9 @@ void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth,
 		
 		//if depth (i.e. 1 for first iteration) is LT weightGraphSize (starts at 1)
 		if(simplexList.size() < simp.size()){
-			std::vector<simplexNode*> tempWEG;
-			tempWEG.push_back(insNode);
-			simplexList.push_back(tempWEG);
+			simplexList.push_back({insNode});
 		} else {
-			simplexList[simp.size() - 1].push_back(insNode);
+			simplexList[simp.size() - 1].insert(insNode);
 		}
 
 		//Check if the node has children already...
@@ -104,7 +102,7 @@ void simplexTree::printTree(simplexNode* head){
 	simplexNode* current;
 	for(int i = 0; i < simplexList.size() ; i++){
 		std::cout << std::endl << "Dim: " << i << std::endl << std::endl;
-		current = simplexList[i][0];
+		current = (*simplexList[i].begin());
 
 		do{
 			std::cout << current->index << "\t" << current << "\t" << current->sibling << "\t" << current->child << "\t" << current->parent << std::endl;
@@ -237,7 +235,7 @@ void simplexTree::deleteIndexRecurse(int vectorIndex, simplexNode* curNode){
 		}
 		
 		for(auto d : simplexList){
-			if(d[0] == curNode)
+			if((*d.begin()) == curNode)
 				d.insert(d.begin(), curNode->sibling);
 		}
 			
@@ -247,7 +245,7 @@ void simplexTree::deleteIndexRecurse(int vectorIndex, simplexNode* curNode){
 		curNode->child = curNode->child->sibling;
 		
 		for(auto d : simplexList){
-			if(d[0] == tempNode)
+			if((*d.begin()) == tempNode)
 				d.insert(d.begin(), tempNode->sibling);
 		}
 		
@@ -288,10 +286,7 @@ void simplexTree::insert(std::vector<double>&) {
 		indexCounter++;
 		runningVectorCount++;
 		nodeCount++;
-
-		std::vector<simplexNode*> tempWEG;
-		tempWEG.push_back(curNode);
-		simplexList.push_back(tempWEG);
+		simplexList.push_back({curNode});
 
 		return;
 	}
@@ -312,7 +307,7 @@ void simplexTree::insert(std::vector<double>&) {
 	//d3 --> | 2 | 3 |     | 4 | 5 |
 	//
 
-	simplexNode* temp = simplexList[0][0];
+	simplexNode* temp = (*simplexList[0].begin());
 
 	//Now let's do it the new way - incremental VR;
 	//	Start at the first dimension (d0);
@@ -327,7 +322,7 @@ void simplexTree::insert(std::vector<double>&) {
 	}while(temp->sibling != nullptr && (temp = temp->sibling) != nullptr);
 
 	//Insert into the right of the tree
-	temp = simplexList[0][0];
+	temp = (*simplexList[0].begin());
 	simplexNode* ins = new simplexNode();
 	temp = *root->children.rbegin();
 	ins->index = indexCounter;
@@ -335,7 +330,7 @@ void simplexTree::insert(std::vector<double>&) {
 	ins->parent = root;
 	root->children.insert(ins);
 	temp->sibling = ins;
-	simplexList[0].push_back(ins);
+	simplexList[0].insert(ins);
 
 	nodeCount++;
 	indexCounter++;
@@ -346,19 +341,13 @@ void simplexTree::insert(std::vector<double>&) {
 void simplexTree::deleteWeightEdgeGraph(int index){
 	
 	for(unsigned dim = 0; dim < simplexList.size(); dim++){
-		std::vector<unsigned> d_indices;
 		
-		for(int vInd = simplexList[dim].size()-1; vInd >= 0; vInd--){
-			//std::cout << "vInd: " << vInd << std::endl;
+		for(auto simplexListIter = simplexList[dim].begin(); simplexListIter != simplexList[dim].end(); ){
 			
-			if(simplexList[dim][vInd]->simplex.find(index) != simplexList[dim][vInd]->simplex.end())
-				d_indices.push_back(vInd);
-		}
-		
-		int rem = 0;
-		for(auto del : d_indices){
-			rem++;
-			simplexList[dim].erase(simplexList[dim].begin() + del);
+			if((*simplexListIter)->simplex.find(index) != (*simplexListIter)->simplex.end())
+				simplexList[dim].erase(*simplexListIter);
+			else
+				simplexListIter++;
 		}
 	}
 	return;
@@ -550,7 +539,7 @@ bool simplexTree::find(std::set<unsigned>){
 bool simplexTree::deletion(std::set<unsigned> removalEntry) {
 	//Remove the entry in the simplex tree
 	bool found = true;
-	simplexNode* curNode = simplexList[0][0];
+	simplexNode* curNode = (*simplexList[0].begin());
 	int d = removalEntry.size() - 1;
 
 
