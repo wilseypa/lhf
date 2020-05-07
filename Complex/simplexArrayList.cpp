@@ -12,6 +12,96 @@ simplexArrayList::simplexArrayList(double maxE, double maxD, std::vector<std::ve
 	indexCount = 0;
 }
 
+/*
+binomialTable::binomialTable(unsigned n, unsigned k) : v(n+1, std::vector<long long>(k+1, 0)){ //Fast computation of binomials with precomputed table
+	v[0][0] = 1;
+	
+	
+	for(int i=1; i<=n; i++){
+		v[i][0] = 1;
+		for(int j=1; j<=k; j++){
+			v[i][j] = v[i-1][j-1] + v[i-1][j]; //Pascal's Rule
+			if(v[i][j] < 0) throw std::overflow_error("Binomial overflow");
+		}
+	}
+}
+
+long long binomialTable::binom(unsigned n, unsigned k){ //Return binomial coefficient
+	if(k>n) return 0;
+	return v[n][k];
+}
+
+//Hash the set by converting to a remapped index
+long long fastPersistence::ripsIndex(std::set<unsigned>& simplex, binomialTable& bin){ 
+	long long simplexIndex = 0;
+	unsigned i = 0;
+	auto it = simplex.begin();
+	while(it != simplex.end()){
+		simplexIndex += bin.binom(*it - shift, ++i);
+		if(simplexIndex < 0) throw std::overflow_error("Binomial overflow");
+		++it;
+	}
+	return simplexIndex;
+}
+
+unsigned fastPersistence::maxVertex(long long ripsIndex, unsigned high, unsigned low, unsigned k, binomialTable &bin){
+	while(high > low){ //Binary search for the max vertex for this simplex
+		unsigned mid = (high + low)/2;
+		if(bin.binom(mid, k) <= ripsIndex) low = mid + 1;
+		else high = mid;
+	}
+	return high - 1;
+}
+
+std::vector<unsigned> fastPersistence::getVertices(long long ripsIndex, int dim, unsigned n, binomialTable &bin){
+	std::vector<unsigned> v;
+	for(unsigned k = dim+1; k>0; k--){ //Get all vertices by repeated binary search for max vertex
+		n = maxVertex(ripsIndex, n, k-1, k, bin);
+		v.push_back(n);
+		ripsIndex -= bin.binom(n, k);
+	}
+	return v;
+}
+
+std::vector<unsigned> simplexArrayList::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<treeNode*, unsigned>& pivotPairs, bool checkEmergent){
+	//Try inserting other vertices into the simplex
+	for(unsigned i=nPts; i-- != 0; ){ 
+		
+		
+		if(it != simplex.first.rend() && i == *it - shift){ //Vertex i is already in the simplex
+			//Now adding vertices less than i -> i is now the kth largest vertex in the simplex instead of the (k-1)th
+			index -= bin.binom(i, k-1);
+			index += bin.binom(i, k); //Recompute the index accordingly
+
+			//Now need to check for the (k-1)th vertex in the simplex
+			--k;
+			
+			//Check for the previous vertex in the simplex (it is a reverse iterator)
+			++it;
+		} else{
+			
+			
+			auto cofacetIndex = indexConverter.find(index + bin.binom(i, k));
+			if(cofacetIndex != indexConverter.end()){ //If this is a valid simplex, add it to the heap
+				_cofaceList.push_back(cofacetIndex->second);
+
+				//If we haven't found an emergent candidate and the weight of the maximal cofacet is equal to the simplex's weight
+				//		we have identified an emergent pair; at this point we can break because the interval is born and dies at the 
+				//		same epsilon
+				if(!foundEmergentCandidate && edges[d+1][cofacetIndex->second].second == simplex.second){
+					
+					//Check to make sure the identified cofacet isn't a pivot
+					if(_pivotPairs.find(cofacetIndex->second) == _pivotPairs.end()) 
+						break; //Found an emergent cofacet pair -> we can break
+						
+					foundEmergentCandidate = true;
+				}
+			}
+		}
+	}
+}
+*/
+
 double simplexArrayList::getSize(){
 	//Calculate size of original data
 	size_t size = 0;
