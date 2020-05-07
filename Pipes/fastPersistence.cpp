@@ -79,7 +79,6 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	//		Until all edges evaluated or MST found (size - 1)	
 	
 	std::vector<simplexNode*> pivots; //Store identified pivots
-	unsigned edgeIndex = 0;
 	unsigned mstSize = 0;
 	unsigned nPts = inData.originalData.size();
 
@@ -87,10 +86,8 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	//shift = *(*edges[0].begin())->simplex.begin();
 	shift = 0;
 
-	for(auto edgeIter = edges[1].end(); edgeIter != edges[1].begin(); ){
-		edgeIter--;
+	for(auto edgeIter = edges[1].begin(); edgeIter != edges[1].end(); edgeIter++){
 		std::set<unsigned>::iterator it = (*edgeIter)->simplex.begin();
-		
 		
 		//Find which connected component each vertex belongs to
 		int v1 = uf.find(*it - shift),  v2 = uf.find(*(++it) - shift); 
@@ -105,16 +102,12 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			temp->weight = (*edgeIter)->weight;
 			pivots.push_back(temp);
 
-			bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, {}, {temp} };
-			
-			//bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, { *it - shift } };
+			bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, {}, {temp} };			
 			inData.bettiTable.push_back(des);
 		}
 
 		//Check if we've filled our MST and can break
 		if(mstSize >= edges[0].size()-1) break;
-
-		edgeIndex++;
 	}
 
 	for(int i=0; i<inData.originalData.size(); i++){
@@ -155,16 +148,10 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		std::unordered_map<unsigned, std::vector<unsigned>> v;				//Store only the reduction matrix V and compute R implicity
 		std::unordered_map<simplexNode*, unsigned> pivotPairs;	//For each pivot, which column has that pivot
 
-		unsigned columnIndex = edges[d].size();
+		unsigned columnIndex = edges[d].size() - 1; //Keep track of the column index for the pivots (for now)
 
 		//Iterate over columns to reduce in reverse order
-		for(auto columnIndexIter = edges[d].end(); columnIndexIter != edges[d].begin();  ){ 
-			//Immediately decrease the iterator (because we're pointing to the end)
-			columnIndexIter--;
-			
-			//Keep track of the column index for the pivots (for now)
-			columnIndex--;
-			
+		for(auto columnIndexIter = edges[d].rbegin(); columnIndexIter != edges[d].rend(); columnIndexIter++, columnIndex--){ 
 			simplexNode* simplex = (*columnIndexIter);		//The current simplex
 
 			//Not a pivot -> need to reduce
