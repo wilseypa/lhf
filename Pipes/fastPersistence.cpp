@@ -112,6 +112,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	//Get all edges for the simplexArrayList or simplexTree
 	std::vector<std::set<simplexBase::simplexNode*, simplexBase::cmpByWeight>> edges = inData.complex->getAllEdges();
 
+
 	if(edges.size() <= 1)
 		return inData;
 		
@@ -138,13 +139,16 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	unsigned nPts = inData.originalData.size();
 
 	unionFind uf(nPts);
-	shift = *(*edges[0].end())->simplex.begin();
+	//shift = *(*edges[0].begin())->simplex.begin();
+	shift = 0;
 
-	for(auto& edge : edges[1]){ //For each edge
-		std::set<unsigned>::iterator it = edge->simplex.begin();
+	for(auto edgeIter = edges[1].end(); edgeIter != edges[1].begin(); ){
+		edgeIter--;
+		std::set<unsigned>::iterator it = (*edgeIter)->simplex.begin();
+		
 		
 		//Find which connected component each vertex belongs to
-		int v1 = uf.find(*it - shift), v2 = uf.find(*(++it) - shift); 
+		int v1 = uf.find(*it - shift),  v2 = uf.find(*(++it) - shift); 
 		
 		//Edge connects two different components -> add to the MST
 		if(v1 != v2){ 
@@ -152,7 +156,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			pivots.push(edgeIndex);
 			mstSize++;
 			
-			bettiBoundaryTableEntry des = { 0, 0, edge->weight, { *it - shift } };
+			bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, { *it - shift } };
 			inData.bettiTable.push_back(des);
 		}
 
@@ -169,6 +173,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			inData.bettiTable.push_back(des);
 		}
 	}
+	
 	
 	//For higher dimensional persistence intervals
 	//	
