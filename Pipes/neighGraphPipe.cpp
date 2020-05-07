@@ -71,26 +71,16 @@ bool neighGraphPipe::configPipe(std::map<std::string, std::string> configMap){
 void neighGraphPipe::outputData(pipePacket inData){
 	std::ofstream file ("output/" + pipeType + "_output.csv");
 	
-	if(inData.complex->simplexType == "simplexArrayList"){
-		if(inData.complex->weightedGraph.size() > 1){
-			for(auto a : inData.complex->weightedGraph[1]){
-				for(auto d : a.first){
-					file << d << ",";
-				}
-				file << a.second << "\n";
+	auto edges = inData.complex->getAllEdges();
+	for (auto edge : edges){
+		for (auto a : edge){
+			for(auto d : a->simplex){
+				file << d << ",";
 			}
-		}
-	}else{
-		auto edges = inData.complex->getAllEdges(5);
-		for (auto edge : edges){
-			for (auto a : edge){
-				for(auto d : a.first){
-					file << d << ",";
-				}
-				file << a.second << "\n";
-			}
+			file << a->weight << "\n";
 		}
 	}
+	
 	file << std::endl;
 	
 	file.close();

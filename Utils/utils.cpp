@@ -343,9 +343,9 @@ std::vector<unsigned> utils::symmetricDiff(std::vector<unsigned> v1, std::vector
 }
 
 // Find the symmetric difference of two vectors
-std::vector<unsigned> utils::symmetricDiff(std::set<unsigned> v1, std::set<unsigned> v2, bool isSorted){
-	std::vector<unsigned> ret;
-	std::vector<unsigned> retTemp;
+std::set<unsigned> utils::symmetricDiff(std::set<unsigned> v1, std::set<unsigned> v2, bool isSorted){
+	std::set<unsigned> ret;
+	std::set<unsigned> retTemp;
 	
 	if(v1 == v2)
 		return ret;
@@ -354,7 +354,7 @@ std::vector<unsigned> utils::symmetricDiff(std::set<unsigned> v1, std::set<unsig
 	//	sort(v1.begin(), v1.end());
 	//	sort(v2.begin(), v2.end());
 //	}
-	set_symmetric_difference(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(retTemp));
+	set_symmetric_difference(v1.begin(), v1.end(), v2.begin(), v2.end(),  std::inserter(retTemp, retTemp.begin()));
 	
 	/*for(auto iter = v1.begin(); iter!= v1.end(); iter++){
 		std::cout << *iter << ",";
@@ -402,6 +402,33 @@ std::vector<std::set<unsigned>> utils::getSubsets(std::set<unsigned> set, int di
 	}
 	return retSubset;
 }
+
+// Find the union of two vectors
+std::set<unsigned> utils::setUnion(std::set<unsigned> v1, std::set<unsigned> v2, bool isSorted){
+	std::set<unsigned> ret;
+	std::set<unsigned> retTemp;
+	
+	if(v1 == v2)
+		return ret;
+	
+	set_union(v1.begin(), v1.end(), v2.begin(), v2.end(), std::inserter(retTemp, retTemp.begin()));
+		
+	/*for(auto iter = v1.begin(); iter!= v1.end(); iter++){
+		std::cout << *iter << ",";
+	}
+	std::cout << "\t";
+	for(auto iter = v2.begin(); iter!= v2.end(); iter++){
+		std::cout << *iter << ",";
+	}
+	std::cout << "\t";
+	for(auto iter = retTemp.begin(); iter!= retTemp.end(); iter++){
+		std::cout << *iter << ",";
+	}
+	std::cout << std::endl;*/
+	return retTemp;
+}
+
+
 
 // Find the union of two vectors
 std::vector<unsigned> utils::setUnion(std::vector<unsigned> v1, std::vector<unsigned> v2, bool isSorted){

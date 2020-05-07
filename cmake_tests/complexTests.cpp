@@ -62,12 +62,12 @@ void t_simp_functions(std::string &log){
 	//Get dimensional edges from uninitialized complex
 	//	RET: std::vector<std::vector<unsigned>>
 	std::cout << "\tTesting get dimensional edges from uninitialized complex" << std::endl;
-	if(testComplex->getDimEdges(2, 5.0).size() != 0) { failLog += "simplexBase getDimEdges failed\n"; }
+	if(testComplex->getDimEdges(2).size() != 0) { failLog += "simplexBase getDimEdges failed\n"; }
 
 	//Get all edges from uninitialized complex
 	//	RET: std::vector<std::vector<std::pair<std::set<unsigned>, double>>>
 	std::cout << "\tTesting get all edges from uninitialized complex" << std::endl;
-	if(testComplex->getAllEdges(5.0).size() != 0) { failLog += "simplexBase getAllEdges failed\n"; }
+	if(testComplex->getAllEdges().size() != 0) { failLog += "simplexBase getAllEdges failed\n"; }
 
 	//Expand the dimensions of the uninitialized complex
 	//	RET: void
@@ -85,11 +85,6 @@ void t_simp_functions(std::string &log){
 	//	RET: bool
 	std::cout << "\tTesting attempt to trigger the stream evaluator for the uninitialized complex" << std::endl;
 	testComplex->streamEvaluator(testValue, testValueArray);
-
-	//Attempt to get dim_0 pairs for the uninitialized complex
-	//	RET: std::vector<std::pair<double,std::vector<unsigned>>>
-	std::cout << "\tTesting attempt to get dim_0 pairs for the uninitialized complex" << std::endl;
-	if(testComplex->getd0Pairs().size() > 0) { failLog += "simplexBase getd0Pairs failed\n"; }
 
 	//Output log status to calling function
 	if(failLog.size() > 0){
@@ -211,12 +206,12 @@ void t_simp_base_functions(std::string &log, std::string type){
 	//Get dimensional edges from complex
 	//	RET: std::vector<std::vector<unsigned>>
 	std::cout << "\t" << type << "\tTesting get dimensional edges from complex" << std::endl;
-	if(testComplex->getDimEdges(2, 5.0).size() != 0) { failLog += type + " getDimEdges failed\n"; }
+	if(testComplex->getDimEdges(2).size() != 0) { failLog += type + " getDimEdges failed\n"; }
 
 	//Get all edges from complex
 	//	RET: std::vector<std::vector<std::pair<std::set<unsigned>, double>>>
 	std::cout << "\t" << type << "\tTesting get all edges from complex" << std::endl;
-	if(testComplex->getAllEdges(5.0).size() != 0) { failLog += type + " getAllEdges failed\n"; }
+	if(testComplex->getAllEdges().size() != 0) { failLog += type + " getAllEdges failed\n"; }
 
 	//Expand the dimensions of the complex
 	//	RET: void
@@ -234,11 +229,6 @@ void t_simp_base_functions(std::string &log, std::string type){
 	//	RET: bool
 	std::cout << "\t" << type << "\tTesting attempt to trigger the stream evaluator for the complex" << std::endl;
 	testComplex->streamEvaluator(testValue, testValueArray);
-
-	//Attempt to get dim_0 pairs for the complex
-	//	RET: std::vector<std::pair<double,std::vector<unsigned>>>
-	std::cout << "\t" << type << "\tTesting attempt to get dim_0 pairs for the complex" << std::endl;
-	if(testComplex->getd0Pairs().size() > 0) { failLog += "simplexBase getd0Pairs failed\n"; }
 
 	//Output log status to calling function
 	if(failLog.size() > 0){
@@ -291,11 +281,11 @@ void t_simp_empty_functions(std::string &log, std::string type){
 
 	//Get dimensional edges from empty complex
 	//	RET: std::vector<std::vector<unsigned>>
-	if(testComplex->getDimEdges(2, 5.0).size() != 0) { failLog += type + " getDimEdges failed\n"; }
+	if(testComplex->getDimEdges(2).size() != 0) { failLog += type + " getDimEdges failed\n"; }
 
 	//Get all edges from empty complex
 	//	RET: std::vector<std::vector<std::pair<std::set<unsigned>, double>>>
-	if(testComplex->getAllEdges(5.0).size() != 0) { failLog += type + " getAllEdges failed\n"; }
+	if(testComplex->getAllEdges().size() != 0) { failLog += type + " getAllEdges failed\n"; }
 
 	//Expand the dimensions of the empty complex
 	//	RET: void

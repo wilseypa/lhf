@@ -9,42 +9,35 @@
 class simplexTree : public simplexBase {
   private:
 	bool isSorted = false;
-	long long nodeCount = 0;
-	std::vector<std::vector<std::pair<std::set<unsigned>, double>>> weightEdgeGraph;
 
-  public:
-	treeNode* head = nullptr; //First simplex in the tree (0 vertex)
-	treeNode* root = nullptr; //Empty node at root of tree (empty simplex)
-	std::vector<treeNode*> dimensions;
+	simplexBase::simplexNode* head = nullptr; //First simplex in the tree (0 vertex)
+	simplexBase::simplexNode* root = nullptr; //Empty node at root of tree (empty simplex)
 
-	simplexTree(std::vector<std::vector<double>>);
-	simplexTree(double, std::vector<std::vector<double>>, int);
-	std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(std::pair<std::set<unsigned>,double>, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
-	void printTree(treeNode*);
-	void recurseInsert(treeNode*, unsigned, int, double, std::set<unsigned>);
+	simplexTree(double, std::vector<std::vector<double>>*, int);
+	std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(simplexBase::simplexNode*, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
+	void printTree(simplexBase::simplexNode*);
+	void recurseInsert(simplexBase::simplexNode*, unsigned, int, double, std::set<unsigned>);
 	double findWeight(std::set<unsigned>);
-	void deleteIndexRecurse(int, treeNode*);
+	void deleteIndexRecurse(int, simplexBase::simplexNode*); 
 	void deleteWeightEdgeGraph(int index);
-	treeNode* find(std::set<unsigned>::iterator, std::set<unsigned>::iterator, treeNode*);
+
+	simplexNode* find(std::set<unsigned>::iterator, std::set<unsigned>::iterator, simplexNode*);
 
 	//virtual interface functions
 	double getSize();
 	bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&);
 	bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&, int&, int&, std::vector<double>&);
-	void deleteIterative(int);
+	void deleteIterative(simplexBase::simplexNode*);
 	void deleteIndexRecurse(int);  // A wrapper for the actual deleteIndexRecurse method.
 	void insert(std::vector<double>&);
 	bool find(std::set<unsigned>);
 	int simplexCount();
 	int vertexCount();
-	std::vector<std::vector<unsigned>> getDimEdges(int,double);
-	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> getAllEdges(double);
-	std::vector<treeNode*> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<treeNode*, unsigned>&, bool);
+	std::vector<simplexBase::simplexNode*> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode*, unsigned>&, bool);
 	bool deletion(std::set<unsigned>);
-	bool deletion(treeNode*);
+	bool deletion(simplexBase::simplexNode*);
 	void expandDimensions(int){return;};
 	void reduceComplex();
-	std::vector<std::pair<double, std::vector<unsigned>>> getd0Pairs();
 	void clear();
 };
 

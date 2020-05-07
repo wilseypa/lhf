@@ -46,7 +46,7 @@ void simplexBase::setConfig(std::map<std::string, std::string> configMap){
 }
 
 
-void simplexBase::setDistanceMatrix(std::vector<std::vector<double>> _distMatrix){
+void simplexBase::setDistanceMatrix(std::vector<std::vector<double>>* _distMatrix){
 	distMatrix = _distMatrix;
 	return;
 }
@@ -68,16 +68,17 @@ simplexBase* simplexBase::newSimplex(const std::string &simplexT, std::map<std::
 }
 
 
-std::vector<std::vector<unsigned>> simplexBase::getDimEdges(int dim, double epsilon){
-	ut.writeLog(simplexType,"No get edges function defined");
-	std::vector<std::vector<unsigned>> a;
-	return a;
+std::set<simplexBase::simplexNode*, simplexBase::cmpByWeight> simplexBase::getDimEdges(int dim){
+	if(dim > simplexList.size()){
+		ut.writeLog(simplexType,"Error: requested dimension beyond complex");
+		std::set<simplexBase::simplexNode*, cmpByWeight> a;
+		return a;
+	}
+	return simplexList[dim];
 }
 
-std::vector<std::vector<std::pair<std::set<unsigned>,double>>> simplexBase::getAllEdges(double epsilon){
-	ut.writeLog(simplexType,"No get edges function defined");
-	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> a;
-	return a;
+std::vector<std::set<simplexBase::simplexNode*, simplexBase::cmpByWeight>> simplexBase::getAllEdges(){
+	return simplexList;
 }
 
 std::vector<treeNode*> simplexBase::getAllCofacets(const std::set<unsigned>& simplex){
@@ -207,13 +208,6 @@ bool simplexBase::streamEvaluator(std::vector<double>& vector, std::vector<std::
 	stats += "Reject\n";
 	//std::cout << "\tReject: (stdev > 0.5 , " << stdev << ")" << std::endl;
 	return false;
-}
-
-
-std::vector<std::pair<double, std::vector<unsigned>>> simplexBase::getd0Pairs(){
-	std::vector<std::pair<double, std::vector<unsigned>>> ret;
-	ut.writeLog(simplexType,"No getd0Pairs function defined");
-	return ret;
 }
 
 void simplexBase::clear(){
