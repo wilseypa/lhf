@@ -56,7 +56,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	if(dim > 0) inData.complex->expandDimensions(dim + 1);	
 	
 	//Get all edges for the simplexArrayList or simplexTree
-	std::vector<std::set<simplexBase::simplexNode*, simplexBase::cmpByWeight>> edges = inData.complex->getAllEdges();
+	std::vector<std::set<simplexNode*, cmpByWeight>> edges = inData.complex->getAllEdges();
 
 
 	if(edges.size() <= 1) return inData;
@@ -165,13 +165,12 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			//Keep track of the column index for the pivots (for now)
 			columnIndex--;
 			
-			std::pair<std::set<unsigned>, double>& simplex = edges[d][columnIndex];		//The current simplex
-			double simplexWeight = simplex.second;										//Current simplex weight
+			simplexNode* simplex = (*columnIndexIter);		//The current simplex
 
 			//Not a pivot -> need to reduce
-			if((*it)->weight != simplexWeight && (*it)->simplex != simplex.first){ 
+			if((*it)->weight != simplex->weight && (*it)->simplex != simplex->simplex){ 
 				//Get all cofacets using emergent pair optimization
-				std::vector<simplexNode*> cofaceList = inData.complex->getAllCofacets(simplex.first, simplexWeight, pivotPairs);
+				std::vector<simplexNode*> cofaceList = inData.complex->getAllCofacets(simplex->simplex, simplex->weight, pivotPairs);
 				std::vector<unsigned> columnV;	//Reduction column of matrix V
 				columnV.push_back(columnIndex); //Initially V=I -> 1's along diagonal
 
@@ -207,8 +206,8 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						nextPivots.push_back(pivot);
 						v[columnIndex] = columnV;
 
-						if(simplexWeight != pivot->weight){
-							bettiBoundaryTableEntry des = { d, simplexWeight, pivot->weight, {}, cofaceList };
+						if(simplex->weight != pivot->weight){
+							bettiBoundaryTableEntry des = { d, simplex->weight, pivot->weight, {}, cofaceList };
 
 							inData.bettiTable.push_back(des);
 						}
@@ -216,7 +215,10 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						break;
 					} else{ //Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
 						for(unsigned i : v[pivotPairs[pivot]]){
-							std::vector<simplexNode*> cofaces = inData.complex->getAllCofacets(edges[d][i].first);
+							auto temp = edges[d].begin();
+							std::advance(temp, i);
+							
+							std::vector<simplexNode*> cofaces = inData.complex->getAllCofacets((*temp)->simplex);
 							cofaceList.insert(cofaceList.end(), cofaces.begin(), cofaces.end());
 						}
 						std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
@@ -224,7 +226,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 				}
 
 				if(cofaceList.empty()){
-					bettiBoundaryTableEntry des = { d, simplexWeight, maxEpsilon, {}, {} };
+					bettiBoundaryTableEntry des = { d, simplex->weight, maxEpsilon, {}, {} };
 					inData.bettiTable.push_back(des);
 				}
 			

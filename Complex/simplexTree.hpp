@@ -8,17 +8,18 @@
 
 class simplexTree : public simplexBase {
   private:
+  public:
 	bool isSorted = false;
 
-	simplexBase::simplexNode* head = nullptr; //First simplex in the tree (0 vertex)
-	simplexBase::simplexNode* root = nullptr; //Empty node at root of tree (empty simplex)
+	simplexNode* head = nullptr; //First simplex in the tree (0 vertex)
+	simplexNode* root = nullptr; //Empty node at root of tree (empty simplex)
 
 	simplexTree(double, std::vector<std::vector<double>>*, int);
-	std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(simplexBase::simplexNode*, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
-	void printTree(simplexBase::simplexNode*);
-	void recurseInsert(simplexBase::simplexNode*, unsigned, int, double, std::set<unsigned>);
+	std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(simplexNode*, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
+	void printTree(simplexNode*);
+	void recurseInsert(simplexNode*, unsigned, int, double, std::set<unsigned>);
 	double findWeight(std::set<unsigned>);
-	void deleteIndexRecurse(int, simplexBase::simplexNode*); 
+	void deleteIndexRecurse(int, simplexNode*); 
 	void deleteWeightEdgeGraph(int index);
 
 	simplexNode* find(std::set<unsigned>::iterator, std::set<unsigned>::iterator, simplexNode*);
@@ -27,15 +28,15 @@ class simplexTree : public simplexBase {
 	double getSize();
 	bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&);
 	bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&, int&, int&, std::vector<double>&);
-	void deleteIterative(simplexBase::simplexNode*);
+	void deleteIterative(simplexNode*);
 	void deleteIndexRecurse(int);  // A wrapper for the actual deleteIndexRecurse method.
 	void insert(std::vector<double>&);
 	bool find(std::set<unsigned>);
 	int simplexCount();
 	int vertexCount();
-	std::vector<simplexBase::simplexNode*> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode*, unsigned>&, bool);
+	std::vector<simplexNode*> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode*, unsigned>&, bool);
 	bool deletion(std::set<unsigned>);
-	bool deletion(simplexBase::simplexNode*);
+	bool deletion(simplexNode*);
 	void expandDimensions(int){return;};
 	void reduceComplex();
 	void clear();

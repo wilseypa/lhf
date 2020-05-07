@@ -208,7 +208,7 @@ pipePacket boundaryPipe::runPipe(pipePacket inData){
 	std::vector<int> bettiNumbers;
 	std::vector<float> lifeSpans[dim];
 	
-	std::vector<std::set<simplexBase::simplexNode*, simplexBase::cmpByWeight>> edges;
+	std::vector<std::set<simplexNode*, cmpByWeight>> edges;
 	
 	//Retrieve
 	auto local_weights = inData.weights;

@@ -68,26 +68,26 @@ simplexBase* simplexBase::newSimplex(const std::string &simplexT, std::map<std::
 }
 
 
-std::set<simplexBase::simplexNode*, simplexBase::cmpByWeight> simplexBase::getDimEdges(int dim){
+std::set<simplexNode*, cmpByWeight> simplexBase::getDimEdges(int dim){
 	if(dim > simplexList.size()){
 		ut.writeLog(simplexType,"Error: requested dimension beyond complex");
-		std::set<simplexBase::simplexNode*, cmpByWeight> a;
+		std::set<simplexNode*, cmpByWeight> a;
 		return a;
 	}
 	return simplexList[dim];
 }
 
-std::vector<std::set<simplexBase::simplexNode*, simplexBase::cmpByWeight>> simplexBase::getAllEdges(){
+std::vector<std::set<simplexNode*, cmpByWeight>> simplexBase::getAllEdges(){
 	return simplexList;
 }
 
-std::vector<treeNode*> simplexBase::getAllCofacets(const std::set<unsigned>& simplex){
-	return getAllCofacets(simplex, 0, std::unordered_map<treeNode*, unsigned>(), false);
+std::vector<simplexNode*> simplexBase::getAllCofacets(const std::set<unsigned>& simplex){
+	return getAllCofacets(simplex, 0, std::unordered_map<simplexNode*, unsigned>(), false);
 }
 
-std::vector<treeNode*> simplexBase::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<treeNode*, unsigned>& pivotPairs, bool checkEmergent){
+std::vector<simplexNode*> simplexBase::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode*, unsigned>& pivotPairs, bool checkEmergent){
 	ut.writeLog(simplexType,"No get cofacets function defined");
-	std::vector<treeNode*> ret;
+	std::vector<simplexNode*> ret;
 	return ret;
 }
 

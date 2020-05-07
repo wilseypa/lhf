@@ -168,9 +168,9 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 
 
 // Delete a node from the tree and from the distance matrix using a vector index
-void simplexTree::deleteIterative(simplexBase::simplexNode* simplex){
+void simplexTree::deleteIterative(simplexNode* simplex){
 	//Find what row/column of our distance matrix pertain to the vector index
-	std::vector<simplexBase::simplexNode*>::iterator it;
+	std::vector<simplexNode*>::iterator it;
 	if((it = std::find(runningVectorIndices.begin(), runningVectorIndices.end(), simplex)) != runningVectorIndices.end()){
 
 		int index = it - runningVectorIndices.begin();
@@ -377,7 +377,7 @@ double simplexTree::getSize(){
 }
 
 //Search for a simplex from a node in the tree
-simplexTree::simplexNode* simplexTree::find(std::set<unsigned>::iterator it, std::set<unsigned>::iterator end, simplexNode* curNode){
+simplexNode* simplexTree::find(std::set<unsigned>::iterator it, std::set<unsigned>::iterator end, simplexNode* curNode){
 	simplexNode* temp = new simplexNode;
 	temp->index = *it;
 
@@ -397,7 +397,7 @@ simplexTree::simplexNode* simplexTree::find(std::set<unsigned>::iterator it, std
 	return curNode;
 }
 
-std::vector<simplexTree::simplexNode*> simplexTree::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode*, unsigned>& pivotPairs, bool checkEmergent){
+std::vector<simplexNode*> simplexTree::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode*, unsigned>& pivotPairs, bool checkEmergent){
 	std::vector<simplexNode*> ret;
 	simplexNode* parentNode = find(simplex.begin(), simplex.end(), root);
 	if(parentNode == nullptr) return ret; //Simplex isn't in the simplex tree	
@@ -443,7 +443,7 @@ void simplexTree::reduceComplex(){
 
 	//Start with the largest dimension
 	ut.writeDebug("simplexTree","Reducing complex, starting simplex count: " + std::to_string(simplexCount()));
-	simplexBase::simplexNode* cur;
+	simplexNode* cur;
 
 	if(simplexList.size() > 0){
 		for(auto i = simplexList.size()-1; i > 1; i--){
@@ -587,8 +587,8 @@ bool simplexTree::deletion(simplexNode* removalEntry) {
 void simplexTree::clear(){
 
 	//Clear the simplexTree structure
-	deletion(head);
-	head = nullptr;
+	deletion(root);
+	root = nullptr;
 
 	//Clear the weighed edge graph
 	for(auto z : simplexList){

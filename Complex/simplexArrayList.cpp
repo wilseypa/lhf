@@ -131,7 +131,7 @@ void simplexArrayList::insert(std::vector<double> &vector){
 	if(vector.empty())
 		return;
 		
-	simplexBase::simplexNode* insNode = new simplexBase::simplexNode();
+	simplexNode* insNode = new simplexNode();
 	
 	//If this is the first point inserted...
 	if(simplexList.size() == 0){
@@ -161,7 +161,7 @@ void simplexArrayList::insert(std::vector<double> &vector){
 					//Create an Edge vector (pair) 
 					//NOTE: do this in opposite order so pairs are ordered! -> {J, I}
 					std::set<unsigned> edge = {j,i};
-					simplexBase::simplexNode* insNode = new simplexBase::simplexNode();
+					simplexNode* insNode = new simplexNode();
 					insNode->simplex = edge;
 					insNode->weight = dist;
 					

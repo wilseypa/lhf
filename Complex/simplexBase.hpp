@@ -11,29 +11,6 @@
 class simplexBase {
   private:
   public:
-	struct simplexNode{
-		unsigned index;
-		
-		struct cmpByIndex{
-			bool operator()(const simplexNode* lhs, const simplexNode* rhs) const{
-				return lhs->index < rhs->index;
-			}
-		};
-		
-		std::set<unsigned> simplex;
-		std::set<simplexNode*, cmpByIndex> children;
-		simplexNode* child = nullptr;
-		simplexNode* sibling = nullptr;
-		simplexNode* parent = nullptr;
-		double weight = 0;
-	};
-	
-	
-	struct cmpByWeight{
-		bool operator()(const simplexNode* lhs, const simplexNode* rhs) const{
-			return lhs->weight <= rhs->weight;
-		}
-	};
 	std::vector<std::set<simplexNode*, cmpByWeight>> simplexList;		//Holds ordered list of simplices in each dimension
 																//Needs to sort by the weight for insertion
   
@@ -44,6 +21,7 @@ class simplexBase {
 	std::string simplexType = "simplexBase";	//Complex Type Identifier
 	
 	simplexNode* root;							//Root of the simplexNode tree (if applicable)
+	simplexNode* head;							//Root of the simplexNode tree (if applicable)
 	
 	double maxEpsilon;							//Maximum epsilon, loaded from configuration
 	int maxDimension;							//Maximum dimension, loaded from configuration

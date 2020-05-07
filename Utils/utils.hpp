@@ -4,21 +4,28 @@
 #include <vector>
 
 // Header file for utils class - see utils.cpp for descriptions
-struct treeNode{
+struct simplexNode{
 	unsigned index;
 	
 	struct cmpByIndex{
-		bool operator()(const treeNode* lhs, const treeNode* rhs) const{
+		bool operator()(const simplexNode* lhs, const simplexNode* rhs) const{
 			return lhs->index < rhs->index;
 		}
 	};
 	
 	std::set<unsigned> simplex;
-	std::set<treeNode*, cmpByIndex> children;
-	treeNode* child = nullptr;
-	treeNode* sibling = nullptr;
-	treeNode* parent = nullptr;
+	std::set<simplexNode*, cmpByIndex> children;
+	simplexNode* child = nullptr;
+	simplexNode* sibling = nullptr;
+	simplexNode* parent = nullptr;
 	double weight = 0;
+};
+
+
+struct cmpByWeight{
+	bool operator()(const simplexNode* lhs, const simplexNode* rhs) const{
+		return lhs->weight <= rhs->weight;
+	}
 };
 
 
@@ -27,7 +34,7 @@ struct bettiBoundaryTableEntry{
 	double birth;
 	double death;
 	std::set<unsigned> boundaryPoints;
-	std::vector<treeNode*> boundary;
+	std::vector<simplexNode*> boundary;
 }; 
 
 
