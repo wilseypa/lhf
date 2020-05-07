@@ -23,7 +23,7 @@ add_executable(test_write writeTests.cpp)
 add_executable(test_read readTests.cpp)
 add_executable(test_preproc preprocTests.cpp)
 
-target_link_libraries(test_complex simplexBase simplexArrayList simplexTree indSimplexTree utils)
+target_link_libraries(test_complex simplexBase simplexArrayList simplexTree utils)
 target_link_libraries(test_pipes simplexBase pipePacket utils basePipe boundaryPipe distMatrixPipe neighGraphPipe persistencePairs ripsPipe slidingWindow upscalePipe)
 target_link_libraries(test_write utils)
 target_link_libraries(test_read utils)

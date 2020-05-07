@@ -139,7 +139,7 @@ void utils::print2DVector(const std::vector<std::vector<unsigned>>& a){
 	return;
 }
 
-void utils::print1DSet(const auto& a){
+void utils::print1DSet(const std::pair<std::set<unsigned>, double>& a){
 		std::cout << "Test\t";
 		
 		for(auto iter = a.first.begin(); iter!= a.first.end(); iter++){

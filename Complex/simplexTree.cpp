@@ -56,6 +56,7 @@ void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth,
 
 		//Get the largest weight of this simplex
 		insNode->weight = curE > node->weight ? curE : node->weight;
+		maxE = insNode->weight;
 		
 		//if depth (i.e. 1 for first iteration) is LT weightGraphSize (starts at 1)
 		if(simplexList.size() < simp.size()){
@@ -117,10 +118,6 @@ void simplexTree::printTree(simplexNode* head){
 	std::cout << "_____________________________________" << std::endl;
 	return;
 }
-
-//**													**//
-//** 				Public Functions 					**//
-//**													**//
 
 // Insert a node into the tree using the distance matrix and a vector index to track changes
 bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vector<std::vector<double>> &window){
@@ -286,6 +283,7 @@ void simplexTree::insert(std::vector<double>&) {
 		head = curNode;
 		head->parent = root;
 		root->children.insert(head);
+		root->child = head;
 		indexCounter++;
 		runningVectorCount++;
 		nodeCount++;
@@ -384,65 +382,54 @@ simplexTree::simplexNode* simplexTree::find(std::set<unsigned>::iterator it, std
 	temp->index = *it;
 
 	while(it != end){
-		if(curNode == nullptr){
+		auto child = curNode->children.find(temp); //Look for the sibling with the next vertex
+		if(child == curNode->children.end()){ //This vertex is not in this level
 			delete temp;
 			return nullptr;
-		}
-
-		auto x = curNode->parent->children.find(temp);
-		if(x == curNode->parent->children.end()){
-			delete temp;
-			return nullptr;
-		} else{
+		} else{ //Search for the next vertex in the next level
 			++it;
 			temp->index = *it;
-			if(it != end) curNode = (*x)->child;
-			else curNode = *x;
+			curNode = *child;
 		}
-
-		// while(curNode->index < *it){ //Haven't yet found the vertex
-		// 	curNode = curNode->sibling;
-		// 	if(curNode == nullptr) return nullptr; //Can't locate the next vertex in the cofacet
-		// }
-
-		// if(curNode->index == *it){
-		// 	++it;
-		// 	if(it != end) curNode = curNode->child; //Search for the next vertex in the next level
-		// } else return nullptr;
 	}
 
 	delete temp;
-
 	return curNode;
 }
 
-std::vector<simplexTree::simplexNode*> simplexTree::getAllCofacets(const std::set<unsigned>& simplex){
+std::vector<simplexTree::simplexNode*> simplexTree::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode*, unsigned>& pivotPairs, bool checkEmergent){
 	std::vector<simplexNode*> ret;
-	simplexNode* parentNode = find(simplex.begin(), simplex.end(), head);
+	simplexNode* parentNode = find(simplex.begin(), simplex.end(), root);
 	if(parentNode == nullptr) return ret; //Simplex isn't in the simplex tree	
 
-	simplexNode* curNode;
 	simplexNode* tempNode;
 	auto it = simplex.end();
 
 	while(true){
-		if(it != simplex.begin()) curNode = parentNode->child; 
-		else curNode = head;
+		//Insert all of the children in reverse lexicographic order
+		for(auto itS = parentNode->children.rbegin(); itS != parentNode->children.rend(); itS++){
+			if(it == simplex.end()) ret.push_back(*itS); //All children of simplex are cofacets
+			else{
+				tempNode = find(it, simplex.end(), *itS); //See if cofacet is in the tree
+				if(tempNode != nullptr){
+					ret.push_back(tempNode);
 
-		while(curNode != nullptr && (it == simplex.end() ? true : curNode->index < *it)){
-			if(it == simplex.end()) tempNode = curNode;
-			else tempNode = find(it, simplex.end(), curNode->child); //See if the cofacet is in the tree
 
-			if(tempNode != nullptr) ret.push_back(tempNode); //Cofacet exists
-			curNode = curNode->sibling; //Iterate over which extra index to add
+					//If we haven't found an emergent candidate and the weight of the maximal cofacet is equal to the simplex's weight
+					//		we have identified an emergent pair; at this point we can break because the interval is born and dies at the 
+					//		same epsilon
+					if(checkEmergent && tempNode->weight == simplexWeight){
+						if(pivotPairs.find(tempNode) == pivotPairs.end()) return ret; //Check to make sure the identified cofacet isn't a pivot
+						checkEmergent = false;
+					}
+				}
+			}
 		}
 
-		if(parentNode->parent != nullptr){ //Recurse backwards up the tree and try adding vertices at each level
-			parentNode = parentNode->parent;
-		} else if(it == simplex.begin()){
-			break;
-		}
+		//Recurse backwards up the tree and try adding vertices at each level
 		--it;
+		if(parentNode->parent != nullptr) parentNode = parentNode->parent;
+		else break;
 	}
 
 	return ret;

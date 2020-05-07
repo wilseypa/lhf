@@ -4,10 +4,24 @@
 
 // Header file for simplexTree class - see simplexTree.cpp for descriptions
 
+/*
+class binomialTable{
+	private:
+		std::vector<std::vector<long long>> v; 
+	public:
+		binomialTable(unsigned n, unsigned k);
+		long long binom(unsigned n, unsigned k);
+};
+*/
+
 class simplexArrayList : public simplexBase{
   private:
 	int indexCount;
 	std::string stats;
+
+	// long long ripsIndex(std::set<unsigned>& simplex, binomialTable& bin);
+	// unsigned maxVertex(long long ripsIndex, unsigned high, unsigned low, unsigned k, binomialTable &bin);
+	// std::vector<unsigned> getVertices(long long ripsIndex, int dim, unsigned n, binomialTable &bin);
   public:
 	simplexArrayList(double, double, std::vector<std::vector<double>>*);
 	double findWeight(std::set<unsigned>);

@@ -1,6 +1,8 @@
 #pragma once
+#include "utils.hpp"
 #include "simplexBase.hpp"
 #include <set>
+#include <unordered_map>
 
 // Header file for simplexTree class - see simplexTree.cpp for descriptions
 
@@ -8,10 +10,8 @@ class simplexTree : public simplexBase {
   private:
 	bool isSorted = false;
 
-  public:
-
-	simplexBase::simplexNode* head = nullptr;
-	//simplexBase::simplexTree(std::vector<std::vector<double>>);
+	simplexBase::simplexNode* head = nullptr; //First simplex in the tree (0 vertex)
+	simplexBase::simplexNode* root = nullptr; //Empty node at root of tree (empty simplex)
 
 	simplexTree(double, std::vector<std::vector<double>>*, int);
 	std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(simplexBase::simplexNode*, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
@@ -20,8 +20,8 @@ class simplexTree : public simplexBase {
 	double findWeight(std::set<unsigned>);
 	void deleteIndexRecurse(int, simplexBase::simplexNode*); 
 	void deleteWeightEdgeGraph(int index);
+
 	simplexNode* find(std::set<unsigned>::iterator, std::set<unsigned>::iterator, simplexNode*);
-	std::vector<simplexNode*> getAllCofacets(const std::set<unsigned>&);
 
 	//virtual interface functions
 	double getSize();
@@ -33,6 +33,7 @@ class simplexTree : public simplexBase {
 	bool find(std::set<unsigned>);
 	int simplexCount();
 	int vertexCount();
+	std::vector<simplexBase::simplexNode*> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode*, unsigned>&, bool);
 	bool deletion(std::set<unsigned>);
 	bool deletion(simplexBase::simplexNode*);
 	void expandDimensions(int){return;};

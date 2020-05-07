@@ -109,8 +109,11 @@
 		
 		utils ut;
 		
+		//Separate our partitions for distribution
 		auto maxRadius = ut.computeMaxRadius(std::atoi(args["clusters"].c_str()), wD->originalData, wD->fullData, wD->originalLabels);
-		
+		auto avgRadius = ut.computeAvgRadius(std::atoi(args["clusters"].c_str()), wD->originalData, wD->fullData, wD->originalLabels);
+			
+		std::cout << "Using maxRadius: " << maxRadius << "\tavgRadius: " << avgRadius<< std::endl;
 		std:vector<unsigned> binCounts;
 		for(unsigned a = 0; a < std::atoi(args["clusters"].c_str()); a++){
 			binCounts.push_back(std::count(wD->originalLabels.begin(), wD->originalLabels.end(), a));
@@ -119,11 +122,20 @@
 		ut.print1DVector(binCounts);
 		
 		auto centroids = wD->originalData;
-		std::cout << "Using maxRadius: " << maxRadius << std::endl;
 		
-		auto partitionedData = ut.separatePartitions(2*maxRadius, wD->originalData, wD->fullData, wD->originalLabels);
+		auto partitionedData = ut.separatePartitions(avgRadius, wD->originalData, wD->fullData, wD->originalLabels);
 		
 		std::cout << "Partitions: " << partitionedData.second.size() << std::endl << "Counts: ";
+		
+		
+		std::vector<unsigned> partitionsize;
+		//Get the partition sizes
+		for(auto a: partitionedData.second)
+			 partitionsize.push_back(a.size());
+
+		int partitionsize_size = partitionsize.size();
+		ut.print1DVector(partitionsize);
+		
 		for(unsigned z = 0; z < partitionedData.second.size(); z++){
 			if(partitionedData.second[z].size() > 0){
 				std::cout << "Running Pipeline with : " << partitionedData.second[z].size() << " vectors" << std::endl;

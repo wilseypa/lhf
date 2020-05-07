@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <set>
 #include <iostream>
+#include <unordered_map>
 #include "utils.hpp"
 
 // Header file for simplexBase class - see simplexTree.cpp for descriptions
@@ -84,8 +85,11 @@ class simplexBase {
 	virtual bool find(std::set<unsigned>);
 	virtual int simplexCount();
 	virtual int vertexCount();
+	virtual std::vector<simplexNode*> getAllCofacets(const std::set<unsigned>&);
+	virtual std::vector<simplexNode*> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode*, unsigned>& pivotPairs, bool = true);
 	virtual std::set<simplexNode*, cmpByWeight> getDimEdges(int);
 	virtual std::vector<std::set<simplexNode*, cmpByWeight>> getAllEdges();
+
 	virtual void expandDimensions(int);
 	virtual void reduceComplex();
 	virtual void clear();
