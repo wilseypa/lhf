@@ -146,14 +146,13 @@ void simplexArrayList::insert(std::vector<double> &vector){
 	else {
 		
 		unsigned i = simplexList[0].size();
+		
 		vertex = {i};
 		if(maxDimension > 0){
 			//Iterate through each existing to compare to new insertion
 			for(unsigned j = 0; j < simplexList[0].size(); j++){
 				
-				auto d2 = distMatrix[j];
-				auto d3 = d2[i];
-				double dist = d3[0];
+				double dist = (*distMatrix)[j][i];
 				
 				//Filter distances <= maxEpsilon, > 0 (same point)
 				if(dist <= maxEpsilon){
@@ -185,6 +184,8 @@ void simplexArrayList::insert(std::vector<double> &vector){
 // Search function to find a specific vector in the simplexArrayList
 // weightedGraph[d][v][p] dimension d stores vectors v of point elements p of simplexes formed
 bool simplexArrayList::find(std::set<unsigned> vector){
+	if (simplexList.size() == 0) return false;
+	
 	for(auto simplexSetIter = simplexList[vector.size() - 1].begin(); simplexSetIter != simplexList[vector.size() - 1].end(); simplexSetIter++){
 		if((*simplexSetIter)->simplex == vector){
 			return true;

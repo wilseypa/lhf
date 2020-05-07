@@ -27,7 +27,6 @@ class simplexArrayList : public simplexBase{
 	double findWeight(std::set<unsigned>);
 	std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(simplexNode*, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
 
-		
 	//virtual interface functions
 	double getSize();
 	void insert(std::vector<double>&);
