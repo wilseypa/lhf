@@ -16,6 +16,7 @@
 #include <unordered_map>
 #include <queue>
 #include "fastPersistence.hpp"
+#include "utils.hpp"
 
 unionFind::unionFind(int n) : rank(n, 0), parent(n, 0) {
 	for(int i=0; i<n; i++) parent[i]=i;
@@ -132,7 +133,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		//		boundary simplices
 	
 	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
-		std::sort(pivots.begin(), pivots.end(), cmpBySecond());
+		std::sort(pivots.begin(), pivots.end(), cmpByWeight());
 		std::vector<simplexNode*>::iterator it = pivots.begin();
 		
 		//Convert our hashed set (ripsIndex) to the index from our complex
@@ -214,7 +215,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 
 				if(cofaceList.empty()){
 					bettiBoundaryTableEntry des = { d, simplex->weight, maxEpsilon, {}, {} };
-					inData.bettiTable.push_back(des);
+					// inData.bettiTable.push_back(des);
 				}
 			
 			//Was a pivot, skip the evaluation and queue next pivot
