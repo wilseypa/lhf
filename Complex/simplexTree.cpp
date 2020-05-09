@@ -272,6 +272,7 @@ void simplexTree::insert(std::vector<double>&) {
 	simplexNode* curNode = new simplexNode;
 	curNode->index = indexCounter;
 	std::set<unsigned> tempSet = {curNode->index};
+	curNode->simplex = tempSet;
 	
 	//Track this index in our current window (for sliding window)
 	runningVectorIndices.push_back(curNode);
@@ -322,25 +323,15 @@ void simplexTree::insert(std::vector<double>&) {
 	}
 
 	//Insert into the right of the tree
-	simplexNode* ins = new simplexNode();
+	curNode->parent = root;
+	root->children.insert(curNode);
 	auto temp = *root->children.rbegin();
-	ins->index = indexCounter;
-	ins->sibling = nullptr;
-	ins->parent = root;
-	root->children.insert(ins);
-	
-	auto tempIter = simplexList[0].end();
-	std::advance(tempIter, -1);
-	(*tempIter)->sibling = ins;
-	simplexList[0].insert(ins);
+	temp->sibling = curNode;
+	simplexList[0].insert(curNode);
 
 	nodeCount++;
 	indexCounter++;
 	runningVectorCount++;
-	
-	//printTree(root);
-	
-	return;
 }
 
 void simplexTree::deleteWeightEdgeGraph(int index){

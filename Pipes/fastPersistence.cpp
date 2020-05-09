@@ -16,6 +16,7 @@
 #include <unordered_map>
 #include <queue>
 #include "fastPersistence.hpp"
+#include "utils.hpp"
 
 unionFind::unionFind(int n) : rank(n, 0), parent(n, 0) {
 	for(int i=0; i<n; i++) parent[i]=i;
@@ -132,7 +133,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		//		boundary simplices
 	
 	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
-		std::sort(pivots.begin(), pivots.end(), cmpBySecond());
+		std::sort(pivots.begin(), pivots.end(), cmpByWeight());
 		std::vector<simplexNode*>::iterator it = pivots.begin();
 		
 		//Convert our hashed set (ripsIndex) to the index from our complex
@@ -164,7 +165,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 				//Build a heap using the coface list to reduce and store in V
 				std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
 
-				while(!cofaceList.empty()){
+				while(true){
 					simplexNode* pivot;
 					while(!cofaceList.empty()){
 						pivot = cofaceList.front();
@@ -191,6 +192,15 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 					} else if(pivotPairs.find(pivot) == pivotPairs.end()){ //Column cannot be reduced
 						pivotPairs.insert({pivot, columnIndex});
 						nextPivots.push_back(pivot);
+
+						// std::sort(columnV.begin(), columnV.end());
+						// auto it = columnV.begin();
+						// while(it != columnV.end()){
+						// 	if((it+1) != columnV.end() && *it==*(it+1)) ++it;
+						// 	else v[columnIndex].push_back(*it);
+						// 	++it;
+						// }
+
 						v[columnIndex] = columnV;
 
 						if(simplex->weight != pivot->weight){
@@ -210,11 +220,6 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						}
 						std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
 					}
-				}
-
-				if(cofaceList.empty()){
-					bettiBoundaryTableEntry des = { d, simplex->weight, maxEpsilon, {}, {} };
-					inData.bettiTable.push_back(des);
 				}
 			
 			//Was a pivot, skip the evaluation and queue next pivot
