@@ -1,18 +1,49 @@
 #pragma once
 
-#ifndef UTILS_HPP_INCL
-#define UTILS_HPP_INCL
-
 #include <set>
 #include <vector>
 
 // Header file for utils class - see utils.cpp for descriptions
+struct simplexNode{
+	unsigned index;
+	
+	struct cmpByIndex{
+		bool operator()(const simplexNode* lhs, const simplexNode* rhs) const{
+			return lhs->index < rhs->index;
+		}
+	};
+	
+	std::set<unsigned> simplex;
+	std::set<simplexNode*, cmpByIndex> children;
+	simplexNode* child = nullptr;
+	simplexNode* sibling = nullptr;
+	simplexNode* parent = nullptr;
+	double weight = 0;
+};
+
+
+struct cmpByWeight{
+	bool operator()(simplexNode* a, simplexNode* b) const{
+		if(a->weight == b->weight){ //If the simplices have the same weight, sort by reverse lexicographic order for fastPersistence
+			auto itA = a->simplex.rbegin(), itB = b->simplex.rbegin();
+			while(itA != a->simplex.rend()){
+				if(*itA != *itB) return *itA > *itB;
+				++itA; ++itB;
+			}
+			return false;
+		} else{
+			return a->weight < b->weight;
+		}
+	}
+};
+
 
 struct bettiBoundaryTableEntry{
 	unsigned bettiDim;
 	double birth;
 	double death;
 	std::set<unsigned> boundaryPoints;
+	std::vector<simplexNode*> boundary;
 }; 
 
 
@@ -24,7 +55,8 @@ class utils {
   public:
 	utils();
 	utils(std::string, std::string);
-	double computeMaxRadius(int, std::vector<std::vector<double>>, std::vector<std::vector<double>>, std::vector<unsigned>);
+	double computeMaxRadius(int, std::vector<std::vector<double>>&, std::vector<std::vector<double>>&, std::vector<unsigned>&);
+	double computeAvgRadius(int, std::vector<std::vector<double>>&, std::vector<std::vector<double>>&, std::vector<unsigned>&);
 	std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> separatePartitions(int, std::vector<std::vector<double>>, std::vector<unsigned>);
 	std::vector<std::vector<std::vector<double>>> separateBoundaryPartitions(std::vector<std::set<unsigned>>, std::vector<std::vector<double>>, std::vector<unsigned>);
 	std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> separatePartitions(double, std::vector<std::vector<double>>, std::vector<std::vector<double>>, std::vector<unsigned>);
@@ -36,14 +68,15 @@ class utils {
 	std::vector<double> feature_distance(std::vector<double>*, std::vector<double>*);
 	double vectors_distance(const double&, const double&);
 	double vectors_distance(const std::vector<double>&, const std::vector<double>&);
-	void print1DSet(const auto&);	
+	void print1DSet(const std::pair<std::set<unsigned>, double>&);	
 	std::set<unsigned> setXOR(std::set<unsigned>&, std::set<unsigned>&);
 	std::set<unsigned> setIntersect(std::set<unsigned>, std::set<unsigned>, bool isSorted);
 	std::vector<unsigned> setIntersect(std::vector<unsigned>, std::vector<unsigned>, bool);
 	std::vector<std::set<unsigned>> getSubsets(std::set<unsigned>, int);
 	std::vector<unsigned> symmetricDiff(std::vector<unsigned>, std::vector<unsigned>, bool);
-	std::vector<unsigned> symmetricDiff(std::set<unsigned>, std::set<unsigned>, bool);
+	std::set<unsigned> symmetricDiff(std::set<unsigned>, std::set<unsigned>, bool);
 	std::vector<unsigned> setUnion(std::vector<unsigned>, std::vector<unsigned>, bool);
+	std::set<unsigned> setUnion(std::set<unsigned>, std::set<unsigned>, bool);
 	std::pair<std::vector<unsigned>, std::vector<unsigned>> intersect(std::vector<unsigned>, std::vector<unsigned>, bool);
 	
 	//Utility functions for writing to console/debug file
@@ -56,7 +89,9 @@ class utils {
 	std::vector<std::set<unsigned>> getSubsets(std::set<unsigned> set);
 	std::vector<std::vector<unsigned>> getSubsets(std::vector<unsigned> set);
 	
+	
+	std::vector<double> serialize(std::vector<std::vector<double>>& );
+	std::vector<std::vector<double>> deserialize(std::vector<double> , unsigned);
+	
 	std::vector<double> nearestNeighbors(std::vector<double>&, std::vector<std::vector<double>>&);
 };
-
-#endif

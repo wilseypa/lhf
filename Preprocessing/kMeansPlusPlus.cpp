@@ -112,7 +112,7 @@ pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
 		std::vector<unsigned> curLabels;
 		
 		//For each point, classify it to a centroid
-		for (unsigned j = 0; j < inData.originalData.size() - 1; j++){
+		for (unsigned j = 0; j < inData.originalData.size(); j++){
 			double minDist = std::numeric_limits<double>::max();
 			unsigned clusterIndex = 0;
 			

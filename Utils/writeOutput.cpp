@@ -29,16 +29,15 @@ bool writeOutput::writeStats(std::string stats, std::string filename){
 	return true;	
 }
 
-bool writeOutput::writeBarcodes(std::vector<std::vector<double>> data, std::string filename){
+bool writeOutput::writeBarcodes(std::vector<bettiBoundaryTableEntry> data, std::string filename){
 	std::string header = "dimension,birth,death\n";
+	std::ofstream file(filename + ".csv");
 	
-	return writeCSV(data, filename, header);
-}
-
-bool writeOutput::writeBarcodes(std::string data, std::string filename){
-	std::string header = "dimension,birth,death\n";
+	for(auto row : data)
+		file << std::to_string(row.bettiDim) << "," << std::to_string(row.birth) << "," << std::to_string(row.death) << std::endl;
 	
-	return writeCSV(data, filename, header);
+	file.close();
+	return true;
 }
 
 // writeCSV -> write a csv formatted file of data input
