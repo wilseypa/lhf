@@ -16,6 +16,7 @@
 #include <unordered_map>
 #include <queue>
 #include "fastPersistence.hpp"
+#include "utils.hpp"
 
 unionFind::unionFind(int n) : rank(n, 0), parent(n, 0) {
 	for(int i=0; i<n; i++) parent[i]=i;
@@ -79,7 +80,6 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	//		Until all edges evaluated or MST found (size - 1)	
 	
 	std::vector<simplexNode*> pivots; //Store identified pivots
-	unsigned edgeIndex = 0;
 	unsigned mstSize = 0;
 	unsigned nPts = inData.originalData.size();
 
@@ -87,10 +87,8 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	//shift = *(*edges[0].begin())->simplex.begin();
 	shift = 0;
 
-	for(auto edgeIter = edges[1].end(); edgeIter != edges[1].begin(); ){
-		edgeIter--;
+	for(auto edgeIter = edges[1].begin(); edgeIter != edges[1].end(); edgeIter++){
 		std::set<unsigned>::iterator it = (*edgeIter)->simplex.begin();
-		
 		
 		//Find which connected component each vertex belongs to
 		int v1 = uf.find(*it - shift),  v2 = uf.find(*(++it) - shift); 
@@ -105,16 +103,12 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			temp->weight = (*edgeIter)->weight;
 			pivots.push_back(temp);
 
-			bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, {}, {temp} };
-			
-			//bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, { *it - shift } };
+			bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, {}, {temp} };			
 			inData.bettiTable.push_back(des);
 		}
 
 		//Check if we've filled our MST and can break
 		if(mstSize >= edges[0].size()-1) break;
-
-		edgeIndex++;
 	}
 
 	for(int i=0; i<inData.originalData.size(); i++){
@@ -139,7 +133,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		//		boundary simplices
 	
 	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
-		std::sort(pivots.begin(), pivots.end(), cmpBySecond());
+		std::sort(pivots.begin(), pivots.end(), cmpByWeight());
 		std::vector<simplexNode*>::iterator it = pivots.begin();
 		
 		//Convert our hashed set (ripsIndex) to the index from our complex
@@ -155,16 +149,10 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		std::unordered_map<unsigned, std::vector<unsigned>> v;				//Store only the reduction matrix V and compute R implicity
 		std::unordered_map<simplexNode*, unsigned> pivotPairs;	//For each pivot, which column has that pivot
 
-		unsigned columnIndex = edges[d].size();
+		unsigned columnIndex = edges[d].size() - 1; //Keep track of the column index for the pivots (for now)
 
 		//Iterate over columns to reduce in reverse order
-		for(auto columnIndexIter = edges[d].end(); columnIndexIter != edges[d].begin();  ){ 
-			//Immediately decrease the iterator (because we're pointing to the end)
-			columnIndexIter--;
-			
-			//Keep track of the column index for the pivots (for now)
-			columnIndex--;
-			
+		for(auto columnIndexIter = edges[d].rbegin(); columnIndexIter != edges[d].rend(); columnIndexIter++, columnIndex--){ 
 			simplexNode* simplex = (*columnIndexIter);		//The current simplex
 
 			//Not a pivot -> need to reduce
@@ -177,7 +165,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 				//Build a heap using the coface list to reduce and store in V
 				std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
 
-				while(!cofaceList.empty()){
+				while(true){
 					simplexNode* pivot;
 					while(!cofaceList.empty()){
 						pivot = cofaceList.front();
@@ -204,6 +192,15 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 					} else if(pivotPairs.find(pivot) == pivotPairs.end()){ //Column cannot be reduced
 						pivotPairs.insert({pivot, columnIndex});
 						nextPivots.push_back(pivot);
+
+						// std::sort(columnV.begin(), columnV.end());
+						// auto it = columnV.begin();
+						// while(it != columnV.end()){
+						// 	if((it+1) != columnV.end() && *it==*(it+1)) ++it;
+						// 	else v[columnIndex].push_back(*it);
+						// 	++it;
+						// }
+
 						v[columnIndex] = columnV;
 
 						if(simplex->weight != pivot->weight){
@@ -223,11 +220,6 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						}
 						std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
 					}
-				}
-
-				if(cofaceList.empty()){
-					bettiBoundaryTableEntry des = { d, simplex->weight, maxEpsilon, {}, {} };
-					inData.bettiTable.push_back(des);
 				}
 			
 			//Was a pivot, skip the evaluation and queue next pivot
