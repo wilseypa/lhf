@@ -36,8 +36,6 @@
 				auto *bp = new basePipe();
 				auto *cp = bp->newPipe(curFunct, args["complexType"]);
 				
-				delete bp;
-				
 				//Check if the pipe was created and configure
 				if(cp != 0 && cp->configPipe(args)){
 					//Run the pipe function (wrapper)
@@ -46,8 +44,6 @@
 					std::cout << cp << std::endl;
 					cout << "LHF runPipeline: Failed to configure pipeline: " << args["pipeline"] << endl;
 				}
-				
-				delete cp;
 			}
 		}
 		//If the pipeline was undefined...
@@ -141,23 +137,25 @@
 		ut.print1DVector(partitionsize);
 		
 		for(unsigned z = 0; z < partitionedData.second.size(); z++){
+			std::cout << "Partition: " << z << std::endl;
 			if(partitionedData.second[z].size() > 0){
 				std::cout << "Running Pipeline with : " << partitionedData.second[z].size() << " vectors" << std::endl;
 				wD->originalData = partitionedData.second[z];
 				
-				
 				runPipeline(args, wD);
-				
-				wD->complex->clear();
 				
 				//Map partitions back to original point indexing
 				//ut.mapPartitionIndexing(partitionedData.first[z], wD->bettiTable);
+				
+				std::cout << "Merging bettis..." << std::endl;
 				
 				for(auto betEntry : wD->bettiTable){
 					if(betEntry.boundaryPoints.size() > 0 && *(betEntry.boundaryPoints.begin()) < binCounts[z])
 						mergedBettiTable.push_back(betEntry);
 					
 				}
+				std::cout << "Clearing" << std::endl;
+				wD->complex->clear();
 				
 			} else 
 				std::cout << "skipping" << std::endl;

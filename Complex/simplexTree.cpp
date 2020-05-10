@@ -25,24 +25,31 @@ void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth,
 	
 	isSorted = false;
 	double curE = 0;
+	//std::cout << "Getting curE dmat size: " << (*distMatrix).size() << std::endl;
+	//std::cout << "Attempting to access: " << node->index << " x " << indexCounter << std::endl;
 
-	//std::cout << runningVectorIndices.size() << "\t" << runningVectorCount << "\t" << indexCounter << "\t" << distMatrix.size() << "\t" << node->index << std::endl;
-	if(runningVectorIndices.size() < runningVectorCount+1){
-		int offset = runningVectorCount+1 - runningVectorIndices.size();
-		if(((int)node->index - offset) > distMatrix->size() || (indexCounter-offset) > distMatrix[(int)node->index - offset].size()){
+	//std::cout << runningVectorIndices.size() << "\t" << runningVectorCount << "\t" << indexCounter << "\t" << distMatrix->size() << "\t" << node->index << std::endl;
+	if(simplexOffset > 0){
+		if((node->index - simplexOffset) > distMatrix->size() || (indexCounter-simplexOffset) > (*distMatrix)[node->index - simplexOffset].size()){
 			std::cout << "DistMatrix access error:" << std::endl;
-			std::cout << "DistMatrix size: " << distMatrix->size() << "\tAccess Index: " << ((int)node->index - offset) << std::endl;
-			std::cout << "Node Index: " << node->index << "\tOffset: " << offset << std::endl;
-			std::cout << "nodeCount: " << nodeCount << "\tindexCount: " << indexCounter << std::endl;
+			std::cout << "\tAttempting to access distMatrix indexes: " << node->index << " x " << indexCounter << std::endl;
+			std::cout << "\tDistMatrix size: " << (*distMatrix).size() << std::endl;
+			std::cout << "\trviCount: " << runningVectorCount << "\t rviSize: " << runningVectorIndices.size() << "\tOffset: " << simplexOffset << "\tOffset2: " << simplexOffset << std::endl;
+			std::cout << "\tOffset Indices: " << node->index - simplexOffset << " x " << indexCounter - simplexOffset << std::endl;
+			std::cout << "\tBackwards size: " << distMatrix[indexCounter - simplexOffset].size() << std::endl;
+			std::cout << "\tRow Size: " << distMatrix[node->index - simplexOffset].size()  << "\tCurIndex: " << curIndex << std::endl;
 		}
 		else
-			curE = (*distMatrix)[(unsigned)node->index - offset][indexCounter - offset];
+			curE = (*distMatrix)[node->index - simplexOffset][indexCounter - simplexOffset];
 
 	}else{
 		curE = (*distMatrix)[node->index][indexCounter];
 	}
 
+
 	curE = curE > maxE ? curE : maxE;
+
+	//std::cout << "Got curE" << std::endl;
 
 	//Check if the node needs inserted at this level
 	if(curE < maxEpsilon){
@@ -276,10 +283,9 @@ void simplexTree::insert(std::vector<double>&) {
 	
 	//Track this index in our current window (for sliding window)
 	runningVectorIndices.push_back(curNode);
-
 	//Check if this is the first node (i.e. head)
 	//	If so, initialize the head node
-	if(head == nullptr){
+	if(root == nullptr){
 		root = new simplexNode;
 		head = curNode;
 		head->parent = root;
@@ -633,21 +639,23 @@ bool simplexTree::deletion(simplexNode* removalEntry) {
 }
 
 void simplexTree::clear(){
-
 	//Clear the simplexTree structure
-	deletion(root);
+	if(root != nullptr)
+		deletion(root);
 	root = nullptr;
 
-	//Clear the weighed edge graph
-	for(auto z : simplexList){
-		z.clear();
+	
+	for(auto i = 0; i < simplexList.size(); i++){
+		simplexList[i].clear();
 	}
 	simplexList.clear();
 
-
+	simplexOffset = runningVectorCount;
 	//runningVectorCount = 0;
 	runningVectorIndices.clear();
 	//indexCounter = 0;
+	
+	return;
 
 }
 

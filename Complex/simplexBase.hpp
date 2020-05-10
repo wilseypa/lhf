@@ -14,6 +14,8 @@ class simplexBase {
 	std::vector<std::set<simplexNode*, cmpByWeight>> simplexList;		//Holds ordered list of simplices in each dimension
 																//Needs to sort by the weight for insertion
   
+	unsigned simplexOffset = 0;
+  
 	long long nodeCount = 0;					//Total number of nodes stored
 	long long indexCounter;						//Current insertion index
 	
