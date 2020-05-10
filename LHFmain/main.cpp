@@ -36,6 +36,8 @@
 				auto *bp = new basePipe();
 				auto *cp = bp->newPipe(curFunct, args["complexType"]);
 				
+				delete bp;
+				
 				//Check if the pipe was created and configure
 				if(cp != 0 && cp->configPipe(args)){
 					//Run the pipe function (wrapper)
@@ -44,6 +46,8 @@
 					std::cout << cp << std::endl;
 					cout << "LHF runPipeline: Failed to configure pipeline: " << args["pipeline"] << endl;
 				}
+				
+				delete cp;
 			}
 		}
 		//If the pipeline was undefined...
