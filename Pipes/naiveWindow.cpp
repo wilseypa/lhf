@@ -87,7 +87,7 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 						}
 					}
 					
-					inData.complex->setDistanceMatrix(distMatrix);
+					inData.complex->setDistanceMatrix(&inData.distMatrix);
 										
 					for(auto a : windowValues)
 						inData.complex->insert(a);

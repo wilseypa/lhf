@@ -62,17 +62,12 @@ void t_simp_functions(std::string &log){
 	//Get dimensional edges from uninitialized complex
 	//	RET: std::vector<std::vector<unsigned>>
 	std::cout << "\tTesting get dimensional edges from uninitialized complex" << std::endl;
-	if(testComplex->getDimEdges(2, 5.0).size() != 0) { failLog += "simplexBase getDimEdges failed\n"; }
+	if(testComplex->getDimEdges(2).size() != 0) { failLog += "simplexBase getDimEdges failed\n"; }
 
 	//Get all edges from uninitialized complex
 	//	RET: std::vector<std::vector<std::pair<std::set<unsigned>, double>>>
 	std::cout << "\tTesting get all edges from uninitialized complex" << std::endl;
-	if(testComplex->getAllEdges(5.0).size() != 0) { failLog += "simplexBase getAllEdges failed\n"; }
-
-	//Get indexed edges from uninitialized complex
-	//	RET: std::vector<std::vector<graphEntry>>
-	std::cout << "\tTesting get indexed edges from uninitialized complex" << std::endl;
-	if(testComplex->getIndexEdges(1).size() != 0) { failLog += "simplexBase getIndexEdges failed\n"; }
+	if(testComplex->getAllEdges().size() != 0) { failLog += "simplexBase getAllEdges failed\n"; }
 
 	//Expand the dimensions of the uninitialized complex
 	//	RET: void
@@ -90,11 +85,6 @@ void t_simp_functions(std::string &log){
 	//	RET: bool
 	std::cout << "\tTesting attempt to trigger the stream evaluator for the uninitialized complex" << std::endl;
 	testComplex->streamEvaluator(testValue, testValueArray);
-
-	//Attempt to get dim_0 pairs for the uninitialized complex
-	//	RET: std::vector<std::pair<double,std::vector<unsigned>>>
-	std::cout << "\tTesting attempt to get dim_0 pairs for the uninitialized complex" << std::endl;
-	if(testComplex->getd0Pairs().size() > 0) { failLog += "simplexBase getd0Pairs failed\n"; }
 
 	//Output log status to calling function
 	if(failLog.size() > 0){
@@ -164,7 +154,7 @@ void t_simp_base_functions(std::string &log, std::string type){
 	std::set<unsigned> findValueSet = {0};
 
 	testComplex = testComplex->newSimplex(type, config);
-	
+	testComplex->setDistanceMatrix(&testValueArray);
 	
 	std::cout << "Beginning simplexBase functions for " << type << std::endl;
 
@@ -216,17 +206,13 @@ void t_simp_base_functions(std::string &log, std::string type){
 	//Get dimensional edges from complex
 	//	RET: std::vector<std::vector<unsigned>>
 	std::cout << "\t" << type << "\tTesting get dimensional edges from complex" << std::endl;
-	if(testComplex->getDimEdges(2, 5.0).size() != 0) { failLog += type + " getDimEdges failed\n"; }
+	std::cout << "\t" << testComplex->simplexList.size() << std::endl;
+	if(testComplex->getDimEdges(2).size() != 0) { failLog += type + " getDimEdges failed\n"; }
 
 	//Get all edges from complex
 	//	RET: std::vector<std::vector<std::pair<std::set<unsigned>, double>>>
 	std::cout << "\t" << type << "\tTesting get all edges from complex" << std::endl;
-	if(testComplex->getAllEdges(5.0).size() != 0) { failLog += type + " getAllEdges failed\n"; }
-
-	//Get indexed edges from complex
-	//	RET: std::vector<std::vector<graphEntry>>
-	std::cout << "\t" << type << "\tTesting get indexed edges from complex" << std::endl;
-	if(testComplex->getIndexEdges(1).size() != 0) { failLog += type + " getIndexEdges failed\n"; }
+	if(testComplex->getAllEdges().size() != 0) { failLog += type + " getAllEdges failed\n"; }
 
 	//Expand the dimensions of the complex
 	//	RET: void
@@ -244,11 +230,6 @@ void t_simp_base_functions(std::string &log, std::string type){
 	//	RET: bool
 	std::cout << "\t" << type << "\tTesting attempt to trigger the stream evaluator for the complex" << std::endl;
 	testComplex->streamEvaluator(testValue, testValueArray);
-
-	//Attempt to get dim_0 pairs for the complex
-	//	RET: std::vector<std::pair<double,std::vector<unsigned>>>
-	std::cout << "\t" << type << "\tTesting attempt to get dim_0 pairs for the complex" << std::endl;
-	if(testComplex->getd0Pairs().size() > 0) { failLog += "simplexBase getd0Pairs failed\n"; }
 
 	//Output log status to calling function
 	if(failLog.size() > 0){
@@ -270,59 +251,68 @@ void t_simp_empty_functions(std::string &log, std::string type){
 	std::vector<std::vector<double>> testValueArray {{0.0, 1.0, 2.0},{2.0, 1.0, 0.0}};
 	std::vector<unsigned> findValue = {0};
 	std::set<unsigned> findValueSet = {0};
+	
+	std::cout << "Beginning simplexBase empty functions for " << type << std::endl;
 
 	testComplex = testComplex->newSimplex(type, config);
 	//Don't insert anything into the complex and test our functions
 
 	//Get empty complex size
 	//	RET: double (0)
+	std::cout << "\t" << type << "\tTesting get size from empty complex" << std::endl;
 	if(testComplex->getSize() != 0) { failLog += type + " getSize failed : " + std::to_string(testComplex->getSize()) + "\n"; }
 
 	//Delete iterative from empty complex
 	//	RET: void
+	//std::cout << "\t" << type << "\tTesting delete iterative from empty complex" << std::endl;
 	//try{ testComplex->deleteIterative(0,0); }
 	//catch(const std::exception){ failLog += type + " deleteIterative failed \n"; }
 
 	//Find vector unsigned in empty complex
 	//	RET: bool (false)
+	std::cout << "\t" << type << "\tTesting find vector unsigned from empty complex" << std::endl;
 	if(testComplex->find(findValue)) { failLog += type + " find vector failed\n"; }
 
 	//Find set unsigned in empty complex
 	//	RET: bool (false)
+	std::cout << "\t" << type << "\tTesting find set unsigned from empty complex" << std::endl;
 	if(testComplex->find(findValueSet)) { failLog += type + " find set failed\n"; }
 
 	//Get empty simplex count
 	//	RET: int (0)
+	std::cout << "\t" << type << "\tTesting get simplex count from empty complex" << std::endl;
 	if(testComplex->simplexCount() != 0) { failLog += type + " simplexCount failed\n"; }
 
 	//Get empty vertex count
 	//	RET: int (0)
+	std::cout << "\t" << type << "\tTesting get vertex count from empty complex" << std::endl;
 	if(testComplex->vertexCount() != 0) { failLog += type + " vertexCount failed\n"; }
 
 	//Get dimensional edges from empty complex
 	//	RET: std::vector<std::vector<unsigned>>
-	if(testComplex->getDimEdges(2, 5.0).size() != 0) { failLog += type + " getDimEdges failed\n"; }
+	std::cout << "\t" << type << "\tTesting get dim edges from empty complex" << std::endl;
+	if(testComplex->getDimEdges(2).size() != 0) { failLog += type + " getDimEdges failed\n"; }
 
 	//Get all edges from empty complex
 	//	RET: std::vector<std::vector<std::pair<std::set<unsigned>, double>>>
-	if(testComplex->getAllEdges(5.0).size() != 0) { failLog += type + " getAllEdges failed\n"; }
-
-	//Get indexed edges from empty complex
-	//	RET: std::vector<std::vector<graphEntry>>
-	if(testComplex->getIndexEdges(1).size() != 0) { failLog += type + " getIndexEdges failed\n"; }
+	std::cout << "\t" << type << "\tTesting get all edges from empty complex" << std::endl;
+	if(testComplex->getAllEdges().size() != 0) { failLog += type + " getAllEdges failed\n"; }
 
 	//Expand the dimensions of the empty complex
 	//	RET: void
+	std::cout << "\t" << type << "\tTesting expand dimensions from empty complex" << std::endl;
 	try{ testComplex->expandDimensions(2); }
 	catch(const std::exception){ failLog += type + " expandDimensions failed\n"; }
 
 	//Attempt to reduce the empty complex
 	//	RET: void
+	std::cout << "\t" << type << "\tTesting reduce complex from empty complex" << std::endl;
 	try{ testComplex->reduceComplex(); }
 	catch(const std::exception){ failLog += type + " reduceComplex failed\n"; }
 
 	//Attempt to trigger the stream evaluator for the empty complex
 	//	RET: bool
+	std::cout << "\t" << type << "\tTesting stream evaluator from empty complex" << std::endl;
 	testComplex->streamEvaluator(testValue, testValueArray);
 
 	//Output log status to calling function
@@ -331,18 +321,20 @@ void t_simp_empty_functions(std::string &log, std::string type){
 	} else {
 		 log += "PASSED: " + type + " Empty Test Functions---------------------------\n";
 	}
+	
+	std::cout << "\tFinished simplexBase empty functions for " << type << std::endl;
 }
 
 int main (int, char**){
 	std::string log;
 	t_simp_functions(log);
 
-	for(std::string type : {"simplexArrayList","simplexTree","indSimplexTree"}){
+	for(std::string type : {"simplexArrayList","simplexTree"}){
 		try{t_simp_empty_functions(log, type);}
 		catch(const std::exception){log += "FAILED: " + type + " Empty Test Functions---------------------------\n";}
 
-		try{t_simp_base_functions(log, type);}
-		catch(const std::exception){log += "FAILED: " + type + " Base Test Functions---------------------------\n";}
+		//try{t_simp_base_functions(log, type);}
+		//catch(const std::exception){log += "FAILED: " + type + " Base Test Functions---------------------------\n";}
 
 	}
 

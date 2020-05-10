@@ -6,7 +6,6 @@
 #include "simplexBase.hpp"
 #include "simplexTree.hpp"
 #include "simplexArrayList.hpp"
-#include "indSimplexTree.hpp"
 
 simplexBase::simplexBase(){return;}
 
@@ -47,7 +46,7 @@ void simplexBase::setConfig(std::map<std::string, std::string> configMap){
 }
 
 
-void simplexBase::setDistanceMatrix(std::vector<std::vector<double>> _distMatrix){
+void simplexBase::setDistanceMatrix(std::vector<std::vector<double>>* _distMatrix){
 	distMatrix = _distMatrix;
 	return;
 }
@@ -64,31 +63,32 @@ simplexBase* simplexBase::newSimplex(const std::string &simplexT, std::map<std::
 		auto t = new simplexArrayList(maxEpsilon, maxDimension, distMatrix);
 		t->setConfig(configMap);
 		return t;
-	} else if (simplexType == "indSimplexTree"){
-		auto t = new indSimplexTree(maxEpsilon, distMatrix, maxDimension);
-		t->setConfig(configMap);
-		return t;
 	}
 	return 0;
 }
 
 
-std::vector<std::vector<unsigned>> simplexBase::getDimEdges(int dim, double epsilon){
-	ut.writeLog(simplexType,"No get edges function defined");
-	std::vector<std::vector<unsigned>> a;
-	return a;
+std::set<simplexNode*, cmpByWeight> simplexBase::getDimEdges(int dim){
+	if(dim >= simplexList.size()){
+		ut.writeLog(simplexType,"Error: requested dimension beyond complex");
+		std::set<simplexNode*, cmpByWeight> a;
+		return a;
+	}
+	return simplexList[dim];
 }
 
-std::vector<std::vector<std::pair<std::set<unsigned>,double>>> simplexBase::getAllEdges(double epsilon){
-	ut.writeLog(simplexType,"No get edges function defined");
-	std::vector<std::vector<std::pair<std::set<unsigned>,double>>> a;
-	return a;
+std::vector<std::set<simplexNode*, cmpByWeight>> simplexBase::getAllEdges(){
+	return simplexList;
 }
 
-std::vector<std::vector<indSimplexTree::graphEntry>> simplexBase::getIndexEdges(double epsilon){
-	ut.writeLog(simplexType,"No get index edges function defined");
-	std::vector<std::vector<indSimplexTree::graphEntry>> a;
-	return a;
+std::vector<simplexNode*> simplexBase::getAllCofacets(const std::set<unsigned>& simplex){
+	return getAllCofacets(simplex, 0, std::unordered_map<simplexNode*, unsigned>(), false);
+}
+
+std::vector<simplexNode*> simplexBase::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode*, unsigned>& pivotPairs, bool checkEmergent){
+	ut.writeLog(simplexType,"No get cofacets function defined");
+	std::vector<simplexNode*> ret;
+	return ret;
 }
 
 double simplexBase::getSize(){
@@ -208,13 +208,6 @@ bool simplexBase::streamEvaluator(std::vector<double>& vector, std::vector<std::
 	stats += "Reject\n";
 	//std::cout << "\tReject: (stdev > 0.5 , " << stdev << ")" << std::endl;
 	return false;
-}
-
-
-std::vector<std::pair<double, std::vector<unsigned>>> simplexBase::getd0Pairs(){
-	std::vector<std::pair<double, std::vector<unsigned>>> ret;
-	ut.writeLog(simplexType,"No getd0Pairs function defined");
-	return ret;
 }
 
 void simplexBase::clear(){
