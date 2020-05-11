@@ -33,7 +33,6 @@ struct cmpBySecond{ //Sort nodes by weight, then by lexicographic order
 
 class fastPersistence : public basePipe {
   private:
-	utils ut;
 	int shift = 0;
 	double maxEpsilon;
   public:

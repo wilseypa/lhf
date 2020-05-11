@@ -69,9 +69,6 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	
 	//	-Boundary matrix stores reduced collection of cofaces for each column (indexed)
 	
-	//Start a timer for physical time passed during the pipe's function
-	auto startTime = std::chrono::high_resolution_clock::now();
-	
 	//Get all dim 0 persistence intervals
 	//Kruskal's minimum spanning tree algorithm
 	//		Track the current connected components (uf)
@@ -119,6 +116,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		}
 	}
 	
+	std::cout << "Finished MST" << std::endl;
 	
 	//For higher dimensional persistence intervals
 	//	
@@ -159,6 +157,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			if((*it)->weight != simplex->weight && (*it)->simplex != simplex->simplex){ 
 				//Get all cofacets using emergent pair optimization
 				std::vector<simplexNode*> cofaceList = inData.complex->getAllCofacets2(simplex->simplex, simplex->weight, pivotPairs);
+				inData.complex->getAllCofacets(simplex->simplex, simplex->weight, pivotPairs);
 				std::vector<unsigned> columnV;	//Reduction column of matrix V
 				columnV.push_back(columnIndex); //Initially V=I -> 1's along diagonal
 
@@ -228,16 +227,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		
 		pivots = nextPivots;
 	}
-	
-	//Stop the timer for time passed during the pipe's function
-	auto endTime = std::chrono::high_resolution_clock::now();
 
-	//Calculate the duration (physical time) for the pipe's function
-	std::chrono::duration<double, std::milli> elapsed = endTime - startTime;
-
-	//Output the time and memory used for this pipeline segment
-	ut.writeDebug("persistence","Bettis executed in " + std::to_string(elapsed.count()/1000.0) + " seconds (physical time)");;
-		
 	return inData;
 }
 
@@ -280,8 +270,10 @@ bool fastPersistence::configPipe(std::map<std::string, std::string> configMap){
 		strDebug = configMap["debug"];
 	}
 	pipe = configMap.find("outputFile");
-	if(pipe != configMap.end())
+	if(pipe != configMap.end()){
+		std::cout << "Set outputFile" << configMap["outputFile"] << std::endl;
 		outputFile = configMap["outputFile"].c_str();
+	}
 	
 	ut = utils(strDebug, outputFile);
 	

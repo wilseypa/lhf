@@ -75,14 +75,17 @@ void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth,
 		//Check if the node has children already...
 		if(node->child == nullptr){
 			node->child = insNode;
-			//node->children.insert(insNode);
+			node->children.insert(insNode);
 			insNode->parent = node;
 
+		//Node has children, add to the end of children
 		} else {
 			temp = node->child;
+			
+			while(temp->sibling != nullptr) temp = temp->sibling;
 			temp->sibling = insNode;
 			insNode->parent = temp->parent;
-			//node->children.insert(insNode);
+			node->children.insert(insNode);
 			temp = node->child;
 			//Have to check the children now...
 			if(simp.size() <= maxDimension){
@@ -289,7 +292,7 @@ void simplexTree::insert(std::vector<double>&) {
 		root = new simplexNode;
 		head = curNode;
 		head->parent = root;
-		//root->children.insert(head);
+		root->children.insert(head);
 		root->child = head;
 		indexCounter++;
 		runningVectorCount++;
@@ -330,7 +333,7 @@ void simplexTree::insert(std::vector<double>&) {
 
 	//Insert into the right of the tree
 	curNode->parent = root;
-	//root->children.insert(curNode);
+	root->children.insert(curNode);
 	auto temp = root->child;
 	temp->sibling = curNode;
 	simplexList[0].insert(curNode);
@@ -378,54 +381,68 @@ simplexNode* simplexTree::find(std::set<unsigned>::iterator it, std::set<unsigne
 	simplexNode* temp = new simplexNode;
 	temp->index = *it;
 
+	//std::cout << "Find: " << *it << std::endl;
+	//std::cout << "\tUnder " << curNode << "\t" << curNode->index << "\t";
+	//ut.print1DVector(curNode->simplex);
+
 	while(it != end){
 		bool found = false;
 		
+		//std::cout << "\tFind: " << *it << std::endl;
 		for(auto childIter = curNode->child; childIter != nullptr; childIter = childIter->sibling){
-			if(childIter->index == temp->index)
+			if(childIter->index == temp->index){
 				found = true;
-		
-			if(found){ //Search for the next vertex in the next level
 				++it;
 				temp->index = *it;
 				curNode = childIter;
 				break;
 			}
+			
+			if(childIter->sibling == nullptr)
+				break;
 		}
 		
 		if(!found) {//This vertex is not in this level
-				delete temp;
-				return nullptr;
+			delete temp;
+			//std::cout << "\tnot found" << std::endl;
+			return nullptr;
 		}
 		
 		
 	}
 
 	delete temp;
+	//std::cout << "\tFound: " << curNode << std::endl;
 	return curNode;
 }
 
 std::vector<simplexNode*> simplexTree::getAllCofacets2(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode*, unsigned>& pivotPairs, bool checkEmergent){
 	std::vector<simplexNode*> ret;
+	std::cout << "gcf2" << std::endl;
+	//std::cout << "Calling find for ";
+	//ut.print1DVector(simplex);
 	simplexNode* parentNode = find(simplex.begin(), simplex.end(), root);
-	if(parentNode == nullptr) return ret; //Simplex isn't in the simplex tree	
+	if(parentNode == nullptr) {std::cout << "\tGCF2: found null parent, ret" << std::endl; return ret; } //Simplex isn't in the simplex tree	
+	
+	//std::cout << simplexWeight << "\t";
+	//ut.print1DVector(simplex);
+	
 
 	simplexNode* tempNode;
 	auto it = simplex.end();
-	
-	auto childIter = parentNode->child;
 
 	while(true){
 		//Insert all of the children in reverse lexicographic order
 		for(auto childIter = parentNode->child; childIter != nullptr; childIter = childIter->sibling){
 			
-			
 			if(it == simplex.end()) ret.push_back(childIter); //All children of simplex are cofacets
 			else{
-				tempNode = find(it, simplex.end(), childIter); //See if cofacet is in the tree
+				
+				//Attempt to find cofacets in the tree				
+				tempNode = find(it, simplex.end(), childIter); 
 				if(tempNode != nullptr){
+					
 					ret.push_back(tempNode);
-
 
 					//If we haven't found an emergent candidate and the weight of the maximal cofacet is equal to the simplex's weight
 					//		we have identified an emergent pair; at this point we can break because the interval is born and dies at the 
@@ -447,27 +464,40 @@ std::vector<simplexNode*> simplexTree::getAllCofacets2(const std::set<unsigned>&
 		else break;
 	}
 
+	std::sort(ret.begin(), ret.end(), std::greater<simplexNode*>());
+
+	std::cout << "Got cofacets2: " << ret.size() << std::endl;
+
+	for(auto i : ret)
+		std::cout << i << "\t";
+		
+	std::cout << std::endl;
+
 	return ret;
 
 }
 
 std::vector<simplexNode*> simplexTree::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode*, unsigned>& pivotPairs, bool checkEmergent){
 	std::vector<simplexNode*> ret;
+	std::cout << "GCF" << std::endl;
 	simplexNode* parentNode = find(simplex.begin(), simplex.end(), root);
-	if(parentNode == nullptr) return ret; //Simplex isn't in the simplex tree	
+	if(parentNode == nullptr) {std::cout << "\tGCF found null parent, ret" << std::endl; return ret; } //Simplex isn't in the simplex tree	
 
 	simplexNode* tempNode;
 	auto it = simplex.end();
+	
+	
+	//std::cout << simplexWeight << "\t";
+	//ut.print1DVector(simplex);
 
 	while(true){
 		//Insert all of the children in reverse lexicographic order
 		for(auto itS = parentNode->children.rbegin(); itS != parentNode->children.rend(); itS++){
-			if(it == simplex.end()) ret.push_back(*itS); //All children of simplex are cofacets
+			if(it == simplex.end()) {ret.push_back(*itS);} //All children of simplex are cofacets
 			else{
 				tempNode = find(it, simplex.end(), *itS); //See if cofacet is in the tree
 				if(tempNode != nullptr){
 					ret.push_back(tempNode);
-
 
 					//If we haven't found an emergent candidate and the weight of the maximal cofacet is equal to the simplex's weight
 					//		we have identified an emergent pair; at this point we can break because the interval is born and dies at the 
@@ -486,6 +516,12 @@ std::vector<simplexNode*> simplexTree::getAllCofacets(const std::set<unsigned>& 
 		else break;
 	}
 
+	std::cout << "GetCofacets (original): " << ret.size() << std::endl;
+
+	for(auto i : ret)
+		std::cout << i << "\t";
+		
+	std::cout << std::endl;
 	return ret;
 }
 

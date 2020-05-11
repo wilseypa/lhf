@@ -26,7 +26,6 @@ distMatrixPipe::distMatrixPipe(){
 
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket distMatrixPipe::runPipe(pipePacket inData){
-	utils ut;
 	
 	//Store our distance matrix
 	if(inData.distMatrix.size() > 0) inData.distMatrix.clear();

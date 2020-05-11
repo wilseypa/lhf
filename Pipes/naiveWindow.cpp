@@ -29,7 +29,6 @@ bool naiveWindow::sampleStreamEvaluator(std::vector<double>& vector, std::vector
 
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket naiveWindow::runPipe(pipePacket inData){
-	utils ut;
 	readInput rp;
 
 	int windowMaxSize = 50;
