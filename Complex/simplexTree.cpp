@@ -80,19 +80,21 @@ void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth,
 
 		//Node has children, add to the end of children
 		} else {
+			//Move to child, then move to last sibling
 			temp = node->child;
-			
 			while(temp->sibling != nullptr) temp = temp->sibling;
+			
+			//Insert the node at the end of the list
 			temp->sibling = insNode;
 			insNode->parent = temp->parent;
+			
 			node->children.insert(insNode);
 			temp = node->child;
 			//Have to check the children now...
 			if(simp.size() <= maxDimension){
 				do {
-					if(temp != insNode)
-						recurseInsert(temp, curIndex, depth + 1, maxE, simp);
-				} while(temp->sibling != nullptr && (temp = temp->sibling) != nullptr);
+					recurseInsert(temp, curIndex, depth + 1, maxE, simp);
+				} while((temp = temp->sibling) != insNode);
 			}
 		}
 	}
@@ -380,21 +382,36 @@ double simplexTree::getSize(){
 simplexNode* simplexTree::find(std::set<unsigned>::iterator it, std::set<unsigned>::iterator end, simplexNode* curNode){
 	simplexNode* temp = new simplexNode;
 	temp->index = *it;
-
-	//std::cout << "Find: " << *it << std::endl;
-	//std::cout << "\tUnder " << curNode << "\t" << curNode->index << "\t";
-	//ut.print1DVector(curNode->simplex);
+	std::set<unsigned>::iterator it2 = it;
 
 	while(it != end){
+		std::cout << "Searching for " << *it << "\tUnder " << curNode->index << std::endl;
+		auto child = curNode->children.find(temp); //Look for the sibling with the next vertex
+		if(child == curNode->children.end()){ //This vertex is not in this level
+			break;
+		} else{ //Search for the next vertex in the next level
+			++it;
+			temp->index = *it;
+			curNode = *child;
+		}
+	}
+
+	if(curNode != nullptr)
+		std::cout << "Original Find: " << curNode << std::endl;
+	else std::cout << "Original not found" << std::endl;
+	
+	temp = curNode;
+	//Check each index of the simplex in increasing order
+	while(it2 != end){
 		bool found = false;
+		std::cout << "Searching for " << *it2 << "\tUnder " << curNode->index << std::endl;
 		
-		//std::cout << "\tFind: " << *it << std::endl;
-		for(auto childIter = curNode->child; childIter != nullptr; childIter = childIter->sibling){
-			if(childIter->index == temp->index){
+		//Look for the sibling with the next vertex through the entire list
+		for(auto childIter = temp->child; childIter != nullptr; childIter = childIter->sibling){
+			if(childIter->index == (*it2) && !found){ //Search for the next vertex in the next level
 				found = true;
-				++it;
-				temp->index = *it;
-				curNode = childIter;
+				++it2;
+				temp = childIter;
 				break;
 			}
 			
@@ -403,16 +420,18 @@ simplexNode* simplexTree::find(std::set<unsigned>::iterator it, std::set<unsigne
 		}
 		
 		if(!found) {//This vertex is not in this level
+			std::cout << "\tnot found" << std::endl;
 			delete temp;
-			//std::cout << "\tnot found" << std::endl;
 			return nullptr;
 		}
 		
 		
 	}
 
+	if(curNode != nullptr)
+		std::cout << "\tFound: " << curNode << std::endl;
+	else std::cout << "\tnot found" << std::endl;
 	delete temp;
-	//std::cout << "\tFound: " << curNode << std::endl;
 	return curNode;
 }
 

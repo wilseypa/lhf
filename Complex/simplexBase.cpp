@@ -83,8 +83,8 @@ std::vector<std::set<simplexNode*, cmpByWeight>> simplexBase::getAllEdges(){
 
 std::vector<simplexNode*> simplexBase::getAllCofacets(const std::set<unsigned>& simplex){
 	
-	getAllCofacets(simplex, 0, std::unordered_map<simplexNode*, unsigned>(), false);
-	return getAllCofacets2(simplex, 0, std::unordered_map<simplexNode*, unsigned>(), false);
+	getAllCofacets2(simplex, 0, std::unordered_map<simplexNode*, unsigned>(), false);
+	return getAllCofacets(simplex, 0, std::unordered_map<simplexNode*, unsigned>(), false);
 }
 
 std::vector<simplexNode*> simplexBase::getAllCofacets2(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode*, unsigned>& pivotPairs, bool checkEmergent){
