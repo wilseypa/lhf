@@ -5,16 +5,8 @@
 
 // Header file for utils class - see utils.cpp for descriptions
 struct simplexNode{
-	unsigned index;
-	
-	struct cmpByIndex{
-		bool operator()(const simplexNode* lhs, const simplexNode* rhs) const{
-			return lhs->index < rhs->index;
-		}
-	};
-	
+	unsigned index;	
 	std::set<unsigned> simplex;
-	std::set<simplexNode*, cmpByIndex> children;
 	simplexNode* child = nullptr;
 	simplexNode* sibling = nullptr;
 	simplexNode* parent = nullptr;
