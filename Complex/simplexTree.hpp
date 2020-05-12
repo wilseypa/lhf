@@ -34,7 +34,6 @@ class simplexTree : public simplexBase {
 	bool find(std::set<unsigned>);
 	int simplexCount();
 	int vertexCount();
-	std::vector<simplexNode*> getAllCofacets2(const std::set<unsigned>&, double, const std::unordered_map<simplexNode*, unsigned>&, bool);
 	std::vector<simplexNode*> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode*, unsigned>&, bool);
 	bool deletion(std::set<unsigned>);
 	bool deletion(simplexNode*);

@@ -402,77 +402,14 @@ simplexNode* simplexTree::find(std::set<unsigned>::iterator it, std::set<unsigne
 	return curNode;
 }
 
-std::vector<simplexNode*> simplexTree::getAllCofacets2(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode*, unsigned>& pivotPairs, bool checkEmergent){
-	std::vector<simplexNode*> ret;
-	std::cout << "gcf2" << std::endl;
-	//std::cout << "Calling find for ";
-	//ut.print1DVector(simplex);
-	simplexNode* parentNode = find(simplex.begin(), simplex.end(), root);
-	if(parentNode == nullptr) {std::cout << "\tGCF2: found null parent, ret" << std::endl; return ret; } //Simplex isn't in the simplex tree	
-	
-	//std::cout << simplexWeight << "\t";
-	//ut.print1DVector(simplex);
-	
-
-	simplexNode* tempNode;
-	auto it = simplex.end();
-
-	while(true){
-		//Insert all of the children in reverse lexicographic order
-		for(auto childIter = parentNode->child; childIter != nullptr; childIter = childIter->sibling){
-			
-			if(it == simplex.end()) ret.push_back(childIter); //All children of simplex are cofacets
-			else{
-				
-				//Attempt to find cofacets in the tree				
-				tempNode = find(it, simplex.end(), childIter); 
-				if(tempNode != nullptr){
-					
-					ret.push_back(tempNode);
-
-					//If we haven't found an emergent candidate and the weight of the maximal cofacet is equal to the simplex's weight
-					//		we have identified an emergent pair; at this point we can break because the interval is born and dies at the 
-					//		same epsilon
-					if(checkEmergent && tempNode->weight == simplexWeight){
-						if(pivotPairs.find(tempNode) == pivotPairs.end()) return ret; //Check to make sure the identified cofacet isn't a pivot
-						checkEmergent = false;
-					}
-				}
-			}
-			
-			if(childIter->sibling == nullptr) break;
-			
-		}
-
-		//Recurse backwards up the tree and try adding vertices at each level
-		--it;
-		if(parentNode->parent != nullptr) parentNode = parentNode->parent;
-		else break;
-	}
-
-	std::sort(ret.begin(), ret.end(), std::greater<simplexNode*>());
-
-	std::cout << "Got cofacets2: " << ret.size() << std::endl;
-
-	for(auto i : ret)
-		std::cout << i << "\t";
-		
-	std::cout << std::endl;
-
-	return ret;
-
-}
-
 std::vector<simplexNode*> simplexTree::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode*, unsigned>& pivotPairs, bool checkEmergent){
 	std::vector<simplexNode*> ret;
-	std::cout << "GCF" << std::endl;
 	simplexNode* parentNode = find(simplex.begin(), simplex.end(), root);
 	if(parentNode == nullptr) return ret; //Simplex isn't in the simplex tree	
 
 
 	simplexNode* tempNode;
 	auto it = simplex.end();
-	
 	
 	//std::cout << simplexWeight << "\t";
 	//ut.print1DVector(simplex);
@@ -511,13 +448,6 @@ std::vector<simplexNode*> simplexTree::getAllCofacets(const std::set<unsigned>& 
 		else break;
 	}
 	std::sort(ret.begin(), ret.end(), cmpByWeight());
-
-	std::cout << "GetCofacets (original): " << ret.size() << std::endl;
-
-	for(auto i : ret)
-		std::cout << i << "\t";
-		
-	std::cout << std::endl;
 	return ret;
 }
 
