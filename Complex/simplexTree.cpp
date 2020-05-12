@@ -25,24 +25,31 @@ void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth,
 	
 	isSorted = false;
 	double curE = 0;
+	//std::cout << "Getting curE dmat size: " << (*distMatrix).size() << std::endl;
+	//std::cout << "Attempting to access: " << node->index << " x " << indexCounter << std::endl;
 
-	//std::cout << runningVectorIndices.size() << "\t" << runningVectorCount << "\t" << indexCounter << "\t" << distMatrix.size() << "\t" << node->index << std::endl;
-	if(runningVectorIndices.size() < runningVectorCount+1){
-		int offset = runningVectorCount+1 - runningVectorIndices.size();
-		if(((int)node->index - offset) > distMatrix->size() || (indexCounter-offset) > distMatrix[(int)node->index - offset].size()){
+	//std::cout << runningVectorIndices.size() << "\t" << runningVectorCount << "\t" << indexCounter << "\t" << distMatrix->size() << "\t" << node->index << std::endl;
+	if(simplexOffset > 0){
+		if((node->index - simplexOffset) > distMatrix->size() || (indexCounter-simplexOffset) > (*distMatrix)[node->index - simplexOffset].size()){
 			std::cout << "DistMatrix access error:" << std::endl;
-			std::cout << "DistMatrix size: " << distMatrix->size() << "\tAccess Index: " << ((int)node->index - offset) << std::endl;
-			std::cout << "Node Index: " << node->index << "\tOffset: " << offset << std::endl;
-			std::cout << "nodeCount: " << nodeCount << "\tindexCount: " << indexCounter << std::endl;
+			std::cout << "\tAttempting to access distMatrix indexes: " << node->index << " x " << indexCounter << std::endl;
+			std::cout << "\tDistMatrix size: " << (*distMatrix).size() << std::endl;
+			std::cout << "\trviCount: " << runningVectorCount << "\t rviSize: " << runningVectorIndices.size() << "\tOffset: " << simplexOffset << "\tOffset2: " << simplexOffset << std::endl;
+			std::cout << "\tOffset Indices: " << node->index - simplexOffset << " x " << indexCounter - simplexOffset << std::endl;
+			std::cout << "\tBackwards size: " << distMatrix[indexCounter - simplexOffset].size() << std::endl;
+			std::cout << "\tRow Size: " << distMatrix[node->index - simplexOffset].size()  << "\tCurIndex: " << curIndex << std::endl;
 		}
 		else
-			curE = (*distMatrix)[(unsigned)node->index - offset][indexCounter - offset];
+			curE = (*distMatrix)[node->index - simplexOffset][indexCounter - simplexOffset];
 
 	}else{
 		curE = (*distMatrix)[node->index][indexCounter];
 	}
 
+
 	curE = curE > maxE ? curE : maxE;
+
+	//std::cout << "Got curE" << std::endl;
 
 	//Check if the node needs inserted at this level
 	if(curE < maxEpsilon){
@@ -70,19 +77,21 @@ void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth,
 			node->child = insNode;
 			insNode->parent = node;
 
+		//Node has children, add to the end of children
 		} else {
 			//Move to child, then move to last sibling
 			temp = node->child;
 			while(temp->sibling != nullptr) temp = temp->sibling;
+
 			temp->sibling = insNode;
 			insNode->parent = temp->parent;
+
 			temp = node->child;
 			//Have to check the children now...
 			if(simp.size() <= maxDimension){
 				do {
-					if(temp != insNode)
-						recurseInsert(temp, curIndex, depth + 1, maxE, simp);
-				} while(temp->sibling != nullptr && (temp = temp->sibling) != nullptr);
+					recurseInsert(temp, curIndex, depth + 1, maxE, simp);
+				} while((temp = temp->sibling) != insNode);
 			}
 		}
 	}
@@ -279,7 +288,7 @@ void simplexTree::insert(std::vector<double>&) {
 
 	//Check if this is the first node (i.e. head)
 	//	If so, initialize the head node
-	if(head == nullptr){
+	if(root == nullptr){
 		root = new simplexNode;
 		head = insNode;
 		head->parent = root;
@@ -393,17 +402,84 @@ simplexNode* simplexTree::find(std::set<unsigned>::iterator it, std::set<unsigne
 	return curNode;
 }
 
-std::vector<simplexNode*> simplexTree::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode*, unsigned>& pivotPairs, bool checkEmergent){
+std::vector<simplexNode*> simplexTree::getAllCofacets2(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode*, unsigned>& pivotPairs, bool checkEmergent){
 	std::vector<simplexNode*> ret;
+	std::cout << "gcf2" << std::endl;
+	//std::cout << "Calling find for ";
+	//ut.print1DVector(simplex);
 	simplexNode* parentNode = find(simplex.begin(), simplex.end(), root);
-	if(parentNode == nullptr) return ret; //Simplex isn't in the simplex tree	
-		
+	if(parentNode == nullptr) {std::cout << "\tGCF2: found null parent, ret" << std::endl; return ret; } //Simplex isn't in the simplex tree	
+	
+	//std::cout << simplexWeight << "\t";
+	//ut.print1DVector(simplex);
+	
 
 	simplexNode* tempNode;
 	auto it = simplex.end();
 
 	while(true){
 		//Insert all of the children in reverse lexicographic order
+		for(auto childIter = parentNode->child; childIter != nullptr; childIter = childIter->sibling){
+			
+			if(it == simplex.end()) ret.push_back(childIter); //All children of simplex are cofacets
+			else{
+				
+				//Attempt to find cofacets in the tree				
+				tempNode = find(it, simplex.end(), childIter); 
+				if(tempNode != nullptr){
+					
+					ret.push_back(tempNode);
+
+					//If we haven't found an emergent candidate and the weight of the maximal cofacet is equal to the simplex's weight
+					//		we have identified an emergent pair; at this point we can break because the interval is born and dies at the 
+					//		same epsilon
+					if(checkEmergent && tempNode->weight == simplexWeight){
+						if(pivotPairs.find(tempNode) == pivotPairs.end()) return ret; //Check to make sure the identified cofacet isn't a pivot
+						checkEmergent = false;
+					}
+				}
+			}
+			
+			if(childIter->sibling == nullptr) break;
+			
+		}
+
+		//Recurse backwards up the tree and try adding vertices at each level
+		--it;
+		if(parentNode->parent != nullptr) parentNode = parentNode->parent;
+		else break;
+	}
+
+	std::sort(ret.begin(), ret.end(), std::greater<simplexNode*>());
+
+	std::cout << "Got cofacets2: " << ret.size() << std::endl;
+
+	for(auto i : ret)
+		std::cout << i << "\t";
+		
+	std::cout << std::endl;
+
+	return ret;
+
+}
+
+std::vector<simplexNode*> simplexTree::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode*, unsigned>& pivotPairs, bool checkEmergent){
+	std::vector<simplexNode*> ret;
+	std::cout << "GCF" << std::endl;
+	simplexNode* parentNode = find(simplex.begin(), simplex.end(), root);
+	if(parentNode == nullptr) return ret; //Simplex isn't in the simplex tree	
+
+
+	simplexNode* tempNode;
+	auto it = simplex.end();
+	
+	
+	//std::cout << simplexWeight << "\t";
+	//ut.print1DVector(simplex);
+
+	while(true){
+		//Insert all of the children in reverse lexicographic order
+
 		for(auto childIter = parentNode->child; childIter != nullptr; childIter = childIter->sibling){
 			
 			if(it == simplex.end()) ret.push_back(childIter); //All children of simplex are cofacets
@@ -436,6 +512,12 @@ std::vector<simplexNode*> simplexTree::getAllCofacets(const std::set<unsigned>& 
 	}
 	std::sort(ret.begin(), ret.end(), cmpByWeight());
 
+	std::cout << "GetCofacets (original): " << ret.size() << std::endl;
+
+	for(auto i : ret)
+		std::cout << i << "\t";
+		
+	std::cout << std::endl;
 	return ret;
 }
 
@@ -589,21 +671,23 @@ bool simplexTree::deletion(simplexNode* removalEntry) {
 }
 
 void simplexTree::clear(){
-
 	//Clear the simplexTree structure
-	deletion(root);
+	if(root != nullptr)
+		deletion(root);
 	root = nullptr;
 
-	//Clear the weighed edge graph
-	for(auto z : simplexList){
-		z.clear();
+	
+	for(auto i = 0; i < simplexList.size(); i++){
+		simplexList[i].clear();
 	}
 	simplexList.clear();
 
-
+	simplexOffset = runningVectorCount;
 	//runningVectorCount = 0;
 	runningVectorIndices.clear();
 	//indexCounter = 0;
+	
+	return;
 
 }
 

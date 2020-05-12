@@ -14,6 +14,8 @@ class simplexBase {
 	std::vector<std::set<simplexNode*, cmpByWeight>> simplexList;		//Holds ordered list of simplices in each dimension
 																//Needs to sort by the weight for insertion
   
+	unsigned simplexOffset = 0;
+  
 	long long nodeCount = 0;					//Total number of nodes stored
 	long long indexCounter;						//Current insertion index
 	
@@ -64,6 +66,7 @@ class simplexBase {
 	virtual int simplexCount();
 	virtual int vertexCount();
 	virtual std::vector<simplexNode*> getAllCofacets(const std::set<unsigned>&);
+	virtual std::vector<simplexNode*> getAllCofacets2(const std::set<unsigned>&, double, const std::unordered_map<simplexNode*, unsigned>& pivotPairs, bool = true);
 	virtual std::vector<simplexNode*> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode*, unsigned>& pivotPairs, bool = true);
 	virtual std::set<simplexNode*, cmpByWeight> getDimEdges(int);
 	virtual std::vector<std::set<simplexNode*, cmpByWeight>> getAllEdges();
