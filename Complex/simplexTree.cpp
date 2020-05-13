@@ -79,19 +79,18 @@ void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth,
 
 		//Node has children, add to the end of children
 		} else {
-			//Move to child, then move to last sibling
-			temp = node->child;
-			while(temp->sibling != nullptr) temp = temp->sibling;
+			//Move to last sibling
+			insNode->parent = node;
+			insNode->sibling = node->child;
+			node->child = insNode;
 
-			temp->sibling = insNode;
-			insNode->parent = temp->parent;
 
-			temp = node->child;
+			temp = insNode->sibling;
 			//Have to check the children now...
 			if(simp.size() <= maxDimension){
 				do {
 					recurseInsert(temp, curIndex, depth + 1, maxE, simp);
-				} while((temp = temp->sibling) != insNode);
+				} while((temp = temp->sibling) != nullptr);
 			}
 		}
 	}
@@ -331,11 +330,10 @@ void simplexTree::insert(std::vector<double>&) {
 	}
 
 	//Insert into the right of the tree
+	//Child points to last child, and sibling points backwards
 	insNode->parent = root;
-	
-	simplexNode* temp = head;
-	while(temp->sibling != nullptr) temp = temp->sibling;	
-	temp->sibling = insNode;
+	insNode->sibling = root->child;
+	root->child = insNode;
 	
 	simplexList[0].insert(insNode);
 
@@ -410,9 +408,6 @@ std::vector<simplexNode*> simplexTree::getAllCofacets(const std::set<unsigned>& 
 
 	simplexNode* tempNode;
 	auto it = simplex.end();
-	
-	//std::cout << simplexWeight << "\t";
-	//ut.print1DVector(simplex);
 
 	while(true){
 		//Insert all of the children in reverse lexicographic order
@@ -431,10 +426,10 @@ std::vector<simplexNode*> simplexTree::getAllCofacets(const std::set<unsigned>& 
 					//If we haven't found an emergent candidate and the weight of the maximal cofacet is equal to the simplex's weight
 					//		we have identified an emergent pair; at this point we can break because the interval is born and dies at the 
 					//		same epsilon
-					/*if(checkEmergent && tempNode->weight == simplexWeight){
+					if(checkEmergent && tempNode->weight == simplexWeight){
 						if(pivotPairs.find(tempNode) == pivotPairs.end()) return ret; //Check to make sure the identified cofacet isn't a pivot
 						checkEmergent = false;
-					}*/
+					}
 				}
 			}
 			
