@@ -26,34 +26,25 @@ distMatrixPipe::distMatrixPipe(){
 
 // runPipe -> Run the configured functions of this pipeline segment
 pipePacket distMatrixPipe::runPipe(pipePacket inData){
-	utils ut;
 	
 	//Store our distance matrix
+	if(inData.distMatrix.size() > 0) inData.distMatrix.clear();
 	inData.distMatrix.resize(inData.originalData.size(), std::vector<double>(inData.originalData.size(),0));
 	
-	//Iterate through each vector
+	//Iterate through each vector, create lower
 	for(unsigned i = 0; i < inData.originalData.size(); i++){
 		if(!inData.originalData[i].empty()){
-		
 			//Grab a second vector to compare to 
 			std::vector<double> temp;
 			for(unsigned j = i+1; j < inData.originalData.size(); j++){
 
 					//Calculate vector distance 
-					auto dist = ut.vectors_distance(inData.originalData[i],inData.originalData[j]);
-					
-					if(dist < maxEpsilon)
-						inData.weights.insert(dist);
-					inData.distMatrix[i][j] = dist;
+					inData.distMatrix[i][j] = ut.vectors_distance(inData.originalData[i],inData.originalData[j]);
 			}
 		}
 	}
 	
 	inData.complex->setDistanceMatrix(&inData.distMatrix);
-	
-	inData.weights.insert(0.0);
-	inData.weights.insert(maxEpsilon);
-	//std::sort(inData.weights.begin(), inData.weights.end(), std::greater<>());
 	
 	ut.writeDebug("distMatrix", "\tDist Matrix Size: " + std::to_string(inData.distMatrix.size()) + " x " + std::to_string(inData.distMatrix.size()));
 	return inData;
