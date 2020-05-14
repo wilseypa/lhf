@@ -144,8 +144,8 @@ int simplexBase::simplexCount(){
 	return -1;
 }
 
-void simplexBase::outputSimplex(){
-	ut.writeLog(simplexType,"No outputSimplex function defined");
+void simplexBase::outputComplex(){
+	ut.writeLog(simplexType,"No outputComplex function defined");
 	return;
 }
 

@@ -25,6 +25,7 @@ class simplexTree : public simplexBase {
 	simplexNode* find(std::set<unsigned>::iterator, std::set<unsigned>::iterator, simplexNode*);
 
 	//virtual interface functions
+	void outputComplex();
 	double getSize();
 	bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&);
 	bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&, int&, int&, std::vector<double>&);

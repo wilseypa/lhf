@@ -15,6 +15,10 @@ simplexTree::simplexTree(double _maxEpsilon, std::vector<std::vector<double>>* _
 	return;
 }
 
+void simplexTree::outputComplex(){
+	return printTree(head);
+}
+
 //**													**//
 //** 				Private Functions 					**//
 //**													**//
@@ -28,8 +32,7 @@ void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth,
 	//std::cout << "Getting curE dmat size: " << (*distMatrix).size() << std::endl;
 	//std::cout << "Attempting to access: " << node->index << " x " << indexCounter << std::endl;
 
-	//std::cout << runningVectorIndices.size() << "\t" << runningVectorCount << "\t" << indexCounter << "\t" << distMatrix->size() << "\t" << node->index << std::endl;
-	if(simplexOffset > 0){
+	if(runningVectorIndices.size() < runningVectorCount){
 		if((node->index - simplexOffset) > distMatrix->size() || (indexCounter-simplexOffset) > (*distMatrix)[node->index - simplexOffset].size()){
 			std::cout << "DistMatrix access error:" << std::endl;
 			std::cout << "\tAttempting to access distMatrix indexes: " << node->index << " x " << indexCounter << std::endl;
@@ -337,9 +340,9 @@ void simplexTree::insert(std::vector<double>&) {
 	
 	simplexList[0].insert(insNode);
 
+	runningVectorCount++;
 	nodeCount++;
 	indexCounter++;
-	runningVectorCount++;
 }
 
 void simplexTree::deleteWeightEdgeGraph(int index){
@@ -401,6 +404,7 @@ simplexNode* simplexTree::find(std::set<unsigned>::iterator it, std::set<unsigne
 }
 
 std::vector<simplexNode*> simplexTree::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode*, unsigned>& pivotPairs, bool checkEmergent){
+	
 	std::vector<simplexNode*> ret;
 	simplexNode* parentNode = find(simplex.begin(), simplex.end(), root);
 	if(parentNode == nullptr) return ret; //Simplex isn't in the simplex tree	
@@ -600,7 +604,7 @@ void simplexTree::clear(){
 	if(root != nullptr)
 		deletion(root);
 	root = nullptr;
-
+	head = nullptr;
 	
 	for(auto i = 0; i < simplexList.size(); i++){
 		simplexList[i].clear();
@@ -608,9 +612,10 @@ void simplexTree::clear(){
 	simplexList.clear();
 
 	simplexOffset = runningVectorCount;
-	//runningVectorCount = 0;
 	runningVectorIndices.clear();
-	//indexCounter = 0;
+	runningVectorCount = 0;
+	indexCounter = 0;
+	nodeCount = 0;
 	
 	return;
 
