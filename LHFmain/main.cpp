@@ -123,7 +123,7 @@
 		
 		auto centroids = wD->originalData;
 		
-		auto partitionedData = ut.separatePartitions(avgRadius, wD->originalData, wD->fullData, wD->originalLabels);
+		auto partitionedData = ut.separatePartitions(2*maxRadius, wD->originalData, wD->fullData, wD->originalLabels);
 		
 		std::cout << "Partitions: " << partitionedData.second.size() << std::endl << "Counts: ";
 		
@@ -147,12 +147,99 @@
 				//Map partitions back to original point indexing
 				//ut.mapPartitionIndexing(partitionedData.first[z], wD->bettiTable);
 				
-				
+				//Utilize a vector of bools to track connected components, size of the partition
+				std::vector<bool> conTrack(partitionedData.second[z].size(), false);
+				std::vector<std::set<unsigned>> conSets;	
+				std::set<unsigned> workSet;			
+				std::set<unsigned> tempSet;	
+				std::set<unsigned> conSetTemp;
+								
 				for(auto betEntry : wD->bettiTable){
-					if(betEntry.boundaryPoints.size() > 0 && *(betEntry.boundaryPoints.begin()) < binCounts[z])
+					std::cout << "Evaluating betti entry: " << betEntry.bettiDim << ", " << betEntry.birth << ", " << betEntry.death << "\t";
+					ut.print1DVector(betEntry.boundaryPoints);
+					std::cout << "BP size: " << betEntry.boundaryPoints.size() << std::endl;
+					
+					for(auto z : conTrack)
+						std::cout << z << " ";
+					std::cout << std::endl;
+					
+					auto boundIter = betEntry.boundaryPoints.begin();
+					bool foundEntry = false;
+					
+					//Erase indices outside of the partition
+					auto it = betEntry.boundaryPoints.lower_bound(binCounts[z]);
+					betEntry.boundaryPoints.erase(it, betEntry.boundaryPoints.end());
+					
+					
+					std::cout << "Evaluating betti entry: " << betEntry.bettiDim << ", " << betEntry.birth << ", " << betEntry.death << "\t";
+					ut.print1DVector(betEntry.boundaryPoints);
+					std::cout << "BP size: " << betEntry.boundaryPoints.size() << std::endl;
+					
+					
+					//If 0-d, check if entries are in conTrack
+					if(betEntry.bettiDim == 0 && betEntry.boundaryPoints.size() > 1){
+						
+						for(std::set<unsigned> cSet : conSets){
+							
+							workSet = ut.setIntersect(betEntry.boundaryPoints, cSet, false);
+							
+							//Single element intersects with the set, join to this set and put into tempset
+							if(workSet.size() == 1){
+								mergedBettiTable.push_back(betEntry);
+								set_union(betEntry.boundaryPoints.begin(), betEntry.boundaryPoints.end(), cSet.begin(), cSet.end(), std::inserter(tempSet, tempSet.end()));
+								foundEntry = true;
+							}					
+							if(workSet.size() == 2){
+								break;
+							}
+						}
+						
+						if(conSets.size() == 0) conSets.push_back(betEntry.boundaryPoints);
+						
+						if(foundEntry){
+							conSets.push_back(tempSet);							
+						}
+						
+						tempSet.clear();
+							
+							
+							
+						
+						/*
+						 * 
+						if((*boundIter) < binCounts[z] && !conTrack[(*boundIter)]){
+							conTrack[(*boundIter)] = true;
+							
+							boundIter++;
+							std::cout << "\tChecking sub: " << (*boundIter) << " , " << binCounts[z] << std::endl;
+							if((*boundIter) < binCounts[z] && !conTrack[(*boundIter)]){
+								conTrack[(*boundIter)] = true;
+							}
+							
+							mergedBettiTable.push_back(betEntry);
+							std::cout << "insA" << std::endl;
+	
+						} else if (boundIter++, (*boundIter) < binCounts[z] && !conTrack[(*boundIter)]){
+							conTrack[(*boundIter)] = true;
+							mergedBettiTable.push_back(betEntry);
+							std::cout << "insB" << std::endl;
+						}*/
+					} else if(betEntry.bettiDim > 0 && betEntry.boundaryPoints.size() > 0 && *(betEntry.boundaryPoints.begin()) < binCounts[z]){
 						mergedBettiTable.push_back(betEntry);
+							std::cout << "insC" << std::endl;
+					}
 					
 				}
+				
+						
+		
+				std::cout << std::endl << "_______Merged BETTIS_______" << std::endl;
+				
+				for(auto a : mergedBettiTable){
+					std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << std::endl;
+				}
+				
+				
 				wD->complex->clear();
 				
 			} else 
@@ -168,12 +255,23 @@
 			wD->complex->clear();
 		} else 
 			std::cout << "skipping" << std::endl;
+			
+			
+			
+		//Merge bettis from the centroid based data
+		for(auto betEntry : wD->bettiTable){
+			if(betEntry.bettiDim > 0 ){
+				mergedBettiTable.push_back(betEntry);
+			}
+		}
+			
+			
+			
 		
-		std::cout << std::endl << "_______BETTIS_______" << std::endl;
+		std::cout << std::endl << "_______Merged BETTIS_______" << std::endl;
 		
-		for(auto a : wD->bettiTable){
-			std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
-			ut.print1DVector(a.boundaryPoints);
+		for(auto a : mergedBettiTable){
+			std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << std::endl;
 		}
     
 		//Output the data using writeOutput library
