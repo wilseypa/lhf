@@ -159,7 +159,6 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			if((*it)->weight != simplex->weight && (*it)->simplex != simplex->simplex){ 
 				//Get all cofacets using emergent pair optimization
 				std::vector<simplexNode*> cofaceList = inData.complex->getAllCofacets(simplex->simplex, simplex->weight, pivotPairs);
-				inData.complex->getAllCofacets2(simplex->simplex, simplex->weight, pivotPairs);
 				std::vector<unsigned> columnV;	//Reduction column of matrix V
 				columnV.push_back(columnIndex); //Initially V=I -> 1's along diagonal
 

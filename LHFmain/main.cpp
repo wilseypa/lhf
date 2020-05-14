@@ -139,7 +139,7 @@
 		for(unsigned z = 0; z < partitionedData.second.size(); z++){
 			std::cout << "Partition: " << z << std::endl;
 			if(partitionedData.second[z].size() > 0){
-				std::cout << "Running Pipeline with : " << partitionedData.second[z].size() << " vectors" << std::endl;
+				std::cout << "\tRunning Pipeline with : " << partitionedData.second[z].size() << " vectors" << std::endl;
 				wD->originalData = partitionedData.second[z];
 				
 				runPipeline(args, wD);
@@ -147,14 +147,12 @@
 				//Map partitions back to original point indexing
 				//ut.mapPartitionIndexing(partitionedData.first[z], wD->bettiTable);
 				
-				std::cout << "Merging bettis..." << std::endl;
 				
 				for(auto betEntry : wD->bettiTable){
 					if(betEntry.boundaryPoints.size() > 0 && *(betEntry.boundaryPoints.begin()) < binCounts[z])
 						mergedBettiTable.push_back(betEntry);
 					
 				}
-				std::cout << "Clearing" << std::endl;
 				wD->complex->clear();
 				
 			} else 
