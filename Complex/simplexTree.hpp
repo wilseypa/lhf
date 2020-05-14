@@ -9,8 +9,6 @@
 class simplexTree : public simplexBase {
   private:
   public:
-	bool isSorted = false;
-
 	simplexNode* head = nullptr; //First simplex in the tree (0 vertex)
 	simplexNode* root = nullptr; //Empty node at root of tree (empty simplex)
 
@@ -25,6 +23,7 @@ class simplexTree : public simplexBase {
 	simplexNode* find(std::set<unsigned>::iterator, std::set<unsigned>::iterator, simplexNode*);
 
 	//virtual interface functions
+	void outputComplex();
 	double getSize();
 	bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&);
 	bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&, int&, int&, std::vector<double>&);
@@ -34,8 +33,7 @@ class simplexTree : public simplexBase {
 	bool find(std::set<unsigned>);
 	int simplexCount();
 	int vertexCount();
-	std::vector<simplexNode*> getAllCofacets2(const std::set<unsigned>&, double, const std::unordered_map<simplexNode*, unsigned>&, bool);
-	std::vector<simplexNode*> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode*, unsigned>&, bool);
+	std::vector<simplexNode*> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode*, simplexNode*>&, bool);
 	bool deletion(std::set<unsigned>);
 	bool deletion(simplexNode*);
 	void expandDimensions(int){return;};
