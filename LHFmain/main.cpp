@@ -90,7 +90,7 @@
 	}	
 
 	void processReducedWrapper(std::map<std::string, std::string> args, pipePacket* wD){
-		
+		auto maxEpsilon = std::atof(args["epsilon"].c_str());
 		auto *ws = new writeOutput();
 		std::vector<bettiBoundaryTableEntry> mergedBettiTable;
 		
@@ -150,18 +150,12 @@
 				//Utilize a vector of bools to track connected components, size of the partition
 				std::vector<bool> conTrack(partitionedData.second[z].size(), false);
 				bool foundExt = false;
-								
+				unsigned tempIndex;		
+				
 				for(auto betEntry : wD->bettiTable){
-					std::cout << "Evaluating betti entry: " << betEntry.bettiDim << ", " << betEntry.birth << ", " << betEntry.death << "\t";
-					ut.print1DVector(betEntry.boundaryPoints);
-					std::cout << "BP size: " << betEntry.boundaryPoints.size() << std::endl;
-					
-					for(auto z : conTrack)
-						std::cout << z << " ";
-					std::cout << std::endl;
 					
 					auto boundIter = betEntry.boundaryPoints.begin();
-					unsigned tempIndex;
+					
 					//The new (improved) approach to merging d0 bettis (pretty sure this works....)
 					//	1. Use a binary array to track each point within the original partition
 					//	2. Iterate the betti entries by weight, increasing
@@ -174,11 +168,9 @@
 					//		-If (b) was not traversed, need to add a {0, maxEps} entry for the independent component (Check this?)
 					
 					if(betEntry.bettiDim == 0 && betEntry.boundaryPoints.size() > 1){	
-								
 						if(betEntry.boundaryPoints.size() > 0 && (*boundIter) < binCounts[z]){
 							tempIndex = (*boundIter);
 							boundIter++;
-							std::cout << "insA" << std::endl;
 							
 							//Check if second entry is in the partition
 							if((*boundIter) < binCounts[z]){
@@ -194,15 +186,17 @@
 								conTrack[tempIndex] = true, conTrack[(*boundIter)] = true;
 							}
 						}
-						
-						
-						
-						
 					} else if(betEntry.bettiDim > 0 && betEntry.boundaryPoints.size() > 0 && *(betEntry.boundaryPoints.begin()) < binCounts[z]){
 						mergedBettiTable.push_back(betEntry);
 					}
-					
 				}
+				//If we never found an external connection, add the infinite connection here
+				if(!foundExt){
+					bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
+					mergedBettiTable.push_back(des);
+				}
+				
+				
 				wD->complex->clear();
 				
 			} else 
