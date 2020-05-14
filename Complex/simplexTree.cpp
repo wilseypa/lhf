@@ -19,15 +19,11 @@ void simplexTree::outputComplex(){
 	return printTree(head);
 }
 
-//**													**//
-//** 				Private Functions 					**//
-//**													**//
 void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth, double maxE, std::set<unsigned> simp){
 	//Incremental insertion
 	//Recurse to each child (which we'll use the parent pointer for...)
 	simplexNode* temp;
 	
-	isSorted = false;
 	double curE = 0;
 	//std::cout << "Getting curE dmat size: " << (*distMatrix).size() << std::endl;
 	//std::cout << "Attempting to access: " << node->index << " x " << indexCounter << std::endl;
@@ -403,8 +399,8 @@ simplexNode* simplexTree::find(std::set<unsigned>::iterator it, std::set<unsigne
 	return curNode;
 }
 
-std::vector<simplexNode*> simplexTree::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode*, unsigned>& pivotPairs, bool checkEmergent){
-	
+std::vector<simplexNode*> simplexTree::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode*, simplexNode*>& pivotPairs, bool checkEmergent){
+
 	std::vector<simplexNode*> ret;
 	simplexNode* parentNode = find(simplex.begin(), simplex.end(), root);
 	if(parentNode == nullptr) return ret; //Simplex isn't in the simplex tree	
@@ -446,7 +442,6 @@ std::vector<simplexNode*> simplexTree::getAllCofacets(const std::set<unsigned>& 
 		if(parentNode->parent != nullptr) parentNode = parentNode->parent;
 		else break;
 	}
-	std::sort(ret.begin(), ret.end(), cmpByWeight());
 	return ret;
 }
 
