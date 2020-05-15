@@ -31,6 +31,9 @@ bool naiveWindow::sampleStreamEvaluator(std::vector<double>& vector, std::vector
 pipePacket naiveWindow::runPipe(pipePacket inData){
 	readInput rp;
 
+
+	//Store our distance matrix
+	std::vector<std::vector<double>> distMatrix;
 	int windowMaxSize = 50;
 
 	// For this pipe, we construct a sub-pipeline:
@@ -59,34 +62,28 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 				windowValues.push_back(currentVector);
 				windowKeys.push_back(key);
 				key++;
-
 				//If we've reached window size, generate the initial complex
 				if(windowValues.size() == windowMaxSize){
-
 					inData.originalData = windowValues;
 					
-					//Store our distance matrix
-					std::vector<std::vector<double>> distMatrix (inData.originalData.size(), std::vector<double>(inData.originalData.size(),0));
+					distMatrix.resize(inData.originalData.size(), std::vector<double>(inData.originalData.size(),0));
+
 					
 					//Iterate through each vector
 					for(unsigned i = 0; i < inData.originalData.size(); i++){
 						if(!inData.originalData[i].empty()){
-						
 							//Grab a second vector to compare to 
 							std::vector<double> temp;
 							for(unsigned j = i+1; j < inData.originalData.size(); j++){
-
 									//Calculate vector distance 
 									auto dist = ut.vectors_distance(inData.originalData[i],inData.originalData[j]);
 									
 									if(dist < epsilon)
-										inData.weights.insert(dist);
-									distMatrix[i][j] = dist;
+										distMatrix[i][j] = dist;
 							}
 						}
 					}
-					
-					inData.complex->setDistanceMatrix(&inData.distMatrix);
+					inData.complex->setDistanceMatrix(&distMatrix);
 										
 					for(auto a : windowValues)
 						inData.complex->insert(a);
@@ -97,7 +94,7 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 
 			//Window is full, evaluate and add to window
 			} else {
-				
+				std::cout << "Insert Iterative" << std::endl;
 				if(inData.complex->insertIterative(currentVector, windowValues)){
 
 					windowValues.erase(windowValues.begin());
