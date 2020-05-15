@@ -90,7 +90,7 @@
 	}	
 
 	void processReducedWrapper(std::map<std::string, std::string> args, pipePacket* wD){
-		
+		auto maxEpsilon = std::atof(args["epsilon"].c_str());
 		auto *ws = new writeOutput();
 		std::vector<bettiBoundaryTableEntry> mergedBettiTable;
 		
@@ -123,7 +123,7 @@
 		
 		auto centroids = wD->originalData;
 		
-		auto partitionedData = ut.separatePartitions(avgRadius, wD->originalData, wD->fullData, wD->originalLabels);
+		auto partitionedData = ut.separatePartitions(2*maxRadius, wD->originalData, wD->fullData, wD->originalLabels);
 		
 		std::cout << "Partitions: " << partitionedData.second.size() << std::endl << "Counts: ";
 		
@@ -147,12 +147,56 @@
 				//Map partitions back to original point indexing
 				//ut.mapPartitionIndexing(partitionedData.first[z], wD->bettiTable);
 				
+				//Utilize a vector of bools to track connected components, size of the partition
+				std::vector<bool> conTrack(partitionedData.second[z].size(), false);
+				bool foundExt = false;
+				unsigned tempIndex;		
 				
 				for(auto betEntry : wD->bettiTable){
-					if(betEntry.boundaryPoints.size() > 0 && *(betEntry.boundaryPoints.begin()) < binCounts[z])
-						mergedBettiTable.push_back(betEntry);
 					
+					auto boundIter = betEntry.boundaryPoints.begin();
+					
+					//The new (improved) approach to merging d0 bettis (pretty sure this works....)
+					//	1. Use a binary array to track each point within the original partition
+					//	2. Iterate the betti entries by weight, increasing
+					//		a. If both indices are less than the partition size, check the binary array
+					//			-If binary array for either of the two indices isn't filled, insert and fill all
+					//		b. If one index is less than the partition size, the other greater, and this is the first instance of this
+					//			-Add this to the connection list; this is the minimum connection outside of the partition
+					//		c. If neither of the indices are less than the partition size, remove
+					//	3. Once all entries have been iterated - if (b) was traversed there is a connection outside to another partition
+					//		-If (b) was not traversed, need to add a {0, maxEps} entry for the independent component (Check this?)
+					
+					if(betEntry.bettiDim == 0 && betEntry.boundaryPoints.size() > 1){	
+						if(betEntry.boundaryPoints.size() > 0 && (*boundIter) < binCounts[z]){
+							tempIndex = (*boundIter);
+							boundIter++;
+							
+							//Check if second entry is in the partition
+							if((*boundIter) < binCounts[z]){
+								if(!conTrack[tempIndex] || !conTrack[(*boundIter)]){
+									mergedBettiTable.push_back(betEntry);
+									conTrack[tempIndex] = true, conTrack[(*boundIter)] = true;
+								} 
+							} else if(!foundExt){
+								foundExt = true;
+								mergedBettiTable.push_back(betEntry);
+							} else if(!conTrack[tempIndex] || !conTrack[(*boundIter)]){
+								mergedBettiTable.push_back(betEntry);
+								conTrack[tempIndex] = true, conTrack[(*boundIter)] = true;
+							}
+						}
+					} else if(betEntry.bettiDim > 0 && betEntry.boundaryPoints.size() > 0 && *(betEntry.boundaryPoints.begin()) < binCounts[z]){
+						mergedBettiTable.push_back(betEntry);
+					}
 				}
+				//If we never found an external connection, add the infinite connection here
+				if(!foundExt){
+					bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
+					mergedBettiTable.push_back(des);
+				}
+				
+				
 				wD->complex->clear();
 				
 			} else 
@@ -168,12 +212,20 @@
 			wD->complex->clear();
 		} else 
 			std::cout << "skipping" << std::endl;
+			
+			
+			
+		//Merge bettis from the centroid based data
+		for(auto betEntry : wD->bettiTable){
+			if(betEntry.bettiDim > 0 ){
+				mergedBettiTable.push_back(betEntry);
+			}
+		}
+			
+		std::cout << std::endl << "_______Merged BETTIS_______" << std::endl;
 		
-		std::cout << std::endl << "_______BETTIS_______" << std::endl;
-		
-		for(auto a : wD->bettiTable){
-			std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
-			ut.print1DVector(a.boundaryPoints);
+		for(auto a : mergedBettiTable){
+			std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << std::endl;
 		}
     
 		//Output the data using writeOutput library

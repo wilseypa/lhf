@@ -103,7 +103,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			temp->weight = (*edgeIter)->weight;
 			pivots.push_back(temp);
 
-			bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, {}, {temp} };			
+			bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, {v1, v2}, {temp} };			
 			inData.bettiTable.push_back(des);
 		}
 
