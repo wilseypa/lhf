@@ -35,7 +35,7 @@
 				//Build the pipe component, configure and run
 				auto *bp = new basePipe();
 				auto *cp = bp->newPipe(curFunct, args["complexType"]);
-				
+			
 				//Check if the pipe was created and configure
 				if(cp != 0 && cp->configPipe(args)){
 					//Run the pipe function (wrapper)
@@ -44,6 +44,8 @@
 					std::cout << cp << std::endl;
 					cout << "LHF runPipeline: Failed to configure pipeline: " << args["pipeline"] << endl;
 				}
+				
+				delete bp, delete cp;
 			}
 		}
 		//If the pipeline was undefined...
@@ -64,6 +66,7 @@
 			}
 		}
 		
+		delete ws;
 		return;
 	}
 
@@ -105,6 +108,7 @@
 			} else {
 				cout << "LHF processReduced: Failed to configure pipeline: " << args["pipeline"] << endl;
 			}
+			delete preprocess, delete prePipe;
 		}
 		
 		utils ut;
@@ -181,9 +185,9 @@
 							} else if(!foundExt){
 								foundExt = true;
 								mergedBettiTable.push_back(betEntry);
-							} else if(!conTrack[tempIndex] || !conTrack[(*boundIter)]){
+							} else if(!conTrack[tempIndex]){
 								mergedBettiTable.push_back(betEntry);
-								conTrack[tempIndex] = true, conTrack[(*boundIter)] = true;
+								conTrack[tempIndex] = true;
 							}
 						}
 					} else if(betEntry.bettiDim > 0 && betEntry.boundaryPoints.size() > 0 && *(betEntry.boundaryPoints.begin()) < binCounts[z]){
@@ -239,6 +243,8 @@
 				
 			}
 		}
+		
+		delete ws;
 		return;
 	}	
 
@@ -286,6 +292,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 			} else {
 				cout << "LHF : Failed to configure pipeline: " << args["pipeline"] << endl;
 			}
+			delete preprocess, delete prePipe;
 		}
 		
 		//Separate our partitions for distribution
@@ -597,8 +604,6 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 				wD->originalData = partitionedData;
 				runPipeline(args, wD);
 				wD->complex->clear();
-				//Map partitions back to original point indexing
-				//ut.mapPartitionIndexing(labels[received_partition], wD->bettiTable);
 				
 				//Utilize a vector of bools to track connected components, size of the partition
 				std::vector<bool> conTrack(binCounts[z], false);
@@ -634,9 +639,9 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 							} else if(!foundExt){
 								foundExt = true;
 								mergedBettiTable.push_back(betEntry);
-							} else if(!conTrack[tempIndex] || !conTrack[(*boundIter)]){
+							} else if(!conTrack[tempIndex]){
 								mergedBettiTable.push_back(betEntry);
-								conTrack[tempIndex] = true, conTrack[(*boundIter)] = true;
+								conTrack[tempIndex] = true;
 							}
 						}
 					} else if(betEntry.bettiDim > 0 && betEntry.boundaryPoints.size() > 0 && *(betEntry.boundaryPoints.begin()) < binCounts[z*(nprocs-1)+(id-1)]){
@@ -649,10 +654,14 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 					mergedBettiTable.push_back(des);
 				}
 				
+				//Map partitions back to original point indexing
+				//ut.mapPartitionIndexing(labels[received_partition], tempPartition);
 
 			} else 
 				std::cout << "skipping" << std::endl;
 		}
+		
+		
 			
 		for(auto bet : mergedBettiTable){
 			//Check if the current betti entry's minimum index is within the partition (or outside, discard)
@@ -779,7 +788,9 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 			ap->printUsage();
 		}
 		
+		delete rs, delete ap, delete wD;
+
+		MPI_Finalize();
 		
-		 MPI_Finalize();
 		return 0;
 	}
