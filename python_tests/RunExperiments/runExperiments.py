@@ -72,7 +72,7 @@ def geometricMeanDenoise(tempData, originalData): #identical to geometric mean b
     reducedData = mean
     
     return reducedData    
-    
+'''
 def corePointExtract(tempData, originalData, centroids):
     unique, counts = np.unique(tempData.labels_, return_counts=True)
     countsDict = dict(zip(unique, counts))
@@ -96,11 +96,11 @@ def corePointExtract(tempData, originalData, centroids):
     finalClusters = np.vstack(tempClusters)  
   
     reducedData = finalClusters
-    return reducedData
+    return reducedData'''
 
 
 ''' Helper function to extract barcodes, boundaries from Eirene output '''
-
+'''
 def extractEireneData(procOutput, epsilon):
     retBarcodes = ""
     retBoundaries = []
@@ -158,7 +158,7 @@ def extractEireneData(procOutput, epsilon):
     
     print("CurBounds:\n",retBoundaries)
     return retBarcodes, retBoundaries
-
+'''
 
 ''' Helper function to extract barcodes from Ripser output '''
 
@@ -223,18 +223,17 @@ print("Running experiments with:\nFilename: ", fileName, "\nEpsilon: ", epsilon,
 originalData = np.genfromtxt(fileName, delimiter=',')
 reducedData = originalData
 
+if not os.path.isfile(os.getcwd() + "/aggResults.csv"):
+    outfile = open(os.getcwd() + "/aggResults.csv", 'a')
+    outfile.write('Filename,OutputPath,Vectors,Dimensions,Preprocessor,PreprocessingTime,PH_Library,Epsilon,PH_Time,BettiCount\n')
+    outfile.close()
 
-for i in range(0, int(reps)):
+for i in range(reps):
 
     ''' Create folder for output '''
     outDir = os.path.basename(fileName) + "_output_v"+str(centroids)+"_e"+str(epsilon) + "/" + str(i) + "/"
     if not os.path.exists(outDir):
         os.makedirs(outDir)
-        
-    if not os.path.isfile(os.getcwd() + "/aggResults.csv"):
-        outfile = open(os.getcwd() + "/aggResults.csv", 'a')
-        outfile.write('Filename,OutputPath,Vectors,Dimensions,Preprocessor,PreprocessingTime(s),PH_Library,Epsilon,PH_Time(s),BettiCount\n')
-        outfile.close()      
 
     timings[partitioner]=0;
     ''' Partition data and store centroids, labels '''
@@ -253,11 +252,9 @@ for i in range(0, int(reps)):
         elif(partitioner == "agglomerativeWard"):  #ward linkage --> minimizes the variance of the clusters being merged
             tempData = cs.AgglomerativeClustering(n_clusters=centroids, linkage="ward").fit(originalData)
             reducedData = geometricMean(tempData, originalData)
-            #print reducedData
         elif(partitioner == "agglomerativeSingle"):  #single linkage --> the minimum of the distances between all observations of the two sets
             tempData = cs.AgglomerativeClustering(n_clusters=centroids, linkage="single").fit(originalData)
             reducedData = geometricMean(tempData, originalData)
-            #print reducedData
             #HDBSCAN - updated version of DBSCAN that iterates through all epsilons and builds a hierarchy of density... tune  minClusterSize to 
             #change size of data reduction ie 3 min Pts = low Reduction 100 min Pts = high Reduction
         elif(partitioner == "hdbscan"): 
@@ -266,7 +263,6 @@ for i in range(0, int(reps)):
             reducedData = geometricMeanDenoise(tempData, originalData)
         elif(partitioner == "random"):
             reducedData = np.array(random.sample(originalData, centroids)) #random.sample = no duplicates
-            #print len(reducedData)
             
         end = time.time()
 
@@ -281,27 +277,16 @@ for i in range(0, int(reps)):
 
     ''' Run each TDA tool on the partitioned data '''
     for tdaType in tdaLibraries:
-        
-        #Check if the last line was returned, keeping our data clean
-        isRet = True;
-        with open(os.getcwd() + "/aggResults.csv", 'rb+') as f:
-            f.seek(-1,2)
-            a = f.read()
-            if(a is not "\n"):
-                isRet = False;
-        
-        outfile = open(os.getcwd() + "/aggResults.csv", 'a')
-        if(not isRet):
-            outfile.write('')
-        outfile.write(fileName + ',' + outDir[:-1] + "," + str(len(reducedData)) + "," + str(len(reducedData[0])) + "," + str(timings[partitioner]) + "," + str(partitioner) + "," + tdaType + "," + str(epsilon) + ",")
-        outfile.close()
+        persTime = 0
+        bettiCount = 0
 
         ''' Eirene configuration and execution '''
+        '''
         if(tdaType == "Eirene"):
             try:
                 proc = subprocess.check_output(
 				["julia", "runEirene.jl", os.getcwd() + "/" + outDir, str(maxDim), str(epsilon)])
-                pers_time = 0
+                persTime = 0
                 outBarcodes, outBoundaries = extractEireneData(proc, epsilon)            
 
                 outfile = open(os.getcwd() + "/" + outDir + tdaType + "_Boundaries.txt","w")
@@ -314,13 +299,11 @@ for i in range(0, int(reps)):
                 outfile.close()
 
                 with open(outDir + '/EireneTime') as f:
-                	pers_time = f.read()
+                	persTime = f.read()
                 	
-                outfile = open(os.getcwd() + "/aggResults.csv", 'a')
-                outfile.write(str(pers_time) + "," + str(str(outBarcodes.count("\n"))) + ",")
-                outfile.close()
+                bettiCount = outBarcodes.count("\n")
             except:
-                print("Eirene processing failed")
+                print("Eirene processing failed") '''
 
         ''' RIPSER configuration and execution '''
         if(tdaType == "ripser"):
@@ -328,14 +311,10 @@ for i in range(0, int(reps)):
                 start = time.time()
                 barcodes = ripser(reducedData, maxdim = maxDim-1, thresh = epsilon)['dgms']
                 end = time.time()
-                pers_time = (end - start)
+                persTime = (end - start)
 
                 outfile = open(os.getcwd() + "/" + outDir + tdaType+"_Output.csv", 'w')
                 bettiCount = extractRipserData(barcodes, epsilon, outfile)
-                outfile.close()
-
-                outfile = open(os.getcwd() + "/aggResults.csv", 'a')
-                outfile.write(str(pers_time) + "," + str(bettiCount) + ",")
                 outfile.close()
             except:
                 print("ripser processing failed")
@@ -348,42 +327,30 @@ for i in range(0, int(reps)):
                 simplex_tree = rips.create_simplex_tree(max_dimension=maxDim)
                 pers = simplex_tree.persistence()
                 end = time.time()
-                pers_time = (end - start)
-                outputGudhiPersistence(pers, str(centroids) + "_", str(epsilon))
+                persTime = (end - start)
 
-                outfile = open(os.getcwd() + "/aggResults.csv", 'a')
-                outfile.write(str(pers_time) + "," + str(len(pers)) + ",")
-                outfile.close()
+                outputGudhiPersistence(pers, str(centroids) + "_", str(epsilon))
+                bettiCount = len(pers)
             except:
                 print("GUDHI processing failed")
                 
                 
         ''' LHF configuration and execution '''
         if(tdaType == "LHF"):
-            #try:
-            start = time.time()
-            proc = subprocess.check_output(["../../LHFmain/LHF", "-m","fast","-d", str(maxDim+1), "-e", str(epsilon), "-i", os.getcwd()+"/"+outDir + "reducedData.csv"])  
+            try:
+                start = time.time()
+                proc = subprocess.check_output(["../../LHFmain/LHF", "-m","fast","-d", str(maxDim), "-e", str(epsilon), "-i", os.getcwd()+"/"+outDir + "reducedData.csv"])  
+                end = time.time()
+                persTime = (end - start)
 
-
-            end = time.time()
-            pers_time = (end - start)
-            outdata = np.genfromtxt("./output.csv.csv")
-            
-            outfile = open(os.getcwd() + "/" + outDir +tdaType+"_Output.csv", 'w')
-                    
-            np.savetxt(os.getcwd() + "/" + outDir +tdaType+"_Output.csv", outdata)
-            # outfile.write(outdata)
-                    
-            outfile.close()
-                    
-            outfile = open(os.getcwd() + "/aggResults.csv", 'a')
-            outfile.write(str(pers_time) + "," + str(outdata.size - 1) + ",")
-            outfile.close()
-           #except:
-                #print "LHF processing failed"    
+                outdata = np.genfromtxt("./output.csv.csv", delimiter=',')                
+                np.savetxt(os.getcwd() + "/" + outDir +tdaType+"_Output.csv", outdata, delimiter=',')
+                bettiCount = len(outdata)
+            except:
+                print("LHF processing failed")  
 
 
         outfile = open(os.getcwd() + "/aggResults.csv", 'a')
-        outfile.write("\n")
+        outfile.write(fileName + ',' + outDir[:-1] + "," + str(len(reducedData)) + "," + str(len(reducedData[0])) + "," + str(partitioner) + "," + str(timings[partitioner]) + "," + tdaType + "," + str(epsilon) + "," + str(persTime) + "," + str(bettiCount) + ",\n")
         outfile.close()
 
