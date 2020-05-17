@@ -18,60 +18,18 @@ tdaLibraries = ['LHF','ripser','GUDHI']
 
 ## HELPER FUNCTIONS --------------------------------------------#
 
-def geometricMean(tempData, originalData):
-    
-    tracker = max(tempData.labels_)
-    sumSize = tracker +1
-    dim = len(originalData[0])
-    summedClusters = np.zeros([ sumSize, dim])
-    mean = np.zeros([sumSize])
-    for t in range(tracker+1):
-        for i in range(len(originalData)):
-            #print t
-            if(tempData.labels_[i] == t):
-                #print summedClusters
-                summedClusters[t] += originalData[i]
+'''Geometric mean of clusters'''
+def clusterCenters(data, labels):
+    n = max(labels)
+    sums = np.zeros([n+1, len(data[0])])
+    counts = np.zeros([n+1])
+    for i in range(len(data)):
+        if(labels[i] != -1):
+            sums[labels[i]] += data[i]
+            counts[labels[i]] += 1
 
+    return sums/counts[:, None]
 
-    unique, counts = np.unique(tempData.labels_, return_counts=True)
-    countsDict = dict(zip(unique, counts))
-    countsTemp = np.array(counts)
-    countsTemp2 = np.array([ [counts]*dim ]).T
-    countsTrick = np.reshape(countsTemp2, (sumSize, dim)) #juggling the stupid numpy arrays so we can trick the vectors for geo means
-    
-    
-    mean = summedClusters/countsTrick
-
-    reducedData = mean
-    
-    return reducedData
-def geometricMeanDenoise(tempData, originalData): #identical to geometric mean but for algorithms that have noise 
-    
-    tracker = max(tempData.labels_)
-    sumSize = tracker +1
-    dim = len(originalData[0])
-    summedClusters = np.zeros([ sumSize, dim])
-    mean = np.zeros([sumSize])
-    for t in range(tracker+1):
-        for i in range(len(originalData)):
-            #print t
-            if(tempData.labels_[i] == t):
-                #print summedClusters
-                summedClusters[t] += originalData[i]
-
-
-    unique, counts = np.unique(tempData.labels_, return_counts=True)
-    countsDict = dict(zip(unique, counts))
-    countsTemp = np.array(counts[1:]) #start at 1 because -1 is noise points
-    countsTemp2 = np.array([ [countsTemp]*dim ]).T
-    countsTrick = np.reshape(countsTemp2, (sumSize, dim)) 
-    
-    
-    mean = summedClusters/countsTrick
-
-    reducedData = mean
-    
-    return reducedData    
 '''
 def corePointExtract(tempData, originalData, centroids):
     unique, counts = np.unique(tempData.labels_, return_counts=True)
@@ -161,9 +119,7 @@ def extractEireneData(procOutput, epsilon):
 '''
 
 ''' Helper function to extract barcodes from Ripser output '''
-
 def extractRipserData(barcodes, epsilon, outfile):
-    epsilon = str(epsilon)
     bettiCount = 0
     for dim in range(len(barcodes)):
         bettiCount += len(barcodes[dim])
@@ -174,21 +130,9 @@ def extractRipserData(barcodes, epsilon, outfile):
 
 
 ''' Helper function for writing GUDHI persistence to file '''
-
-
-def outputGudhiPersistence(data, label, maxedge):
-    buf = ""
-
-    for i in data:
-        tmp = str(i).replace('(', '')
-        tmp = str(tmp).replace(' ', '')
-        tmp = str(tmp).replace('inf', maxedge)
-        buf += tmp[:-2] + "\n"
-
-    out = open(outDir+'GUDHI_Output.csv', 'w')
-    out.write(buf)
-    out.close()
-    return
+def outputGudhiPersistence(data, epsilon, outfile):
+    for line in data:
+        outfile.write(str(line[0]) + ',' + str(line[1][0]) + ',' + (epsilon if line[1][1] == np.inf else str(line[1][1])) + "\n")
 
 
 ''' MAIN LOOP HERE '''
@@ -196,7 +140,7 @@ def outputGudhiPersistence(data, label, maxedge):
 ''' Get CMD Arguments: [filename] [epsilon] [maxDim] [partitioner] [upscale 0/1] [centroids #] [reps]'''
 parser = argparse.ArgumentParser(description='Run iterative testing for TDA tools')
 parser.add_argument('--filename','-f',type=str, help='Point cloud filename', default='Circles.csv')
-parser.add_argument('--partitioner', '-p', type=str, help='Partitioner for point cloud reduction', default='kmeans++')
+parser.add_argument('--partitioner', '-p', type=str, help='Partitioner for point cloud reduction', default=None)
 parser.add_argument('--epsilon','-e',type=float, help='Max epsilon to compute PH up to', default=5)
 parser.add_argument('--dim', '-d', type=int, help='Maximum homology dimension to compute (Hx)', default=1)
 parser.add_argument('--upscale', '-u', type=bool, help='Set whether to upscale data during processing', default=0)
@@ -212,7 +156,6 @@ maxDim = args.dim
 upscale = args.upscale
 centroids = args.centroids
 reps = args.reps
-timings = {}
 originalLabels = []
 neighSize = args.neighSize
 
@@ -235,14 +178,14 @@ for i in range(reps):
     if not os.path.exists(outDir):
         os.makedirs(outDir)
 
-    timings[partitioner]=0;
+    partitionTime = 0
     ''' Partition data and store centroids, labels '''
     
     if(len(originalData[0]) < maxDim):
         maxDim = len(originalData[0])
     
 
-    if(centroids < len(originalData)):
+    if(partitioner != None):
         start = time.time()
     
         if(partitioner == "kmeans++"): #baseline partitioner
@@ -250,23 +193,23 @@ for i in range(reps):
             originalLabels = reducedData.labels_
             reducedData = reducedData.cluster_centers_          
         elif(partitioner == "agglomerativeWard"):  #ward linkage --> minimizes the variance of the clusters being merged
-            tempData = cs.AgglomerativeClustering(n_clusters=centroids, linkage="ward").fit(originalData)
-            reducedData = geometricMean(tempData, originalData)
+            labels = cs.AgglomerativeClustering(n_clusters=centroids, linkage="ward").fit_predict(originalData)
+            reducedData = clusterCenters(originalData, labels)
         elif(partitioner == "agglomerativeSingle"):  #single linkage --> the minimum of the distances between all observations of the two sets
-            tempData = cs.AgglomerativeClustering(n_clusters=centroids, linkage="single").fit(originalData)
-            reducedData = geometricMean(tempData, originalData)
+            labels = cs.AgglomerativeClustering(n_clusters=centroids, linkage="single").fit_predict(originalData)
+            reducedData = clusterCenters(originalData, labels)
             #HDBSCAN - updated version of DBSCAN that iterates through all epsilons and builds a hierarchy of density... tune  minClusterSize to 
             #change size of data reduction ie 3 min Pts = low Reduction 100 min Pts = high Reduction
         elif(partitioner == "hdbscan"): 
             clusterer = hdbscan.HDBSCAN(algorithm='best', alpha=1.0, approx_min_span_tree=True, gen_min_span_tree=False, leaf_size=40, metric='euclidean', min_cluster_size=neighSize, min_samples=None, p=None)
-            tempData = clusterer.fit(originalData)  
-            reducedData = geometricMeanDenoise(tempData, originalData)
+            labels = clusterer.fit_predict(originalData)  
+            reducedData = clusterCenters(originalData, labels)
         elif(partitioner == "random"):
-            reducedData = np.array(random.sample(originalData, centroids)) #random.sample = no duplicates
+            reducedData = originalData[np.random.choice(originalData.shape[0], centroids, replace=False), :]
             
         end = time.time()
 
-        timings[partitioner] = (end - start)
+        partitionTime = (end - start)
 
 
     ''' Output all data to files '''
@@ -279,6 +222,7 @@ for i in range(reps):
     for tdaType in tdaLibraries:
         persTime = 0
         bettiCount = 0
+        file = os.getcwd() + "/" + outDir +tdaType+"_Output.csv"
 
         ''' Eirene configuration and execution '''
         '''
@@ -313,9 +257,8 @@ for i in range(reps):
                 end = time.time()
                 persTime = (end - start)
 
-                outfile = open(os.getcwd() + "/" + outDir + tdaType+"_Output.csv", 'w')
-                bettiCount = extractRipserData(barcodes, epsilon, outfile)
-                outfile.close()
+                with open(file, 'w') as outfile:
+                    bettiCount = extractRipserData(barcodes, str(epsilon), outfile)
             except:
                 print("ripser processing failed")
 
@@ -328,9 +271,10 @@ for i in range(reps):
                 pers = simplex_tree.persistence()
                 end = time.time()
                 persTime = (end - start)
-
-                outputGudhiPersistence(pers, str(centroids) + "_", str(epsilon))
                 bettiCount = len(pers)
+
+                with open(file, 'w') as outfile:
+                    outputGudhiPersistence(pers, str(epsilon), outfile)
             except:
                 print("GUDHI processing failed")
                 
@@ -344,13 +288,11 @@ for i in range(reps):
                 persTime = (end - start)
 
                 outdata = np.genfromtxt("./output.csv.csv", delimiter=',')                
-                np.savetxt(os.getcwd() + "/" + outDir +tdaType+"_Output.csv", outdata, delimiter=',')
+                np.savetxt(file, outdata, delimiter=',')
                 bettiCount = len(outdata)
             except:
                 print("LHF processing failed")  
 
 
-        outfile = open(os.getcwd() + "/aggResults.csv", 'a')
-        outfile.write(fileName + ',' + outDir[:-1] + "," + str(len(reducedData)) + "," + str(len(reducedData[0])) + "," + str(partitioner) + "," + str(timings[partitioner]) + "," + tdaType + "," + str(epsilon) + "," + str(persTime) + "," + str(bettiCount) + ",\n")
-        outfile.close()
-
+        with open(os.getcwd() + "/aggResults.csv", 'a') as outfile:
+            outfile.write(fileName + ',' + outDir[:-1] + "," + str(len(reducedData)) + "," + str(len(reducedData[0])) + "," + str(partitioner) + "," + str(partitionTime) + "," + tdaType + "," + str(epsilon) + "," + str(persTime) + "," + str(bettiCount) + ",\n")
