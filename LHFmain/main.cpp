@@ -132,7 +132,6 @@
 		
 		std::cout << "Partitions: " << partitionedData.second.size() << std::endl << "Counts: ";
 		
-		
 		std::vector<unsigned> partitionsize;
 		//Get the partition sizes
 		for(auto a: partitionedData.second)
@@ -152,18 +151,11 @@
 				//Map partitions back to original point indexing
 				//ut.mapPartitionIndexing(partitionedData.first[z], wD->bettiTable);
 				
-				//Utilize a vector of bools to track connected components, size of the partition
-				std::vector<bool> conTrack(partitionedData.second[z].size(), false);
 				bool foundExt = false;
 				unsigned tempIndex;		
 				std::vector<bettiBoundaryTableEntry> temp;
 				
 				for(auto betEntry : wD->bettiTable){
-					std::cout << betEntry.bettiDim << ",\t" << betEntry.birth << ",\t" << betEntry.death << ",\t";
-					ut.print1DVector(betEntry.boundaryPoints);
-					
-					for(auto r : conTrack) std::cout << r;
-					std::cout << std::endl;
 					
 					auto boundIter = betEntry.boundaryPoints.begin();
 					
@@ -185,19 +177,10 @@
 							
 							//Check if second entry is in the partition
 							if((*boundIter) < binCounts[z]){
-								if(!conTrack[tempIndex]){
-									temp.push_back(betEntry);
-									conTrack[tempIndex] = true;
-								} else if (!conTrack[(*boundIter)]){
-									temp.push_back(betEntry);
-									conTrack[(*boundIter)] = true;
-								}
+								temp.push_back(betEntry);
 							} else if(!foundExt){
 								foundExt = true;
 								temp.push_back(betEntry);
-							} else if(!conTrack[tempIndex]){
-								temp.push_back(betEntry);
-								conTrack[tempIndex] = true;
 							}
 						}
 					} else if(betEntry.bettiDim > 0 && betEntry.boundaryPoints.size() > 0 && *(betEntry.boundaryPoints.begin()) < binCounts[z]){
@@ -210,13 +193,19 @@
 					temp.push_back(des);
 				}
 				
-				std::cout << "Partition size: " << binCounts[z] << "\tGenerated barcodes: " << temp.size() << std::endl;
-				
 				//Remap the boundary indices into the original point space
 				temp = ut.mapPartitionIndexing(partitionedData.first[z] , temp);
-				
-				for(auto t : temp)
-					mergedBettiTable.push_back(t);
+		
+				for(auto newEntry : temp){
+					bool found = false;
+					for(auto curEntry : mergedBettiTable){
+						if(newEntry.death == curEntry.death && newEntry.boundaryPoints == curEntry.boundaryPoints){
+							found = true;
+						}
+					}
+					if(!found)
+						mergedBettiTable.push_back(newEntry);
+				}
 								
 				wD->bettiTable.clear();
 				wD->complex->clear();
@@ -258,7 +247,7 @@
 				//ws->writeConsole(wD);
 			} else {
 				ws->writeStats(wD->stats, args["outputFile"]);
-				ws->writeBarcodes(wD->bettiTable, args["outputFile"]);
+				ws->writeBarcodes(mergedBettiTable, args["outputFile"]);
 				
 			}
 		}
@@ -525,7 +514,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 				//ws->writeConsole(wD);
 			} else {
 				ws->writeStats(wD->stats, args["outputFile"]);
-				ws->writeBarcodes(mergedMasterBettiTable, args["outputFile"]);
+				ws->writeBarcodes(mergedBettiTable, args["outputFile"]);
 				
 			}
 		}
@@ -679,6 +668,17 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 				}
 				//Remap the boundary indices into the original point space
 				temp = ut.mapPartitionIndexing(labels[received_partition] , temp);
+				
+				for(auto newEntry : temp){
+					bool found = false;
+					for(auto curEntry : mergedBettiTable){
+						if(newEntry.death == curEntry.death && newEntry.boundaryPoints == curEntry.boundaryPoints){
+							found = true;
+						}
+					}
+					if(!found)
+						mergedBettiTable.push_back(newEntry);
+				}
 				
 				for(auto t : temp)
 					mergedBettiTable.push_back(t);
