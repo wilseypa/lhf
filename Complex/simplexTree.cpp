@@ -599,8 +599,6 @@ void simplexTree::clear(){
 	if(root != nullptr)
 		deletion(root);
 	root = nullptr;
-	if(head != nullptr)
-		deletion(head);
 	head = nullptr;
 	
 	for(auto i = 0; i < simplexList.size(); i++){

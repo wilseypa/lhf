@@ -200,7 +200,7 @@
 					mergedBettiTable.push_back(des);
 				}
 				
-				
+				wD->bettiTable.clear();
 				wD->complex->clear();
 				
 			} else 
