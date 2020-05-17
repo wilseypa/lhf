@@ -159,6 +159,11 @@
 				std::vector<bettiBoundaryTableEntry> temp;
 				
 				for(auto betEntry : wD->bettiTable){
+					std::cout << betEntry.bettiDim << ",\t" << betEntry.birth << ",\t" << betEntry.death << ",\t";
+					ut.print1DVector(betEntry.boundaryPoints);
+					
+					for(auto r : conTrack) std::cout << r;
+					std::cout << std::endl;
 					
 					auto boundIter = betEntry.boundaryPoints.begin();
 					
@@ -180,10 +185,13 @@
 							
 							//Check if second entry is in the partition
 							if((*boundIter) < binCounts[z]){
-								if(!conTrack[tempIndex] || !conTrack[(*boundIter)]){
+								if(!conTrack[tempIndex]){
 									temp.push_back(betEntry);
-									conTrack[tempIndex] = true, conTrack[(*boundIter)] = true;
-								} 
+									conTrack[tempIndex] = true;
+								} else if (!conTrack[(*boundIter)]){
+									temp.push_back(betEntry);
+									conTrack[(*boundIter)] = true;
+								}
 							} else if(!foundExt){
 								foundExt = true;
 								temp.push_back(betEntry);
@@ -201,6 +209,8 @@
 					bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
 					temp.push_back(des);
 				}
+				
+				std::cout << "Partition size: " << binCounts[z] << "\tGenerated barcodes: " << temp.size() << std::endl;
 				
 				//Remap the boundary indices into the original point space
 				temp = ut.mapPartitionIndexing(partitionedData.first[z] , temp);
@@ -643,10 +653,13 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 							
 							//Check if second entry is in the partition
 							if((*boundIter) < binCounts[z*(nprocs-1)+(id-1)]){
-								if(!conTrack[tempIndex] || !conTrack[(*boundIter)]){
+								if(!conTrack[tempIndex]){
 									temp.push_back(betEntry);
-									conTrack[tempIndex] = true, conTrack[(*boundIter)] = true;
-								} 
+									conTrack[tempIndex] = true;
+								} else if (!conTrack[(*boundIter)]){
+									temp.push_back(betEntry);
+									conTrack[(*boundIter)] = true;
+								}
 							} else if(!foundExt){
 								foundExt = true;
 								temp.push_back(betEntry);
