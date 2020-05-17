@@ -81,16 +81,16 @@ def corePointExtract(tempData, originalData, centroids):
    
     
     for c in range(0, clusterIndex+1):
-      for i in range(len(originalData)):
-           if (tempData.labels_[i] == c) :
-				clusters[c].append(originalData[i])
+        for i in range(len(originalData)):
+            if (tempData.labels_[i] == c):
+                clusters[c].append(originalData[i])
     rawClusters = np.asarray(clusters)
 
     centroidFrac = centroids/(clusterIndex + 1)
     #print centroidFrac
     tempClusters = []
     for c in range(0, clusterIndex +1):
-		tempClusters.append(cs.KMeans(n_clusters = centroidFrac, init="k-means++", n_jobs = -1).fit(rawClusters[c]).cluster_centers_)
+        tempClusters.append(cs.KMeans(n_clusters = centroidFrac, init="k-means++", n_jobs = -1).fit(rawClusters[c]).cluster_centers_)
 
     finalClusters = np.vstack(tempClusters)  
   
@@ -152,10 +152,10 @@ def extractEireneData(procOutput, epsilon):
         if(insert):
             curBounds.append(retBoundaries[i])
     
-    print "RetBounds:\n",retBoundaries
+    print("RetBounds:\n",retBoundaries)
     retBoundaries = curBounds
     
-    print "CurBounds:\n",retBoundaries
+    print("CurBounds:\n",retBoundaries)
     return retBarcodes, retBoundaries
 
 
@@ -189,18 +189,10 @@ def outputGudhiPersistence(data, label, maxedge):
         tmp = str(tmp).replace('inf', maxedge)
         buf += tmp[:-2] + "\n"
 
-    out = file(outDir+'GUDHI_Output.csv', 'w')
+    out = open(outDir+'GUDHI_Output.csv', 'w')
     out.write(buf)
     out.close()
     return
-
-
-
-
-
-
-
-
 
 
 ''' MAIN LOOP HERE '''
@@ -228,7 +220,7 @@ timings = {}
 originalLabels = []
 neighSize = args.neighSize
 
-print "Running experiments with:\nFilename: ", fileName, "\nEpsilon: ", epsilon, "\nMaxDim", maxDim, "\nPartitioner: ",  partitioner, "\nUpscale: ", upscale, "\nCentroids: ", centroids, "\nMinCluster HDBSCAN", neighSize
+print("Running experiments with:\nFilename: ", fileName, "\nEpsilon: ", epsilon, "\nMaxDim", maxDim, "\nPartitioner: ",  partitioner, "\nUpscale: ", upscale, "\nCentroids: ", centroids, "\nMinCluster HDBSCAN", neighSize)
 
 
 ''' Read input data '''
@@ -239,12 +231,12 @@ reducedData = originalData
 for i in range(0, int(reps)):
 
     ''' Create folder for output '''
-    outDir = fileName + "_output_v"+str(centroids)+"_e"+str(epsilon) + "/" + str(i) + "/"
+    outDir = os.path.basename(fileName) + "_output_v"+str(centroids)+"_e"+str(epsilon) + "/" + str(i) + "/"
     if not os.path.exists(outDir):
         os.makedirs(outDir)
         
     if not os.path.isfile(os.getcwd() + "/aggResults.csv"):
-        outfile = file(os.getcwd() + "/aggResults.csv", 'a')
+        outfile = open(os.getcwd() + "/aggResults.csv", 'a')
         outfile.write('Filename,OutputPath,Vectors,Dimensions,Preprocessor,PreprocessingTime(s),PH_Library,Epsilon,PH_Time(s),BettiCount\n')
         outfile.close()      
 
@@ -273,9 +265,9 @@ for i in range(0, int(reps)):
             #HDBSCAN - updated version of DBSCAN that iterates through all epsilons and builds a hierarchy of density... tune  minClusterSize to 
             #change size of data reduction ie 3 min Pts = low Reduction 100 min Pts = high Reduction
         elif(partitioner == "hdbscan"): 
-			clusterer = hdbscan.HDBSCAN(algorithm='best', alpha=1.0, approx_min_span_tree=True, gen_min_span_tree=False, leaf_size=40, metric='euclidean', min_cluster_size=neighSize, min_samples=None, p=None)
-			tempData = clusterer.fit(originalData)  
-			reducedData = geometricMeanDenoise(tempData, originalData)
+            clusterer = hdbscan.HDBSCAN(algorithm='best', alpha=1.0, approx_min_span_tree=True, gen_min_span_tree=False, leaf_size=40, metric='euclidean', min_cluster_size=neighSize, min_samples=None, p=None)
+            tempData = clusterer.fit(originalData)  
+            reducedData = geometricMeanDenoise(tempData, originalData)
         elif(partitioner == "random"):
             reducedData = np.array(random.sample(originalData, centroids)) #random.sample = no duplicates
             #print len(reducedData)
@@ -296,13 +288,13 @@ for i in range(0, int(reps)):
         
         #Check if the last line was returned, keeping our data clean
         isRet = True;
-        with file(os.getcwd() + "/aggResults.csv", 'rb+') as f:
+        with open(os.getcwd() + "/aggResults.csv", 'rb+') as f:
             f.seek(-1,2)
             a = f.read()
             if(a is not "\n"):
                 isRet = False;
         
-        outfile = file(os.getcwd() + "/aggResults.csv", 'a')
+        outfile = open(os.getcwd() + "/aggResults.csv", 'a')
         if(not isRet):
             outfile.write('')
         outfile.write(fileName + ',' + outDir[:-1] + "," + str(len(reducedData)) + "," + str(len(reducedData[0])) + "," + str(timings[partitioner]) + "," + str(partitioner) + "," + tdaType + "," + str(epsilon) + ",")
@@ -311,28 +303,28 @@ for i in range(0, int(reps)):
         ''' Eirene configuration and execution '''
         if(tdaType == "Eirene"):
             try:
-			proc = subprocess.check_output(
+                proc = subprocess.check_output(
 				["julia", "runEirene.jl", os.getcwd() + "/" + outDir, str(maxDim), str(epsilon)])
-			pers_time = 0
-			outBarcodes, outBoundaries = extractEireneData(proc, epsilon)            
-			
-			outfile = file(os.getcwd() + "/" + outDir + tdaType + "_Boundaries.txt","w")
-			outBoundaries = str(outBoundaries).replace('),','\n')
-			outfile.write(outBoundaries.translate(None,'[]()set'))
-			outfile.close()            
-				
-			outfile = file(os.getcwd() + "/" + outDir + tdaType + "_Output.csv", "w")
-			outfile.write(outBarcodes)
-			outfile.close()
-			
-			with open(outDir + '/EireneTime') as f:
-				pers_time = f.read()
-				
-			outfile = file(os.getcwd() + "/aggResults.csv", 'a')
-			outfile.write(str(pers_time) + "," + str(str(outBarcodes.count("\n"))) + ",")
-			outfile.close()
+                pers_time = 0
+                outBarcodes, outBoundaries = extractEireneData(proc, epsilon)            
+
+                outfile = open(os.getcwd() + "/" + outDir + tdaType + "_Boundaries.txt","w")
+                outBoundaries = str(outBoundaries).replace('),','\n')
+                outfile.write(outBoundaries.translate(None,'[]()set'))
+                outfile.close()            
+                	
+                outfile = open(os.getcwd() + "/" + outDir + tdaType + "_Output.csv", "w")
+                outfile.write(outBarcodes)
+                outfile.close()
+
+                with open(outDir + '/EireneTime') as f:
+                	pers_time = f.read()
+                	
+                outfile = open(os.getcwd() + "/aggResults.csv", 'a')
+                outfile.write(str(pers_time) + "," + str(str(outBarcodes.count("\n"))) + ",")
+                outfile.close()
             except:
-                print "Eirene processing failed"
+                print("Eirene processing failed")
 
         ''' RIPSER configuration and execution '''
         if(tdaType == "ripser"):
@@ -344,16 +336,15 @@ for i in range(0, int(reps)):
                     end = time.time()
                     pers_time = (end - start)
                     outdata = extractRipserData(proc, epsilon)
-                    outfile = file(os.getcwd() + "/" + outDir +
-                                   tdaType+"_Output.csv", 'w')
+                    outfile = open(os.getcwd() + "/" + outDir + tdaType+"_Output.csv", 'w')
                     outfile.write(outdata)
                     outfile.close()
 
-                    outfile = file(os.getcwd() + "/aggResults.csv", 'a')
+                    outfile = open(os.getcwd() + "/aggResults.csv", 'a')
                     outfile.write(str(pers_time) + "," + str(outdata.count("\n")) + ",")
                     outfile.close()
             except:
-                print "ripser processing failed"
+                print("ripser processing failed")
 
         ''' GUDHI configuration and execution '''
         if(tdaType == "GUDHI"):
@@ -366,38 +357,39 @@ for i in range(0, int(reps)):
                 pers_time = (end - start)
                 outputGudhiPersistence(pers, str(centroids) + "_", str(epsilon))
 
-                outfile = file(os.getcwd() + "/aggResults.csv", 'a')
+                outfile = open(os.getcwd() + "/aggResults.csv", 'a')
                 outfile.write(str(pers_time) + "," + str(len(pers)) + ",")
                 outfile.close()
             except:
-                print "GUDHI processing failed"
+                print("GUDHI processing failed")
                 
                 
         ''' LHF configuration and execution '''
         if(tdaType == "LHF"):
             #try:
             start = time.time()
-            proc = subprocess.check_output(["./LHF", "-m","fast","-d", str(maxDim+1), "-e", str(epsilon), "-i", os.getcwd()+"/"+outDir + "reducedData.csv"])  
+            proc = subprocess.check_output(["../../LHFmain/LHF", "-m","fast","-d", str(maxDim+1), "-e", str(epsilon), "-i", os.getcwd()+"/"+outDir + "reducedData.csv"])  
 
 
             end = time.time()
             pers_time = (end - start)
             outdata = np.genfromtxt("./output.csv.csv")
             
-            outfile = file(os.getcwd() + "/" + outDir +tdaType+"_Output.csv", 'w')
+            outfile = open(os.getcwd() + "/" + outDir +tdaType+"_Output.csv", 'w')
                     
-            outfile.write(outdata)
+            np.savetxt(os.getcwd() + "/" + outDir +tdaType+"_Output.csv", outdata)
+            # outfile.write(outdata)
                     
             outfile.close()
                     
-            outfile = file(os.getcwd() + "/aggResults.csv", 'a')
+            outfile = open(os.getcwd() + "/aggResults.csv", 'a')
             outfile.write(str(pers_time) + "," + str(outdata.size - 1) + ",")
             outfile.close()
            #except:
                 #print "LHF processing failed"    
 
 
-        outfile = file(os.getcwd() + "/aggResults.csv", 'a')
+        outfile = open(os.getcwd() + "/aggResults.csv", 'a')
         outfile.write("\n")
         outfile.close()
 
