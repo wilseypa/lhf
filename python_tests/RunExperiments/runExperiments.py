@@ -10,6 +10,7 @@ import gudhi
 import random
 import hdbscan
 import string
+from ripser import ripser
 np.set_printoptions(threshold=sys.maxsize) # for debugging
 tdaLibraries = ['LHF','ripser','GUDHI']
 
@@ -161,20 +162,15 @@ def extractEireneData(procOutput, epsilon):
 
 ''' Helper function to extract barcodes from Ripser output '''
 
-def extractRipserData(barcodes, epsilon):
-    retData = ""
-    dim = -1
+def extractRipserData(barcodes, epsilon, outfile):
+    epsilon = str(epsilon)
+    bettiCount = 0
+    for dim in range(len(barcodes)):
+        bettiCount += len(barcodes[dim])
+        for line in barcodes[dim]:
+            outfile.write(str(dim) + "," + str(line[0]) + "," + (epsilon if line[1] == np.inf else str(line[1])) + "\n")
 
-    for line in barcodes.split('\n'):
-
-        if(line[0:4] == "pers"):
-            dim += 1
-        elif(line[0:2] == " [" and line[-2] == " "):
-            retData += str(dim) + "," + line[2:-2] + str(epsilon) + "\n"
-        elif(line[0:2] == " ["):
-            retData += str(dim) + "," + line[2:-1] + "\n"
-
-    return retData
+    return bettiCount
 
 
 ''' Helper function for writing GUDHI persistence to file '''
@@ -329,20 +325,18 @@ for i in range(0, int(reps)):
         ''' RIPSER configuration and execution '''
         if(tdaType == "ripser"):
             try:
-                if os.path.isfile("./ripser"):
-                    start = time.time()
-                    proc = subprocess.check_output(["./ripser", "--format", "point-cloud", "--dim", str(maxDim-1), "--threshold", str(epsilon), os.getcwd(
-                    )+"/"+outDir + "reducedData.csv"])  # ,">>" + os.getcwd()+"/"+outDir+str(centroids)+"_Ripser.csv"])#, stdout=PIPE, stderr=PIPE)
-                    end = time.time()
-                    pers_time = (end - start)
-                    outdata = extractRipserData(proc, epsilon)
-                    outfile = open(os.getcwd() + "/" + outDir + tdaType+"_Output.csv", 'w')
-                    outfile.write(outdata)
-                    outfile.close()
+                start = time.time()
+                barcodes = ripser(reducedData, maxdim = maxDim-1, thresh = epsilon)['dgms']
+                end = time.time()
+                pers_time = (end - start)
 
-                    outfile = open(os.getcwd() + "/aggResults.csv", 'a')
-                    outfile.write(str(pers_time) + "," + str(outdata.count("\n")) + ",")
-                    outfile.close()
+                outfile = open(os.getcwd() + "/" + outDir + tdaType+"_Output.csv", 'w')
+                bettiCount = extractRipserData(barcodes, epsilon, outfile)
+                outfile.close()
+
+                outfile = open(os.getcwd() + "/aggResults.csv", 'a')
+                outfile.write(str(pers_time) + "," + str(bettiCount) + ",")
+                outfile.close()
             except:
                 print("ripser processing failed")
 
