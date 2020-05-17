@@ -94,6 +94,7 @@
 
 	void processReducedWrapper(std::map<std::string, std::string> args, pipePacket* wD){
 		auto maxEpsilon = std::atof(args["epsilon"].c_str());
+		auto scalar = std::atof(args["scalar"].c_str());
 		auto *ws = new writeOutput();
 		std::vector<bettiBoundaryTableEntry> mergedBettiTable;
 		
@@ -127,7 +128,7 @@
 		
 		auto centroids = wD->originalData;
 		
-		auto partitionedData = ut.separatePartitions(2*maxRadius, wD->originalData, wD->fullData, wD->originalLabels);
+		auto partitionedData = ut.separatePartitions(scalar*maxRadius, wD->originalData, wD->fullData, wD->originalLabels);
 		
 		std::cout << "Partitions: " << partitionedData.second.size() << std::endl << "Counts: ";
 		
@@ -155,6 +156,7 @@
 				std::vector<bool> conTrack(partitionedData.second[z].size(), false);
 				bool foundExt = false;
 				unsigned tempIndex;		
+				std::vector<bettiBoundaryTableEntry> temp;
 				
 				for(auto betEntry : wD->bettiTable){
 					
@@ -179,27 +181,33 @@
 							//Check if second entry is in the partition
 							if((*boundIter) < binCounts[z]){
 								if(!conTrack[tempIndex] || !conTrack[(*boundIter)]){
-									mergedBettiTable.push_back(betEntry);
+									temp.push_back(betEntry);
 									conTrack[tempIndex] = true, conTrack[(*boundIter)] = true;
 								} 
 							} else if(!foundExt){
 								foundExt = true;
-								mergedBettiTable.push_back(betEntry);
+								temp.push_back(betEntry);
 							} else if(!conTrack[tempIndex]){
-								mergedBettiTable.push_back(betEntry);
+								temp.push_back(betEntry);
 								conTrack[tempIndex] = true;
 							}
 						}
 					} else if(betEntry.bettiDim > 0 && betEntry.boundaryPoints.size() > 0 && *(betEntry.boundaryPoints.begin()) < binCounts[z]){
-						mergedBettiTable.push_back(betEntry);
+						temp.push_back(betEntry);
 					}
 				}
 				//If we never found an external connection, add the infinite connection here
 				if(!foundExt){
 					bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
-					mergedBettiTable.push_back(des);
+					temp.push_back(des);
 				}
 				
+				//Remap the boundary indices into the original point space
+				temp = ut.mapPartitionIndexing(partitionedData.first[z] , temp);
+				
+				for(auto t : temp)
+					mergedBettiTable.push_back(t);
+								
 				wD->bettiTable.clear();
 				wD->complex->clear();
 				
@@ -229,7 +237,8 @@
 		std::cout << std::endl << "_______Merged BETTIS_______" << std::endl;
 		
 		for(auto a : mergedBettiTable){
-			std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << std::endl;
+			std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
+			ut.print1DVector(a.boundaryPoints);
 		}
     
 		//Output the data using writeOutput library
@@ -254,6 +263,7 @@
 
 void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* wD){
 	auto maxEpsilon = std::atof(args["epsilon"].c_str());
+	auto scalar = std::atof(args["scalar"].c_str());
 	//Start with the preprocessing function, if enabled
 	auto *ws = new writeOutput();
 	std::vector<bettiBoundaryTableEntry> mergedBettiTable;
@@ -307,7 +317,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		}
 		
 		//Partition the data into separate data vectors
-		auto partitionedData = ut.separatePartitions(2*maxRadius, wD->originalData, wD->fullData, wD->originalLabels);
+		auto partitionedData = ut.separatePartitions(scalar*maxRadius, wD->originalData, wD->fullData, wD->originalLabels);
 	
 		//	Each node/slave will process at least 1 partition
 		//		NOTE: the partition may contain points outside partition that are within 2*Rmax
@@ -494,7 +504,8 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		std::cout << std::endl << "_______Merged BETTIS_______" << std::endl;
 		
 		for(auto a : mergedBettiTable){
-			std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << std::endl;
+			std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
+			ut.print1DVector(a.boundaryPoints);
 		}
 			
 		//Output the data using writeOutput library
@@ -603,12 +614,12 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 				std::cout << "Running Pipeline with : " << partitionedData.size() << " vectors" << " id :: "<<id<<std::endl;
 				wD->originalData = partitionedData;
 				runPipeline(args, wD);
-				wD->complex->clear();
 				
 				//Utilize a vector of bools to track connected components, size of the partition
 				std::vector<bool> conTrack(binCounts[z], false);
 				bool foundExt = false;
 				unsigned tempIndex;		
+				std::vector<bettiBoundaryTableEntry> temp;
 				
 				for(auto betEntry : wD->bettiTable){
 					
@@ -633,29 +644,34 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 							//Check if second entry is in the partition
 							if((*boundIter) < binCounts[z*(nprocs-1)+(id-1)]){
 								if(!conTrack[tempIndex] || !conTrack[(*boundIter)]){
-									mergedBettiTable.push_back(betEntry);
+									temp.push_back(betEntry);
 									conTrack[tempIndex] = true, conTrack[(*boundIter)] = true;
 								} 
 							} else if(!foundExt){
 								foundExt = true;
-								mergedBettiTable.push_back(betEntry);
+								temp.push_back(betEntry);
 							} else if(!conTrack[tempIndex]){
-								mergedBettiTable.push_back(betEntry);
+								temp.push_back(betEntry);
 								conTrack[tempIndex] = true;
 							}
 						}
 					} else if(betEntry.bettiDim > 0 && betEntry.boundaryPoints.size() > 0 && *(betEntry.boundaryPoints.begin()) < binCounts[z*(nprocs-1)+(id-1)]){
-						mergedBettiTable.push_back(betEntry);
+						temp.push_back(betEntry);
 					}
 				}
 				//If we never found an external connection, add the infinite connection here
 				if(!foundExt){
 					bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
-					mergedBettiTable.push_back(des);
+					temp.push_back(des);
 				}
+				//Remap the boundary indices into the original point space
+				temp = ut.mapPartitionIndexing(labels[received_partition] , temp);
 				
-				//Map partitions back to original point indexing
-				//ut.mapPartitionIndexing(labels[received_partition], tempPartition);
+				for(auto t : temp)
+					mergedBettiTable.push_back(t);
+								
+				wD->bettiTable.clear();
+				wD->complex->clear();
 
 			} else 
 				std::cout << "skipping" << std::endl;
