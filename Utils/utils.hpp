@@ -52,7 +52,7 @@ class utils {
 	std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> separatePartitions(int, std::vector<std::vector<double>>, std::vector<unsigned>);
 	std::vector<std::vector<std::vector<double>>> separateBoundaryPartitions(std::vector<std::set<unsigned>>, std::vector<std::vector<double>>, std::vector<unsigned>);
 	std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> separatePartitions(double, std::vector<std::vector<double>>, std::vector<std::vector<double>>, std::vector<unsigned>);
-	void mapPartitionIndexing(std::vector<unsigned>, std::vector<bettiBoundaryTableEntry>&);
+	std::vector<bettiBoundaryTableEntry> mapPartitionIndexing(std::vector<unsigned>, std::vector<bettiBoundaryTableEntry>);
 	void print2DVector(const std::vector<std::vector<unsigned>>&);
 	void print1DVector(const std::vector<unsigned>&);
 	void print1DVector(const std::set<unsigned>&);
