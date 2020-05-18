@@ -488,8 +488,20 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 					bettiEntry.boundaryPoints.insert(betti_boundaries[p][bi]);
 				
 				beg +=betti_boundarysize[p][i];
-				mergedBettiTable.push_back(bettiEntry);
+				curBettiTable.push_back(bettiEntry);
 			}
+			  
+				for(auto newEntry : curBettiTable){
+					bool found = false;
+					for(auto curEntry : mergedBettiTable){
+						if(newEntry.death == curEntry.death && newEntry.boundaryPoints == curEntry.boundaryPoints){
+							found = true;
+						}
+					}
+					if(!found)
+						mergedBettiTable.push_back(newEntry);
+				}
+			
 		}
 			
 			
@@ -640,7 +652,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 							boundIter++;
 							
 							//Check if second entry is in the partition
-							if((*boundIter) < binCounts[z*(nprocs-1)+(id-1)]){
+							if((*boundIter) < binCounts[received_partition*(nprocs-1)+(id-1)]){
 								if(!conTrack[tempIndex]){
 									temp.push_back(betEntry);
 									conTrack[tempIndex] = true;
@@ -679,8 +691,8 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 						mergedBettiTable.push_back(newEntry);
 				}
 				
-				for(auto t : temp)
-					mergedBettiTable.push_back(t);
+			//	for(auto t : temp)
+			//		mergedBettiTable.push_back(t);
 								
 				wD->bettiTable.clear();
 				wD->complex->clear();
