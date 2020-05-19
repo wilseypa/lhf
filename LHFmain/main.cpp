@@ -380,7 +380,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 			wD->originalData = centroids;
 			runPipeline(args, wD);
 		
-			wD->complex->clear();
+	         	wD->complex->clear();
 		} else 
 			std::cout << "skipping" << std::endl;
 		
@@ -478,7 +478,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 			int beg = 0;
 			
 			std::vector<bettiBoundaryTableEntry> curBettiTable;
-			
+		
 			for(int i=0;i<sizeOfBettiTable[p];i++){
 				bettiBoundaryTableEntry bettiEntry;
 				bettiEntry.bettiDim = betti_dim[p][i];
@@ -488,15 +488,27 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 					bettiEntry.boundaryPoints.insert(betti_boundaries[p][bi]);
 				
 				beg +=betti_boundarysize[p][i];
-				mergedBettiTable.push_back(bettiEntry);
+				curBettiTable.push_back(bettiEntry);
 			}
+			  
+				for(auto newEntry : curBettiTable){
+					bool found = false;
+					for(auto curEntry : mergedBettiTable){
+						if(newEntry.death == curEntry.death && newEntry.boundaryPoints == curEntry.boundaryPoints){
+							found = true;
+						}
+					}
+					if(!found)
+						mergedBettiTable.push_back(newEntry);
+				}
+			
 		}
 			
 			
 		//Merge bettis from the centroid based data
 		for(auto betEntry : wD->bettiTable){
 			if(betEntry.bettiDim > 0 ){
-				mergedBettiTable.push_back(betEntry);
+			    mergedBettiTable.push_back(betEntry);
 			}
 		}
 			
@@ -613,9 +625,8 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 				std::cout << "Running Pipeline with : " << partitionedData.size() << " vectors" << " id :: "<<id<<std::endl;
 				wD->originalData = partitionedData;
 				runPipeline(args, wD);
-				
-				//Utilize a vector of bools to track connected components, size of the partition
-				std::vector<bool> conTrack(binCounts[z], false);
+                                //Utilize a vector of bools to track connected components, size of the partition
+				std::vector<bool> conTrack(binCounts[received_partition], false);
 				bool foundExt = false;
 				unsigned tempIndex;		
 				std::vector<bettiBoundaryTableEntry> temp;
@@ -636,12 +647,12 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 					//		-If (b) was not traversed, need to add a {0, maxEps} entry for the independent component (Check this?)
 					
 					if(betEntry.bettiDim == 0 && betEntry.boundaryPoints.size() > 1){	
-						if(betEntry.boundaryPoints.size() > 0 && (*boundIter) < binCounts[z*(nprocs-1)+(id-1)]){
+						if(betEntry.boundaryPoints.size() > 0 && (*boundIter) < binCounts[received_partition*(nprocs-1)+(id-1)]){
 							tempIndex = (*boundIter);
 							boundIter++;
 							
 							//Check if second entry is in the partition
-							if((*boundIter) < binCounts[z*(nprocs-1)+(id-1)]){
+							if((*boundIter) < binCounts[received_partition*(nprocs-1)+(id-1)]){
 								if(!conTrack[tempIndex]){
 									temp.push_back(betEntry);
 									conTrack[tempIndex] = true;
@@ -657,7 +668,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 								conTrack[tempIndex] = true;
 							}
 						}
-					} else if(betEntry.bettiDim > 0 && betEntry.boundaryPoints.size() > 0 && *(betEntry.boundaryPoints.begin()) < binCounts[z*(nprocs-1)+(id-1)]){
+					} else if(betEntry.bettiDim > 0 && betEntry.boundaryPoints.size() > 0 && *(betEntry.boundaryPoints.begin()) < binCounts[received_partition*(nprocs-1)+(id-1)]){
 						temp.push_back(betEntry);
 					}
 				}
@@ -680,12 +691,12 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 						mergedBettiTable.push_back(newEntry);
 				}
 				
-				for(auto t : temp)
-					mergedBettiTable.push_back(t);
+			//	for(auto t : temp)
+			//		mergedBettiTable.push_back(t);
 								
 				wD->bettiTable.clear();
 				wD->complex->clear();
-
+                               
 			} else 
 				std::cout << "skipping" << std::endl;
 		}
@@ -701,11 +712,12 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 			betti_death.push_back(bet.death);
 			betti_boundarysize.push_back(bet.boundaryPoints.size());
 			betti_boundaries.insert(betti_boundaries.end(),bet.boundaryPoints.begin(),bet.boundaryPoints.end());
+	                
 		}
 		
 		//Sending of merged betti results back to master (but this should be done after all partitions are finished)
 		int bettiTableSize = betti_dim.size();
-		MPI_Request reqs1;
+	        MPI_Request reqs1;
 		MPI_Isend(&bettiTableSize,1,MPI_INT,0,0,MPI_COMM_WORLD,&reqs1);
 		
 		MPI_Request reqs2;
