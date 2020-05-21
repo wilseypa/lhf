@@ -104,34 +104,61 @@ for i in range(0, int(reps)):
 		''' RIPSER configuration and execution '''
 		if(tdaType == "ripser"):
 			if os.path.isfile("./ripser"):
-					start = time.time()
-					proc = subprocess.check_output(["./ripser", "--format", "point-cloud", "--dim", str(maxDim), "--threshold", str(epsilon), os.getcwd(
-					)+"/"+outDir + "processedData.csv"])  # ,">>" + os.getcwd()+"/"+outDir+str(centroids)+"_Ripser.csv"])#, stdout=PIPE, stderr=PIPE)
-					end = time.time()
-					pers_time = (end - start)
-					outdata = extractRipserData(proc, epsilon)
-					outfile = file(os.getcwd() + "/" + outDir +
-								   tdaType+"_Output.csv", 'w')
-					outfile.write(outdata)
-					outfile.close()
+				start = time.time()
+				proc = subprocess.check_output(["./ripser", "--format", "point-cloud", "--dim", str(maxDim), "--threshold", str(epsilon), os.getcwd(
+				)+"/"+outDir + "processedData.csv"])  # ,">>" + os.getcwd()+"/"+outDir+str(centroids)+"_Ripser.csv"])#, stdout=PIPE, stderr=PIPE)
+				end = time.time()
+				pers_time = (end - start)
+				outdata = extractRipserData(proc, epsilon)
+				outfile = file(os.getcwd() + "/" + outDir +
+							   tdaType+"_Output.csv", 'w')
+				outfile.write(outdata)
+				outfile.close()
+				
+				outdata = np.genfromtxt(os.getcwd() + "/" + outDir +
+							   tdaType+"_Output.csv", delimiter=',')
+
+				outString = str(pers_time) + "," + str(len(outdata)) + ",";
+				start = time.time()
+				print "Computing Metrics"
+				for a in range(0, maxDim+1):
+					print "Dim:",a
+					bn = 0.0
+					h = 0.0
+					ws = 0.0
+					#Create a mask for the data
+					mask = np.empty(outdata.shape, dtype=bool)
+					mask[:,:] = (outdata[:,0] != a)[:,np.newaxis]
+					curData = np.ma.MaskedArray(outdata, mask=mask)
 					
-					outdata = np.genfromtxt(os.getcwd() + "/" + outDir +
-								   tdaType+"_Output.csv", delimiter=',')
+					#compress the mask
+					curData = np.ma.compress_rows(curData);
+					print "\tSize:",curData.shape
+					str(bn) +"," + str(h) + "," + str(ws) + "," 
+					
+					#if(a == 0)
+					#	for i in range(0,d0_count):
+					#		outdata = np.vstack([outdata, [0,0,epsilon]])
+					
+					
+					if(len(curData.data) > 0):
+						print "Metric", len(curData), a
+						bn = persim.bottleneck(comparePers, curData, matching=False)
 
-					start = time.time()
-					print "Computing Metrics"
-					bn = persim.bottleneck(outdata, comparePers, matching=False)
+						h = persim.heat(comparePers, curData)
 
-					h = persim.heat(outdata, comparePers)
-
-					ws = persim.wasserstein(outdata, comparePers)
-					end = time.time()
-					stat_time=(end-start)
+						ws = persim.wasserstein(comparePers, curData)
+					
+					outString += str(bn) +"," + str(h) + "," + str(ws) + "," 
+				end = time.time()
+				stat_time=(end-start)
+		
+		
+				outfile = file(os.getcwd() + "/aggResults.csv", 'a')
+				outfile.write(outString + str(stat_time) + ",")
+				outfile.close()
 			
-
-					outfile = file(os.getcwd() + "/aggResults.csv", 'a')
-					outfile.write(str(pers_time) + "," + str(len(outdata)) + "," + str(bn) +"," + str(h) + "," + str(ws) + "," + str(stat_time) + ",")
-					outfile.close()
+			
 			else:
 				print "ripser processing failed"
 
@@ -142,9 +169,9 @@ for i in range(0, int(reps)):
 			print "mpiexec","-np",str(noproc),"./LHF", "-m",mode,"-d", str(maxDim), "-e", str(epsilon), "-k",str(centroids), "-s", "1", "-i", os.getcwd()+"/"+outDir + "originalData.csv"
 			
 			if(centroids == len(originalData)):
-				proc = subprocess.check_output(["./LHF", "-m","fast","-d", str(maxDim+1), "-e", str(epsilon), "-s", "1", "-o", "output", "-i", os.getcwd()+"/"+outDir + "originalData.csv"])  
+				proc = subprocess.check_output(["./LHF", "-m","fast","-d", str(maxDim+1), "-e", str(epsilon), "-o", "output", "-i", os.getcwd()+"/"+outDir + "originalData.csv"])  
 			else:
-				proc = subprocess.check_output(["mpiexec","-np",str(noproc),"./LHF", "-m",mode,"-d", str(maxDim+1), "-e", str(epsilon), "-k",str(centroids), "-s", "1", "-o", "output", "-i", os.getcwd()+"/"+outDir + "originalData.csv"])  
+				proc = subprocess.check_output(["mpiexec","-np",str(noproc),"./LHF", "-m",mode,"-d", str(maxDim+1), "-e", str(epsilon), "-k",str(centroids), "-o", "output", "-i", os.getcwd()+"/"+outDir + "originalData.csv"])  
 			
 			end = time.time()
 			pers_time = (end - start)
@@ -156,18 +183,41 @@ for i in range(0, int(reps)):
 		   #except:
 				#print "LHF processing failed"    
 			
+			
+			outString = str(pers_time) + "," + str(len(outdata)) + ",";
 			start = time.time()
 			print "Computing Metrics"
-			bn = persim.bottleneck(outdata, comparePers, matching=False)
+			for a in range(0, maxDim+1):
+				print "Dim:",a
+				bn = 0.0
+				h = 0.0
+				ws = 0.0
+				#Create a mask for the data
+				mask = np.empty(outdata.shape, dtype=bool)
+				mask[:,:] = (outdata[:,0] != a)[:,np.newaxis]
+				curData = np.ma.MaskedArray(outdata, mask=mask)
+				
+				#compress the mask
+				curData = np.ma.compress_rows(curData);
+				print "\tSize:",curData.shape
+				
+				str(bn) +"," + str(h) + "," + str(ws) + "," 
+				
+				if(len(curData.data) > 0):
+					print "Metric", len(curData), a
+					bn = persim.bottleneck(comparePers, curData, matching=False)
 
-			h = persim.heat(outdata, comparePers)
+					h = persim.heat(comparePers, curData)
 
-			ws = persim.wasserstein(outdata, comparePers)
+					ws = persim.wasserstein(comparePers, curData)
+				
+				outString += str(bn) +"," + str(h) + "," + str(ws) + "," 
 			end = time.time()
 			stat_time=(end-start)
 			
+			
 			outfile = file(os.getcwd() + "/aggResults.csv", 'a')
-			outfile.write(str(pers_time) + "," + str(len(outdata)) + "," + str(bn) +"," + str(h) + "," + str(ws) + "," + str(stat_time) + ",")
+			outfile.write(outString + str(stat_time) + ",")
 			outfile.close()
 			
 

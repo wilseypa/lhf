@@ -96,6 +96,7 @@
 		auto maxEpsilon = std::atof(args["epsilon"].c_str());
 		auto scalar = std::atof(args["scalar"].c_str());
 		auto *ws = new writeOutput();
+		auto originalDataSize = wD->originalData.size();
 		std::vector<bettiBoundaryTableEntry> mergedBettiTable;
 		
 		//Start with the preprocessing function, if enabled
@@ -214,6 +215,17 @@
 				std::cout << "skipping" << std::endl;
 		}
 		
+		
+		//Add open d0 intervals for the remaining d0 bettis
+		auto addlIntervals = std::count_if(mergedBettiTable.begin(), mergedBettiTable.end(), [&](bettiBoundaryTableEntry const &i) { return ( i.bettiDim == 0); });
+		std::cout << "Adding " << originalDataSize << "-" << addlIntervals << " intervals" << std::endl;
+		for(auto i = 0; i < originalDataSize - addlIntervals; i++){
+			bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
+			mergedBettiTable.push_back(des);
+		}
+			
+				
+		
 		std::cout << "Full Data: " << centroids.size() << std::endl;
 		if(centroids.size() > 0){
 			std::cout << "Running Pipeline with : " << centroids.size() << " vectors" << std::endl;
@@ -224,7 +236,7 @@
 		} else 
 			std::cout << "skipping" << std::endl;
 			
-			
+		
 			
 		//Merge bettis from the centroid based data
 		for(auto betEntry : wD->bettiTable){
