@@ -3,6 +3,7 @@ import numpy as np
 import argparse
 import csv
 import subprocess
+import tadasets
 import time
 import os
 import string
@@ -20,8 +21,9 @@ parser.add_argument('--dim', '-d', type=int, help='Maximum homology dimension to
 parser.add_argument('--datadim', '-nd', type=int, help='Dimension of data to generate', default=2)
 parser.add_argument('--npoints', '-n', type=int, help='Number of points to generate', default=100)
 parser.add_argument('--centroids', '-k', type=int, help='Number of centroids to compute', default=50)
+parser.add_argument('--np','-np', type=int, help='Number of processors to use', default=1)
 parser.add_argument('--reps','-r',type=int,help='Number of experiment repititions', default = 1)
-parser.add_argument('--mode','-m',type=str,help='Mode to run LHF in', default='fast')
+parser.add_argument('--mode','-m',type=str,help='Mode to run LHF in', default='mpi')
 args = parser.parse_args()
 
 epsilon = args.epsilon
@@ -31,24 +33,24 @@ npoints = args.npoints
 centroids = args.centroids
 reps = args.reps
 mode = args.mode
+noproc = args.np
 timings = {}
 
-print "Running " + mode + " experiments with:\nEpsilon: ", epsilon, "\nMaxDim", maxDim, "\ndataDim: ",  dataDim, "\nnPoints: ", npoints, "\nCentroids: ", centroids, "\n"
+print "Running " + mode + " experiments with:\nEpsilon: ", epsilon, "\nMaxDim", maxDim, "\ndataDim: ",  dataDim, "\nnPoints: ", npoints, "\nCentroids: ", centroids, "\nNProcs", noproc, "\n"
 
 ''' Generate input data '''
-originalData = make_blobs(n_samples=npoints, n_features=dataDim, center_box=(-1.0, 1.0))[0]
-
+originalData = tadasets.dsphere(n=npoints, d=dataDim-1, r=1, noise=0.1)
 
 for i in range(0, int(reps)):
 
 	''' Create folder for output '''
-	outDir = "blobs_output_v"+str(centroids)+"_e"+str(epsilon) + "_d"+str(maxDim)+"/" + str(i) + "/"
+	outDir = "perf_dsphere_"+str(centroids)+"_e"+str(epsilon) + "_d"+str(maxDim) + "_np" + str(noproc) +"/" + str(i) + "/"
 	if not os.path.exists(outDir):
 		os.makedirs(outDir)
 	
 	if not os.path.isfile(os.getcwd() + "/aggResults.csv"):
 		outfile = file(os.getcwd() + "/aggResults.csv", 'a')
-		outfile.write('OutputPath,Vectors,Dimensions,maxDim,Epsilon,PH_Time(s),BettiCount\n')
+		outfile.write('OutputPath,No.Procs,Vectors,Dimensions,maxDim,Epsilon,Centroids,PH_Time(s),BettiCount\n')
 		outfile.close()      
         
         
@@ -66,13 +68,14 @@ for i in range(0, int(reps)):
 	outfile = file(os.getcwd() + "/aggResults.csv", 'a')
 	if(not isRet):
 		outfile.write('')
-	outfile.write(outDir[:-1] + "," + str(npoints) + "," + str(dataDim) + "," + str(maxDim) + "," + str(epsilon) + ",")
+	outfile.write(outDir[:-1] + "," + str(noproc) + "," + str(npoints) + "," + str(dataDim) + "," + str(maxDim) + "," + str(epsilon) + "," + str(centroids) + ",")
 	outfile.close()
 
 	
 	#try:
 	start = time.time()
-	proc = subprocess.check_output(["./LHF", "-m",mode,"-d", str(maxDim+1), "-e", str(epsilon), "-i", os.getcwd()+"/"+outDir + "originalData.csv"])  
+	print "mpiexec","-np",str(noproc),"./LHF", "-m",mode,"-d", str(maxDim), "-e", str(epsilon), "-k",str(centroids), "-s", "1", "-i", os.getcwd()+"/"+outDir + "originalData.csv"
+	proc = subprocess.check_output(["mpiexec","-np",str(noproc),"./LHF", "-m",mode,"-d", str(maxDim), "-e", str(epsilon), "-k",str(centroids), "-s", "1", "-i", os.getcwd()+"/"+outDir + "originalData.csv"])  
 
 
 	end = time.time()
