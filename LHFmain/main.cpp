@@ -12,8 +12,6 @@
 	#include "preprocessor.hpp"
 	#include "utils.hpp"
 
-	using namespace std;
-
 	int nprocs,id;
 	 
 	void runPipeline(std::map<std::string, std::string> args, pipePacket* wD){
@@ -42,7 +40,7 @@
 					*wD = cp->runPipeWrapper(*wD);
 				} else {
 					std::cout << cp << std::endl;
-					cout << "LHF runPipeline: Failed to configure pipeline: " << args["pipeline"] << endl;
+					std::cout << "LHF runPipeline: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 				}
 				
 				delete bp, delete cp;
@@ -50,7 +48,7 @@
 		}
 		//If the pipeline was undefined...
 		else {
-			cout << "LHF runPipeline: Failed to find a suitable pipeline, exiting..." << endl;
+			std::cout << "LHF runPipeline: Failed to find a suitable pipeline, exiting..." << std::endl;
 			return;
 		}
 		
@@ -83,7 +81,7 @@
 			if(prePipe != 0 && prePipe->configPreprocessor(args)){
 				*wD = prePipe->runPreprocessorWrapper(*wD);
 			} else {
-				cout << "LHF processData: Failed to configure pipeline: " << args["pipeline"] << endl;
+				std::cout << "LHF processData: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 			}
 		}
 		
@@ -108,7 +106,7 @@
 			if(prePipe != 0 && prePipe->configPreprocessor(args)){
 				*wD = prePipe->runPreprocessorWrapper(*wD);
 			} else {
-				cout << "LHF processReduced: Failed to configure pipeline: " << args["pipeline"] << endl;
+				std::cout << "LHF processReduced: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 			}
 			delete preprocess, delete prePipe;
 		}
@@ -120,7 +118,7 @@
 		auto avgRadius = ut.computeAvgRadius(std::atoi(args["clusters"].c_str()), wD->originalData, wD->fullData, wD->originalLabels);
 			
 		std::cout << "Using maxRadius: " << maxRadius << "\tavgRadius: " << avgRadius<< std::endl;
-		std:vector<unsigned> binCounts;
+		std::vector<unsigned> binCounts;
 		for(unsigned a = 0; a < std::atoi(args["clusters"].c_str()); a++){
 			binCounts.push_back(std::count(wD->originalLabels.begin(), wD->originalLabels.end(), a));
 		}
@@ -153,7 +151,6 @@
 				//ut.mapPartitionIndexing(partitionedData.first[z], wD->bettiTable);
 				
 				bool foundExt = false;
-				unsigned tempIndex;		
 				std::vector<bettiBoundaryTableEntry> temp;
 				
 				for(auto betEntry : wD->bettiTable){
@@ -173,7 +170,7 @@
 					
 					if(betEntry.bettiDim == 0 && betEntry.boundaryPoints.size() > 1){	
 						if(betEntry.boundaryPoints.size() > 0 && (*boundIter) < binCounts[z]){
-							tempIndex = (*boundIter);
+							unsigned tempIndex = (*boundIter);
 							boundIter++;
 							
 							//Check if second entry is in the partition
@@ -311,7 +308,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 			if(prePipe != 0 && prePipe->configPreprocessor(args)){
 				*wD = prePipe->runPreprocessorWrapper(*wD);
 			} else {
-				cout << "LHF : Failed to configure pipeline: " << args["pipeline"] << endl;
+				std::cout << "LHF : Failed to configure pipeline: " << args["pipeline"] << std::endl;
 			}
 			delete preprocess, delete prePipe;
 		}
@@ -322,7 +319,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		auto centroids = wD->originalData;
 		
 		//Store the count of original points in each partition for merging
-		std:vector<unsigned> binCounts;
+		std::vector<unsigned> binCounts;
 		for(unsigned a = 0; a < std::atoi(args["clusters"].c_str()); a++){
 			binCounts.push_back(std::count(wD->originalLabels.begin(), wD->originalLabels.end(), a));
 		}
