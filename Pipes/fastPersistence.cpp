@@ -85,7 +85,6 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 
 	unionFind uf(nPts);
 	//shift = *(*edges[0].begin())->simplex.begin();
-	shift = 0;
 
 	for(auto edgeIter = edges[1].begin(); edgeIter != edges[1].end(); edgeIter++){
 		std::set<unsigned>::iterator it = (*edgeIter)->simplex.begin();
