@@ -16,7 +16,7 @@ simplexTree::simplexTree(double _maxEpsilon, std::vector<std::vector<double>>* _
 }
 
 void simplexTree::outputComplex(){
-	return printTree(head);
+	return printTree(root->child);
 }
 
 void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth, double maxE, std::set<unsigned> simp){
@@ -25,21 +25,24 @@ void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth,
 	simplexNode* temp;
 	
 	double curE = 0;
-	//std::cout << "Getting curE dmat size: " << (*distMatrix).size() << std::endl;
-	//std::cout << "Attempting to access: " << node->index << " x " << indexCounter << std::endl;
 
 	if(runningVectorIndices.size() < runningVectorCount){
-		if((node->index - simplexOffset) > distMatrix->size() || (indexCounter-simplexOffset) > (*distMatrix)[node->index - simplexOffset].size()){
+		
+		//Get the position of the vector in the runningVectorIndices array
+		auto nodeIndex = std::find(runningVectorIndices.begin(), runningVectorIndices.end(), node);
+		
+		if((std::distance(runningVectorIndices.begin(), nodeIndex)) > distMatrix->size() || (indexCounter - (runningVectorCount - 1)) > (*distMatrix)[std::distance(runningVectorIndices.begin(), nodeIndex)].size()){
 			std::cout << "DistMatrix access error:" << std::endl;
 			std::cout << "\tAttempting to access distMatrix indexes: " << node->index << " x " << indexCounter << std::endl;
 			std::cout << "\tDistMatrix size: " << (*distMatrix).size() << std::endl;
-			std::cout << "\trviCount: " << runningVectorCount << "\t rviSize: " << runningVectorIndices.size() << "\tOffset: " << simplexOffset << "\tOffset2: " << simplexOffset << std::endl;
-			std::cout << "\tOffset Indices: " << node->index - simplexOffset << " x " << indexCounter - simplexOffset << std::endl;
-			std::cout << "\tBackwards size: " << distMatrix[indexCounter - simplexOffset].size() << std::endl;
-			std::cout << "\tRow Size: " << distMatrix[node->index - simplexOffset].size()  << "\tCurIndex: " << curIndex << std::endl;
+			std::cout << "\trviCount: " << runningVectorCount << "\t rviSize: " << runningVectorIndices.size() << "\tOffset: " << simplexOffset << "\tIC: " << indexCounter << std::endl;
+			std::cout << "\tOffset Indices: " << node->index - (runningVectorCount - 1) << " x " << indexCounter - (runningVectorCount - 1) << std::endl;
+			std::cout << "\tBackwards size: " << distMatrix[indexCounter - (runningVectorCount - 1)].size() << std::endl;
+			std::cout << "\tRow Size: " << distMatrix[indexCounter - (runningVectorCount - 1)].size()  << "\tCurIndex: " << curIndex << std::endl;
+			std::cout << "\tNode Index: " << std::distance(runningVectorIndices.begin(), nodeIndex) << std::endl;
 		}
 		else
-			curE = (*distMatrix)[node->index - simplexOffset][indexCounter - simplexOffset];
+			curE = (*distMatrix)[std::distance(runningVectorIndices.begin(), nodeIndex)][indexCounter - (runningVectorCount - 1)];
 
 	}else{
 		curE = (*distMatrix)[node->index][indexCounter];
@@ -99,16 +102,15 @@ void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth,
 }
 
 
-void simplexTree::printTree(simplexNode* head){
+void simplexTree::printTree(simplexNode* headPointer){
 	std::cout << "_____________________________________" << std::endl;
-	if(head == nullptr){
+	if(root->child == nullptr){
 		std::cout << "Empty tree... " << std::endl;
 		return;
 	}
 
-	std::cout << "HEAD: " << head->index << "\t" << head << "\t" << head->child << "\t" << head->sibling << std::endl;
+	std::cout << "ROOT: " << headPointer->index << "\t" << headPointer << "\t" << headPointer->child << "\t" << headPointer->sibling << std::endl;
 	std::cout << "sList Size: " << simplexList.size() << std::endl;
-
 
 	simplexNode* current;
 	
@@ -117,7 +119,8 @@ void simplexTree::printTree(simplexNode* head){
 		std::cout << "[index , address, sibling, child, parent]" << std::endl << std::endl;
 		
 		for(auto simplexIter = simplexList[i].begin(); simplexIter != simplexList[i].end(); simplexIter++){
-			std::cout << (*simplexIter)->index << "\t" << (*simplexIter) << "\t" << (*simplexIter)->sibling << "\t" << (*simplexIter)->child << "\t" << (*simplexIter)->parent << std::endl;
+			std::cout << (*simplexIter)->index << "\t" << (*simplexIter) << "\t" << (*simplexIter)->sibling << "\t" << (*simplexIter)->child << "\t" << (*simplexIter)->parent << "\t";
+			ut.print1DVector((*simplexIter)->simplex);
 		} 
 
 		std::cout << std::endl;
@@ -132,18 +135,19 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 	if(window.size() == 0){
 		return true;
 	}
-
+	
 	if(streamEval(currentVector, window)) {   // Point is deemed 'significant'
-		std::vector<double> distMatrixRow = ut.nearestNeighbors(currentVector, window);
-
-		//auto tempIndex = runningVectorIndices[0]->sibling;
-		deleteIterative(runningVectorIndices[0]);
-		//head = tempIndex;
 		
+		//Delete the oldest point in the window
+		deleteIterative(runningVectorIndices[0]);
 		runningVectorIndices.erase(runningVectorIndices.begin());
-
+		
+		//Create distance matrix row of current vector to each point in the window
+		std::vector<double> distMatrixRow = ut.nearestNeighbors(currentVector, window);
+		
+		//Insert the new point into the distance matrix and complex
 		distMatrix->push_back(distMatrixRow);
-		insert(distMatrixRow);
+		insert(currentVector);
 
 		removedSimplices++;
 
@@ -177,17 +181,21 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 
 // Delete a node from the tree and from the distance matrix using a vector index
 void simplexTree::deleteIterative(simplexNode* simplex){
+	
 	//Find what row/column of our distance matrix pertain to the vector index
 	std::vector<simplexNode*>::iterator it;
 	if((it = std::find(runningVectorIndices.begin(), runningVectorIndices.end(), simplex)) != runningVectorIndices.end()){
 
+		//Index holds the index in the runningVectorIndices array of the simplexNode pointer
 		int index = it - runningVectorIndices.begin();
 
 		//Delete the row and column from the distance matrix based on vector index
-		if(index > 0){
-			
+		//	This corresponds to the index into the runnningVectorIndices array
+		if(index >= 0){
+			//Delete Row[index]
 			distMatrix->erase(distMatrix->begin() + index);
 		
+			//Delete column[index] (row[][index])
 			for(auto z : *(distMatrix)){
 				if(z.size() >= index)
 					z.erase(z.begin() + index);
@@ -196,13 +204,11 @@ void simplexTree::deleteIterative(simplexNode* simplex){
 
 		auto curNodeCount = nodeCount;
 
-		//Delete all entries in the simplex tree with the index...
-		deleteIndexRecurse(simplex->index, head);
+		//Delete all entries in the simplex tree 
+		//printTree(root);
+		deleteIndexRecurse(simplex->index);
 		
-		deleteWeightEdgeGraph(simplex->index);
-		
-		//std::cout << "Node Count reduced from " << curNodeCount << " to " << nodeCount << std::endl;
-		
+		//printTree(root);		
 
 	} else {
 		ut.writeDebug("simplexTree","Failed to find vector by index");
@@ -212,8 +218,7 @@ void simplexTree::deleteIterative(simplexNode* simplex){
 
 
 void simplexTree::deleteIndexRecurse(int vectorIndex) {
-
-    deleteIndexRecurse(vectorIndex, head);
+    deleteIndexRecurse(vectorIndex, root->child);
     return;
 }
 
@@ -226,28 +231,39 @@ void simplexTree::deleteIndexRecurse(int vectorIndex, simplexNode* curNode){
 	}
 	
 	//Handle siblings - either they need to be removed (and 'hopped') or recursed
+	//	Only need to recurse if the vector could be a member of tree (i.e. < vectorIndex)
 	if(curNode->sibling != nullptr && curNode->sibling->index == vectorIndex){
+		
+		//Map the current node's sibling to the node following the node for deletion
 		simplexNode* tempNode = curNode->sibling;
 		curNode->sibling = curNode->sibling->sibling;
-		deleteIndexRecurse(vectorIndex, curNode->sibling);
-
+		
+		//Delete the orphaned node now that sibling remapping is handled
+		//	The sibling still points to the following node, so this is valid
+		deleteIndexRecurse(vectorIndex, tempNode);
+		
 	} else if(curNode->sibling != nullptr){
+		//Recurse to the next sibling and check for deletion
 		deleteIndexRecurse(vectorIndex, curNode->sibling);
 	}
 
+	//Handle self; if this is the vector index delete branches/nodes
+	//	Assume all children / sibling pointers have been alleviated in calling function
 	if(curNode->index == vectorIndex){
 
-		if(curNode == head){
-			head = curNode->sibling;
-			//simplexList[0].insert(simplexList.begin(), curNode->sibling); 
+		//Ensure we aren't the first node of the tree
+		if(curNode == root->child){
+			root->child = curNode->sibling; 
 		}
 		
-		for(auto d : simplexList){
-			if((*d.begin()) == curNode)
-				d.insert(d.begin(), curNode->sibling);
-		}
+		//Remove our index from the parent
+		curNode->parent->children.erase(curNode);
 			
+		//Delete this node and sub-nodes in the tree
 		deletion(curNode);
+		
+	//If this isn't the vectorIndex, need to look at children and remove or recurse
+	//	Only need to recurse if the vector could be a member of tree (i.e. < vectorIndex)
 	} else if (curNode->child != nullptr && curNode->child->index == vectorIndex){
 		simplexNode* tempNode = curNode->child;
 		curNode->child = curNode->child->sibling;
@@ -257,9 +273,9 @@ void simplexTree::deleteIndexRecurse(int vectorIndex, simplexNode* curNode){
 				d.insert(d.begin(), tempNode->sibling);
 		}
 		
-		deletion(tempNode);
+		deleteIndexRecurse(vectorIndex, tempNode);
 
-	} else if(curNode->child != nullptr){
+	} else if(curNode->child != nullptr && curNode->child->index < vectorIndex){
 		deleteIndexRecurse(vectorIndex, curNode->child);
 	}
 
@@ -289,10 +305,9 @@ void simplexTree::insert(std::vector<double>&) {
 	//	If so, initialize the head node
 	if(root == nullptr){
 		root = new simplexNode;
-		head = insNode;
-		head->parent = root;
-		root->child = head;
-		root->children.insert(head);
+		insNode->parent = root;
+		root->child = insNode;
+		root->children.insert(insNode);
 		indexCounter++;
 		runningVectorCount++;
 		nodeCount++;
@@ -557,30 +572,17 @@ bool simplexTree::deletion(std::set<unsigned> removalEntry) {
 bool simplexTree::deletion(simplexNode* removalEntry) {
 	simplexNode* curNode = removalEntry;
 
-	//Iterate to the bottom of branch in the current node
-	while(curNode->child != nullptr){
-		curNode->child->parent = curNode;
-		curNode=curNode->child;
+	//Iterate each child and delete
+	auto it = curNode->children.begin();
+	while(it != curNode->children.end()){
+		deletion(*(it));	
+		it++;	
 	}
-	
-	if(curNode == removalEntry && curNode->sibling != nullptr){
-		deletion(curNode->sibling);
-	}
-
-	//If we did go down, remove on the way back up
-	while(curNode != removalEntry){
-		if(curNode->sibling != nullptr){
-			deletion(curNode->sibling);
-		}
-		curNode = curNode->parent;
-
-		nodeCount--;
-		delete curNode->child;
-		curNode->child = nullptr;
-	}
-
-	//curNode = curNode->parent;
 	nodeCount--;
+	
+	//Remove from the simplex list
+	simplexList[curNode->simplex.size() - 1].erase(curNode);
+	
 	delete curNode;
 	return false;
 }
@@ -590,7 +592,6 @@ void simplexTree::clear(){
 	if(root != nullptr)
 		deletion(root);
 	root = nullptr;
-	head = nullptr;
 	
 	for(auto i = 0; i < simplexList.size(); i++){
 		simplexList[i].clear();

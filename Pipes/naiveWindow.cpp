@@ -94,7 +94,6 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 
 			//Window is full, evaluate and add to window
 			} else {
-				std::cout << "Insert Iterative" << std::endl;
 				if(inData.complex->insertIterative(currentVector, windowValues)){
 
 					windowValues.erase(windowValues.begin());
@@ -108,7 +107,7 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 
 
 			//Check if we've gone through 100 points
-			if(pointCounter % 10 == 0 && pointCounter > windowMaxSize){
+			if(pointCounter % 10 == 0 && pointCounter >= windowMaxSize){
 				// Build and trigger remaining pipeline. It should only require the computation of persistence
 				// intervals from the complex being maintained.
 				inData.originalData = windowValues;
