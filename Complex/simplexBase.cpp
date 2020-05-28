@@ -139,6 +139,11 @@ int simplexBase::vertexCount(){
 	return -1;
 }
 
+void simplexBase::prepareCofacets(int dim){
+	ut.writeLog(simplexType,"No prepareCofacets function defined");
+	return;
+}
+
 int simplexBase::simplexCount(){
 	ut.writeLog(simplexType,"No simplexCount function defined");
 	return -1;

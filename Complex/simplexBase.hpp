@@ -65,6 +65,7 @@ class simplexBase {
 	virtual bool find(std::set<unsigned>);
 	virtual int simplexCount();
 	virtual int vertexCount();
+	virtual void prepareCofacets(int);
 	virtual std::vector<simplexNode*> getAllCofacets(const std::set<unsigned>&);
 	virtual std::vector<simplexNode*> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode*, simplexNode*>& pivotPairs, bool = true);
 	virtual std::set<simplexNode*, cmpByWeight> getDimEdges(int);

@@ -60,6 +60,15 @@ std::vector<unsigned> simplexArrayList::getVertices(long long ripsIndex, int dim
 	return v;
 }
 
+void simplexArrayList::prepareCofacets(int dim){
+	if(dim == 1) bin = binomialTable(simplexList[0].size(), maxDimension+1);
+
+	indexConverter.clear();
+	for(auto simplex : simplexList[dim+1]){
+		indexConverter.insert(std::make_pair(ripsIndex(simplex->simplex, bin), simplex));
+	}
+}
+
 std::vector<simplexNode*> simplexArrayList::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode*, simplexNode*>& pivotPairs, bool checkEmergent){
 	std::vector<simplexNode*> ret;
 	int nPts = simplexList[0].size();
@@ -237,9 +246,6 @@ void simplexArrayList::expandDimensions(int dim){
 		//Check if we need to break from expanding dimensions (no more edges)
 		if(simplexList.size() < d)
 			break;
-		
-		//Store d-dimensional simplices
-		std::vector<std::set<unsigned>> test;
 		
 		auto jSimplexIter = simplexList[d-1].begin();
 		auto tSimplexIter = simplexList[d-1].begin();
