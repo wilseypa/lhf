@@ -45,7 +45,7 @@ dmat = metrics.pairwise_distances(orig_data);
 dmat = np.reshape(dmat,(1,len(orig_data)**2))
 dmat = np.sort(dmat)
 
-print dmat[0]
+print(dmat[0])
 
 #ax = fig.add_subplot(1,4,4)
 ax1.hist(dmat[0], bins=1000)#, cumulative = True)

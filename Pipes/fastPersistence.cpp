@@ -103,7 +103,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			temp->weight = (*edgeIter)->weight;
 			pivots.push_back(temp);
 
-			bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, {v1, v2}, {temp} };			
+			bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, temp->simplex, {temp} };			
 			inData.bettiTable.push_back(des);
 		}
 
@@ -146,21 +146,19 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		//}
 
 		std::vector<simplexNode*> nextPivots;	 					//Pivots for the next dimension
-		std::unordered_map<unsigned, std::vector<unsigned>> v;				//Store only the reduction matrix V and compute R implicity
-		std::unordered_map<simplexNode*, unsigned> pivotPairs;	//For each pivot, which column has that pivot
-
-		unsigned columnIndex = edges[d].size() - 1; //Keep track of the column index for the pivots (for now)
+		std::unordered_map<simplexNode*, std::vector<simplexNode*>> v;				//Store only the reduction matrix V and compute R implicity
+		std::unordered_map<simplexNode*, simplexNode*> pivotPairs;	//For each pivot, which column has that pivot
 
 		//Iterate over columns to reduce in reverse order
-		for(auto columnIndexIter = edges[d].rbegin(); columnIndexIter != edges[d].rend(); columnIndexIter++, columnIndex--){ 
+		for(auto columnIndexIter = edges[d].rbegin(); columnIndexIter != edges[d].rend(); columnIndexIter++){ 
 			simplexNode* simplex = (*columnIndexIter);		//The current simplex
 
 			//Not a pivot -> need to reduce
 			if((*it)->weight != simplex->weight && (*it)->simplex != simplex->simplex){ 
 				//Get all cofacets using emergent pair optimization
 				std::vector<simplexNode*> cofaceList = inData.complex->getAllCofacets(simplex->simplex, simplex->weight, pivotPairs);
-				std::vector<unsigned> columnV;	//Reduction column of matrix V
-				columnV.push_back(columnIndex); //Initially V=I -> 1's along diagonal
+				std::vector<simplexNode*> columnV;	//Reduction column of matrix V
+				columnV.push_back(simplex); //Initially V=I -> 1's along diagonal
 
 				//Build a heap using the coface list to reduce and store in V
 				std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
@@ -190,32 +188,27 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 					if(cofaceList.empty()){ //Column completely reduced
 						break;
 					} else if(pivotPairs.find(pivot) == pivotPairs.end()){ //Column cannot be reduced
-						pivotPairs.insert({pivot, columnIndex});
+						pivotPairs.insert({pivot, simplex});
 						nextPivots.push_back(pivot);
 
-						// std::sort(columnV.begin(), columnV.end());
-						// auto it = columnV.begin();
-						// while(it != columnV.end()){
-						// 	if((it+1) != columnV.end() && *it==*(it+1)) ++it;
-						// 	else v[columnIndex].push_back(*it);
-						// 	++it;
-						// }
-
-						v[columnIndex] = columnV;
+						std::sort(columnV.begin(), columnV.end());
+						auto it = columnV.begin();
+						while(it != columnV.end()){
+							if((it+1) != columnV.end() && *it==*(it+1)) ++it;
+							else v[simplex].push_back(*it);
+							++it;
+						}
 
 						if(simplex->weight != pivot->weight){
 							bettiBoundaryTableEntry des = { d, simplex->weight, pivot->weight, {}, cofaceList };
-
 							inData.bettiTable.push_back(des);
 						}
 
 						break;
 					} else{ //Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
-						for(unsigned i : v[pivotPairs[pivot]]){
-							auto temp = edges[d].begin();
-							std::advance(temp, i);
-							
-							std::vector<simplexNode*> cofaces = inData.complex->getAllCofacets((*temp)->simplex);
+						for(simplexNode* simp : v[pivotPairs[pivot]]){
+							columnV.push_back(simp);
+							std::vector<simplexNode*> cofaces = inData.complex->getAllCofacets((simp->simplex));
 							cofaceList.insert(cofaceList.end(), cofaces.begin(), cofaces.end());
 						}
 						std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());

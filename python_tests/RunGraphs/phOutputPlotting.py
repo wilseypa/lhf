@@ -30,8 +30,8 @@ from palettable.tableau import Tableau_20
 
 # define a function to display/save the pylab figures.
 def displayGraph(fileName) :
-    print "Creating graphics " + fileName
-    print "    ....writing pdf"
+    print("Creating graphics " + fileName)
+    print("    ....writing pdf")
     pylab.savefig(fileName + ".pdf", bbox_inches='tight')
     pylab.clf()
 #    pylab.show()
@@ -50,12 +50,12 @@ markers = ['o','+','<','d','x','>','1','2','3','4','^']
 argparser = argparse.ArgumentParser(description='Create barcode and persistent diagram plots of persistent homology outputs from a csv file.')
 argparser.add_argument('--xlimit', help='Set a fixed limit for x-axis. (Default: use ceiling of max death)')
 argparser.add_argument('--nolegend', help='Do not print legends on plots.', action="store_true")
-argparser.add_argument('fileName', help='Name of the csv file.')
+argparser.add_argument('--fileName', help='Name of the csv file.')
 args = argparser.parse_args()
 
 inFile = args.fileName
 if inFile is None :
-    print 'Missing input filename....aborting'
+    print('Missing input filename....aborting')
     sys.exit()
     
 rawData = np.loadtxt(inFile, dtype=np.float, delimiter=",", comments="#")
@@ -68,12 +68,12 @@ else :
 
 # did the user request an x-axis limit below the maximum death value found in the input?
 if xLimit < maxDeath :
-    print 'Requested xLimit (' + str(xLimit) + ') value is lower than max death value (' + str(maxDeath) + ')...aborting'
+    print('Requested xLimit (' + str(xLimit) + ') value is lower than max death value (' + str(maxDeath) + ')...aborting')
     sys.exit()
 
 # are there more dimensions in the data then we have colors for?
 if len(colorPalette) < np.max(rawData[:,0]) :
-    print 'The current colormap has insufficient colors to represent all the dimensions in the data...aborting'
+    print('The current colormap has insufficient colors to represent all the dimensions in the data...aborting')
     sys.exit()
 
 # build barcode plot
