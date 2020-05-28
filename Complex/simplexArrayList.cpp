@@ -29,7 +29,7 @@ long long binomialTable::binom(unsigned n, unsigned k){ //Return binomial coeffi
 }
 
 //Hash the set by converting to a remapped index
-long long simplexArrayList::ripsIndex(const std::set<unsigned>& simplex, binomialTable& bin){ 
+long long simplexArrayList::simplexHash(const std::set<unsigned>& simplex, binomialTable& bin){ 
 	long long simplexIndex = 0;
 	unsigned i = 0;
 	auto it = simplex.begin();
@@ -41,21 +41,21 @@ long long simplexArrayList::ripsIndex(const std::set<unsigned>& simplex, binomia
 	return simplexIndex;
 }
 
-unsigned simplexArrayList::maxVertex(long long ripsIndex, unsigned high, unsigned low, unsigned k, binomialTable &bin){
+unsigned simplexArrayList::maxVertex(long long simplexHash, unsigned high, unsigned low, unsigned k, binomialTable &bin){
 	while(high > low){ //Binary search for the max vertex for this simplex
 		unsigned mid = (high + low)/2;
-		if(bin.binom(mid, k) <= ripsIndex) low = mid + 1;
+		if(bin.binom(mid, k) <= simplexHash) low = mid + 1;
 		else high = mid;
 	}
 	return high - 1;
 }
 
-std::vector<unsigned> simplexArrayList::getVertices(long long ripsIndex, int dim, unsigned n, binomialTable &bin){
+std::vector<unsigned> simplexArrayList::getVertices(long long simplexHash, int dim, unsigned n, binomialTable &bin){
 	std::vector<unsigned> v;
 	for(unsigned k = dim+1; k>0; k--){ //Get all vertices by repeated binary search for max vertex
-		n = maxVertex(ripsIndex, n, k-1, k, bin);
+		n = maxVertex(simplexHash, n, k-1, k, bin);
 		v.push_back(n);
-		ripsIndex -= bin.binom(n, k);
+		simplexHash -= bin.binom(n, k);
 	}
 	return v;
 }
@@ -65,7 +65,7 @@ void simplexArrayList::prepareCofacets(int dim){
 
 	indexConverter.clear();
 	for(auto simplex : simplexList[dim+1]){
-		indexConverter.insert(std::make_pair(ripsIndex(simplex->simplex, bin), simplex));
+		indexConverter.insert(std::make_pair(simplexHash(simplex->simplex, bin), simplex));
 	}
 }
 
@@ -74,7 +74,7 @@ std::vector<simplexNode*> simplexArrayList::getAllCofacets(const std::set<unsign
 	int nPts = simplexList[0].size();
 	unsigned k = simplex.size() + 1;
 	std::set<unsigned>::reverse_iterator it = simplex.rbegin();
-	long long index = ripsIndex(simplex, bin);
+	long long index = simplexHash(simplex, bin);
 
 	//Try inserting other vertices into the simplex
 	for(unsigned i=nPts; i-- != 0; ){ 
@@ -217,27 +217,19 @@ void simplexArrayList::expandDimensions(int dim){
 		if(simplexList.size() < d) break;
 		if(simplexList.size() == d) simplexList.push_back({});
 		
-		auto jSimplexIter = simplexList[d-1].begin();
-		auto tSimplexIter = simplexList[d-1].begin();
-		
 		//Iterate through each element in the current dimension's edges
-		for(unsigned j = 0; j < simplexList[d-1].size(); j++, jSimplexIter++){
-			
-			//Reset our t iterator to j+1
-			tSimplexIter = jSimplexIter;
-			tSimplexIter++;
+		for(auto jSimplexIter = simplexList[d-1].begin(); jSimplexIter != simplexList[d-1].end(); jSimplexIter++){
 			
 			//First search for intersections of the current element
-			for(unsigned t = j+1; t < simplexList[d-1].size(); t++, tSimplexIter++){
+			for(auto tSimplexIter = std::next(jSimplexIter); tSimplexIter != simplexList[d-1].end(); tSimplexIter++){
 				
 				//Symmetric Diff will give us the 
 				auto simp = ut.symmetricDiff((*jSimplexIter)->simplex, (*tSimplexIter)->simplex,true);
-				std::set<unsigned> totalVector = simp;
+				std::set<unsigned> totalVector = ut.setUnion((*jSimplexIter)->simplex, (*tSimplexIter)->simplex, true);
 				double maxWeight = (*jSimplexIter)->weight > (*tSimplexIter)->weight ? (*jSimplexIter)->weight : (*tSimplexIter)->weight;
 				
-				
-				//This point intersects; potential candidate for a higher-level simplice
-				//	Note - this is supposed to be 2, and will always be 2
+				//This point intersects; potential candidate for a higher-level simplex
+				//Note - this is supposed to be 2, and will always be 2
 				if (simp.size() == 2){
 					
 					bool create = true;
@@ -245,33 +237,20 @@ void simplexArrayList::expandDimensions(int dim){
 					
 					//Case that we have a single vertex as the intersect
 					if(m.size() == 1){
-						std::set<unsigned> searchVector = simp;
-						
-						totalVector = searchVector;
-						for(auto pt : m)
-							totalVector.insert(pt);
-						
-						double wt = 0;
-						if((wt = findWeight(searchVector)) < 0){
+						double wt = findWeight(simp);
+						if(wt < 0){
 							create = false;
 						} else if (wt > maxWeight)
 							maxWeight = wt;
-							
-						
 					
 					} else if(m.size() > 1){
 						
-						for(auto z : ut.getSubsets(m)){
-							
-							std::set<unsigned> searchVector = simp;
-							for(unsigned pt : z){
+						for(auto searchVector : ut.getSubsets(m)){
+							for(unsigned pt : simp)
 								searchVector.insert(pt);
-							}
-							totalVector = ut.setUnion(totalVector, searchVector, true);
 							
-							double wt = 0;
-							
-							if((wt = findWeight(searchVector)) < 0){
+							double wt = findWeight(searchVector);						
+							if(wt < 0){
 								create = false;
 								break;
 							} else if (wt > maxWeight)
@@ -286,12 +265,9 @@ void simplexArrayList::expandDimensions(int dim){
 						simplexList[d].insert(tot);
 					}
 				}
-			}
-			
+			}			
 		}
-	} 
-	
-	return;
+	}
 }
 
 void simplexArrayList::reduceComplex(){
