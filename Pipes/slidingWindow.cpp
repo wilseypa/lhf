@@ -735,7 +735,7 @@ void slidingWindow::runComplexInitializer(pipePacket &inData, std::vector<int> &
         if(!inData.originalData[i].empty())
         {
             //insert data into the complex (SimplexArrayList, SimplexTree)
-            inData.complex->insert(inData.originalData[i]);
+            inData.complex->insert();
         }
     }
 

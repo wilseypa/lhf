@@ -54,8 +54,6 @@ fastPersistence::fastPersistence(){
 //	FastPersistence: For computing the persistence pairs from simplicial complex:
 //		1. See Bauer-19 for algorithm/description
 pipePacket fastPersistence::runPipe(pipePacket inData){
-	if(dim >= 2) inData.complex->expandDimensions(dim + 1);	
-	
 	//Get all edges for the simplexArrayList or simplexTree
 	std::vector<std::set<simplexNode*, cmpByWeight>> edges = inData.complex->getAllEdges();
 

@@ -119,7 +119,7 @@ void simplexBase::deleteIndexRecurse(int){
 }
 
 
-void simplexBase::insert(std::vector<double>&){
+void simplexBase::insert(){
 	ut.writeLog(simplexType,"No insert function defined");
 	return;
 }

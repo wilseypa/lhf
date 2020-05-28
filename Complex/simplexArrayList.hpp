@@ -28,7 +28,7 @@ class simplexArrayList : public simplexBase{
 
 		//virtual interface functions
 		double getSize();
-		void insert(std::vector<double>&);
+		void insert();
 		bool find(std::set<unsigned>);
 		int simplexCount();
 		int vertexCount();

@@ -124,64 +124,37 @@ double simplexArrayList::getSize(){
 //		Sequence: 0 , 1 , 3 , 6 , 10 , 15
 //		(AKA very inefficient)
 //
-void simplexArrayList::insert(std::vector<double> &vector){
-	//Create a temporary pair to hold the weight and 2-D edge
-	//	e.g.  1.82 , {1, 5} would represent an edge between
-	//		points 1 and 5 with a weight of 1.82
-		
-		
-	std::set<unsigned> vertex = {0};
-	if(vector.empty())
-		return;
-		
-	simplexNode* insNode = new simplexNode();
-	
+void simplexArrayList::insert(){			
 	//If this is the first point inserted...
-	if(simplexList.size() == 0){
-		insNode->simplex = vertex;
-		insNode->weight = 0.0;
-		simplexList.push_back({insNode});
-		return;
-	}
+	if(simplexList.size() == 0) simplexList.push_back({});
 	
 	//If there are already points, do a brute-force compare
 	//		this will take a comparison to every existing point
-	else {
-		
-		unsigned i = simplexList[0].size();
-		
-		vertex = {i};
-		if(maxDimension > 0){
-			//Iterate through each existing to compare to new insertion
-			for(unsigned j = 0; j < simplexList[0].size(); j++){
+	unsigned i = simplexList[0].size();
+	
+	if(maxDimension > 0){
+		if(simplexList.size() == 1) simplexList.push_back({});
+
+		//Iterate through each existing to compare to new insertion
+		for(unsigned j = 0; j < i; j++){
+			double dist = (*distMatrix)[j][i];
+			
+			//Filter distances <= maxEpsilon, > 0 (same point)
+			if(dist <= maxEpsilon){
 				
-				double dist = (*distMatrix)[j][i];
-				
-				//Filter distances <= maxEpsilon, > 0 (same point)
-				if(dist <= maxEpsilon){
-					
-					//Create an Edge vector (pair) 
-					//NOTE: do this in opposite order so pairs are ordered! -> {J, I}
-					std::set<unsigned> edge = {j,i};
-					simplexNode* insNode = new simplexNode();
-					insNode->simplex = edge;
-					insNode->weight = dist;
-					
-					if(simplexList.size() == 1)
-						simplexList.push_back({insNode});
-					else
-						simplexList[1].insert(insNode);
-				}
+				//Create an Edge vector 
+				simplexNode* insNode = new simplexNode();
+				insNode->simplex = {i, j};
+				insNode->weight = dist;				
+				simplexList[1].insert(insNode);
 			}
 		}
-		
-		insNode->simplex = vertex;
-		insNode->weight = 0.0;
-		simplexList[0].insert(insNode);
-		
-	}	
-	
-	return;
+	}
+
+	simplexNode* insNode = new simplexNode();
+	insNode->simplex = {i};
+	insNode->weight = 0.0;
+	simplexList[0].insert(insNode);
 }
 
 // Search function to find a specific vector in the simplexArrayList
@@ -236,16 +209,13 @@ int simplexArrayList::vertexCount(){
 //		with a face, search for the remaining faces
 //
 //
-void simplexArrayList::expandDimensions(int dim){	
-	
-	std::vector<unsigned> tempVect;	
-	
+void simplexArrayList::expandDimensions(int dim){		
 	//Iterate up to max dimension of simplex, starting at dim 2 (edges)
 	for(unsigned d = 2; d <= dim; d++){
 		
 		//Check if we need to break from expanding dimensions (no more edges)
-		if(simplexList.size() < d)
-			break;
+		if(simplexList.size() < d) break;
+		if(simplexList.size() == d) simplexList.push_back({});
 		
 		auto jSimplexIter = simplexList[d-1].begin();
 		auto tSimplexIter = simplexList[d-1].begin();
@@ -313,12 +283,7 @@ void simplexArrayList::expandDimensions(int dim){
 						simplexNode* tot = new simplexNode();
 						tot->simplex = totalVector;
 						tot->weight = maxWeight;
-						
-						if(simplexList.size() == d){
-							simplexList.push_back({tot});
-						}else{
-							simplexList[d].insert(tot);
-						}
+						simplexList[d].insert(tot);
 					}
 				}
 			}
