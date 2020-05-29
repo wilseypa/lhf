@@ -403,7 +403,7 @@ std::vector<std::set<unsigned>> utils::getSubsets(std::set<unsigned> set, int di
 }
 
 // Find the union of two vectors
-std::set<unsigned> utils::setUnion(std::set<unsigned> v1, std::set<unsigned> v2, bool isSorted){
+std::set<unsigned> utils::setUnion(std::set<unsigned> v1, std::set<unsigned> v2){
 	std::set<unsigned> retTemp;
 	
 	if(v1 == v2) return v1;

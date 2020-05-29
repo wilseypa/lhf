@@ -379,7 +379,7 @@ double simplexTree::getSize(){
 
 //Search for a simplex from a node in the tree
 simplexNode* simplexTree::find(std::set<unsigned>::iterator it, std::set<unsigned>::iterator end, simplexNode* curNode){
-	simplexNode* temp = new simplexNode;
+	simplexNode* temp = new simplexNode();
 	temp->index = *it;
 
 	while(it != end){

@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <algorithm>
 #include "simplexArrayList.hpp"
 
 // simplexArrayList constructor, currently no needed information for the class constructor
@@ -128,10 +129,15 @@ void simplexArrayList::insert(){
 	//If this is the first point inserted...
 	if(simplexList.size() == 0) simplexList.push_back({});
 	
-	//If there are already points, do a brute-force compare
-	//		this will take a comparison to every existing point
 	unsigned i = simplexList[0].size();
-	
+
+	simplexNode* insNode = new simplexNode();
+	insNode->simplex = {i};
+	insNode->weight = 0.0;
+	simplexList[0].insert(insNode);
+
+	//If there are already points, do a brute-force compare
+	//		this will take a comparison to every existing point	
 	if(maxDimension > 0){
 		if(simplexList.size() == 1) simplexList.push_back({});
 
@@ -150,11 +156,6 @@ void simplexArrayList::insert(){
 			}
 		}
 	}
-
-	simplexNode* insNode = new simplexNode();
-	insNode->simplex = {i};
-	insNode->weight = 0.0;
-	simplexList[0].insert(insNode);
 }
 
 // Search function to find a specific vector in the simplexArrayList
@@ -201,13 +202,9 @@ int simplexArrayList::vertexCount(){
 }
 
 // Expand the simplexArrayList to incorporate higher-level simplices 
-//	-> O(d((n+1)(n+2)/2)) -> O(dn^2) -> where n is the number of d-1 simplices
-//		Sequence: 0 , 1 , 3 , 6 , 10 , 15
-//		(AKA very inefficient)
+//	-> O(dnk) -> where n is the number of points, d is the dimension, and k is the number of d-1 simplices
 //
-//	Do this by comparing each simplex to subsequent simplices; if they intersect
-//		with a face, search for the remaining faces
-//
+//	Do this by comparing each simplex with points to insert
 //
 void simplexArrayList::expandDimensions(int dim){		
 	//Iterate up to max dimension of simplex, starting at dim 2 (edges)
@@ -218,54 +215,29 @@ void simplexArrayList::expandDimensions(int dim){
 		if(simplexList.size() == d) simplexList.push_back({});
 		
 		//Iterate through each element in the current dimension's edges
-		for(auto jSimplexIter = simplexList[d-1].begin(); jSimplexIter != simplexList[d-1].end(); jSimplexIter++){
-			
-			//First search for intersections of the current element
-			for(auto tSimplexIter = std::next(jSimplexIter); tSimplexIter != simplexList[d-1].end(); tSimplexIter++){
-				
-				//Symmetric Diff will give us the 
-				auto simp = ut.symmetricDiff((*jSimplexIter)->simplex, (*tSimplexIter)->simplex,true);
-				std::set<unsigned> totalVector = ut.setUnion((*jSimplexIter)->simplex, (*tSimplexIter)->simplex, true);
-				double maxWeight = (*jSimplexIter)->weight > (*tSimplexIter)->weight ? (*jSimplexIter)->weight : (*tSimplexIter)->weight;
-				
-				//This point intersects; potential candidate for a higher-level simplex
-				//Note - this is supposed to be 2, and will always be 2
-				if (simp.size() == 2){
-					
-					bool create = true;
-					auto m = ut.setIntersect((*jSimplexIter)->simplex,(*tSimplexIter)->simplex,true);
-					
-					//Case that we have a single vertex as the intersect
-					if(m.size() == 1){
-						double wt = findWeight(simp);
-						if(wt < 0){
-							create = false;
-						} else if (wt > maxWeight)
-							maxWeight = wt;
-					
-					} else if(m.size() > 1){
-						
-						for(auto searchVector : ut.getSubsets(m)){
-							for(unsigned pt : simp)
-								searchVector.insert(pt);
-							
-							double wt = findWeight(searchVector);						
-							if(wt < 0){
-								create = false;
-								break;
-							} else if (wt > maxWeight)
-								maxWeight = wt;
-						}
+		for(auto it = simplexList[d-1].begin(); it != simplexList[d-1].end(); it++){
+			//Iterate over points to possibly add to the simplex
+			for(simplexNode* simp : simplexList[0]){
+				unsigned pt = *simp->simplex.begin(); //Point label
+
+				if((*it)->simplex.find(pt) == (*it)->simplex.end()){ //Not already in the simplex
+
+					double maxWeight = (*it)->weight;
+					for(auto i : (*it)->simplex){ //Compute the weight using all edges
+						double wt = (*distMatrix)[std::min(i, pt)][std::max(i, pt)];
+						maxWeight = std::max(maxWeight, wt);
 					}
 					
-					if(create){
+					if(maxWeight <= maxEpsilon){ //Valid simplex
 						simplexNode* tot = new simplexNode();
-						tot->simplex = totalVector;
+						tot->simplex = ut.setUnion((*it)->simplex, simp->simplex);
 						tot->weight = maxWeight;
-						simplexList[d].insert(tot);
+						if(!simplexList[d].insert(tot).second) //Already in simplexList -> delete the pointer
+							delete tot;
 					}
+
 				}
-			}			
+			}
 		}
 	}
 }
