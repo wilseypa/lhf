@@ -179,33 +179,6 @@ void naiveWindow::runSubPipeline(pipePacket wrData){
 	return;
 }
 
-/*void naiveWindow::runComplexInitializer(pipePacket &inData){
-	if(inData.originalData.size() == 0)
-		return;
-
-	std::string pipeFuncts = "distMatrix.neighGraph";
-	auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
-	//For each '.' separated pipeline function (count of '.' + 1 -> lim)
-	for(unsigned i = 0; i < lim; i++){
-		auto curFunct = pipeFuncts.substr(0,pipeFuncts.find('.'));
-		pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
-
-		//Build the pipe component, configure and run
-		auto *bp = new basePipe();
-		auto *cp = bp->newPipe(curFunct, "simplexTree");
-
-		//Check if the pipe was created and configure
-		if(cp != 0 && cp->configPipe(subConfigMap)){
-			//Run the pipe function (wrapper)
-			inData = cp->runPipeWrapper(inData);
-		} else {
-			std::cout << "LHF : Failed to configure pipeline: " << curFunct << std::endl;
-		}
-	}
-	return;
-}*/
-
-
 
 // configPipe -> configure the function settings of this pipeline segment
 bool naiveWindow::configPipe(std::map<std::string, std::string> configMap){
