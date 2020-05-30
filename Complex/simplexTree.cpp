@@ -147,7 +147,8 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 		
 		//Insert the new point into the distance matrix and complex
 		distMatrix->push_back(distMatrixRow);
-		insert(currentVector);
+
+		insert();
 
 		removedSimplices++;
 
@@ -168,7 +169,7 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 		// deleteIterative(keyToBeDeleted);
 		runningVectorIndices.erase(runningVectorIndices.begin() + indexToBeDeleted);
 
-		insert(distsFromCurrVec);
+		insert();
 
 		removedSimplices++;
 
@@ -286,7 +287,7 @@ void simplexTree::deleteIndexRecurse(int vectorIndex, simplexNode* curNode){
 
 // Insert a node into the tree
 //
-void simplexTree::insert(std::vector<double>&) {
+void simplexTree::insert() {
 	if(distMatrix->size() == 0){
 		ut.writeDebug("simplexTree","Distance matrix is empty, skipping insertion");
 		return;
@@ -394,7 +395,7 @@ double simplexTree::getSize(){
 
 //Search for a simplex from a node in the tree
 simplexNode* simplexTree::find(std::set<unsigned>::iterator it, std::set<unsigned>::iterator end, simplexNode* curNode){
-	simplexNode* temp = new simplexNode;
+	simplexNode* temp = new simplexNode();
 	temp->index = *it;
 
 	while(it != end){

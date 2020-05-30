@@ -60,11 +60,12 @@ class simplexBase {
 	virtual bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&, int&, int&, std::vector<double>&);
 	virtual void deleteIterative(int);
 	virtual void deleteIndexRecurse(int);  				// A wrapper for the actual deleteIndexRecurse method.
-	virtual void insert(std::vector<double>&);
+	virtual void insert();
 	virtual bool find(std::vector<unsigned>);
 	virtual bool find(std::set<unsigned>);
 	virtual int simplexCount();
 	virtual int vertexCount();
+	virtual void prepareCofacets(int);
 	virtual std::vector<simplexNode*> getAllCofacets(const std::set<unsigned>&);
 	virtual std::vector<simplexNode*> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode*, simplexNode*>& pivotPairs, bool = true);
 	virtual std::set<simplexNode*, cmpByWeight> getDimEdges(int);

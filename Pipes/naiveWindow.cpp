@@ -86,7 +86,7 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 					inData.complex->setDistanceMatrix(&distMatrix);
 										
 					for(auto a : windowValues)
-						inData.complex->insert(a);
+						inData.complex->insert();
 					
 					// Set the stream evaluator
 					inData.complex->setStreamEvaluator(&this->sampleStreamEvaluator);
