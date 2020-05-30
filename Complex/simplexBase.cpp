@@ -119,7 +119,7 @@ void simplexBase::deleteIndexRecurse(int){
 }
 
 
-void simplexBase::insert(std::vector<double>&){
+void simplexBase::insert(){
 	ut.writeLog(simplexType,"No insert function defined");
 	return;
 }
@@ -137,6 +137,11 @@ bool simplexBase::find(std::set<unsigned>){
 int simplexBase::vertexCount(){
 	ut.writeLog(simplexType,"No vertexCount function defined");
 	return -1;
+}
+
+void simplexBase::prepareCofacets(int dim){
+	ut.writeLog(simplexType,"No prepareCofacets function defined");
+	return;
 }
 
 int simplexBase::simplexCount(){

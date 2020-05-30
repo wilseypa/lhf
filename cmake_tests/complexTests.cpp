@@ -20,7 +20,7 @@ void t_simp_functions(std::string &log){
 	//Insert values into uninitialized complex
 	//	RET: void
 	std::cout << "\tTesting insertion into uninitialized complex" << std::endl;
-	try{ testComplex->insert(testValue); }
+	try{ testComplex->insert(); }
 	catch(const std::exception){ failLog += "simplexBase insert failed\n"; }
 
 	//Get uninitialized size
@@ -163,7 +163,7 @@ void t_simp_base_functions(std::string &log, std::string type){
 	try{
 		std::cout << "\t" << type << "\tTesting insertion of values to initialize complex" << std::endl;
 		for(auto vector : testValueArray)
-			testComplex->insert(vector);
+			testComplex->insert();
 	}
 	catch(const std::exception){ failLog += type + " insert failed\n"; }
 
