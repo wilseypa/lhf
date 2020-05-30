@@ -31,6 +31,9 @@ bool naiveWindow::sampleStreamEvaluator(std::vector<double>& vector, std::vector
 pipePacket naiveWindow::runPipe(pipePacket inData){
 	readInput rp;
 
+
+	//Store our distance matrix
+	std::vector<std::vector<double>> distMatrix;
 	int windowMaxSize = 50;
 
 	// For this pipe, we construct a sub-pipeline:
@@ -59,34 +62,28 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 				windowValues.push_back(currentVector);
 				windowKeys.push_back(key);
 				key++;
-
 				//If we've reached window size, generate the initial complex
 				if(windowValues.size() == windowMaxSize){
-
 					inData.originalData = windowValues;
 					
-					//Store our distance matrix
-					std::vector<std::vector<double>> distMatrix (inData.originalData.size(), std::vector<double>(inData.originalData.size(),0));
+					distMatrix.resize(inData.originalData.size(), std::vector<double>(inData.originalData.size(),0));
+
 					
 					//Iterate through each vector
 					for(unsigned i = 0; i < inData.originalData.size(); i++){
 						if(!inData.originalData[i].empty()){
-						
 							//Grab a second vector to compare to 
 							std::vector<double> temp;
 							for(unsigned j = i+1; j < inData.originalData.size(); j++){
-
 									//Calculate vector distance 
 									auto dist = ut.vectors_distance(inData.originalData[i],inData.originalData[j]);
 									
 									if(dist < epsilon)
-										inData.weights.insert(dist);
-									distMatrix[i][j] = dist;
+										distMatrix[i][j] = dist;
 							}
 						}
 					}
-					
-					inData.complex->setDistanceMatrix(&inData.distMatrix);
+					inData.complex->setDistanceMatrix(&distMatrix);
 										
 					for(auto a : windowValues)
 						inData.complex->insert();
@@ -97,7 +94,6 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 
 			//Window is full, evaluate and add to window
 			} else {
-				
 				if(inData.complex->insertIterative(currentVector, windowValues)){
 
 					windowValues.erase(windowValues.begin());
@@ -111,7 +107,7 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 
 
 			//Check if we've gone through 100 points
-			if(pointCounter % 10 == 0 && pointCounter > windowMaxSize){
+			if(pointCounter % 10 == 0 && pointCounter >= windowMaxSize){
 				// Build and trigger remaining pipeline. It should only require the computation of persistence
 				// intervals from the complex being maintained.
 				inData.originalData = windowValues;
@@ -182,33 +178,6 @@ void naiveWindow::runSubPipeline(pipePacket wrData){
 
 	return;
 }
-
-/*void naiveWindow::runComplexInitializer(pipePacket &inData){
-	if(inData.originalData.size() == 0)
-		return;
-
-	std::string pipeFuncts = "distMatrix.neighGraph";
-	auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
-	//For each '.' separated pipeline function (count of '.' + 1 -> lim)
-	for(unsigned i = 0; i < lim; i++){
-		auto curFunct = pipeFuncts.substr(0,pipeFuncts.find('.'));
-		pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
-
-		//Build the pipe component, configure and run
-		auto *bp = new basePipe();
-		auto *cp = bp->newPipe(curFunct, "simplexTree");
-
-		//Check if the pipe was created and configure
-		if(cp != 0 && cp->configPipe(subConfigMap)){
-			//Run the pipe function (wrapper)
-			inData = cp->runPipeWrapper(inData);
-		} else {
-			std::cout << "LHF : Failed to configure pipeline: " << curFunct << std::endl;
-		}
-	}
-	return;
-}*/
-
 
 
 // configPipe -> configure the function settings of this pipeline segment

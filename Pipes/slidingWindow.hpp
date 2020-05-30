@@ -14,7 +14,6 @@ private:
     std::string inputFile;
     void runSubPipeline();
     std::map<std::string, std::string> subConfigMap;
-	void runComplexInitializer(pipePacket &, std::vector<int> &, std::vector<double> &);
 
 public:
     struct EvalParams
