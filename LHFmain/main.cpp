@@ -12,8 +12,6 @@
 	#include "preprocessor.hpp"
 	#include "utils.hpp"
 
-	using namespace std;
-
 	int nprocs,id;
 	 
 	void runPipeline(std::map<std::string, std::string> args, pipePacket* wD){
@@ -42,7 +40,7 @@
 					*wD = cp->runPipeWrapper(*wD);
 				} else {
 					std::cout << cp << std::endl;
-					cout << "LHF runPipeline: Failed to configure pipeline: " << args["pipeline"] << endl;
+					std::cout << "LHF runPipeline: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 				}
 				
 				delete bp, delete cp;
@@ -50,7 +48,7 @@
 		}
 		//If the pipeline was undefined...
 		else {
-			cout << "LHF runPipeline: Failed to find a suitable pipeline, exiting..." << endl;
+			std::cout << "LHF runPipeline: Failed to find a suitable pipeline, exiting..." << std::endl;
 			return;
 		}
 		
@@ -83,7 +81,7 @@
 			if(prePipe != 0 && prePipe->configPreprocessor(args)){
 				*wD = prePipe->runPreprocessorWrapper(*wD);
 			} else {
-				cout << "LHF processData: Failed to configure pipeline: " << args["pipeline"] << endl;
+				std::cout << "LHF processData: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 			}
 		}
 		
@@ -96,6 +94,7 @@
 		auto maxEpsilon = std::atof(args["epsilon"].c_str());
 		auto scalar = std::atof(args["scalar"].c_str());
 		auto *ws = new writeOutput();
+		auto originalDataSize = wD->originalData.size();
 		std::vector<bettiBoundaryTableEntry> mergedBettiTable;
 		
 		//Start with the preprocessing function, if enabled
@@ -107,7 +106,7 @@
 			if(prePipe != 0 && prePipe->configPreprocessor(args)){
 				*wD = prePipe->runPreprocessorWrapper(*wD);
 			} else {
-				cout << "LHF processReduced: Failed to configure pipeline: " << args["pipeline"] << endl;
+				std::cout << "LHF processReduced: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 			}
 			delete preprocess, delete prePipe;
 		}
@@ -119,7 +118,7 @@
 		auto avgRadius = ut.computeAvgRadius(std::atoi(args["clusters"].c_str()), wD->originalData, wD->fullData, wD->originalLabels);
 			
 		std::cout << "Using maxRadius: " << maxRadius << "\tavgRadius: " << avgRadius<< std::endl;
-		std:vector<unsigned> binCounts;
+		std::vector<unsigned> binCounts;
 		for(unsigned a = 0; a < std::atoi(args["clusters"].c_str()); a++){
 			binCounts.push_back(std::count(wD->originalLabels.begin(), wD->originalLabels.end(), a));
 		}
@@ -152,7 +151,6 @@
 				//ut.mapPartitionIndexing(partitionedData.first[z], wD->bettiTable);
 				
 				bool foundExt = false;
-				unsigned tempIndex;		
 				std::vector<bettiBoundaryTableEntry> temp;
 				
 				for(auto betEntry : wD->bettiTable){
@@ -172,7 +170,7 @@
 					
 					if(betEntry.bettiDim == 0 && betEntry.boundaryPoints.size() > 1){	
 						if(betEntry.boundaryPoints.size() > 0 && (*boundIter) < binCounts[z]){
-							tempIndex = (*boundIter);
+							unsigned tempIndex = (*boundIter);
 							boundIter++;
 							
 							//Check if second entry is in the partition
@@ -214,6 +212,17 @@
 				std::cout << "skipping" << std::endl;
 		}
 		
+		
+		//Add open d0 intervals for the remaining d0 bettis
+		auto addlIntervals = std::count_if(mergedBettiTable.begin(), mergedBettiTable.end(), [&](bettiBoundaryTableEntry const &i) { return ( i.bettiDim == 0); });
+		std::cout << "Adding " << originalDataSize << "-" << addlIntervals << " intervals" << std::endl;
+		for(auto i = 0; i < originalDataSize - addlIntervals; i++){
+			bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
+			mergedBettiTable.push_back(des);
+		}
+			
+				
+		
 		std::cout << "Full Data: " << centroids.size() << std::endl;
 		if(centroids.size() > 0){
 			std::cout << "Running Pipeline with : " << centroids.size() << " vectors" << std::endl;
@@ -224,7 +233,7 @@
 		} else 
 			std::cout << "skipping" << std::endl;
 			
-			
+		
 			
 		//Merge bettis from the centroid based data
 		for(auto betEntry : wD->bettiTable){
@@ -299,7 +308,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 			if(prePipe != 0 && prePipe->configPreprocessor(args)){
 				*wD = prePipe->runPreprocessorWrapper(*wD);
 			} else {
-				cout << "LHF : Failed to configure pipeline: " << args["pipeline"] << endl;
+				std::cout << "LHF : Failed to configure pipeline: " << args["pipeline"] << std::endl;
 			}
 			delete preprocess, delete prePipe;
 		}
@@ -310,7 +319,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		auto centroids = wD->originalData;
 		
 		//Store the count of original points in each partition for merging
-		std:vector<unsigned> binCounts;
+		std::vector<unsigned> binCounts;
 		for(unsigned a = 0; a < std::atoi(args["clusters"].c_str()); a++){
 			binCounts.push_back(std::count(wD->originalLabels.begin(), wD->originalLabels.end(), a));
 		}

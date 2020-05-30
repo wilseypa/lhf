@@ -5,8 +5,16 @@
 
 // Header file for utils class - see utils.cpp for descriptions
 struct simplexNode{
-	unsigned index;	
+	unsigned index;
+	
+	struct cmpByIndex{
+		bool operator()(const simplexNode* lhs, const simplexNode* rhs) const{
+			return lhs->index < rhs->index;
+		}
+	};
+	
 	std::set<unsigned> simplex;
+	std::set<simplexNode*, cmpByIndex> children;
 	simplexNode* child = nullptr;
 	simplexNode* sibling = nullptr;
 	simplexNode* parent = nullptr;
@@ -68,7 +76,7 @@ class utils {
 	std::vector<unsigned> symmetricDiff(std::vector<unsigned>, std::vector<unsigned>, bool);
 	std::set<unsigned> symmetricDiff(std::set<unsigned>, std::set<unsigned>, bool);
 	std::vector<unsigned> setUnion(std::vector<unsigned>, std::vector<unsigned>, bool);
-	std::set<unsigned> setUnion(std::set<unsigned>, std::set<unsigned>, bool);
+	std::set<unsigned> setUnion(std::set<unsigned>, std::set<unsigned>);
 	std::pair<std::vector<unsigned>, std::vector<unsigned>> intersect(std::vector<unsigned>, std::vector<unsigned>, bool);
 	
 	//Utility functions for writing to console/debug file

@@ -58,7 +58,7 @@ ax2 = fig.add_subplot(1,2,2)
 
 indexNaN = np.isinf(data)
 if(args.inf):
-	print "test"
+	print("test")
 	data[indexNaN] = float(args.inf)
 else:
 	data[indexNaN] = 1
@@ -76,12 +76,12 @@ else :
 
 # did the user request an x-axis limit below the maximum death value found in the input?
 if xLimit < maxDeath :
-    print 'Requested xLimit (' + str(xLimit) + ') value is lower than max death value (' + str(maxDeath) + ')...aborting'
+    print('Requested xLimit (' + str(xLimit) + ') value is lower than max death value (' + str(maxDeath) + ')...aborting')
     sys.exit()
 
 # are there more dimensions in the data then we have colors for?
 if len(colorPalette) < np.max(data[:,0]) :
-    print 'The current colormap has insufficient colors to represent all the dimensions in the data...aborting'
+    print('The current colormap has insufficient colors to represent all the dimensions in the data...aborting')
     sys.exit()
 
 # build barcode plot

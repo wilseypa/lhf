@@ -27,7 +27,7 @@ pipePacket neighGraphPipe::runPipe(pipePacket inData){
 	for(unsigned i = 0; i < inData.originalData.size(); i++){
 		if(!inData.originalData[i].empty()){
 			//insert data into the complex (SimplexArrayList, SimplexTree)
-			inData.complex->insert(inData.originalData[i]);	
+			inData.complex->insert();	
 		}
 	}
 

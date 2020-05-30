@@ -519,6 +519,8 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
     utils ut;
     readInput rp;
 	pPack = &inData;
+	//Store our distance matrix
+	std::vector<std::vector<double>> distMatrix;
 
 
     // For this pipe, we construct a sub-pipeline:
@@ -552,7 +554,27 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
                     std::cout << "Initializing complex" << std::endl;
 
                     inData.originalData = windowValues;
-                    runComplexInitializer(inData, defaultVals->nnIndices, defaultVals->nnDists);
+                    
+                    distMatrix.resize(inData.originalData.size(), std::vector<double>(inData.originalData.size(),0));
+
+					//Iterate through each vector
+					for(unsigned i = 0; i < inData.originalData.size(); i++){
+						if(!inData.originalData[i].empty()){
+							//Grab a second vector to compare to 
+							std::vector<double> temp;
+							for(unsigned j = i+1; j < inData.originalData.size(); j++){
+									//Calculate vector distance 
+									auto dist = ut.vectors_distance(inData.originalData[i],inData.originalData[j]);
+									
+									if(dist < epsilon)
+										distMatrix[i][j] = dist;
+							}
+						}
+					}
+					inData.complex->setDistanceMatrix(&distMatrix);
+
+					for(auto a : windowValues)
+						inData.complex->insert();
 
                     // Set the stream evaluator
                     inData.complex->setStreamEvaluator(&this->nnBasedEvaluator);
@@ -565,6 +587,7 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
                     defaultVals->numPointsPartn[defaultVals->targetPartition] = defaultVals->windowMaxSize;
                     defaultVals->maxKeys[defaultVals->targetPartition] = defaultVals->key - 1;
                 }
+                
 
             }
             else
@@ -635,7 +658,7 @@ void slidingWindow::runSubPipeline(pipePacket wrData)
     pipePacket inData = wrData;
     outputData(inData);
 
-    std::string pipeFuncts = "rips.persistence";
+	std::string pipeFuncts = "rips.fast";
     auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
     subConfigMap["fn"] = "_" + std::to_string(repCounter);
     repCounter++;
@@ -665,87 +688,6 @@ void slidingWindow::runSubPipeline(pipePacket wrData)
 
     return;
 }
-
-void slidingWindow::runComplexInitializer(pipePacket &inData, std::vector<int> &nnIndices, std::vector<double> &nnDists)
-{
-    //Initialize the complex and build other structures for maintaining NN, etc.
-    //
-    //	We need to exit this function by covering the distMatrix and neighGraph
-    //		pipe functions
-
-
-
-    //	1.	Create distance matrix (and compute other info)-------------
-
-    utils ut;
-
-    //Store our distance matrix
-    std::vector<std::vector<double>> distMatrix (inData.originalData.size(), std::vector<double>(inData.originalData.size(),0));
-
-    //Iterate through each vector
-    for(unsigned i = 0; i < inData.originalData.size(); i++)
-    {
-        if(!inData.originalData[i].empty())
-        {
-            std::vector<double> distsFromCurrVect;
-
-            for(unsigned j = 0; j < inData.originalData.size(); j++)
-            {
-                if (j < i)
-                {
-                    distsFromCurrVect.push_back( distMatrix[j][i] );
-                }
-                else if (j > i)
-                {
-                    //Calculate vector distance
-                    auto dist = ut.vectors_distance(inData.originalData[i], inData.originalData[j]);
-                    if(dist < epsilon)
-                        inData.weights.insert(dist);
-                    distMatrix[i][j] = dist;
-                    distsFromCurrVect.push_back( dist );
-                }
-            }
-
-            auto tempIndex = std::min_element(distsFromCurrVect.begin(), distsFromCurrVect.end()) - distsFromCurrVect.begin();
-            if (tempIndex < i)
-                nnIndices.push_back(tempIndex);
-            else
-                nnIndices.push_back(tempIndex + 1);
-
-            auto nnDistFromCurrVect = *std::min_element( distsFromCurrVect.begin(), distsFromCurrVect.end() );
-            nnDists.push_back( nnDistFromCurrVect );
-        }
-    }
-
-    inData.complex->setDistanceMatrix(&inData.distMatrix);
-
-    inData.weights.insert(0.0);
-    inData.weights.insert(epsilon);
-    //std::sort(inData.weights.begin(), inData.weights.end(), std::greater<>());
-
-    //------------------------------------------------------------------
-
-
-
-    // 2. Insert into complex (build neighborhood graph) ---------------
-
-    //Iterate through each vector, inserting into simplex storage
-    for(unsigned i = 0; i < inData.originalData.size(); i++)
-    {
-        if(!inData.originalData[i].empty())
-        {
-            //insert data into the complex (SimplexArrayList, SimplexTree)
-            inData.complex->insert(inData.originalData[i]);
-        }
-    }
-
-    //------------------------------------------------------------------
-
-
-    return;
-}
-
-
 
 // configPipe -> configure the function settings of this pipeline segment
 bool slidingWindow::configPipe(std::map<std::string, std::string> configMap)
@@ -786,8 +728,6 @@ bool slidingWindow::configPipe(std::map<std::string, std::string> configMap)
 
     return true;
 }
-
-
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
 void slidingWindow::outputData(pipePacket inData)
