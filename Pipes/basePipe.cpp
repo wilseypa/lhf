@@ -40,7 +40,6 @@ basePipe* basePipe::newPipe(const std::string &pipeT, const std::string &complex
 	} else if (pipeType == "fastPersistence" || pipeType == "fast"){
 		return new fastPersistence();
 	} else if (pipeType == "naivewindow" || pipeType == "naive"){
-		std::cout << "naive" << std::endl;
 		return new naiveWindow();
 	}
 	

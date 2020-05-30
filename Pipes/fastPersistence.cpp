@@ -79,19 +79,26 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	//			if joins components, add them
 	//		Until all edges evaluated or MST found (size - 1)	
 	
+	//For streaming data, indices will not be 0-N; instead sparse
+	//	So in streaming, create a hash map to quickly lookup points
+	
+	std::unordered_map<unsigned, unsigned> mappedIndices;	//Store a map of the indices for MST
 	std::vector<simplexNode*> pivots; //Store identified pivots
 	unsigned mstSize = 0;
 	unsigned nPts = inData.originalData.size();
 
 	unionFind uf(nPts);
-	//shift = *(*edges[0].begin())->simplex.begin();
-	shift = 0;
 
 	for(auto edgeIter = edges[1].begin(); edgeIter != edges[1].end(); edgeIter++){
 		std::set<unsigned>::iterator it = (*edgeIter)->simplex.begin();
 		
 		//Find which connected component each vertex belongs to
-		int v1 = uf.find(*it - shift),  v2 = uf.find(*(++it) - shift); 
+		//	Use a hash map to track insertions for streaming or sparse indices
+		if( mappedIndices.size() == 0 || mappedIndices.find(*it) == mappedIndices.end() ) mappedIndices.insert( std::make_pair(*it, mappedIndices.size()) );
+		int v1 = uf.find(mappedIndices.find(*it)->second);
+		it++;
+		if( mappedIndices.find(*it) == mappedIndices.end() ) mappedIndices.insert( std::make_pair(*it, mappedIndices.size()) );
+		int v2 = uf.find(mappedIndices.find(*it)->second); 
 		
 		//Edge connects two different components -> add to the MST
 		if(v1 != v2){ 
@@ -119,6 +126,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		}
 	}
 	
+	std::cout << "Finished MST" << std::endl;
 	
 	//For higher dimensional persistence intervals
 	//	
