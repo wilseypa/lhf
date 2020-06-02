@@ -149,7 +149,7 @@ void naiveWindow::runSubPipeline(pipePacket wrData){
 	pipePacket inData = wrData;
 	outputData(inData);
 	
-	std::cout << "StreamSize: " << inData.complex->indexCounter << std::endl;
+	std::cout << "StreamSize: " << inData.complex->indexCounter << "\tWindowSize: " << inData.originalData.size() << std::endl;
 
 	std::string pipeFuncts = "rips.fast";
 	auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
@@ -174,7 +174,6 @@ void naiveWindow::runSubPipeline(pipePacket wrData){
 			std::cout << "LHF subPipe: Failed to configure pipeline: " << curFunct << std::endl;
 		}
 	}
-
 
 	return;
 }

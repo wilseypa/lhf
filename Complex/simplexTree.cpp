@@ -23,12 +23,11 @@ void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth,
 	//Incremental insertion
 	//Recurse to each child (which we'll use the parent pointer for...)
 	simplexNode* temp;
-	
 	double curE = 0;
 
 	if(runningVectorIndices.size() < runningVectorCount){
 		
-		//Get the position of the vector in the runningVectorIndices array
+		//Get the positions of the vector in the runningVectorIndices array
 		auto nodeIndex = std::find(runningVectorIndices.begin(), runningVectorIndices.end(), node);
 		
 		if((std::distance(runningVectorIndices.begin(), nodeIndex)) > distMatrix->size() || (indexCounter - (runningVectorCount - 1)) > (*distMatrix)[std::distance(runningVectorIndices.begin(), nodeIndex)].size()){
@@ -42,7 +41,7 @@ void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth,
 			std::cout << "\tNode Index: " << std::distance(runningVectorIndices.begin(), nodeIndex) << std::endl;
 		}
 		else
-			curE = (*distMatrix)[std::distance(runningVectorIndices.begin(), nodeIndex)][indexCounter - (runningVectorCount - 1)];
+			curE = *((*distMatrix)[std::distance(runningVectorIndices.begin(), nodeIndex)].rbegin());
 
 	}else{
 		curE = (*distMatrix)[node->index][indexCounter];
@@ -187,18 +186,18 @@ void simplexTree::deleteIterative(simplexNode* simplex){
 	if((it = std::find(runningVectorIndices.begin(), runningVectorIndices.end(), simplex)) != runningVectorIndices.end()){
 
 		//Index holds the index in the runningVectorIndices array of the simplexNode pointer
-		int index = it - runningVectorIndices.begin();
+		int index = std::distance(runningVectorIndices.begin(), it);
 
 		//Delete the row and column from the distance matrix based on vector index
 		//	This corresponds to the index into the runnningVectorIndices array
-		if(index >= 0){
+		if(index > 0){
 			//Delete Row[index]
 			distMatrix->erase(distMatrix->begin() + index);
 		
 			//Delete column[index] (row[][index])
-			for(auto z : *(distMatrix)){
-				if(z.size() >= index)
-					z.erase(z.begin() + index);
+			for(int i = 0; i < (*distMatrix).size(); i++){
+				if((*distMatrix)[i].size() >= index)
+					(*distMatrix)[i].erase((*distMatrix)[i].begin() + index);
 			}
 		}
 
@@ -589,9 +588,14 @@ bool simplexTree::deletion(simplexNode* removalEntry) {
 
 void simplexTree::clear(){
 	//Clear the simplexTree structure
-	if(root != nullptr)
-		deletion(root);
-	root = nullptr;
+	
+	if(root != nullptr){
+		//Iterate each simplexList[0] entry and delete
+		for(auto simp : simplexList[0])
+			deletion(simp);
+	
+		root = nullptr;
+	}
 	
 	for(auto i = 0; i < simplexList.size(); i++){
 		simplexList[i].clear();
