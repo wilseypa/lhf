@@ -143,10 +143,6 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 		} else if(args["mode"] == "fast"){
 			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
 			args["upscale"] = "false";
-<<<<<<< Updated upstream
-			args["complexType"] = "simplexTree";
-=======
->>>>>>> Stashed changes
 		} else if(args["mode"] == "naive" || args["mode"] == "naivewindow"){
 			args["preprocessor"] = "";
 			args["pipeline"] = "naivewindow";
