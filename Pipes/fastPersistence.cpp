@@ -140,17 +140,8 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	
 	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
 		inData.complex->prepareCofacets(d);
-		std::sort(pivots.begin(), pivots.end(), cmpByWeight());
+		std::sort(pivots.begin(), pivots.end(), cmpBySecond());
 		std::vector<simplexNode*>::iterator it = pivots.begin();
-		
-		//Convert our hashed set (ripsIndex) to the index from our complex
-		//std::unordered_map<long long, unsigned> indexConverter; 
-		
-		//unsigned simplexIndex = 0;
-		//for(auto& simplex : edges[d+1]){
-			//indexConverter.insert(std::make_pair(ripsIndex(simplex->simplex, bin), simplexIndex));
-			//simplexIndex++;
-		//}
 
 		std::vector<simplexNode*> nextPivots;	 					//Pivots for the next dimension
 		std::unordered_map<simplexNode*, std::vector<simplexNode*>> v;				//Store only the reduction matrix V and compute R implicity
@@ -161,7 +152,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			simplexNode* simplex = (*columnIndexIter);		//The current simplex
 
 			//Not a pivot -> need to reduce
-			if((*it)->weight != simplex->weight && (*it)->simplex != simplex->simplex){ 
+			if((*it)->weight != simplex->weight || (*it)->simplex != simplex->simplex){ 
 				//Get all cofacets using emergent pair optimization
 				std::vector<simplexNode*> cofaceList = inData.complex->getAllCofacets(simplex->simplex, simplex->weight, pivotPairs);
 				std::vector<simplexNode*> columnV;	//Reduction column of matrix V
