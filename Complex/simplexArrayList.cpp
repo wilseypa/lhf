@@ -217,25 +217,20 @@ void simplexArrayList::expandDimensions(int dim){
 		//Iterate through each element in the current dimension's edges
 		for(auto it = simplexList[d-1].begin(); it != simplexList[d-1].end(); it++){
 			//Iterate over points to possibly add to the simplex
-			for(simplexNode* simp : simplexList[0]){
-				unsigned pt = *simp->simplex.begin(); //Point label
-
-				if((*it)->simplex.find(pt) == (*it)->simplex.end()){ //Not already in the simplex
-
-					double maxWeight = (*it)->weight;
-					for(auto i : (*it)->simplex){ //Compute the weight using all edges
-						double wt = (*distMatrix)[std::min(i, pt)][std::max(i, pt)];
-						maxWeight = std::max(maxWeight, wt);
-					}
-					
-					if(maxWeight <= maxEpsilon){ //Valid simplex
-						simplexNode* tot = new simplexNode();
-						tot->simplex = ut.setUnion((*it)->simplex, simp->simplex);
-						tot->weight = maxWeight;
-						if(!simplexList[d].insert(tot).second) //Already in simplexList -> delete the pointer
-							delete tot;
-					}
-
+			//Use points larger than the maximal vertex in the simplex to prevent double counting
+			unsigned minPt = *(*it)->simplex.rbegin() + 1;
+			
+			for(unsigned pt = minPt; pt < simplexList[0].size(); pt++){
+				//Compute the weight using all edges
+				double maxWeight = (*it)->weight;
+				for(auto i : (*it)->simplex) maxWeight = std::max(maxWeight, (*distMatrix)[i][pt]);
+				
+				if(maxWeight <= maxEpsilon){ //Valid simplex
+					simplexNode* tot = new simplexNode();
+					tot->simplex = (*it)->simplex;
+					tot->simplex.insert(pt);
+					tot->weight = maxWeight;
+					simplexList[d].insert(tot);
 				}
 			}
 		}
