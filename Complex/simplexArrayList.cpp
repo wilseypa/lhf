@@ -123,7 +123,6 @@ double simplexArrayList::getSize(){
 
 // Insert for simplexArrayList -> O((n+1)(n+2)/2) -> O(n^2)
 //		Sequence: 0 , 1 , 3 , 6 , 10 , 15
-//		(AKA very inefficient)
 //
 void simplexArrayList::insert(){			
 	//If this is the first point inserted...
@@ -131,9 +130,7 @@ void simplexArrayList::insert(){
 	
 	unsigned i = simplexList[0].size();
 
-	simplexNode* insNode = new simplexNode();
-	insNode->simplex = {i};
-	insNode->weight = 0.0;
+	simplexNode* insNode = new simplexNode({i}, 0.0);
 	simplexList[0].insert(insNode);
 
 	//If there are already points, do a brute-force compare
@@ -149,9 +146,7 @@ void simplexArrayList::insert(){
 			if(dist <= maxEpsilon){
 				
 				//Create an Edge vector 
-				simplexNode* insNode = new simplexNode();
-				insNode->simplex = {i, j};
-				insNode->weight = dist;				
+				simplexNode* insNode = new simplexNode({i, j}, dist);
 				simplexList[1].insert(insNode);
 			}
 		}
@@ -226,10 +221,8 @@ void simplexArrayList::expandDimensions(int dim){
 				for(auto i : (*it)->simplex) maxWeight = std::max(maxWeight, (*distMatrix)[i][pt]);
 				
 				if(maxWeight <= maxEpsilon){ //Valid simplex
-					simplexNode* tot = new simplexNode();
-					tot->simplex = (*it)->simplex;
+					simplexNode* tot = new simplexNode((*it)->simplex, maxWeight);
 					tot->simplex.insert(pt);
-					tot->weight = maxWeight;
 					simplexList[d].insert(tot);
 				}
 			}

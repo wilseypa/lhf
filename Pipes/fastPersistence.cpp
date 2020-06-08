@@ -103,9 +103,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			uf.join(v1, v2);
 			mstSize++;
       
-			simplexNode* temp = new simplexNode;
-			temp->simplex = (*edgeIter)->simplex;
-			temp->weight = (*edgeIter)->weight;
+			simplexNode* temp = new simplexNode((*edgeIter)->simplex, (*edgeIter)->weight);
 			pivots.push_back(temp);
 
 			bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, temp->simplex, {temp} };			
