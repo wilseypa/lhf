@@ -574,7 +574,7 @@ bool simplexTree::deletion(simplexNode* removalEntry) {
 	nodeCount--;
 	
 	//Remove from the simplex list
-	simplexList[curNode->simplex.size() - 1].erase(curNode);
+	simplexList[curNode->simplex.size() - 1].erase(simplexList[curNode->simplex.size() - 1].find(curNode));
 	
 	delete curNode;
 	return false;
@@ -585,15 +585,12 @@ void simplexTree::clear(){
 	
 	if(root != nullptr){
 		//Iterate each simplexList[0] entry and delete
-		for(auto simp : simplexList[0])
+		for(auto simp : root->children)
 			deletion(simp);
 	
 		root = nullptr;
 	}
 	
-	for(auto i = 0; i < simplexList.size(); i++){
-		simplexList[i].clear();
-	}
 	simplexList.clear();
 
 	simplexOffset = runningVectorCount;

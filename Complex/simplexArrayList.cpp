@@ -326,12 +326,6 @@ bool simplexArrayList::deletion(std::set<unsigned> vector){
 	return false;
 }
 
-void simplexArrayList::clear(){
-	
-	for(auto z : simplexList){
-		z.clear();
-	}
-	
+void simplexArrayList::clear(){	
 	simplexList.clear();
-	
 }
