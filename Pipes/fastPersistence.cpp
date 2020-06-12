@@ -80,49 +80,49 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	//For streaming data, indices will not be 0-N; instead sparse
 	//	So in streaming, create a hash map to quickly lookup points
 	
-	std::unordered_map<unsigned, unsigned> mappedIndices;	//Store a map of the indices for MST
-	std::vector<simplexNode*> pivots; //Store identified pivots
-	unsigned mstSize = 0;
-	unsigned nPts = inData.originalData.size();
+	// std::unordered_map<unsigned, unsigned> mappedIndices;	//Store a map of the indices for MST
+	// std::vector<simplexNode*> pivots; //Store identified pivots
+	// unsigned mstSize = 0;
+	// unsigned nPts = inData.originalData.size();
 
-	unionFind uf(nPts);
+	// unionFind uf(nPts);
 
-	for(auto edgeIter = edges[1].begin(); edgeIter != edges[1].end(); edgeIter++){
-		std::set<unsigned>::iterator it = (*edgeIter)->simplex.begin();
+	// for(auto edgeIter = edges[1].begin(); edgeIter != edges[1].end(); edgeIter++){
+	// 	std::set<unsigned>::iterator it = (*edgeIter)->simplex.begin();
 		
-		//Find which connected component each vertex belongs to
-		//	Use a hash map to track insertions for streaming or sparse indices
-		if( mappedIndices.size() == 0 || mappedIndices.find(*it) == mappedIndices.end() ) mappedIndices.insert( std::make_pair(*it, mappedIndices.size()) );
-		int v1 = uf.find(mappedIndices.find(*it)->second);
-		it++;
-		if( mappedIndices.find(*it) == mappedIndices.end() ) mappedIndices.insert( std::make_pair(*it, mappedIndices.size()) );
-		int v2 = uf.find(mappedIndices.find(*it)->second); 
+	// 	//Find which connected component each vertex belongs to
+	// 	//	Use a hash map to track insertions for streaming or sparse indices
+	// 	if( mappedIndices.size() == 0 || mappedIndices.find(*it) == mappedIndices.end() ) mappedIndices.insert( std::make_pair(*it, mappedIndices.size()) );
+	// 	int v1 = uf.find(mappedIndices.find(*it)->second);
+	// 	it++;
+	// 	if( mappedIndices.find(*it) == mappedIndices.end() ) mappedIndices.insert( std::make_pair(*it, mappedIndices.size()) );
+	// 	int v2 = uf.find(mappedIndices.find(*it)->second); 
 		
-		//Edge connects two different components -> add to the MST
-		if(v1 != v2){ 
-			uf.join(v1, v2);
-			mstSize++;
+	// 	//Edge connects two different components -> add to the MST
+	// 	if(v1 != v2){ 
+	// 		uf.join(v1, v2);
+	// 		mstSize++;
       
-			simplexNode* temp = new simplexNode((*edgeIter)->simplex, (*edgeIter)->weight);
-			pivots.push_back(temp);
+	// 		simplexNode* temp = new simplexNode((*edgeIter)->simplex, (*edgeIter)->weight);
+	// 		pivots.push_back(temp);
 
-			bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, temp->simplex, {temp} };			
-			inData.bettiTable.push_back(des);
-		}
+	// 		bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, temp->simplex, {temp} };			
+	// 		inData.bettiTable.push_back(des);
+	// 	}
 
-		//Check if we've filled our MST and can break
-		if(mstSize >= edges[0].size()-1) break;
-	}
+	// 	//Check if we've filled our MST and can break
+	// 	if(mstSize >= edges[0].size()-1) break;
+	// }
 
-	for(int i=0; i<inData.originalData.size(); i++){
-		if(uf.find(i) == i){ //i is the name of a connected component
-			//Each connected component has an open persistence interval
-			bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
-			inData.bettiTable.push_back(des);
-		}
-	}
+	// for(int i=0; i<inData.originalData.size(); i++){
+	// 	if(uf.find(i) == i){ //i is the name of a connected component
+	// 		//Each connected component has an open persistence interval
+	// 		bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
+	// 		inData.bettiTable.push_back(des);
+	// 	}
+	// }
 	
-	std::cout << "Finished MST" << std::endl;
+	// std::cout << "Finished MST" << std::endl;
 	
 	//For higher dimensional persistence intervals
 	//	
@@ -135,26 +135,45 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		
 		//Track V (reduction matrix) for each column j that has been reduced to identify the constituent 
 		//		boundary simplices
-	
-	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
-		inData.complex->prepareCofacets(d);
-		std::sort(pivots.begin(), pivots.end(), cmpBySecond());
-		std::vector<simplexNode*>::iterator it = pivots.begin();
 
-		std::vector<simplexNode*> nextPivots;	 					//Pivots for the next dimension
-		std::unordered_map<simplexNode*, std::vector<simplexNode*>> v;				//Store only the reduction matrix V and compute R implicity
-		std::unordered_map<simplexNode*, simplexNode*> pivotPairs;	//For each pivot, which column has that pivot
+	std::vector<simplexNode*> simplexList;
 
-		//Iterate over columns to reduce in reverse order
-		for(auto columnIndexIter = edges[d].rbegin(); columnIndexIter != edges[d].rend(); columnIndexIter++){ 
-			simplexNode* simplex = (*columnIndexIter);		//The current simplex
+	for(unsigned d = 0; d <= dim; d++){
+		for(auto it = edges[d].rbegin(); it != edges[d].rend(); it++){
+			simplexList.push_back(*it);
+		}
+	}
 
-			//Not a pivot -> need to reduce
-			if((*it)->weight != simplex->weight || (*it)->simplex != simplex->simplex){ 
-				//Get all cofacets using emergent pair optimization
-				std::vector<simplexNode*> cofaceList = inData.complex->getAllCofacets(simplex->simplex, simplex->weight, pivotPairs);
-				std::vector<simplexNode*> columnV;	//Reduction column of matrix V
-				columnV.push_back(simplex); //Initially V=I -> 1's along diagonal
+	int n = 2;
+	int blockSize = simplexList.size()/n;
+	std::vector<unsigned> blocks;
+	for(int i = 0; i < n; i++) blocks.push_back(i*blockSize);
+	blocks.push_back(simplexList.size());
+
+	std::unordered_map<simplexNode*, std::vector<simplexNode*>> v;				//Store only the reduction matrix V and compute R implicity
+	std::unordered_map<simplexNode*, simplexNode*> pivotPairs[n];	//For each pivot, which column has that pivot
+	std::vector<std::pair<simplexNode*, std::vector<simplexNode*>>> columnsToReduce[n];
+
+	int j = 0;
+	for(unsigned i = 0; i < simplexList.size(); i++){
+		if(i == blocks[j+1]) j++;
+
+		columnsToReduce[j].push_back(make_pair(simplexList[i], inData.complex->getAllCofacets(simplexList[i]->simplex)));
+	}
+
+	for(int diff = 0; diff < n; diff++){
+		for(int j = 0; j < n-diff; j++){
+			int i = j + diff;
+
+			std::cout<<i<<' '<<j<<'\n';
+
+			simplexNode* first = simplexList[blocks[j]];
+			simplexNode* last = simplexList[blocks[j+1]-1];
+			std::vector<std::pair<simplexNode*, std::vector<simplexNode*>>> columns;
+
+			for(auto simp : columnsToReduce[j]){
+				simplexNode* simplex = simp.first;
+				std::vector<simplexNode*> cofaceList = simp.second;
 
 				//Build a heap using the coface list to reduce and store in V
 				std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
@@ -181,42 +200,136 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						}
 					}
 
+ // || simplex->simplex.size() < first->simplex.size() || simplex->simplex.size() > last->simplex.size() || cmpBySecond()(simplexList[blocks[j]], pivot) || cmpBySecond()(pivot, simplexList[blocks[j-1]])
 					if(cofaceList.empty()){ //Column completely reduced
 						break;
-					} else if(pivotPairs.find(pivot) == pivotPairs.end()){ //Column cannot be reduced
-						pivotPairs.insert({pivot, simplex});
-						nextPivots.push_back(pivot);
-
-						std::sort(columnV.begin(), columnV.end());
-						auto it = columnV.begin();
-						while(it != columnV.end()){
-							if((it+1) != columnV.end() && *it==*(it+1)) ++it;
-							else v[simplex].push_back(*it);
-							++it;
+					} 
+					bool flag = false;
+					for(int x = blocks[i]; x < blocks[i+1]; x++){
+						if(simplexList[x] == pivot){
+							flag = true;
+							break;
 						}
+					}
+					if(!flag){
+						columns.push_back(make_pair(simplex, cofaceList));
+						break;
+					}
+
+					if(pivotPairs[i].find(pivot) == pivotPairs[i].end()){ //Column cannot be reduced
+						pivotPairs[i].insert({pivot, simplex});
+
+						v[simplex] = cofaceList;
 
 						if(simplex->weight != pivot->weight){
-							bettiBoundaryTableEntry des = { d, simplex->weight, pivot->weight, {}, cofaceList };
+							bettiBoundaryTableEntry des = { simplex->simplex.size()-1, simplex->weight, pivot->weight, {}, cofaceList };
 							inData.bettiTable.push_back(des);
 						}
 
 						break;
 					} else{ //Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
-						for(simplexNode* simp : v[pivotPairs[pivot]]){
-							columnV.push_back(simp);
-							std::vector<simplexNode*> cofaces = inData.complex->getAllCofacets((simp->simplex));
-							cofaceList.insert(cofaceList.end(), cofaces.begin(), cofaces.end());
-						}
+
+						auto cofaces = v[pivotPairs[i][pivot]];
+						cofaceList.insert(cofaceList.end(), cofaces.begin(), cofaces.end());
 						std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
 					}
 				}
-			
-			//Was a pivot, skip the evaluation and queue next pivot
-			} else ++it;
+			}
+			columnsToReduce[j] = columns;
 		}
-		
-		pivots = nextPivots;
 	}
+
+	// for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
+	// 	int n = 10;
+	// 	int c = edges[d].size()/n, r = edges[d+1].size()/n;
+	// 	std::vector<unsigned> blockRows, blockColumns;
+	// 	for(int i = 0; i < n; i++){
+	// 		blockRows.push_back(i*r);
+	// 		blockColumns.push_back(i*c);
+	// 	}
+	// 	blockColumns.push_back(edges[d].size()-1);
+	// 	blockRows.push_back(edges[d+1].size()-1);
+
+	// 	inData.complex->prepareCofacets(d);
+	// 	std::sort(pivots.begin(), pivots.end(), cmpBySecond());
+	// 	std::vector<simplexNode*>::iterator it = pivots.begin();
+
+	// 	std::vector<simplexNode*> nextPivots;	 					//Pivots for the next dimension
+	// 	std::unordered_map<simplexNode*, std::vector<simplexNode*>> v;				//Store only the reduction matrix V and compute R implicity
+	// 	std::unordered_map<simplexNode*, simplexNode*> pivotPairs;	//For each pivot, which column has that pivot
+
+		// //Iterate over columns to reduce in reverse order
+		// for(auto columnIndexIter = edges[d].rbegin(); columnIndexIter != edges[d].rend(); columnIndexIter++){ 
+		// 	simplexNode* simplex = (*columnIndexIter);		//The current simplex
+
+		// 	//Not a pivot -> need to reduce
+		// 	if((*it)->weight != simplex->weight || (*it)->simplex != simplex->simplex){ 
+		// 		//Get all cofacets using emergent pair optimization
+		// 		std::vector<simplexNode*> cofaceList = inData.complex->getAllCofacets(simplex->simplex, simplex->weight, pivotPairs);
+		// 		std::vector<simplexNode*> columnV;	//Reduction column of matrix V
+		// 		columnV.push_back(simplex); //Initially V=I -> 1's along diagonal
+
+		// 		//Build a heap using the coface list to reduce and store in V
+		// 		std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
+
+		// 		while(true){
+		// 			simplexNode* pivot;
+		// 			while(!cofaceList.empty()){
+		// 				pivot = cofaceList.front();
+
+		// 				//Rotate the heap
+		// 				std::pop_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
+		// 				cofaceList.pop_back();
+
+		// 				if(!cofaceList.empty() && pivot == cofaceList.front()){ //Coface is in twice -> evaluates to 0 mod 2
+							
+		// 					//Rotate the heap
+		// 					std::pop_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
+		// 					cofaceList.pop_back();
+		// 				} else{
+
+		// 					cofaceList.push_back(pivot);
+		// 					std::push_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
+		// 					break;
+		// 				}
+		// 			}
+
+		// 			if(cofaceList.empty()){ //Column completely reduced
+		// 				break;
+		// 			} else if(pivotPairs.find(pivot) == pivotPairs.end()){ //Column cannot be reduced
+		// 				pivotPairs.insert({pivot, simplex});
+		// 				nextPivots.push_back(pivot);
+
+		// 				std::sort(columnV.begin(), columnV.end());
+		// 				auto it = columnV.begin();
+		// 				while(it != columnV.end()){
+		// 					if((it+1) != columnV.end() && *it==*(it+1)) ++it;
+		// 					else v[simplex].push_back(*it);
+		// 					++it;
+		// 				}
+
+		// 				if(simplex->weight != pivot->weight){
+		// 					bettiBoundaryTableEntry des = { d, simplex->weight, pivot->weight, {}, cofaceList };
+		// 					inData.bettiTable.push_back(des);
+		// 				}
+
+		// 				break;
+		// 			} else{ //Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
+		// 				for(simplexNode* simp : v[pivotPairs[pivot]]){
+		// 					columnV.push_back(simp);
+		// 					std::vector<simplexNode*> cofaces = inData.complex->getAllCofacets((simp->simplex));
+		// 					cofaceList.insert(cofaceList.end(), cofaces.begin(), cofaces.end());
+		// 				}
+		// 				std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
+		// 			}
+		// 		}
+			
+		// 	//Was a pivot, skip the evaluation and queue next pivot
+		// 	} else ++it;
+		// }
+		
+		// pivots = nextPivots;
+	// }
 	
 	//Stop the timer for time passed during the pipe's function
 	auto endTime = std::chrono::high_resolution_clock::now();
