@@ -144,31 +144,29 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		}
 	}
 
-	int n = 2;
+	int n = 30;
 	int blockSize = simplexList.size()/n;
 	std::vector<unsigned> blocks;
 	for(int i = 0; i < n; i++) blocks.push_back(i*blockSize);
 	blocks.push_back(simplexList.size());
 
-	std::unordered_map<simplexNode*, std::vector<simplexNode*>> v;				//Store only the reduction matrix V and compute R implicity
+	std::unordered_map<simplexNode*, std::vector<simplexNode*>> v[n];				//Store only the reduction matrix V and compute R implicity
 	std::unordered_map<simplexNode*, simplexNode*> pivotPairs[n];	//For each pivot, which column has that pivot
 	std::vector<std::pair<simplexNode*, std::vector<simplexNode*>>> columnsToReduce[n];
 
-	int j = 0;
+	int block = 0;
 	for(unsigned i = 0; i < simplexList.size(); i++){
-		if(i == blocks[j+1]) j++;
+		if(i == blocks[block+1]) block++;
 
-		columnsToReduce[j].push_back(make_pair(simplexList[i], inData.complex->getAllCofacets(simplexList[i]->simplex)));
+		columnsToReduce[block].push_back(make_pair(simplexList[i], inData.complex->getAllCofacets(simplexList[i]->simplex)));
 	}
 
-	for(int diff = 0; diff < n; diff++){
+	for(int diff = n-1; diff >= 0; diff--){
 		for(int j = 0; j < n-diff; j++){
 			int i = j + diff;
 
-			std::cout<<i<<' '<<j<<'\n';
-
-			simplexNode* first = simplexList[blocks[j]];
-			simplexNode* last = simplexList[blocks[j+1]-1];
+			// simplexNode* first = simplexList[blocks[i]];
+			// simplexNode* last = simplexList[blocks[i+1]-1];
 			std::vector<std::pair<simplexNode*, std::vector<simplexNode*>>> columns;
 
 			for(auto simp : columnsToReduce[j]){
@@ -219,7 +217,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 					if(pivotPairs[i].find(pivot) == pivotPairs[i].end()){ //Column cannot be reduced
 						pivotPairs[i].insert({pivot, simplex});
 
-						v[simplex] = cofaceList;
+						v[i][simplex] = cofaceList;
 
 						if(simplex->weight != pivot->weight){
 							bettiBoundaryTableEntry des = { simplex->simplex.size()-1, simplex->weight, pivot->weight, {}, cofaceList };
@@ -229,7 +227,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						break;
 					} else{ //Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
 
-						auto cofaces = v[pivotPairs[i][pivot]];
+						auto cofaces = v[i][pivotPairs[i][pivot]];
 						cofaceList.insert(cofaceList.end(), cofaces.begin(), cofaces.end());
 						std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
 					}
