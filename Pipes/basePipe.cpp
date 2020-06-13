@@ -19,6 +19,7 @@
 #include "slidingWindow.hpp"
 #include "fastPersistence.hpp"
 #include "naiveWindow.hpp"
+#include "parallelPersistence.hpp"
 
 basePipe* basePipe::newPipe(const std::string &pipeT, const std::string &complexType){
 	ut.writeDebug("basePipe","Building pipeline: " + pipeT + " for " + complexType);
@@ -41,6 +42,8 @@ basePipe* basePipe::newPipe(const std::string &pipeT, const std::string &complex
 		return new fastPersistence();
 	} else if (pipeType == "naivewindow" || pipeType == "naive"){
 		return new naiveWindow();
+	} else if (pipeType == "parallelPersistence"){
+		return new parallelPersistence();
 	}
 	
 	return 0;

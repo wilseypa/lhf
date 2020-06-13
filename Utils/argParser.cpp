@@ -142,6 +142,9 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 		} else if(args["mode"] == "fast"){
 			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
 			args["upscale"] = "false";
+		} else if(args["mode"] == "parallel"){
+			args["pipeline"] = "distMatrix.neighGraph.rips.parallelPersistence";
+			args["upscale"] = "false";
 		} else if(args["mode"] == "naive" || args["mode"] == "naivewindow"){
 			args["preprocessor"] = "";
 			args["pipeline"] = "naivewindow";
