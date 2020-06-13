@@ -44,13 +44,12 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 	//Start a timer for physical time passed during the pipe's function
 	auto startTime = std::chrono::high_resolution_clock::now();
 
-	int n = 30; //Number of threads
+	int n = 5; //Number of threads
 
 	std::unordered_map<simplexNode*, std::vector<simplexNode*>> boundary[n];	//Store the boundary matrix
 	std::unordered_map<simplexNode*, simplexNode*> pivotPairs[n];				//For each pivot, which column has that pivot
 	std::vector<std::pair<simplexNode*, std::vector<simplexNode*>>> columnsToReduce[n]; //Columns in the jth range which need to be reduced
 	simplexNode* first[n]; 	//First simplex in the ith range
-	std::vector<simplexNode*> pivots[n]; //Store identified pivots
 
 	int nSimplices = 0; //Total number of simplices
 	for(unsigned d = 0; d <= dim; d++) nSimplices += edges[d].size();
@@ -63,6 +62,7 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 	int block = 0;
 	unsigned i = 0;
 
+	first[0] = *edges[0].rbegin();
 	for(unsigned d = 0; d <= dim; d++){
 		for(auto it = edges[d].rbegin(); it != edges[d].rend(); it++){
 			if(i == blocks[block+1]){
