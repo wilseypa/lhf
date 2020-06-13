@@ -138,7 +138,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	
 	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
 		inData.complex->prepareCofacets(d);
-		std::sort(pivots.begin(), pivots.end(), cmpBySecond());
+		std::sort(pivots.begin(), pivots.end(), cmpByWeightDec());
 		std::vector<simplexNode*>::iterator it = pivots.begin();
 
 		std::vector<simplexNode*> nextPivots;	 					//Pivots for the next dimension
@@ -157,7 +157,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 				columnV.push_back(simplex); //Initially V=I -> 1's along diagonal
 
 				//Build a heap using the coface list to reduce and store in V
-				std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
+				std::make_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
 
 				while(true){
 					simplexNode* pivot;
@@ -165,18 +165,18 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						pivot = cofaceList.front();
 
 						//Rotate the heap
-						std::pop_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
+						std::pop_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
 						cofaceList.pop_back();
 
 						if(!cofaceList.empty() && pivot == cofaceList.front()){ //Coface is in twice -> evaluates to 0 mod 2
 							
 							//Rotate the heap
-							std::pop_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
+							std::pop_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
 							cofaceList.pop_back();
 						} else{
 
 							cofaceList.push_back(pivot);
-							std::push_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
+							std::push_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
 							break;
 						}
 					}
@@ -207,7 +207,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 							std::vector<simplexNode*> cofaces = inData.complex->getAllCofacets((simp->simplex));
 							cofaceList.insert(cofaceList.end(), cofaces.begin(), cofaces.end());
 						}
-						std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
+						std::make_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
 					}
 				}
 			

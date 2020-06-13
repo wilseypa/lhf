@@ -9,7 +9,6 @@
 
 class parallelPersistence : public basePipe {
   private:
-	int shift = 0;
 	double maxEpsilon;
   public:
 	int dim;

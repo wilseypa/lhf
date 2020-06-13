@@ -26,7 +26,7 @@ parallelPersistence::parallelPersistence(){
 
 struct cmpSimplices{
 	bool operator()(simplexNode* a, simplexNode* b){
-		if(a->simplex.size() == b->simplex.size()) return cmpBySecond()(a, b);
+		if(a->simplex.size() == b->simplex.size()) return cmpByWeightDec()(a, b);
 		return a->simplex.size() < b->simplex.size();
 	}
 };
@@ -50,6 +50,7 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 	std::unordered_map<simplexNode*, simplexNode*> pivotPairs[n];				//For each pivot, which column has that pivot
 	std::vector<std::pair<simplexNode*, std::vector<simplexNode*>>> columnsToReduce[n]; //Columns in the jth range which need to be reduced
 	simplexNode* first[n]; 	//First simplex in the ith range
+	std::vector<simplexNode*> pivots[n]; //Store identified pivots
 
 	int nSimplices = 0; //Total number of simplices
 	for(unsigned d = 0; d <= dim; d++) nSimplices += edges[d].size();
@@ -72,13 +73,13 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 			//Iterate over all the edges and assign each column to the correct thread
 			std::vector<simplexNode*> cofaceList = inData.complex->getAllCofacets((*it)->simplex);
 			//Build a heap using the coface list to reduce and store in V
-			std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
+			std::make_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
 			columnsToReduce[block].push_back(make_pair(*it, cofaceList));
 			i++;
 		}
 	}
 
-	//Row i and column j
+	//Row range i (node i) and column range j
 	//Iterate from (n-1, 0)
 	// (n-2, 0), (n-1, 1)
 	// (n-3, 0), (n-2, 1), (n-1, 2)
@@ -94,24 +95,26 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 				simplexNode* simplex = simp.first;
 				std::vector<simplexNode*> cofaceList = simp.second;
 
+				if(pivotPairs[i].find(simplex) != pivotPairs[i].end()) continue;
+
 				while(true){
 					simplexNode* pivot;
 					while(!cofaceList.empty()){
 						pivot = cofaceList.front();
 
 						//Rotate the heap
-						std::pop_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
+						std::pop_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
 						cofaceList.pop_back();
 
 						if(!cofaceList.empty() && pivot == cofaceList.front()){ //Coface is in twice -> evaluates to 0 mod 2
 							
 							//Rotate the heap
-							std::pop_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
+							std::pop_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
 							cofaceList.pop_back();
 						} else{
 
 							cofaceList.push_back(pivot);
-							std::push_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
+							std::push_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
 							break;
 						}
 					}
@@ -136,7 +139,7 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 
 						auto cofaces = boundary[i][pivotPairs[i][pivot]];
 						cofaceList.insert(cofaceList.end(), cofaces.begin(), cofaces.end());
-						std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
+						std::make_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
 					}
 				}
 			}
