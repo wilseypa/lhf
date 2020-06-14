@@ -44,7 +44,7 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 	//Start a timer for physical time passed during the pipe's function
 	auto startTime = std::chrono::high_resolution_clock::now();
 
-	int n = 5; //Number of threads
+	int n = 1; //Number of threads
 
 	std::unordered_map<simplexNode*, std::vector<simplexNode*>> boundary[n];	//Store the boundary matrix
 	std::unordered_map<simplexNode*, simplexNode*> pivotPairs[n];				//For each pivot, which column has that pivot
@@ -71,10 +71,7 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 			}
 
 			//Iterate over all the edges and assign each column to the correct thread
-			std::vector<simplexNode*> cofaceList = inData.complex->getAllCofacets((*it)->simplex);
-			//Build a heap using the coface list to reduce and store in V
-			std::make_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
-			columnsToReduce[block].push_back(make_pair(*it, cofaceList));
+			columnsToReduce[block].push_back(make_pair(*it, std::vector<simplexNode*>()));
 			i++;
 		}
 	}
@@ -96,6 +93,12 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 				std::vector<simplexNode*> cofaceList = simp.second;
 
 				if(pivotPairs[i].find(simplex) != pivotPairs[i].end()) continue;
+
+				//Build a heap using the coface list to reduce and store in V
+				if(cofaceList.empty()){
+					cofaceList = inData.complex->getAllCofacets(simplex->simplex);
+					std::make_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
+				}
 
 				while(true){
 					simplexNode* pivot;
@@ -143,10 +146,11 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 					}
 				}
 			}
+			//Send unreduced columns to the next node
 			columnsToReduce[j] = unreducedColumns;
 		}
 	}
-	
+
 	//Stop the timer for time passed during the pipe's function
 	auto endTime = std::chrono::high_resolution_clock::now();
 
@@ -154,7 +158,7 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 	std::chrono::duration<double, std::milli> elapsed = endTime - startTime;
 
 	//Output the time and memory used for this pipeline segment
-	ut.writeDebug("persistence","Bettis executed in " + std::to_string(elapsed.count()/1000.0) + " seconds (physical time)");;
+	ut.writeDebug("parallelPersistence","Bettis executed in " + std::to_string(elapsed.count()/1000.0) + " seconds (physical time)");;
 		
 	return inData;
 }

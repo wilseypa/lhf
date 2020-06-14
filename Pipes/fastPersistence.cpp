@@ -225,7 +225,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	std::chrono::duration<double, std::milli> elapsed = endTime - startTime;
 
 	//Output the time and memory used for this pipeline segment
-	ut.writeDebug("persistence","Bettis executed in " + std::to_string(elapsed.count()/1000.0) + " seconds (physical time)");;
+	ut.writeDebug("fastPersistence","Bettis executed in " + std::to_string(elapsed.count()/1000.0) + " seconds (physical time)");;
 		
 	return inData;
 }
