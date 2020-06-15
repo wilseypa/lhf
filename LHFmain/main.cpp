@@ -11,7 +11,7 @@
 	#include "pipePacket.hpp"
 	#include "preprocessor.hpp"
 	#include "utils.hpp"
-
+        #include <string> 
 	int nprocs,id;
 	 
 	void runPipeline(std::map<std::string, std::string> args, pipePacket* wD){
@@ -317,16 +317,33 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 	std::vector<double> betti_death;
 	std::vector<unsigned> betti_boundarysize;
 	std::vector<unsigned> betti_boundaries;
+	
+        std::vector<std::vector<std::vector<double>>> smallCentroidsPartitionedData;
+        std::vector<std::vector<unsigned>> smallCentroidsPartitionedLabel;
+	std::vector<bettiBoundaryTableEntry> mergedCentroidsBettiTable;           
+
 	//Check if we are the master process for upscaling   
 	if(id == 0){
-		std::vector<bettiBoundaryTableEntry> mergedMasterBettiTable;
+		std::vector<bettiBoundaryTableEntry> mergedMasterBettiTable;           
+        	
+		std::vector<std::vector<unsigned>> bigPartitionedLabel;
+	        std::vector<std::vector<std::vector<double>>> bigPartitionedData;
+	       
+	        std::vector<std::vector<std::vector<double>>> bigCentroidsPartitionedData;
+         	std::vector<std::vector<unsigned>> bigCentroidsPartitionedLabel;
+         
+	        std::vector<std::vector<unsigned>> smallPartitionedLabel;
+		std::vector<std::vector<std::vector<double>>> smallPartitionedData;
 		
+		//  std::cout<<"Maximum Partition Size "<<std::atoi(args["maxsize"].c_str())<<std::endl;		
 		//Read our input data
+		
 		auto *rs = new readInput();
 		wD->originalData = rs->readCSV(args["inputFile"]);
 		wD->fullData = wD->originalData;
-
+                int maxlabel=wD->originalData.size();
 		//Partition the data with the configured preprocessor
+ITERATIVEPARTITIONING :
 		auto pre = args["preprocessor"];
 		if(pre != ""){
 			auto *preprocess = new preprocessor();
@@ -345,17 +362,117 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		auto avgRadius = ut.computeAvgRadius(std::atoi(args["clusters"].c_str()), wD->originalData, wD->fullData, wD->originalLabels);
 		centroids = wD->originalData;
 		
+                
 		//Store the count of original points in each partition for merging
-		
+//		std::transform(std::begin(wD->originalLabels),std::end(wD->originalLabels),std::begin(wD->originalLabels),[maxlabel](unsigned x){return x+maxlabel;});
 		for(unsigned a = 0; a < std::atoi(args["clusters"].c_str()); a++){
 			binCounts.push_back(std::count(wD->originalLabels.begin(), wD->originalLabels.end(), a));
 		}
-		
-		//Partition the data into separate data vectors
-		partitionedData = ut.separatePartitions(scalar*maxRadius, wD->originalData, wD->fullData, wD->originalLabels);
+              	partitionedData = ut.separatePartitions(scalar*maxRadius, wD->originalData, wD->fullData, wD->originalLabels);
+ 
+  		for(int i=0;i<partitionedData.second.size();i++){
+		     if(partitionedData.second[i].size()>std::atoi(args["maxsize"].c_str())){
+		        bigPartitionedData.push_back(partitionedData.second[i]);	    
+                     }
+		     else{
+		        smallPartitionedData.push_back(partitionedData.second[i]);
+			smallPartitionedLabel.push_back(partitionedData.first[i]);
+		     }
+		}
+                            
+                if(centroids.size()>std::atoi(args["maxsize"].c_str())){
+			bigCentroidsPartitionedData.push_back(centroids);
+         	}
+		else
+		{
+			smallCentroidsPartitionedData.push_back(centroids);
+			std::vector<unsigned> centroidsLabel;
+		        int i;
+			for(i=maxlabel;i<maxlabel+centroids.size();i++)
+                           centroidsLabel.push_back(i);
+                        maxlabel=i;
+			smallCentroidsPartitionedLabel.push_back(centroidsLabel);
+
+		}
+
+        /*                
+		std::cout<<std::endl<<"Max Label "<<maxlabel<<std::endl;
+
+
+                std::cout<<std::endl<<"large "<<std::endl;
+		for(int a=0; a < bigPartitionedData.size();a++)
+		std::cout<<"{"<<bigPartitionedData[a].size()<<"} ";
 	
+                std::cout<<std::endl<<"large centroids "<<std::endl;
+		for(int a=0; a < bigCentroidsPartitionedData.size();a++)
+		std::cout<<"{"<<bigCentroidsPartitionedData[a].size()<<"} ";
+                
+		std::cout<<std::endl<<"small "<<std::endl;
+		for(int a=0; a < smallPartitionedData.size();a++)
+		std::cout<<"{"<<smallPartitionedData[a].size()<<","<<smallPartitionedLabel[a].size()<<"} ";
+	
+                std::cout<<std::endl<<"small centroids "<<std::endl;
+		for(int a=0; a < smallCentroidsPartitionedData.size();a++)
+		std::cout<<"{"<<smallCentroidsPartitionedData[a].size()<<","<<smallCentroidsPartitionedLabel[a].size()<<"} ";
+                int k1;
+		std::cin>>k1;	
+	*/
+		char cluster[20];
+		for(int i=bigPartitionedData.size()-1;i>=0;i++){
+			wD->originalData = bigPartitionedData[i];
+			wD->fullData = wD->originalData;
+			wD->originalLabels = {};
+			args["clusters"] = std::to_string((int)(bigPartitionedData[i].size()/10));
+			bigPartitionedData.pop_back();
+                        goto ITERATIVEPARTITIONING;
+		}
+
+		for(int i=bigCentroidsPartitionedData.size()-1;i>=0;i++){
+			wD->originalData = bigCentroidsPartitionedData[i];
+			wD->fullData = wD->originalData;
+			wD->originalLabels = {};
+			args["clusters"] = std::to_string((int)(bigCentroidsPartitionedData[i].size()/10));
+			bigCentroidsPartitionedData.pop_back();
+                        goto ITERATIVEPARTITIONING;
+		}
+
+                        
+	/*	std::cout<<std::endl<<"Max Label "<<maxlabel<<std::endl;
+
+                std::cout<<std::endl<<"small "<<std::endl;
+		for(int a=0; a < smallPartitionedData.size();a++)
+		std::cout<<"{"<<smallPartitionedData[a].size()<<","<<smallPartitionedLabel[a].size()<<"} ";
+	
+                std::cout<<std::endl<<"small centroids "<<std::endl;
+		for(int a=0; a < smallCentroidsPartitionedData.size();a++)
+		std::cout<<"{"<<smallCentroidsPartitionedData[a].size()<<","<<smallCentroidsPartitionedLabel[a].size()<<"} ";
+        */
+		std::vector<unsigned> index;
+        
+                for(unsigned i=0;i<smallPartitionedLabel.size();i++)
+			index.push_back(i);
+
+		std::random_shuffle(index.begin(),index.end());
+
+		std::vector<std::vector<unsigned>> smallPartitionedLabelFinal;
+		std::vector<std::vector<std::vector<double>>> smallPartitionedDataFinal;
+
+		for(unsigned i=0;i<smallPartitionedLabel.size();i++){
+			smallPartitionedDataFinal.push_back(smallPartitionedData[index[i]]);
+		        smallPartitionedLabelFinal.push_back(smallPartitionedLabel[index[i]]);
+		}
+
+                        
+		std::cout<<std::endl<<"Max Label "<<maxlabel<<std::endl;
+
+                std::cout<<std::endl<<"Small Final "<<std::endl;
+		for(int a=0; a < smallPartitionedDataFinal.size();a++)
+			std::cout<<"{"<<smallPartitionedDataFinal[a].size()<<","<<smallPartitionedLabelFinal[a].size()<<"} ";
+	       
+		partitionedData = std::make_pair(smallPartitionedLabelFinal,smallPartitionedDataFinal);
+
 		//	Each node/slave will process at least 1 partition
-		//		NOTE: the partition may contain points outside partition that are within 2*Rmax
+		//	NOTE: the partition may contain points outside partition that are within 2*Rmax
 		minPartitions = partitionedData.second.size() / (nprocs-1);
 		firstk = partitionedData.second.size() - (minPartitions*(nprocs-1));
 				
@@ -368,7 +485,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 			for(auto b : a)
 				for(auto c : b)
 					sdata.push_back(c);
-	    //serialize all the labels
+	        //serialize all the labels
 		for(auto a : partitionedData.first)
 			for(auto b : a)
 				sdatalabel.push_back(b);
@@ -382,7 +499,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		
 		//distributing partitions in scounts and scountslabel
 		int temp=0,k=1;
-     	for(auto a : partitionsize){
+         	for(auto a : partitionsize){
 			if(k-1<firstk){
 				if(temp>=minPartitions+1){
 					temp=0;
@@ -403,8 +520,8 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		maxsize=0;
 		maxsizelabel=0;
 		scounts[0]=0;
-	// find the maximum buffer size required for partition
-        for(auto  a : scounts){
+		// find the maximum buffer size required for partition
+        	for(auto  a : scounts){
 			displs[k] = a + displs[k-1];
 			k++;
 			if(a>maxsize)
@@ -412,7 +529,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		}
 		k=1;
 		scountslabel[0]=0;
-	// find maximum buffer size required by label partition	
+		// find maximum buffer size required by label partition	
 		for(auto  a : scountslabel){
 			displslabel[k] = a + displslabel[k-1];
 			k++;
@@ -420,7 +537,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 				maxsizelabel = a;
 		}		
 		// No partitions to master therefore zero
-	    scounts[0]=0;
+	        scounts[0]=0;
 		scountslabel[0]=0;
 		
 		partitionsize_size = partitionsize.size();
@@ -442,12 +559,12 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 	MPI_Bcast(&minPartitions,1,MPI_INT,0,MPI_COMM_WORLD);
 	MPI_Bcast(&maxsize,1,MPI_INT,0,MPI_COMM_WORLD);
 	MPI_Bcast(&scounts,nprocs,MPI_INT,0,MPI_COMM_WORLD);
-    MPI_Bcast(&maxsizelabel,1,MPI_INT,0,MPI_COMM_WORLD);
+    	MPI_Bcast(&maxsizelabel,1,MPI_INT,0,MPI_COMM_WORLD);
 
 	if(id <= firstk && id !=0)
 		minPartitions = minPartitions + 1;
 	
-    receivedData = (double *)malloc(maxsize*sizeof(double));
+        receivedData = (double *)malloc(maxsize*sizeof(double));
 	receivedDataLabel = (unsigned *)malloc(maxsizelabel*sizeof(unsigned));
 	for(int i=0;i<maxsize;i++){
 			receivedData[i] = 0.0;
@@ -458,21 +575,39 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 
 //	scatter the partions to slaves.
 	MPI_Scatterv( &sdata[0],scounts,displs, MPI_DOUBLE, receivedData, maxsize, MPI_DOUBLE,0, MPI_COMM_WORLD);
-    MPI_Scatterv( &sdatalabel[0],scountslabel,displslabel, MPI_UNSIGNED, receivedDataLabel, maxsizelabel, MPI_UNSIGNED,0, MPI_COMM_WORLD);
+   	 MPI_Scatterv( &sdatalabel[0],scountslabel,displslabel, MPI_UNSIGNED, receivedDataLabel, maxsizelabel, MPI_UNSIGNED,0, MPI_COMM_WORLD);
     
 	if(id==0){
 	
 		//Run the centroid replaced data set through master while other processes execute on partitions
-		std::cout << "Full Data: " << centroids.size() << std::endl;
-		if(centroids.size() > 0){
-			std::cout << "Running Pipeline with : " << centroids.size() << " vectors" << std::endl;
-			wD->originalData = centroids;
-			runPipeline(args, wD);
+
+		std::cout << "Full Data: " << smallCentroidsPartitionedData.size() << std::endl;
+                for(int i=0;i<smallCentroidsPartitionedData.size();i++){
+			if(smallCentroidsPartitionedData[i].size() > 0){
+				std::cout << "Running Centroids Pipeline with : " << smallCentroidsPartitionedData[i].size() << " vectors" << std::endl;
+				wD->originalData = smallCentroidsPartitionedData[i];;
+				runPipeline(args, wD);
+                               
+				auto temp = ut.mapPartitionIndexing(smallCentroidsPartitionedLabel[i] , wD->bettiTable);
+			       
+				
+				for(auto newEntry : temp){
+					bool found = false;
+					for(auto curEntry : mergedCentroidsBettiTable){
+						if(newEntry.death == curEntry.death && newEntry.boundaryPoints == curEntry.boundaryPoints){
+							found = true;
+						}
+					}
+					if(!found)
+						mergedCentroidsBettiTable.push_back(newEntry);
+				}
+				wD->bettiTable.clear();
+				wD->complex->clear();
+			}
+		       	else 
+				std::cout << "skipping" << std::endl;
 		
-	         	wD->complex->clear();
-		} else 
-			std::cout << "skipping" << std::endl;
-		
+		}
 	//SLAVE PROCESS:
 	} else {
 		//NOTE: need to have dynamic partition size; whether that means serializing and sending
@@ -502,7 +637,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		}
 
 		p=0;
-        for(int i=0;i<minPartitions;i++){
+                for(int i=0;i<minPartitions;i++){
 			std::vector<unsigned> partitionlabel;
 			for(int j=0;j<partitionsize[displacement+i];j++){
 				partitionlabel.push_back(receivedDataLabel[p++]);
@@ -664,10 +799,13 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		}
 
 		//Merge bettis from the centroid based data
-		for(auto betEntry : wD->bettiTable){
-			if(betEntry.bettiDim > 0 ){
+		for(auto betEntry : mergedCentroidsBettiTable){
+		///	if(betEntry.bettiDim > 0 ){
 			    mergedBettiTable.push_back(betEntry);
-			}
+		//	}
+			
+	//		std::cout << betEntry.bettiDim << ",\t" << betEntry.birth << ",\t" << betEntry.death << ",\t";
+	//		ut.print1DVector(betEntry.boundaryPoints);
 		}
 			
 		std::cout << std::endl << "_______Merged BETTIS_______" << std::endl;

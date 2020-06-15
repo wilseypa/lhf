@@ -9,8 +9,8 @@
 #include <iostream>
 #include "argParser.hpp"
 
-std::map<std::string, std::string> argMap = { {"scalar","s"},{"mpi","a"},{"mode","m"},{"dimensions","d"},{"iterations","r"},{"pipeline","p"},{"inputFile","i"},{"outputFile","o"},{"epsilon","e"},{"lambda","l"},{"debug","x"},{"complexType","c"},{"clusters","k"},{"preprocessor","pre"},{"upscale","u"},{"twist","t"},{"collapse","z"}};
-std::map<std::string, std::string> defaultMap = { {"scalar","2.0"},{"mpi", "0"},{"mode", "standard"},{"dimensions","1"},{"iterations","250"},{"pipeline",""},{"inputFile","None"},{"outputFile","output.csv"},{"epsilon","5"},{"lambda",".25"},{"debug","0"},{"complexType","simplexTree"},{"clusters","20"},{"preprocessor",""},{"upscale","false"},{"twist","false"},{"collapse","false"}};
+std::map<std::string, std::string> argMap = {{"maxsize","ms"}, {"scalar","s"},{"mpi","a"},{"mode","m"},{"dimensions","d"},{"iterations","r"},{"pipeline","p"},{"inputFile","i"},{"outputFile","o"},{"epsilon","e"},{"lambda","l"},{"debug","x"},{"complexType","c"},{"clusters","k"},{"preprocessor","pre"},{"upscale","u"},{"twist","t"},{"collapse","z"}};
+std::map<std::string, std::string> defaultMap = {{"maxsize","2000"},{"scalar","2.0"},{"mpi", "0"},{"mode", "standard"},{"dimensions","1"},{"iterations","250"},{"pipeline",""},{"inputFile","None"},{"outputFile","output.csv"},{"epsilon","5"},{"lambda",".25"},{"debug","0"},{"complexType","simplexTree"},{"clusters","20"},{"preprocessor",""},{"upscale","false"},{"twist","false"},{"collapse","false"}};
 
 // argParse constructor, currently no needed information for the class constructor
 argParser::argParser(){
@@ -125,7 +125,6 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 				args["preprocessor"] = "kmeans++";
 			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
 			args["upscale"] = "false";
-			args["complexType"] = "simplexTree";
 		} else if(args["mode"] == "upscaleBound"){
 			if(args["preprocessor"] == "")
 				args["preprocessor"] = "kmeans++";
