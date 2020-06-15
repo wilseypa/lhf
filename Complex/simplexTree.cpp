@@ -54,17 +54,12 @@ void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth,
 
 	//Check if the node needs inserted at this level
 	if(curE < maxEpsilon){
-		simp.insert(node->index);		
-		simplexNode* insNode = new simplexNode();
-		insNode->index = curIndex;
-		insNode->simplex = simp;
-		insNode->sibling = nullptr;
-		insNode->child = nullptr;
-		nodeCount++;
-
+		simp.insert(node->index);
 		//Get the largest weight of this simplex
-		insNode->weight = curE > node->weight ? curE : node->weight;
-		maxE = insNode->weight;
+		maxE = curE > node->weight ? curE : node->weight;
+		simplexNode* insNode = new simplexNode(simp, maxE);
+		insNode->index = curIndex;
+		nodeCount++;
 		
 		//if depth (i.e. 1 for first iteration) is LT weightGraphSize (starts at 1)
 		if(simplexList.size() < simp.size()){
@@ -293,10 +288,8 @@ void simplexTree::insert() {
 	}
 
 	//Create our new node to insert
-	simplexNode* insNode = new simplexNode;
+	simplexNode* insNode = new simplexNode({indexCounter}, 0);
 	insNode->index = indexCounter;
-	std::set<unsigned> tempSet = {insNode->index};
-	insNode->simplex = tempSet;
 	
 	//Track this index in our current window (for sliding window)
 	runningVectorIndices.push_back(insNode);
@@ -304,7 +297,7 @@ void simplexTree::insert() {
 	//Check if this is the first node (i.e. head)
 	//	If so, initialize the head node
 	if(root == nullptr){
-		root = new simplexNode;
+		root = new simplexNode();
 		insNode->parent = root;
 		root->child = insNode;
 		root->children.insert(insNode);
@@ -342,7 +335,7 @@ void simplexTree::insert() {
 	//	iterate to d0->sibling
 
 	for(auto simplexListIter = simplexList[0].begin(); simplexListIter != simplexList[0].end(); simplexListIter++){
-		recurseInsert((*simplexListIter), indexCounter, 0, 0, tempSet);
+		recurseInsert((*simplexListIter), indexCounter, 0, 0, {indexCounter});
 	}
 
 	//Insert into the right of the tree
@@ -581,7 +574,7 @@ bool simplexTree::deletion(simplexNode* removalEntry) {
 	nodeCount--;
 	
 	//Remove from the simplex list
-	simplexList[curNode->simplex.size() - 1].erase(curNode);
+	simplexList[curNode->simplex.size() - 1].erase(simplexList[curNode->simplex.size() - 1].find(curNode));
 	
 	delete curNode;
 	return false;
@@ -592,15 +585,12 @@ void simplexTree::clear(){
 	
 	if(root != nullptr){
 		//Iterate each simplexList[0] entry and delete
-		for(auto simp : simplexList[0])
+		for(auto simp : root->children)
 			deletion(simp);
 	
 		root = nullptr;
 	}
 	
-	for(auto i = 0; i < simplexList.size(); i++){
-		simplexList[i].clear();
-	}
 	simplexList.clear();
 
 	simplexOffset = runningVectorCount;

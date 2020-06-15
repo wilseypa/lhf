@@ -19,6 +19,9 @@ struct simplexNode{
 	simplexNode* sibling = nullptr;
 	simplexNode* parent = nullptr;
 	double weight = 0;
+
+	simplexNode(){}
+	simplexNode(std::set<unsigned> simp, double wt) : simplex(simp), weight(wt) {}
 };
 
 
