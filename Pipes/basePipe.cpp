@@ -42,7 +42,7 @@ basePipe* basePipe::newPipe(const std::string &pipeT, const std::string &complex
 		return new fastPersistence();
 	} else if (pipeType == "naivewindow" || pipeType == "naive"){
 		return new naiveWindow();
-	} else if (pipeType == "parallelPersistence"){
+	} else if (pipeType == "parallelPersistence" || pipeType == "parallel"){
 		return new parallelPersistence();
 	}
 	

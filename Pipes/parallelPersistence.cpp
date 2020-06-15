@@ -4,6 +4,7 @@
  * 
  */
 
+#include "omp.h"
 #include <string>
 #include <chrono>
 #include <iostream>
@@ -36,6 +37,7 @@ struct cmpSimplices{
 //	parallelPersistence: For computing the persistence pairs from simplicial complex:
 //		1. See Bauer-19 for algorithm/description
 pipePacket parallelPersistence::runPipe(pipePacket inData){
+	
 	//Get all edges for the simplexArrayList or simplexTree
 	std::vector<std::set<simplexNode*, cmpByWeight>> edges = inData.complex->getAllEdges();
 
@@ -43,113 +45,119 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 	
 	//Start a timer for physical time passed during the pipe's function
 	auto startTime = std::chrono::high_resolution_clock::now();
+	
+	#pragma omp parallel num_threads(threads)
+	{
+		int n = omp_get_num_threads();
+		printf("Thread %d started\n", omp_get_thread_num());
 
-	int n = 1; //Number of threads
+		std::unordered_map<simplexNode*, std::vector<simplexNode*>> boundary[n];	//Store the boundary matrix
+		std::unordered_map<simplexNode*, simplexNode*> pivotPairs[n];				//For each pivot, which column has that pivot
+		std::vector<std::pair<simplexNode*, std::vector<simplexNode*>>> columnsToReduce[n]; //Columns in the jth range which need to be reduced
+		simplexNode* first[n]; 	//First simplex in the ith range
 
-	std::unordered_map<simplexNode*, std::vector<simplexNode*>> boundary[n];	//Store the boundary matrix
-	std::unordered_map<simplexNode*, simplexNode*> pivotPairs[n];				//For each pivot, which column has that pivot
-	std::vector<std::pair<simplexNode*, std::vector<simplexNode*>>> columnsToReduce[n]; //Columns in the jth range which need to be reduced
-	simplexNode* first[n]; 	//First simplex in the ith range
+		int nSimplices = 0; //Total number of simplices
+		for(unsigned d = 0; d <= dim; d++) nSimplices += edges[d].size();
 
-	int nSimplices = 0; //Total number of simplices
-	for(unsigned d = 0; d <= dim; d++) nSimplices += edges[d].size();
+		int blockSize = nSimplices/n; //Create approximately equal size blocks
+		std::vector<unsigned> blocks;
+		for(int i = 0; i < n; i++) blocks.push_back(i*blockSize);
+		blocks.push_back(nSimplices);
 
-	int blockSize = nSimplices/n; //Create approximately equal size blocks
-	std::vector<unsigned> blocks;
-	for(int i = 0; i < n; i++) blocks.push_back(i*blockSize);
-	blocks.push_back(nSimplices);
+		int block = 0;
+		unsigned i = 0;
 
-	int block = 0;
-	unsigned i = 0;
-
-	first[0] = *edges[0].rbegin();
-	for(unsigned d = 0; d <= dim; d++){
-		for(auto it = edges[d].rbegin(); it != edges[d].rend(); it++){
-			if(i == blocks[block+1]){
-				block++;
-				first[block] = *it;
-			}
-
-			//Iterate over all the edges and assign each column to the correct thread
-			columnsToReduce[block].push_back(make_pair(*it, std::vector<simplexNode*>()));
-			i++;
-		}
-	}
-
-	//Row range i (node i) and column range j
-	//Iterate from (n-1, 0)
-	// (n-2, 0), (n-1, 1)
-	// (n-3, 0), (n-2, 1), (n-1, 2)
-	// etc.
-	for(int diff = n-1; diff >= 0; diff--){ //Difference between i and j
-		for(int j = 0; j < n-diff; j++){
-			int i = j + diff;
-
-			//Columns that won't be reduced on this node -> must be sent to the next node
-			std::vector<std::pair<simplexNode*, std::vector<simplexNode*>>> unreducedColumns;
-
-			for(auto simp : columnsToReduce[j]){
-				simplexNode* simplex = simp.first;
-				std::vector<simplexNode*> cofaceList = simp.second;
-
-				if(pivotPairs[i].find(simplex) != pivotPairs[i].end()) continue;
-
-				//Build a heap using the coface list to reduce and store in V
-				if(cofaceList.empty()){
-					cofaceList = inData.complex->getAllCofacets(simplex->simplex);
-					std::make_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
+		first[0] = *edges[0].rbegin();
+		for(unsigned d = 0; d <= dim; d++){
+			for(auto it = edges[d].rbegin(); it != edges[d].rend(); it++){
+				if(i == blocks[block+1]){
+					block++;
+					first[block] = *it;
 				}
 
-				while(true){
-					simplexNode* pivot;
-					while(!cofaceList.empty()){
-						pivot = cofaceList.front();
+				//Iterate over all the edges and assign each column to the correct thread
+				columnsToReduce[block].push_back(make_pair(*it, std::vector<simplexNode*>()));
+				i++;
+			}
+		}
 
-						//Rotate the heap
-						std::pop_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
-						cofaceList.pop_back();
+		//Row range i (node i) and column range j
+		//Iterate from (n-1, 0)
+		// (n-2, 0), (n-1, 1)
+		// (n-3, 0), (n-2, 1), (n-1, 2)
+		// etc.
+		for(int diff = n-1; diff >= 0; diff--){ //Difference between i and j
+			for(int j = 0; j < n-diff; j++){
+				int i = j + diff;
 
-						if(!cofaceList.empty() && pivot == cofaceList.front()){ //Coface is in twice -> evaluates to 0 mod 2
-							
+				//Columns that won't be reduced on this node -> must be sent to the next node
+				std::vector<std::pair<simplexNode*, std::vector<simplexNode*>>> unreducedColumns;
+
+				for(auto simp : columnsToReduce[j]){
+					simplexNode* simplex = simp.first;
+					std::vector<simplexNode*> cofaceList = simp.second;
+
+					if(pivotPairs[i].find(simplex) != pivotPairs[i].end()) continue;
+
+					//Build a heap using the coface list to reduce and store in V
+					if(cofaceList.empty()){
+						cofaceList = inData.complex->getAllCofacets(simplex->simplex);
+						std::make_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
+					}
+
+					while(true){
+						simplexNode* pivot;
+						while(!cofaceList.empty()){
+							pivot = cofaceList.front();
+
 							//Rotate the heap
 							std::pop_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
 							cofaceList.pop_back();
-						} else{
 
-							cofaceList.push_back(pivot);
-							std::push_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
+							if(!cofaceList.empty() && pivot == cofaceList.front()){ //Coface is in twice -> evaluates to 0 mod 2
+								
+								//Rotate the heap
+								std::pop_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
+								cofaceList.pop_back();
+							} else{
+
+								cofaceList.push_back(pivot);
+								std::push_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
+								break;
+							}
+						}
+						
+						if(cofaceList.empty()){ //Column completely reduced
 							break;
+						} else if(cmpSimplices()(pivot, first[i])){ //Pivot is not in range i
+							unreducedColumns.push_back(make_pair(simplex, cofaceList));
+							break;
+						} else if(pivotPairs[i].find(pivot) == pivotPairs[i].end()){ //Column cannot be reduced
+							pivotPairs[i].insert({pivot, simplex});
+
+							boundary[i][simplex] = cofaceList;
+
+							if(simplex->weight != pivot->weight){
+								bettiBoundaryTableEntry des = { simplex->simplex.size()-1, simplex->weight, pivot->weight, {}, cofaceList };
+								inData.bettiTable.push_back(des);
+							}
+
+							break;
+						} else{ //Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
+
+							auto cofaces = boundary[i][pivotPairs[i][pivot]];
+							cofaceList.insert(cofaceList.end(), cofaces.begin(), cofaces.end());
+							std::make_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
 						}
-					}
-					
-					if(cofaceList.empty()){ //Column completely reduced
-						break;
-					} else if(cmpSimplices()(pivot, first[i])){ //Pivot is not in range i
-						unreducedColumns.push_back(make_pair(simplex, cofaceList));
-						break;
-					} else if(pivotPairs[i].find(pivot) == pivotPairs[i].end()){ //Column cannot be reduced
-						pivotPairs[i].insert({pivot, simplex});
-
-						boundary[i][simplex] = cofaceList;
-
-						if(simplex->weight != pivot->weight){
-							bettiBoundaryTableEntry des = { simplex->simplex.size()-1, simplex->weight, pivot->weight, {}, cofaceList };
-							inData.bettiTable.push_back(des);
-						}
-
-						break;
-					} else{ //Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
-
-						auto cofaces = boundary[i][pivotPairs[i][pivot]];
-						cofaceList.insert(cofaceList.end(), cofaces.begin(), cofaces.end());
-						std::make_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
 					}
 				}
+				//Send unreduced columns to the next node
+				columnsToReduce[j] = unreducedColumns;
 			}
-			//Send unreduced columns to the next node
-			columnsToReduce[j] = unreducedColumns;
 		}
+		
 	}
+	//END PARALLEL EXECUTION
 
 	//Stop the timer for time passed during the pipe's function
 	auto endTime = std::chrono::high_resolution_clock::now();
@@ -210,6 +218,11 @@ bool parallelPersistence::configPipe(std::map<std::string, std::string> configMa
 	pipe = configMap.find("dimensions");
 	if(pipe != configMap.end())
 		dim = std::atoi(configMap["dimensions"].c_str());
+	else return false;
+	
+	pipe = configMap.find("threads");
+	if(pipe != configMap.end())
+		threads = std::atoi(configMap["threads"].c_str());
 	else return false;
 	
 	pipe = configMap.find("epsilon");

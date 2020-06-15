@@ -3,8 +3,8 @@
 #
 enable_testing()
 
-cmake_minimum_required(VERSION 3.5)
-set (CMAKE_CXX_STANDARD_LIBRARIES "-lpthread")
+cmake_minimum_required(VERSION 3.9)
+set (CMAKE_CXX_STANDARD_LIBRARIES "-lpthread -fopenmp")
 set (CMAKE_CXX_STANDARD 14)
 
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}")

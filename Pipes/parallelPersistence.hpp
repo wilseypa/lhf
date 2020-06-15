@@ -11,7 +11,7 @@ class parallelPersistence : public basePipe {
   private:
 	double maxEpsilon;
   public:
-	int dim;
+	int dim, threads;
     parallelPersistence();
     pipePacket runPipe(pipePacket inData);
     bool configPipe(std::map<std::string, std::string> configMap);

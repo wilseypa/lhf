@@ -4,6 +4,9 @@
 
 cmake_minimum_required(VERSION 3.5)
 
+find_package(OpenMP)
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+
 add_library(pipePacket "pipePacket.cpp" "pipePacket.hpp")
 add_library(basePipe "basePipe.cpp" "basePipe.hpp")
 add_library(distMatrixPipe "distMatrixPipe.cpp" "distMatrixPipe.hpp")
@@ -27,7 +30,7 @@ include_directories(../Utils)
 link_directories(../Utils)
 
 # target_link_libraries(LHF PipeFunctions)
-target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe ripsPipe upscalePipe boundaryPipe persistencePairs slidingWindow fastPersistence naiveWindow parallelPersistence)
+target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe ripsPipe upscalePipe boundaryPipe persistencePairs slidingWindow fastPersistence naiveWindow parallelPersistence OpenMP::OpenMP_CXX)
 
 INSTALL (TARGETS basePipe
 	LIBRARY DESTINATION lib
