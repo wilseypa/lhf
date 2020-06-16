@@ -91,7 +91,7 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 	#pragma omp parallel num_threads(threads)
 	{
 		int np = omp_get_thread_num();
-		printf("Thread %d started, executing on chunk %d - %d\n", omp_get_thread_num(), blockSize*np, blocks[np+1]-1);
+		printf("Thread %d started, executing on chunk %d - %d\n", omp_get_thread_num(), blocks[np], blocks[np+1]-1);
 		//For each thread - 
 		//		Begin processing own chunk; reduce all possible columns
 		//			Columns that can't be reduced are passed on to thread n+1
@@ -100,7 +100,7 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 		//			-Perform 2 loops of spectral sequence
 		//				-First loop is only columns in the same chunk
 		//				-Second loop only add from chunk and left neighbor
-		//			-If we still have unreduced columns, pass to the 
+		//			-If we still have unreduced columns, pass to the global reduction
 		//			
 		//		Key Storage:
 		//			-n, the total number of threads
@@ -181,17 +181,41 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 			}
 		}
 		
-		//Round 2: chunk + left neighbor reduction
-		//		This needs a synchronization that the left neighbor has finished first pass
-		//		
+		//Round 2: chunk + left neighbor reduction (probably should generalize the above)
+		//		2 options here, probably need to test
+		//			(A) wait for reduced neighbor (needs synchronization)
+		//				-This results in less overall work, but must wait
+		//			(B) proceed with unreduced neighbor and throw away reductions in [np-1]
+		//				-No synchronization, but more processing overall (repeats)
+		//
+		//
+		//		(A) Wait for reduced column columnsToReduce[np-1]
+		//			-Use columnsToReduce, then blocks[np] through blocks[np+1]-1
+		//
+		//		(B) Use new indices - 
+		//			-blocks[np-1], the starting index for the chunk
+		//			-blocks[np+1] - 1, the ending index for the chunk (same)
 		
 		
 		
-		//Send unreduced columns to submatrix (gxg) global
 		
+		//Send unreduced columns to submatrix (g*g) global
+		//	This needs to either be a synchronized structure or compressed before reducing the global submatrix
 		
 	}
-	//END PARALLEL EXECUTION
+	//END PARALLEL EXECUTION	
+
+
+
+	//Reduce global submatrix (g*g)
+	
+	
+	
+	
+	//Compress results into betti table
+
+
+
 
 	//Stop the timer for time passed during the pipe's function
 	auto endTime = std::chrono::high_resolution_clock::now();
