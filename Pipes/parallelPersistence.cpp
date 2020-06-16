@@ -46,54 +46,72 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 	//Start a timer for physical time passed during the pipe's function
 	auto startTime = std::chrono::high_resolution_clock::now();
 	
+	
+	//Build buffers for each thread
+	int n = omp_get_num_threads();
+	std::unordered_map<simplexNode*, std::vector<simplexNode*>> boundary[n];	//Store the boundary matrix
+	std::unordered_map<simplexNode*, simplexNode*> pivotPairs[n];				//For each pivot, which column has that pivot
+	std::vector<std::pair<simplexNode*, std::vector<simplexNode*>>> columnsToReduce[n]; //Columns in the jth range which need to be reduced
+	//Columns that won't be reduced on this node -> must be sent to the next node
+	std::vector<std::vector<std::pair<simplexNode*, std::vector<simplexNode*>>>> unreducedColumns[n];
+	simplexNode* first[n]; 	//First simplex in the ith range
+	
+	int nSimplices = 0; //Total number of simplices
+	for(unsigned d = 0; d <= dim; d++) nSimplices += edges[d].size();
+
+	int blockSize = nSimplices/n; //Create approximately equal size blocks
+	std::vector<unsigned> blocks;
+	for(int i = 0; i < n; i++) blocks.push_back(i*blockSize);
+	blocks.push_back(nSimplices);
+
+	int block = 0;
+	unsigned i = 0;
+
+	first[0] = *edges[0].rbegin();
+	for(unsigned d = 0; d <= dim; d++){
+		for(auto it = edges[d].rbegin(); it != edges[d].rend(); it++){
+			if(i == blocks[block+1]){
+				block++;
+				first[block] = *it;
+			}
+
+			//Iterate over all the edges and assign each column to the correct thread
+			columnsToReduce[block].push_back(make_pair(*it, std::vector<simplexNode*>()));
+			i++;
+		}
+	}
+	
+	std::cout << "starting threads: " << threads << std::endl;
+	
 	#pragma omp parallel num_threads(threads)
 	{
-		int n = omp_get_num_threads();
+		int np = omp_get_thread_num();
 		printf("Thread %d started\n", omp_get_thread_num());
 
-		std::unordered_map<simplexNode*, std::vector<simplexNode*>> boundary[n];	//Store the boundary matrix
-		std::unordered_map<simplexNode*, simplexNode*> pivotPairs[n];				//For each pivot, which column has that pivot
-		std::vector<std::pair<simplexNode*, std::vector<simplexNode*>>> columnsToReduce[n]; //Columns in the jth range which need to be reduced
-		simplexNode* first[n]; 	//First simplex in the ith range
+		//For each thread - 
+		//		Begin processing own chunk; reduce all possible columns
+		//			Columns that can't be reduced are passed on to thread n+1
+		//			
+		//		Some Notes:
+		//			-Perform 2 loops of spectral sequence
+		//				-First loop is only columns in the same chunk
+		//				-Second loop only add from chunk and left neighbor
+		//			
+		//		Key Storage:
+		//			-n, the total number of threads
+		//			-np, the current thread number
+		//			-blocks[np], the starting index for the chunk
+		//			-blocks[np+1] - 1, the ending index for the chunk
 
-		int nSimplices = 0; //Total number of simplices
-		for(unsigned d = 0; d <= dim; d++) nSimplices += edges[d].size();
+		//First reduction of columns in same chunk, to be passed to right neighbor (np + 1)
+		//	Iterate from row range i (number of rows) and column range j
+		
+		for(int i = blocks[np] -1; i >= blocks[np]; i--){ //iterate the block backwards in i
+			for(int j = blocks[np]; j <= i; j++){ //iterate the block forwards in j
 
-		int blockSize = nSimplices/n; //Create approximately equal size blocks
-		std::vector<unsigned> blocks;
-		for(int i = 0; i < n; i++) blocks.push_back(i*blockSize);
-		blocks.push_back(nSimplices);
+				int diff = j - i;
 
-		int block = 0;
-		unsigned i = 0;
-
-		first[0] = *edges[0].rbegin();
-		for(unsigned d = 0; d <= dim; d++){
-			for(auto it = edges[d].rbegin(); it != edges[d].rend(); it++){
-				if(i == blocks[block+1]){
-					block++;
-					first[block] = *it;
-				}
-
-				//Iterate over all the edges and assign each column to the correct thread
-				columnsToReduce[block].push_back(make_pair(*it, std::vector<simplexNode*>()));
-				i++;
-			}
-		}
-
-		//Row range i (node i) and column range j
-		//Iterate from (n-1, 0)
-		// (n-2, 0), (n-1, 1)
-		// (n-3, 0), (n-2, 1), (n-1, 2)
-		// etc.
-		for(int diff = n-1; diff >= 0; diff--){ //Difference between i and j
-			for(int j = 0; j < n-diff; j++){
-				int i = j + diff;
-
-				//Columns that won't be reduced on this node -> must be sent to the next node
-				std::vector<std::pair<simplexNode*, std::vector<simplexNode*>>> unreducedColumns;
-
-				for(auto simp : columnsToReduce[j]){
+				for(auto simp : columnsToReduce[np]){
 					simplexNode* simplex = simp.first;
 					std::vector<simplexNode*> cofaceList = simp.second;
 
@@ -130,7 +148,7 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 						if(cofaceList.empty()){ //Column completely reduced
 							break;
 						} else if(cmpSimplices()(pivot, first[i])){ //Pivot is not in range i
-							unreducedColumns.push_back(make_pair(simplex, cofaceList));
+							//(unreducedColumns[np]).push_back(make_pair(simplex, cofaceList));
 							break;
 						} else if(pivotPairs[i].find(pivot) == pivotPairs[i].end()){ //Column cannot be reduced
 							pivotPairs[i].insert({pivot, simplex});
@@ -150,11 +168,22 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 							std::make_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
 						}
 					}
-				}
+				}			
+				
+				
 				//Send unreduced columns to the next node
-				columnsToReduce[j] = unreducedColumns;
+				//columnsToReduce[np + 1] = unreducedColumns[np];
 			}
 		}
+		
+		//Round 2: chunk + left neighbor reduction
+		//		This needs a synchronization that the left neighbor has finished first pass
+		//		
+		
+		
+		
+		//Send unreduced columns to submatrix (gxg) global
+		
 		
 	}
 	//END PARALLEL EXECUTION
