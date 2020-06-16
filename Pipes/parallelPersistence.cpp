@@ -48,18 +48,21 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 	
 	
 	//Build buffers for each thread
-	int n = omp_get_num_threads();
+	int n = threads;
 	std::unordered_map<simplexNode*, std::vector<simplexNode*>> boundary[n];	//Store the boundary matrix
 	std::unordered_map<simplexNode*, simplexNode*> pivotPairs[n];				//For each pivot, which column has that pivot
 	std::vector<std::pair<simplexNode*, std::vector<simplexNode*>>> columnsToReduce[n]; //Columns in the jth range which need to be reduced
 	//Columns that won't be reduced on this node -> must be sent to the next node
-	std::vector<std::vector<std::pair<simplexNode*, std::vector<simplexNode*>>>> unreducedColumns[n];
+	std::vector<std::pair<simplexNode*, std::vector<simplexNode*>>> unreducedColumns[n];
 	simplexNode* first[n]; 	//First simplex in the ith range
 	
 	int nSimplices = 0; //Total number of simplices
 	for(unsigned d = 0; d <= dim; d++) nSimplices += edges[d].size();
 
+	std::cout << "Total Simplices: " << nSimplices << std::endl;
+
 	int blockSize = nSimplices/n; //Create approximately equal size blocks
+	std::cout << "blockSize: " << blockSize << std::endl;
 	std::vector<unsigned> blocks;
 	for(int i = 0; i < n; i++) blocks.push_back(i*blockSize);
 	blocks.push_back(nSimplices);
@@ -81,13 +84,14 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 		}
 	}
 	
+	//Do work on the entire boundary matrix; don't go dimension by dimension
+	
 	std::cout << "starting threads: " << threads << std::endl;
 	
 	#pragma omp parallel num_threads(threads)
 	{
 		int np = omp_get_thread_num();
-		printf("Thread %d started\n", omp_get_thread_num());
-
+		printf("Thread %d started, executing on chunk %d - %d\n", omp_get_thread_num(), blockSize*np, blocks[np+1]-1);
 		//For each thread - 
 		//		Begin processing own chunk; reduce all possible columns
 		//			Columns that can't be reduced are passed on to thread n+1
@@ -96,6 +100,7 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 		//			-Perform 2 loops of spectral sequence
 		//				-First loop is only columns in the same chunk
 		//				-Second loop only add from chunk and left neighbor
+		//			-If we still have unreduced columns, pass to the 
 		//			
 		//		Key Storage:
 		//			-n, the total number of threads
@@ -106,7 +111,7 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 		//First reduction of columns in same chunk, to be passed to right neighbor (np + 1)
 		//	Iterate from row range i (number of rows) and column range j
 		
-		for(int i = blocks[np] -1; i >= blocks[np]; i--){ //iterate the block backwards in i
+		for(int i = blocks[np+1] -1; i >= blocks[np+1]; i--){ //iterate the block backwards in i
 			for(int j = blocks[np]; j <= i; j++){ //iterate the block forwards in j
 
 				int diff = j - i;
@@ -148,7 +153,7 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 						if(cofaceList.empty()){ //Column completely reduced
 							break;
 						} else if(cmpSimplices()(pivot, first[i])){ //Pivot is not in range i
-							//(unreducedColumns[np]).push_back(make_pair(simplex, cofaceList));
+							(unreducedColumns[np]).push_back(make_pair(simplex, cofaceList));
 							break;
 						} else if(pivotPairs[i].find(pivot) == pivotPairs[i].end()){ //Column cannot be reduced
 							pivotPairs[i].insert({pivot, simplex});
