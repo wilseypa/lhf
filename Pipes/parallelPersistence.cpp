@@ -49,85 +49,102 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 	
 	//Build buffers for each thread
 	int n = threads;
-	std::unordered_map<simplexNode*, std::vector<simplexNode*>> boundary[n];	//Store the boundary matrix
-	std::unordered_map<simplexNode*, simplexNode*> pivotPairs[n];				//For each pivot, which column has that pivot
-	std::vector<std::pair<simplexNode*, std::vector<simplexNode*>>> columnsToReduce[n]; //Columns in the jth range which need to be reduced
-	//Columns that won't be reduced on this node -> must be sent to the next node
-	std::vector<std::pair<simplexNode*, std::vector<simplexNode*>>> unreducedColumns[n];
+	std::unordered_map<simplexNode*, std::vector<simplexNode*>> boundary;	//Store the boundary matrix
+	//std::unordered_map<simplexNode*, simplexNode*> pivotPairs;				//For each pivot, which column has that pivot
+	std::vector<std::pair<simplexNode*, std::vector<simplexNode*>>> columnsToReduce; //Columns in the jth range which need to be reduced
+	
 	simplexNode* first[n]; 	//First simplex in the ith range
 	
-	int nSimplices = 0; //Total number of simplices
-	for(unsigned d = 0; d <= dim; d++) nSimplices += edges[d].size();
-
-	std::cout << "Total Simplices: " << nSimplices << std::endl;
-
-	int blockSize = nSimplices/n; //Create approximately equal size blocks
-	std::cout << "blockSize: " << blockSize << std::endl;
 	std::vector<unsigned> blocks;
-	for(int i = 0; i < n; i++) blocks.push_back(i*blockSize);
-	blocks.push_back(nSimplices);
-
-	int block = 0;
-	unsigned i = 0;
-
-	first[0] = *edges[0].rbegin();
+	int nSimplices = 0; //Total number of simplices
 	for(unsigned d = 0; d <= dim; d++){
-		for(auto it = edges[d].rbegin(); it != edges[d].rend(); it++){
-			if(i == blocks[block+1]){
-				block++;
-				first[block] = *it;
-			}
-
-			//Iterate over all the edges and assign each column to the correct thread
-			columnsToReduce[block].push_back(make_pair(*it, std::vector<simplexNode*>()));
-			i++;
-		}
+		blocks.push_back(nSimplices);
+		
+		nSimplices += edges[d].size();
 	}
+	blocks.push_back(nSimplices);
+	std::cout << "Total Simplices: " << nSimplices << std::endl;
 	
-	//Do work on the entire boundary matrix; don't go dimension by dimension
+	std::cout << "Blocks: \t";
+	for(auto a : blocks)
+		std::cout << a << "\t";
+	std::cout << std::endl;
+	
+	std::cout << "d0: " << edges[0].size() << std::endl;
+	std::cout << "d1: " << edges[1].size() << std::endl;
+	std::cout << "d2: " << edges[2].size() << std::endl; 
 	
 	std::cout << "starting threads: " << threads << std::endl;
 	
-	#pragma omp parallel num_threads(threads)
-	{
-		int np = omp_get_thread_num();
-		printf("Thread %d started, executing on chunk %d - %d\n", omp_get_thread_num(), blocks[np], blocks[np+1]-1);
-		//For each thread - 
-		//		Begin processing own chunk; reduce all possible columns
-		//			Columns that can't be reduced are passed on to thread n+1
-		//			
-		//		Some Notes:
-		//			-Perform 2 loops of spectral sequence
-		//				-First loop is only columns in the same chunk
-		//				-Second loop only add from chunk and left neighbor
-		//			-If we still have unreduced columns, pass to the global reduction
-		//			
-		//		Key Storage:
-		//			-n, the total number of threads
-		//			-np, the current thread number
-		//			-blocks[np], the starting index for the chunk
-		//			-blocks[np+1] - 1, the ending index for the chunk
-
-		//First reduction of columns in same chunk, to be passed to right neighbor (np + 1)
-		//	Iterate from row range i (number of rows) and column range j
+	std::vector<int> iter(threads, 0);
+	std::vector<bool> complete(50, 0);
+	
+	//Process within each dimension
+	for(unsigned d = 0; d <= dim; d++){
+	
+		//Within the dimension, the algorithm needs to process edges[d] columns; this defines our omp FOR clause
+		//		The bounds of these points (i_min, i_max) - 
+		//			i_min = blocks[d] ; i_max = blocks[d+1];
+		//		We only consider these in the forms of columns of reduction to be processed with their cofaces
+	
+		int i_min = blocks[d];
+		int i_max = blocks[d+1];
 		
-		for(int i = blocks[np+1] -1; i >= blocks[np+1]; i--){ //iterate the block backwards in i
-			for(int j = blocks[np]; j <= i; j++){ //iterate the block forwards in j
+		std::cout << "Using bounds: " << i_min << "\t" << i_max << std::endl;
+		
+		//Reduce only to our necessary columns:
+		
+		columnsToReduce = inData.complex->simplexList[d];
+		
+		std::cout << "reducing columns: " << columnsToReduce.size() << std::endl;
+		
+		inData.complex->prepareCofacets(d);
+		std::sort(pivots.begin(), pivots.end(), cmpByWeightDec());
+		std::vector<simplexNode*>::iterator it = pivots.begin();
 
-				int diff = j - i;
+		std::vector<simplexNode*> nextPivots;	 					//Pivots for the next dimension
+		std::unordered_map<simplexNode*, std::vector<simplexNode*>> v;				//Store only the reduction matrix V and compute R implicity
+		std::unordered_map<simplexNode*, simplexNode*> pivotPairs;	//For each pivot, which column has that pivot
+		
+		unsigned curCoIndex = 0;
+	
+		#pragma omp parallel num_threads(threads)
+		{
+			int np = omp_get_thread_num();
+			//
+			//	For each column to reduce, which contains a list of cofacets and an index in the weighted list
+			//		if the index before us (n-1) has been processed in the boolean vector, our reduced lowest cofacet is a pivot
+			//			While the index before us hasn't been processed, we can reduce in parallel against the reduction matrix
+			//				To do this, wait for the lowest cofacet to be a pivot, then reduce, and wait for the next lowest cofacet to be a pivot
+			//
+			//			
+			//		Some Notes:
+			//			-This is a np-independent algorithm; don't worry about n (# of threads) or np (current thread #) in this context
+			//			
+			//		Key Storage:
+			//			-curCoIndex - stores the current index that is ready to be emitted (keeps sequential ordering of the columns)
+			//			
 
-				for(auto simp : columnsToReduce[np]){
-					simplexNode* simplex = simp.first;
-					std::vector<simplexNode*> cofaceList = simp.second;
+			
+			#pragma omp for schedule(dynamic) ordered
+			for(unsigned coIndex = 0; coIndex < columnsToReduce.size(); coIndex++){ 
+				
+				auto simp = columnsToReduce[coIndex];
+				simplexNode* simplex = simp.first;
+				std::vector<simplexNode*> cofaceList = simp.second;
+				
+				if(pivotPairs[i].find(simplex) != pivotPairs[i].end()) continue;
 
-					if(pivotPairs[i].find(simplex) != pivotPairs[i].end()) continue;
-
-					//Build a heap using the coface list to reduce and store in V
-					if(cofaceList.empty()){
-						cofaceList = inData.complex->getAllCofacets(simplex->simplex);
-						std::make_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
-					}
-
+				//Build a heap using the coface list to reduce and store in V
+				if(cofaceList.empty()){
+					cofaceList = inData.complex->getAllCofacets(simplex->simplex);
+					std::make_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
+				}				
+				
+				
+				//Loop through reducing the columns until we can push our pivot or clear
+				while(curCoIndex != coIndex){
+					
 					while(true){
 						simplexNode* pivot;
 						while(!cofaceList.empty()){
@@ -153,13 +170,14 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 						if(cofaceList.empty()){ //Column completely reduced
 							break;
 						} else if(cmpSimplices()(pivot, first[i])){ //Pivot is not in range i
-							(unreducedColumns[np]).push_back(make_pair(simplex, cofaceList));
+							(unreducedColumns).push_back(make_pair(simplex, cofaceList));
 							break;
-						} else if(pivotPairs[i].find(pivot) == pivotPairs[i].end()){ //Column cannot be reduced
-							pivotPairs[i].insert({pivot, simplex});
+						} else if(pivotPairs.find(pivot) == pivotPairs.end()){ //Column cannot be reduced
+							pivotPairs.insert({pivot, simplex});
 
-							boundary[i][simplex] = cofaceList;
+							boundary[simplex] = cofaceList;
 
+							//Needs to be synchronized or inserted into array
 							if(simplex->weight != pivot->weight){
 								bettiBoundaryTableEntry des = { simplex->simplex.size()-1, simplex->weight, pivot->weight, {}, cofaceList };
 								inData.bettiTable.push_back(des);
@@ -168,7 +186,7 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 							break;
 						} else{ //Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
 
-							auto cofaces = boundary[i][pivotPairs[i][pivot]];
+							auto cofaces = boundary[pivotPairs[pivot]];
 							cofaceList.insert(cofaceList.end(), cofaces.begin(), cofaces.end());
 							std::make_heap(cofaceList.begin(), cofaceList.end(), cmpByWeightDec());
 						}
@@ -176,46 +194,20 @@ pipePacket parallelPersistence::runPipe(pipePacket inData){
 				}			
 				
 				
-				//Send unreduced columns to the next node
-				//columnsToReduce[np + 1] = unreducedColumns[np];
+
+						
 			}
+			
+			
 		}
+		//END PARALLEL EXECUTION	
 		
-		//Round 2: chunk + left neighbor reduction (probably should generalize the above)
-		//		2 options here, probably need to test
-		//			(A) wait for reduced neighbor (needs synchronization)
-		//				-This results in less overall work, but must wait
-		//			(B) proceed with unreduced neighbor and throw away reductions in [np-1]
-		//				-No synchronization, but more processing overall (repeats)
-		//
-		//
-		//		(A) Wait for reduced column columnsToReduce[np-1]
-		//			-Use columnsToReduce, then blocks[np] through blocks[np+1]-1
-		//
-		//		(B) Use new indices - 
-		//			-blocks[np-1], the starting index for the chunk
-		//			-blocks[np+1] - 1, the ending index for the chunk (same)
-		
-		
-		
-		
-		//Send unreduced columns to submatrix (g*g) global
-		//	This needs to either be a synchronized structure or compressed before reducing the global submatrix
-		
+		std::cout << std::endl;
 	}
-	//END PARALLEL EXECUTION	
 
-
-
-	//Reduce global submatrix (g*g)
-	
-	
-	
-	
-	//Compress results into betti table
-
-
-
+	for(int i = 0; i < iter.size(); i++){
+		std::cout << "Thread #" << i << " completed " << iter[i] << std::endl;
+	}
 
 	//Stop the timer for time passed during the pipe's function
 	auto endTime = std::chrono::high_resolution_clock::now();

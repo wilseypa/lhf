@@ -6,7 +6,6 @@ on:
       - master
       - MPI_Development
       - cmake_development
-      - parallelPersistence
 
 jobs:
   build:
