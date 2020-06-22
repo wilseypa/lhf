@@ -12,9 +12,11 @@ find_package(MPI REQUIRED)
 add_definitions(-DOMPI_SKIP_MPICXX)
 include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 
+find_package(OpenMP)
+
 set (CMAKE_CXX_STANDARD 14)
 set (CMAKE_CXX_STANDARD_LIBRARIES "-lpthread -lmpi")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fopenmp")
 
 include_directories(../Complex)
 link_directories(../Complex)
@@ -31,7 +33,7 @@ link_directories(../Utils)
 #Add Source to this project's executable
 add_executable(LHF "main.cpp")
 
-target_link_libraries(LHF PRIVATE simplexBase pipePacket utils basePipe preprocessor)
+target_link_libraries(LHF PRIVATE simplexBase pipePacket utils basePipe preprocessor OpenMP::OpenMP_CXX)
 
 
 
