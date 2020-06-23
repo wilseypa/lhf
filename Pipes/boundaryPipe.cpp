@@ -182,149 +182,33 @@ std::vector<std::vector<unsigned>> boundaryPipe::extractBoundaries(std::vector<s
 
 // runPipe -> Run the configured functions of this pipeline segment
 //
-//		generate boundary matrix, determine constituent boundaries
-//		edges that make up the boundary
-//
-//		For each dimension, 
-//			Generate boundary matrix at each weight
-//				Then, reduce the boundary matrix to RREF
-//				Extract boundaries from RREF
-//			Generate barcodes (lifespans) of each component
-//				WITH boundaries that form the barcode
 //
 pipePacket boundaryPipe::runPipe(pipePacket inData){
-	std::vector<std::vector<unsigned>> allBoundaries;
 	
-	
-	struct bettiDef_t{
-		double epsilon;
-		int dim;
-		int betti;
-	};
-	
-	std::vector<bettiDef_t> bettis;
-	
-	
-	std::vector<int> bettiNumbers;
-	std::vector<float> lifeSpans[dim];
-	
-	std::vector<std::set<simplexNode*, cmpByWeight>> edges;
-	
-	//Retrieve
-	auto local_weights = inData.weights;
-	std::string barcodes;
-	for(int d2 = 0; d2 <= dim; d2++){
-		bettiNumbers.push_back(0);
-	}
-	
-	std::string bettiOutput[] = {"Epsilon\t\tDim\tBD\tBetti\trank\tnullity\tlRank\tlNul\n","Epsilon\t\tDim\tBD\tBetti\trank\tnullity\tlRank\tlNul\n","Epsilon\t\tDim\tBD\tBetti\trank\tnullity\tlRank\tlNul\n"};
-	
-	double epsilon = 0;
-	
-	//For each edge
-	for(auto eps : local_weights){
-		//Reload the buffers with the current edges
-		edges = inData.complex->getAllEdges();
+	if(dim < 2)
+		return inData;
 		
-		//Get the weights (increasing order)
-		//Check if we've already processed or not
-		if(epsilon != eps){
-			epsilon = eps;
-			auto last_rank_nul = std::make_pair(0,0);
-			
-			//Iterate through each dimension to build boundary matrix
-			for(int d = dim; d >= 0; d--){
-				
-				//Get the reduced boundary matrix
-				std::pair<std::vector<std::vector<unsigned>>,std::pair<int,int>>  bound_rank_nul;
-				
-				//if(d == 0)
-				//	bound_rank_nul = boundaryMatrix({}, edges[d]);
-				//else
-				//	bound_rank_nul = boundaryMatrix(edges[d-1], edges[d]);
-				
-				if(d > 1){
-					std::cout <<"Extracting boundaries..." << std::endl;
-					/*std::vector<std::vector<unsigned>> z = extractBoundaries(edges[d-1], bound_rank_nul.first, bound_rank_nul.second.second);
-					
-					std::cout << "\n\n______________BOUNDARIES (" << std::to_string(z.size()) << ")_______________" << std::endl;
-					
-					for(auto a : z){
-						ut.print1DVector(a);
-					}
-					
-					
-					for(auto bound : z){
-						std::cout << "bound\t";
-						for(auto curBound : allBoundaries){
-							std::cout << "curBound\t";
-							if(ut.setIntersect(bound, curBound, true).size() > bound.size())
-								allBoundaries.push_back(bound);
-						}
-					}*/
-				}
-				
-				auto rank_nul = bound_rank_nul.second;
-											
-				if(bettiNumbers[d] != (rank_nul.second- last_rank_nul.first)){
-					bettiNumbers[d] = (rank_nul.second- last_rank_nul.first);
-				}
-				
-				if(d != dim)
-					bettis.push_back(bettiDef_t {epsilon, d, rank_nul.second - last_rank_nul.first});
-				if(debug){
-					bettiOutput[d] += std::to_string(epsilon) + "\t" + std::to_string(d) + "\t" + std::to_string(d-1) + "\t" + std::to_string(rank_nul.second)/* - last_rank_nul.first)*/ + "\t" + std::to_string(rank_nul.first) + "\t" + std::to_string(rank_nul.second) + "\t" + std::to_string(last_rank_nul.first) + "\t" + std::to_string(last_rank_nul.second) + "\n";
-				}
-				last_rank_nul = rank_nul;
-				
-			}
-		}
-
-	}
+	int count = 0;
+		
+	std::vector<bettiBoundaryTableEntry> tempBetti;
 	
-	std::string output = "Dim,Birth,Death\n";
 	
-	for(int i = 0; i < dim; i ++){
-		bettiDef_t lastBetti = {0.0,i,0};
-		for(int j = bettis.size(); j >= 0; j--){
-			int lastBirth;
-			
-			if(bettis[j].dim == i){
-				
-				if(bettis[j].betti < lastBetti.betti){
-					for(int k = 0; k < (lastBetti.betti - bettis[j].betti); k++)
-						output += std::to_string(i) + "," + std::to_string(lastBetti.epsilon) + "," + std::to_string(bettis[j].epsilon) + "\n";
-					lastBetti.betti = bettis[j].betti;
-				}
-				if(bettis[j].betti > lastBetti.betti){
-					lastBetti.epsilon = bettis[j].epsilon;
-					lastBetti.betti = bettis[j].betti;
-				}
+	//Extract the higher-dimensional boundary points by using the map created from fastPersistence
+	for(auto bet : inData.bettiTable){
+		if(bet.bettiDim > 0){
+			std::set<unsigned> totalBoundary;
+			for(auto index : bet.boundaryPoints){
+				totalBoundary.insert(index);
 			}
+			count++;
+			tempBetti.push_back({bet.bettiDim, bet.birth, bet.death, totalBoundary, bet.boundary});
 			
-			if(j == 0){
-				while(lastBetti.betti > 0){
-					output += std::to_string(i) + "," + std::to_string(lastBetti.epsilon) + "," + std::to_string(maxEpsilon) + "\n";
-					lastBetti.betti--;
-				}
-			}
+		} else {
+			tempBetti.push_back(bet);
 		}
 	}
 	
-	if(debug){
-		std::cout << "\n\n______________RESULTS_______________" << std::endl;
-		std::cout << bettiOutput[0] << std::endl << std::endl;
-		std::cout << bettiOutput[1] << std::endl << std::endl;
-		std::cout << bettiOutput[2] << std::endl;
-		std::cout << std::endl << output << std::endl;
-	}
-	
-	std::cout << "\n\n______________BOUNDARIES_______________" << std::endl;
-	for(auto a : allBoundaries){
-		ut.print1DVector(a);
-	}
-	
-	inData.bettiOutput = output;
+	std::cout << "Boundaries updated: " << count << std::endl;
 	
 	return inData;
 }
