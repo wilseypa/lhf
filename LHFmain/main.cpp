@@ -168,6 +168,9 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 	int partitionsize_size = partitionsize.size();
 	ut.print1DVector(partitionsize);
 	
+	//		Append the centroid dataset to run in parallel as well
+	partitionedData.second.push_back(centroids);
+	
 	
 	
 	//3. Process each partition using OpenMP to handle multithreaded scheduling
@@ -185,9 +188,27 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 		//		Schedule each thread to compute one of the partitions in any order
 		//			When finished, thread will grab next iteration available
 		#pragma omp for schedule(dynamic)
-		for(unsigned z = 0; z < partitionedData.second.size(); z++){
+		for(int z = partitionedData.second.size()-1; z >= 0; z--){
 			
-			if(partitionedData.second[z].size() > 0){				
+			//Check if we are running the centroid dataset (there's no label associated)
+			if(z == partitionedData.first.size()){
+				//		Run on full dataset
+				//		Set the pipeline to include the boundary and upscaling steps
+				args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence.boundary";
+				if(centroids.size() > 0){
+					wD->originalData = centroids;
+					runPipeline(args, wD);
+					
+					wD->complex->clear();
+				} else 
+					std::cout << "skipping full data, no centroids" << std::endl;
+					
+				//Determine if we need to upscale any additional boundaries based on the output of the centroid approximated PH
+				
+				
+					
+					
+			} else if(partitionedData.second[z].size() > 0){				
 				
 				//		Clone the pipePacket to prevent shared memory race conditions
 				auto curwD = new pipePacket(args, args["complexType"]);	
@@ -287,14 +308,7 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 		mergedBettiTable.push_back(des);
 	}
 	
-	//		Run on full dataset
-	if(centroids.size() > 0){
-		wD->originalData = centroids;
-		runPipeline(args, wD);
-		
-		wD->complex->clear();
-	} else 
-		std::cout << "skipping full data, no centroids" << std::endl;
+	
 		
 	//		Merge bettis from the centroid based data
 	for(auto betEntry : wD->bettiTable){
