@@ -101,24 +101,33 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 	//We may also want to limit the number of recursions for bigger data sets
 	
 	
-	auto iterwD = new pipePacket(args, args["complexType"]);	
+	//Break this down into better code sections:
 	
+	
+	//1. Local objects and storage
+	
+	//		Parameters	
 	auto threshold = std::atoi(args["threshold"].c_str());
-	
 	auto maxEpsilon = std::atof(args["epsilon"].c_str());
-	utils ut;
 	auto scalar = std::atof(args["scalar"].c_str());
 	auto threads = std::atoi(args["threads"].c_str());
-	auto *ws = new writeOutput();
-	auto originalDataSize = wD->originalData.size();
+	
+	//		Referenced Libraries
+	utils ut;
+	
+	//		Local Storage
 	std::vector<bettiBoundaryTableEntry> mergedBettiTable;
 	std::vector<bettiBoundaryTableEntry> partBettiTable[threads];
+	auto originalDataSize = wD->originalData.size();
 	
-	
+	//		Initalize a copy of the pipePacket
+	auto iterwD = new pipePacket(args, args["complexType"]);
 	iterwD->originalData = wD->originalData;
 	iterwD->fullData = wD->fullData;
 	
-	//Start with the preprocessing function, if enabled
+	//2. Partition the source point cloud separate datasets accordingly
+	
+	//		Run preprocessor pipeline to partition
 	auto pre = args["preprocessor"];
 	if(pre != ""){
 		auto *preprocess = new preprocessor();
@@ -132,14 +141,12 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 		delete preprocess, delete prePipe;
 	}
 	
-	
-	//Separate our partitions for distribution
+	//		Compute partition statistics for fuzzy partition distance
 	auto maxRadius = ut.computeMaxRadius(std::atoi(args["clusters"].c_str()), iterwD->originalData, iterwD->fullData, iterwD->originalLabels);
 	auto avgRadius = ut.computeAvgRadius(std::atoi(args["clusters"].c_str()), iterwD->originalData, iterwD->fullData, iterwD->originalLabels);
-	
-	std::cout << "Sizes OD: " << iterwD->originalData.size() << "\tFD: " << iterwD->fullData.size() << "\tOL: " << iterwD->originalLabels.size() << std::endl;
-		
 	std::cout << "Using maxRadius: " << maxRadius << "\tavgRadius: " << avgRadius<< std::endl;
+	
+	//		Count the size of each partition for identifying source partitions when looking at the betti table results
 	std::vector<unsigned> binCounts;
 	for(unsigned a = 0; a < std::atoi(args["clusters"].c_str()); a++){
 		binCounts.push_back(std::count(iterwD->originalLabels.begin(), iterwD->originalLabels.end(), a));
@@ -147,55 +154,67 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 	std::cout << "Bin Counts: ";
 	ut.print1DVector(binCounts);
 	
+	//		Store our centroid-approximated dataset to compute last
 	auto centroids = iterwD->originalData;
 	
+	//		Sort our fuzzy partitions into individual vectors
 	auto partitionedData = ut.separatePartitions(scalar*maxRadius, iterwD->originalData, iterwD->fullData, iterwD->originalLabels);
-	
 	std::cout << "Partitions: " << partitionedData.second.size() << std::endl << "Counts: ";
 	
+	//		Get sizes of the new fuzzy partitions
 	std::vector<unsigned> partitionsize;
-	//Get the partition sizes
 	for(auto a: partitionedData.second)
 		 partitionsize.push_back(a.size());
-
 	int partitionsize_size = partitionsize.size();
 	ut.print1DVector(partitionsize);
 	
 	
+	
+	//3. Process each partition using OpenMP to handle multithreaded scheduling
+	//
+	
 	std::cout << "Running with " << omp_get_num_threads() << " threads" << std::endl;
 	
+	//		This begins the parallel region; # threads are spun up within these braces
 	#pragma omp parallel num_threads(threads)
 	{
+		
+		//		Get the thread number with OpenMP - prevents simultaneous accesses to the betti tables
 		int np = omp_get_thread_num();
 		std::cout << "Starting thread #" << np << std::endl;
 			
+		//		Schedule each thread to compute one of the partitions in any order
+		//			When finished, thread will grab next iteration available
 		#pragma omp for schedule(dynamic)
 		for(unsigned z = 0; z < partitionedData.second.size(); z++){
-			auto curwD = new pipePacket(args, args["complexType"]);	
 			
-			std::cout << "Partition: " << z << std::endl;
-			if(partitionedData.second[z].size() > 0){
-				std::cout << "\tRunning Pipeline with : " << partitionedData.second[z].size() << " vectors" << std::endl;
+			if(partitionedData.second[z].size() > 0){				
+				
+				//		Clone the pipePacket to prevent shared memory race conditions
+				auto curwD = new pipePacket(args, args["complexType"]);	
 				curwD->originalData = partitionedData.second[z];
 				curwD->fullData = partitionedData.second[z];
 				
-				std::cout << "Complex size: " << curwD->complex->getSize() << std::endl;
-				std::cout << "Data size: " << curwD->originalData.size() << std::endl;
 				
+				//		If the current partition is smaller than the threshold, process
+				//			Otherwise recurse to reduce the number of points
 				if(partitionedData.second[z].size() < threshold){
 					runPipeline(args, curwD);
 				} else {
 					curwD->bettiTable = processIterUpscale(args, curwD);
 				}
-				//Map partitions back to original point indexing
-				//ut.mapPartitionIndexing(partitionedData.first[z], wD->bettiTable);
 				
+				
+				
+				//4. Process and merge bettis - whether they are from runPipeline or IterUpscale
 				bool foundExt = false;
 				std::vector<bettiBoundaryTableEntry> temp;
 				
 				for(auto betEntry : curwD->bettiTable){
 					
 					auto boundIter = betEntry.boundaryPoints.begin();
+					
+					//REWRITE::
 					
 					//The new (improved) approach to merging d0 bettis (pretty sure this works....)
 					//	1. Use a binary array to track each point within the original partition
@@ -245,24 +264,24 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 						partBettiTable[np].push_back(newEntry);
 				}
 								
-				curwD->bettiTable.clear();
-				curwD->complex->clear();
+				delete curwD;
 				
 			} else 
 				std::cout << "skipping" << std::endl;
 				
-			delete curwD;
 		}
 	}
 	
-	//Merge partitioned betti tables together
+	//5. Merge partitions, compute PH on original centroid dataset, and report results
+	
+	//		Merge partitioned betti tables together
 	for(auto partTable : partBettiTable){
 		for(auto entry : partTable){
 			mergedBettiTable.push_back(entry);
 		}
 	}
 	
-	//Add open d0 intervals for the remaining d0 bettis
+	//		Add open d0 intervals for the remaining d0 bettis
 	auto addlIntervals = std::count_if(mergedBettiTable.begin(), mergedBettiTable.end(), [&](bettiBoundaryTableEntry const &i) { return ( i.bettiDim == 0); });
 	std::cout << "Adding " << originalDataSize << "-" << addlIntervals << " intervals" << std::endl;
 	for(auto i = 0; i < originalDataSize - addlIntervals; i++){
@@ -270,6 +289,7 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 		mergedBettiTable.push_back(des);
 	}
 	
+	//		Run on full dataset
 	std::cout << "Full Data: " << centroids.size() << std::endl;
 	if(centroids.size() > 0){
 		std::cout << "Running Pipeline with : " << centroids.size() << " vectors" << std::endl;
@@ -280,9 +300,7 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 	} else 
 		std::cout << "skipping" << std::endl;
 		
-	
-		
-	//Merge bettis from the centroid based data
+	//		Merge bettis from the centroid based data
 	for(auto betEntry : wD->bettiTable){
 		if(betEntry.bettiDim > 0 ){
 			mergedBettiTable.push_back(betEntry);
@@ -290,6 +308,8 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 	}
 		
 	delete iterwD;
+	
+	//		Return the final merged betti table for this iteration
 	return mergedBettiTable;
 	
 }
