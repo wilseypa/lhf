@@ -144,7 +144,6 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 	//		Compute partition statistics for fuzzy partition distance
 	auto maxRadius = ut.computeMaxRadius(std::atoi(args["clusters"].c_str()), iterwD->originalData, iterwD->fullData, iterwD->originalLabels);
 	auto avgRadius = ut.computeAvgRadius(std::atoi(args["clusters"].c_str()), iterwD->originalData, iterwD->fullData, iterwD->originalLabels);
-	std::cout << "Using maxRadius: " << maxRadius << "\tavgRadius: " << avgRadius<< std::endl;
 	
 	//		Count the size of each partition for identifying source partitions when looking at the betti table results
 	std::vector<unsigned> binCounts;
@@ -154,11 +153,10 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 	std::cout << "Bin Counts: ";
 	ut.print1DVector(binCounts);
 	
-	//		Store our centroid-approximated dataset to compute last
-	auto centroids = iterwD->originalData;
-	
 	//		Sort our fuzzy partitions into individual vectors
-	auto partitionedData = ut.separatePartitions(scalar*maxRadius, iterwD->originalData, iterwD->fullData, iterwD->originalLabels);
+	args["scalarV"] = std::to_string(scalar*maxRadius);
+	auto partitionedData = ut.separatePartitions(std::atof(args["scalarV"].c_str()), iterwD->originalData, iterwD->fullData, iterwD->originalLabels);
+	std::cout << "Using sclar value: " << args["scalarV"] << std::endl;
 	std::cout << "Partitions: " << partitionedData.second.size() << std::endl << "Counts: ";
 	
 	//		Get sizes of the new fuzzy partitions
@@ -169,8 +167,7 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 	ut.print1DVector(partitionsize);
 	
 	//		Append the centroid dataset to run in parallel as well
-	partitionedData.second.push_back(centroids);
-	
+	partitionedData.second.push_back(iterwD->originalData);
 	
 	
 	//3. Process each partition using OpenMP to handle multithreaded scheduling
@@ -194,10 +191,11 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 			if(z == partitionedData.first.size()){
 				//		Run on full dataset
 				//		Set the pipeline to include the boundary and upscaling steps
-				args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence.boundary";
-				if(centroids.size() > 0){
-					wD->originalData = centroids;
-					runPipeline(args, wD);
+				auto centArgs = args;
+				centArgs["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence.boundary";
+				if(partitionedData.second[z].size() > 0){
+					wD->originalData = partitionedData.second[z];
+					runPipeline(centArgs, wD);
 					
 					wD->complex->clear();
 				} else 
@@ -1025,13 +1023,29 @@ int main(int argc, char* argv[]){
 		} else if(args["mode"] == "iterUpscale" || args["mode"] == "iter"){	
 			auto mergedBettiTable = processIterUpscale(args,wD);
 			utils ut;
+			auto *ws = new writeOutput();
 			
-			std::cout << std::endl << "_______Merged BETTIS_______" << std::endl;
-	
-			for(auto a : mergedBettiTable){
-				std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
-				ut.print1DVector(a.boundaryPoints);
+			if(args["debug"] == "1" || args["debug"] == "true"){
+				std::cout << std::endl << "_______Merged BETTIS_______" << std::endl;
+		
+				for(auto a : mergedBettiTable){
+					std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
+					ut.print1DVector(a.boundaryPoints);
+				}
 			}
+			
+			//Output the data using writeOutput library
+			auto pipe = args.find("outputFile");
+			if(pipe != args.end()){
+				if (args["outputFile"] == "console"){
+					//ws->writeConsole(wD);
+				} else {
+					ws->writeStats(wD->stats, args["outputFile"]);
+					ws->writeBarcodes(mergedBettiTable, args["outputFile"]);
+					
+				}
+			}
+			
 			
 			
 		} else {
