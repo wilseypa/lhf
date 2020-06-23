@@ -148,7 +148,7 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 			args["complexType"] = "simplexTree";
 		} else if(args["mode"] == "iterUpscale" || args["mode"] == "iter"){
 			args["preprocessor"] = "kmeans++";
-			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
+			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence.boundary";
 			args["upscale"] = "true";
 		}
 	}

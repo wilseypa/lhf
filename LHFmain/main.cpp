@@ -173,7 +173,7 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 	//3. Process each partition using OpenMP to handle multithreaded scheduling
 	//
 	
-	std::cout << "Running with " << omp_get_num_threads() << " threads" << std::endl;
+	std::cout << "Running with " << threads << " threads" << std::endl;
 	
 	//		This begins the parallel region; # threads are spun up within these braces
 	#pragma omp parallel num_threads(threads)
@@ -181,8 +181,7 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 		
 		//		Get the thread number with OpenMP - prevents simultaneous accesses to the betti tables
 		int np = omp_get_thread_num();
-		std::cout << "Starting thread #" << np << std::endl;
-			
+		
 		//		Schedule each thread to compute one of the partitions in any order
 		//			When finished, thread will grab next iteration available
 		#pragma omp for schedule(dynamic)
@@ -283,22 +282,19 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 	
 	//		Add open d0 intervals for the remaining d0 bettis
 	auto addlIntervals = std::count_if(mergedBettiTable.begin(), mergedBettiTable.end(), [&](bettiBoundaryTableEntry const &i) { return ( i.bettiDim == 0); });
-	std::cout << "Adding " << originalDataSize << "-" << addlIntervals << " intervals" << std::endl;
 	for(auto i = 0; i < originalDataSize - addlIntervals; i++){
 		bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
 		mergedBettiTable.push_back(des);
 	}
 	
 	//		Run on full dataset
-	std::cout << "Full Data: " << centroids.size() << std::endl;
 	if(centroids.size() > 0){
-		std::cout << "Running Pipeline with : " << centroids.size() << " vectors" << std::endl;
 		wD->originalData = centroids;
 		runPipeline(args, wD);
 		
 		wD->complex->clear();
 	} else 
-		std::cout << "skipping" << std::endl;
+		std::cout << "skipping full data, no centroids" << std::endl;
 		
 	//		Merge bettis from the centroid based data
 	for(auto betEntry : wD->bettiTable){
