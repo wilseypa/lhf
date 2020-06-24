@@ -10,6 +10,7 @@ class boundaryPipe : public basePipe {
 	std::vector<int> ranks;
 	std::vector<int> nRanks;
 	float maxEpsilon;
+	double scalarV;
   public:
 	int dim;
     boundaryPipe();

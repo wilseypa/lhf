@@ -29,30 +29,36 @@ boundaryPipe::boundaryPipe(){
 //
 pipePacket boundaryPipe::runPipe(pipePacket inData){
 	
-	if(dim < 2)
+	if(dim < 1)
 		return inData;
 		
 	int count = 0;
 		
-	std::vector<bettiBoundaryTableEntry> tempBetti;
+	std::vector<std::set<unsigned>> tempBetti;
 	
+	std::cout << "Using scalar value: " << scalarV << std::endl;
 	
-	//Extract the higher-dimensional boundary points by using the map created from fastPersistence
+	//Extract the relevant boundaries from the centroid-approximated point cloud
 	for(auto bet : inData.bettiTable){
-		if(bet.bettiDim > 0){
+		
+		//If the betti is d1 or higher, or the distance is greater than the scalar
+		if(bet.bettiDim > 0 || bet.death - bet.birth >= scalarV){
+			
+			
 			std::set<unsigned> totalBoundary;
-			for(auto index : bet.boundaryPoints){
-				totalBoundary.insert(index);
+			for(auto index : bet.boundary){
+				for(unsigned entry : index->simplex )
+					totalBoundary.insert(entry);
 			}
 			count++;
-			tempBetti.push_back({bet.bettiDim, bet.birth, bet.death, totalBoundary, bet.boundary});
+			tempBetti.push_back(totalBoundary);
 			
-		} else {
-			tempBetti.push_back(bet);
 		}
 	}
 	
 	std::cout << "Boundaries updated: " << count << std::endl;
+	
+	inData.boundaries = tempBetti;
 	
 	return inData;
 }
@@ -86,6 +92,11 @@ bool boundaryPipe::configPipe(std::map<std::string, std::string> configMap){
 	pipe = configMap.find("dimensions");
 	if(pipe != configMap.end())
 		dim = std::atoi(configMap["dimensions"].c_str());
+	else return false;
+	
+	pipe = configMap.find("scalarV");
+	if(pipe != configMap.end())
+		scalarV = std::atof(configMap["scalarV"].c_str());
 	else return false;
 	
 	pipe = configMap.find("epsilon");

@@ -85,6 +85,8 @@ void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD)
 		} else {
 			std::cout << "LHF processData: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 		}
+		
+		delete preprocess, prePipe;
 	}
 	
 	runPipeline(args, wD);
@@ -192,7 +194,11 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 				//		Run on full dataset
 				//		Set the pipeline to include the boundary and upscaling steps
 				auto centArgs = args;
-				centArgs["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence.boundary";
+				if(args["upscale"] == "true" || args["upscale"] == "1")
+					centArgs["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence.boundary.upscale";
+				else
+					centArgs["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
+					
 				if(partitionedData.second[z].size() > 0){
 					wD->originalData = partitionedData.second[z];
 					runPipeline(centArgs, wD);
@@ -281,7 +287,9 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 					if(!found)
 						partBettiTable[np].push_back(newEntry);
 				}
-								
+				
+				curwD->complex->clear();
+				delete curwD->complex;
 				delete curwD;
 				
 			} else 
@@ -315,6 +323,8 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 		}
 	}
 		
+	iterwD->complex->clear();
+	delete iterwD->complex;
 	delete iterwD;
 	
 	//		Return the final merged betti table for this iteration
@@ -333,81 +343,122 @@ void processReducedWrapper(std::map<std::string, std::string> args, pipePacket* 
 	auto threads = std::atoi(args["threads"].c_str());
 	auto *ws = new writeOutput();
 	auto originalDataSize = wD->originalData.size();
+	
+	//		Local Storage
 	std::vector<bettiBoundaryTableEntry> mergedBettiTable;
 	std::vector<bettiBoundaryTableEntry> partBettiTable[threads];
 	
-	//Start with the preprocessing function, if enabled
+	//		Initalize a copy of the pipePacket
+	auto iterwD = new pipePacket(args, args["complexType"]);
+	iterwD->originalData = wD->originalData;
+	iterwD->fullData = wD->fullData;
+	
+	//2. Partition the source point cloud separate datasets accordingly
+	
+	//		Run preprocessor pipeline to partition
 	auto pre = args["preprocessor"];
 	if(pre != ""){
 		auto *preprocess = new preprocessor();
 		auto *prePipe = preprocess->newPreprocessor(pre);
 		
 		if(prePipe != 0 && prePipe->configPreprocessor(args)){
-			*wD = prePipe->runPreprocessorWrapper(*wD);
+			*iterwD = prePipe->runPreprocessorWrapper(*iterwD);
 		} else {
 			std::cout << "LHF processReduced: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 		}
 		delete preprocess, delete prePipe;
 	}
 	
+	//		Compute partition statistics for fuzzy partition distance
+	auto maxRadius = ut.computeMaxRadius(std::atoi(args["clusters"].c_str()), iterwD->originalData, iterwD->fullData, iterwD->originalLabels);
+	auto avgRadius = ut.computeAvgRadius(std::atoi(args["clusters"].c_str()), iterwD->originalData, iterwD->fullData, iterwD->originalLabels);
 	
-	//Separate our partitions for distribution
-	auto maxRadius = ut.computeMaxRadius(std::atoi(args["clusters"].c_str()), wD->originalData, wD->fullData, wD->originalLabels);
-	auto avgRadius = ut.computeAvgRadius(std::atoi(args["clusters"].c_str()), wD->originalData, wD->fullData, wD->originalLabels);
-		
-	std::cout << "Using maxRadius: " << maxRadius << "\tavgRadius: " << avgRadius<< std::endl;
+	//		Count the size of each partition for identifying source partitions when looking at the betti table results
 	std::vector<unsigned> binCounts;
 	for(unsigned a = 0; a < std::atoi(args["clusters"].c_str()); a++){
-		binCounts.push_back(std::count(wD->originalLabels.begin(), wD->originalLabels.end(), a));
+		binCounts.push_back(std::count(iterwD->originalLabels.begin(), iterwD->originalLabels.end(), a));
 	}
 	std::cout << "Bin Counts: ";
 	ut.print1DVector(binCounts);
 	
-	auto centroids = wD->originalData;
-	
-	auto partitionedData = ut.separatePartitions(scalar*maxRadius, wD->originalData, wD->fullData, wD->originalLabels);
-	
+	//		Sort our fuzzy partitions into individual vectors
+	args["scalarV"] = std::to_string(scalar*maxRadius);
+	auto partitionedData = ut.separatePartitions(std::atof(args["scalarV"].c_str()), iterwD->originalData, iterwD->fullData, iterwD->originalLabels);
+	std::cout << "Using sclar value: " << args["scalarV"] << std::endl;
 	std::cout << "Partitions: " << partitionedData.second.size() << std::endl << "Counts: ";
 	
+	//		Get sizes of the new fuzzy partitions
 	std::vector<unsigned> partitionsize;
-	//Get the partition sizes
 	for(auto a: partitionedData.second)
 		 partitionsize.push_back(a.size());
-
 	int partitionsize_size = partitionsize.size();
 	ut.print1DVector(partitionsize);
 	
+	//		Append the centroid dataset to run in parallel as well
+	partitionedData.second.push_back(iterwD->originalData);
 	
-	std::cout << "Running with " << omp_get_num_threads() << " threads" << std::endl;
 	
+	//3. Process each partition using OpenMP to handle multithreaded scheduling
+	//
+	
+	std::cout << "Running with " << threads << " threads" << std::endl;
+	
+	//		This begins the parallel region; # threads are spun up within these braces
 	#pragma omp parallel num_threads(threads)
 	{
+		
+		//		Get the thread number with OpenMP - prevents simultaneous accesses to the betti tables
 		int np = omp_get_thread_num();
-		std::cout << "Starting thread #" << np << std::endl;
-			
+		
+		//		Schedule each thread to compute one of the partitions in any order
+		//			When finished, thread will grab next iteration available
 		#pragma omp for schedule(dynamic)
-		for(unsigned z = 0; z < partitionedData.second.size(); z++){
-			auto curwD = new pipePacket(args, args["complexType"]);	
+		for(int z = partitionedData.second.size()-1; z >= 0; z--){
 			
-			std::cout << "Partition: " << z << std::endl;
-			if(partitionedData.second[z].size() > 0){
-				std::cout << "\tRunning Pipeline with : " << partitionedData.second[z].size() << " vectors" << std::endl;
-				curwD->originalData = partitionedData.second[z];
+			//Check if we are running the centroid dataset (there's no label associated)
+			if(z == partitionedData.first.size()){
+				//		Run on full dataset
+				//		Set the pipeline to include the boundary and upscaling steps
+				auto centArgs = args;
+				if(args["upscale"] == "true" || args["upscale"] == "1")
+					centArgs["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence.boundary.upscale";
+				else
+					centArgs["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
 				
-				std::cout << "Complex size: " << curwD->complex->getSize() << std::endl;
-				std::cout << "Data size: " << curwD->originalData.size() << std::endl;
+				if(partitionedData.second[z].size() > 0){
+					wD->originalData = partitionedData.second[z];
+					wD->originalLabels = iterwD->originalLabels;
+					runPipeline(centArgs, wD);
+					
+					wD->complex->clear();
+				} else 
+					std::cout << "skipping full data, no centroids" << std::endl;
+					
+				//Determine if we need to upscale any additional boundaries based on the output of the centroid approximated PH
+				
+				
+					
+					
+			} else if(partitionedData.second[z].size() > 0){				
+				
+				//		Clone the pipePacket to prevent shared memory race conditions
+				auto curwD = new pipePacket(args, args["complexType"]);	
+				curwD->originalData = partitionedData.second[z];
+				curwD->fullData = partitionedData.second[z];
 				
 				runPipeline(args, curwD);
 				
-				//Map partitions back to original point indexing
-				//ut.mapPartitionIndexing(partitionedData.first[z], wD->bettiTable);
 				
+				
+				//4. Process and merge bettis - whether they are from runPipeline or IterUpscale
 				bool foundExt = false;
 				std::vector<bettiBoundaryTableEntry> temp;
 				
 				for(auto betEntry : curwD->bettiTable){
 					
 					auto boundIter = betEntry.boundaryPoints.begin();
+					
+					//REWRITE::
 					
 					//The new (improved) approach to merging d0 bettis (pretty sure this works....)
 					//	1. Use a binary array to track each point within the original partition
@@ -456,46 +507,34 @@ void processReducedWrapper(std::map<std::string, std::string> args, pipePacket* 
 					if(!found)
 						partBettiTable[np].push_back(newEntry);
 				}
-								
-				curwD->bettiTable.clear();
+				
 				curwD->complex->clear();
+				delete curwD->complex;				
+				delete curwD;
 				
 			} else 
 				std::cout << "skipping" << std::endl;
+				
 		}
 	}
 	
-	//Merge partitioned betti tables together
+	//5. Merge partitions, compute PH on original centroid dataset, and report results
+	
+	//		Merge partitioned betti tables together
 	for(auto partTable : partBettiTable){
 		for(auto entry : partTable){
 			mergedBettiTable.push_back(entry);
 		}
 	}
 	
-	
-	//Add open d0 intervals for the remaining d0 bettis
+	//		Add open d0 intervals for the remaining d0 bettis
 	auto addlIntervals = std::count_if(mergedBettiTable.begin(), mergedBettiTable.end(), [&](bettiBoundaryTableEntry const &i) { return ( i.bettiDim == 0); });
-	std::cout << "Adding " << originalDataSize << "-" << addlIntervals << " intervals" << std::endl;
 	for(auto i = 0; i < originalDataSize - addlIntervals; i++){
 		bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
 		mergedBettiTable.push_back(des);
 	}
 		
-			
-	
-	std::cout << "Full Data: " << centroids.size() << std::endl;
-	if(centroids.size() > 0){
-		std::cout << "Running Pipeline with : " << centroids.size() << " vectors" << std::endl;
-		wD->originalData = centroids;
-		runPipeline(args, wD);
-		
-		wD->complex->clear();
-	} else 
-		std::cout << "skipping" << std::endl;
-		
-	
-		
-	//Merge bettis from the centroid based data
+	//		Merge bettis from the centroid based data
 	for(auto betEntry : wD->bettiTable){
 		if(betEntry.bettiDim > 0 ){
 			mergedBettiTable.push_back(betEntry);
@@ -985,9 +1024,6 @@ int main(int argc, char* argv[]){
 	
 	
 	//Define external classes used for reading input, parsing arguments, writing output
-	MPI_Init(&argc,&argv);
-	MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
-	MPI_Comm_rank(MPI_COMM_WORLD,&id);
 	
 	auto *rs = new readInput();
 	auto *ap = new argParser();
@@ -1017,7 +1053,15 @@ int main(int argc, char* argv[]){
 		wD->originalData = wD->originalData;
 		
 		if(args["mode"] == "mpi"){
+			
+			MPI_Init(&argc,&argv);
+			MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
+			MPI_Comm_rank(MPI_COMM_WORLD,&id);
+			
 			processUpscaleWrapper(args, wD);
+			
+			MPI_Finalize();
+			
 		} else if (args["mode"] == "reduced"){
 			processReducedWrapper(args,wD);	
 		} else if(args["mode"] == "iterUpscale" || args["mode"] == "iter"){	
@@ -1046,6 +1090,7 @@ int main(int argc, char* argv[]){
 				}
 			}
 			
+			delete ws;
 			
 			
 		} else {
@@ -1055,9 +1100,10 @@ int main(int argc, char* argv[]){
 		ap->printUsage();
 	}
 	
+	wD->complex->clear();
+	delete wD->complex;
 	delete rs, delete ap, delete wD;
 
-	MPI_Finalize();
 	
 	return 0;
 }

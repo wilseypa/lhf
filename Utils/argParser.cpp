@@ -123,7 +123,6 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 			if(args["preprocessor"] == "")
 				args["preprocessor"] = "kmeans++";
 			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
-			args["upscale"] = "false";
 		} else if(args["mode"] == "upscaleBound"){
 			if(args["preprocessor"] == "")
 				args["preprocessor"] = "kmeans++";
@@ -149,7 +148,6 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 		} else if(args["mode"] == "iterUpscale" || args["mode"] == "iter"){
 			args["preprocessor"] = "kmeans++";
 			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
-			args["upscale"] = "true";
 		}
 	}
 	
