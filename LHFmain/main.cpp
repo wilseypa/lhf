@@ -338,10 +338,11 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		//  std::cout<<"Maximum Partition Size "<<std::atoi(args["maxsize"].c_str())<<std::endl;		
 		//Read our input data
 		
-		auto *rs = new readInput();
+        	auto *rs = new readInput();
 		wD->originalData = rs->readCSV(args["inputFile"]);
 		wD->fullData = wD->originalData;
                 int maxlabel=wD->originalData.size();
+
 		//Partition the data with the configured preprocessor
 ITERATIVEPARTITIONING :
 		auto pre = args["preprocessor"];
@@ -362,16 +363,16 @@ ITERATIVEPARTITIONING :
 		auto avgRadius = ut.computeAvgRadius(std::atoi(args["clusters"].c_str()), wD->originalData, wD->fullData, wD->originalLabels);
 		centroids = wD->originalData;
 		
-                
+             
 		//Store the count of original points in each partition for merging
 //		std::transform(std::begin(wD->originalLabels),std::end(wD->originalLabels),std::begin(wD->originalLabels),[maxlabel](unsigned x){return x+maxlabel;});
 		for(unsigned a = 0; a < std::atoi(args["clusters"].c_str()); a++){
 			binCounts.push_back(std::count(wD->originalLabels.begin(), wD->originalLabels.end(), a));
 		}
               	partitionedData = ut.separatePartitions(scalar*maxRadius, wD->originalData, wD->fullData, wD->originalLabels);
- 
+  
   		for(int i=0;i<partitionedData.second.size();i++){
-		     if(partitionedData.second[i].size()>std::atoi(args["maxsize"].c_str())){
+		     if(partitionedData.second[i].size()>std::atoi(args["maxSize"].c_str())){
 		        bigPartitionedData.push_back(partitionedData.second[i]);	    
                      }
 		     else{
@@ -380,7 +381,8 @@ ITERATIVEPARTITIONING :
 		     }
 		}
                             
-                if(centroids.size()>std::atoi(args["maxsize"].c_str())){
+             
+                if(centroids.size()>std::atoi(args["maxSize"].c_str())){
 			bigCentroidsPartitionedData.push_back(centroids);
          	}
 		else
@@ -394,59 +396,31 @@ ITERATIVEPARTITIONING :
 			smallCentroidsPartitionedLabel.push_back(centroidsLabel);
 
 		}
-
-        /*                
-		std::cout<<std::endl<<"Max Label "<<maxlabel<<std::endl;
-
-
-                std::cout<<std::endl<<"large "<<std::endl;
-		for(int a=0; a < bigPartitionedData.size();a++)
-		std::cout<<"{"<<bigPartitionedData[a].size()<<"} ";
-	
-                std::cout<<std::endl<<"large centroids "<<std::endl;
-		for(int a=0; a < bigCentroidsPartitionedData.size();a++)
-		std::cout<<"{"<<bigCentroidsPartitionedData[a].size()<<"} ";
-                
-		std::cout<<std::endl<<"small "<<std::endl;
-		for(int a=0; a < smallPartitionedData.size();a++)
-		std::cout<<"{"<<smallPartitionedData[a].size()<<","<<smallPartitionedLabel[a].size()<<"} ";
-	
-                std::cout<<std::endl<<"small centroids "<<std::endl;
-		for(int a=0; a < smallCentroidsPartitionedData.size();a++)
-		std::cout<<"{"<<smallCentroidsPartitionedData[a].size()<<","<<smallCentroidsPartitionedLabel[a].size()<<"} ";
-                int k1;
-		std::cin>>k1;	
-	*/
-		char cluster[20];
-		for(int i=bigPartitionedData.size()-1;i>=0;i++){
+             
+		if(bigPartitionedData.size()>0){
+			int i= bigPartitionedData.size()-1;
 			wD->originalData = bigPartitionedData[i];
 			wD->fullData = wD->originalData;
 			wD->originalLabels = {};
-			args["clusters"] = std::to_string((int)(bigPartitionedData[i].size()/10));
+			double x = std::atoi(args["reductionPercentage"].c_str());
+			double y = x/100;
+			args["clusters"] =   std::to_string((int)(bigPartitionedData[i].size()*y));
 			bigPartitionedData.pop_back();
                         goto ITERATIVEPARTITIONING;
 		}
 
-		for(int i=bigCentroidsPartitionedData.size()-1;i>=0;i++){
+		if(bigCentroidsPartitionedData.size()>0){
+			int i = bigCentroidsPartitionedData.size()-1;
 			wD->originalData = bigCentroidsPartitionedData[i];
 			wD->fullData = wD->originalData;
 			wD->originalLabels = {};
-			args["clusters"] = std::to_string((int)(bigCentroidsPartitionedData[i].size()/10));
+			double x = std::atoi(args["reductionPercentage"].c_str());
+			double y = x/100;		
+			args["clusters"] = std::to_string((int)(bigCentroidsPartitionedData[i].size()*y));
 			bigCentroidsPartitionedData.pop_back();
                         goto ITERATIVEPARTITIONING;
 		}
 
-                        
-	/*	std::cout<<std::endl<<"Max Label "<<maxlabel<<std::endl;
-
-                std::cout<<std::endl<<"small "<<std::endl;
-		for(int a=0; a < smallPartitionedData.size();a++)
-		std::cout<<"{"<<smallPartitionedData[a].size()<<","<<smallPartitionedLabel[a].size()<<"} ";
-	
-                std::cout<<std::endl<<"small centroids "<<std::endl;
-		for(int a=0; a < smallCentroidsPartitionedData.size();a++)
-		std::cout<<"{"<<smallCentroidsPartitionedData[a].size()<<","<<smallCentroidsPartitionedLabel[a].size()<<"} ";
-        */
 		std::vector<unsigned> index;
         
                 for(unsigned i=0;i<smallPartitionedLabel.size();i++)
