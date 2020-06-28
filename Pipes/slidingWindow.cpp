@@ -515,7 +515,7 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
                 // Update the distance matrix and the NN statistics.
                 updateStats();
 
-                std::cout << "Point Added" << '\n';
+                std::cout << "This Point Added" << '\n';
 
                 std::cout << pointCounter << '\n';
                 for (auto const& pair: defaultVals->avgNNDistPartitions)
@@ -523,6 +523,7 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
                     std::cout << "{" << pair.first << ": " << pair.second << "}\n";
                 }
                 std::cout << "==============================================================================================" << '\n';
+                std::cout << "Hello world again ++++++++++++++++++" << '\n';
             }
         }
 
