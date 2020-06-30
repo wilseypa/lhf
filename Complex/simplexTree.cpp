@@ -40,10 +40,14 @@ void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth,
 			std::cout << "\tRow Size: " << distMatrix[indexCounter - (runningVectorCount - 1)].size()  << "\tCurIndex: " << curIndex << std::endl;
 			std::cout << "\tNode Index: " << std::distance(runningVectorIndices.begin(), nodeIndex) << std::endl;
 		}
-		else
-			curE = *((*distMatrix)[std::distance(runningVectorIndices.begin(), nodeIndex)].rbegin());
+		else {
+		    // std::cout << "Distance matrix size 1: " << distMatrix->size() << '\n';
+		    curE = *((*distMatrix)[std::distance(runningVectorIndices.begin(), nodeIndex)].rbegin());
+		}
 
-	}else{
+
+	}else {
+	    // std::cout << "Distance matrix size 2: " << distMatrix->size() << '\n';
 		curE = (*distMatrix)[node->index][indexCounter];
 	}
 
@@ -165,8 +169,10 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 
 	if(streamEval(currentVector, window)) {   // Point is deemed 'significant'
 
+		std::cout << "indexToBeDeleted: " << indexToBeDeleted << '\n';
 		// deleteIterative(keyToBeDeleted);
 		runningVectorIndices.erase(runningVectorIndices.begin() + indexToBeDeleted);
+		std::cout << "runningVectorIndices size: " << runningVectorIndices.size() << '\n';
 
 		insert();
 
@@ -297,6 +303,7 @@ void simplexTree::insert() {
 
 	//Track this index in our current window (for sliding window)
 	runningVectorIndices.push_back(insNode);
+	std::cout << "runningVectorIndices size after insertion: " << runningVectorIndices.size() << '\n';
 
 	//Check if this is the first node (i.e. head)
 	//	If so, initialize the head node
@@ -338,6 +345,8 @@ void simplexTree::insert() {
 	//			insert to current
 	//	iterate to d0->sibling
 
+	std::cout << "runningVectorCount at recurseInsert: " << runningVectorCount << '\n';
+
 	for(auto simplexListIter = simplexList[0].begin(); simplexListIter != simplexList[0].end(); simplexListIter++){
 		recurseInsert((*simplexListIter), indexCounter, 0, 0, {indexCounter});
 	}
@@ -354,6 +363,8 @@ void simplexTree::insert() {
 	runningVectorCount++;
 	nodeCount++;
 	indexCounter++;
+
+	// std::cout << "runningVectorCount after increment: " << runningVectorCount << '\n';
 }
 
 void simplexTree::deleteWeightEdgeGraph(int index){
