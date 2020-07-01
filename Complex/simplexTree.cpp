@@ -135,7 +135,7 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 	if(streamEval(currentVector, window)) {   // Point is deemed 'significant'
 
 		//Delete the oldest point in the window
-		deleteIterative(runningVectorIndices[0]);
+		deleteIterative(runningVectorIndices[2]);
 		runningVectorIndices.erase(runningVectorIndices.begin());
 
 		//Create distance matrix row of current vector to each point in the window
