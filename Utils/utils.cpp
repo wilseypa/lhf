@@ -467,7 +467,7 @@ void utils::writeDebug(std::string module, std::string message){
 
 void utils::writeFile(std::string fullMessage){
 	std::ofstream outfile;
-	outfile.open(outputFile+"_debug", std::ios_base::app);
+	outfile.open(outputFile+"_debug.txt", std::ios_base::app);
 	outfile << fullMessage << "\n"; 
 	
 	return;

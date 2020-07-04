@@ -39,8 +39,8 @@ void simplexBase::setConfig(std::map<std::string, std::string> configMap){
 		maxEpsilon = std::atof(configMap["epsilon"].c_str());
 	else return;
 
-	ut.writeLog(simplexType,"Configured utils for : " + simplexType);
 	ut = utils(debug, outputFile);
+	ut.writeLog(simplexType,"Configured utils for : " + simplexType);
 
 	return;
 }

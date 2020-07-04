@@ -4,6 +4,7 @@
 Makefile
 *.cmake
 *.csv
+*_debug.txt
 CMakeCache.txt
 CMakeFiles
 LHF
