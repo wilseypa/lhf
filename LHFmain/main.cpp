@@ -16,7 +16,7 @@
 
 int nprocs,id;
  
-struct cmp{
+struct sortBettis{
 	bool operator()(bettiBoundaryTableEntry lhs, bettiBoundaryTableEntry rhs){
 		return lhs.death < rhs.death;
 	}
@@ -39,8 +39,7 @@ void runPipeline(std::map<std::string, std::string> args, pipePacket* wD){
 			pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
 			
 			//Build the pipe component, configure and run
-			auto *bp = new basePipe();
-			auto *cp = bp->newPipe(curFunct, args["complexType"]);
+			auto *cp = basePipe::newPipe(curFunct, args["complexType"]);
 		
 			//Check if the pipe was created and configure
 			if(cp != 0 && cp->configPipe(args)){
@@ -51,7 +50,7 @@ void runPipeline(std::map<std::string, std::string> args, pipePacket* wD){
 				std::cout << "LHF runPipeline: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 			}
 			
-			delete bp, delete cp;
+			delete cp;
 		}
 	}
 	//If the pipeline was undefined...
@@ -83,8 +82,7 @@ void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD)
 	//Start with the preprocessing function, if enabled
 	auto pre = args["preprocessor"];
 	if(pre != ""){
-		auto *preprocess = new preprocessor();
-		auto *prePipe = preprocess->newPreprocessor(pre);
+		auto *prePipe = preprocessor::newPreprocessor(pre);
 		
 		if(prePipe != 0 && prePipe->configPreprocessor(args)){
 			*wD = prePipe->runPreprocessorWrapper(*wD);
@@ -92,7 +90,7 @@ void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD)
 			std::cout << "LHF processData: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 		}
 		
-		delete preprocess, prePipe;
+		delete prePipe;
 	}
 	
 	runPipeline(args, wD);
@@ -138,15 +136,14 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 	//		Run preprocessor pipeline to partition
 	auto pre = args["preprocessor"];
 	if(pre != ""){
-		auto *preprocess = new preprocessor();
-		auto *prePipe = preprocess->newPreprocessor(pre);
+		auto *prePipe = preprocessor::newPreprocessor(pre);
 		
 		if(prePipe != 0 && prePipe->configPreprocessor(args)){
 			*iterwD = prePipe->runPreprocessorWrapper(*iterwD);
 		} else {
 			std::cout << "LHF processReduced: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 		}
-		delete preprocess, delete prePipe;
+		delete prePipe;
 	}
 	
 	//		Compute partition statistics for fuzzy partition distance
@@ -651,15 +648,14 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		//Partition the data with the configured preprocessor
 		auto pre = args["preprocessor"];
 		if(pre != ""){
-			auto *preprocess = new preprocessor();
-			auto *prePipe = preprocess->newPreprocessor(pre);
+			auto *prePipe = preprocessor::newPreprocessor(pre);
 
 			if(prePipe != 0 && prePipe->configPreprocessor(args)){
 				*wD = prePipe->runPreprocessorWrapper(*wD);
 			} else {
 				std::cout << "LHF : Failed to configure pipeline: " << args["pipeline"] << std::endl;
 			}
-			delete preprocess, delete prePipe;
+			delete prePipe;
 		}
 		
 		//Separate our partitions for distribution
@@ -1089,7 +1085,7 @@ int main(int argc, char* argv[]){
 			// processReducedWrapper(args,wD);	
 		} else if(args["mode"] == "reduced" || args["mode"] == "iterUpscale" || args["mode"] == "iter"){	
 			auto mergedBettiTable = processIterUpscale(args,wD);
-			sort(mergedBettiTable.begin(), mergedBettiTable.end(), cmp());
+			sort(mergedBettiTable.begin(), mergedBettiTable.end(), sortBettis());
 			utils ut;
 			auto *ws = new writeOutput();
 			

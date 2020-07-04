@@ -19,18 +19,17 @@ preprocessor::preprocessor(){
 	return;
 }
 
-preprocessor* preprocessor::newPreprocessor(const std::string &procT){
-	ut.writeDebug("preprocessor","Building preprocessor: " + procT);
-	procName= procT;
+preprocessor* preprocessor::newPreprocessor(const std::string &procName){
+	utils ut;
+	ut.writeDebug("preprocessor","Building preprocessor: " + procName);
+
 	if(procName == "none"){
 		return new preprocessor();
 	} else if (procName == "kmeansplusplus" || procName == "kmeans++" || procName == "kmeans"){
 		return new kMeansPlusPlus();
-	} 
-	  else  if(procName == "streamingKmeans" || procName == "streamingkmeans" || procName =="streamKM"){
+	} else if(procName == "streamingKmeans" || procName == "streamingkmeans" || procName =="streamKM"){
 		return new streamingKmeans();
-	} 
-	 else  if(procName == "denStream" || procName == "denstream" || procName =="DenStream"){
+	} else if(procName == "denStream" || procName == "denstream" || procName =="DenStream"){
 		return new denStream();
 	} 
 
