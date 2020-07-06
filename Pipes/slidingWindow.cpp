@@ -18,6 +18,9 @@
 #include "readInput.hpp"
 
 
+int pointCounter = 1;
+std::vector<std::vector<double>> distMatrix;
+
 // basePipe constructor
 slidingWindow::slidingWindow()
 {
@@ -55,9 +58,10 @@ void slidingWindow::deleteNNstats()
 
 void slidingWindow::updateStats()
 {
-
     // Delete the corresponding row from the distance matrix.
-    pPack->distMatrix.erase(pPack->distMatrix.begin() + defaultVals->indexToBeDeleted);
+    // pPack->complex->distMatrix->erase(pPack->complex->distMatrix->begin() + defaultVals->indexToBeDeleted);
+    distMatrix.erase(distMatrix.begin() + defaultVals->indexToBeDeleted);
+
 
     double sumOldNNdists = 0.0;
     double sumNewNNdists = 0.0;
@@ -74,13 +78,15 @@ void slidingWindow::updateStats()
     std::vector<int> tpIndices; // A vector to store the positions of the existing members of the target partition.
 
     // Add a new column and row to the end of the upper triangular distance matrix.
-    for(unsigned int i = 0; i < pPack->distMatrix.size(); i++)
+    for(unsigned int i = 0; i < distMatrix.size(); i++)
     {
         // Delete the corresponding entry from each row.
-        pPack->distMatrix[i].erase( pPack->distMatrix[i].begin() + defaultVals->indexToBeDeleted );
+        // pPack->complex->distMatrix->at(i).erase( pPack->complex->distMatrix->at(i).begin() + defaultVals->indexToBeDeleted );
+        distMatrix[i].erase( distMatrix[i].begin() + defaultVals->indexToBeDeleted );
 
         // Add the new distance value to the end of each row.
-        pPack->distMatrix[i].push_back( defaultVals->distsFromCurrVec[i] );
+        // pPack->complex->distMatrix->at(i).push_back( defaultVals->distsFromCurrVec[i] );
+        distMatrix[i].push_back( defaultVals->distsFromCurrVec[i] );
 
         // Update NN statistics for only those partitions from which the point was deleted or to which the new point is to be added.
         // Case 1: The i-th point belongs to the partition the last point was deleted from, but not to the partition the new point is
@@ -105,18 +111,18 @@ void slidingWindow::updateStats()
                 std::vector<double> memberDistsFromVect;
                 std::vector<int> memberIndices;
 
-                for(unsigned int j = 0; j < pPack->distMatrix.size(); j++)
+                for(unsigned int j = 0; j < distMatrix.size(); j++)
                 {
                     if ( defaultVals->partitionLabels[j] == defaultVals->labelToBeDeleted )
                     {
                         if (j < i)
                         {
-                            memberDistsFromVect.push_back( pPack->distMatrix[j][i] );
+                            memberDistsFromVect.push_back( distMatrix[j][i] );
                             memberIndices.push_back(j);
                         }
                         else if (j > i)
                         {
-                            memberDistsFromVect.push_back( pPack->distMatrix[i][j] );
+                            memberDistsFromVect.push_back( distMatrix[i][j] );
                             memberIndices.push_back(j);
                         }
                     }
@@ -222,12 +228,12 @@ void slidingWindow::updateStats()
                     {
                         if (j < i)
                         {
-                            memberDistsFromVect.push_back( pPack->distMatrix[j][i] );
+                            memberDistsFromVect.push_back( distMatrix[j][i] );
                             memberIndices.push_back(j);
                         }
                         else if (j > i)
                         {
-                            memberDistsFromVect.push_back( pPack->distMatrix[i][j] );
+                            memberDistsFromVect.push_back( distMatrix[i][j] );
                             memberIndices.push_back(j);
                         }
                     }
@@ -250,7 +256,11 @@ void slidingWindow::updateStats()
     }
 
     std::vector<double> distMatLastRow(defaultVals->windowMaxSize);  // The last row of the upper triangular distance matrix is a vector of 0s.
-    pPack->distMatrix.push_back( distMatLastRow );
+    //pPack->complex->distMatrix->push_back( distMatLastRow );
+    distMatrix.push_back( distMatLastRow );
+    pPack->complex->setDistanceMatrix(&distMatrix);
+
+
 
     // Update the average NN distance of the partition from which the last point was deleted and of the one to which the new point
     // is being added.
@@ -326,17 +336,42 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
     // Find the distance from the current vector to its nearest neighbor in the window.
     auto nnDistCurrVec = *std::min_element( defaultVals->distsFromCurrVec.begin(), defaultVals->distsFromCurrVec.end() );
 
+    std::cout << nnDistCurrVec << std::endl;
+
     if (defaultVals->avgNNDistPartitions.size() == 1)  // If the window is 'pure':
     {
-        if (nnDistCurrVec == 0)
+
+        if (nnDistCurrVec == 0) {
+
+            std::cout << pointCounter << '\n';
+            for (auto const& pair: defaultVals->avgNNDistPartitions) {
+                std::cout << "{" << pair.first << ": " << pair.second << "}\n";
+            }
+            std::cout << "1 ==============================================================================================" << '\n';
+
             return false;
+        }
 
         // Find the average nearest neighbor distance in the single 'partition' in the window.
         int currentLabel = defaultVals->partitionLabels[0];
+        std::cout << "currentLabel: " << currentLabel << '\n';
+
         auto avgNNDistSinglePartition = defaultVals->avgNNDistPartitions[currentLabel];
 
-        if (avgNNDistSinglePartition <= f2 && nnDistCurrVec <= 1)
+        std::cout << "avgNNDistSinglePartition: " << avgNNDistSinglePartition << std::endl;
+
+        if (avgNNDistSinglePartition <= f2 && nnDistCurrVec <= 1) {
+            std::cout << "Hello World" << std::endl;
+
+            std::cout << pointCounter << '\n';
+            for (auto const& pair: defaultVals->avgNNDistPartitions) {
+                std::cout << "{" << pair.first << ": " << pair.second << "}\n";
+            }
+            std::cout << "2 ==============================================================================================" << '\n';
+
             return false;
+        }
+
 
         if (avgNNDistSinglePartition == 0 || nnDistCurrVec / avgNNDistSinglePartition > f1)
         {
@@ -354,6 +389,14 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
 
             // Update the distance matrix and the NN statistics.
             updateStats();
+
+            std::cout << "1. Point Added" << '\n';
+
+            std::cout << pointCounter << '\n';
+            for (auto const& pair: defaultVals->avgNNDistPartitions) {
+                std::cout << "{" << pair.first << ": " << pair.second << "}\n";
+            }
+            std::cout << "==============================================================================================" << '\n';
 
             return true;
         }
@@ -429,6 +472,14 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
             // Update the distance matrix and the NN statistics.
             updateStats();
 
+            std::cout << "2. Point Added" << '\n';
+
+            std::cout << pointCounter << '\n';
+            for (auto const& pair: defaultVals->avgNNDistPartitions) {
+                std::cout << "{" << pair.first << ": " << pair.second << "}\n";
+            }
+            std::cout << "==============================================================================================" << '\n';
+
         }
 
         else {   // There is no outdated partition in the window:
@@ -446,6 +497,15 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
                 // Update the distance matrix and the NN statistics.
                 updateStats();
 
+                std::cout << "3. Point Added" << '\n';
+
+                std::cout << pointCounter << '\n';
+                for (auto const& pair: defaultVals->avgNNDistPartitions)
+                {
+                    std::cout << "{" << pair.first << ": " << pair.second << "}\n";
+                }
+                std::cout << "==============================================================================================" << '\n';
+
             }
             else {   // The current vector is assigned to one of the existing partitions:
                 // In this case, make sure the point to be deleted does not belong to the target partition. In particular,
@@ -460,6 +520,15 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
 
                 // Update the distance matrix and the NN statistics.
                 updateStats();
+
+                std::cout << "4. Point Added" << '\n';
+
+                std::cout << pointCounter << '\n';
+                for (auto const& pair: defaultVals->avgNNDistPartitions)
+                {
+                    std::cout << "{" << pair.first << ": " << pair.second << "}\n";
+                }
+                std::cout << "==============================================================================================" << '\n';
             }
         }
 
@@ -520,7 +589,7 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
     readInput rp;
 	pPack = &inData;
 	//Store our distance matrix
-	std::vector<std::vector<double>> distMatrix;
+	// std::vector<std::vector<double>> distMatrix;
 
 
     // For this pipe, we construct a sub-pipeline:
@@ -535,7 +604,7 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
     std::vector<double> currentVector;
     if(rp.streamInit(inputFile))
     {
-        int pointCounter = 1;
+        // int pointCounter = 1;
 
         while(rp.streamRead(currentVector))
         {
@@ -554,24 +623,44 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
                     std::cout << "Initializing complex" << std::endl;
 
                     inData.originalData = windowValues;
-                    
+
                     distMatrix.resize(inData.originalData.size(), std::vector<double>(inData.originalData.size(),0));
 
 					//Iterate through each vector
-					for(unsigned i = 0; i < inData.originalData.size(); i++){
-						if(!inData.originalData[i].empty()){
-							//Grab a second vector to compare to 
-							std::vector<double> temp;
-							for(unsigned j = i+1; j < inData.originalData.size(); j++){
-									//Calculate vector distance 
-									auto dist = ut.vectors_distance(inData.originalData[i],inData.originalData[j]);
-									
-									if(dist < epsilon)
-										distMatrix[i][j] = dist;
-							}
-						}
-					}
-					inData.complex->setDistanceMatrix(&distMatrix);
+                    for(unsigned i = 0; i < inData.originalData.size(); i++)
+                    {
+                        if(!inData.originalData[i].empty())
+                        {
+                            std::vector<double> distsFromCurrVect;
+
+                            for(unsigned j = 0; j < inData.originalData.size(); j++)
+                            {
+                                if (j < i)
+                                {
+                                    distsFromCurrVect.push_back( distMatrix[j][i] );
+                                }
+                                else if (j > i)
+                                {
+                                    //Calculate vector distance
+                                    auto dist = ut.vectors_distance(inData.originalData[i], inData.originalData[j]);
+                                    distMatrix[i][j] = dist;
+                                    distsFromCurrVect.push_back( dist );
+                                }
+
+                            }
+
+                            auto tempIndex = std::min_element(distsFromCurrVect.begin(), distsFromCurrVect.end()) - distsFromCurrVect.begin();
+                            if (tempIndex < i)
+                                defaultVals->nnIndices.push_back(tempIndex);
+                            else
+                                defaultVals->nnIndices.push_back(tempIndex + 1);
+
+                            auto nnDistFromCurrVect = *std::min_element( distsFromCurrVect.begin(), distsFromCurrVect.end() );
+                            defaultVals->nnDists.push_back( nnDistFromCurrVect );
+                        }
+                    }
+
+                    inData.complex->setDistanceMatrix(&distMatrix);
 
 					for(auto a : windowValues)
 						inData.complex->insert();
@@ -587,7 +676,7 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
                     defaultVals->numPointsPartn[defaultVals->targetPartition] = defaultVals->windowMaxSize;
                     defaultVals->maxKeys[defaultVals->targetPartition] = defaultVals->key - 1;
                 }
-                
+
 
             }
             else
