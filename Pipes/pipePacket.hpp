@@ -22,7 +22,7 @@ class pipePacket {
 	std::vector<std::vector<double>> distMatrix;
 	simplexBase* complex;
 	
-	std::vector<std::vector<unsigned>> boundaries;
+	std::vector<std::set<unsigned>> boundaries;
 	std::set<double, std::greater<double>> weights;	
 	std::string bettiOutput;
 	
