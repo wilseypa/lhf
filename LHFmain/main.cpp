@@ -18,7 +18,7 @@ int nprocs,id;
  
 struct sortBettis{
 	bool operator()(bettiBoundaryTableEntry lhs, bettiBoundaryTableEntry rhs){
-		return lhs.death < rhs.death;
+		return lhs.bettiDim < rhs.bettiDim || (lhs.bettiDim == rhs.bettiDim && lhs.death < rhs.death);
 	}
 };
 
@@ -211,9 +211,6 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 					std::cout << "skipping full data, no centroids" << std::endl;
 					
 				//Determine if we need to upscale any additional boundaries based on the output of the centroid approximated PH
-				
-				
-					
 					
 			} else if(partitionedData.second[z].size() > 0){				
 				
@@ -221,7 +218,6 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 				auto curwD = new pipePacket(args, args["complexType"]);	
 				curwD->originalData = partitionedData.second[z];
 				curwD->fullData = partitionedData.second[z];
-				
 				
 				//		If the current partition is smaller than the threshold, process
 				//			Otherwise recurse to reduce the number of points
@@ -231,14 +227,15 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 					curwD->bettiTable = processIterUpscale(args, curwD);
 				}
 				
-				
-				
 				//4. Process and merge bettis - whether they are from runPipeline or IterUpscale
 				bool foundExt = false;
 				std::vector<bettiBoundaryTableEntry> temp;
-				
+				ut.extractBoundaryPoints(curwD->bettiTable);
+
+				//Remap the boundary indices into the original point space
+				curwD->bettiTable = ut.mapPartitionIndexing(partitionedData.first[z], curwD->bettiTable);
+
 				for(auto betEntry : curwD->bettiTable){
-					
 					auto boundIter = betEntry.boundaryPoints.begin();
 					
 					//REWRITE::
@@ -254,31 +251,28 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 					//	3. Once all entries have been iterated - if (b) was traversed there is a connection outside to another partition
 					//		-If (b) was not traversed, need to add a {0, maxEps} entry for the independent component (Check this?)
 					
-					if(betEntry.bettiDim == 0 && betEntry.boundaryPoints.size() > 1){	
-						if(betEntry.boundaryPoints.size() > 0 && (*boundIter) < binCounts[z]){
-							unsigned tempIndex = (*boundIter);
+					if(betEntry.boundaryPoints.size() > 0 && iterwD->originalLabels[*boundIter] == z){
+						if(betEntry.bettiDim == 0){
 							boundIter++;
 							
 							//Check if second entry is in the partition
-							if((*boundIter) < binCounts[z]){
+							if(iterwD->originalLabels[*boundIter] == z){
 								temp.push_back(betEntry);
 							} else if(!foundExt){
 								foundExt = true;
 								temp.push_back(betEntry);
-							}
+							}						
+						} else{
+							temp.push_back(betEntry);
 						}
-					} else if(betEntry.bettiDim > 0 && betEntry.boundaryPoints.size() > 0 && *(betEntry.boundaryPoints.begin()) < binCounts[z]){
-						temp.push_back(betEntry);
 					}
 				}
+
 				//If we never found an external connection, add the infinite connection here
 				if(!foundExt){
 					bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
 					temp.push_back(des);
 				}
-				
-				//Remap the boundary indices into the original point space
-				temp = ut.mapPartitionIndexing(partitionedData.first[z] , temp);
 		
 				for(auto newEntry : temp){
 					bool found = false;
@@ -297,18 +291,14 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 				
 			} else 
 				std::cout << "skipping" << std::endl;
-				
 		}
 	}
 	
 	//5. Merge partitions, compute PH on original centroid dataset, and report results
 	
 	//		Merge partitioned betti tables together
-	for(auto partTable : partBettiTable){
-		for(auto entry : partTable){
-			mergedBettiTable.push_back(entry);
-		}
-	}
+	for(auto partTable : partBettiTable)
+		mergedBettiTable.insert(mergedBettiTable.end(), partTable.begin(), partTable.end());
 	
 	//		Add open d0 intervals for the remaining d0 bettis
 	auto addlIntervals = std::count_if(mergedBettiTable.begin(), mergedBettiTable.end(), [&](bettiBoundaryTableEntry const &i) { return ( i.bettiDim == 0); });
@@ -332,7 +322,6 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 	
 	//		Return the final merged betti table for this iteration
 	return mergedBettiTable;
-	
 }
 
 
