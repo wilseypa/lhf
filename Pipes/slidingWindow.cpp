@@ -20,6 +20,7 @@
 
 int pointCounter = 1;
 std::vector<std::vector<double>> distMatrix;
+std::vector<std::vector<double>> dummDistMatrix;
 
 // basePipe constructor
 slidingWindow::slidingWindow()
@@ -30,6 +31,7 @@ slidingWindow::slidingWindow()
 
 void slidingWindow::deleteNNstats()
 {
+    std::cout << "Sliding window indexToBeDeleted = " << defaultVals->indexToBeDeleted << '\n';
     defaultVals->keyToBeDeleted = defaultVals->windowKeys[defaultVals->indexToBeDeleted];
 
     defaultVals->windowKeys.erase( defaultVals->windowKeys.begin() + defaultVals->indexToBeDeleted );
@@ -258,7 +260,22 @@ void slidingWindow::updateStats()
     std::vector<double> distMatLastRow(defaultVals->windowMaxSize);  // The last row of the upper triangular distance matrix is a vector of 0s.
     //pPack->complex->distMatrix->push_back( distMatLastRow );
     distMatrix.push_back( distMatLastRow );
-    pPack->complex->setDistanceMatrix(&distMatrix);
+    // distMatrix.push_back( defaultVals->dummDistsFromCurrVec );
+
+//    //Delete Row[index]
+//    dummDistMatrix.erase(dummDistMatrix.begin() + defaultVals->indexToBeDeleted);
+//
+//    //Delete column[index] (row[][index])
+//    for(int i = 0; i < dummDistMatrix.size(); i++)
+//    {
+//        if(dummDistMatrix[i].size() >= defaultVals->indexToBeDeleted)
+//            dummDistMatrix[i].erase(dummDistMatrix[i].begin() + defaultVals->indexToBeDeleted);
+//            dummDistMatrix[i].push_back( defaultVals->distsFromCurrVec[i] );
+//    }
+
+    dummDistMatrix.push_back( defaultVals->dummDistsFromCurrVec );
+
+    pPack->complex->setDistanceMatrix(&dummDistMatrix);
 
 
 
@@ -332,6 +349,7 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
 
     // Compute the distances from the current vector to the existing ones in the window.
     defaultVals->distsFromCurrVec = ut.nearestNeighbors(currentVector, windowValues);
+    defaultVals->dummDistsFromCurrVec = defaultVals->distsFromCurrVec;
 
     // Find the distance from the current vector to its nearest neighbor in the window.
     auto nnDistCurrVec = *std::min_element( defaultVals->distsFromCurrVec.begin(), defaultVals->distsFromCurrVec.end() );
@@ -343,6 +361,7 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
 
         if (nnDistCurrVec == 0) {
 
+            std::cout << "1. ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"  << '\n';
             std::cout << pointCounter << '\n';
             for (auto const& pair: defaultVals->avgNNDistPartitions) {
                 std::cout << "{" << pair.first << ": " << pair.second << "}\n";
@@ -361,7 +380,7 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
         std::cout << "avgNNDistSinglePartition: " << avgNNDistSinglePartition << std::endl;
 
         if (avgNNDistSinglePartition <= f2 && nnDistCurrVec <= 1) {
-            std::cout << "Hello World" << std::endl;
+            std::cout << "2. ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"  << '\n';
 
             std::cout << pointCounter << '\n';
             for (auto const& pair: defaultVals->avgNNDistPartitions) {
@@ -375,6 +394,7 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
 
         if (avgNNDistSinglePartition == 0 || nnDistCurrVec / avgNNDistSinglePartition > f1)
         {
+            std::cout << "3. ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"  << '\n';
             // In this case, the oldest point will be deleted from the window.
             defaultVals->labelToBeDeleted = defaultVals->partitionLabels[0];
             defaultVals->indexToBeDeleted = 0;
@@ -461,6 +481,7 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
 
         if (smallestOutdated != -1) {   // If there is (are) outdated partition(s):
 
+            std::cout << "4. ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"  << '\n';
             // Delete the oldest point of the smallest outdated partition (and its associated statistics) from the sliding window.
             defaultVals->labelToBeDeleted = smallestOutdated;
             defaultVals->indexToBeDeleted = std::find( defaultVals->partitionLabels.begin(), defaultVals->partitionLabels.end(), smallestOutdated ) - defaultVals->partitionLabels.begin();
@@ -485,6 +506,7 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
         else {   // There is no outdated partition in the window:
             if ( defaultVals->targetPartition != nearestPartition ) {   // If the current vector was assigned a new partition:
 
+                std::cout << "5. ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"  << '\n';
                 // In this case, the oldest point will be deleted from the window.
                 defaultVals->labelToBeDeleted = defaultVals->partitionLabels[0];
                 defaultVals->indexToBeDeleted = 0;
@@ -511,8 +533,15 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
                 // In this case, make sure the point to be deleted does not belong to the target partition. In particular,
                 // we'll delete the oldest point from a partition label != targetPartition label.
 
+                std::cout << "6. ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"  << '\n';
                 // Find the first occurrence of a partition label != targetPartition label.
-                defaultVals->indexToBeDeleted = std::find( defaultVals->partitionLabels.begin(), defaultVals->partitionLabels.end(), !defaultVals->targetPartition ) - defaultVals->partitionLabels.begin();
+
+                for (auto delIndex = 0; delIndex < defaultVals->partitionLabels.size(); delIndex++) {
+                    if ( defaultVals->partitionLabels[delIndex] != defaultVals->targetPartition )
+                        defaultVals->indexToBeDeleted = delIndex;
+                }
+
+                // defaultVals->indexToBeDeleted = std::find( defaultVals->partitionLabels.begin(), defaultVals->partitionLabels.end(), !defaultVals->targetPartition ) - defaultVals->partitionLabels.begin();
                 defaultVals->labelToBeDeleted = defaultVals->partitionLabels[defaultVals->indexToBeDeleted];
 
                 deleteNNstats();
@@ -661,6 +690,7 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
                     }
 
                     inData.complex->setDistanceMatrix(&distMatrix);
+                    dummDistMatrix = distMatrix;
 
 					for(auto a : windowValues)
 						inData.complex->insert();
@@ -683,7 +713,7 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
             {
                 if(inData.complex->insertIterative(currentVector, windowValues, defaultVals->keyToBeDeleted, defaultVals->indexToBeDeleted, defaultVals->distsFromCurrVec))
                 {
-                    inData.complex->deleteIndexRecurse( defaultVals->keyToBeDeleted );
+                    // inData.complex->deleteIndexRecurse( defaultVals->keyToBeDeleted );
 
                     // Insert the current vector, its key and partition label into the rear ends of the corresponding containers.
                     windowValues.push_back(currentVector);
@@ -747,7 +777,8 @@ void slidingWindow::runSubPipeline(pipePacket wrData)
     pipePacket inData = wrData;
     outputData(inData);
 
-	std::string pipeFuncts = "rips.fast";
+	// std::string pipeFuncts = "rips.fast";
+	std::string pipeFuncts = "rips";
     auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
     subConfigMap["fn"] = "_" + std::to_string(repCounter);
     repCounter++;
