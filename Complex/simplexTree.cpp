@@ -167,7 +167,7 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 
 	if(streamEval(currentVector, window)) {   // Point is deemed 'significant'
 
-		// deleteIndexRecurse(keyToBeDeleted);
+		deleteIndexRecurse(keyToBeDeleted);
 		runningVectorIndices.erase(runningVectorIndices.begin() + indexToBeDeleted);
 
 		insert();

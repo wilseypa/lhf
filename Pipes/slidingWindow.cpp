@@ -683,7 +683,6 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
             {
                 if(inData.complex->insertIterative(currentVector, windowValues, defaultVals->keyToBeDeleted, defaultVals->indexToBeDeleted, defaultVals->distsFromCurrVec))
                 {
-                    inData.complex->deleteIndexRecurse( defaultVals->keyToBeDeleted );
 
                     // Insert the current vector, its key and partition label into the rear ends of the corresponding containers.
                     windowValues.push_back(currentVector);
