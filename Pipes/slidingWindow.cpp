@@ -31,7 +31,6 @@ slidingWindow::slidingWindow()
 
 void slidingWindow::deleteNNstats()
 {
-    std::cout << "Sliding window indexToBeDeleted = " << defaultVals->indexToBeDeleted << '\n';
     defaultVals->keyToBeDeleted = defaultVals->windowKeys[defaultVals->indexToBeDeleted];
 
     defaultVals->windowKeys.erase( defaultVals->windowKeys.begin() + defaultVals->indexToBeDeleted );
@@ -262,20 +261,24 @@ void slidingWindow::updateStats()
     distMatrix.push_back( distMatLastRow );
     // distMatrix.push_back( defaultVals->dummDistsFromCurrVec );
 
-//    //Delete Row[index]
-//    dummDistMatrix.erase(dummDistMatrix.begin() + defaultVals->indexToBeDeleted);
-//
-//    //Delete column[index] (row[][index])
-//    for(int i = 0; i < dummDistMatrix.size(); i++)
-//    {
-//        if(dummDistMatrix[i].size() >= defaultVals->indexToBeDeleted)
-//            dummDistMatrix[i].erase(dummDistMatrix[i].begin() + defaultVals->indexToBeDeleted);
-//            dummDistMatrix[i].push_back( defaultVals->distsFromCurrVec[i] );
-//    }
+
+
+    //Delete Row[index]
+    dummDistMatrix.erase(dummDistMatrix.begin() + defaultVals->indexToBeDeleted);
+
+    //Delete column[index] (row[][index])
+    for(int i = 0; i < dummDistMatrix.size(); i++)
+    {
+        if(dummDistMatrix[i].size() >= defaultVals->indexToBeDeleted)
+            dummDistMatrix[i].erase(dummDistMatrix[i].begin() + defaultVals->indexToBeDeleted);
+            dummDistMatrix[i].push_back( defaultVals->distsFromCurrVec[i] );
+    }
 
     dummDistMatrix.push_back( defaultVals->dummDistsFromCurrVec );
 
     pPack->complex->setDistanceMatrix(&dummDistMatrix);
+
+    // std::cout << "Reached upto here: " << '\n';
 
 
 
@@ -537,10 +540,14 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
                 // Find the first occurrence of a partition label != targetPartition label.
 
                 for (auto delIndex = 0; delIndex < defaultVals->partitionLabels.size(); delIndex++) {
-                    if ( defaultVals->partitionLabels[delIndex] != defaultVals->targetPartition )
+                    if ( defaultVals->partitionLabels[delIndex] != defaultVals->targetPartition ) {
                         defaultVals->indexToBeDeleted = delIndex;
+                        break;
+                    }
+
                 }
 
+                std::cout << "defaultVals->indexToBeDeleted = " << defaultVals->indexToBeDeleted << '\n';
                 // defaultVals->indexToBeDeleted = std::find( defaultVals->partitionLabels.begin(), defaultVals->partitionLabels.end(), !defaultVals->targetPartition ) - defaultVals->partitionLabels.begin();
                 defaultVals->labelToBeDeleted = defaultVals->partitionLabels[defaultVals->indexToBeDeleted];
 
