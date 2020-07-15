@@ -20,7 +20,6 @@
 
 int pointCounter = 1;
 std::vector<std::vector<double>> distMatrix;
-std::vector<std::vector<double>> dummDistMatrix;
 
 // basePipe constructor
 slidingWindow::slidingWindow()
@@ -256,30 +255,13 @@ void slidingWindow::updateStats()
 
     }
 
-    std::vector<double> distMatLastRow(defaultVals->windowMaxSize);  // The last row of the upper triangular distance matrix is a vector of 0s.
+    // std::vector<double> distMatLastRow(defaultVals->windowMaxSize);  // The last row of the upper triangular distance matrix is a vector of 0s.
+    std::vector<double> distMatLastRow = defaultVals->distsFromCurrVec;
+    distMatLastRow.push_back(0);
     //pPack->complex->distMatrix->push_back( distMatLastRow );
     distMatrix.push_back( distMatLastRow );
-    // distMatrix.push_back( defaultVals->dummDistsFromCurrVec );
 
-
-
-    //Delete Row[index]
-    dummDistMatrix.erase(dummDistMatrix.begin() + defaultVals->indexToBeDeleted);
-
-    //Delete column[index] (row[][index])
-    for(int i = 0; i < dummDistMatrix.size(); i++)
-    {
-        if(dummDistMatrix[i].size() >= defaultVals->indexToBeDeleted)
-            dummDistMatrix[i].erase(dummDistMatrix[i].begin() + defaultVals->indexToBeDeleted);
-            dummDistMatrix[i].push_back( defaultVals->distsFromCurrVec[i] );
-    }
-
-    dummDistMatrix.push_back( defaultVals->dummDistsFromCurrVec );
-
-    pPack->complex->setDistanceMatrix(&dummDistMatrix);
-
-    // std::cout << "Reached upto here: " << '\n';
-
+    pPack->complex->setDistanceMatrix(&distMatrix);
 
 
     // Update the average NN distance of the partition from which the last point was deleted and of the one to which the new point
@@ -352,7 +334,6 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
 
     // Compute the distances from the current vector to the existing ones in the window.
     defaultVals->distsFromCurrVec = ut.nearestNeighbors(currentVector, windowValues);
-    defaultVals->dummDistsFromCurrVec = defaultVals->distsFromCurrVec;
 
     // Find the distance from the current vector to its nearest neighbor in the window.
     auto nnDistCurrVec = *std::min_element( defaultVals->distsFromCurrVec.begin(), defaultVals->distsFromCurrVec.end() );
@@ -697,7 +678,6 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
                     }
 
                     inData.complex->setDistanceMatrix(&distMatrix);
-                    dummDistMatrix = distMatrix;
 
 					for(auto a : windowValues)
 						inData.complex->insert();
@@ -784,8 +764,8 @@ void slidingWindow::runSubPipeline(pipePacket wrData)
     pipePacket inData = wrData;
     outputData(inData);
 
-	// std::string pipeFuncts = "rips.fast";
-	std::string pipeFuncts = "rips";
+	std::string pipeFuncts = "rips.fast";
+	// std::string pipeFuncts = "rips";
     auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
     subConfigMap["fn"] = "_" + std::to_string(repCounter);
     repCounter++;

@@ -3,6 +3,7 @@
 #include <vector>
 #include <unistd.h>
 #include <iostream>
+#include <typeinfo>
 #include "simplexTree.hpp"
 
 simplexTree::simplexTree(double _maxEpsilon, std::vector<std::vector<double>>* _distMatrix, int _maxDim){
@@ -25,7 +26,8 @@ void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth,
 	simplexNode* temp;
 	double curE = 0;
 
-	if(runningVectorIndices.size() < runningVectorCount){
+
+	if(runningVectorIndices.size() <= runningVectorCount){
 
 		//Get the positions of the vector in the runningVectorIndices array
 		auto nodeIndex = std::find(runningVectorIndices.begin(), runningVectorIndices.end(), node);
@@ -42,17 +44,21 @@ void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth,
 		}
 		else {
 		    curE = *((*distMatrix)[std::distance(runningVectorIndices.begin(), nodeIndex)].rbegin());
+		    // std::cout << "curE1 = " << curE << '\n';
 		}
 
 
 	}else {
+	    // std::cout << "node->index = " << node->index << '\n';
+	    // std::cout << "indexCounter = " << indexCounter << '\n';
 		curE = (*distMatrix)[node->index][indexCounter];
+		// std::cout << "curE2 = " << curE << '\n';
 	}
+
+	// std::cout << "================================================" << '\n';
 
 
 	curE = curE > maxE ? curE : maxE;
-
-	//std::cout << "Got curE" << std::endl;
 
 	//Check if the node needs inserted at this level
 	if(curE < maxEpsilon){
@@ -135,22 +141,26 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 	if(streamEval(currentVector, window)) {   // Point is deemed 'significant'
 
 		//Delete the oldest point in the window
-		deleteIterative(runningVectorIndices[0]);
-		runningVectorIndices.erase(runningVectorIndices.begin() + 0);
+		deleteIterative(runningVectorIndices[5]);
+		runningVectorIndices.erase(runningVectorIndices.begin() + 5);
 
 		//Create distance matrix row of current vector to each point in the window
-		// std::vector<double> distsCurrVec = ut.nearestNeighbors(currentVector, window);
-		std::vector<double> distMatrixRow = ut.nearestNeighbors(currentVector, window);
+		std::vector<double> distsCurrVec = ut.nearestNeighbors(currentVector, window);
+		// std::vector<double> distMatrixRow = ut.nearestNeighbors(currentVector, window);
 
-//		//Insert the new point into the distance matrix and complex
-//		for(int i = 0; i < (*distMatrix).size(); i++) {
-//            (*distMatrix)[i].push_back(distsCurrVec[i+1]);
-//		}
+		distsCurrVec.erase(distsCurrVec.begin() + 5);
+
+		//Insert the new point into the distance matrix and complex
+		for(int i = 0; i < (*distMatrix).size(); i++) {
+            (*distMatrix)[i].push_back(distsCurrVec[i]);
+		}
+
+		distsCurrVec.push_back(0);
 //
 //		std::vector<double> distMatLastRow( window.size() );
-//		distMatrix->push_back(distMatLastRow);
+		distMatrix->push_back(distsCurrVec);
 
-        distMatrix->push_back(distMatrixRow);
+//        distMatrix->push_back(distMatrixRow);
 
 		insert();
 
@@ -208,18 +218,6 @@ void simplexTree::deleteIterative(simplexNode* simplex){
                 (*distMatrix)[i].erase((*distMatrix)[i].begin() + index);
 		}
 
-//        if(index < 0)  // Impossible event - no deletion
-//        {
-//            //Delete Row[index]
-//            distMatrix->erase(distMatrix->begin() + index);
-//
-//            //Delete column[index] (row[][index])
-//            for(int i = 0; i < (*distMatrix).size(); i++)
-//            {
-//                if((*distMatrix)[i].size() >= index)
-//                    (*distMatrix)[i].erase((*distMatrix)[i].begin() + index);
-//            }
-//        }
 
         auto curNodeCount = nodeCount;
 
