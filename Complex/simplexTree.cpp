@@ -27,7 +27,7 @@ void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth,
 	double curE = 0;
 
 
-	if(runningVectorIndices.size() <= runningVectorCount){
+	if(runningVectorIndices.size() < runningVectorCount){
 
 		//Get the positions of the vector in the runningVectorIndices array
 		auto nodeIndex = std::find(runningVectorIndices.begin(), runningVectorIndices.end(), node);
@@ -141,14 +141,14 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 	if(streamEval(currentVector, window)) {   // Point is deemed 'significant'
 
 		//Delete the oldest point in the window
-		deleteIterative(runningVectorIndices[5]);
-		runningVectorIndices.erase(runningVectorIndices.begin() + 5);
+		deleteIterative(runningVectorIndices[0]);
+		runningVectorIndices.erase(runningVectorIndices.begin());
 
 		//Create distance matrix row of current vector to each point in the window
 		std::vector<double> distsCurrVec = ut.nearestNeighbors(currentVector, window);
 		// std::vector<double> distMatrixRow = ut.nearestNeighbors(currentVector, window);
 
-		distsCurrVec.erase(distsCurrVec.begin() + 5);
+		distsCurrVec.erase(distsCurrVec.begin());
 
 		//Insert the new point into the distance matrix and complex
 		for(int i = 0; i < (*distMatrix).size(); i++) {
@@ -295,17 +295,6 @@ void simplexTree::deleteIndexRecurse(int vectorIndex, simplexNode* curNode){
 			}
 		}
 
-
-//        for(auto i = 0; i < simplexList.size(); i++)
-//        {
-//            if(*(simplexList[i].begin()) == tempNode)
-//            {
-//                std::cout << "Iteration inside if " << i << '\n';
-//
-//                simplexList[i].insert(simplexList[i].begin(), tempNode->sibling);
-//            }
-//        }
-
 		deleteIndexRecurse(vectorIndex, tempNode);
 
 	} else if(curNode->child != nullptr && curNode->child->index < vectorIndex){
@@ -373,6 +362,8 @@ void simplexTree::insert() {
 	//			insert to current
 	//	iterate to d0->sibling
 
+	runningVectorCount++;
+
 	for(auto simplexListIter = simplexList[0].begin(); simplexListIter != simplexList[0].end(); simplexListIter++){
 		recurseInsert((*simplexListIter), indexCounter, 0, 0, {indexCounter});
 	}
@@ -386,7 +377,7 @@ void simplexTree::insert() {
 
 	simplexList[0].insert(insNode);
 
-	runningVectorCount++;
+	// runningVectorCount++;
 	nodeCount++;
 	indexCounter++;
 }
