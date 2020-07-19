@@ -9,15 +9,14 @@ pipePacket::pipePacket(const std::string& simplexType, const double epsilon, con
 	std::map<std::string,std::string> blankConfig;
 	simplexBase *bs = new simplexBase(epsilon, maxDim);
 	complex = bs->newSimplex(simplexType, blankConfig);
+	delete bs;
 }
 
 pipePacket::pipePacket(const std::map<std::string, std::string> configMap, const std::string& simplexType){
-	
 	simplexBase *bs = new simplexBase(configMap);
 	complex = bs->newSimplex(simplexType, configMap);
+	delete bs;
 }
-	
-	
 
 double pipePacket::getSize(){
 	

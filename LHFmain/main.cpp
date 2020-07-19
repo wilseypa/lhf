@@ -1,161 +1,247 @@
-	#include "mpi.h"
-	#include <iostream>
-	#include <vector>
-	#include <algorithm>
-	#include <typeinfo>
-	#include <thread>
-	#include "readInput.hpp"
-	#include "argParser.hpp"
-	#include "basePipe.hpp"
-	#include "writeOutput.hpp"
-	#include "pipePacket.hpp"
-	#include "preprocessor.hpp"
-	#include "utils.hpp"
-        #include <string> 
-	int nprocs,id;
-	 
-	void runPipeline(std::map<std::string, std::string> args, pipePacket* wD){
-		auto *ws = new writeOutput();
+#include "mpi.h"
+#include "omp.h"
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <typeinfo>
+#include <thread>
+#include "readInput.hpp"
+#include "argParser.hpp"
+#include "basePipe.hpp"
+#include "writeOutput.hpp"
+#include "pipePacket.hpp"
+#include "preprocessor.hpp"
+#include "utils.hpp"
+#include <string> 
 
-		// Begin processing parts of the pipeline
-		// DataInput -> A -> B -> ... -> DataOutput
-		// Parsed by "." -> i.e. A.B.C.D
-		auto pipe = args.find("pipeline");
-		if(pipe != args.end()){
-			auto pipeFuncts = std::string(args["pipeline"]);
-			auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
-			
-			//For each '.' separated pipeline function (count of '.' + 1 -> lim)
-			for(unsigned i = 0; i < lim; i++){
-				auto curFunct = pipeFuncts.substr(0,pipeFuncts.find('.'));
-				pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
-				
-				//Build the pipe component, configure and run
-				auto *bp = new basePipe();
-				auto *cp = bp->newPipe(curFunct, args["complexType"]);
-			
-				//Check if the pipe was created and configure
-				if(cp != 0 && cp->configPipe(args)){
-					//Run the pipe function (wrapper)
-					*wD = cp->runPipeWrapper(*wD);
-				} else {
-					std::cout << cp << std::endl;
-					std::cout << "LHF runPipeline: Failed to configure pipeline: " << args["pipeline"] << std::endl;
-				}
-				
-				delete bp, delete cp;
-			}
-		}
-		//If the pipeline was undefined...
-		else {
-			std::cout << "LHF runPipeline: Failed to find a suitable pipeline, exiting..." << std::endl;
-			return;
-		}
+int nprocs,id;
+ 
+struct sortBettis{
+	bool operator()(bettiBoundaryTableEntry lhs, bettiBoundaryTableEntry rhs){
+		return lhs.death < rhs.death;
+	}
+};
+
+void runPipeline(std::map<std::string, std::string> args, pipePacket* wD){
+	auto *ws = new writeOutput();
+
+	// Begin processing parts of the pipeline
+	// DataInput -> A -> B -> ... -> DataOutput
+	// Parsed by "." -> i.e. A.B.C.D
+	auto pipe = args.find("pipeline");
+	if(pipe != args.end()){
+		auto pipeFuncts = std::string(args["pipeline"]);
+		auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
 		
-		//Output the data using writeOutput library
-		pipe = args.find("outputFile");
-		if(pipe != args.end()){
-			if (args["outputFile"] == "console"){
-				//ws->writeConsole(wD);
+		//For each '.' separated pipeline function (count of '.' + 1 -> lim)
+		for(unsigned i = 0; i < lim; i++){
+			auto curFunct = pipeFuncts.substr(0,pipeFuncts.find('.'));
+			pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
+			
+			//Build the pipe component, configure and run
+			auto *cp = basePipe::newPipe(curFunct, args["complexType"]);
+		
+			//Check if the pipe was created and configure
+			if(cp != 0 && cp->configPipe(args)){
+				//Run the pipe function (wrapper)
+				*wD = cp->runPipeWrapper(*wD);
 			} else {
-				ws->writeStats(wD->stats, args["outputFile"]);
-				ws->writeBarcodes(wD->bettiTable, args["outputFile"]);
-				
+				std::cout << cp << std::endl;
+				std::cout << "LHF runPipeline: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 			}
+			
+			delete cp;
 		}
-		
-		delete ws;
+	}
+	//If the pipeline was undefined...
+	else {
+		std::cout << "LHF runPipeline: Failed to find a suitable pipeline, exiting..." << std::endl;
 		return;
 	}
-
-
-
-	void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD){
-		
-		//Start with the preprocessing function, if enabled
-		auto pre = args["preprocessor"];
-		if(pre != ""){
-			auto *preprocess = new preprocessor();
-			auto *prePipe = preprocess->newPreprocessor(pre);
+	
+	//Output the data using writeOutput library
+	pipe = args.find("outputFile");
+	if(pipe != args.end()){
+		if (args["outputFile"] == "console"){
+			//ws->writeConsole(wD);
+		} else {
+			ws->writeStats(wD->stats, args["outputFile"]);
+			ws->writeBarcodes(wD->bettiTable, args["outputFile"]);
 			
-			if(prePipe != 0 && prePipe->configPreprocessor(args)){
-				*wD = prePipe->runPreprocessorWrapper(*wD);
-			} else {
-				std::cout << "LHF processData: Failed to configure pipeline: " << args["pipeline"] << std::endl;
-			}
+		}
+	}
+	
+	delete ws;
+	return;
+}
+
+
+
+void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD){
+	
+	//Start with the preprocessing function, if enabled
+	auto pre = args["preprocessor"];
+	if(pre != ""){
+		auto *prePipe = preprocessor::newPreprocessor(pre);
+		
+		if(prePipe != 0 && prePipe->configPreprocessor(args)){
+			*wD = prePipe->runPreprocessorWrapper(*wD);
+		} else {
+			std::cout << "LHF processData: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 		}
 		
-		runPipeline(args, wD);
-			
-		return;
-	}	
+		delete prePipe;
+	}
+	
+	runPipeline(args, wD);
+		
+	return;
+}	
 
-	void processReducedWrapper(std::map<std::string, std::string> args, pipePacket* wD){
-		auto maxEpsilon = std::atof(args["epsilon"].c_str());
-		auto scalar = std::atof(args["scalar"].c_str());
-		auto *ws = new writeOutput();
-		auto originalDataSize = wD->originalData.size();
-		std::vector<bettiBoundaryTableEntry> mergedBettiTable;
+std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, std::string> args, pipePacket* wD){
+	
+	//This function is called when the number of points in a partition are greater than the point threshold
+	//	If the number of points in the new partitions are under the point threshold, continue
+	//	If the number of points in any new partition is above the point threshold, recurse
+	//
+	//We may also want to limit the number of recursions for bigger data sets
+	
+	
+	//Break this down into better code sections:
+	
+	
+	//1. Local objects and storage
+	
+	//		Parameters	
+	auto threshold = std::atoi(args["threshold"].c_str());
+	auto maxEpsilon = std::atof(args["epsilon"].c_str());
+	auto scalar = std::atof(args["scalar"].c_str());
+	auto threads = std::atoi(args["threads"].c_str());
+	
+	//		Referenced Libraries
+	utils ut;
+	
+	//		Local Storage
+	std::vector<bettiBoundaryTableEntry> mergedBettiTable;
+	std::vector<bettiBoundaryTableEntry> partBettiTable[threads];
+	auto originalDataSize = wD->originalData.size();
+	
+	//		Initalize a copy of the pipePacket
+	auto iterwD = new pipePacket(args, args["complexType"]);
+	iterwD->originalData = wD->originalData;
+	iterwD->fullData = wD->fullData;
+	
+	//2. Partition the source point cloud separate datasets accordingly
+	
+	//		Run preprocessor pipeline to partition
+	auto pre = args["preprocessor"];
+	if(pre != ""){
+		auto *prePipe = preprocessor::newPreprocessor(pre);
 		
-		//Start with the preprocessing function, if enabled
-		auto pre = args["preprocessor"];
-		if(pre != ""){
-			auto *preprocess = new preprocessor();
-			auto *prePipe = preprocess->newPreprocessor(pre);
-			
-			if(prePipe != 0 && prePipe->configPreprocessor(args)){
-				*wD = prePipe->runPreprocessorWrapper(*wD);
-			} else {
-				std::cout << "LHF processReduced: Failed to configure pipeline: " << args["pipeline"] << std::endl;
-			}
-			delete preprocess, delete prePipe;
+		if(prePipe != 0 && prePipe->configPreprocessor(args)){
+			*iterwD = prePipe->runPreprocessorWrapper(*iterwD);
+		} else {
+			std::cout << "LHF processReduced: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 		}
+		delete prePipe;
+	}
+	
+	//		Compute partition statistics for fuzzy partition distance
+	auto maxRadius = ut.computeMaxRadius(std::atoi(args["clusters"].c_str()), iterwD->originalData, iterwD->fullData, iterwD->originalLabels);
+	auto avgRadius = ut.computeAvgRadius(std::atoi(args["clusters"].c_str()), iterwD->originalData, iterwD->fullData, iterwD->originalLabels);
+	
+	//		Count the size of each partition for identifying source partitions when looking at the betti table results
+	std::vector<unsigned> binCounts;
+	for(unsigned a = 0; a < std::atoi(args["clusters"].c_str()); a++){
+		binCounts.push_back(std::count(iterwD->originalLabels.begin(), iterwD->originalLabels.end(), a));
+	}
+	std::cout << "Bin Counts: ";
+	ut.print1DVector(binCounts);
+	
+	//		Sort our fuzzy partitions into individual vectors
+	args["scalarV"] = std::to_string(scalar*maxRadius);
+	auto partitionedData = ut.separatePartitions(std::atof(args["scalarV"].c_str()), iterwD->originalData, iterwD->fullData, iterwD->originalLabels);
+	std::cout << "Using scalar value: " << args["scalarV"] << std::endl;
+	std::cout << "Partitions: " << partitionedData.second.size() << std::endl << "Counts: ";
+	
+	//		Get sizes of the new fuzzy partitions
+	std::vector<unsigned> partitionsize;
+	for(auto a: partitionedData.second)
+		 partitionsize.push_back(a.size());
+	int partitionsize_size = partitionsize.size();
+	ut.print1DVector(partitionsize);
+	
+	//		Append the centroid dataset to run in parallel as well
+	partitionedData.second.push_back(iterwD->originalData);
+	
+	
+	//3. Process each partition using OpenMP to handle multithreaded scheduling
+	//
+	
+	std::cout << "Running with " << threads << " threads" << std::endl;
+	
+	//		This begins the parallel region; # threads are spun up within these braces
+	#pragma omp parallel num_threads(threads)
+	{
 		
-		utils ut;
+		//		Get the thread number with OpenMP - prevents simultaneous accesses to the betti tables
+		int np = omp_get_thread_num();
 		
-		//Separate our partitions for distribution
-		auto maxRadius = ut.computeMaxRadius(std::atoi(args["clusters"].c_str()), wD->originalData, wD->fullData, wD->originalLabels);
-		auto avgRadius = ut.computeAvgRadius(std::atoi(args["clusters"].c_str()), wD->originalData, wD->fullData, wD->originalLabels);
+		//		Schedule each thread to compute one of the partitions in any order
+		//			When finished, thread will grab next iteration available
+		#pragma omp for schedule(dynamic)
+		for(int z = partitionedData.second.size()-1; z >= 0; z--){
 			
-		std::cout << "Using maxRadius: " << maxRadius << "\tavgRadius: " << avgRadius<< std::endl;
-		std::vector<unsigned> binCounts;
-		for(unsigned a = 0; a < std::atoi(args["clusters"].c_str()); a++){
-			binCounts.push_back(std::count(wD->originalLabels.begin(), wD->originalLabels.end(), a));
-		}
-		std::cout << "Bin Counts: ";
-		ut.print1DVector(binCounts);
-		
-		auto centroids = wD->originalData;
-		
-		auto partitionedData = ut.separatePartitions(scalar*maxRadius, wD->originalData, wD->fullData, wD->originalLabels);
-		
-		std::cout << "Partitions: " << partitionedData.second.size() << std::endl << "Counts: ";
-		
-		std::vector<unsigned> partitionsize;
-		//Get the partition sizes
-		for(auto a: partitionedData.second)
-			 partitionsize.push_back(a.size());
-
-		int partitionsize_size = partitionsize.size();
-		ut.print1DVector(partitionsize);
-		
-		for(unsigned z = 0; z < partitionedData.second.size(); z++){
-			std::cout << "Partition: " << z << std::endl;
-			if(partitionedData.second[z].size() > 0){
-				std::cout << "\tRunning Pipeline with : " << partitionedData.second[z].size() << " vectors" << std::endl;
-				wD->originalData = partitionedData.second[z];
+			//Check if we are running the centroid dataset (there's no label associated)
+			if(z == partitionedData.first.size()){
+				//		Run on full dataset
+				//		Set the pipeline to include the boundary and upscaling steps
+				auto centArgs = args;
+				if(args["upscale"] == "true" || args["upscale"] == "1")
+					centArgs["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence.boundary.upscale";
+				else
+					centArgs["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
+					
+				if(partitionedData.second[z].size() > 0){
+					wD->originalData = partitionedData.second[z];
+					runPipeline(centArgs, wD);
+					
+					wD->complex->clear();
+				} else 
+					std::cout << "skipping full data, no centroids" << std::endl;
+					
+				//Determine if we need to upscale any additional boundaries based on the output of the centroid approximated PH
 				
-				runPipeline(args, wD);
 				
-				//Map partitions back to original point indexing
-				//ut.mapPartitionIndexing(partitionedData.first[z], wD->bettiTable);
+					
+					
+			} else if(partitionedData.second[z].size() > 0){				
 				
+				//		Clone the pipePacket to prevent shared memory race conditions
+				auto curwD = new pipePacket(args, args["complexType"]);	
+				curwD->originalData = partitionedData.second[z];
+				curwD->fullData = partitionedData.second[z];
+				
+				
+				//		If the current partition is smaller than the threshold, process
+				//			Otherwise recurse to reduce the number of points
+				if(args["mode"] == "reduced" || partitionedData.second[z].size() < threshold){
+					runPipeline(args, curwD);
+				} else {
+					curwD->bettiTable = processIterUpscale(args, curwD);
+				}
+				
+				
+				
+				//4. Process and merge bettis - whether they are from runPipeline or IterUpscale
 				bool foundExt = false;
 				std::vector<bettiBoundaryTableEntry> temp;
 				
-				for(auto betEntry : wD->bettiTable){
+				for(auto betEntry : curwD->bettiTable){
 					
 					auto boundIter = betEntry.boundaryPoints.begin();
+					
+					//REWRITE::
 					
 					//The new (improved) approach to merging d0 bettis (pretty sure this works....)
 					//	1. Use a binary array to track each point within the original partition
@@ -196,77 +282,58 @@
 		
 				for(auto newEntry : temp){
 					bool found = false;
-					for(auto curEntry : mergedBettiTable){
+					for(auto curEntry : partBettiTable[np]){
 						if(newEntry.death == curEntry.death && newEntry.boundaryPoints == curEntry.boundaryPoints){
 							found = true;
 						}
 					}
 					if(!found)
-						mergedBettiTable.push_back(newEntry);
+						partBettiTable[np].push_back(newEntry);
 				}
-								
-				wD->bettiTable.clear();
-				wD->complex->clear();
+				
+				curwD->complex->clear();
+				delete curwD->complex;
+				delete curwD;
 				
 			} else 
 				std::cout << "skipping" << std::endl;
-		}
-		
-		
-		//Add open d0 intervals for the remaining d0 bettis
-		auto addlIntervals = std::count_if(mergedBettiTable.begin(), mergedBettiTable.end(), [&](bettiBoundaryTableEntry const &i) { return ( i.bettiDim == 0); });
-		std::cout << "Adding " << originalDataSize << "-" << addlIntervals << " intervals" << std::endl;
-		for(auto i = 0; i < originalDataSize - addlIntervals; i++){
-			bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
-			mergedBettiTable.push_back(des);
-		}
-			
 				
-		
-		std::cout << "Full Data: " << centroids.size() << std::endl;
-		if(centroids.size() > 0){
-			std::cout << "Running Pipeline with : " << centroids.size() << " vectors" << std::endl;
-			wD->originalData = centroids;
-			runPipeline(args, wD);
-			
-			wD->complex->clear();
-		} else 
-			std::cout << "skipping" << std::endl;
-			
-		
-			
-		//Merge bettis from the centroid based data
-		for(auto betEntry : wD->bettiTable){
-			if(betEntry.bettiDim > 0 ){
-				mergedBettiTable.push_back(betEntry);
-			}
 		}
-			
-		std::cout << std::endl << "_______Merged BETTIS_______" << std::endl;
-		
-		for(auto a : mergedBettiTable){
-			std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
-			ut.print1DVector(a.boundaryPoints);
+	}
+	
+	//5. Merge partitions, compute PH on original centroid dataset, and report results
+	
+	//		Merge partitioned betti tables together
+	for(auto partTable : partBettiTable){
+		for(auto entry : partTable){
+			mergedBettiTable.push_back(entry);
 		}
-    
-		//Output the data using writeOutput library
-		auto pipe = args.find("outputFile");
-		if(pipe != args.end()){
-			if (args["outputFile"] == "console"){
-				//ws->writeConsole(wD);
-			} else {
-				ws->writeStats(wD->stats, args["outputFile"]);
-				ws->writeBarcodes(mergedBettiTable, args["outputFile"]);
-				
-			}
-		}
+	}
+	
+	//		Add open d0 intervals for the remaining d0 bettis
+	auto addlIntervals = std::count_if(mergedBettiTable.begin(), mergedBettiTable.end(), [&](bettiBoundaryTableEntry const &i) { return ( i.bettiDim == 0); });
+	for(auto i = 0; i < originalDataSize - addlIntervals; i++){
+		bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
+		mergedBettiTable.push_back(des);
+	}
+	
+	
 		
-		delete ws;
-		return;
-	}	
-
-
-
+	//		Merge bettis from the centroid based data
+	for(auto betEntry : wD->bettiTable){
+		if(betEntry.bettiDim > 0 ){
+			mergedBettiTable.push_back(betEntry);
+		}
+	}
+		
+	iterwD->complex->clear();
+	delete iterwD->complex;
+	delete iterwD;
+	
+	//		Return the final merged betti table for this iteration
+	return mergedBettiTable;
+	
+}
 
 
 void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* wD){
@@ -278,20 +345,43 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 	utils ut;
 		
 	// check if 1 process only
-	  if(nprocs==1)
-	  {
-		 //Read our input data
+	if(nprocs==1){
+		//Read our input data
 		auto *rs = new readInput();
 		wD->originalData = rs->readCSV(args["inputFile"]);
 		wD->fullData = wD->originalData;
+
+		auto *ws = new writeOutput();
+		utils ut;
 		
-		processReducedWrapper(args,wD);
-		 
-		return ;
+		args["mode"] = "reduced";
+		auto mergedBettiTable = processIterUpscale(args,wD);
+		// processReducedWrapper(args,wD);
+
+		std::cout << std::endl << "_______Merged BETTIS_______" << std::endl;
 		
-		  }
+		for(auto a : mergedBettiTable){
+			std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
+			ut.print1DVector(a.boundaryPoints);
+		}
+
+		//Output the data using writeOutput library
+		auto pipe = args.find("outputFile");
+		if(pipe != args.end()){
+			if (args["outputFile"] == "console"){
+				//ws->writeConsole(wD);
+			} else {
+				ws->writeStats(wD->stats, args["outputFile"]);
+				ws->writeBarcodes(mergedBettiTable, args["outputFile"]);		
+			}
+		}
+		
+		delete ws;
+		return;
+	}
+	
 	unsigned dimension;	
-    std::vector<std::vector<double>> centroids;	
+	std::vector<std::vector<double>> centroids;	
 	std::vector<unsigned> binCounts;
 	std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> partitionedData;
 	int minPartitions;
@@ -311,7 +401,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 	int maxsizelabel=0;
 	double *receivedData;
 	unsigned *receivedDataLabel;
-	
+
 	std::vector<unsigned> betti_dim;
 	std::vector<double> betti_birth;
 	std::vector<double> betti_death;
@@ -347,15 +437,14 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 ITERATIVEPARTITIONING :
 		auto pre = args["preprocessor"];
 		if(pre != ""){
-			auto *preprocess = new preprocessor();
-			auto *prePipe = preprocess->newPreprocessor(pre);
-	
+			auto *prePipe = preprocessor::newPreprocessor(pre);
+
 			if(prePipe != 0 && prePipe->configPreprocessor(args)){
 				*wD = prePipe->runPreprocessorWrapper(*wD);
 			} else {
 				std::cout << "LHF : Failed to configure pipeline: " << args["pipeline"] << std::endl;
 			}
-			delete preprocess, delete prePipe;
+			delete prePipe;
 		}
 		
 		//Separate our partitions for distribution
@@ -519,9 +608,9 @@ ITERATIVEPARTITIONING :
 		std::cout << "partitionsize:";
 		ut.print1DVector(partitionsize);
 	}
-	
-//	broadcasting all the required information by slaves.
-	
+
+	//	broadcasting all the required information by slaves.
+
 	MPI_Bcast(&dimension,1,MPI_UNSIGNED,0,MPI_COMM_WORLD);				//Data dimension
 	MPI_Bcast(&partitionsize_size,1,MPI_UNSIGNED,0,MPI_COMM_WORLD);		//Partition size array size
 	partitionsize.resize(partitionsize_size);
@@ -547,12 +636,11 @@ ITERATIVEPARTITIONING :
 			receivedDataLabel[i] = 0;
 	}
 
-//	scatter the partions to slaves.
+	//	scatter the partions to slaves.
 	MPI_Scatterv( &sdata[0],scounts,displs, MPI_DOUBLE, receivedData, maxsize, MPI_DOUBLE,0, MPI_COMM_WORLD);
-   	 MPI_Scatterv( &sdatalabel[0],scountslabel,displslabel, MPI_UNSIGNED, receivedDataLabel, maxsizelabel, MPI_UNSIGNED,0, MPI_COMM_WORLD);
-    
+  MPI_Scatterv( &sdatalabel[0],scountslabel,displslabel, MPI_UNSIGNED, receivedDataLabel, maxsizelabel, MPI_UNSIGNED,0, MPI_COMM_WORLD);
 	if(id==0){
-	
+
 		//Run the centroid replaced data set through master while other processes execute on partitions
 
 		std::cout << "Full Data: " << smallCentroidsPartitionedData.size() << std::endl;
@@ -586,7 +674,7 @@ ITERATIVEPARTITIONING :
 	} else {
 		//NOTE: need to have dynamic partition size; whether that means serializing and sending
 		//	the partition table and size or dynamically allocating the partitionsize vector here (push_back)
-//		std::cout<<dimension<<" "<<minPartitions<<" "<<id<<std::endl;
+	//		std::cout<<dimension<<" "<<minPartitions<<" "<<id<<std::endl;
 		int i=0;
 		int displacement=0;
 		if(id <= firstk)
@@ -620,11 +708,11 @@ ITERATIVEPARTITIONING :
 		}
 		
 		for(unsigned z = 0; z < minPartitions; z++){
-	 		if(partitionedData[z].size() > 0){
+			if(partitionedData[z].size() > 0){
 				std::cout << "Running Pipeline with : " << partitionedData[z].size() << " vectors" << " id :: "<<id<<std::endl;
 				wD->originalData = partitionedData[z];
 				runPipeline(args, wD);
-                                //Utilize a vector of bools to track connected components, size of the partition
+								//Utilize a vector of bools to track connected components, size of the partition
 				std::vector<bool> conTrack(binCounts[z], false);
 				bool foundExt = false;
 				unsigned tempIndex;		
@@ -692,7 +780,7 @@ ITERATIVEPARTITIONING :
 								
 				wD->bettiTable.clear();
 				wD->complex->clear();
-                               
+							   
 			} else 
 				std::cout << "skipping" << std::endl;
 		}
@@ -705,7 +793,7 @@ ITERATIVEPARTITIONING :
 			betti_death.push_back(bet.death);
 			betti_boundarysize.push_back(bet.boundaryPoints.size());
 			betti_boundaries.insert(betti_boundaries.end(),bet.boundaryPoints.begin(),bet.boundaryPoints.end());
-      
+	  
 		}
 		
 		bettiTableSize = betti_dim.size();
@@ -713,7 +801,7 @@ ITERATIVEPARTITIONING :
 		for(auto a : betti_boundarysize)
 			boundary_size +=a;
 	}	
-	
+
 	//gether all the betties from slaves
 	int totalsize =0;
 	MPI_Reduce(&bettiTableSize, &totalsize, 1, MPI_INT, MPI_SUM, 0,MPI_COMM_WORLD);
@@ -725,7 +813,7 @@ ITERATIVEPARTITIONING :
 
 	for(int i=1;i<nprocs;i++)
 		displsg[i] = displsg[i-1] + num[i-1];
-	
+
 	std::vector<unsigned> recvbuffdim(totalsize);
 	std::vector<double> recvbuffbirth(totalsize);
 	std::vector<double> recvbuffdeath(totalsize);
@@ -734,14 +822,14 @@ ITERATIVEPARTITIONING :
 	MPI_Gatherv(&betti_birth[0],bettiTableSize, MPI_DOUBLE, &recvbuffbirth[0], &num[0], &displsg[0],MPI_DOUBLE,0,MPI_COMM_WORLD);
 	MPI_Gatherv(&betti_death[0],bettiTableSize, MPI_DOUBLE, &recvbuffdeath[0], &num[0], &displsg[0],MPI_DOUBLE,0,MPI_COMM_WORLD);
 	MPI_Gatherv(&betti_boundarysize[0],bettiTableSize, MPI_UNSIGNED, &recvbuffboundaries_size[0], &num[0], &displsg[0],MPI_UNSIGNED,0,MPI_COMM_WORLD);
-	
+
 	int totalboundarysize =0;
 	MPI_Reduce(&boundary_size, &totalboundarysize, 1, MPI_UNSIGNED, MPI_SUM, 0,MPI_COMM_WORLD);
 
 	std::vector<unsigned> recvbuffboundaries(totalboundarysize);
 	std::vector<int> num1(nprocs);
 	MPI_Gather(&boundary_size, 1, MPI_UNSIGNED, &num1[0], 1, MPI_UNSIGNED,0, MPI_COMM_WORLD);
-	
+
 	std::vector<int> displsgb(nprocs);
 	displsgb[0]=0;
 
@@ -749,7 +837,7 @@ ITERATIVEPARTITIONING :
 		displsgb[i] = displsgb[i-1] + num1[i-1];
 	}
 	MPI_Gatherv(&betti_boundaries[0],boundary_size, MPI_UNSIGNED, &recvbuffboundaries[0], &num1[0], &displsgb[0],MPI_UNSIGNED,0,MPI_COMM_WORLD);
-	
+
 	if(id==0){
 		//master prune out the duplicates across slaves.
 		int beg=0;
@@ -804,84 +892,118 @@ ITERATIVEPARTITIONING :
 	}
 }	
 
-	int main(int argc, char* argv[]){
-		//	Steps to compute PH with preprocessing:
-		//
-		//		1.  Preprocess the input data
-		//			a. Store the original dataset, reduced dataset, cluster indices
-		//
-		//		2.	Build a 2-D neighborhood graph
-		//			a. Weight each edge less than epsilon
-		//			b. Order edges (min to max)
-		//
-		//		3.  Rips filtration
-		//			a. Build higher-level simplices (d > 2)
-		//				- Retain the largest of edges as weight (when simplex forms)
-		//			b. Build list of **relevant epsilon values
-		//
-		//		4.	Betti calculation
-		//			a. For each relevant epsilon value
-		//				i.	Create Boundary Matrix
-		//					- if pn[i,j] < n, set to 1
-		//					- else set to 0
-		//				ii.	Compute RREF
-		//				iii.Store constituent boundary points
-		//
-		//		5.	Upscaling
-		//			a. Upscale around boundary points
-		//			b. For each upscaled boundary, repeat steps 2-4
-		//
-		//
-		//	**relevant refers to edge weights, i.e. where a simplex of any
-		//			dimension is created (or merged into another simplex)
-		
-		
-		//Define external classes used for reading input, parsing arguments, writing output
-		MPI_Init(&argc,&argv);
-		MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
-		MPI_Comm_rank(MPI_COMM_WORLD,&id);
-		
-		auto *rs = new readInput();
-		auto *ap = new argParser();
-		
-		//Parse the command-line arguments
-		auto args = ap->parse(argc, argv);
-		
-		//Determine what pipe we will be running
-		ap->setPipeline(args);
-		
-	 //   for(auto z : args)
-		//	std::cout << z.first << "\t" << z.second << std::endl;
-		
-		//Create a pipePacket (datatype) to store the complex and pass between engines
-		auto *wD = new pipePacket(args, args["complexType"]);	//wD (workingData)
-		
-		if(args["pipeline"] != "slidingwindow" && args["pipeline"] != "naivewindow" && args["mode"] != "mpi"){
-			//Read data from inputFile CSV
-			wD->originalData = rs->readCSV(args["inputFile"]);
-			wD->fullData = wD->originalData;
-		}
-		
-		//If data was found in the inputFile
-		if(wD->originalData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
-
-			//Add data to our pipePacket
-			wD->originalData = wD->originalData;
-			
-			if(args["upscale"] == "true"){
-				processUpscaleWrapper(args, wD);
-			} else if (args["mode"] == "reduced"){
-				processReducedWrapper(args,wD);			
-			} else {
-				processDataWrapper(args, wD);
-			}
-		} else {
-			ap->printUsage();
-		}
-		
-		delete rs, delete ap, delete wD;
-
-		MPI_Finalize();
-		
-		return 0;
+int main(int argc, char* argv[]){
+	//	Steps to compute PH with preprocessing:
+	//
+	//		1.  Preprocess the input data
+	//			a. Store the original dataset, reduced dataset, cluster indices
+	//
+	//		2.	Build a 2-D neighborhood graph
+	//			a. Weight each edge less than epsilon
+	//			b. Order edges (min to max)
+	//
+	//		3.  Rips filtration
+	//			a. Build higher-level simplices (d > 2)
+	//				- Retain the largest of edges as weight (when simplex forms)
+	//			b. Build list of **relevant epsilon values
+	//
+	//		4.	Betti calculation
+	//			a. For each relevant epsilon value
+	//				i.	Create Boundary Matrix
+	//					- if pn[i,j] < n, set to 1
+	//					- else set to 0
+	//				ii.	Compute RREF
+	//				iii.Store constituent boundary points
+	//
+	//		5.	Upscaling
+	//			a. Upscale around boundary points
+	//			b. For each upscaled boundary, repeat steps 2-4
+	//
+	//
+	//	**relevant refers to edge weights, i.e. where a simplex of any
+	//			dimension is created (or merged into another simplex)
+	
+	
+	//Define external classes used for reading input, parsing arguments, writing output
+	
+	auto *rs = new readInput();
+	auto *ap = new argParser();
+	
+	//Parse the command-line arguments
+	auto args = ap->parse(argc, argv);
+	
+	//Determine what pipe we will be running
+	ap->setPipeline(args);
+	
+ //   for(auto z : args)
+	//	std::cout << z.first << "\t" << z.second << std::endl;
+	
+	//Create a pipePacket (datatype) to store the complex and pass between engines
+	auto *wD = new pipePacket(args, args["complexType"]);	//wD (workingData)
+	
+	if(args["pipeline"] != "slidingwindow" && args["pipeline"] != "naivewindow" && args["mode"] != "mpi"){
+		//Read data from inputFile CSV
+		wD->originalData = rs->readCSV(args["inputFile"]);
+		wD->fullData = wD->originalData;
 	}
+	
+	//If data was found in the inputFile
+	if(wD->originalData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
+
+		//Add data to our pipePacket
+		wD->originalData = wD->originalData;
+		
+		if(args["mode"] == "mpi"){
+			
+			MPI_Init(&argc,&argv);
+			MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
+			MPI_Comm_rank(MPI_COMM_WORLD,&id);
+			
+			processUpscaleWrapper(args, wD);
+			
+			MPI_Finalize();
+
+		} else if(args["mode"] == "reduced" || args["mode"] == "iterUpscale" || args["mode"] == "iter"){	
+			auto mergedBettiTable = processIterUpscale(args,wD);
+			sort(mergedBettiTable.begin(), mergedBettiTable.end(), sortBettis());
+			utils ut;
+			auto *ws = new writeOutput();
+			
+			if(args["debug"] == "1" || args["debug"] == "true"){
+				std::cout << std::endl << "_______Merged BETTIS_______" << std::endl;
+		
+				for(auto a : mergedBettiTable){
+					std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
+					ut.print1DVector(a.boundaryPoints);
+				}
+			}
+			
+			//Output the data using writeOutput library
+			auto pipe = args.find("outputFile");
+			if(pipe != args.end()){
+				if (args["outputFile"] == "console"){
+					//ws->writeConsole(wD);
+				} else {
+					ws->writeStats(wD->stats, args["outputFile"]);
+					ws->writeBarcodes(mergedBettiTable, args["outputFile"]);
+					
+				}
+			}
+			
+			delete ws;
+			
+			
+		} else {
+			processDataWrapper(args, wD);
+		}
+	} else {
+		ap->printUsage();
+	}
+	
+	wD->complex->clear();
+	delete wD->complex;
+	delete rs, delete ap, delete wD;
+
+	
+	return 0;
+}

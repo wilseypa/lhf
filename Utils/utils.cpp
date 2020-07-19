@@ -446,7 +446,7 @@ std::vector<unsigned> utils::setUnion(std::vector<unsigned> v1, std::vector<unsi
 }
 
 void utils::writeLog(std::string module, std::string message){
-	if(outputFile == "console"){
+	if(debug == "1" || debug == "true"){
 		std::cout << "[" << module << "]:\t" << message << std::endl;
 	} else {
 		writeFile("[" + module + "]:\t" + message);
@@ -457,9 +457,8 @@ void utils::writeLog(std::string module, std::string message){
 void utils::writeDebug(std::string module, std::string message){
 	if(debug == "0" || debug == "false"){
 		return;
-	} else if(outputFile == "console"){
-		std::cout << "[DEBUG]\t[" << module << "]:\t" << message << std::endl;
 	} else {
+		std::cout << "[DEBUG]\t[" << module << "]:\t" << message << std::endl;
 		writeFile("[DEBUG]\t[" + module + "]:\t" + message);
 	}
 	
@@ -468,7 +467,7 @@ void utils::writeDebug(std::string module, std::string message){
 
 void utils::writeFile(std::string fullMessage){
 	std::ofstream outfile;
-	outfile.open(outputFile, std::ios_base::app);
+	outfile.open(outputFile+"_debug.txt", std::ios_base::app);
 	outfile << fullMessage << "\n"; 
 	
 	return;
