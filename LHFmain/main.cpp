@@ -22,9 +22,25 @@ struct sortBettis{
 	}
 };
 
-void runPipeline(std::map<std::string, std::string> args, pipePacket* wD){
+void outputBettis(std::map<std::string, std::string> args, pipePacket* wD){
 	auto *ws = new writeOutput();
 
+	//Output the data using writeOutput library
+	auto pipe = args.find("outputFile");
+	if(pipe != args.end()){
+		if (args["outputFile"] == "console"){
+			//ws->writeConsole(wD);
+		} else {
+			ws->writeStats(wD->stats, args["outputFile"]);
+			ws->writeBarcodes(wD->bettiTable, args["outputFile"]);
+			
+		}
+	}
+	
+	delete ws;
+}
+
+void runPipeline(std::map<std::string, std::string> args, pipePacket* wD){
 	// Begin processing parts of the pipeline
 	// DataInput -> A -> B -> ... -> DataOutput
 	// Parsed by "." -> i.e. A.B.C.D
@@ -60,19 +76,7 @@ void runPipeline(std::map<std::string, std::string> args, pipePacket* wD){
 	}
 	
 	//Output the data using writeOutput library
-	pipe = args.find("outputFile");
-	if(pipe != args.end()){
-		if (args["outputFile"] == "console"){
-			//ws->writeConsole(wD);
-		} else {
-			ws->writeStats(wD->stats, args["outputFile"]);
-			ws->writeBarcodes(wD->bettiTable, args["outputFile"]);
-			
-		}
-	}
-	
-	delete ws;
-	return;
+	outputBettis(args, wD);
 }
 
 
@@ -92,10 +96,6 @@ void processDataWrapper(std::map<std::string, std::string> args, pipePacket* wD)
 		
 		delete prePipe;
 	}
-	
-	runPipeline(args, wD);
-		
-	return;
 }	
 
 std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, std::string> args, pipePacket* wD){
@@ -117,6 +117,7 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 	auto maxEpsilon = std::atof(args["epsilon"].c_str());
 	auto scalar = std::atof(args["scalar"].c_str());
 	auto threads = std::atoi(args["threads"].c_str());
+	auto clusters = std::atoi(args["clusters"].c_str());
 	
 	//		Referenced Libraries
 	utils ut;
@@ -134,25 +135,15 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 	//2. Partition the source point cloud separate datasets accordingly
 	
 	//		Run preprocessor pipeline to partition
-	auto pre = args["preprocessor"];
-	if(pre != ""){
-		auto *prePipe = preprocessor::newPreprocessor(pre);
-		
-		if(prePipe != 0 && prePipe->configPreprocessor(args)){
-			*iterwD = prePipe->runPreprocessorWrapper(*iterwD);
-		} else {
-			std::cout << "LHF processReduced: Failed to configure pipeline: " << args["pipeline"] << std::endl;
-		}
-		delete prePipe;
-	}
+	processDataWrapper(args, iterwD);
 	
 	//		Compute partition statistics for fuzzy partition distance
-	auto maxRadius = ut.computeMaxRadius(std::atoi(args["clusters"].c_str()), iterwD->originalData, iterwD->fullData, iterwD->originalLabels);
-	auto avgRadius = ut.computeAvgRadius(std::atoi(args["clusters"].c_str()), iterwD->originalData, iterwD->fullData, iterwD->originalLabels);
+	auto maxRadius = ut.computeMaxRadius(clusters, iterwD->originalData, iterwD->fullData, iterwD->originalLabels);
+	auto avgRadius = ut.computeAvgRadius(clusters, iterwD->originalData, iterwD->fullData, iterwD->originalLabels);
 	
 	//		Count the size of each partition for identifying source partitions when looking at the betti table results
 	std::vector<unsigned> binCounts;
-	for(unsigned a = 0; a < std::atoi(args["clusters"].c_str()); a++){
+	for(unsigned a = 0; a < clusters; a++){
 		binCounts.push_back(std::count(iterwD->originalLabels.begin(), iterwD->originalLabels.end(), a));
 	}
 	std::cout << "Bin Counts: ";
@@ -162,13 +153,12 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 	args["scalarV"] = std::to_string(scalar*maxRadius);
 	auto partitionedData = ut.separatePartitions(std::atof(args["scalarV"].c_str()), iterwD->originalData, iterwD->fullData, iterwD->originalLabels);
 	std::cout << "Using scalar value: " << args["scalarV"] << std::endl;
-	std::cout << "Partitions: " << partitionedData.second.size() << std::endl << "Counts: ";
+	std::cout << "Partitions: " << partitionedData.second.size() << std::endl << "Partition Bin Counts: ";
 	
 	//		Get sizes of the new fuzzy partitions
 	std::vector<unsigned> partitionsize;
 	for(auto a: partitionedData.second)
-		 partitionsize.push_back(a.size());
-	int partitionsize_size = partitionsize.size();
+		partitionsize.push_back(a.size());
 	ut.print1DVector(partitionsize);
 	
 	//		Append the centroid dataset to run in parallel as well
@@ -176,7 +166,6 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 	
 	
 	//3. Process each partition using OpenMP to handle multithreaded scheduling
-	//
 	
 	std::cout << "Running with " << threads << " threads" << std::endl;
 	
@@ -212,7 +201,7 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 					
 				//Determine if we need to upscale any additional boundaries based on the output of the centroid approximated PH
 					
-			} else if(partitionedData.second[z].size() > 0){				
+			} else if(partitionedData.second[z].size() > 0){
 				
 				//		Clone the pipePacket to prevent shared memory race conditions
 				auto curwD = new pipePacket(args, args["complexType"]);	
@@ -298,16 +287,7 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 	
 	//		Merge partitioned betti tables together
 	for(auto partTable : partBettiTable)
-		mergedBettiTable.insert(mergedBettiTable.end(), partTable.begin(), partTable.end());
-	
-	//		Add open d0 intervals for the remaining d0 bettis
-	auto addlIntervals = std::count_if(mergedBettiTable.begin(), mergedBettiTable.end(), [&](bettiBoundaryTableEntry const &i) { return ( i.bettiDim == 0); });
-	for(auto i = 0; i < originalDataSize - addlIntervals; i++){
-		bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
-		mergedBettiTable.push_back(des);
-	}
-	
-	
+		mergedBettiTable.insert(mergedBettiTable.end(), partTable.begin(), partTable.end());	
 		
 	//		Merge bettis from the centroid based data
 	for(auto betEntry : wD->bettiTable){
@@ -316,6 +296,13 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 		}
 	}
 		
+	//		Add open d0 intervals for the remaining d0 bettis
+	auto addlIntervals = std::count_if(mergedBettiTable.begin(), mergedBettiTable.end(), [&](bettiBoundaryTableEntry const &i) { return ( i.bettiDim == 0); });
+	for(auto i = 0; i < originalDataSize - addlIntervals; i++){
+		bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
+		mergedBettiTable.push_back(des);
+	}
+
 	iterwD->complex->clear();
 	delete iterwD->complex;
 	delete iterwD;
@@ -424,17 +411,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 
 		//Partition the data with the configured preprocessor
 ITERATIVEPARTITIONING :
-		auto pre = args["preprocessor"];
-		if(pre != ""){
-			auto *prePipe = preprocessor::newPreprocessor(pre);
-
-			if(prePipe != 0 && prePipe->configPreprocessor(args)){
-				*wD = prePipe->runPreprocessorWrapper(*wD);
-			} else {
-				std::cout << "LHF : Failed to configure pipeline: " << args["pipeline"] << std::endl;
-			}
-			delete prePipe;
-		}
+		processDataWrapper(args, wD);
 		
 		//Separate our partitions for distribution
 		auto maxRadius = ut.computeMaxRadius(std::atoi(args["clusters"].c_str()), wD->originalData, wD->fullData, wD->originalLabels);
@@ -924,9 +901,6 @@ int main(int argc, char* argv[]){
 	//Determine what pipe we will be running
 	ap->setPipeline(args);
 	
- //   for(auto z : args)
-	//	std::cout << z.first << "\t" << z.second << std::endl;
-	
 	//Create a pipePacket (datatype) to store the complex and pass between engines
 	auto *wD = new pipePacket(args, args["complexType"]);	//wD (workingData)
 	
@@ -953,37 +927,25 @@ int main(int argc, char* argv[]){
 			MPI_Finalize();
 
 		} else if(args["mode"] == "reduced" || args["mode"] == "iterUpscale" || args["mode"] == "iter"){	
-			auto mergedBettiTable = processIterUpscale(args,wD);
-			sort(mergedBettiTable.begin(), mergedBettiTable.end(), sortBettis());
+			wD->bettiTable = processIterUpscale(args,wD);
+			sort(wD->bettiTable.begin(), wD->bettiTable.end(), sortBettis());
 			utils ut;
-			auto *ws = new writeOutput();
 			
 			if(args["debug"] == "1" || args["debug"] == "true"){
 				std::cout << std::endl << "_______Merged BETTIS_______" << std::endl;
 		
-				for(auto a : mergedBettiTable){
+				for(auto a : wD->bettiTable){
 					std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
 					ut.print1DVector(a.boundaryPoints);
 				}
 			}
 			
 			//Output the data using writeOutput library
-			auto pipe = args.find("outputFile");
-			if(pipe != args.end()){
-				if (args["outputFile"] == "console"){
-					//ws->writeConsole(wD);
-				} else {
-					ws->writeStats(wD->stats, args["outputFile"]);
-					ws->writeBarcodes(mergedBettiTable, args["outputFile"]);
-					
-				}
-			}
-			
-			delete ws;
-			
+			outputBettis(args, wD);
 			
 		} else {
 			processDataWrapper(args, wD);
+			runPipeline(args, wD);
 		}
 	} else {
 		ap->printUsage();
@@ -993,6 +955,5 @@ int main(int argc, char* argv[]){
 	delete wD->complex;
 	delete rs, delete ap, delete wD;
 
-	
 	return 0;
 }
