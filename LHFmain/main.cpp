@@ -32,8 +32,7 @@ void outputBettis(std::map<std::string, std::string> args, pipePacket* wD){
 			//ws->writeConsole(wD);
 		} else {
 			ws->writeStats(wD->stats, args["outputFile"]);
-			ws->writeBarcodes(wD->bettiTable, args["outputFile"]);
-			
+			ws->writeBarcodes(wD->bettiTable, args["outputFile"]);	
 		}
 	}
 	
@@ -257,11 +256,11 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 					}
 				}
 
-				//If we never found an external connection, add the infinite connection here
-				if(!foundExt){
-					bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
-					temp.push_back(des);
-				}
+				// //If we never found an external connection, add the infinite connection here
+				// if(!foundExt){
+				// 	bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
+				// 	temp.push_back(des);
+				// }
 		
 				for(auto newEntry : temp){
 					bool found = false;
@@ -296,12 +295,11 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 		}
 	}
 		
-	//		Add open d0 intervals for the remaining d0 bettis
-	auto addlIntervals = std::count_if(mergedBettiTable.begin(), mergedBettiTable.end(), [&](bettiBoundaryTableEntry const &i) { return ( i.bettiDim == 0); });
-	for(auto i = 0; i < originalDataSize - addlIntervals; i++){
-		bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
-		mergedBettiTable.push_back(des);
-	}
+	// //		Add open d0 intervals for the remaining d0 bettis
+	// auto addlIntervals = std::count_if(mergedBettiTable.begin(), mergedBettiTable.end(), [&](bettiBoundaryTableEntry const &i) { return ( i.bettiDim == 0); });
+	// for(auto i = 0; i < originalDataSize - addlIntervals; i++)
+	bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
+	mergedBettiTable.push_back(des);
 
 	iterwD->complex->clear();
 	delete iterwD->complex;
