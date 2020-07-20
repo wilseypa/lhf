@@ -34,7 +34,7 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 
 	//Store our distance matrix
 	std::vector<std::vector<double>> distMatrix;
-	int windowMaxSize = 50;
+	int windowMaxSize = 200;
 
 	// For this pipe, we construct a sub-pipeline:
 	//		1. Read data vector by vector, push into stream evaluation in complex
@@ -65,29 +65,29 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 				//If we've reached window size, generate the initial complex
 				if(windowValues.size() == windowMaxSize){
 					inData.originalData = windowValues;
-					
+
 					distMatrix.resize(inData.originalData.size(), std::vector<double>(inData.originalData.size(),0));
 
-					
+
 					//Iterate through each vector
 					for(unsigned i = 0; i < inData.originalData.size(); i++){
 						if(!inData.originalData[i].empty()){
-							//Grab a second vector to compare to 
+							//Grab a second vector to compare to
 							std::vector<double> temp;
 							for(unsigned j = i+1; j < inData.originalData.size(); j++){
-									//Calculate vector distance 
+									//Calculate vector distance
 									auto dist = ut.vectors_distance(inData.originalData[i],inData.originalData[j]);
-									
+
 									if(dist < epsilon)
 										distMatrix[i][j] = dist;
 							}
 						}
 					}
 					inData.complex->setDistanceMatrix(&distMatrix);
-										
+
 					for(auto a : windowValues)
 						inData.complex->insert();
-					
+
 					// Set the stream evaluator
 					inData.complex->setStreamEvaluator(&this->sampleStreamEvaluator);
 				}
@@ -148,13 +148,13 @@ void naiveWindow::runSubPipeline(pipePacket wrData){
 
 	pipePacket inData = wrData;
 	outputData(inData);
-	
+
 	std::cout << "StreamSize: " << inData.complex->indexCounter << "\tWindowSize: " << inData.originalData.size() << std::endl;
 
 	std::string pipeFuncts = "rips.fast";
 	auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
 	subConfigMap["fn"] = "_" + std::to_string(repCounter);
-	
+
 	repCounter++;
 
 	//For each '.' separated pipeline function (count of '.' + 1 -> lim)
@@ -163,8 +163,7 @@ void naiveWindow::runSubPipeline(pipePacket wrData){
 		pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
 
 		//Build the pipe component, configure and run
-		auto *bp = new basePipe();
-		auto *cp = bp->newPipe(curFunct, "simplexTree");
+		auto *cp = basePipe::newPipe(curFunct, "simplexTree");
 
 		//Check if the pipe was created and configure
 		if(cp != 0 && cp->configPipe(subConfigMap)){

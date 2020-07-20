@@ -122,8 +122,6 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		}
 	}
 	
-	std::cout << "Finished MST" << std::endl;
-	
 	//For higher dimensional persistence intervals
 	//	
 		//Build next dimension of ordered simplices, ignoring previous dimension pivots

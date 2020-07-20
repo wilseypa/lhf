@@ -39,8 +39,8 @@ void simplexBase::setConfig(std::map<std::string, std::string> configMap){
 		maxEpsilon = std::atof(configMap["epsilon"].c_str());
 	else return;
 
-	std::cout << "Setting utils for : " << simplexType << std::endl;
 	ut = utils(debug, outputFile);
+	ut.writeLog(simplexType,"Configured utils for : " + simplexType);
 
 	return;
 }
@@ -166,7 +166,7 @@ void simplexBase::reduceComplex(){
 
 void simplexBase::setStreamEvaluator(bool (*f) (std::vector<double>&, std::vector<std::vector<double>>&)){
 	streamEval = f;
-	std::cout << "changed stream evaluator" << std::endl;
+	ut.writeLog(simplexType,"Changed stream evaluator");
 	return;
 }
 

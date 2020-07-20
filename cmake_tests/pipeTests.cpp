@@ -40,8 +40,7 @@ void t_pipe_functions(std::string &log){
 void t_pipe_empty_functions(std::string &log, std::string type, std::string complexType){
 	std::string failLog = "";
 	auto *pack = new pipePacket(complexType, 5.0, 2);
-	basePipe *testPipe = new basePipe();
-	testPipe = testPipe->newPipe(type, complexType);
+	basePipe *testPipe = basePipe::newPipe(type, complexType);
 	
 	std::map<std::string, std::string> testConfig = {{"epsilon","5.0"}};
 	

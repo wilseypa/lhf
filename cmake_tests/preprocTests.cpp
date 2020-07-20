@@ -46,8 +46,7 @@ void t_preproc_functions(std::string &log){
 void t_preproc_empty_functions(std::string &log, std::string type){
 	std::string failLog = "";
 	auto *pack = new pipePacket("simplexArrayList", 5.0, 2);
-	preprocessor *testPreproc = new preprocessor();
-	testPreproc = testPreproc->newPreprocessor(type);
+	preprocessor *testPreproc = preprocessor::newPreprocessor(type);
 	std::vector<unsigned> testValue = {0, 1, 2};
 	std::vector<std::vector<double>> testValueArray {{0.0, 1.0, 2.0},{2.0, 1.0, 0.0}};
 	

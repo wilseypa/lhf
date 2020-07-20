@@ -112,20 +112,25 @@ std::vector<std::vector<std::vector<double>>> utils::separateBoundaryPartitions(
 	return res;
 }
 
+void utils::extractBoundaryPoints(std::vector<bettiBoundaryTableEntry>& bettiTable){
+	for(auto& bet: bettiTable){
+		std::set<unsigned> bound;
+		for(auto simplex : bet.boundary) bound.insert(simplex->simplex.begin(), simplex->simplex.end());
+		bet.boundaryPoints = bound;
+	}
+}
+
 std::vector<bettiBoundaryTableEntry> utils::mapPartitionIndexing(std::vector<unsigned> partitionedLabels, std::vector<bettiBoundaryTableEntry> bettiTable){
-	std::vector<bettiBoundaryTableEntry> ret;
-	
-	for(auto bet : bettiTable){
+	for(auto& bet : bettiTable){
 		std::set<unsigned> convBound;
 		
 		for(auto ind : bet.boundaryPoints){
 			convBound.insert(partitionedLabels[ind]);
-		}			
+		}
 		
-		ret.push_back({bet.bettiDim, bet.birth, bet.death, convBound, bet.boundary});
-		
+		bet.boundaryPoints = convBound;
 	}
-	return ret;
+	return bettiTable;
 }
 
 void utils::print2DVector(const std::vector<std::vector<unsigned>>& a){
@@ -446,7 +451,7 @@ std::vector<unsigned> utils::setUnion(std::vector<unsigned> v1, std::vector<unsi
 }
 
 void utils::writeLog(std::string module, std::string message){
-	if(outputFile == "console"){
+	if(debug == "1" || debug == "true"){
 		std::cout << "[" << module << "]:\t" << message << std::endl;
 	} else {
 		writeFile("[" + module + "]:\t" + message);
@@ -457,9 +462,8 @@ void utils::writeLog(std::string module, std::string message){
 void utils::writeDebug(std::string module, std::string message){
 	if(debug == "0" || debug == "false"){
 		return;
-	} else if(outputFile == "console"){
-		std::cout << "[DEBUG]\t[" << module << "]:\t" << message << std::endl;
 	} else {
+		std::cout << "[DEBUG]\t[" << module << "]:\t" << message << std::endl;
 		writeFile("[DEBUG]\t[" + module + "]:\t" + message);
 	}
 	
@@ -468,7 +472,7 @@ void utils::writeDebug(std::string module, std::string message){
 
 void utils::writeFile(std::string fullMessage){
 	std::ofstream outfile;
-	outfile.open(outputFile, std::ios_base::app);
+	outfile.open(outputFile+"_debug.txt", std::ios_base::app);
 	outfile << fullMessage << "\n"; 
 	
 	return;

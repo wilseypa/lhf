@@ -21,9 +21,10 @@
 #include "naiveWindow.hpp"
 #include "parallelPersistence.hpp"
 
-basePipe* basePipe::newPipe(const std::string &pipeT, const std::string &complexType){
-	ut.writeDebug("basePipe","Building pipeline: " + pipeT + " for " + complexType);
-	pipeType = pipeT;
+basePipe* basePipe::newPipe(const std::string &pipeType, const std::string &complexType){
+	utils ut;
+	ut.writeDebug("basePipe","Building pipeline: " + pipeType + " for " + complexType);
+
 	if(pipeType == "distMatrix"){
 		return new distMatrixPipe();
 	} else if (pipeType == "neighGraph"){
