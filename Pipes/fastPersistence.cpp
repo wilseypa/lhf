@@ -1,7 +1,7 @@
 /*
- * persistencePairs hpp + cpp extend the basePipe class for calculating the 
+ * persistencePairs hpp + cpp extend the basePipe class for calculating the
  * persistence pairs numbers from a complex
- * 
+ *
  */
 
 #include <string>
@@ -59,27 +59,27 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 
 
 	if(edges.size() <= 1) return inData;
-		
+
 	//Some notes on fast persistence:
-	
+
 	//	-Vectors need to be stored in a lexicograhically ordered set of decreasing (d+1)-tuples (e.g. {3, 1, 0})
 	//		-These vectors are replaced with their indices (e.g. {{2,1,0} = 0, {3,1,0} = 1, {3,2,0} = 2, etc.})
-	
+
 	//	-Boundary matrix stores reduced collection of cofaces for each column (indexed)
-	
+
 	//Start a timer for physical time passed during the pipe's function
 	auto startTime = std::chrono::high_resolution_clock::now();
-	
+
 	//Get all dim 0 persistence intervals
 	//Kruskal's minimum spanning tree algorithm
 	//		Track the current connected components (uf)
 	//		Check edges; if contained in a component, ignore
 	//			if joins components, add them
-	//		Until all edges evaluated or MST found (size - 1)	
-	
+	//		Until all edges evaluated or MST found (size - 1)
+
 	//For streaming data, indices will not be 0-N; instead sparse
 	//	So in streaming, create a hash map to quickly lookup points
-	
+
 	std::unordered_map<unsigned, unsigned> mappedIndices;	//Store a map of the indices for MST
 	std::vector<simplexNode*> pivots; //Store identified pivots
 	unsigned mstSize = 0;
@@ -89,30 +89,32 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 
 	for(auto edgeIter = edges[1].begin(); edgeIter != edges[1].end(); edgeIter++){
 		std::set<unsigned>::iterator it = (*edgeIter)->simplex.begin();
-		
+
 		//Find which connected component each vertex belongs to
 		//	Use a hash map to track insertions for streaming or sparse indices
 		if( mappedIndices.size() == 0 || mappedIndices.find(*it) == mappedIndices.end() ) mappedIndices.insert( std::make_pair(*it, mappedIndices.size()) );
 		int v1 = uf.find(mappedIndices.find(*it)->second);
 		it++;
 		if( mappedIndices.find(*it) == mappedIndices.end() ) mappedIndices.insert( std::make_pair(*it, mappedIndices.size()) );
-		int v2 = uf.find(mappedIndices.find(*it)->second); 
-		
+		int v2 = uf.find(mappedIndices.find(*it)->second);
+
 		//Edge connects two different components -> add to the MST
-		if(v1 != v2){ 
+		if(v1 != v2){
 			uf.join(v1, v2);
 			mstSize++;
-      
+
 			simplexNode* temp = new simplexNode((*edgeIter)->simplex, (*edgeIter)->weight);
 			pivots.push_back(temp);
 
-			bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, temp->simplex, {temp} };			
+			bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, temp->simplex, {temp} };
 			inData.bettiTable.push_back(des);
 		}
 
 		//Check if we've filled our MST and can break
 		if(mstSize >= edges[0].size()-1) break;
 	}
+
+	// std::cout << "mappedIndices.size = " << mappedIndices.size() << '\n';
 
 	for(int i=0; i<inData.originalData.size(); i++){
 		if(uf.find(i) == i){ //i is the name of a connected component
@@ -121,19 +123,19 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			inData.bettiTable.push_back(des);
 		}
 	}
-	
+
 	//For higher dimensional persistence intervals
-	//	
+	//
 		//Build next dimension of ordered simplices, ignoring previous dimension pivots
-		
+
 		//Represent the ordered simplices as indexed sets
-		
+
 		//Identify apparent pairs - i.e. d is the youngest face of d+1, and d+1 is the oldest coface of d
 		//		This indicates a feature represents a trivial persistence interval
-		
-		//Track V (reduction matrix) for each column j that has been reduced to identify the constituent 
+
+		//Track V (reduction matrix) for each column j that has been reduced to identify the constituent
 		//		boundary simplices
-	
+
 	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
 		inData.complex->prepareCofacets(d);
 		std::sort(pivots.begin(), pivots.end(), cmpBySecond());
@@ -144,11 +146,11 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 		std::unordered_map<simplexNode*, simplexNode*> pivotPairs;	//For each pivot, which column has that pivot
 
 		//Iterate over columns to reduce in reverse order
-		for(auto columnIndexIter = edges[d].rbegin(); columnIndexIter != edges[d].rend(); columnIndexIter++){ 
+		for(auto columnIndexIter = edges[d].rbegin(); columnIndexIter != edges[d].rend(); columnIndexIter++){
 			simplexNode* simplex = (*columnIndexIter);		//The current simplex
 
 			//Not a pivot -> need to reduce
-			if((*it)->weight != simplex->weight || (*it)->simplex != simplex->simplex){ 
+			if((*it)->weight != simplex->weight || (*it)->simplex != simplex->simplex){
 				//Get all cofacets using emergent pair optimization
 				std::vector<simplexNode*> cofaceList = inData.complex->getAllCofacets(simplex->simplex, simplex->weight, pivotPairs);
 				std::vector<simplexNode*> columnV;	//Reduction column of matrix V
@@ -167,7 +169,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						cofaceList.pop_back();
 
 						if(!cofaceList.empty() && pivot == cofaceList.front()){ //Coface is in twice -> evaluates to 0 mod 2
-							
+
 							//Rotate the heap
 							std::pop_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
 							cofaceList.pop_back();
@@ -208,14 +210,14 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
 					}
 				}
-			
+
 			//Was a pivot, skip the evaluation and queue next pivot
 			} else ++it;
 		}
-		
+
 		pivots = nextPivots;
 	}
-	
+
 	//Stop the timer for time passed during the pipe's function
 	auto endTime = std::chrono::high_resolution_clock::now();
 
@@ -224,7 +226,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 
 	//Output the time and memory used for this pipeline segment
 	ut.writeDebug("persistence","Bettis executed in " + std::to_string(elapsed.count()/1000.0) + " seconds (physical time)");;
-		
+
 	return inData;
 }
 
@@ -237,13 +239,13 @@ void fastPersistence::outputData(pipePacket inData){
 		file.open("output/"+pipeType+"_bettis_output"+fnmod+".csv");
 	else
 		file.open("output/" + pipeType + "_bettis_output.csv");
-	
+
 	file << inData.bettiOutput;
-	
+
 	file.close();
-	
+
 	file.open("output/tArray.csv");
-	
+
 	file << "Dim,Birth,Death,Simplex\n";
 	for(auto tStruct : inData.bettiTable){
 		file << tStruct.bettiDim << "," << tStruct.birth << "," << tStruct.death << ",";
@@ -252,7 +254,7 @@ void fastPersistence::outputData(pipePacket inData){
 		file << "\n";
 	}
 	file.close();
-	
+
 	return;
 }
 
@@ -260,7 +262,7 @@ void fastPersistence::outputData(pipePacket inData){
 // configPipe -> configure the function settings of this pipeline segment
 bool fastPersistence::configPipe(std::map<std::string, std::string> configMap){
 	std::string strDebug;
-	
+
 	auto pipe = configMap.find("debug");
 	if(pipe != configMap.end()){
 		debug = std::atoi(configMap["debug"].c_str());
@@ -269,26 +271,26 @@ bool fastPersistence::configPipe(std::map<std::string, std::string> configMap){
 	pipe = configMap.find("outputFile");
 	if(pipe != configMap.end())
 		outputFile = configMap["outputFile"].c_str();
-	
+
 	ut = utils(strDebug, outputFile);
-	
+
 	pipe = configMap.find("dimensions");
 	if(pipe != configMap.end())
 		dim = std::atoi(configMap["dimensions"].c_str());
 	else return false;
-	
+
 	pipe = configMap.find("epsilon");
 	if(pipe != configMap.end())
 		maxEpsilon = std::atof(configMap["epsilon"].c_str());
-	else return false;	
-	
+	else return false;
+
 	pipe = configMap.find("fn");
 	if(pipe != configMap.end())
 		fnmod = configMap["fn"];
-		
+
 	configured = true;
 	ut.writeDebug("fastPersistence","Configured with parameters { dim: " + configMap["dimensions"] + ", complexType: " + configMap["complexType"] + ", eps: " + configMap["epsilon"]);
 	ut.writeDebug("fastPersistence","\t\t\t\tdebug: " + strDebug + ", outputFile: " + outputFile + " }");
-	
+
 	return true;
 }

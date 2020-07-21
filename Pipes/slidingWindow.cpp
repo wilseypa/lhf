@@ -255,9 +255,9 @@ void slidingWindow::updateStats()
 
     }
 
-    // std::vector<double> distMatLastRow(defaultVals->windowMaxSize);  // The last row of the upper triangular distance matrix is a vector of 0s.
-    std::vector<double> distMatLastRow = defaultVals->distsFromCurrVec;
-    distMatLastRow.push_back(0);
+    std::vector<double> distMatLastRow(defaultVals->windowMaxSize);  // The last row of the upper triangular distance matrix is a vector of 0s.
+    // std::vector<double> distMatLastRow = defaultVals->distsFromCurrVec;
+    // distMatLastRow.push_back(0);
     //pPack->complex->distMatrix->push_back( distMatLastRow );
     distMatrix.push_back( distMatLastRow );
 
@@ -338,18 +338,18 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
     // Find the distance from the current vector to its nearest neighbor in the window.
     auto nnDistCurrVec = *std::min_element( defaultVals->distsFromCurrVec.begin(), defaultVals->distsFromCurrVec.end() );
 
-    std::cout << nnDistCurrVec << std::endl;
+    // std::cout << nnDistCurrVec << std::endl;
 
     if (defaultVals->avgNNDistPartitions.size() == 1)  // If the window is 'pure':
     {
 
         if (nnDistCurrVec == 0) {
 
-            std::cout << "1. ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"  << '\n';
-            std::cout << pointCounter << '\n';
-            for (auto const& pair: defaultVals->avgNNDistPartitions) {
-                std::cout << "{" << pair.first << ": " << pair.second << "}\n";
-            }
+//            std::cout << "1. ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"  << '\n';
+            std::cout << "pointCounter = " << pointCounter << '\n';
+//            for (auto const& pair: defaultVals->avgNNDistPartitions) {
+//                std::cout << "{" << pair.first << ": " << pair.second << "}\n";
+//            }
             std::cout << "1 ==============================================================================================" << '\n';
 
             return false;
@@ -357,19 +357,19 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
 
         // Find the average nearest neighbor distance in the single 'partition' in the window.
         int currentLabel = defaultVals->partitionLabels[0];
-        std::cout << "currentLabel: " << currentLabel << '\n';
+        // std::cout << "currentLabel: " << currentLabel << '\n';
 
         auto avgNNDistSinglePartition = defaultVals->avgNNDistPartitions[currentLabel];
 
-        std::cout << "avgNNDistSinglePartition: " << avgNNDistSinglePartition << std::endl;
+        // std::cout << "avgNNDistSinglePartition: " << avgNNDistSinglePartition << std::endl;
 
         if (avgNNDistSinglePartition <= f2 && nnDistCurrVec <= 1) {
-            std::cout << "2. ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"  << '\n';
-
-            std::cout << pointCounter << '\n';
-            for (auto const& pair: defaultVals->avgNNDistPartitions) {
-                std::cout << "{" << pair.first << ": " << pair.second << "}\n";
-            }
+//            std::cout << "2. ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"  << '\n';
+//
+            std::cout << "pointCounter = " << pointCounter << '\n';
+//            for (auto const& pair: defaultVals->avgNNDistPartitions) {
+//                std::cout << "{" << pair.first << ": " << pair.second << "}\n";
+//            }
             std::cout << "2 ==============================================================================================" << '\n';
 
             return false;
@@ -378,7 +378,7 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
 
         if (avgNNDistSinglePartition == 0 || nnDistCurrVec / avgNNDistSinglePartition > f1)
         {
-            std::cout << "3. ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"  << '\n';
+            // std::cout << "3. ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"  << '\n';
             // In this case, the oldest point will be deleted from the window.
             defaultVals->labelToBeDeleted = defaultVals->partitionLabels[0];
             defaultVals->indexToBeDeleted = 0;
@@ -396,10 +396,10 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
 
             std::cout << "1. Point Added" << '\n';
 
-            std::cout << pointCounter << '\n';
-            for (auto const& pair: defaultVals->avgNNDistPartitions) {
-                std::cout << "{" << pair.first << ": " << pair.second << "}\n";
-            }
+            std::cout << "pointCounter = " << pointCounter << '\n';
+//            for (auto const& pair: defaultVals->avgNNDistPartitions) {
+//                std::cout << "{" << pair.first << ": " << pair.second << "}\n";
+//            }
             std::cout << "==============================================================================================" << '\n';
 
             return true;
@@ -465,7 +465,7 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
 
         if (smallestOutdated != -1) {   // If there is (are) outdated partition(s):
 
-            std::cout << "4. ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"  << '\n';
+            // std::cout << "4. ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"  << '\n';
             // Delete the oldest point of the smallest outdated partition (and its associated statistics) from the sliding window.
             defaultVals->labelToBeDeleted = smallestOutdated;
             defaultVals->indexToBeDeleted = std::find( defaultVals->partitionLabels.begin(), defaultVals->partitionLabels.end(), smallestOutdated ) - defaultVals->partitionLabels.begin();
@@ -479,10 +479,10 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
 
             std::cout << "2. Point Added" << '\n';
 
-            std::cout << pointCounter << '\n';
-            for (auto const& pair: defaultVals->avgNNDistPartitions) {
-                std::cout << "{" << pair.first << ": " << pair.second << "}\n";
-            }
+            std::cout << "pointCounter = " << pointCounter << '\n';
+//            for (auto const& pair: defaultVals->avgNNDistPartitions) {
+//                std::cout << "{" << pair.first << ": " << pair.second << "}\n";
+//            }
             std::cout << "==============================================================================================" << '\n';
 
         }
@@ -490,7 +490,7 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
         else {   // There is no outdated partition in the window:
             if ( defaultVals->targetPartition != nearestPartition ) {   // If the current vector was assigned a new partition:
 
-                std::cout << "5. ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"  << '\n';
+                // std::cout << "5. ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"  << '\n';
                 // In this case, the oldest point will be deleted from the window.
                 defaultVals->labelToBeDeleted = defaultVals->partitionLabels[0];
                 defaultVals->indexToBeDeleted = 0;
@@ -505,11 +505,11 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
 
                 std::cout << "3. Point Added" << '\n';
 
-                std::cout << pointCounter << '\n';
-                for (auto const& pair: defaultVals->avgNNDistPartitions)
-                {
-                    std::cout << "{" << pair.first << ": " << pair.second << "}\n";
-                }
+                std::cout << "pointCounter = " << pointCounter << '\n';
+//                for (auto const& pair: defaultVals->avgNNDistPartitions)
+//                {
+//                    std::cout << "{" << pair.first << ": " << pair.second << "}\n";
+//                }
                 std::cout << "==============================================================================================" << '\n';
 
             }
@@ -517,9 +517,9 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
                 // In this case, make sure the point to be deleted does not belong to the target partition. In particular,
                 // we'll delete the oldest point from a partition label != targetPartition label.
 
-                std::cout << "6. ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"  << '\n';
-                // Find the first occurrence of a partition label != targetPartition label.
+                // std::cout << "6. ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"  << '\n';
 
+                // Find the first occurrence of a partition label != targetPartition label.
                 for (auto delIndex = 0; delIndex < defaultVals->partitionLabels.size(); delIndex++) {
                     if ( defaultVals->partitionLabels[delIndex] != defaultVals->targetPartition ) {
                         defaultVals->indexToBeDeleted = delIndex;
@@ -528,7 +528,7 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
 
                 }
 
-                std::cout << "defaultVals->indexToBeDeleted = " << defaultVals->indexToBeDeleted << '\n';
+                // std::cout << "defaultVals->indexToBeDeleted = " << defaultVals->indexToBeDeleted << '\n';
                 // defaultVals->indexToBeDeleted = std::find( defaultVals->partitionLabels.begin(), defaultVals->partitionLabels.end(), !defaultVals->targetPartition ) - defaultVals->partitionLabels.begin();
                 defaultVals->labelToBeDeleted = defaultVals->partitionLabels[defaultVals->indexToBeDeleted];
 
@@ -540,11 +540,11 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
 
                 std::cout << "4. Point Added" << '\n';
 
-                std::cout << pointCounter << '\n';
-                for (auto const& pair: defaultVals->avgNNDistPartitions)
-                {
-                    std::cout << "{" << pair.first << ": " << pair.second << "}\n";
-                }
+                std::cout << "pointCounter = " << pointCounter << '\n';
+//                for (auto const& pair: defaultVals->avgNNDistPartitions)
+//                {
+//                    std::cout << "{" << pair.first << ": " << pair.second << "}\n";
+//                }
                 std::cout << "==============================================================================================" << '\n';
             }
         }
@@ -713,7 +713,7 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
             }
 
             //Check if we've gone through 100 points
-            if(pointCounter % 100 == 0 && pointCounter > defaultVals->windowMaxSize)
+            if(pointCounter % 100 == 0 && pointCounter >= defaultVals->windowMaxSize)
             {
                 // Build and trigger remaining pipeline. It should only require the computation of persistence
                 // intervals from the complex being maintained.
