@@ -698,7 +698,7 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
             }
             else
             {
-                if(inData.complex->insertIterative(currentVector, windowValues, defaultVals->keyToBeDeleted, defaultVals->indexToBeDeleted, defaultVals->distsFromCurrVec))
+                if(inData.complex->insertIterative(currentVector, windowValues, defaultVals->keyToBeDeleted, defaultVals->indexToBeDeleted))
                 {
                     // inData.complex->deleteIndexRecurse( defaultVals->keyToBeDeleted );
 

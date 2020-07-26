@@ -13,29 +13,29 @@ class simplexBase {
   public:
 	std::vector<std::set<simplexNode*, cmpByWeight>> simplexList;		//Holds ordered list of simplices in each dimension
 																//Needs to sort by the weight for insertion
-  
+
 	unsigned simplexOffset = 0;
-  
+
 	long long nodeCount = 0;					//Total number of nodes stored
 	long long indexCounter;						//Current insertion index
-	
+
 	utils ut;									//Utilities functions
 	std::string simplexType = "simplexBase";	//Complex Type Identifier
-	
+
 	simplexNode* root;							//Root of the simplexNode tree (if applicable)
 	simplexNode* head;							//Root of the simplexNode tree (if applicable)
-	
+
 	double maxEpsilon;							//Maximum epsilon, loaded from configuration
 	int maxDimension;							//Maximum dimension, loaded from configuration
 	std::vector<std::vector<double>>* distMatrix;	//Pointer to distance matrix for current complex
-	
-	
+
+
 	//For sliding window implementation, tracks the current vectors inserted into the window
 	//		Note - these point to the d0 simplexNodes; index, weight, etc. can be obtained
 	std::vector<simplexNode*> runningVectorIndices;
 	int runningVectorCount = 0;		//How many total points have been inserted into complex?
 									//		Is this different than indexCounter?
-	
+
 	int removedSimplices = 0;
 	std::string stats = "RVIndex,Mean,Stdev,k,kNN_Mean,kNN_Stdev,Result\n";
 
@@ -43,12 +43,12 @@ class simplexBase {
 	simplexBase();
 	simplexBase(std::map<std::string, std::string>);
 	simplexBase(double, int);
-	
+
 	//Configurations of the complex
 	void setConfig(std::map<std::string, std::string>);
 	void setDistanceMatrix(std::vector<std::vector<double>>* _distMatrix);
 	simplexBase* newSimplex(const std::string &simplexT, std::map<std::string, std::string> configMap);
-	
+
 	//Stream evaluator - this uses a function to determine if points should be inserted into the complex
 	bool (*streamEval) (std::vector<double>&, std::vector<std::vector<double>>&);
     bool streamEvaluator(std::vector<double>&, std::vector<std::vector<double>>&);
@@ -57,7 +57,7 @@ class simplexBase {
 	//virtual interface functions
 	virtual double getSize();
 	virtual bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&);
-	virtual bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&, int&, int&, std::vector<double>&);
+	virtual bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&, int&, int&);
 	virtual void deleteIterative(int);
 	virtual void deleteIndexRecurse(int);  				// A wrapper for the actual deleteIndexRecurse method.
 	virtual void insert();

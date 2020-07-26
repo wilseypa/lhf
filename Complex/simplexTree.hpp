@@ -17,7 +17,7 @@ class simplexTree : public simplexBase {
 	void printTree(simplexNode*);
 	void recurseInsert(simplexNode*, unsigned, int, double, std::set<unsigned>);
 	double findWeight(std::set<unsigned>);
-	void deleteIndexRecurse(int, simplexNode*); 
+	void deleteIndexRecurse(int, simplexNode*);
 	void deleteWeightEdgeGraph(int index);
 
 	simplexNode* find(std::set<unsigned>::iterator, std::set<unsigned>::iterator, simplexNode*);
@@ -26,7 +26,7 @@ class simplexTree : public simplexBase {
 	void outputComplex();
 	double getSize();
 	bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&);
-	bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&, int&, int&, std::vector<double>&);
+	bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&, int&, int&);
 	void deleteIterative(simplexNode*);
 	void deleteIndexRecurse(int);  // A wrapper for the actual deleteIndexRecurse method.
 	void insert();
