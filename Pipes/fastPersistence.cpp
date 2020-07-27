@@ -17,6 +17,7 @@
 #include <queue>
 #include "fastPersistence.hpp"
 #include "utils.hpp"
+#include "writeOutput.hpp"
 
 unionFind::unionFind(int n) : rank(n, 0), parent(n, 0) {
 	for(int i=0; i<n; i++) parent[i]=i;
@@ -235,12 +236,12 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
 void fastPersistence::outputData(pipePacket inData){
 	std::ofstream file;
+	auto *ws = new writeOutput();
+	
 	if(fnmod.size() > 0)
-		file.open("output/"+pipeType+"_bettis_output"+fnmod+".csv");
+		ws->writeBarcodes(inData.bettiTable, "output/"+pipeType+"_bettis_output"+fnmod);
 	else
-		file.open("output/" + pipeType + "_bettis_output.csv");
-
-	file << inData.bettiOutput;
+		ws->writeBarcodes(inData.bettiTable, "output/" + pipeType + "_bettis_output");
 
 	file.close();
 
@@ -255,6 +256,7 @@ void fastPersistence::outputData(pipePacket inData){
 	}
 	file.close();
 
+	delete ws;
 	return;
 }
 
