@@ -32,7 +32,7 @@ class simplexBase {
 
 	//For sliding window implementation, tracks the current vectors inserted into the window
 	//		Note - these point to the d0 simplexNodes; index, weight, etc. can be obtained
-	std::vector<simplexNode*> runningVectorIndices;
+	std::vector<int> runningVectorIndices;   // std::vector<simplexNode*> runningVectorIndices;
 	int runningVectorCount = 0;		//How many total points have been inserted into complex?
 									//		Is this different than indexCounter?
 

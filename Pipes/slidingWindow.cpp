@@ -595,7 +595,7 @@ bool slidingWindow::nnBasedEvaluator(std::vector<double>& currentVector, std::ve
 //	return false;
 //}
 
-slidingWindow::EvalParams* slidingWindow::defaultVals = new EvalParams{ 200, 0, 0 };
+slidingWindow::EvalParams* slidingWindow::defaultVals = new EvalParams{ 100, 0, 0 };
 pipePacket* slidingWindow::pPack;
 
 
@@ -713,7 +713,7 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
             }
 
             //Check if we've gone through 100 points
-            if(pointCounter % 100 == 0 && pointCounter >= defaultVals->windowMaxSize)
+            if(pointCounter % 500 == 0 && pointCounter >= defaultVals->windowMaxSize)
             {
                 // Build and trigger remaining pipeline. It should only require the computation of persistence
                 // intervals from the complex being maintained.
@@ -729,7 +729,7 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
 
         }
         //Probably want to trigger the remaining pipeline one last time...
-        if((pointCounter - 1) % 100 != 0)
+        if((pointCounter - 1) % 500 != 0)
         {
             std::cout << "pointCounter: " << pointCounter << "\tSimplex Count: " << inData.complex->simplexCount() << "\tVertex Count: " << inData.complex->vertexCount() << std::endl;
 

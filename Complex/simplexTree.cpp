@@ -30,7 +30,7 @@ void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth,
 	if(runningVectorIndices.size() < runningVectorCount){
 
 		//Get the positions of the vector in the runningVectorIndices array
-		auto nodeIndex = std::find(runningVectorIndices.begin(), runningVectorIndices.end(), node);
+		auto nodeIndex = std::find(runningVectorIndices.begin(), runningVectorIndices.end(), node->index);
 
 		if((std::distance(runningVectorIndices.begin(), nodeIndex)) > distMatrix->size() || (indexCounter - (runningVectorCount - 1)) > (*distMatrix)[std::distance(runningVectorIndices.begin(), nodeIndex)].size()){
 			std::cout << "DistMatrix access error:" << std::endl;
@@ -47,7 +47,7 @@ void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth,
 		}
 
 
-	}else {
+	} else {
 		curE = (*distMatrix)[node->index][indexCounter];
 	}
 
@@ -63,6 +63,7 @@ void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth,
 		insNode->index = curIndex;
 		nodeCount++;
 
+
 		//if depth (i.e. 1 for first iteration) is LT weightGraphSize (starts at 1)
 		if(simplexList.size() < simp.size()){
 			simplexList.push_back({insNode});
@@ -70,21 +71,23 @@ void simplexTree::recurseInsert(simplexNode* node, unsigned curIndex, int depth,
 			simplexList[simp.size() - 1].insert(insNode);
 		}
 
+
 		//Check if the node has children already...
 		if(node->child == nullptr){
 			node->child = insNode;
 			insNode->parent = node;
 			node->children.insert(insNode);
 
-		//Node has children, add to the end of children
+		//Node has children, add to the beginning of children
 		} else {
-			//Move to last sibling
+			//Add new node as the first child. Shift existing children to left.
 			insNode->parent = node;
 			insNode->sibling = node->child;
 			node->child = insNode;
 			node->children.insert(insNode);
 
 			temp = insNode->sibling;
+
 			//Have to check the children now...
 			if(simp.size() <= maxDimension){
 				do {
@@ -196,11 +199,11 @@ bool simplexTree::insertIterative(std::vector<double> &currentVector, std::vecto
 
 
 // Delete a node from the tree and from the distance matrix using a vector index
-void simplexTree::deleteIterative(simplexNode* simplex){
+void simplexTree::deleteIterative(int simplexIndex){
 
 	//Find what row/column of our distance matrix pertain to the vector index
-	std::vector<simplexNode*>::iterator it;
-	if((it = std::find(runningVectorIndices.begin(), runningVectorIndices.end(), simplex)) != runningVectorIndices.end()){
+	std::vector<int>::iterator it;
+	if((it = std::find(runningVectorIndices.begin(), runningVectorIndices.end(), simplexIndex)) != runningVectorIndices.end()){
 
 		//Index holds the index in the runningVectorIndices array of the simplexNode pointer
 		int index = std::distance(runningVectorIndices.begin(), it);
@@ -224,7 +227,7 @@ void simplexTree::deleteIterative(simplexNode* simplex){
 		//Delete all entries in the simplex tree
 		//printTree(root);
 		// std::cout << "simplex->index " << simplex->index << '\n';
-		deleteIndexRecurse(simplex->index);
+		deleteIndexRecurse(simplexIndex);
 
 		//printTree(root);
 
@@ -318,7 +321,6 @@ void simplexTree::deleteIndexRecurse(int vectorIndex, simplexNode* curNode){
 }
 
 
-
 // Insert a node into the tree
 //
 void simplexTree::insert() {
@@ -332,7 +334,7 @@ void simplexTree::insert() {
 	insNode->index = indexCounter;
 
 	//Track this index in our current window (for sliding window)
-	runningVectorIndices.push_back(insNode);
+	runningVectorIndices.push_back(insNode->index);
 
 	//Check if this is the first node (i.e. head)
 	//	If so, initialize the head node
