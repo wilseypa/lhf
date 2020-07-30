@@ -1,7 +1,7 @@
 /*
  * writeOutput hpp + cpp protoype and define a class for writing output from
- * the LFH system (https://github.com/wilseypa/LFH). The class is designed
- * to hold all functions corresponding to wiriting output data to .csv files,
+ * the LHF system (https://github.com/wilseypa/LHF). The class is designed
+ * to hold all functions corresponding to writing output data to .csv files,
  * .mat files, console, and other additional files as they are added to the system.
  * 
  *  
