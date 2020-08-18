@@ -38,8 +38,8 @@ class fastPersistence : public basePipe {
   public:
 	int dim;
     fastPersistence();
-    pipePacket runPipe(pipePacket inData);
-    bool configPipe(std::map<std::string, std::string> configMap);
-	void outputData(pipePacket);
+    void runPipe(pipePacket &inData);
+    bool configPipe(std::map<std::string, std::string> &configMap);
+	void outputData(pipePacket&);
 };
 

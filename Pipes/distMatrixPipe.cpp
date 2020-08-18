@@ -25,7 +25,7 @@ distMatrixPipe::distMatrixPipe(){
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
-pipePacket distMatrixPipe::runPipe(pipePacket inData){
+void distMatrixPipe::runPipe(pipePacket &inData){
 	
 	//Store our distance matrix
 	if(inData.distMatrix.size() > 0) inData.distMatrix.clear();
@@ -47,12 +47,12 @@ pipePacket distMatrixPipe::runPipe(pipePacket inData){
 	inData.complex->setDistanceMatrix(&inData.distMatrix);
 	
 	ut.writeDebug("distMatrix", "\tDist Matrix Size: " + std::to_string(inData.distMatrix.size()) + " x " + std::to_string(inData.distMatrix.size()));
-	return inData;
+	return;
 }
 
 
 // configPipe -> configure the function settings of this pipeline segment
-bool distMatrixPipe::configPipe(std::map<std::string, std::string> configMap){
+bool distMatrixPipe::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
 	
 	auto pipe = configMap.find("debug");
@@ -78,7 +78,7 @@ bool distMatrixPipe::configPipe(std::map<std::string, std::string> configMap){
 }
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-void distMatrixPipe::outputData(pipePacket inData){
+void distMatrixPipe::outputData(pipePacket &inData){
 	std::ofstream file;
 	file.open("output/" + pipeType + "_output.csv");
 	

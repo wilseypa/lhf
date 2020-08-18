@@ -783,7 +783,7 @@ void slidingWindow::runSubPipeline(pipePacket wrData)
         if(cp != 0 && cp->configPipe(subConfigMap))
         {
             //Run the pipe function (wrapper)
-            inData = cp->runPipeWrapper(inData);
+            cp->runPipeWrapper(inData);
         }
         else
         {

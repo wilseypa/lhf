@@ -53,12 +53,12 @@ fastPersistence::fastPersistence(){
 //
 //	FastPersistence: For computing the persistence pairs from simplicial complex:
 //		1. See Bauer-19 for algorithm/description
-pipePacket fastPersistence::runPipe(pipePacket inData){
+void fastPersistence::runPipe(pipePacket &inData){
 	//Get all edges for the simplexArrayList or simplexTree
 	std::vector<std::set<simplexNode*, cmpByWeight>> edges = inData.complex->getAllEdges();
 
 
-	if(edges.size() <= 1) return inData;
+	if(edges.size() <= 1) return;
 
 	//Some notes on fast persistence:
 
@@ -227,13 +227,13 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	//Output the time and memory used for this pipeline segment
 	ut.writeDebug("persistence","Bettis executed in " + std::to_string(elapsed.count()/1000.0) + " seconds (physical time)");;
 
-	return inData;
+	return;
 }
 
 
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-void fastPersistence::outputData(pipePacket inData){
+void fastPersistence::outputData(pipePacket &inData){
 	std::ofstream file;
 	if(fnmod.size() > 0)
 		file.open("output/"+pipeType+"_bettis_output"+fnmod+".csv");
@@ -263,7 +263,7 @@ void fastPersistence::outputData(pipePacket inData){
 
 
 // configPipe -> configure the function settings of this pipeline segment
-bool fastPersistence::configPipe(std::map<std::string, std::string> configMap){
+bool fastPersistence::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
 
 	auto pipe = configMap.find("debug");

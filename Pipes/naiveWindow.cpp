@@ -168,7 +168,7 @@ void naiveWindow::runSubPipeline(pipePacket wrData){
 		//Check if the pipe was created and configure
 		if(cp != 0 && cp->configPipe(subConfigMap)){
 			//Run the pipe function (wrapper)
-			inData = cp->runPipeWrapper(inData);
+			cp->runPipeWrapper(inData);
 		} else {
 			std::cout << "LHF subPipe: Failed to configure pipeline: " << curFunct << std::endl;
 		}

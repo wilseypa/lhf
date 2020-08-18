@@ -9,8 +9,8 @@ class distMatrixPipe : public basePipe {
 	double maxEpsilon;
   public:
     distMatrixPipe();
-    pipePacket runPipe(pipePacket inData);
-    bool configPipe(std::map<std::string, std::string> configMap);
-	void outputData(pipePacket);
+    void runPipe(pipePacket& inData);
+    bool configPipe(std::map<std::string, std::string> &configMap);
+	void outputData(pipePacket&);
 };
 
