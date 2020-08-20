@@ -6,10 +6,9 @@
 // #include <typeinfo>
 #include "simplexTree.hpp"
 
-simplexTree::simplexTree(double _maxEpsilon, std::vector<std::vector<double>>* _distMatrix, int _maxDim){
+simplexTree::simplexTree(double _maxEpsilon, int _maxDim){
 	indexCounter = 0;
 	std::cout << "simplexTree set indexCounter" << std::endl;
-	distMatrix = _distMatrix;
 	maxDimension = _maxDim;
 	maxEpsilon = _maxEpsilon;
 	simplexType = "simplexTree";

@@ -9,9 +9,8 @@
 
 simplexBase::simplexBase(){return;}
 
-simplexBase::simplexBase(std::map<std::string, std::string> configMap){
+simplexBase::simplexBase(std::map<std::string, std::string> &configMap){
 	setConfig(configMap);
-
 	return;
 }
 
@@ -20,7 +19,7 @@ simplexBase::simplexBase(double maxE, int maxDim){
 	maxDimension = maxDim;
 }
 
-void simplexBase::setConfig(std::map<std::string, std::string> configMap){
+void simplexBase::setConfig(std::map<std::string, std::string> &configMap){
 	std::string debug;
 	std::string outputFile;
 
@@ -52,15 +51,14 @@ void simplexBase::setDistanceMatrix(std::vector<std::vector<double>>* _distMatri
 }
 
 // simplexTree constructor, currently no needed information for the class constructor
-simplexBase* simplexBase::newSimplex(const std::string &simplexT, std::map<std::string, std::string> configMap){
-	simplexType = simplexT;
-
-	if(simplexType == "simplexTree"){
-		auto t = new simplexTree(maxEpsilon, distMatrix, maxDimension);
+simplexBase* simplexBase::newSimplex(const std::string &simplexT, std::map<std::string, std::string> &configMap){
+	if(simplexT == "simplexTree"){
+		//maxEpsilon and maxDimension are overwritten by setConfig
+		auto t = new simplexTree(0, 0);
 		t->setConfig(configMap);
 		return t;
-	} else if (simplexType == "simplexArrayList"){
-		auto t = new simplexArrayList(maxEpsilon, maxDimension, distMatrix);
+	} else if (simplexT == "simplexArrayList"){
+		auto t = new simplexArrayList(0, 0);
 		t->setConfig(configMap);
 		return t;
 	}

@@ -13,7 +13,7 @@ class pipePacket {
 	std::vector<bettiBoundaryTableEntry> bettiTable;
   
 	pipePacket(const std::string &, const double, const int);
-	pipePacket(const std::map<std::string, std::string>, const std::string&);
+	pipePacket(std::map<std::string, std::string>, const std::string&);
 	std::string stats;
   
 	std::vector<std::vector<double>> originalData;

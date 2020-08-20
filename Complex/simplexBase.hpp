@@ -41,13 +41,13 @@ class simplexBase {
 
 	//Constructors
 	simplexBase();
-	simplexBase(std::map<std::string, std::string>);
+	simplexBase(std::map<std::string, std::string>&);
 	simplexBase(double, int);
 
 	//Configurations of the complex
-	void setConfig(std::map<std::string, std::string>);
+	void setConfig(std::map<std::string, std::string>&);
 	void setDistanceMatrix(std::vector<std::vector<double>>* _distMatrix);
-	simplexBase* newSimplex(const std::string &simplexT, std::map<std::string, std::string> configMap);
+	static simplexBase* newSimplex(const std::string &, std::map<std::string, std::string>&);
 
 	//Stream evaluator - this uses a function to determine if points should be inserted into the complex
 	bool (*streamEval) (std::vector<double>&, std::vector<std::vector<double>>&);

@@ -5,11 +5,10 @@
 #include "simplexArrayList.hpp"
 
 // simplexArrayList constructor, currently no needed information for the class constructor
-simplexArrayList::simplexArrayList(double maxE, double maxD, std::vector<std::vector<double>>* _distMatrix) : bin(0,0) {
+simplexArrayList::simplexArrayList(double maxE, double maxD) : bin(0,0) {
 	simplexType = "simplexArrayList";
 	maxEpsilon = maxE;
 	maxDimension = maxD;
-	distMatrix = _distMatrix;
 }
 
 binomialTable::binomialTable(unsigned n, unsigned k) : v(n+1, std::vector<long long>(k+1, 0)){ //Fast computation of binomials with precomputed table

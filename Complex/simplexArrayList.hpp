@@ -22,7 +22,7 @@ class simplexArrayList : public simplexBase{
 		unsigned maxVertex(long long, unsigned, unsigned, unsigned, binomialTable&);
 		std::vector<unsigned> getVertices(long long, int, unsigned, binomialTable&);
 	public:
-		simplexArrayList(double, double, std::vector<std::vector<double>>*);
+		simplexArrayList(double, double);
 		double findWeight(std::set<unsigned>);
 		std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(simplexNode*, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
 

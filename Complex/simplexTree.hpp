@@ -12,7 +12,7 @@ class simplexTree : public simplexBase {
 	simplexNode* head = nullptr; //First simplex in the tree (0 vertex)
 	simplexNode* root = nullptr; //Empty node at root of tree (empty simplex)
 
-	simplexTree(double, std::vector<std::vector<double>>*, int);
+	simplexTree(double, int);
 	std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(simplexNode*, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
 	void printTree(simplexNode*);
 	void recurseInsert(simplexNode*, unsigned, int, double, std::set<unsigned>);
