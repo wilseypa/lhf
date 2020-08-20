@@ -196,7 +196,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						}
 
 						if(simplex->weight != pivot->weight){
-							bettiBoundaryTableEntry des = { d, simplex->weight, pivot->weight, {}, cofaceList };
+							bettiBoundaryTableEntry des = { d, simplex->weight, pivot->weight, {}, v[simplex] };
 							inData.bettiTable.push_back(des);
 						}
 
