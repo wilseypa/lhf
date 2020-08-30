@@ -5,14 +5,14 @@
 cmake_minimum_required(VERSION 3.5)
 
 add_library(simplexBase "simplexBase.cpp" "simplexBase.hpp")
-#add_library(simplexArrayList "simplexArrayList.cpp" "simplexArrayList.hpp")
+add_library(simplexArrayList "simplexArrayList.cpp" "simplexArrayList.hpp")
 add_library(simplexTree "simplexTree.cpp" "simplexTree.hpp")
 
 include_directories(../Utils)
 link_directories(../Utils)
 
 # target_link_libraries(LHF PipeFunctions)
-target_link_libraries(simplexBase utils pipePacket simplexTree)
+target_link_libraries(simplexBase utils pipePacket simplexArrayList simplexTree)
 
 INSTALL (TARGETS simplexBase
 	LIBRARY DESTINATION lib

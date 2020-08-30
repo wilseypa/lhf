@@ -5,7 +5,7 @@
 #include <typeinfo>
 #include "simplexBase.hpp"
 #include "simplexTree.hpp"
-//#include "simplexArrayList.hpp"
+#include "simplexArrayList.hpp"
 
 simplexBase::simplexBase(){return;}
 
@@ -57,10 +57,10 @@ simplexBase* simplexBase::newSimplex(const std::string &simplexT, std::map<std::
 		auto t = new simplexTree(0, 0);
 		t->setConfig(configMap);
 		return t;
-	//} else if (simplexT == "simplexArrayList"){
-		//auto t = new simplexArrayList(0, 0);
-		//t->setConfig(configMap);
-		//return t;
+	} else if (simplexT == "simplexArrayList"){
+		auto t = new simplexArrayList(0, 0);
+		t->setConfig(configMap);
+		return t;
 	}
 	return 0;
 }

@@ -123,13 +123,13 @@ double simplexArrayList::getSize(){
 // Insert for simplexArrayList -> O((n+1)(n+2)/2) -> O(n^2)
 //		Sequence: 0 , 1 , 3 , 6 , 10 , 15
 //
-void simplexArrayList::insert(){			
+void simplexArrayList::insert(){		
 	//If this is the first point inserted...
 	if(simplexList.size() == 0) simplexList.push_back({});
 	
 	unsigned i = simplexList[0].size();
 
-	simplexNode_P insNode = new simplexNode({i}, 0.0);
+	simplexNode_P insNode = std::make_shared<simplexNode>(simplexNode({i}, 0.0));
 	simplexList[0].insert(insNode);
 
 	//If there are already points, do a brute-force compare
@@ -145,7 +145,7 @@ void simplexArrayList::insert(){
 			if(dist <= maxEpsilon){
 				
 				//Create an Edge vector 
-				simplexNode_P insNode = new simplexNode({i, j}, dist);
+				simplexNode_P insNode = std::make_shared<simplexNode>(simplexNode({i, j}, dist));
 				simplexList[1].insert(insNode);
 			}
 		}
@@ -220,7 +220,7 @@ void simplexArrayList::expandDimensions(int dim){
 				for(auto i : (*it)->simplex) maxWeight = std::max(maxWeight, (*distMatrix)[i][pt]);
 				
 				if(maxWeight <= maxEpsilon){ //Valid simplex
-					simplexNode* tot = new simplexNode((*it)->simplex, maxWeight);
+					simplexNode_P tot = std::make_shared<simplexNode>(simplexNode((*it)->simplex, maxWeight));
 					tot->simplex.insert(pt);
 					simplexList[d].insert(tot);
 				}
@@ -265,7 +265,7 @@ void simplexArrayList::reduceComplex(){
 	return;
 }
 
-std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> simplexArrayList::recurseReduce(simplexNode* simplex, std::vector<std::set<unsigned>> removals, std::vector<std::set<unsigned>> checked){
+std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> simplexArrayList::recurseReduce(simplexNode_P simplex, std::vector<std::set<unsigned>> removals, std::vector<std::set<unsigned>> checked){
 	checked.push_back(simplex->simplex);
 	auto subsets = ut.getSubsets(simplex->simplex);
 	std::set<unsigned> maxFace;
