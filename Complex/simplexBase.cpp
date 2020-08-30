@@ -5,7 +5,7 @@
 #include <typeinfo>
 #include "simplexBase.hpp"
 #include "simplexTree.hpp"
-#include "simplexArrayList.hpp"
+//#include "simplexArrayList.hpp"
 
 simplexBase::simplexBase(){return;}
 
@@ -57,35 +57,35 @@ simplexBase* simplexBase::newSimplex(const std::string &simplexT, std::map<std::
 		auto t = new simplexTree(0, 0);
 		t->setConfig(configMap);
 		return t;
-	} else if (simplexT == "simplexArrayList"){
-		auto t = new simplexArrayList(0, 0);
-		t->setConfig(configMap);
-		return t;
+	//} else if (simplexT == "simplexArrayList"){
+		//auto t = new simplexArrayList(0, 0);
+		//t->setConfig(configMap);
+		//return t;
 	}
 	return 0;
 }
 
 
-std::set<simplexNode*, cmpByWeight> simplexBase::getDimEdges(int dim){
+std::set<simplexNode_P, cmpByWeight> simplexBase::getDimEdges(int dim){
 	if(dim >= simplexList.size()){
 		ut.writeLog(simplexType,"Error: requested dimension beyond complex");
-		std::set<simplexNode*, cmpByWeight> a;
+		std::set<simplexNode_P, cmpByWeight> a;
 		return a;
 	}
 	return simplexList[dim];
 }
 
-std::vector<std::set<simplexNode*, cmpByWeight>> simplexBase::getAllEdges(){
+std::vector<std::set<simplexNode_P, cmpByWeight>> simplexBase::getAllEdges(){
 	return simplexList;
 }
 
-std::vector<simplexNode*> simplexBase::getAllCofacets(const std::set<unsigned>& simplex){
-	return getAllCofacets(simplex, 0, std::unordered_map<simplexNode*, simplexNode*>(), false);
+std::vector<simplexNode_P> simplexBase::getAllCofacets(const std::set<unsigned>& simplex){
+	return getAllCofacets(simplex, 0, std::unordered_map<simplexNode_P, simplexNode_P>(), false);
 }
 
-std::vector<simplexNode*> simplexBase::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode*, simplexNode*>& pivotPairs, bool checkEmergent){
+std::vector<simplexNode_P> simplexBase::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode_P, simplexNode_P>& pivotPairs, bool checkEmergent){
 	ut.writeLog(simplexType,"No get cofacets function defined");
-	std::vector<simplexNode*> ret;
+	std::vector<simplexNode_P> ret;
 	return ret;
 }
 

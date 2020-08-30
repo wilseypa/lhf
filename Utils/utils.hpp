@@ -2,31 +2,34 @@
 
 #include <set>
 #include <vector>
+#include <memory>
+
 
 // Header file for utils class - see utils.cpp for descriptions
 struct simplexNode{
 	unsigned index;
 	
 	struct cmpByIndex{
-		bool operator()(const simplexNode* lhs, const simplexNode* rhs) const{
+		bool operator()(const std::shared_ptr<simplexNode> lhs, const std::shared_ptr<simplexNode> rhs) const{
 			return lhs->index < rhs->index;
 		}
 	};
 	
 	std::set<unsigned> simplex;
-	std::set<simplexNode*, cmpByIndex> children;
-	simplexNode* child = nullptr;
-	simplexNode* sibling = nullptr;
-	simplexNode* parent = nullptr;
+	std::set<std::shared_ptr<simplexNode>, cmpByIndex> children;
+	std::shared_ptr<simplexNode> child = nullptr;
+	std::shared_ptr<simplexNode> sibling = nullptr;
+	std::shared_ptr<simplexNode> parent = nullptr;
 	double weight = 0;
 
 	simplexNode(){}
 	simplexNode(std::set<unsigned> simp, double wt) : simplex(simp), weight(wt) {}
 };
 
+typedef std::shared_ptr<simplexNode> simplexNode_P;
 
 struct cmpByWeight{
-	bool operator()(simplexNode* a, simplexNode* b) const{
+	bool operator()(simplexNode_P a, simplexNode_P b) const{
 		if(a->weight == b->weight){ //If the simplices have the same weight, sort by reverse lexicographic order for fastPersistence
 			auto itA = a->simplex.rbegin(), itB = b->simplex.rbegin();
 			while(itA != a->simplex.rend()){
@@ -46,7 +49,7 @@ struct bettiBoundaryTableEntry{
 	double birth;
 	double death;
 	std::set<unsigned> boundaryPoints;
-	std::vector<simplexNode*> boundary;
+	std::vector<simplexNode_P> boundary;
 }; 
 
 

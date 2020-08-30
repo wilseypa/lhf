@@ -55,7 +55,7 @@ fastPersistence::fastPersistence(){
 //		1. See Bauer-19 for algorithm/description
 void fastPersistence::runPipe(pipePacket &inData){
 	//Get all edges for the simplexArrayList or simplexTree
-	std::vector<std::set<simplexNode*, cmpByWeight>> edges = inData.complex->getAllEdges();
+	std::vector<std::set<simplexNode_P, cmpByWeight>> edges = inData.complex->getAllEdges();
 
 
 	if(edges.size() <= 1) return;
@@ -81,7 +81,7 @@ void fastPersistence::runPipe(pipePacket &inData){
 	//	So in streaming, create a hash map to quickly lookup points
 
 	std::unordered_map<unsigned, unsigned> mappedIndices;	//Store a map of the indices for MST
-	std::vector<simplexNode*> pivots; //Store identified pivots
+	std::vector<simplexNode_P> pivots; //Store identified pivots
 	unsigned mstSize = 0;
 	unsigned nPts = inData.originalData.size();
 
@@ -103,7 +103,7 @@ void fastPersistence::runPipe(pipePacket &inData){
 			uf.join(v1, v2);
 			mstSize++;
 
-			simplexNode* temp = new simplexNode((*edgeIter)->simplex, (*edgeIter)->weight);
+			simplexNode_P temp = std::make_shared<simplexNode>(simplexNode((*edgeIter)->simplex, (*edgeIter)->weight));
 			pivots.push_back(temp);
 
 			bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, temp->simplex, {temp} };
@@ -139,28 +139,28 @@ void fastPersistence::runPipe(pipePacket &inData){
 	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
 		inData.complex->prepareCofacets(d);
 		std::sort(pivots.begin(), pivots.end(), cmpBySecond());
-		std::vector<simplexNode*>::iterator it = pivots.begin();
+		std::vector<simplexNode_P>::iterator it = pivots.begin();
 
-		std::vector<simplexNode*> nextPivots;	 					//Pivots for the next dimension
-		std::unordered_map<simplexNode*, std::vector<simplexNode*>> v;				//Store only the reduction matrix V and compute R implicity
-		std::unordered_map<simplexNode*, simplexNode*> pivotPairs;	//For each pivot, which column has that pivot
+		std::vector<simplexNode_P> nextPivots;	 					//Pivots for the next dimension
+		std::unordered_map<simplexNode_P, std::vector<simplexNode_P>> v;				//Store only the reduction matrix V and compute R implicity
+		std::unordered_map<simplexNode_P, simplexNode_P> pivotPairs;	//For each pivot, which column has that pivot
 
 		//Iterate over columns to reduce in reverse order
 		for(auto columnIndexIter = edges[d].rbegin(); columnIndexIter != edges[d].rend(); columnIndexIter++){
-			simplexNode* simplex = (*columnIndexIter);		//The current simplex
+			simplexNode_P simplex = (*columnIndexIter);		//The current simplex
 
 			//Not a pivot -> need to reduce
 			if((*it)->weight != simplex->weight || (*it)->simplex != simplex->simplex){
 				//Get all cofacets using emergent pair optimization
-				std::vector<simplexNode*> cofaceList = inData.complex->getAllCofacets(simplex->simplex, simplex->weight, pivotPairs);
-				std::vector<simplexNode*> columnV;	//Reduction column of matrix V
+				std::vector<simplexNode_P> cofaceList = inData.complex->getAllCofacets(simplex->simplex, simplex->weight, pivotPairs);
+				std::vector<simplexNode_P> columnV;	//Reduction column of matrix V
 				columnV.push_back(simplex); //Initially V=I -> 1's along diagonal
 
 				//Build a heap using the coface list to reduce and store in V
 				std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
 
 				while(true){
-					simplexNode* pivot;
+					simplexNode_P pivot;
 					while(!cofaceList.empty()){
 						pivot = cofaceList.front();
 
@@ -202,9 +202,9 @@ void fastPersistence::runPipe(pipePacket &inData){
 
 						break;
 					} else{ //Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
-						for(simplexNode* simp : v[pivotPairs[pivot]]){
+						for(simplexNode_P simp : v[pivotPairs[pivot]]){
 							columnV.push_back(simp);
-							std::vector<simplexNode*> cofaces = inData.complex->getAllCofacets((simp->simplex));
+							std::vector<simplexNode_P> cofaces = inData.complex->getAllCofacets((simp->simplex));
 							cofaceList.insert(cofaceList.end(), cofaces.begin(), cofaces.end());
 						}
 						std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());

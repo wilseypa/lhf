@@ -2,16 +2,18 @@
 #include <map>
 #include <algorithm>
 #include <set>
+#include <memory>
 #include <iostream>
 #include <unordered_map>
 #include "utils.hpp"
 
 // Header file for simplexBase class - see simplexTree.cpp for descriptions
 
+
 class simplexBase {
   private:
   public:
-	std::vector<std::set<simplexNode*, cmpByWeight>> simplexList;		//Holds ordered list of simplices in each dimension
+	std::vector<std::set<simplexNode_P, cmpByWeight>> simplexList;		//Holds ordered list of simplices in each dimension
 																//Needs to sort by the weight for insertion
 
 	unsigned simplexOffset = 0;
@@ -22,8 +24,8 @@ class simplexBase {
 	utils ut;									//Utilities functions
 	std::string simplexType = "simplexBase";	//Complex Type Identifier
 
-	simplexNode* root;							//Root of the simplexNode tree (if applicable)
-	simplexNode* head;							//Root of the simplexNode tree (if applicable)
+	simplexNode_P root;							//Root of the simplexNode tree (if applicable)
+	simplexNode_P head;							//Root of the simplexNode tree (if applicable)
 
 	double maxEpsilon;							//Maximum epsilon, loaded from configuration
 	int maxDimension;							//Maximum dimension, loaded from configuration
@@ -66,10 +68,10 @@ class simplexBase {
 	virtual int simplexCount();
 	virtual int vertexCount();
 	virtual void prepareCofacets(int);
-	virtual std::vector<simplexNode*> getAllCofacets(const std::set<unsigned>&);
-	virtual std::vector<simplexNode*> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode*, simplexNode*>& pivotPairs, bool = true);
-	virtual std::set<simplexNode*, cmpByWeight> getDimEdges(int);
-	virtual std::vector<std::set<simplexNode*, cmpByWeight>> getAllEdges();
+	virtual std::vector<simplexNode_P> getAllCofacets(const std::set<unsigned>&);
+	virtual std::vector<simplexNode_P> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode_P, simplexNode_P>& pivotPairs, bool = true);
+	virtual std::set<simplexNode_P, cmpByWeight> getDimEdges(int);
+	virtual std::vector<std::set<simplexNode_P, cmpByWeight>> getAllEdges();
 
 	virtual void expandDimensions(int);
 	virtual void reduceComplex();

@@ -69,8 +69,8 @@ void simplexArrayList::prepareCofacets(int dim){
 	}
 }
 
-std::vector<simplexNode*> simplexArrayList::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode*, simplexNode*>& pivotPairs, bool checkEmergent){
-	std::vector<simplexNode*> ret;
+std::vector<simplexNode_P> simplexArrayList::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode_P, simplexNode_P>& pivotPairs, bool checkEmergent){
+	std::vector<simplexNode_P> ret;
 	int nPts = simplexList[0].size();
 	unsigned k = simplex.size() + 1;
 	std::set<unsigned>::reverse_iterator it = simplex.rbegin();
@@ -129,7 +129,7 @@ void simplexArrayList::insert(){
 	
 	unsigned i = simplexList[0].size();
 
-	simplexNode* insNode = new simplexNode({i}, 0.0);
+	simplexNode_P insNode = new simplexNode({i}, 0.0);
 	simplexList[0].insert(insNode);
 
 	//If there are already points, do a brute-force compare
@@ -145,7 +145,7 @@ void simplexArrayList::insert(){
 			if(dist <= maxEpsilon){
 				
 				//Create an Edge vector 
-				simplexNode* insNode = new simplexNode({i, j}, dist);
+				simplexNode_P insNode = new simplexNode({i, j}, dist);
 				simplexList[1].insert(insNode);
 			}
 		}
