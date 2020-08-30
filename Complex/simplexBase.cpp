@@ -65,6 +65,9 @@ simplexBase* simplexBase::newSimplex(const std::string &simplexT, std::map<std::
 	return 0;
 }
 
+void simplexBase::setEnclosingRadius(double r){
+	maxEpsilon = r;
+}
 
 std::set<simplexNode_P, cmpByWeight> simplexBase::getDimEdges(int dim){
 	if(dim >= simplexList.size()){

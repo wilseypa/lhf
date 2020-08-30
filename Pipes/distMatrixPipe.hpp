@@ -6,7 +6,7 @@
 
 class distMatrixPipe : public basePipe {
   private:
-	double maxEpsilon;
+	double enclosingRadius;
   public:
     distMatrixPipe();
     void runPipe(pipePacket& inData);
