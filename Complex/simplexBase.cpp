@@ -51,14 +51,14 @@ void simplexBase::setDistanceMatrix(std::vector<std::vector<double>>* _distMatri
 }
 
 // simplexTree constructor, currently no needed information for the class constructor
-simplexBase* simplexBase::newSimplex(const std::string &simplexT, std::map<std::string, std::string> &configMap){
+std::shared_ptr<simplexBase> simplexBase::newSimplex(const std::string &simplexT, std::map<std::string, std::string> &configMap){
 	if(simplexT == "simplexTree"){
 		//maxEpsilon and maxDimension are overwritten by setConfig
-		auto t = new simplexTree(0, 0);
+		auto t = std::make_shared<simplexBase>( simplexTree(0, 0) );
 		t->setConfig(configMap);
 		return t;
 	} else if (simplexT == "simplexArrayList"){
-		auto t = new simplexArrayList(0, 0);
+		auto t = std::make_shared<simplexBase>( simplexArrayList(0, 0) );
 		t->setConfig(configMap);
 		return t;
 	}

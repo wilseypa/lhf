@@ -15,7 +15,7 @@ class basePipe {
 	int debug = 0;
 	std::string outputFile;
     basePipe(){};
-    static basePipe* newPipe(const std::string&, const std::string&);
+    static std::shared_ptr<basePipe> newPipe(const std::string&, const std::string&);
     void runPipeWrapper(pipePacket&);
 	virtual void outputData(pipePacket&);
     virtual void runPipe(pipePacket&);

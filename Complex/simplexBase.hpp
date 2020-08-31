@@ -50,7 +50,7 @@ class simplexBase {
 	void setConfig(std::map<std::string, std::string>&);
 	void setDistanceMatrix(std::vector<std::vector<double>>* _distMatrix);
 	void setEnclosingRadius(double);
-	static simplexBase* newSimplex(const std::string &, std::map<std::string, std::string>&);
+	static std::shared_ptr<simplexBase> newSimplex(const std::string &, std::map<std::string, std::string>&);
 
 	//Stream evaluator - this uses a function to determine if points should be inserted into the complex
 	bool (*streamEval) (std::vector<double>&, std::vector<std::vector<double>>&);
