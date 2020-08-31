@@ -20,28 +20,28 @@
 #include "fastPersistence.hpp"
 #include "naiveWindow.hpp"
 
-std::shared_ptr<basePipe> basePipe::newPipe(const std::string &pipeType, const std::string &complexType){
+basePipe* basePipe::newPipe(const std::string &pipeType, const std::string &complexType){
 	utils ut;
 	ut.writeDebug("basePipe","Building pipeline: " + pipeType + " for " + complexType);
 
 	if(pipeType == "distMatrix"){
-		return std::make_shared<basePipe>(distMatrixPipe());
+		return new distMatrixPipe();
 	} else if (pipeType == "neighGraph"){
-		return std::make_shared<basePipe>(neighGraphPipe());
+		return new neighGraphPipe();
 	} else if (pipeType == "rips"){
-		return std::make_shared<basePipe>(ripsPipe());
+		return new ripsPipe();
 	} else if (pipeType == "upscale"){
-		return std::make_shared<basePipe>(upscalePipe());
+		return new upscalePipe();
 	} else if (pipeType == "boundary"){
-		return std::make_shared<basePipe>(boundaryPipe());
+		return new boundaryPipe();
 	} else if (pipeType == "persistence"){
-		return std::make_shared<basePipe>(persistencePairs());
+		return new persistencePairs();
 	} else if (pipeType == "slidingwindow" || pipeType == "sliding"){
-		return std::make_shared<basePipe>(slidingWindow());
+		return new slidingWindow();
 	} else if (pipeType == "fastPersistence" || pipeType == "fast"){
-		return std::make_shared<basePipe>(fastPersistence());
+		return new fastPersistence();
 	} else if (pipeType == "naivewindow" || pipeType == "naive"){
-		return std::make_shared<basePipe>(naiveWindow());
+		return new naiveWindow();
 	}
 	
 	return 0;

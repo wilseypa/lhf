@@ -20,7 +20,7 @@ class pipePacket {
 	std::vector<unsigned> originalLabels;
 	std::vector<std::vector<double>> fullData;
 	std::vector<std::vector<double>> distMatrix;
-	std::shared_ptr<simplexBase> complex;
+	simplexBase* complex;
 	
 	std::vector<std::set<unsigned>> boundaries;
 	std::set<double, std::greater<double>> weights;	
