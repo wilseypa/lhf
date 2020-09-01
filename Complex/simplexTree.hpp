@@ -13,14 +13,14 @@ class simplexTree : public simplexBase {
 	simplexNode_P root = nullptr; //Empty node at root of tree (empty simplex)
 
 	simplexTree(double, int);
-	std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(simplexNode_P, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
-	void printTree(simplexNode_P);
-	void recurseInsert(simplexNode_P, unsigned, int, double, std::set<unsigned>);
+	std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(simplexNode*, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
+	void printTree(simplexNode*);
+	void recurseInsert(simplexNode*, unsigned, int, double, std::set<unsigned>);
 	double findWeight(std::set<unsigned>);
-	void deleteIndexRecurse(int, simplexNode_P);
+	void deleteIndexRecurse(int, simplexNode*);
 	void deleteWeightEdgeGraph(int index);
 
-	simplexNode_P find(std::set<unsigned>::iterator, std::set<unsigned>::iterator, simplexNode_P);
+	simplexNode* find(std::set<unsigned>::iterator, std::set<unsigned>::iterator, simplexNode*);
 
 	//virtual interface functions
 	void outputComplex();
@@ -34,9 +34,9 @@ class simplexTree : public simplexBase {
 	int simplexCount();
 	int vertexCount();
 	void prepareCofacets(int){return;}
-	std::vector<simplexNode_P> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode_P, simplexNode_P>&, bool);
+	std::vector<simplexNode*> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode*, simplexNode*>&, bool);
 	bool deletion(std::set<unsigned>);
-	bool deletion(simplexNode_P);
+	bool deletion(simplexNode*);
 	void expandDimensions(int){return;};
 	void reduceComplex();
 	void clear();

@@ -10,16 +10,19 @@ struct simplexNode{
 	unsigned index;
 	
 	struct cmpByIndex{
+		bool operator()(const simplexNode* lhs, const simplexNode* rhs) const{
+			return lhs->index < rhs->index;
+		}
 		bool operator()(const std::shared_ptr<simplexNode> lhs, const std::shared_ptr<simplexNode> rhs) const{
 			return lhs->index < rhs->index;
 		}
 	};
 	
 	std::set<unsigned> simplex;
-	std::set<std::shared_ptr<simplexNode>, cmpByIndex> children;
-	std::shared_ptr<simplexNode> child = nullptr;
-	std::shared_ptr<simplexNode> sibling = nullptr;
-	std::shared_ptr<simplexNode> parent = nullptr;
+	std::set<simplexNode*, cmpByIndex> children;
+	simplexNode* child = nullptr;
+	simplexNode* sibling = nullptr;
+	simplexNode* parent = nullptr;
 	double weight = 0;
 
 	simplexNode(){}

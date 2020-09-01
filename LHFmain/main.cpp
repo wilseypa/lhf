@@ -65,6 +65,8 @@ void runPipeline(std::map<std::string, std::string> args, pipePacket &wD){
 				std::cout << "LHF runPipeline: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 			}
 			
+			delete cp;
+			
 		}
 	}
 	//If the pipeline was undefined...
