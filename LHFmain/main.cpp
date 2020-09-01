@@ -217,7 +217,7 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 				//4. Process and merge bettis - whether they are from runPipeline or IterUpscale
 				bool foundExt = false;
 				std::vector<bettiBoundaryTableEntry> temp;
-				ut.extractBoundaryPoints(curwD.bettiTable);
+				// ut.extractBoundaryPoints(curwD.bettiTable);
 
 				//Remap the boundary indices into the original point space
 				curwD.bettiTable = ut.mapPartitionIndexing(partitionedData.first[z], curwD.bettiTable);
@@ -293,7 +293,7 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 	// //		Add open d0 intervals for the remaining d0 bettis
 	// auto addlIntervals = std::count_if(mergedBettiTable.begin(), mergedBettiTable.end(), [&](bettiBoundaryTableEntry const &i) { return ( i.bettiDim == 0); });
 	// for(auto i = 0; i < originalDataSize - addlIntervals; i++)
-	bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
+	bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {} };
 	mergedBettiTable.push_back(des);
 	
 	//		Return the final merged betti table for this iteration

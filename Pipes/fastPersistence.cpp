@@ -106,7 +106,7 @@ void fastPersistence::runPipe(pipePacket &inData){
 			simplexNode_P temp = std::make_shared<simplexNode>(simplexNode((*edgeIter)->simplex, (*edgeIter)->weight));
 			pivots.push_back(temp);
 
-			bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, temp->simplex, {temp} };
+			bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, temp->simplex };
 			inData.bettiTable.push_back(des);
 		}
 
@@ -119,7 +119,7 @@ void fastPersistence::runPipe(pipePacket &inData){
 	for(int i=0; i<inData.originalData.size(); i++){
 		if(uf.find(i) == i){ //i is the name of a connected component
 			//Each connected component has an open persistence interval
-			bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
+			bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {} };
 			inData.bettiTable.push_back(des);
 		}
 	}
@@ -196,7 +196,7 @@ void fastPersistence::runPipe(pipePacket &inData){
 						}
 
 						if(simplex->weight != pivot->weight){
-							bettiBoundaryTableEntry des = { d, simplex->weight, pivot->weight, {}, v[simplex] };
+							bettiBoundaryTableEntry des = { d, simplex->weight, pivot->weight, ut.extractBoundaryPoints(v[simplex]) };
 							inData.bettiTable.push_back(des);
 						}
 
