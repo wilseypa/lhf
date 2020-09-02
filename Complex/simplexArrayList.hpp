@@ -37,6 +37,6 @@ class simplexArrayList : public simplexBase{
 		bool deletion(std::set<unsigned>);
 		void expandDimensions(int);
 		void reduceComplex();
-		void clear();
+		~simplexArrayList();
 };
 

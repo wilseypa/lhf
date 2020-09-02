@@ -76,6 +76,6 @@ class simplexBase {
 
 	virtual void expandDimensions(int);
 	virtual void reduceComplex();
-	virtual void clear();
+	virtual ~simplexBase();
 	virtual void outputComplex();
 };

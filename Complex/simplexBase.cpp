@@ -216,7 +216,4 @@ bool simplexBase::streamEvaluator(std::vector<double>& vector, std::vector<std::
 	return false;
 }
 
-void simplexBase::clear(){
-	ut.writeLog(simplexType,"No clear function defined");
-	return;
-}
+simplexBase::~simplexBase(){}

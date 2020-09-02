@@ -42,7 +42,6 @@ void runPipeline(std::map<std::string, std::string> args, pipePacket &wD){
 	// DataInput -> A -> B -> ... -> DataOutput
 	// Parsed by "." -> i.e. A.B.C.D
 	auto pipe = args.find("pipeline");
-	std::cout << "Reached pipeline: " << args["pipeline"] << std::endl;
 	
 	if(pipe != args.end()){
 		auto pipeFuncts = std::string(args["pipeline"]);
@@ -52,7 +51,6 @@ void runPipeline(std::map<std::string, std::string> args, pipePacket &wD){
 		for(unsigned i = 0; i < lim; i++){
 			auto curFunct = pipeFuncts.substr(0,pipeFuncts.find('.'));
 			pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
-			std::cout << "Running pipeline: " << curFunct << std::endl;
 			//Build the pipe component, configure and run
 			auto cp = basePipe::newPipe(curFunct, args["complexType"]);
 		
@@ -61,7 +59,6 @@ void runPipeline(std::map<std::string, std::string> args, pipePacket &wD){
 				//Run the pipe function (wrapper)
 				cp->runPipeWrapper(wD);
 			} else {
-				std::cout << cp << std::endl;
 				std::cout << "LHF runPipeline: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 			}
 			
@@ -191,11 +188,14 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 				else
 					centArgs["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
 					
+				//Run against the original dataset
+			
 				if(partitionedData.second[z].size() > 0){
-					wD.originalData = partitionedData.second[z];
-					runPipeline(centArgs, wD);
+					iterwD.originalData = partitionedData.second[z];
+					runPipeline(centArgs, iterwD);
 					
-					wD.complex->clear();
+					//wD.complex->clear();
+					delete iterwD.complex;
 				} else 
 					std::cout << "skipping full data, no centroids" << std::endl;
 					
@@ -216,6 +216,7 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 					curwD.bettiTable = processIterUpscale(args, curwD);
 				}
 				
+				delete curwD.complex;
 				//4. Process and merge bettis - whether they are from runPipeline or IterUpscale
 				bool foundExt = false;
 				std::vector<bettiBoundaryTableEntry> temp;
@@ -286,7 +287,7 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 		mergedBettiTable.insert(mergedBettiTable.end(), partTable.begin(), partTable.end());	
 		
 	//		Merge bettis from the centroid based data
-	for(auto betEntry : wD.bettiTable){
+	for(auto betEntry : iterwD.bettiTable){
 		if(betEntry.bettiDim > 0 ){
 			mergedBettiTable.push_back(betEntry);
 		}
@@ -940,6 +941,11 @@ int main(int argc, char* argv[]){
 			std::cout << "Reached C" << std::endl;
 			runPipeline(args, wD);
 			std::cout << "Reached D" << std::endl;
+			
+			//Output the data using writeOutput library
+			outputBettis(args, wD);
+			
+			delete wD.complex;
 		}
 	} else {
 		ap.printUsage();

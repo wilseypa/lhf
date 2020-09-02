@@ -9,10 +9,16 @@ pipePacket::pipePacket(const std::string& simplexType, const double epsilon, con
 	std::map<std::string,std::string> blankConfig;
 	blankConfig["dimensions"] = std::to_string(maxDim);
 	blankConfig["epsilon"] = std::to_string(epsilon);
+	
+	if(complex != nullptr)
+		delete complex;
 	complex = simplexBase::newSimplex(simplexType, blankConfig);
 }
 
 pipePacket::pipePacket(std::map<std::string, std::string> configMap, const std::string& simplexType){
+	
+	if(complex != nullptr)
+		delete complex;
 	complex = simplexBase::newSimplex(simplexType, configMap);
 }
 
@@ -32,3 +38,4 @@ double pipePacket::getSize(){
 	
 	return size;
 }
+
