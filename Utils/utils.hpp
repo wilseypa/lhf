@@ -23,9 +23,6 @@ struct simplexNode{
 	
 	std::set<unsigned> simplex;
 	std::set<simplexNode*, cmpByIndex> children;
-	simplexNode* child = nullptr;
-	simplexNode* sibling = nullptr;
-	simplexNode* parent = nullptr;
 	double weight = 0;
 
 	simplexNode(){}
