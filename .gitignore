@@ -13,6 +13,7 @@ test_functions
 test_*
 Testing
 *.mat
+*.out.*
 
 # Prerequisites
 *.d

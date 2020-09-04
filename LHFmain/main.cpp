@@ -84,7 +84,7 @@ void processDataWrapper(std::map<std::string, std::string> args, pipePacket &wD)
 	auto pre = args["preprocessor"];
 	if(pre != ""){
 		auto prePipe = preprocessor::newPreprocessor(pre);
-		
+
 		if(prePipe != 0 && prePipe->configPreprocessor(args)){
 			wD = prePipe->runPreprocessorWrapper(wD);
 		} else {
@@ -128,16 +128,16 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 	auto iterwD = pipePacket(args, args["complexType"]);
 	iterwD.originalData = wD.originalData;
 	iterwD.fullData = wD.fullData;
-	
+
 	//2. Partition the source point cloud separate datasets accordingly
 	
 	//		Run preprocessor pipeline to partition
 	processDataWrapper(args, iterwD);
-	
+
 	//		Compute partition statistics for fuzzy partition distance
 	auto maxRadius = ut.computeMaxRadius(clusters, iterwD.originalData, iterwD.fullData, iterwD.originalLabels);
 	auto avgRadius = ut.computeAvgRadius(clusters, iterwD.originalData, iterwD.fullData, iterwD.originalLabels);
-	
+
 	//		Count the size of each partition for identifying source partitions when looking at the betti table results
 	std::vector<unsigned> binCounts;
 	for(unsigned a = 0; a < clusters; a++){
@@ -944,12 +944,12 @@ int main(int argc, char* argv[]){
 			
 			//Output the data using writeOutput library
 			outputBettis(args, wD);
-			
-			delete wD.complex;
 		}
 	} else {
 		ap.printUsage();
 	}
 	
+	delete wD.complex;
+
 	return 0;
 }
