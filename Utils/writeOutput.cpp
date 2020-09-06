@@ -14,7 +14,6 @@
 #include <regex>
 #include <fstream>
 #include "writeOutput.hpp"
-
 // writeOutput constructor, currently no needed information for the class constructor
 writeOutput::writeOutput(){
 
@@ -32,10 +31,12 @@ bool writeOutput::writeStats(std::string stats, std::string filename){
 bool writeOutput::writeBarcodes(std::vector<bettiBoundaryTableEntry> data, std::string filename){
 	std::string header = "dimension,birth,death\n";
 	std::ofstream file(filename + ".csv");
-	
-	for(auto row : data)
-		file << std::to_string(row.bettiDim) << "," << std::to_string(row.birth) << "," << std::to_string(row.death) << std::endl;
-	
+	for(auto row : data){
+	file << std::to_string(row.bettiDim) << ",\t" << std::to_string(row.birth) << ",\t" << std::to_string(row.death)<<" ,\t";
+        for(auto b:row.boundaryPoints)
+	       file<<b<<", ";	
+	file<<std::endl;
+	}
 	file.close();
 	return true;
 }
