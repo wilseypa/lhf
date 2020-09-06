@@ -25,7 +25,7 @@ distMatrixPipe::distMatrixPipe(){
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
-pipePacket distMatrixPipe::runPipe(pipePacket inData){
+void distMatrixPipe::runPipe(pipePacket &inData){
 	
 	//Store our distance matrix
 	if(inData.distMatrix.size() > 0) inData.distMatrix.clear();
@@ -33,26 +33,29 @@ pipePacket distMatrixPipe::runPipe(pipePacket inData){
 	
 	//Iterate through each vector, create lower
 	for(unsigned i = 0; i < inData.originalData.size(); i++){
-		if(!inData.originalData[i].empty()){
-			//Grab a second vector to compare to 
-			std::vector<double> temp;
-			for(unsigned j = i+1; j < inData.originalData.size(); j++){
-
-					//Calculate vector distance 
-					inData.distMatrix[i][j] = ut.vectors_distance(inData.originalData[i],inData.originalData[j]);
-			}
+		//Grab a second vector to compare to 
+		for(unsigned j = i+1; j < inData.originalData.size(); j++){
+			//Calculate vector distance 
+			inData.distMatrix[i][j] = ut.vectors_distance(inData.originalData[i],inData.originalData[j]);
 		}
 	}
-	
+
+	for(unsigned i = 0; i < inData.originalData.size(); i++){
+		double r_i = 0;
+		for(unsigned j = 0; j < inData.originalData.size(); j++) r_i = std::max(r_i, inData.distMatrix[std::min(i, j)][std::max(i, j)]);
+		enclosingRadius = std::min(enclosingRadius, r_i);
+	}
+
 	inData.complex->setDistanceMatrix(&inData.distMatrix);
-	
+	inData.complex->setEnclosingRadius(enclosingRadius);
+
 	ut.writeDebug("distMatrix", "\tDist Matrix Size: " + std::to_string(inData.distMatrix.size()) + " x " + std::to_string(inData.distMatrix.size()));
-	return inData;
+	return;
 }
 
 
 // configPipe -> configure the function settings of this pipeline segment
-bool distMatrixPipe::configPipe(std::map<std::string, std::string> configMap){
+bool distMatrixPipe::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
 	
 	auto pipe = configMap.find("debug");
@@ -68,9 +71,9 @@ bool distMatrixPipe::configPipe(std::map<std::string, std::string> configMap){
 	
 	pipe = configMap.find("epsilon");
 	if(pipe != configMap.end())
-		maxEpsilon = std::atof(configMap["epsilon"].c_str());
+		enclosingRadius = std::atof(configMap["epsilon"].c_str());
 	else return false;
-	
+
 	configured = true;
 	ut.writeDebug("distMatrixPipe","Configured with parameters { eps: " + configMap["epsilon"] + " , debug: " + strDebug + ", outputFile: " + outputFile + " }");
 	
@@ -78,7 +81,7 @@ bool distMatrixPipe::configPipe(std::map<std::string, std::string> configMap){
 }
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-void distMatrixPipe::outputData(pipePacket inData){
+void distMatrixPipe::outputData(pipePacket &inData){
 	std::ofstream file;
 	file.open("output/" + pipeType + "_output.csv");
 	

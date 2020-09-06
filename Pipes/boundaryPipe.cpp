@@ -29,36 +29,36 @@ boundaryPipe::boundaryPipe(){
 //
 pipePacket boundaryPipe::runPipe(pipePacket inData){
 	
-	if(dim < 1)
-		return inData;
+	// if(dim < 1)
+	// 	return inData;
 		
-	int count = 0;
+	// int count = 0;
 		
-	std::vector<std::set<unsigned>> tempBetti;
+	// std::vector<std::set<unsigned>> tempBetti;
 	
-	std::cout << "Using scalar value: " << scalarV << std::endl;
+	// std::cout << "Using scalar value: " << scalarV << std::endl;
 	
-	//Extract the relevant boundaries from the centroid-approximated point cloud
-	for(auto bet : inData.bettiTable){
+	// //Extract the relevant boundaries from the centroid-approximated point cloud
+	// for(auto bet : inData.bettiTable){
 		
-		//If the betti is d1 or higher, or the distance is greater than the scalar
-		if(bet.bettiDim > 0 || bet.death - bet.birth >= scalarV){
+	// 	//If the betti is d1 or higher, or the distance is greater than the scalar
+	// 	if(bet.bettiDim > 0 || bet.death - bet.birth >= scalarV){
 			
 			
-			std::set<unsigned> totalBoundary;
-			for(auto index : bet.boundary){
-				for(unsigned entry : index->simplex )
-					totalBoundary.insert(entry);
-			}
-			count++;
-			tempBetti.push_back(totalBoundary);
+	// 		std::set<unsigned> totalBoundary;
+	// 		for(auto index : bet.boundary){
+	// 			for(unsigned entry : index->simplex )
+	// 				totalBoundary.insert(entry);
+	// 		}
+	// 		count++;
+	// 		tempBetti.push_back(totalBoundary);
 			
-		}
-	}
+	// 	}
+	// }
 	
-	std::cout << "Boundaries updated: " << count << std::endl;
+	// std::cout << "Boundaries updated: " << count << std::endl;
 	
-	inData.boundaries = tempBetti;
+	// inData.boundaries = tempBetti;
 	
 	return inData;
 }

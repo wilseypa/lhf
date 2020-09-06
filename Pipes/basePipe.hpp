@@ -16,9 +16,9 @@ class basePipe {
 	std::string outputFile;
     basePipe(){};
     static basePipe* newPipe(const std::string&, const std::string&);
-    pipePacket runPipeWrapper(pipePacket);
-	virtual void outputData(pipePacket);
-    virtual pipePacket runPipe(pipePacket);
-    virtual bool configPipe(std::map<std::string, std::string>);    
+    void runPipeWrapper(pipePacket&);
+	virtual void outputData(pipePacket&);
+    virtual void runPipe(pipePacket&);
+    virtual bool configPipe(std::map<std::string, std::string>&);    
 };
 

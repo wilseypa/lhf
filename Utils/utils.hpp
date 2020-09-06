@@ -2,6 +2,8 @@
 
 #include <set>
 #include <vector>
+#include <memory>
+
 
 // Header file for utils class - see utils.cpp for descriptions
 struct simplexNode{
@@ -11,22 +13,26 @@ struct simplexNode{
 		bool operator()(const simplexNode* lhs, const simplexNode* rhs) const{
 			return lhs->index < rhs->index;
 		}
+		bool operator()(const simplexNode& lhs, const simplexNode& rhs) const{
+			return lhs.index < rhs.index;
+		}
+		bool operator()(const std::shared_ptr<simplexNode> lhs, const std::shared_ptr<simplexNode> rhs) const{
+			return lhs->index < rhs->index;
+		}
 	};
 	
 	std::set<unsigned> simplex;
 	std::set<simplexNode*, cmpByIndex> children;
-	simplexNode* child = nullptr;
-	simplexNode* sibling = nullptr;
-	simplexNode* parent = nullptr;
 	double weight = 0;
 
 	simplexNode(){}
 	simplexNode(std::set<unsigned> simp, double wt) : simplex(simp), weight(wt) {}
 };
 
+typedef std::shared_ptr<simplexNode> simplexNode_P;
 
 struct cmpByWeight{
-	bool operator()(simplexNode* a, simplexNode* b) const{
+	bool operator()(simplexNode_P a, simplexNode_P b) const{
 		if(a->weight == b->weight){ //If the simplices have the same weight, sort by reverse lexicographic order for fastPersistence
 			auto itA = a->simplex.rbegin(), itB = b->simplex.rbegin();
 			while(itA != a->simplex.rend()){
@@ -46,7 +52,6 @@ struct bettiBoundaryTableEntry{
 	double birth;
 	double death;
 	std::set<unsigned> boundaryPoints;
-	std::vector<simplexNode*> boundary;
 }; 
 
 
@@ -63,7 +68,8 @@ class utils {
 	std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> separatePartitions(int, std::vector<std::vector<double>>, std::vector<unsigned>);
 	std::vector<std::vector<std::vector<double>>> separateBoundaryPartitions(std::vector<std::set<unsigned>>, std::vector<std::vector<double>>, std::vector<unsigned>);
 	std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> separatePartitions(double, std::vector<std::vector<double>>, std::vector<std::vector<double>>, std::vector<unsigned>);
-	void extractBoundaryPoints(std::vector<bettiBoundaryTableEntry>&);
+	// void extractBoundaryPoints(std::vector<bettiBoundaryTableEntry>&);
+	std::set<unsigned> extractBoundaryPoints(std::vector<simplexNode_P>);
 	std::vector<bettiBoundaryTableEntry> mapPartitionIndexing(std::vector<unsigned>, std::vector<bettiBoundaryTableEntry>);
 	void print2DVector(const std::vector<std::vector<unsigned>>&);
 	void print1DVector(const std::vector<unsigned>&);
