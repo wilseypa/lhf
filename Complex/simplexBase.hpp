@@ -2,18 +2,16 @@
 #include <map>
 #include <algorithm>
 #include <set>
-#include <memory>
 #include <iostream>
 #include <unordered_map>
 #include "utils.hpp"
 
 // Header file for simplexBase class - see simplexTree.cpp for descriptions
 
-
 class simplexBase {
   private:
   public:
-	std::vector<std::set<simplexNode_P, cmpByWeight>> simplexList;		//Holds ordered list of simplices in each dimension
+	std::vector<std::set<simplexNode*, cmpByWeight>> simplexList;		//Holds ordered list of simplices in each dimension
 																//Needs to sort by the weight for insertion
 
 	unsigned simplexOffset = 0;
@@ -24,8 +22,8 @@ class simplexBase {
 	utils ut;									//Utilities functions
 	std::string simplexType = "simplexBase";	//Complex Type Identifier
 
-	simplexNode_P root;							//Root of the simplexNode tree (if applicable)
-	simplexNode_P head;							//Root of the simplexNode tree (if applicable)
+	simplexNode* root;							//Root of the simplexNode tree (if applicable)
+	simplexNode* head;							//Root of the simplexNode tree (if applicable)
 
 	double maxEpsilon;							//Maximum epsilon, loaded from configuration
 	int maxDimension;							//Maximum dimension, loaded from configuration
@@ -43,14 +41,13 @@ class simplexBase {
 
 	//Constructors
 	simplexBase();
-	simplexBase(std::map<std::string, std::string>&);
+	simplexBase(std::map<std::string, std::string>);
 	simplexBase(double, int);
 
 	//Configurations of the complex
-	void setConfig(std::map<std::string, std::string>&);
+	void setConfig(std::map<std::string, std::string>);
 	void setDistanceMatrix(std::vector<std::vector<double>>* _distMatrix);
-	void setEnclosingRadius(double);
-	static simplexBase* newSimplex(const std::string &, std::map<std::string, std::string>&);
+	simplexBase* newSimplex(const std::string &simplexT, std::map<std::string, std::string> configMap);
 
 	//Stream evaluator - this uses a function to determine if points should be inserted into the complex
 	bool (*streamEval) (std::vector<double>&, std::vector<std::vector<double>>&);
@@ -69,13 +66,13 @@ class simplexBase {
 	virtual int simplexCount();
 	virtual int vertexCount();
 	virtual void prepareCofacets(int);
-	virtual std::vector<simplexNode_P> getAllCofacets(const std::set<unsigned>&);
-	virtual std::vector<simplexNode_P> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode_P, simplexNode_P>& pivotPairs, bool = true);
-	virtual std::set<simplexNode_P, cmpByWeight> getDimEdges(int);
-	virtual std::vector<std::set<simplexNode_P, cmpByWeight>> getAllEdges();
+	virtual std::vector<simplexNode*> getAllCofacets(const std::set<unsigned>&);
+	virtual std::vector<simplexNode*> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode*, simplexNode*>& pivotPairs, bool = true);
+	virtual std::set<simplexNode*, cmpByWeight> getDimEdges(int);
+	virtual std::vector<std::set<simplexNode*, cmpByWeight>> getAllEdges();
 
 	virtual void expandDimensions(int);
 	virtual void reduceComplex();
-	virtual ~simplexBase();
+	virtual void clear();
 	virtual void outputComplex();
 };

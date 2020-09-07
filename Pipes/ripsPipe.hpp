@@ -10,8 +10,8 @@ class ripsPipe : public basePipe {
 	std::string collapse;
 	int dim;
     ripsPipe();
-    void runPipe(pipePacket&);
-    bool configPipe(std::map<std::string, std::string>&);
-	void outputData(pipePacket&);
+    pipePacket runPipe(pipePacket);
+    bool configPipe(std::map<std::string, std::string>);
+	void outputData(pipePacket);
 };
 

@@ -5,10 +5,11 @@
 #include "simplexArrayList.hpp"
 
 // simplexArrayList constructor, currently no needed information for the class constructor
-simplexArrayList::simplexArrayList(double maxE, double maxD) : bin(0,0) {
+simplexArrayList::simplexArrayList(double maxE, double maxD, std::vector<std::vector<double>>* _distMatrix) : bin(0,0) {
 	simplexType = "simplexArrayList";
 	maxEpsilon = maxE;
 	maxDimension = maxD;
+	distMatrix = _distMatrix;
 }
 
 binomialTable::binomialTable(unsigned n, unsigned k) : v(n+1, std::vector<long long>(k+1, 0)){ //Fast computation of binomials with precomputed table
@@ -69,8 +70,8 @@ void simplexArrayList::prepareCofacets(int dim){
 	}
 }
 
-std::vector<simplexNode_P> simplexArrayList::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode_P, simplexNode_P>& pivotPairs, bool checkEmergent){
-	std::vector<simplexNode_P> ret;
+std::vector<simplexNode*> simplexArrayList::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode*, simplexNode*>& pivotPairs, bool checkEmergent){
+	std::vector<simplexNode*> ret;
 	int nPts = simplexList[0].size();
 	unsigned k = simplex.size() + 1;
 	std::set<unsigned>::reverse_iterator it = simplex.rbegin();
@@ -123,13 +124,13 @@ double simplexArrayList::getSize(){
 // Insert for simplexArrayList -> O((n+1)(n+2)/2) -> O(n^2)
 //		Sequence: 0 , 1 , 3 , 6 , 10 , 15
 //
-void simplexArrayList::insert(){		
+void simplexArrayList::insert(){			
 	//If this is the first point inserted...
 	if(simplexList.size() == 0) simplexList.push_back({});
 	
 	unsigned i = simplexList[0].size();
 
-	simplexNode_P insNode = std::make_shared<simplexNode>(simplexNode({i}, 0.0));
+	simplexNode* insNode = new simplexNode({i}, 0.0);
 	simplexList[0].insert(insNode);
 
 	//If there are already points, do a brute-force compare
@@ -145,7 +146,7 @@ void simplexArrayList::insert(){
 			if(dist <= maxEpsilon){
 				
 				//Create an Edge vector 
-				simplexNode_P insNode = std::make_shared<simplexNode>(simplexNode({i, j}, dist));
+				simplexNode* insNode = new simplexNode({i, j}, dist);
 				simplexList[1].insert(insNode);
 			}
 		}
@@ -220,7 +221,7 @@ void simplexArrayList::expandDimensions(int dim){
 				for(auto i : (*it)->simplex) maxWeight = std::max(maxWeight, (*distMatrix)[i][pt]);
 				
 				if(maxWeight <= maxEpsilon){ //Valid simplex
-					simplexNode_P tot = std::make_shared<simplexNode>(simplexNode((*it)->simplex, maxWeight));
+					simplexNode* tot = new simplexNode((*it)->simplex, maxWeight);
 					tot->simplex.insert(pt);
 					simplexList[d].insert(tot);
 				}
@@ -265,7 +266,7 @@ void simplexArrayList::reduceComplex(){
 	return;
 }
 
-std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> simplexArrayList::recurseReduce(simplexNode_P simplex, std::vector<std::set<unsigned>> removals, std::vector<std::set<unsigned>> checked){
+std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> simplexArrayList::recurseReduce(simplexNode* simplex, std::vector<std::set<unsigned>> removals, std::vector<std::set<unsigned>> checked){
 	checked.push_back(simplex->simplex);
 	auto subsets = ut.getSubsets(simplex->simplex);
 	std::set<unsigned> maxFace;
@@ -325,6 +326,6 @@ bool simplexArrayList::deletion(std::set<unsigned> vector){
 	return false;
 }
 
-simplexArrayList::~simplexArrayList(){	
+void simplexArrayList::clear(){	
 	simplexList.clear();
 }

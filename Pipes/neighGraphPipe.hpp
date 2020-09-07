@@ -10,8 +10,8 @@ class neighGraphPipe : public basePipe {
 	int dim;
   public:
     neighGraphPipe();
-    void runPipe(pipePacket&);
-	void outputData(pipePacket&);
-    bool configPipe(std::map<std::string, std::string>&);
+    pipePacket runPipe(pipePacket);
+	void outputData(pipePacket);
+    bool configPipe(std::map<std::string, std::string>);
 };
 
