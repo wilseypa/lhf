@@ -134,6 +134,7 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 	//2. Partition the source point cloud separate datasets accordingly
 	
 	//		Run preprocessor pipeline to partition
+			
 	processDataWrapper(args, iterwD);
 	
 	//		Compute partition statistics for fuzzy partition distance
@@ -317,7 +318,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 	utils ut;
     
 	// check if 1 process only
-	if(nprocs==1){
+/*	if(nprocs==1){
 		//Read our input data
 		auto *rs = new readInput();
 		wD->originalData = rs->readCSV(args["inputFile"]);
@@ -352,7 +353,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		delete ws;
 		return;
 	}
-	
+*/	
 	unsigned dimension;	
 	std::vector<std::vector<double>> centroids;	
 	std::vector<unsigned> binCounts;
@@ -462,18 +463,24 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		k=0;
 		maxsize=0;
 		maxsizelabel=0;
+		auto bd = scounts[0];
 		// find the maximum buffer size required for partition
         	for(auto  a : scounts){
-			displs[k] = a + displs[k];
+			if(k>0)
+			displs[k] = bd + displs[k-1];
 			k++;
+			bd = a;
 			if(a>maxsize)
 				maxsize = a;
 		}
 		k=0;
+		auto bl = scountslabel[0];
 		// find maximum buffer size required by label partition	
 		for(auto  a : scountslabel){
-			displslabel[k] = a + displslabel[k];
+			if(k>0)
+			displslabel[k] = bl + displslabel[k-1];
 			k++;
+			bl=a;
 			if(a>maxsizelabel)
 				maxsizelabel = a;
 		}		
