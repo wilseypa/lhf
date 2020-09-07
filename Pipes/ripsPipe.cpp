@@ -26,7 +26,7 @@ ripsPipe::ripsPipe(){
 
 
 // runPipe -> Run the configured functions of this pipeline segment
-void ripsPipe::runPipe(pipePacket &inData){
+pipePacket ripsPipe::runPipe(pipePacket inData){
 	
 	inData.complex->expandDimensions(dim);
 		
@@ -39,12 +39,12 @@ void ripsPipe::runPipe(pipePacket &inData){
 		ut.writeDebug("ripsPipe","Reduced Complex Size: " + std::to_string(inData.complex->simplexCount()));
 		ut.writeDebug("ripsPipe", "Reduced Complex Mem: " + std::to_string(inData.complex->getSize()));
 	}
-	return;
+	return inData;
 }
 
 
 // configPipe -> configure the function settings of this pipeline segment
-bool ripsPipe::configPipe(std::map<std::string, std::string> &configMap){
+bool ripsPipe::configPipe(std::map<std::string, std::string> configMap){
 	std::string strDebug;
 	
 	auto pipe = configMap.find("debug");
@@ -75,7 +75,7 @@ bool ripsPipe::configPipe(std::map<std::string, std::string> &configMap){
 
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-void ripsPipe::outputData(pipePacket &inData){
+void ripsPipe::outputData(pipePacket inData){
 	std::ofstream file;
 	
 	if(inData.complex->simplexType == "simplexArrayList"){

@@ -173,7 +173,7 @@ std::set<unsigned> persistencePairs::createBoundaryMatrix(std::vector<std::vecto
 pipePacket persistencePairs::runPipe(pipePacket inData){
 	
 	//Get all edges for the simplexArrayList or simplexTree
-	std::vector<std::set<simplexNode_P, cmpByWeight>> edges = inData.complex->getAllEdges();
+	std::vector<std::set<simplexNode*, cmpByWeight>> edges = inData.complex->getAllEdges();
 	
 	//Get all dim 0 pairs
 	

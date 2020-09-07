@@ -114,13 +114,13 @@ void upscalePipe::runSubPipeline(pipePacket wrData)
         pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
 
         //Build the pipe component, configure and run
-        auto cp = basePipe::newPipe(curFunct, "simplexTree");
+        auto *cp = basePipe::newPipe(curFunct, "simplexTree");
 
         //Check if the pipe was created and configure
         if(cp != 0 && cp->configPipe(subConfigMap))
         {
             //Run the pipe function (wrapper)
-            cp->runPipeWrapper(inData);
+            inData = cp->runPipeWrapper(inData);
         }
         else
         {

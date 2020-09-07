@@ -21,7 +21,7 @@ neighGraphPipe::neighGraphPipe(){
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
-void neighGraphPipe::runPipe(pipePacket &inData){	
+pipePacket neighGraphPipe::runPipe(pipePacket inData){	
 	
 	//Iterate through each vector, inserting into simplex storage
 	for(unsigned i = 0; i < inData.originalData.size(); i++){
@@ -31,11 +31,11 @@ void neighGraphPipe::runPipe(pipePacket &inData){
 		}
 	}
 
-	return;
+	return inData;
 }
 
 // configPipe -> configure the function settings of this pipeline segment
-bool neighGraphPipe::configPipe(std::map<std::string, std::string> &configMap){
+bool neighGraphPipe::configPipe(std::map<std::string, std::string> configMap){
 	std::string strDebug;
 	
 	auto pipe = configMap.find("debug");
@@ -68,7 +68,7 @@ bool neighGraphPipe::configPipe(std::map<std::string, std::string> &configMap){
 
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-void neighGraphPipe::outputData(pipePacket &inData){
+void neighGraphPipe::outputData(pipePacket inData){
 	std::ofstream file ("output/" + pipeType + "_output.csv");
 	
 	auto edges = inData.complex->getAllEdges();
