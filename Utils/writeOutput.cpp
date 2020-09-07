@@ -33,9 +33,12 @@ bool writeOutput::writeBarcodes(std::vector<bettiBoundaryTableEntry> data, std::
 	std::string header = "dimension,birth,death\n";
 	std::ofstream file(filename + ".csv");
 	
-	for(auto row : data)
-		file << std::to_string(row.bettiDim) << "," << std::to_string(row.birth) << "," << std::to_string(row.death) << std::endl;
-	
+	for(auto row : data){
+		file << std::to_string(row.bettiDim) << ",\t" << std::to_string(row.birth) << ",\t" << std::to_string(row.death)<<",\t";
+	for(auto bp : row.boundaryPoints)
+		file << std::to_string(bp)<<",  ";
+	file<<std::endl;
+	}
 	file.close();
 	return true;
 }
