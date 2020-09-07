@@ -61,6 +61,7 @@ void runPipeline(std::map<std::string, std::string> args, pipePacket* wD){
 				//Run the pipe function (wrapper)
 				*wD = cp->runPipeWrapper(*wD);
 			} else {
+				std::cout<< cp <<std::endl;
 				std::cout << "LHF runPipeline: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 			}
 			
@@ -217,11 +218,12 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 				//4. Process and merge bettis - whether they are from runPipeline or IterUpscale
 				bool foundExt = false;
 				std::vector<bettiBoundaryTableEntry> temp;
-				ut.extractBoundaryPoints(curwD->bettiTable);
+				//ut.extractBoundaryPoints(curwD->bettiTable);
 
 				//Remap the boundary indices into the original point space
 				curwD->bettiTable = ut.mapPartitionIndexing(partitionedData.first[z], curwD->bettiTable);
-              		for(auto betEntry : curwD->bettiTable){
+              		
+				for(auto betEntry : curwD->bettiTable){
 					auto boundIter = betEntry.boundaryPoints.begin();
 					
 					//REWRITE::
@@ -300,7 +302,7 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 	iterwD->complex->clear();
 	delete iterwD->complex;
 	delete iterwD;
-
+   // Return the final merged betti table for this iteration
 	return mergedBettiTable;
 }
 
@@ -354,7 +356,6 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 	unsigned dimension;	
 	std::vector<std::vector<double>> centroids;	
 	std::vector<unsigned> binCounts;
-	//std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> partitionedData;
 	int minPartitions=0;
 	int firstk=0;
 	std::vector<unsigned> partitionsize;
@@ -391,8 +392,7 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		auto *rs = new readInput();
 		wD->originalData = rs->readCSV(args["inputFile"]);
 		wD->fullData = wD->originalData;
-        int maxlabel=wD->originalData.size() -1;
-
+     
 		//Partition the data with the configured preprocessor
 
 		processDataWrapper(args, wD);
@@ -400,7 +400,6 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 		originalLabels = wD->originalLabels;
 		originalLabels_size = wD->originalLabels.size();
 		
-		//ut.print1DVector(originalLabels);
 		//Separate our partitions for distribution
 		auto maxRadius = ut.computeMaxRadius(std::atoi(args["clusters"].c_str()), wD->originalData, wD->fullData, wD->originalLabels);
 		auto avgRadius = ut.computeAvgRadius(std::atoi(args["clusters"].c_str()), wD->originalData, wD->fullData, wD->originalLabels);
@@ -660,9 +659,6 @@ void processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket* 
 					//		c. If neither of the indices are less than the partition size, remove
 					//	3. Once all entries have been iterated - if (b) was traversed there is a connection outside to another partition
 					//		-If (b) was not traversed, need to add a {0, maxEps} entry for the independent component (Check this?)
-				    //std::cout<<std::endl<<"look :: "<<originalLabels[*boundIter]<<"  "<<*boundIter<<"  "<<displacement+z<<" id = "<<id<<" z= "<<z<<std::endl; 
-			//	int lkj;
-			//	std::cin>>lkj;
 					if(betEntry.boundaryPoints.size() > 0 && originalLabels[*boundIter] == displacement+z){
 						if(betEntry.bettiDim == 0){
 							boundIter++;
