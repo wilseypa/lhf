@@ -11,10 +11,21 @@ class simplexTree : public simplexBase {
 	
 	//SimplexTreeNode wraps a simplexNode and tree pointers
 	struct simplexTreeNode{
+		struct cmpByIndex{
+			bool operator()(const simplexTreeNode* lhs, const simplexTreeNode* rhs) const{
+				return lhs->simpNode->index < rhs->simpNode->index;
+			}
+			bool operator()(const simplexTreeNode& lhs, const simplexTreeNode& rhs) const{
+				return lhs.simpNode->index < rhs.simpNode->index;
+			}
+		};
+		
 		simplexTreeNode* child = nullptr;
 		simplexTreeNode* sibling = nullptr;
 		simplexTreeNode* parent = nullptr;
+		std::set<simplexTreeNode*, cmpByIndex> children;
 		simplexNode_P simpNode;
+		
 		
 		
 		simplexTreeNode(){simpNode = std::make_shared<simplexNode>(simplexNode());}

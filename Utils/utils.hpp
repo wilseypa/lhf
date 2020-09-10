@@ -9,20 +9,7 @@
 struct simplexNode{
 	unsigned index;
 	
-	struct cmpByIndex{
-		bool operator()(const simplexNode* lhs, const simplexNode* rhs) const{
-			return lhs->index < rhs->index;
-		}
-		bool operator()(const simplexNode& lhs, const simplexNode& rhs) const{
-			return lhs.index < rhs.index;
-		}
-		bool operator()(const std::shared_ptr<simplexNode> lhs, const std::shared_ptr<simplexNode> rhs) const{
-			return lhs->index < rhs->index;
-		}
-	};
-	
 	std::set<unsigned> simplex;
-	std::set<simplexNode*, cmpByIndex> children;
 	double weight = 0;
 
 	simplexNode(){}

@@ -795,11 +795,6 @@ std::vector<bettiBoundaryTableEntry> processUpscaleWrapper(std::map<std::string,
 			if(!found)
 				finalMergedBettiTable.push_back(bettiEntry);
 		}
-
-
-		//sort(finalMergedBettiTable.begin(), finalMergedBettiTable.end(), sortBettis());
-				
-		
 	}
 	
 	return finalMergedBettiTable;
@@ -870,8 +865,11 @@ int main(int argc, char* argv[]){
 			MPI_Comm_rank(MPI_COMM_WORLD,&id);
 			
 			wD.bettiTable = processUpscaleWrapper(args, wD);
-			
+			sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
 			MPI_Finalize();
+			
+			//Output the data using writeOutput library
+			outputBettis(args, wD);
 
 		} else if(args["mode"] == "reduced" || args["mode"] == "iterUpscale" || args["mode"] == "iter"){	
 			wD.bettiTable = processIterUpscale(args,wD);
@@ -892,7 +890,7 @@ int main(int argc, char* argv[]){
 	
 	utils ut;
 	
-	if(args["debug"] == "1" || args["debug"] == "true"){
+	if((args["debug"] == "1" || args["debug"] == "true") && wD.bettiTable.size() > 0 ){
 		std::cout << std::endl << "_______Merged BETTIS_______" << std::endl;
 
 		for(auto a : wD.bettiTable){

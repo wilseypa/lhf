@@ -72,7 +72,7 @@ void simplexTree::recurseInsert(simplexTreeNode* node, unsigned curIndex, int de
 		if(node->child == nullptr){
 			node->child = insNode;
 			insNode->parent = node;
-			node->simpNode->children.insert(insNode->simpNode.get());
+			node->children.insert(insNode);
 
 		//Node has children, add to the beginning of children
 		} else {
@@ -80,7 +80,7 @@ void simplexTree::recurseInsert(simplexTreeNode* node, unsigned curIndex, int de
 			insNode->parent = node;
 			insNode->sibling = node->child;
 			node->child = insNode;
-			node->simpNode->children.insert(insNode->simpNode.get());
+			node->children.insert(insNode);
 
 			temp = insNode->sibling;
 
@@ -286,7 +286,7 @@ void simplexTree::deleteIndexRecurse(int vectorIndex, simplexTreeNode* curNode){
 		}
 
 		//Remove our index from the parent
-		curNode->parent->simpNode->children.erase(curNode->simpNode.get());
+		curNode->parent->children.erase(curNode);
 
 		//Delete this node and sub-nodes in the tree
 		deletion(curNode);
@@ -336,7 +336,7 @@ void simplexTree::insert() {
 		root = new simplexTreeNode();
 		insNode->parent = root;
 		root->child = insNode;
-		root->simpNode->children.insert(insNode->simpNode.get());
+		root->children.insert(insNode);
 		indexCounter++;
 		runningVectorCount++;
 		nodeCount++;
@@ -381,7 +381,7 @@ void simplexTree::insert() {
 	insNode->parent = root;
 	insNode->sibling = root->child;
 	root->child = insNode;
-	root->simpNode->children.insert(insNode->simpNode.get());
+	root->children.insert(insNode);
 
 	//simplexList[0].insert(insNode);
 
@@ -454,9 +454,9 @@ std::vector<simplexNode_P> simplexTree::getAllCofacets(const std::set<unsigned>&
 
 	while(true){
 		//Insert all of the children in reverse lexicographic order
-		for(auto itS = parentNode->simpNode->children.rbegin(); itS != parentNode->simpNode->children.rend(); itS++){
+		for(auto itS = parentNode->children.rbegin(); itS != parentNode->children.rend(); itS++){
 			if(it == simplex.end()) {
-				ret.push_back(std::make_shared<simplexNode>(*(*itS))); //All children of simplex are cofacets
+				ret.push_back((*itS)->simpNode); //All children of simplex are cofacets
 			} else {
 				//tempNode = find(it, simplex.end(), *itS); //See if cofacet is in the tree
 				if(tempNode != nullptr){
