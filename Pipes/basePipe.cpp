@@ -14,7 +14,6 @@
 #include "neighGraphPipe.hpp"
 #include "ripsPipe.hpp"
 #include "upscalePipe.hpp"
-#include "boundaryPipe.hpp"
 #include "persistencePairs.hpp"
 #include "slidingWindow.hpp"
 #include "fastPersistence.hpp"
@@ -31,9 +30,8 @@ basePipe* basePipe::newPipe(const std::string &pipeType, const std::string &comp
 	} else if (pipeType == "rips"){
 		return new ripsPipe();
 	} else if (pipeType == "upscale"){
+		std::cout << "Building upscale" << std::endl;
 		return new upscalePipe();
-	} else if (pipeType == "boundary"){
-		return new boundaryPipe();
 	} else if (pipeType == "persistence"){
 		return new persistencePairs();
 	} else if (pipeType == "slidingwindow" || pipeType == "sliding"){
@@ -49,9 +47,11 @@ basePipe* basePipe::newPipe(const std::string &pipeType, const std::string &comp
 
 // runPipeWrapper -> wrapper for timing of runPipe and other misc. functions
 void basePipe::runPipeWrapper(pipePacket &inData){
+	
 	//Check if the pipe has been configured
 	if(!configured){
 		ut.writeLog(pipeType,"Pipe not configured");
+		std::cout << "Pipe not configured" << std::endl;
 		return;
 	}
 	//Start a timer for physical time passed during the pipe's function

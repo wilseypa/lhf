@@ -123,11 +123,11 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 			if(args["preprocessor"] == "")
 				args["preprocessor"] = "kmeans++";
 			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
-		} else if(args["mode"] == "upscaleBound"){
+		} else if(args["mode"] == "upscale"){
 			if(args["preprocessor"] == "")
 				args["preprocessor"] = "kmeans++";
 			args["upscale"] = "true";
-			args["pipeline"] = "distMatrix.neighGraph.rips.persistence.boundary.upscale";
+			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence.upscale";
 		} else if(args["mode"] == "stream"){
 			if(args["preprocessor"] == "")
 				args["preprocessor"] = "streamingkmeans";

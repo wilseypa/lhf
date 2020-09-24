@@ -71,9 +71,6 @@ void runPipeline(std::map<std::string, std::string> args, pipePacket &wD){
 		std::cout << "LHF runPipeline: Failed to find a suitable pipeline, exiting..." << std::endl;
 		return;
 	}
-	
-	//Output the data using writeOutput library
-	outputBettis(args, wD);
 }
 
 
@@ -883,6 +880,9 @@ int main(int argc, char* argv[]){
 			
 			//Output the data using writeOutput library
 			outputBettis(args, wD);
+			
+			
+			
 		}
 	} else {
 		ap.printUsage();
