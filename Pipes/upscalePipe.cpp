@@ -27,7 +27,6 @@ upscalePipe::upscalePipe(){
 
 
 
-
 // runPipe -> Run the configured functions of this pipeline segment
 //
 //	Upscale Pipe:
@@ -59,16 +58,25 @@ void upscalePipe::runPipe(pipePacket &inData){
 			
 			//Check if there is a set intersection with any of the existing boundary sets
 			bool isFound = false;
+			int index = 0;
+			int firstIntersect = -1;
 			
-			for(unsigned i = 0; i < upscaleBoundaries.size(); i++){
-				if(ut.setIntersect(upscaleBoundaries[i], (*pi).boundaryPoints, true).size() > 0){
-					upscaleBoundaries[i] = ut.setUnion(upscaleBoundaries[i], (*pi).boundaryPoints);
-					//for(auto bp : pi.boundaryPoints)
-					//	upscaleBoundaries[i].insert(bp);
-					isFound = true;
-					break;
+			for(auto bp = upscaleBoundaries.begin(); bp != upscaleBoundaries.end(); bp++){
+				if(ut.setIntersect((*bp), (*pi).boundaryPoints, true).size() > 0){
+					
+					if(!isFound){
+						upscaleBoundaries[index] = ut.setUnion((*bp), (*pi).boundaryPoints);
+						//for(auto bp : pi.boundaryPoints)
+						//	upscaleBoundaries[i].insert(bp);
+						isFound = true;
+						firstIntersect = index;
+					} else {
+						upscaleBoundaries[firstIntersect] = ut.setUnion((*bp), upscaleBoundaries[firstIntersect]);
+						upscaleBoundaries.erase(bp--);
+					}
+						
 				}
-				
+				index++;
 			}
 			if(!isFound){
 				upscaleBoundaries.push_back((*pi).boundaryPoints);
@@ -79,6 +87,9 @@ void upscalePipe::runPipe(pipePacket &inData){
 	}
 	
 	//Need to re-analyze upscaleBoundaries in case of additional set intersections
+	
+	std::cout << "Found " << upscaleBoundaries.size() << " independent features to upscale" << std::endl;
+	
 	
 	//Upscale each independent boundary
 	for(auto bound : upscaleBoundaries){
