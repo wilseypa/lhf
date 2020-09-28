@@ -21,9 +21,9 @@
 // basePipe constructor
 upscalePipe::upscalePipe(){
 	pipeType = "Upscale";
+	
 	return;
 }
-
 
 
 
@@ -36,8 +36,10 @@ upscalePipe::upscalePipe(){
 //				
 //		
 //
-pipePacket upscalePipe::runPipe(pipePacket inData){
+void upscalePipe::runPipe(pipePacket &inData){
 	utils ut;
+	
+	std::vector<std::set<unsigned>> upscaleBoundaries;
 	
 	//Handle two types of boundary sets coming in -
 	//		1. Sets with only 2 centroids, indicating a minDist
@@ -45,66 +47,96 @@ pipePacket upscalePipe::runPipe(pipePacket inData){
 	
 	std::cout << "Running upscale pipe" << std::endl;
 	
-	for(auto bound : inData.boundaries){
+	//First, filter and join all of our boundaries by union of sets
+	
+	for(auto pi = inData.bettiTable.begin(); pi != inData.bettiTable.end(); pi++){
+		std::cout << (*pi).bettiDim << ",\t" << (*pi).birth << ",\t" << (*pi).death << ",\t";
+		ut.print1DVector((*pi).boundaryPoints);
 		
-		std::cout << bound.size() << std::endl;
-		
-		if(bound.size() > 2){
+		//Check if this interval lives for longer than scalarV
+		if(((*pi).death - (*pi).birth) > scalarV && (*pi).bettiDim > 0){
 			
+			//Check if there is a set intersection with any of the existing boundary sets
+			bool isFound = false;
+			int index = 0;
+			int firstIntersect = -1;
 			
-			
-			
-			
-		} else if (bound.size() == 2) {
-			//Find minimum distance between 2 indexed partitions
-			double minDist = -1;
-			std::cout << "Looking for inner cluster distance between " << (*bound.begin()) << " and " << (*bound.rbegin()) << std::endl;
-			
-			for(unsigned index = 0; index < inData.originalLabels.size(); index++){
-				
-				std::cout << "a " << inData.originalLabels[index] << std::endl;
-				if(inData.originalLabels[index] == (*bound.begin())){
+			for(auto bp = upscaleBoundaries.begin(); bp != upscaleBoundaries.end(); bp++){
+				if(ut.setIntersect((*bp), (*pi).boundaryPoints, true).size() > 0){
 					
-					for(unsigned comp = 0; comp < inData.originalLabels.size(); comp++){
-						
-						if(inData.originalLabels[comp] == (*bound.rbegin())){
-							auto dist = ut.vectors_distance(inData.originalData[index], inData.originalData[comp]);
-							if(dist == -1 || dist < minDist)
-								minDist = dist;			
-					
-						}
+					if(!isFound){
+						upscaleBoundaries[index] = ut.setUnion((*bp), (*pi).boundaryPoints);
+						//for(auto bp : pi.boundaryPoints)
+						//	upscaleBoundaries[i].insert(bp);
+						isFound = true;
+						firstIntersect = index;
+					} else {
+						upscaleBoundaries[firstIntersect] = ut.setUnion((*bp), upscaleBoundaries[firstIntersect]);
+						upscaleBoundaries.erase(bp--);
 					}
+						
 				}
+				index++;
+			}
+			if(!isFound){
+				upscaleBoundaries.push_back((*pi).boundaryPoints);
 			}
 			
-			if(minDist > 0)
-				std::cout << "Found minDist between two clusters: " << minDist << std::endl;
+			inData.bettiTable.erase(pi--);
+		}
+	}
+	
+	//Need to re-analyze upscaleBoundaries in case of additional set intersections
+	
+	std::cout << "Found " << upscaleBoundaries.size() << " independent features to upscale" << std::endl;
+	
+	
+	//Upscale each independent boundary
+	for(auto bound : upscaleBoundaries){
 		
+		
+		auto curwD = pipePacket(subConfigMap,subConfigMap["complexType"]);//args, args["complexType"]);
+		
+		for(unsigned index = 0; index < inData.originalLabels.size(); index++){
+			
+			if(bound.find(inData.originalLabels[index]) != bound.end())
+				curwD.originalData.push_back(inData.originalData[index]);
 		
 		}
 		
+		std::cout << "Gathered " << curwD.originalData.size() << " original points" << std::endl;
+		
+		runSubPipeline(curwD);
+		
+		std::cout << std::endl << "_____UPSCALE BETTIS_______" << std::endl;
+
+		for(auto a : curwD.bettiTable){
+			std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
+			ut.print1DVector(a.boundaryPoints);
+			
+			//Check if this interval lives for longer than scalarV
+			if((a.death - a.birth) > scalarV && a.bettiDim > 0)
+				inData.bettiTable.push_back(a);
+			
+		}
 		
 	}
-	
-	
-	
 	
 	//Merge the new upscaled features into the bettiTable
 	
 	
-	return inData;
+	return;
 }
 
 
-void upscalePipe::runSubPipeline(pipePacket wrData)
+void upscalePipe::runSubPipeline(pipePacket& wrData)
 {
     if(wrData.originalData.size() == 0)
         return;
 
-    pipePacket inData = wrData;
-    outputData(inData);
+    outputData(wrData);
 
-	std::string pipeFuncts = "rips.fast";
+	std::string pipeFuncts = "distMatrix.neighGraph.rips.fast";
     auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
 
     //For each '.' separated pipeline function (count of '.' + 1 -> lim)
@@ -114,13 +146,13 @@ void upscalePipe::runSubPipeline(pipePacket wrData)
         pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
 
         //Build the pipe component, configure and run
-        auto *cp = basePipe::newPipe(curFunct, "simplexTree");
+        auto cp = basePipe::newPipe(curFunct, "simplexTree");
 
         //Check if the pipe was created and configure
         if(cp != 0 && cp->configPipe(subConfigMap))
         {
             //Run the pipe function (wrapper)
-            inData = cp->runPipeWrapper(inData);
+            cp->runPipeWrapper(wrData);
         }
         else
         {
@@ -136,7 +168,7 @@ void upscalePipe::runSubPipeline(pipePacket wrData)
 
 
 // configPipe -> configure the function settings of this pipeline segment
-bool upscalePipe::configPipe(std::map<std::string, std::string> configMap){
+bool upscalePipe::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
     subConfigMap = configMap;
 	
@@ -151,10 +183,10 @@ bool upscalePipe::configPipe(std::map<std::string, std::string> configMap){
 	
 	ut = utils(strDebug, outputFile);
 	
-	pipe = configMap.find("scalarV");
-	if(pipe != configMap.end())
-		scalarV = std::atof(configMap["scalarV"].c_str());
-	else return false;
+	//pipe = configMap.find("scalarV");
+	//if(pipe != configMap.end())
+	//	scalarV = std::atof(configMap["scalarV"].c_str());
+	//else return false;
 	
 	configured = true;
 	ut.writeDebug("upscale","Configured with parameters { debug: " + strDebug + ", outputFile: " + outputFile + " }");

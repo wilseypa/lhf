@@ -16,15 +16,15 @@ class binomialTable{
 class simplexArrayList : public simplexBase{
 	private:
 		binomialTable bin;
-		std::unordered_map<long long, simplexNode*> indexConverter;
+		std::unordered_map<long long, simplexNode_P> indexConverter;
 
 		long long simplexHash(const std::set<unsigned>&, binomialTable&);
 		unsigned maxVertex(long long, unsigned, unsigned, unsigned, binomialTable&);
 		std::vector<unsigned> getVertices(long long, int, unsigned, binomialTable&);
 	public:
-		simplexArrayList(double, double, std::vector<std::vector<double>>*);
+		simplexArrayList(double, double);
 		double findWeight(std::set<unsigned>);
-		std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(simplexNode*, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
+		std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(simplexNode_P, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
 
 		//virtual interface functions
 		double getSize();
@@ -33,10 +33,10 @@ class simplexArrayList : public simplexBase{
 		int simplexCount();
 		int vertexCount();
 		void prepareCofacets(int);
-		std::vector<simplexNode*> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode*, simplexNode*>&, bool);
+		std::vector<simplexNode_P> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode_P, simplexNode_P>&, bool);
 		bool deletion(std::set<unsigned>);
 		void expandDimensions(int);
 		void reduceComplex();
-		void clear();
+		~simplexArrayList();
 };
 

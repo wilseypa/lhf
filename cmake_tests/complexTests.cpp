@@ -106,8 +106,7 @@ void t_simp_tree_functions(std::string &log){
 													 {1.1, 1.1, 1.2},{0.0, 0.4, 1.0}, {1.5, 1.5, 0.0}	};
 
 	std::vector<std::vector<double>> distMatrix = {};
-	simplexBase* testComplex = new simplexBase();
-	testComplex = testComplex->newSimplex("simplexTree", config);
+	simplexBase* testComplex = simplexBase::newSimplex("simplexTree", config);
 
 	
 	std::cout << "Beginning simplexTree tests" << std::endl;
@@ -143,7 +142,6 @@ void t_simp_tree_functions(std::string &log){
 // TEST simplexArrayList Functions
 void t_simp_base_functions(std::string &log, std::string type){
 	std::map<std::string,std::string> config;
-	simplexBase* testComplex = new simplexBase();
 	std::string failLog = "";
 	std::vector<double> testValue = {0.0, 1.0, 2.0};
 	std::vector<std::vector<double>> testValueArray = {{0.0, 1.0, 2.0},{2.0, 1.0, 0.0}, {1.0, 1.0, 2.0}, \
@@ -153,7 +151,7 @@ void t_simp_base_functions(std::string &log, std::string type){
 	std::vector<unsigned> findValue = {0};
 	std::set<unsigned> findValueSet = {0};
 
-	testComplex = testComplex->newSimplex(type, config);
+	simplexBase* testComplex = simplexBase::newSimplex(type, config);
 	testComplex->setDistanceMatrix(&testValueArray);
 	
 	std::cout << "Beginning simplexBase functions for " << type << std::endl;
@@ -245,7 +243,6 @@ void t_simp_base_functions(std::string &log, std::string type){
 // TEST simplexArrayList Functions
 void t_simp_empty_functions(std::string &log, std::string type){
 	std::map<std::string,std::string> config;
-	simplexBase* testComplex = new simplexBase();
 	std::string failLog = "";
 	std::vector<double> testValue = {0.0, 1.0, 2.0};
 	std::vector<std::vector<double>> testValueArray {{0.0, 1.0, 2.0},{2.0, 1.0, 0.0}};
@@ -254,7 +251,7 @@ void t_simp_empty_functions(std::string &log, std::string type){
 	
 	std::cout << "Beginning simplexBase empty functions for " << type << std::endl;
 
-	testComplex = testComplex->newSimplex(type, config);
+	simplexBase* testComplex = simplexBase::newSimplex(type, config);
 	//Don't insert anything into the complex and test our functions
 
 	//Get empty complex size

@@ -7,15 +7,19 @@
 // pipePacket constructor, currently no needed information for the class constructor
 pipePacket::pipePacket(const std::string& simplexType, const double epsilon, const int maxDim){
 	std::map<std::string,std::string> blankConfig;
-	simplexBase *bs = new simplexBase(epsilon, maxDim);
-	complex = bs->newSimplex(simplexType, blankConfig);
-	delete bs;
+	blankConfig["dimensions"] = std::to_string(maxDim);
+	blankConfig["epsilon"] = std::to_string(epsilon);
+	
+	if(complex != nullptr)
+		delete complex;
+	complex = simplexBase::newSimplex(simplexType, blankConfig);
 }
 
-pipePacket::pipePacket(const std::map<std::string, std::string> configMap, const std::string& simplexType){
-	simplexBase *bs = new simplexBase(configMap);
-	complex = bs->newSimplex(simplexType, configMap);
-	delete bs;
+pipePacket::pipePacket(std::map<std::string, std::string> configMap, const std::string& simplexType){
+	
+	if(complex != nullptr)
+		delete complex;
+	complex = simplexBase::newSimplex(simplexType, configMap);
 }
 
 double pipePacket::getSize(){
@@ -34,3 +38,4 @@ double pipePacket::getSize(){
 	
 	return size;
 }
+

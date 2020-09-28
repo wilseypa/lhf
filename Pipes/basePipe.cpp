@@ -14,7 +14,6 @@
 #include "neighGraphPipe.hpp"
 #include "ripsPipe.hpp"
 #include "upscalePipe.hpp"
-#include "boundaryPipe.hpp"
 #include "persistencePairs.hpp"
 #include "slidingWindow.hpp"
 #include "fastPersistence.hpp"
@@ -31,9 +30,8 @@ basePipe* basePipe::newPipe(const std::string &pipeType, const std::string &comp
 	} else if (pipeType == "rips"){
 		return new ripsPipe();
 	} else if (pipeType == "upscale"){
+		std::cout << "Building upscale" << std::endl;
 		return new upscalePipe();
-	} else if (pipeType == "boundary"){
-		return new boundaryPipe();
 	} else if (pipeType == "persistence"){
 		return new persistencePairs();
 	} else if (pipeType == "slidingwindow" || pipeType == "sliding"){
@@ -48,16 +46,18 @@ basePipe* basePipe::newPipe(const std::string &pipeType, const std::string &comp
 }
 
 // runPipeWrapper -> wrapper for timing of runPipe and other misc. functions
-pipePacket basePipe::runPipeWrapper(pipePacket inData){
+void basePipe::runPipeWrapper(pipePacket &inData){
+	
 	//Check if the pipe has been configured
 	if(!configured){
 		ut.writeLog(pipeType,"Pipe not configured");
-		return inData;
+		std::cout << "Pipe not configured" << std::endl;
+		return;
 	}
 	//Start a timer for physical time passed during the pipe's function
 	auto startTime = std::chrono::high_resolution_clock::now();
 	
-	inData = runPipe(inData);
+	runPipe(inData);
 	
 	//Stop the timer for time passed during the pipe's function
 	auto endTime = std::chrono::high_resolution_clock::now();
@@ -94,11 +94,11 @@ pipePacket basePipe::runPipeWrapper(pipePacket inData){
 	if(debug)
 		outputData(inData);
 	
-	return inData;
+	return;
 }
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-void basePipe::outputData(pipePacket inData){
+void basePipe::outputData(pipePacket &inData){
 	ut.writeDebug("basePipe","No output function defined for: " + pipeType);
 	
 	std::ofstream file;
@@ -118,14 +118,14 @@ void basePipe::outputData(pipePacket inData){
 
 
 // runPipe -> Run the configured functions of this pipeline segment
-pipePacket basePipe::runPipe(pipePacket inData){
+void basePipe::runPipe(pipePacket &inData){
 	ut.writeError("basePipe","No run function defined for: " + pipeType);
 	
-	return inData;
+	return;
 }	
 
 // configPipe -> configure the function settings of this pipeline segment
-bool basePipe::configPipe(std::map<std::string, std::string> configMap){
+bool basePipe::configPipe(std::map<std::string, std::string> &configMap){
 	ut.writeDebug("basePipe","No configure function defined for: " + pipeType);
 
 	auto pipe = configMap.find("debug");

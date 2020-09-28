@@ -53,12 +53,12 @@ fastPersistence::fastPersistence(){
 //
 //	FastPersistence: For computing the persistence pairs from simplicial complex:
 //		1. See Bauer-19 for algorithm/description
-pipePacket fastPersistence::runPipe(pipePacket inData){
+void fastPersistence::runPipe(pipePacket &inData){
 	//Get all edges for the simplexArrayList or simplexTree
-	std::vector<std::set<simplexNode*, cmpByWeight>> edges = inData.complex->getAllEdges();
+	std::vector<std::set<simplexNode_P, cmpByWeight>> edges = inData.complex->getAllEdges();
 
 
-	if(edges.size() <= 1) return inData;
+	if(edges.size() <= 1) return;
 
 	//Some notes on fast persistence:
 
@@ -81,7 +81,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	//	So in streaming, create a hash map to quickly lookup points
 
 	std::unordered_map<unsigned, unsigned> mappedIndices;	//Store a map of the indices for MST
-	std::vector<simplexNode*> pivots; //Store identified pivots
+	std::vector<simplexNode_P> pivots; //Store identified pivots
 	unsigned mstSize = 0;
 	unsigned nPts = inData.originalData.size();
 
@@ -103,10 +103,10 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 			uf.join(v1, v2);
 			mstSize++;
 
-			simplexNode* temp = new simplexNode((*edgeIter)->simplex, (*edgeIter)->weight);
+			simplexNode_P temp = std::make_shared<simplexNode>(simplexNode((*edgeIter)->simplex, (*edgeIter)->weight));
 			pivots.push_back(temp);
 
-			bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, temp->simplex, {temp} };
+			bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, temp->simplex };
 			inData.bettiTable.push_back(des);
 		}
 
@@ -119,7 +119,7 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	for(int i=0; i<inData.originalData.size(); i++){
 		if(uf.find(i) == i){ //i is the name of a connected component
 			//Each connected component has an open persistence interval
-			bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
+			bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {} };
 			inData.bettiTable.push_back(des);
 		}
 	}
@@ -139,28 +139,28 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
 		inData.complex->prepareCofacets(d);
 		std::sort(pivots.begin(), pivots.end(), cmpBySecond());
-		std::vector<simplexNode*>::iterator it = pivots.begin();
+		std::vector<simplexNode_P>::iterator it = pivots.begin();
 
-		std::vector<simplexNode*> nextPivots;	 					//Pivots for the next dimension
-		std::unordered_map<simplexNode*, std::vector<simplexNode*>> v;				//Store only the reduction matrix V and compute R implicity
-		std::unordered_map<simplexNode*, simplexNode*> pivotPairs;	//For each pivot, which column has that pivot
+		std::vector<simplexNode_P> nextPivots;	 					//Pivots for the next dimension
+		std::unordered_map<simplexNode_P, std::vector<simplexNode_P>> v;				//Store only the reduction matrix V and compute R implicity
+		std::unordered_map<simplexNode_P, simplexNode_P> pivotPairs;	//For each pivot, which column has that pivot
 
 		//Iterate over columns to reduce in reverse order
 		for(auto columnIndexIter = edges[d].rbegin(); columnIndexIter != edges[d].rend(); columnIndexIter++){
-			simplexNode* simplex = (*columnIndexIter);		//The current simplex
+			simplexNode_P simplex = (*columnIndexIter);		//The current simplex
 
 			//Not a pivot -> need to reduce
 			if((*it)->weight != simplex->weight || (*it)->simplex != simplex->simplex){
 				//Get all cofacets using emergent pair optimization
-				std::vector<simplexNode*> cofaceList = inData.complex->getAllCofacets(simplex->simplex, simplex->weight, pivotPairs);
-				std::vector<simplexNode*> columnV;	//Reduction column of matrix V
+				std::vector<simplexNode_P> cofaceList = inData.complex->getAllCofacets(simplex->simplex, simplex->weight, pivotPairs);
+				std::vector<simplexNode_P> columnV;	//Reduction column of matrix V
 				columnV.push_back(simplex); //Initially V=I -> 1's along diagonal
 
 				//Build a heap using the coface list to reduce and store in V
 				std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
 
 				while(true){
-					simplexNode* pivot;
+					simplexNode_P pivot;
 					while(!cofaceList.empty()){
 						pivot = cofaceList.front();
 
@@ -196,15 +196,15 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 						}
 
 						if(simplex->weight != pivot->weight){
-							bettiBoundaryTableEntry des = { d, simplex->weight, pivot->weight, {}, cofaceList };
+							bettiBoundaryTableEntry des = { d, simplex->weight, pivot->weight, ut.extractBoundaryPoints(v[simplex]) };
 							inData.bettiTable.push_back(des);
 						}
 
 						break;
 					} else{ //Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
-						for(simplexNode* simp : v[pivotPairs[pivot]]){
+						for(simplexNode_P simp : v[pivotPairs[pivot]]){
 							columnV.push_back(simp);
-							std::vector<simplexNode*> cofaces = inData.complex->getAllCofacets((simp->simplex));
+							std::vector<simplexNode_P> cofaces = inData.complex->getAllCofacets((simp->simplex));
 							cofaceList.insert(cofaceList.end(), cofaces.begin(), cofaces.end());
 						}
 						std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
@@ -227,13 +227,13 @@ pipePacket fastPersistence::runPipe(pipePacket inData){
 	//Output the time and memory used for this pipeline segment
 	ut.writeDebug("persistence","Bettis executed in " + std::to_string(elapsed.count()/1000.0) + " seconds (physical time)");;
 
-	return inData;
+	return;
 }
 
 
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-void fastPersistence::outputData(pipePacket inData){
+void fastPersistence::outputData(pipePacket &inData){
 	std::ofstream file;
 	if(fnmod.size() > 0)
 		file.open("output/"+pipeType+"_bettis_output"+fnmod+".csv");
@@ -263,7 +263,7 @@ void fastPersistence::outputData(pipePacket inData){
 
 
 // configPipe -> configure the function settings of this pipeline segment
-bool fastPersistence::configPipe(std::map<std::string, std::string> configMap){
+bool fastPersistence::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
 
 	auto pipe = configMap.find("debug");
