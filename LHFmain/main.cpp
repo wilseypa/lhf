@@ -185,7 +185,7 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 				//		Set the pipeline to include the boundary and upscaling steps
 				auto centArgs = args;
 				if(args["upscale"] == "true" || args["upscale"] == "1")
-					centArgs["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence.boundary.upscale";
+					centArgs["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence.upscale";
 				else
 					centArgs["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
 					
