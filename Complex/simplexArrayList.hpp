@@ -18,9 +18,9 @@ class simplexArrayList : public simplexBase{
 		binomialTable bin;
 		std::unordered_map<long long, simplexNode_P> indexConverter;
 
-		long long simplexHash(const std::set<unsigned>&, binomialTable&);
-		unsigned maxVertex(long long, unsigned, unsigned, unsigned, binomialTable&);
-		std::vector<unsigned> getVertices(long long, int, unsigned, binomialTable&);
+		long long simplexHash(const std::set<unsigned>&);
+		unsigned maxVertex(long long, unsigned, unsigned, unsigned);
+		std::vector<unsigned> getVertices(long long, int, unsigned);
 	public:
 		simplexArrayList(double, double);
 		double findWeight(std::set<unsigned>);

@@ -29,7 +29,7 @@ long long binomialTable::binom(unsigned n, unsigned k){ //Return binomial coeffi
 }
 
 //Hash the set by converting to a remapped index
-long long simplexArrayList::simplexHash(const std::set<unsigned>& simplex, binomialTable& bin){ 
+long long simplexArrayList::simplexHash(const std::set<unsigned>& simplex){ 
 	long long simplexIndex = 0;
 	unsigned i = 0;
 	auto it = simplex.begin();
@@ -41,7 +41,7 @@ long long simplexArrayList::simplexHash(const std::set<unsigned>& simplex, binom
 	return simplexIndex;
 }
 
-unsigned simplexArrayList::maxVertex(long long simplexHash, unsigned high, unsigned low, unsigned k, binomialTable &bin){
+unsigned simplexArrayList::maxVertex(long long simplexHash, unsigned high, unsigned low, unsigned k){
 	while(high > low){ //Binary search for the max vertex for this simplex
 		unsigned mid = (high + low)/2;
 		if(bin.binom(mid, k) <= simplexHash) low = mid + 1;
@@ -50,10 +50,10 @@ unsigned simplexArrayList::maxVertex(long long simplexHash, unsigned high, unsig
 	return high - 1;
 }
 
-std::vector<unsigned> simplexArrayList::getVertices(long long simplexHash, int dim, unsigned n, binomialTable &bin){
+std::vector<unsigned> simplexArrayList::getVertices(long long simplexHash, int dim, unsigned n){
 	std::vector<unsigned> v;
 	for(unsigned k = dim+1; k>0; k--){ //Get all vertices by repeated binary search for max vertex
-		n = maxVertex(simplexHash, n, k-1, k, bin);
+		n = maxVertex(simplexHash, n, k-1, k);
 		v.push_back(n);
 		simplexHash -= bin.binom(n, k);
 	}
@@ -63,7 +63,7 @@ std::vector<unsigned> simplexArrayList::getVertices(long long simplexHash, int d
 void simplexArrayList::prepareCofacets(int dim){
 	indexConverter.clear();
 	for(auto simplex : simplexList[dim+1]){
-		indexConverter.insert(std::make_pair(simplexHash(simplex->simplex, bin), simplex));
+		indexConverter.insert(std::make_pair(simplexHash(simplex->simplex), simplex));
 	}
 }
 
@@ -72,7 +72,7 @@ std::vector<simplexNode_P> simplexArrayList::getAllCofacets(const std::set<unsig
 	int nPts = simplexList[0].size();
 	unsigned k = simplex.size() + 1;
 	std::set<unsigned>::reverse_iterator it = simplex.rbegin();
-	long long index = simplexHash(simplex, bin);
+	long long index = simplexHash(simplex);
 
 	//Try inserting other vertices into the simplex
 	for(unsigned i=nPts; i-- != 0; ){ 
@@ -248,7 +248,7 @@ void simplexArrayList::expandDimensions(int dim){
 				if(maxWeight <= maxEpsilon){ //Valid simplex
 					simplexNode_P tot = std::make_shared<simplexNode>(simplexNode((*it)->simplex, maxWeight));
 					tot->simplex.insert(pt);
-					tot->hash = simplexHash(tot->simplex, bin); ///TODO: FIX THIS BECAUSE WOW INEFFICIENT
+					tot->hash = simplexHash(tot->simplex); ///TODO: FIX THIS BECAUSE WOW INEFFICIENT
 					simplexList[d].insert(tot);
 				}
 			}
