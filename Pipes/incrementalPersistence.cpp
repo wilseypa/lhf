@@ -15,20 +15,20 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <queue>
-#include "fastPersistence.hpp"
+#include "incrementalPersistence.hpp"
 #include "utils.hpp"
 
 // basePipe constructor
-fastPersistence::fastPersistence(){
-	pipeType = "FastPersistence";
+incrementalPersistence::incrementalPersistence(){
+	pipeType = "IncrementalPersistence";
 	return;
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
 //
-//	FastPersistence: For computing the persistence pairs from simplicial complex:
+//	IncrementalPersistence: For computing the persistence pairs from simplicial complex:
 //		1. See Bauer-19 for algorithm/description
-void fastPersistence::runPipe(pipePacket &inData){
+void incrementalPersistence::runPipe(pipePacket &inData){
 	//Get all edges for the simplexArrayList or simplexTree
 	std::vector<std::set<simplexNode_P, cmpByWeight>> edges = inData.complex->getAllEdges();
 
@@ -125,7 +125,7 @@ void fastPersistence::runPipe(pipePacket &inData){
 			simplexNode_P simplex = (*columnIndexIter);		//The current simplex
 
 			//Not a pivot -> need to reduce
-			if((*it)->weight != simplex->weight || (*it)->simplex != simplex->simplex){
+			if((*it)->hash != simplex->hash){
 				//Get all cofacets using emergent pair optimization
 				std::vector<simplexNode_P> cofaceList = inData.complex->getAllCofacets(simplex->simplex, simplex->weight, pivotPairs);
 				std::vector<simplexNode_P> columnV;	//Reduction column of matrix V
@@ -208,7 +208,7 @@ void fastPersistence::runPipe(pipePacket &inData){
 
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-void fastPersistence::outputData(pipePacket &inData){
+void incrementalPersistence::outputData(pipePacket &inData){
 	std::ofstream file;
 	if(fnmod.size() > 0)
 		file.open("output/"+pipeType+"_bettis_output"+fnmod+".csv");
@@ -238,7 +238,7 @@ void fastPersistence::outputData(pipePacket &inData){
 
 
 // configPipe -> configure the function settings of this pipeline segment
-bool fastPersistence::configPipe(std::map<std::string, std::string> &configMap){
+bool incrementalPersistence::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
 
 	auto pipe = configMap.find("debug");
@@ -267,8 +267,8 @@ bool fastPersistence::configPipe(std::map<std::string, std::string> &configMap){
 		fnmod = configMap["fn"];
 
 	configured = true;
-	ut.writeDebug("fastPersistence","Configured with parameters { dim: " + configMap["dimensions"] + ", complexType: " + configMap["complexType"] + ", eps: " + configMap["epsilon"]);
-	ut.writeDebug("fastPersistence","\t\t\t\tdebug: " + strDebug + ", outputFile: " + outputFile + " }");
+	ut.writeDebug("incrementalPersistence","Configured with parameters { dim: " + configMap["dimensions"] + ", complexType: " + configMap["complexType"] + ", eps: " + configMap["epsilon"]);
+	ut.writeDebug("incrementalPersistence","\t\t\t\tdebug: " + strDebug + ", outputFile: " + outputFile + " }");
 
 	return true;
 }

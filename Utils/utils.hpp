@@ -8,6 +8,7 @@
 // Header file for utils class - see utils.cpp for descriptions
 struct simplexNode{
 	unsigned index;
+	long long hash = -1;
 	
 	std::set<unsigned> simplex;
 	double weight = 0;
@@ -41,6 +42,15 @@ struct bettiBoundaryTableEntry{
 	std::set<unsigned> boundaryPoints;
 }; 
 
+
+class unionFind{
+	private:
+		std::vector<int> rank, parent;
+	public:
+		unionFind(int n);
+		int find(int i);
+		bool join(int x, int y);
+};
 
 class utils {
   private:

@@ -7,10 +7,34 @@
 #include <fstream>
 #include "utils.hpp"
 
-// utils constructor, currently no needed information for the class constructor
-utils::utils(){
-
+unionFind::unionFind(int n) : rank(n, 0), parent(n, 0) {
+	for(int i=0; i<n; i++) parent[i]=i;
 }
+
+int unionFind::find(int i){
+	if(i == parent[i]) return i; //Found name of the component
+	parent[i] = find(parent[i]); //Path Compression
+	return parent[i];
+}
+
+bool unionFind::join(int x, int y){ //Union by rank
+	x = find(x);
+	y = find(y);
+	if(x == y) return false;
+	if(rank[x] == rank[y]){
+		rank[y]++;
+		parent[x] = y;
+	} else if(rank[x] < rank[y]){
+		parent[x] = y;
+	} else{
+		parent[y] = x;
+	}
+	return true;
+}
+
+
+// utils constructor, currently no needed information for the class constructor
+utils::utils(){}
 
 utils::utils(std::string _debug, std::string _outputFile){
 	debug = _debug;

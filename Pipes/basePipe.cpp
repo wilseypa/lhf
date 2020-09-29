@@ -17,6 +17,7 @@
 #include "persistencePairs.hpp"
 #include "slidingWindow.hpp"
 #include "fastPersistence.hpp"
+#include "incrementalPersistence.hpp"
 #include "naiveWindow.hpp"
 
 basePipe* basePipe::newPipe(const std::string &pipeType, const std::string &complexType){
@@ -38,6 +39,8 @@ basePipe* basePipe::newPipe(const std::string &pipeType, const std::string &comp
 		return new slidingWindow();
 	} else if (pipeType == "fastPersistence" || pipeType == "fast"){
 		return new fastPersistence();
+	} else if (pipeType == "incrementalPersistence" || pipeType == "inc"){
+		return new incrementalPersistence();
 	} else if (pipeType == "naivewindow" || pipeType == "naive"){
 		return new naiveWindow();
 	}
