@@ -88,8 +88,7 @@ std::vector<simplexNode_P> simplexBase::getAllCofacets(const std::set<unsigned>&
 
 std::vector<simplexNode_P> simplexBase::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode_P, simplexNode_P>& pivotPairs, bool checkEmergent){
 	ut.writeLog(simplexType,"No get cofacets function defined");
-	std::vector<simplexNode_P> ret;
-	return ret;
+	return std::vector<simplexNode_P>();
 }
 
 double simplexBase::getSize(){

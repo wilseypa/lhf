@@ -61,8 +61,6 @@ std::vector<unsigned> simplexArrayList::getVertices(long long simplexHash, int d
 }
 
 void simplexArrayList::prepareCofacets(int dim){
-	if(dim == 1) bin = binomialTable(simplexList[0].size(), maxDimension+1);
-
 	indexConverter.clear();
 	for(auto simplex : simplexList[dim+1]){
 		indexConverter.insert(std::make_pair(simplexHash(simplex->simplex, bin), simplex));
@@ -105,6 +103,40 @@ std::vector<simplexNode_P> simplexArrayList::getAllCofacets(const std::set<unsig
 	return ret;
 }
 
+std::vector<simplexNode_P> simplexArrayList::getAllCofacets(simplexNode_P simp, const std::unordered_map<long long, simplexNode_P>& pivotPairs, bool checkEmergent){
+	//Method builds out cofacets for incrementalPersistence
+
+	std::vector<simplexNode_P> ret;
+
+	//Iterate over points to possibly add to the simplex
+	for(unsigned pt = simplexList[0].size(); pt-- != 0; ){
+		//Compute the weight using all edges
+		double maxWeight = simp->weight;
+		for(auto i : simp->simplex){
+			if(i == pt){
+				maxWeight = maxEpsilon + 1;
+				break;
+			}
+			maxWeight = std::max(maxWeight, (*distMatrix)[std::min(i, pt)][std::max(i, pt)]);
+		}
+
+		if(maxWeight <= maxEpsilon){ //Valid simplex
+			simplexNode_P x = std::make_shared<simplexNode>(simp->simplex, maxWeight);
+			x->simplex.insert(pt);
+			// simplexNode_P tot = *simplexList[simp->simplex.size()].find(x);
+			// ret.push_back(tot);
+			// delete x;
+
+			if(checkEmergent && maxWeight == simp->weight){
+				// if(pivotPairs.find(tot) == pivotPairs.end()) return ret;
+				checkEmergent = false;
+			}
+		}
+	}
+
+	return ret;
+}
+
 double simplexArrayList::getSize(){
 	//Calculate size of original data
 	size_t size = 0;
@@ -130,26 +162,8 @@ void simplexArrayList::insert(){
 	unsigned i = simplexList[0].size();
 
 	simplexNode_P insNode = std::make_shared<simplexNode>(simplexNode({i}, 0.0));
+	insNode->hash = i;
 	simplexList[0].insert(insNode);
-
-	//If there are already points, do a brute-force compare
-	//		this will take a comparison to every existing point	
-	if(maxDimension > 0){
-		if(simplexList.size() == 1) simplexList.push_back({});
-
-		//Iterate through each existing to compare to new insertion
-		for(unsigned j = 0; j < i; j++){
-			double dist = (*distMatrix)[j][i];
-			
-			//Filter distances <= maxEpsilon, > 0 (same point)
-			if(dist <= maxEpsilon){
-				
-				//Create an Edge vector 
-				simplexNode_P insNode = std::make_shared<simplexNode>(simplexNode({i, j}, dist));
-				simplexList[1].insert(insNode);
-			}
-		}
-	}
 }
 
 // Search function to find a specific vector in the simplexArrayList
@@ -201,8 +215,10 @@ int simplexArrayList::vertexCount(){
 //	Do this by comparing each simplex with points to insert
 //
 void simplexArrayList::expandDimensions(int dim){		
+	bin = binomialTable(simplexList[0].size(), maxDimension + 1);
+
 	//Iterate up to max dimension of simplex, starting at dim 2 (edges)
-	for(unsigned d = 2; d <= dim; d++){
+	for(unsigned d = 1; d <= dim; d++){
 		
 		//Check if we need to break from expanding dimensions (no more edges)
 		if(simplexList.size() < d) break;
