@@ -29,20 +29,20 @@ void distMatrixPipe::runPipe(pipePacket &inData){
 	
 	//Store our distance matrix
 	if(inData.distMatrix.size() > 0) inData.distMatrix.clear();
-	inData.distMatrix.resize(inData.originalData.size(), std::vector<double>(inData.originalData.size(),0));
+	inData.distMatrix.resize(inData.workData.size(), std::vector<double>(inData.workData.size(),0));
 	
 	//Iterate through each vector, create lower
-	for(unsigned i = 0; i < inData.originalData.size(); i++){
+	for(unsigned i = 0; i < inData.workData.size(); i++){
 		//Grab a second vector to compare to 
-		for(unsigned j = i+1; j < inData.originalData.size(); j++){
+		for(unsigned j = i+1; j < inData.workData.size(); j++){
 			//Calculate vector distance 
-			inData.distMatrix[i][j] = ut.vectors_distance(inData.originalData[i],inData.originalData[j]);
+			inData.distMatrix[i][j] = ut.vectors_distance(inData.workData[i],inData.workData[j]);
 		}
 	}
 
-	for(unsigned i = 0; i < inData.originalData.size(); i++){
+	for(unsigned i = 0; i < inData.workData.size(); i++){
 		double r_i = 0;
-		for(unsigned j = 0; j < inData.originalData.size(); j++) r_i = std::max(r_i, inData.distMatrix[std::min(i, j)][std::max(i, j)]);
+		for(unsigned j = 0; j < inData.workData.size(); j++) r_i = std::max(r_i, inData.distMatrix[std::min(i, j)][std::max(i, j)]);
 		enclosingRadius = std::min(enclosingRadius, r_i);
 	}
 

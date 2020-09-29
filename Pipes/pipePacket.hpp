@@ -16,9 +16,9 @@ class pipePacket {
 	pipePacket(std::map<std::string, std::string>, const std::string&);
 	std::string stats;
   
-	std::vector<std::vector<double>> originalData;
-	std::vector<unsigned> originalLabels;
-	std::vector<std::vector<double>> fullData;
+	std::vector<std::vector<double>> workData;
+	std::vector<unsigned> centroidLabels;
+	std::vector<std::vector<double>> inputData;
 	std::vector<std::vector<double>> distMatrix;
 	simplexBase* complex = nullptr;
 	

@@ -104,7 +104,7 @@ void basePipe::outputData(pipePacket &inData){
 	std::ofstream file;
 	file.open("output/" + pipeType + "_output.csv");
 	
-	for (auto a : inData.originalData){
+	for (auto a : inData.workData){
 		for (auto d : a){
 			file << std::to_string(d) << ",";
 		}

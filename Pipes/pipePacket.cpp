@@ -28,7 +28,7 @@ double pipePacket::getSize(){
 	
 	size_t size = 0;
 	
-	for(auto row : originalData){
+	for(auto row : workData){
 		for(auto index : row)
 			size += sizeof(index);
 	}	

@@ -89,7 +89,10 @@ void upscalePipe::runPipe(pipePacket &inData){
 	//Need to re-analyze upscaleBoundaries in case of additional set intersections
 	
 	std::cout << "Found " << upscaleBoundaries.size() << " independent features to upscale" << std::endl;
-	
+	for(auto bound : upscaleBoundaries){
+		std::cout <<"\t";
+		ut.print1DVector(bound);
+	}
 	
 	//Upscale each independent boundary
 	for(auto bound : upscaleBoundaries){
@@ -97,14 +100,17 @@ void upscalePipe::runPipe(pipePacket &inData){
 		
 		auto curwD = pipePacket(subConfigMap,subConfigMap["complexType"]);//args, args["complexType"]);
 		
-		for(unsigned index = 0; index < inData.originalLabels.size(); index++){
+		for(unsigned index = 0; index < inData.centroidLabels.size(); index++){
 			
-			if(bound.find(inData.originalLabels[index]) != bound.end())
-				curwD.originalData.push_back(inData.originalData[index]);
+			if(bound.find(inData.centroidLabels[index]) != bound.end()){
+				curwD.workData.push_back(inData.inputData[index]);
+				std::cout << "Inserting : " << inData.centroidLabels[index] << "\t";
+				ut.print1DVector(inData.inputData[index]);
+			}
 		
 		}
 		
-		std::cout << "Gathered " << curwD.originalData.size() << " original points" << std::endl;
+		std::cout << "Gathered " << curwD.workData.size() << " original points" << std::endl;
 		
 		runSubPipeline(curwD);
 		
@@ -131,10 +137,12 @@ void upscalePipe::runPipe(pipePacket &inData){
 
 void upscalePipe::runSubPipeline(pipePacket& wrData)
 {
-    if(wrData.originalData.size() == 0)
+    if(wrData.workData.size() == 0)
         return;
 
     outputData(wrData);
+    
+    
 
 	std::string pipeFuncts = "distMatrix.neighGraph.rips.fast";
     auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
@@ -180,6 +188,13 @@ bool upscalePipe::configPipe(std::map<std::string, std::string> &configMap){
 	pipe = configMap.find("outputFile");
 	if(pipe != configMap.end())
 		outputFile = configMap["outputFile"].c_str();
+	
+	pipe = configMap.find("dimensions");
+	if(pipe != configMap.end()){
+		dim = std::atoi(configMap["dimensions"].c_str());
+	}
+	std::cout << "UPSCALE DIM: " << dim << std::endl;
+	
 	
 	ut = utils(strDebug, outputFile);
 	

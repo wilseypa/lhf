@@ -119,12 +119,12 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 	//		Local Storage
 	std::vector<bettiBoundaryTableEntry> mergedBettiTable;
 	std::vector<bettiBoundaryTableEntry> partBettiTable[threads];
-	auto originalDataSize = wD.originalData.size();
+	auto originalDataSize = wD.inputData.size();
 	
 	//		Initalize a copy of the pipePacket
 	auto iterwD = pipePacket(args, args["complexType"]);
-	iterwD.originalData = wD.originalData;
-	iterwD.fullData = wD.fullData;
+	iterwD.inputData = wD.inputData;
+	iterwD.workData = wD.inputData;
 
 	//2. Partition the source point cloud separate datasets accordingly
 	if(runPartition){
@@ -132,24 +132,24 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 		processDataWrapper(args, iterwD);
 	} else {
 		//		Copy partition data from source
-		iterwD.originalLabels = wD.originalLabels;
+		iterwD.centroidLabels = wD.centroidLabels;
 	}
 
 	//		Compute partition statistics for fuzzy partition distance
-	auto maxRadius = ut.computeMaxRadius(clusters, iterwD.originalData, iterwD.fullData, iterwD.originalLabels);
-	auto avgRadius = ut.computeAvgRadius(clusters, iterwD.originalData, iterwD.fullData, iterwD.originalLabels);
+	auto maxRadius = ut.computeMaxRadius(clusters, iterwD.workData, iterwD.inputData, iterwD.centroidLabels);
+	auto avgRadius = ut.computeAvgRadius(clusters, iterwD.workData, iterwD.inputData, iterwD.centroidLabels);
 
 	//		Count the size of each partition for identifying source partitions when looking at the betti table results
 	std::vector<unsigned> binCounts;
 	for(unsigned a = 0; a < clusters; a++){
-		binCounts.push_back(std::count(iterwD.originalLabels.begin(), iterwD.originalLabels.end(), a));
+		binCounts.push_back(std::count(iterwD.centroidLabels.begin(), iterwD.centroidLabels.end(), a));
 	}
 	std::cout << "Bin Counts: ";
 	ut.print1DVector(binCounts);
 	
 	//		Sort our fuzzy partitions into individual vectors
 	args["scalarV"] = std::to_string(scalar*maxRadius);
-	auto partitionedData = ut.separatePartitions(std::atof(args["scalarV"].c_str()), iterwD.originalData, iterwD.fullData, iterwD.originalLabels);
+	auto partitionedData = ut.separatePartitions(std::atof(args["scalarV"].c_str()), iterwD.workData, iterwD.inputData, iterwD.centroidLabels);
 	std::cout << "Using scalar value: " << args["scalarV"] << std::endl;
 	std::cout << "Partitions: " << partitionedData.second.size() << std::endl << "Partition Bin Counts: ";
 	
@@ -160,7 +160,7 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 	ut.print1DVector(partitionsize);
 	
 	//		Append the centroid dataset to run in parallel as well
-	partitionedData.second.push_back(iterwD.originalData);
+	partitionedData.second.push_back(iterwD.workData);
 	
 	
 	//3. Process each partition using OpenMP to handle multithreaded scheduling
@@ -192,7 +192,7 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 				//Run against the original dataset
 			
 				if(partitionedData.second[z].size() > 0){
-					iterwD.originalData = partitionedData.second[z];
+					iterwD.workData = partitionedData.second[z];
 					runPipeline(centArgs, iterwD);
 					
 					//wD.complex->clear();
@@ -206,8 +206,8 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 				
 				//		Clone the pipePacket to prevent shared memory race conditions
 				auto curwD = pipePacket(args, args["complexType"]);	
-				curwD.originalData = partitionedData.second[z];
-				curwD.fullData = partitionedData.second[z];
+				curwD.workData = partitionedData.second[z];
+				curwD.inputData = partitionedData.second[z];
 				
 				//		If the current partition is smaller than the threshold, process
 				//			Otherwise recurse to reduce the number of points
@@ -242,12 +242,12 @@ std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, st
 					//	3. Once all entries have been iterated - if (b) was traversed there is a connection outside to another partition
 					//		-If (b) was not traversed, need to add a {0, maxEps} entry for the independent component (Check this?)
 					
-					if(betEntry.boundaryPoints.size() > 0 && iterwD.originalLabels[*boundIter] == z){
+					if(betEntry.boundaryPoints.size() > 0 && iterwD.centroidLabels[*boundIter] == z){
 						if(betEntry.bettiDim == 0){
 							boundIter++;
 							
 							//Check if second entry is in the partition
-							if(iterwD.originalLabels[*boundIter] == z){
+							if(iterwD.centroidLabels[*boundIter] == z){
 								temp.push_back(betEntry);
 							} else if(!foundExt){
 								foundExt = true;
@@ -322,8 +322,8 @@ std::vector<bettiBoundaryTableEntry> processUpscaleWrapper(std::map<std::string,
 	// check if 1 process only
 	if(nprocs==1){
 		//Read our input data
-		wD.originalData = rs.readCSV(args["inputFile"]);
-		wD.fullData = wD.originalData;
+		wD.inputData = rs.readCSV(args["inputFile"]);
+		wD.workData = wD.inputData;
 		
 		return processIterUpscale(args,wD);
 	}
@@ -380,23 +380,23 @@ std::vector<bettiBoundaryTableEntry> processUpscaleWrapper(std::map<std::string,
 	if(id == 0){
 		
 		//Read our input data
-		wD.originalData = rs.readCSV(args["inputFile"]);
-		wD.fullData = wD.originalData;
+		wD.inputData = rs.readCSV(args["inputFile"]);
+		wD.workData = wD.inputData;
      
 		//Partition the data with the configured preprocessor
 		processDataWrapper(args, wD);
 		
 		//original Labels to be sent our to all processes
-		originalLabels = wD.originalLabels;
-		originalLabels_size = wD.originalLabels.size();
+		originalLabels = wD.centroidLabels;
+		originalLabels_size = wD.centroidLabels.size();
 		
 		//Separate our partitions for distribution
-		auto maxRadius = ut.computeMaxRadius(std::atoi(args["clusters"].c_str()), wD.originalData, wD.fullData, wD.originalLabels);
-		auto avgRadius = ut.computeAvgRadius(std::atoi(args["clusters"].c_str()), wD.originalData, wD.fullData, wD.originalLabels);
+		auto maxRadius = ut.computeMaxRadius(std::atoi(args["clusters"].c_str()), wD.workData, wD.inputData, wD.centroidLabels);
+		auto avgRadius = ut.computeAvgRadius(std::atoi(args["clusters"].c_str()), wD.workData, wD.inputData, wD.centroidLabels);
 
-       	auto partitionedData1 = ut.separatePartitions(scalar*maxRadius, wD.originalData, wD.fullData, wD.originalLabels);
+       	auto partitionedData1 = ut.separatePartitions(scalar*maxRadius, wD.workData, wD.inputData, wD.centroidLabels);
         
-        partitionedData1.second.push_back(wD.originalData);
+        partitionedData1.second.push_back(wD.workData);
 		//	Each node/slave will process at least 1 partition
 		//	NOTE: the partition may contain points outside partition that are within 2*Rmax
 		minPartitions = partitionedData1.second.size() / nprocs;
@@ -559,13 +559,13 @@ std::vector<bettiBoundaryTableEntry> processUpscaleWrapper(std::map<std::string,
 
 	//Initalize a copy of the pipePacket
 	auto iterwD = new pipePacket(args, args["complexType"]);
-	iterwD->originalData = wD.originalData;
-	iterwD->fullData = wD.fullData;
+	iterwD->workData = wD.workData;
+	iterwD->inputData = wD.inputData;
 	
 	//Local Storage
 	std::vector<bettiBoundaryTableEntry> mergedBettiTable;
 	std::vector<bettiBoundaryTableEntry> partBettiTable[threads];
-	auto originalDataSize = wD.originalData.size();
+	auto originalDataSize = wD.workData.size();
 		
 	//3. Process each partition using OpenMP to handle multithreaded scheduling
 	
@@ -598,8 +598,7 @@ std::vector<bettiBoundaryTableEntry> processUpscaleWrapper(std::map<std::string,
 				//Run against the original dataset
 			
 				if(partitionedData.second[z].size() > 0){
-					iterwD->originalData = partitionedData.second[z];
-					iterwD->originalData = partitionedData.second[z];
+					iterwD->workData = partitionedData.second[z];
 					runPipeline(centArgs, *iterwD);
 					delete iterwD->complex;
 				} else 
@@ -612,8 +611,8 @@ std::vector<bettiBoundaryTableEntry> processUpscaleWrapper(std::map<std::string,
 				//		Clone the pipePacket to prevent shared memory race conditions
 			
 				auto curwD = new pipePacket(args, args["complexType"]);	
-				curwD->originalData = partitionedData.second[z];
-				curwD->fullData = partitionedData.second[z];
+				curwD->workData = partitionedData.second[z];
+				curwD->inputData = partitionedData.second[z];
 				
 				//		If the current partition is smaller than the threshold, process
 				//			Otherwise recurse to reduce the number of points
@@ -846,15 +845,12 @@ int main(int argc, char* argv[]){
 	
 	if(args["pipeline"] != "slidingwindow" && args["pipeline"] != "naivewindow" && args["mode"] != "mpi"){
 		//Read data from inputFile CSV
-		wD.originalData = rs.readCSV(args["inputFile"]);
-		wD.fullData = wD.originalData;
+		wD.inputData = rs.readCSV(args["inputFile"]);
+		wD.workData = wD.inputData;
 	}
 	//If data was found in the inputFile
-	if(wD.originalData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
+	if(wD.inputData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
 
-		//Add data to our pipePacket
-		wD.originalData = wD.originalData;
-		
 		if(args["mode"] == "mpi"){
 			
 			MPI_Init(&argc,&argv);
