@@ -12,10 +12,11 @@
 #include <algorithm>
 #include <set>
 #include <map>
-#include <stdexcept>
+#include <exception>
 #include <unordered_map>
 #include <queue>
 #include "incrementalPersistence.hpp"
+#include "simplexArrayList.hpp"
 #include "utils.hpp"
 
 // basePipe constructor
@@ -29,9 +30,17 @@ incrementalPersistence::incrementalPersistence(){
 //	IncrementalPersistence: For computing the persistence pairs from simplicial complex:
 //		1. See Bauer-19 for algorithm/description
 void incrementalPersistence::runPipe(pipePacket &inData){
-	//Get all edges for the simplexArrayList or simplexTree
-	std::vector<std::set<simplexNode_P, cmpByWeight>> edges = inData.complex->getAllEdges();
+	simplexArrayList* complex;
 
+	if(inData.complex->simplexType == "simplexArrayList"){
+		complex = (simplexArrayList*) inData.complex;
+	} else{
+		std::cout<<"IncrementalPersistence does not support complexes other than simplexArrayList\n";
+		return;
+	}
+
+	//Get all edges for the simplexArrayList
+	std::vector<std::set<simplexNode_P, cmpByWeight>> edges = complex->getAllEdges();
 
 	if(edges.size() <= 1) return;
 
@@ -67,18 +76,24 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 
 		//Find which connected component each vertex belongs to
 		//	Use a hash map to track insertions for streaming or sparse indices
-		if( mappedIndices.size() == 0 || mappedIndices.find(*it) == mappedIndices.end() ) mappedIndices.insert( std::make_pair(*it, mappedIndices.size()) );
-		int v1 = uf.find(mappedIndices.find(*it)->second);
+		unsigned v1 = *it;
+		if(mappedIndices.size() == 0 || mappedIndices.find(v1) == mappedIndices.end())
+			mappedIndices.insert(std::make_pair(v1, mappedIndices.size()));
+		int c1 = uf.find(mappedIndices.find(v1)->second);
+
 		it++;
-		if( mappedIndices.find(*it) == mappedIndices.end() ) mappedIndices.insert( std::make_pair(*it, mappedIndices.size()) );
-		int v2 = uf.find(mappedIndices.find(*it)->second);
+		unsigned v2 = *it;
+		if(mappedIndices.find(v2) == mappedIndices.end())
+			mappedIndices.insert(std::make_pair(v2, mappedIndices.size()));
+		int c2 = uf.find(mappedIndices.find(v2)->second);
 
 		//Edge connects two different components -> add to the MST
-		if(v1 != v2){
-			uf.join(v1, v2);
+		if(c1 != c2){
+			uf.join(c1, c2);
 			mstSize++;
 
 			simplexNode_P temp = std::make_shared<simplexNode>(simplexNode((*edgeIter)->simplex, (*edgeIter)->weight));
+			temp->hash = v1 + v2*(v2-1)/2;
 			pivots.push_back(temp);
 
 			bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, temp->simplex };
@@ -112,13 +127,12 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 		//		boundary simplices
 
 	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
-		inData.complex->prepareCofacets(d);
 		std::sort(pivots.begin(), pivots.end(), cmpBySecond());
 		std::vector<simplexNode_P>::iterator it = pivots.begin();
 
 		std::vector<simplexNode_P> nextPivots;	 					//Pivots for the next dimension
 		std::unordered_map<simplexNode_P, std::vector<simplexNode_P>> v;				//Store only the reduction matrix V and compute R implicity
-		std::unordered_map<simplexNode_P, simplexNode_P> pivotPairs;	//For each pivot, which column has that pivot
+		std::unordered_map<long long, simplexNode_P> pivotPairs;	//For each pivot, which column has that pivot
 
 		//Iterate over columns to reduce in reverse order
 		for(auto columnIndexIter = edges[d].rbegin(); columnIndexIter != edges[d].rend(); columnIndexIter++){
@@ -127,7 +141,7 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 			//Not a pivot -> need to reduce
 			if((*it)->hash != simplex->hash){
 				//Get all cofacets using emergent pair optimization
-				std::vector<simplexNode_P> cofaceList = inData.complex->getAllCofacets(simplex->simplex, simplex->weight, pivotPairs);
+				std::vector<simplexNode_P> cofaceList = complex->getAllCofacets(simplex, pivotPairs);
 				std::vector<simplexNode_P> columnV;	//Reduction column of matrix V
 				columnV.push_back(simplex); //Initially V=I -> 1's along diagonal
 
@@ -143,7 +157,7 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 						std::pop_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
 						cofaceList.pop_back();
 
-						if(!cofaceList.empty() && pivot == cofaceList.front()){ //Coface is in twice -> evaluates to 0 mod 2
+						if(!cofaceList.empty() && pivot->hash == cofaceList.front()->hash){ //Coface is in twice -> evaluates to 0 mod 2
 
 							//Rotate the heap
 							std::pop_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
@@ -158,8 +172,8 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 
 					if(cofaceList.empty()){ //Column completely reduced
 						break;
-					} else if(pivotPairs.find(pivot) == pivotPairs.end()){ //Column cannot be reduced
-						pivotPairs.insert({pivot, simplex});
+					} else if(pivotPairs.find(pivot->hash) == pivotPairs.end()){ //Column cannot be reduced
+						pivotPairs.insert({pivot->hash, simplex});
 						nextPivots.push_back(pivot);
 
 						std::sort(columnV.begin(), columnV.end());
@@ -177,9 +191,9 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 
 						break;
 					} else{ //Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
-						for(simplexNode_P simp : v[pivotPairs[pivot]]){
+						for(simplexNode_P simp : v[pivotPairs[pivot->hash]]){
 							columnV.push_back(simp);
-							std::vector<simplexNode_P> cofaces = inData.complex->getAllCofacets((simp->simplex));
+							std::vector<simplexNode_P> cofaces = complex->getAllCofacets(simp);
 							cofaceList.insert(cofaceList.end(), cofaces.begin(), cofaces.end());
 						}
 						std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());

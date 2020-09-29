@@ -34,7 +34,8 @@ class simplexArrayList : public simplexBase{
 		int vertexCount();
 		void prepareCofacets(int);
 		std::vector<simplexNode_P> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode_P, simplexNode_P>&, bool);
-		std::vector<simplexNode_P> getAllCofacets(simplexNode_P, const std::unordered_map<long long, simplexNode_P>&, bool);
+		std::vector<simplexNode_P> getAllCofacets(simplexNode_P, const std::unordered_map<long long, simplexNode_P>&, bool = true);
+		std::vector<simplexNode_P> getAllCofacets(simplexNode_P);
 		bool deletion(std::set<unsigned>);
 		void expandDimensions(int);
 		void reduceComplex();

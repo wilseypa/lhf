@@ -68,14 +68,14 @@ void fastPersistence::runPipe(pipePacket &inData){
 		//Find which connected component each vertex belongs to
 		//	Use a hash map to track insertions for streaming or sparse indices
 		if( mappedIndices.size() == 0 || mappedIndices.find(*it) == mappedIndices.end() ) mappedIndices.insert( std::make_pair(*it, mappedIndices.size()) );
-		int v1 = uf.find(mappedIndices.find(*it)->second);
+		int c1 = uf.find(mappedIndices.find(*it)->second);
 		it++;
 		if( mappedIndices.find(*it) == mappedIndices.end() ) mappedIndices.insert( std::make_pair(*it, mappedIndices.size()) );
-		int v2 = uf.find(mappedIndices.find(*it)->second);
+		int c2 = uf.find(mappedIndices.find(*it)->second);
 
 		//Edge connects two different components -> add to the MST
-		if(v1 != v2){
-			uf.join(v1, v2);
+		if(c1 != c2){
+			uf.join(c1, c2);
 			mstSize++;
 
 			simplexNode_P temp = std::make_shared<simplexNode>(simplexNode((*edgeIter)->simplex, (*edgeIter)->weight));

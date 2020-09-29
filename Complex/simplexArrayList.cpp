@@ -108,33 +108,43 @@ std::vector<simplexNode_P> simplexArrayList::getAllCofacets(simplexNode_P simp, 
 
 	std::vector<simplexNode_P> ret;
 
-	//Iterate over points to possibly add to the simplex
-	for(unsigned pt = simplexList[0].size(); pt-- != 0; ){
-		//Compute the weight using all edges
-		double maxWeight = simp->weight;
-		for(auto i : simp->simplex){
-			if(i == pt){
-				maxWeight = maxEpsilon + 1;
-				break;
+	unsigned k = simp->simplex.size() + 1;
+	std::set<unsigned>::reverse_iterator it = simp->simplex.rbegin();
+	long long index = simp->hash;
+
+	// Try inserting other vertices into the simplex
+	for(unsigned i = simplexList[0].size(); i-- != 0; ){ 
+		if(it != simp->simplex.rend() && i == *it - simplexOffset){ //Vertex i is already in the simplex
+			//Now adding vertices less than i -> i is now the kth largest vertex in the simplex instead of the (k-1)th
+			index -= bin.binom(i, k-1);
+			index += bin.binom(i, k); //Recompute the index accordingly
+			--k;	//Now need to check for the (k-1)th vertex in the simplex			
+			++it; 	//Check for the previous vertex in the simplex (it is a reverse iterator)
+		} else{
+			double maxWeight = simp->weight;
+			for(auto pt : simp->simplex){
+				maxWeight = std::max(maxWeight, (*distMatrix)[std::min(i, pt)][std::max(i, pt)]);
 			}
-			maxWeight = std::max(maxWeight, (*distMatrix)[std::min(i, pt)][std::max(i, pt)]);
-		}
 
-		if(maxWeight <= maxEpsilon){ //Valid simplex
-			simplexNode_P x = std::make_shared<simplexNode>(simp->simplex, maxWeight);
-			x->simplex.insert(pt);
-			// simplexNode_P tot = *simplexList[simp->simplex.size()].find(x);
-			// ret.push_back(tot);
-			// delete x;
+			if(maxWeight <= maxEpsilon){ //Valid simplex
+				simplexNode_P x = std::make_shared<simplexNode>(simp->simplex, maxWeight);
+				x->simplex.insert(i);
+				x->hash = index + bin.binom(i, k);
+				ret.push_back(x);
 
-			if(checkEmergent && maxWeight == simp->weight){
-				// if(pivotPairs.find(tot) == pivotPairs.end()) return ret;
-				checkEmergent = false;
+				if(checkEmergent && maxWeight == simp->weight){
+					if(pivotPairs.find(index + bin.binom(i, k)) == pivotPairs.end()) return ret;
+					checkEmergent = false;
+				}
 			}
 		}
 	}
 
 	return ret;
+}
+
+std::vector<simplexNode_P> simplexArrayList::getAllCofacets(simplexNode_P simp){
+	return getAllCofacets(simp, std::unordered_map<long long, simplexNode_P>(), false);
 }
 
 double simplexArrayList::getSize(){
@@ -238,6 +248,7 @@ void simplexArrayList::expandDimensions(int dim){
 				if(maxWeight <= maxEpsilon){ //Valid simplex
 					simplexNode_P tot = std::make_shared<simplexNode>(simplexNode((*it)->simplex, maxWeight));
 					tot->simplex.insert(pt);
+					tot->hash = simplexHash(tot->simplex, bin); ///TODO: FIX THIS BECAUSE WOW INEFFICIENT
 					simplexList[d].insert(tot);
 				}
 			}
