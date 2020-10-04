@@ -103,10 +103,10 @@ std::vector<simplexNode_P> simplexArrayList::getAllCofacets(const std::set<unsig
 	return ret;
 }
 
-std::vector<simplexNode_P> simplexArrayList::getAllCofacets(simplexNode_P simp, const std::unordered_map<long long, simplexNode_P>& pivotPairs, bool checkEmergent){
+std::vector<simplexNode*> simplexArrayList::getAllCofacets(simplexNode_P simp, const std::unordered_map<long long, simplexNode_P>& pivotPairs, bool checkEmergent){
 	//Method builds out cofacets for incrementalPersistence
 
-	std::vector<simplexNode_P> ret;
+	std::vector<simplexNode*> ret;
 
 	unsigned k = simp->simplex.size() + 1;
 	std::set<unsigned>::reverse_iterator it = simp->simplex.rbegin();
@@ -127,7 +127,7 @@ std::vector<simplexNode_P> simplexArrayList::getAllCofacets(simplexNode_P simp, 
 			}
 
 			if(maxWeight <= maxEpsilon){ //Valid simplex
-				simplexNode_P x = std::make_shared<simplexNode>(simp->simplex, maxWeight);
+				simplexNode* x = new simplexNode(simp->simplex, maxWeight);
 				x->simplex.insert(i);
 				x->hash = index + bin.binom(i, k);
 				ret.push_back(x);
@@ -143,7 +143,7 @@ std::vector<simplexNode_P> simplexArrayList::getAllCofacets(simplexNode_P simp, 
 	return ret;
 }
 
-std::vector<simplexNode_P> simplexArrayList::getAllCofacets(simplexNode_P simp){
+std::vector<simplexNode*> simplexArrayList::getAllCofacets(simplexNode_P simp){
 	return getAllCofacets(simp, std::unordered_map<long long, simplexNode_P>(), false);
 }
 

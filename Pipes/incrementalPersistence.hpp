@@ -20,6 +20,14 @@ class incrementalPersistence : public basePipe {
 					return a->weight > b->weight;
 				}
 			}
+
+			bool operator()(simplexNode* a, simplexNode* b) const{
+				if(a->weight == b->weight){ //If the simplices have the same weight, sort by reverse lexicographic order for fastPersistence
+					return a->hash < b->hash;
+				} else{
+					return a->weight > b->weight;
+				}
+			}
 		};
 
 	public:

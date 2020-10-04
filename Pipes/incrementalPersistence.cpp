@@ -136,7 +136,7 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 			//Not a pivot -> need to reduce
 			if((*it)->hash != simplex->hash){
 				//Get all cofacets using emergent pair optimization
-				std::vector<simplexNode_P> cofaceList = complex->getAllCofacets(simplex, pivotPairs);
+				std::vector<simplexNode*> cofaceList = complex->getAllCofacets(simplex, pivotPairs);
 				std::vector<simplexNode_P> columnV;	//Reduction column of matrix V
 				columnV.push_back(simplex); //Initially V=I -> 1's along diagonal
 
@@ -144,7 +144,7 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 				std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
 
 				while(true){
-					simplexNode_P pivot;
+					simplexNode* pivot;
 					while(!cofaceList.empty()){
 						pivot = cofaceList.front();
 
@@ -153,6 +153,8 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 						cofaceList.pop_back();
 
 						if(!cofaceList.empty() && pivot->hash == cofaceList.front()->hash){ //Coface is in twice -> evaluates to 0 mod 2
+							delete pivot;
+							delete cofaceList.front();
 
 							//Rotate the heap
 							std::pop_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
@@ -169,7 +171,7 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 						break;
 					} else if(pivotPairs.find(pivot->hash) == pivotPairs.end()){ //Column cannot be reduced
 						pivotPairs.insert({pivot->hash, simplex});
-						nextPivots.push_back(pivot);
+						nextPivots.push_back(std::shared_ptr<simplexNode>(pivot));
 
 						std::sort(columnV.begin(), columnV.end());
 						auto it = columnV.begin();
@@ -178,6 +180,8 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 							else v[simplex].push_back(*it);
 							++it;
 						}
+
+						for(int i=1; i<cofaceList.size(); i++) delete cofaceList[i];
 
 						if(simplex->weight != pivot->weight){
 							bettiBoundaryTableEntry des = { d, simplex->weight, pivot->weight, ut.extractBoundaryPoints(v[simplex]) };
@@ -188,7 +192,7 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 					} else{ //Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
 						for(simplexNode_P simp : v[pivotPairs[pivot->hash]]){
 							columnV.push_back(simp);
-							std::vector<simplexNode_P> cofaces = complex->getAllCofacets(simp);
+							std::vector<simplexNode*> cofaces = complex->getAllCofacets(simp);
 							cofaceList.insert(cofaceList.end(), cofaces.begin(), cofaces.end());
 						}
 						std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
