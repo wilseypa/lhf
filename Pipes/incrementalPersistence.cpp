@@ -63,8 +63,7 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 
 	//For streaming data, indices will not be 0-N; instead sparse
 	//	So in streaming, create a hash map to quickly lookup points
-
-	std::unordered_map<unsigned, unsigned> mappedIndices;	//Store a map of the indices for MST
+	//TODO - POSSIBLY FIX
 	std::vector<simplexNode_P> pivots; //Store identified pivots
 	unsigned mstSize = 0;
 	unsigned nPts = inData.originalData.size();
@@ -77,15 +76,11 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 		//Find which connected component each vertex belongs to
 		//	Use a hash map to track insertions for streaming or sparse indices
 		unsigned v1 = *it;
-		if(mappedIndices.size() == 0 || mappedIndices.find(v1) == mappedIndices.end())
-			mappedIndices.insert(std::make_pair(v1, mappedIndices.size()));
-		int c1 = uf.find(mappedIndices.find(v1)->second);
+		int c1 = uf.find(v1);
 
 		it++;
 		unsigned v2 = *it;
-		if(mappedIndices.find(v2) == mappedIndices.end())
-			mappedIndices.insert(std::make_pair(v2, mappedIndices.size()));
-		int c2 = uf.find(mappedIndices.find(v2)->second);
+		int c2 = uf.find(v2);
 
 		//Edge connects two different components -> add to the MST
 		if(c1 != c2){

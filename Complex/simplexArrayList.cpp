@@ -248,7 +248,7 @@ void simplexArrayList::expandDimensions(int dim){
 				if(maxWeight <= maxEpsilon){ //Valid simplex
 					simplexNode_P tot = std::make_shared<simplexNode>(simplexNode((*it)->simplex, maxWeight));
 					tot->simplex.insert(pt);
-					tot->hash = simplexHash(tot->simplex); ///TODO: FIX THIS BECAUSE WOW INEFFICIENT
+					tot->hash = (*it)->hash + bin.binom(pt, tot->simplex.size());
 					simplexList[d].insert(tot);
 				}
 			}
