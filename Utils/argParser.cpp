@@ -150,7 +150,7 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
 		} else if(args["mode"] == "inc" || args["mode"] == "incremental"){
 			args["complexType"] = "simplexArrayList";
-			args["pipeline"] = "distMatrix.neighGraph.rips.incrementalPersistence";
+			args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";
 		}
 	}
 	

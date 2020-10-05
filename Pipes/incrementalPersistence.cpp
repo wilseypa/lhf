@@ -43,6 +43,8 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 	std::set<simplexNode_P, cmpByWeight> e = complex->getDimEdges(0);
 	//Convert the set to a vector
 	std::vector<simplexNode_P> edges = std::vector<simplexNode_P>(e.begin(), e.end());
+	//Initialize the binomial table
+	complex->initBinom();
 	//Get the next dimension (edges)
 	edges = complex->expandDimension(edges);
 

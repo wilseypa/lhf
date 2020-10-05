@@ -26,6 +26,11 @@ class simplexArrayList : public simplexBase{
 		double findWeight(std::set<unsigned>);
 		std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(simplexNode_P, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
 
+		void initBinom();
+		std::vector<simplexNode*> getAllCofacets(simplexNode_P, const std::unordered_map<long long, simplexNode_P>&, bool = true);
+		std::vector<simplexNode*> getAllCofacets(simplexNode_P);
+		std::vector<simplexNode_P> expandDimension(std::vector<simplexNode_P> edges);
+
 		//virtual interface functions
 		double getSize();
 		void insert();
@@ -34,11 +39,8 @@ class simplexArrayList : public simplexBase{
 		int vertexCount();
 		void prepareCofacets(int);
 		std::vector<simplexNode_P> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode_P, simplexNode_P>&, bool);
-		std::vector<simplexNode*> getAllCofacets(simplexNode_P, const std::unordered_map<long long, simplexNode_P>&, bool = true);
-		std::vector<simplexNode*> getAllCofacets(simplexNode_P);
 		bool deletion(std::set<unsigned>);
 		void expandDimensions(int);
-		std::vector<simplexNode_P> expandDimension(std::vector<simplexNode_P> edges);
 		void reduceComplex();
 		~simplexArrayList();
 };

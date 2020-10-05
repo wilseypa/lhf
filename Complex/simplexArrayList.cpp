@@ -219,13 +219,17 @@ int simplexArrayList::vertexCount(){
 	return simplexList[0].size();
 }
 
+void simplexArrayList::initBinom(){
+	bin = binomialTable(simplexList[0].size(), maxDimension+1);
+}
+
 // Expand the simplexArrayList to incorporate higher-level simplices 
 //	-> O(dnk) -> where n is the number of points, d is the dimension, and k is the number of d-1 simplices
 //
 //	Do this by comparing each simplex with points to insert
 //
 void simplexArrayList::expandDimensions(int dim){		
-	bin = binomialTable(simplexList[0].size(), maxDimension + 1);
+	initBinom();
 
 	//Iterate up to max dimension of simplex, starting at dim 2 (edges)
 	for(unsigned d = 1; d <= dim; d++){
