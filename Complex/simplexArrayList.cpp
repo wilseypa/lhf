@@ -256,6 +256,33 @@ void simplexArrayList::expandDimensions(int dim){
 	}
 }
 
+std::vector<simplexNode_P> simplexArrayList::expandDimension(std::vector<simplexNode_P> edges){
+	std::vector<simplexNode_P> nextEdges;
+
+	//Iterate through each element in the current dimension's edges
+	for(auto it = edges.begin(); it != edges.end(); it++){
+		//Iterate over points to possibly add to the simplex
+		//Use points larger than the maximal vertex in the simplex to prevent double counting
+		unsigned minPt = *(*it)->simplex.rbegin() + 1;
+		
+		for(unsigned pt = minPt; pt < simplexList[0].size(); pt++){
+			//Compute the weight using all edges
+			double maxWeight = (*it)->weight;
+			for(auto i : (*it)->simplex) maxWeight = std::max(maxWeight, (*distMatrix)[i][pt]);
+			
+			if(maxWeight <= maxEpsilon){ //Valid simplex
+				simplexNode_P tot = std::make_shared<simplexNode>(simplexNode((*it)->simplex, maxWeight));
+				tot->simplex.insert(pt);
+				tot->hash = (*it)->hash + bin.binom(pt, tot->simplex.size());
+				nextEdges.push_back(tot);
+			}
+		}
+	}
+
+	std::sort(nextEdges.begin(), nextEdges.end(), cmpByWeight());
+	return nextEdges;
+}
+
 void simplexArrayList::reduceComplex(){
 	
 	//Start with the largest dimension

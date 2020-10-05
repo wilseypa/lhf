@@ -39,10 +39,12 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 		return;
 	}
 
-	//Get all edges for the simplexArrayList
-	std::vector<std::set<simplexNode_P, cmpByWeight>> edges = complex->getAllEdges();
-
-	if(edges.size() <= 1) return;
+	//Get the set of all points
+	std::set<simplexNode_P, cmpByWeight> e = complex->getDimEdges(0);
+	//Convert the set to a vector
+	std::vector<simplexNode_P> edges = std::vector<simplexNode_P>(e.begin(), e.end());
+	//Get the next dimension (edges)
+	edges = complex->expandDimension(edges);
 
 	//Some notes on fast persistence:
 
@@ -70,7 +72,7 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 
 	unionFind uf(nPts);
 
-	for(auto edgeIter = edges[1].begin(); edgeIter != edges[1].end(); edgeIter++){
+	for(auto edgeIter = edges.begin(); edgeIter != edges.end(); edgeIter++){
 		std::set<unsigned>::iterator it = (*edgeIter)->simplex.begin();
 
 		//Find which connected component each vertex belongs to
@@ -96,7 +98,7 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 		}
 
 		//Check if we've filled our MST and can break
-		if(mstSize >= edges[0].size()-1) break;
+		if(mstSize >= edges.size()-1) break;
 	}
 
 	// std::cout << "mappedIndices.size = " << mappedIndices.size() << '\n';
@@ -121,7 +123,7 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 		//Track V (reduction matrix) for each column j that has been reduced to identify the constituent
 		//		boundary simplices
 
-	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
+	for(unsigned d = 1; d < dim && !edges.empty(); d++){
 		std::sort(pivots.begin(), pivots.end(), cmpBySecond());
 		std::vector<simplexNode_P>::iterator it = pivots.begin();
 
@@ -129,10 +131,15 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 		std::unordered_map<simplexNode_P, std::vector<simplexNode_P>> v;				//Store only the reduction matrix V and compute R implicity
 		std::unordered_map<long long, simplexNode_P> pivotPairs;	//For each pivot, which column has that pivot
 
+		//If d=1, we have already expanded the points into edges
+		//Otherwise, we need to generate the higher dimensional edges (equivalent to simplexList[d])
+		if(d != 1) edges = complex->expandDimension(edges);
+
 		//Iterate over columns to reduce in reverse order
-		for(auto columnIndexIter = edges[d].rbegin(); columnIndexIter != edges[d].rend(); columnIndexIter++){
+		for(auto columnIndexIter = edges.rbegin(); columnIndexIter != edges.rend(); columnIndexIter++){
 			simplexNode_P simplex = (*columnIndexIter);		//The current simplex
 
+			//Only need to test hash for equality
 			//Not a pivot -> need to reduce
 			if((*it)->hash != simplex->hash){
 				//Get all cofacets using emergent pair optimization
@@ -181,6 +188,7 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 							++it;
 						}
 
+						//Don't delete the first entry because that is converted to a smart pointer and stored as a pivot
 						for(int i=1; i<cofaceList.size(); i++) delete cofaceList[i];
 
 						if(simplex->weight != pivot->weight){

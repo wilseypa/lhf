@@ -38,6 +38,7 @@ class simplexArrayList : public simplexBase{
 		std::vector<simplexNode*> getAllCofacets(simplexNode_P);
 		bool deletion(std::set<unsigned>);
 		void expandDimensions(int);
+		std::vector<simplexNode_P> expandDimension(std::vector<simplexNode_P> edges);
 		void reduceComplex();
 		~simplexArrayList();
 };
