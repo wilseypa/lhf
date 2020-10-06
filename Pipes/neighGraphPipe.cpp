@@ -24,8 +24,8 @@ neighGraphPipe::neighGraphPipe(){
 void neighGraphPipe::runPipe(pipePacket &inData){	
 	
 	//Iterate through each vector, inserting into simplex storage
-	for(unsigned i = 0; i < inData.originalData.size(); i++){
-		if(!inData.originalData[i].empty()){
+	for(unsigned i = 0; i < inData.workData.size(); i++){
+		if(!inData.workData[i].empty()){
 			//insert data into the complex (SimplexArrayList, SimplexTree)
 			inData.complex->insert();	
 		}

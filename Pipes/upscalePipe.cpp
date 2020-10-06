@@ -39,7 +39,7 @@ upscalePipe::upscalePipe(){
 void upscalePipe::runPipe(pipePacket &inData){
 	utils ut;
 	
-	std::vector<std::set<unsigned>> upscaleBoundaries;
+	std::vector<std::pair<std::set<unsigned>,std::vector<bettiBoundaryTableEntry>>> upscaleBoundaries;
 	
 	//Handle two types of boundary sets coming in -
 	//		1. Sets with only 2 centroids, indicating a minDist
@@ -62,16 +62,21 @@ void upscalePipe::runPipe(pipePacket &inData){
 			int firstIntersect = -1;
 			
 			for(auto bp = upscaleBoundaries.begin(); bp != upscaleBoundaries.end(); bp++){
-				if(ut.setIntersect((*bp), (*pi).boundaryPoints, true).size() > 0){
+				if(ut.setIntersect((*bp).first, (*pi).boundaryPoints, true).size() > 0){
 					
 					if(!isFound){
-						upscaleBoundaries[index] = ut.setUnion((*bp), (*pi).boundaryPoints);
+						upscaleBoundaries[index].first = ut.setUnion((*bp).first, (*pi).boundaryPoints);
 						//for(auto bp : pi.boundaryPoints)
 						//	upscaleBoundaries[i].insert(bp);
+						(*bp).second.push_back((*pi));
 						isFound = true;
 						firstIntersect = index;
 					} else {
-						upscaleBoundaries[firstIntersect] = ut.setUnion((*bp), upscaleBoundaries[firstIntersect]);
+						upscaleBoundaries[firstIntersect].first = ut.setUnion((*bp).first, upscaleBoundaries[firstIntersect].first);
+						
+						for(auto betti : (*bp).second)
+							upscaleBoundaries[firstIntersect].second.push_back(betti);
+						
 						upscaleBoundaries.erase(bp--);
 					}
 						
@@ -79,7 +84,8 @@ void upscalePipe::runPipe(pipePacket &inData){
 				index++;
 			}
 			if(!isFound){
-				upscaleBoundaries.push_back((*pi).boundaryPoints);
+				std::vector<bettiBoundaryTableEntry> a = {(*pi)};
+				upscaleBoundaries.push_back(std::make_pair((*pi).boundaryPoints, a));
 			}
 			
 			inData.bettiTable.erase(pi--);
@@ -89,37 +95,49 @@ void upscalePipe::runPipe(pipePacket &inData){
 	//Need to re-analyze upscaleBoundaries in case of additional set intersections
 	
 	std::cout << "Found " << upscaleBoundaries.size() << " independent features to upscale" << std::endl;
-	
+	for(auto bound : upscaleBoundaries){
+		std::cout <<"\t";
+		ut.print1DVector(bound.first);
+	}
 	
 	//Upscale each independent boundary
 	for(auto bound : upscaleBoundaries){
 		
-		
-		auto curwD = pipePacket(subConfigMap,subConfigMap["complexType"]);//args, args["complexType"]);
-		
-		for(unsigned index = 0; index < inData.originalLabels.size(); index++){
+		if(bound.first.size() < 4){
+			//Not a suitable boundary for upscaling; revert found features
+			for(auto betti : bound.second){
+				std::cout << "Reverting betti, boundary too short" << std::endl;
+				inData.bettiTable.push_back(betti);
+			}
+		} else {
 			
-			if(bound.find(inData.originalLabels[index]) != bound.end())
-				curwD.originalData.push_back(inData.originalData[index]);
-		
-		}
-		
-		std::cout << "Gathered " << curwD.originalData.size() << " original points" << std::endl;
-		
-		runSubPipeline(curwD);
-		
-		std::cout << std::endl << "_____UPSCALE BETTIS_______" << std::endl;
+			
+			auto curwD = pipePacket(subConfigMap,subConfigMap["complexType"]);//args, args["complexType"]);
+			
+			for(unsigned index = 0; index < inData.centroidLabels.size(); index++){
+				
+				if(bound.first.find(inData.centroidLabels[index]) != bound.first.end()){
+					curwD.workData.push_back(inData.inputData[index]);
+				}
+			
+			}
+			
+			std::cout << "Gathered " << curwD.workData.size() << " original points" << std::endl;
+			
+			runSubPipeline(curwD);
+			
+			std::cout << std::endl << "_____UPSCALE BETTIS_______" << std::endl;
 
-		for(auto a : curwD.bettiTable){
-			std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
-			ut.print1DVector(a.boundaryPoints);
-			
-			//Check if this interval lives for longer than scalarV
-			if((a.death - a.birth) > scalarV && a.bettiDim > 0)
-				inData.bettiTable.push_back(a);
-			
+			for(auto a : curwD.bettiTable){
+				std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
+				ut.print1DVector(a.boundaryPoints);
+				
+				//Check if this interval lives for longer than scalarV
+				if((a.death - a.birth) > scalarV && a.bettiDim > 0)
+					inData.bettiTable.push_back(a);
+				
+			}
 		}
-		
 	}
 	
 	//Merge the new upscaled features into the bettiTable
@@ -131,10 +149,12 @@ void upscalePipe::runPipe(pipePacket &inData){
 
 void upscalePipe::runSubPipeline(pipePacket& wrData)
 {
-    if(wrData.originalData.size() == 0)
+    if(wrData.workData.size() == 0)
         return;
 
     outputData(wrData);
+    
+    
 
 	std::string pipeFuncts = "distMatrix.neighGraph.rips.fast";
     auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
@@ -180,6 +200,13 @@ bool upscalePipe::configPipe(std::map<std::string, std::string> &configMap){
 	pipe = configMap.find("outputFile");
 	if(pipe != configMap.end())
 		outputFile = configMap["outputFile"].c_str();
+	
+	pipe = configMap.find("dimensions");
+	if(pipe != configMap.end()){
+		dim = std::atoi(configMap["dimensions"].c_str());
+	}
+	std::cout << "UPSCALE DIM: " << dim << std::endl;
+	
 	
 	ut = utils(strDebug, outputFile);
 	

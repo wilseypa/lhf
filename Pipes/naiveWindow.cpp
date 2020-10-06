@@ -64,19 +64,19 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 				key++;
 				//If we've reached window size, generate the initial complex
 				if(windowValues.size() == windowMaxSize){
-					inData.originalData = windowValues;
+					inData.workData = windowValues;
 
-					distMatrix.resize(inData.originalData.size(), std::vector<double>(inData.originalData.size(),0));
+					distMatrix.resize(inData.workData.size(), std::vector<double>(inData.workData.size(),0));
 
 
 					//Iterate through each vector
-					for(unsigned i = 0; i < inData.originalData.size(); i++){
-						if(!inData.originalData[i].empty()){
+					for(unsigned i = 0; i < inData.workData.size(); i++){
+						if(!inData.workData[i].empty()){
 							//Grab a second vector to compare to
 							std::vector<double> temp;
-							for(unsigned j = i+1; j < inData.originalData.size(); j++){
+							for(unsigned j = i+1; j < inData.workData.size(); j++){
 									//Calculate vector distance
-									auto dist = ut.vectors_distance(inData.originalData[i],inData.originalData[j]);
+									auto dist = ut.vectors_distance(inData.workData[i],inData.workData[j]);
 
 									if(dist < epsilon)
 										distMatrix[i][j] = dist;
@@ -110,7 +110,7 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 			if(pointCounter % 10 == 0 && pointCounter >= windowMaxSize){
 				// Build and trigger remaining pipeline. It should only require the computation of persistence
 				// intervals from the complex being maintained.
-				inData.originalData = windowValues;
+				inData.workData = windowValues;
 				runSubPipeline(inData);
 
 			}
@@ -143,13 +143,13 @@ void naiveWindow::writeComplexStats(pipePacket &inData){
 }
 
 void naiveWindow::runSubPipeline(pipePacket wrData){
-    if(wrData.originalData.size() == 0)
+    if(wrData.workData.size() == 0)
 		return;
 
 	pipePacket inData = wrData;
 	outputData(inData);
 
-	std::cout << "StreamSize: " << inData.complex->indexCounter << "\tWindowSize: " << inData.originalData.size() << std::endl;
+	std::cout << "StreamSize: " << inData.complex->indexCounter << "\tWindowSize: " << inData.workData.size() << std::endl;
 
 	std::string pipeFuncts = "rips.fast";
 	auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
@@ -221,7 +221,7 @@ bool naiveWindow::configPipe(std::map<std::string, std::string> configMap){
 void naiveWindow::outputData(pipePacket inData){
 	std::ofstream file ("output/" + pipeType + "_" + std::to_string(repCounter) + "_output.csv");
 
-	for(auto a : inData.originalData){
+	for(auto a : inData.workData){
 		for(auto d : a){
 			file << d << ",";
 		}
