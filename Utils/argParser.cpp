@@ -122,7 +122,7 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 		}else if(args["mode"] == "reduced"){
 			if(args["preprocessor"] == "")
 				args["preprocessor"] = "kmeans++";
-			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
+			args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";
 		} else if(args["mode"] == "upscale"){
 			if(args["preprocessor"] == "")
 				args["preprocessor"] = "kmeans++";
@@ -138,7 +138,7 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 			args["upscale"] = "false";
 			args["complexType"] = "simplexTree";
 		} else if(args["mode"] == "fast"){
-			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
+			args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";
 			args["upscale"] = "false";
 		} else if(args["mode"] == "naive" || args["mode"] == "naivewindow"){
 			args["preprocessor"] = "";
