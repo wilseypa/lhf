@@ -73,7 +73,7 @@ int main (int, char**){
 	t_pipe_functions(log);
 	
 	
-	for(std::string type : {"distMatrix","neighGraph","rips","upscale","persistence","slidingwindow","fastPersistence"}){ 
+	for(std::string type : {"distMatrix","neighGraph","upscale","persistence","slidingwindow","fastPersistence"}){ 
 		try{t_pipe_empty_functions(log, type, "simplexArrayList");}
 		catch(const std::exception){log += "FAILED: " + type + " Empty Test Functions---------------------------\n";}			
 	}
