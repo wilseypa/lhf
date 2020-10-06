@@ -582,9 +582,9 @@ bool simplexTree::find(std::set<unsigned>){
 // A recursive function to delete a simplex (and sub-branches) from the tree.
 bool simplexTree::deletion(std::set<unsigned> removalEntry) {
 	//Remove the entry in the simplex tree
-	bool found = true;
-	simplexNode_P curNode = (*simplexList[0].begin());
-	int d = removalEntry.size() - 1;
+	// bool found = true;
+	// simplexNode_P curNode = (*simplexList[0].begin());
+	// int d = removalEntry.size() - 1;
 
 
 	/*for(int i = 0; i < dimensions[d].size(); i++){

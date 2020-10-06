@@ -9,9 +9,7 @@
 
 class persistencePairs : public basePipe {
   private:
-  
-	utils ut;
-	double maxEpsilon;
+  	double maxEpsilon;
 	std::string twist;
   public:
 	struct tArrayEntry_t{
