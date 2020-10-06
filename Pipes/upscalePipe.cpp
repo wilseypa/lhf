@@ -106,37 +106,38 @@ void upscalePipe::runPipe(pipePacket &inData){
 		if(bound.first.size() < 4){
 			//Not a suitable boundary for upscaling; revert found features
 			for(auto betti : bound.second){
+				std::cout << "Reverting betti, boundary too short" << std::endl;
 				inData.bettiTable.push_back(betti);
 			}
-		}
-		
-		
-		auto curwD = pipePacket(subConfigMap,subConfigMap["complexType"]);//args, args["complexType"]);
-		
-		for(unsigned index = 0; index < inData.centroidLabels.size(); index++){
+		} else {
 			
-			if(bound.first.find(inData.centroidLabels[index]) != bound.first.end()){
-				curwD.workData.push_back(inData.inputData[index]);
+			
+			auto curwD = pipePacket(subConfigMap,subConfigMap["complexType"]);//args, args["complexType"]);
+			
+			for(unsigned index = 0; index < inData.centroidLabels.size(); index++){
+				
+				if(bound.first.find(inData.centroidLabels[index]) != bound.first.end()){
+					curwD.workData.push_back(inData.inputData[index]);
+				}
+			
 			}
-		
-		}
-		
-		std::cout << "Gathered " << curwD.workData.size() << " original points" << std::endl;
-		
-		runSubPipeline(curwD);
-		
-		std::cout << std::endl << "_____UPSCALE BETTIS_______" << std::endl;
+			
+			std::cout << "Gathered " << curwD.workData.size() << " original points" << std::endl;
+			
+			runSubPipeline(curwD);
+			
+			std::cout << std::endl << "_____UPSCALE BETTIS_______" << std::endl;
 
-		for(auto a : curwD.bettiTable){
-			std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
-			ut.print1DVector(a.boundaryPoints);
-			
-			//Check if this interval lives for longer than scalarV
-			if((a.death - a.birth) > scalarV && a.bettiDim > 0)
-				inData.bettiTable.push_back(a);
-			
+			for(auto a : curwD.bettiTable){
+				std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
+				ut.print1DVector(a.boundaryPoints);
+				
+				//Check if this interval lives for longer than scalarV
+				if((a.death - a.birth) > scalarV && a.bettiDim > 0)
+					inData.bettiTable.push_back(a);
+				
+			}
 		}
-		
 	}
 	
 	//Merge the new upscaled features into the bettiTable
