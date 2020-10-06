@@ -70,7 +70,7 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 	//TODO - POSSIBLY FIX
 	std::vector<simplexNode_P> pivots; //Store identified pivots
 	unsigned mstSize = 0;
-	unsigned nPts = inData.originalData.size();
+	unsigned nPts = inData.workData.size();
 
 	unionFind uf(nPts);
 
@@ -105,7 +105,7 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 
 	// std::cout << "mappedIndices.size = " << mappedIndices.size() << '\n';
 
-	for(int i=0; i<inData.originalData.size(); i++){
+	for(int i=0; i<inData.workData.size(); i++){
 		if(uf.find(i) == i){ //i is the name of a connected component
 			//Each connected component has an open persistence interval
 			bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {} };
