@@ -18,13 +18,18 @@ class simplexArrayList : public simplexBase{
 		binomialTable bin;
 		std::unordered_map<long long, simplexNode_P> indexConverter;
 
-		long long simplexHash(const std::set<unsigned>&, binomialTable&);
-		unsigned maxVertex(long long, unsigned, unsigned, unsigned, binomialTable&);
-		std::vector<unsigned> getVertices(long long, int, unsigned, binomialTable&);
+		long long simplexHash(const std::set<unsigned>&);
+		unsigned maxVertex(long long, unsigned, unsigned, unsigned);
+		std::vector<unsigned> getVertices(long long, int, unsigned);
 	public:
 		simplexArrayList(double, double);
 		double findWeight(std::set<unsigned>);
 		std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(simplexNode_P, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
+
+		void initBinom();
+		std::vector<simplexNode*> getAllCofacets(simplexNode_P, const std::unordered_map<long long, simplexNode_P>&, bool = true);
+		std::vector<simplexNode*> getAllCofacets(simplexNode_P);
+		std::vector<simplexNode_P> expandDimension(std::vector<simplexNode_P> edges);
 
 		//virtual interface functions
 		double getSize();
