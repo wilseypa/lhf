@@ -31,12 +31,20 @@ include_directories(../Utils)
 link_directories(../Utils)
 
 #Add Source to this project's executable
+
+add_library(LHFlib SHARED "LHF.cpp" "LHF.hpp")
+set_target_properties(LHFlib PROPERTIES VERSION ${PROJECT_VERSION})
+set_target_properties(LHFlib PROPERTIES SOVERSION 1)
+#set_target_properties(LHF PROPERTIES PUBLIC_HEADER "LHF.hpp")
+
+target_link_libraries(LHFlib simplexBase pipePacket utils readInput writeOutput basePipe preprocessor OpenMP::OpenMP_CXX)
+
+INSTALL (TARGETS LHFlib
+	LIBRARY DESTINATION lib
+	ARCHIVE DESTINATION lib)
+
 add_executable(LHF "main.cpp")
-
-target_link_libraries(LHF PRIVATE simplexBase pipePacket utils basePipe preprocessor OpenMP::OpenMP_CXX)
-
-
-
+target_link_libraries(LHF PRIVATE LHFlib)
 # TODO: Add tests and install targets if needed.
 
 MESSAGE (STATUS "CMAKE_INCLUDE_PATH: " ${CMAKE_INCLUDE_PATH})

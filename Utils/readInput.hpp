@@ -1,5 +1,13 @@
 #pragma once
 
+
+#include <string>
+#include <iostream>
+#include <vector>
+#include <regex>
+#include <fstream>
+#include <cmath>
+
 // Header file for readInput class - see readInput.cpp for descriptions
 
 class readInput {
