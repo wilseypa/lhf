@@ -8,12 +8,6 @@
  * 
  */
 
-#include <string>
-#include <iostream>
-#include <vector>
-#include <regex>
-#include <fstream>
-#include <cmath>
 #include "readInput.hpp"
 
 
