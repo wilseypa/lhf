@@ -27,7 +27,7 @@ class LHF {
 	void outputBettis(std::map<std::string, std::string>, pipePacket &);
 	void runPipeline(std::map<std::string, std::string>, pipePacket &);
 	void processDataWrapper(std::map<std::string, std::string>, pipePacket &);
-	std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, std::string> args, pipePacket &wd){processIterUpscale(args, wd, true);}
+	std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, std::string> args, pipePacket &wd){return processIterUpscale(args, wd, true);}
 	std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, std::string>, pipePacket &, bool);
 	std::vector<bettiBoundaryTableEntry> processUpscaleWrapper(std::map<std::string, std::string>, pipePacket &);
 
