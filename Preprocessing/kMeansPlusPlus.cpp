@@ -42,8 +42,11 @@ pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
     //mersenne twister random algorithm - used to have reproducible results from seed
     //  This seed should be recorded to reproduce after a run
     //  There may be multiple seeds in a run depending on how many times k-means is used
-    static std::random_device seed;  
-    static std::mt19937 gen(seed()); 
+    //static std::random_device seed;
+    if(seed < 0){
+		seed = time(NULL);
+    }
+    static std::mt19937 gen(seed); 
     
     std::uniform_int_distribution<size_t> distribution(0, inData.workData.size()-1);
     int index = distribution(gen); //Randomly choose the first centroid
@@ -166,6 +169,10 @@ bool kMeansPlusPlus::configPreprocessor(std::map<std::string, std::string> confi
     if(pipe !=configMap.end())
         num_clusters = std::atoi(configMap["clusters"].c_str());
     else return false;
+    
+    pipe = configMap.find("seed");
+    if(pipe != configMap.end())
+		seed = std::atoi(configMap["seed"].c_str());
 
     pipe = configMap.find("iterations");
 	if(pipe != configMap.end())

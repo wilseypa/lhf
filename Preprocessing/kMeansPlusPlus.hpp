@@ -6,6 +6,7 @@
 
 class kMeansPlusPlus : public preprocessor {
   private:
+    int seed;
 	int num_clusters;			
 	int num_iterations;			
   public:

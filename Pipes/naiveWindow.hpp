@@ -15,10 +15,12 @@ class naiveWindow : public basePipe {
 	std::map<std::string, std::string> subConfigMap;
 	//void runComplexInitializer(pipePacket &);
   public:
+	//Store our distance matrix
+	std::vector<std::vector<double>> distMatrix;
     naiveWindow();
-    pipePacket runPipe(pipePacket);
-	void outputData(pipePacket);
-    bool configPipe(std::map<std::string, std::string>);
+    void runPipe(pipePacket&);
+	void outputData(pipePacket&);
+    bool configPipe(std::map<std::string, std::string>&);
     void runSubPipeline(pipePacket);
 	void writeComplexStats(pipePacket &);
 	static bool sampleStreamEvaluator(std::vector<double>&, std::vector<std::vector<double>>&);

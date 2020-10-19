@@ -9,8 +9,8 @@
 #include <iostream>
 #include "argParser.hpp"
 
-std::map<std::string, std::string> argMap = { {"reductionPercentage","rp"},{"maxSize","ms"},{"threads","t"},{"threshold","th"},{"scalar","s"},{"mpi","a"},{"mode","m"},{"dimensions","d"},{"iterations","r"},{"pipeline","p"},{"inputFile","i"},{"outputFile","o"},{"epsilon","e"},{"lambda","l"},{"debug","x"},{"complexType","c"},{"clusters","k"},{"preprocessor","pre"},{"upscale","u"},{"twist","w"},{"collapse","z"}};
-std::map<std::string, std::string> defaultMap = { {"reductionPercentage","10"},{"maxSize","2000"},{"threads","30"},{"threshold","250"},{"scalar","2.0"},{"mpi", "0"},{"mode", "standard"},{"dimensions","1"},{"iterations","250"},{"pipeline",""},{"inputFile","None"},{"outputFile","output"},{"epsilon","5"},{"lambda",".25"},{"debug","0"},{"complexType","simplexArrayList"},{"clusters","20"},{"preprocessor",""},{"upscale","false"},{"twist","false"},{"collapse","false"}};
+std::map<std::string, std::string> argMap = { {"reductionPercentage","rp"},{"maxSize","ms"},{"threads","t"},{"threshold","th"},{"scalar","s"},{"mpi","a"},{"mode","m"},{"dimensions","d"},{"iterations","r"},{"pipeline","p"},{"inputFile","i"},{"outputFile","o"},{"epsilon","e"},{"lambda","l"},{"debug","x"},{"complexType","c"},{"clusters","k"},{"preprocessor","pre"},{"upscale","u"},{"twist","w"},{"collapse","z"},{"seed","q"}};
+std::map<std::string, std::string> defaultMap = { {"reductionPercentage","10"},{"maxSize","2000"},{"threads","30"},{"threshold","250"},{"scalar","2.0"},{"mpi", "0"},{"mode", "standard"},{"dimensions","1"},{"iterations","250"},{"pipeline",""},{"inputFile","None"},{"outputFile","output"},{"epsilon","5"},{"lambda",".25"},{"debug","0"},{"complexType","simplexArrayList"},{"clusters","20"},{"preprocessor",""},{"upscale","false"},{"seed","-1"},{"twist","false"},{"collapse","false"}};
 
 // argParse constructor, currently no needed information for the class constructor
 argParser::argParser(){
@@ -144,7 +144,6 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 			args["preprocessor"] = "";
 			args["pipeline"] = "naivewindow";
 			args["upscale"] = "false";
-			args["complexType"] = "simplexTree";
 		} else if(args["mode"] == "iterUpscale" || args["mode"] == "iter"){
 			args["preprocessor"] = "kmeans++";
 			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
