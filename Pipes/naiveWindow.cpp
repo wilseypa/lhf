@@ -28,13 +28,11 @@ bool naiveWindow::sampleStreamEvaluator(std::vector<double>& vector, std::vector
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
-pipePacket naiveWindow::runPipe(pipePacket inData){
+void naiveWindow::runPipe(pipePacket &inData){
 	readInput rp;
 
 
-	//Store our distance matrix
-	std::vector<std::vector<double>> distMatrix;
-	int windowMaxSize = 200;
+	int windowMaxSize = 100;
 
 	// For this pipe, we construct a sub-pipeline:
 	//		1. Read data vector by vector, push into stream evaluation in complex
@@ -64,32 +62,28 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 				key++;
 				//If we've reached window size, generate the initial complex
 				if(windowValues.size() == windowMaxSize){
-					inData.originalData = windowValues;
+					inData.workData = windowValues;
 
-					distMatrix.resize(inData.originalData.size(), std::vector<double>(inData.originalData.size(),0));
+					distMatrix.resize(inData.workData.size(), std::vector<double>(inData.workData.size(),0));
 
 
 					//Iterate through each vector
-					for(unsigned i = 0; i < inData.originalData.size(); i++){
-						if(!inData.originalData[i].empty()){
+					for(unsigned i = 0; i < inData.workData.size(); i++){
+						if(!inData.workData[i].empty()){
 							//Grab a second vector to compare to
 							std::vector<double> temp;
-							for(unsigned j = i+1; j < inData.originalData.size(); j++){
+							for(unsigned j = i+1; j < inData.workData.size(); j++){
 									//Calculate vector distance
-									auto dist = ut.vectors_distance(inData.originalData[i],inData.originalData[j]);
+									auto dist = ut.vectors_distance(inData.workData[i],inData.workData[j]);
 
 									if(dist < epsilon)
 										distMatrix[i][j] = dist;
 							}
 						}
 					}
-					inData.complex->setDistanceMatrix(&distMatrix);
-
-					for(auto a : windowValues)
-						inData.complex->insert();
 
 					// Set the stream evaluator
-					inData.complex->setStreamEvaluator(&this->sampleStreamEvaluator);
+					//inData.complex->setStreamEvaluator(&this->sampleStreamEvaluator);
 				}
 
 			//Window is full, evaluate and add to window
@@ -110,8 +104,10 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 			if(pointCounter % 10 == 0 && pointCounter >= windowMaxSize){
 				// Build and trigger remaining pipeline. It should only require the computation of persistence
 				// intervals from the complex being maintained.
-				inData.originalData = windowValues;
+				inData.workData = windowValues;
 				runSubPipeline(inData);
+				inData = pipePacket("simplexArrayList",epsilon,dim);
+				
 
 			}
 			pointCounter++;
@@ -128,7 +124,7 @@ pipePacket naiveWindow::runPipe(pipePacket inData){
 		writeComplexStats(inData);
 	}
 
-	return inData;
+	return;
 }
 
 void naiveWindow::writeComplexStats(pipePacket &inData){
@@ -143,17 +139,18 @@ void naiveWindow::writeComplexStats(pipePacket &inData){
 }
 
 void naiveWindow::runSubPipeline(pipePacket wrData){
-    if(wrData.originalData.size() == 0)
+    if(wrData.workData.size() == 0)
 		return;
 
 	pipePacket inData = wrData;
 	outputData(inData);
 
-	std::cout << "StreamSize: " << inData.complex->indexCounter << "\tWindowSize: " << inData.originalData.size() << std::endl;
-
-	std::string pipeFuncts = "rips.fast";
+	inData.complex->setDistanceMatrix(&distMatrix);
+	std::string pipeFuncts = "neighGraph.incrementalPersistence";
+	subConfigMap["complexType"] = "simplexArrayList";
 	auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
 	subConfigMap["fn"] = "_" + std::to_string(repCounter);
+	
 
 	repCounter++;
 
@@ -163,23 +160,25 @@ void naiveWindow::runSubPipeline(pipePacket wrData){
 		pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
 
 		//Build the pipe component, configure and run
-		auto *cp = basePipe::newPipe(curFunct, "simplexTree");
+		auto cp = basePipe::newPipe(curFunct, "simplexTree");
 
 		//Check if the pipe was created and configure
 		if(cp != 0 && cp->configPipe(subConfigMap)){
 			//Run the pipe function (wrapper)
-			inData = cp->runPipeWrapper(inData);
+			cp->runPipeWrapper(inData);
 		} else {
 			std::cout << "LHF subPipe: Failed to configure pipeline: " << curFunct << std::endl;
 		}
 	}
+	
+	distMatrix.clear();
 
 	return;
 }
 
 
 // configPipe -> configure the function settings of this pipeline segment
-bool naiveWindow::configPipe(std::map<std::string, std::string> configMap){
+bool naiveWindow::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
 	subConfigMap = configMap;
 
@@ -218,10 +217,10 @@ bool naiveWindow::configPipe(std::map<std::string, std::string> configMap){
 
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-void naiveWindow::outputData(pipePacket inData){
+void naiveWindow::outputData(pipePacket &inData){
 	std::ofstream file ("output/" + pipeType + "_" + std::to_string(repCounter) + "_output.csv");
 
-	for(auto a : inData.originalData){
+	for(auto a : inData.workData){
 		for(auto d : a){
 			file << d << ",";
 		}

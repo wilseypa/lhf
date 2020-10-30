@@ -12,28 +12,41 @@
 #include <algorithm>
 #include <set>
 #include <map>
-#include <stdexcept>
+#include <exception>
 #include <unordered_map>
 #include <queue>
-#include "fastPersistence.hpp"
+#include "incrementalPersistence.hpp"
+#include "simplexArrayList.hpp"
 #include "utils.hpp"
 
 // basePipe constructor
-fastPersistence::fastPersistence(){
-	pipeType = "FastPersistence";
+incrementalPersistence::incrementalPersistence(){
+	pipeType = "IncrementalPersistence";
 	return;
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
 //
-//	FastPersistence: For computing the persistence pairs from simplicial complex:
+//	IncrementalPersistence: For computing the persistence pairs from simplicial complex:
 //		1. See Bauer-19 for algorithm/description
-void fastPersistence::runPipe(pipePacket &inData){
-	//Get all edges for the simplexArrayList or simplexTree
-	std::vector<std::set<simplexNode_P, cmpByWeight>> edges = inData.complex->getAllEdges();
+void incrementalPersistence::runPipe(pipePacket &inData){
+	simplexArrayList* complex;
 
+	if(inData.complex->simplexType == "simplexArrayList"){
+		complex = (simplexArrayList*) inData.complex;
+	} else{
+		std::cout<<"IncrementalPersistence does not support complexes other than simplexArrayList\n";
+		return;
+	}
 
-	if(edges.size() <= 1) return;
+	//Get the set of all points
+	std::set<simplexNode_P, cmpByWeight> e = complex->getDimEdges(0);
+	//Convert the set to a vector
+	std::vector<simplexNode_P> edges = std::vector<simplexNode_P>(e.begin(), e.end());
+	//Initialize the binomial table
+	complex->initBinom();
+	//Get the next dimension (edges)
+	edges = complex->expandDimension(edges);
 
 	//Some notes on fast persistence:
 
@@ -54,24 +67,24 @@ void fastPersistence::runPipe(pipePacket &inData){
 
 	//For streaming data, indices will not be 0-N; instead sparse
 	//	So in streaming, create a hash map to quickly lookup points
-
-	std::unordered_map<unsigned, unsigned> mappedIndices;	//Store a map of the indices for MST
+	//TODO - POSSIBLY FIX
 	std::vector<simplexNode_P> pivots; //Store identified pivots
 	unsigned mstSize = 0;
 	unsigned nPts = inData.workData.size();
 
 	unionFind uf(nPts);
 
-	for(auto edgeIter = edges[1].begin(); edgeIter != edges[1].end(); edgeIter++){
+	for(auto edgeIter = edges.begin(); edgeIter != edges.end(); edgeIter++){
 		std::set<unsigned>::iterator it = (*edgeIter)->simplex.begin();
 
 		//Find which connected component each vertex belongs to
 		//	Use a hash map to track insertions for streaming or sparse indices
-		if( mappedIndices.size() == 0 || mappedIndices.find(*it) == mappedIndices.end() ) mappedIndices.insert( std::make_pair(*it, mappedIndices.size()) );
-		int c1 = uf.find(mappedIndices.find(*it)->second);
+		unsigned v1 = *it;
+		int c1 = uf.find(v1);
+
 		it++;
-		if( mappedIndices.find(*it) == mappedIndices.end() ) mappedIndices.insert( std::make_pair(*it, mappedIndices.size()) );
-		int c2 = uf.find(mappedIndices.find(*it)->second);
+		unsigned v2 = *it;
+		int c2 = uf.find(v2);
 
 		//Edge connects two different components -> add to the MST
 		if(c1 != c2){
@@ -79,6 +92,7 @@ void fastPersistence::runPipe(pipePacket &inData){
 			mstSize++;
 
 			simplexNode_P temp = std::make_shared<simplexNode>(simplexNode((*edgeIter)->simplex, (*edgeIter)->weight));
+			temp->hash = v1 + v2*(v2-1)/2;
 			pivots.push_back(temp);
 
 			bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, temp->simplex };
@@ -86,7 +100,7 @@ void fastPersistence::runPipe(pipePacket &inData){
 		}
 
 		//Check if we've filled our MST and can break
-		if(mstSize >= edges[0].size()-1) break;
+		if(mstSize >= edges.size()-1) break;
 	}
 
 	// std::cout << "mappedIndices.size = " << mappedIndices.size() << '\n';
@@ -111,23 +125,27 @@ void fastPersistence::runPipe(pipePacket &inData){
 		//Track V (reduction matrix) for each column j that has been reduced to identify the constituent
 		//		boundary simplices
 
-	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
-		inData.complex->prepareCofacets(d);
+	for(unsigned d = 1; d < dim && !edges.empty(); d++){
 		std::sort(pivots.begin(), pivots.end(), cmpBySecond());
 		std::vector<simplexNode_P>::iterator it = pivots.begin();
 
 		std::vector<simplexNode_P> nextPivots;	 					//Pivots for the next dimension
 		std::unordered_map<simplexNode_P, std::vector<simplexNode_P>> v;				//Store only the reduction matrix V and compute R implicity
-		std::unordered_map<simplexNode_P, simplexNode_P> pivotPairs;	//For each pivot, which column has that pivot
+		std::unordered_map<long long, simplexNode_P> pivotPairs;	//For each pivot, which column has that pivot
+
+		//If d=1, we have already expanded the points into edges
+		//Otherwise, we need to generate the higher dimensional edges (equivalent to simplexList[d])
+		if(d != 1) edges = complex->expandDimension(edges);
 
 		//Iterate over columns to reduce in reverse order
-		for(auto columnIndexIter = edges[d].rbegin(); columnIndexIter != edges[d].rend(); columnIndexIter++){
+		for(auto columnIndexIter = edges.rbegin(); columnIndexIter != edges.rend(); columnIndexIter++){
 			simplexNode_P simplex = (*columnIndexIter);		//The current simplex
 
+			//Only need to test hash for equality
 			//Not a pivot -> need to reduce
-			if((*it)->weight != simplex->weight || (*it)->simplex != simplex->simplex){
+			if((*it)->hash != simplex->hash){
 				//Get all cofacets using emergent pair optimization
-				std::vector<simplexNode_P> cofaceList = inData.complex->getAllCofacets(simplex->simplex, simplex->weight, pivotPairs);
+				std::vector<simplexNode*> cofaceList = complex->getAllCofacets(simplex, pivotPairs);
 				std::vector<simplexNode_P> columnV;	//Reduction column of matrix V
 				columnV.push_back(simplex); //Initially V=I -> 1's along diagonal
 
@@ -135,7 +153,7 @@ void fastPersistence::runPipe(pipePacket &inData){
 				std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
 
 				while(true){
-					simplexNode_P pivot;
+					simplexNode* pivot;
 					while(!cofaceList.empty()){
 						pivot = cofaceList.front();
 
@@ -143,7 +161,9 @@ void fastPersistence::runPipe(pipePacket &inData){
 						std::pop_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
 						cofaceList.pop_back();
 
-						if(!cofaceList.empty() && pivot == cofaceList.front()){ //Coface is in twice -> evaluates to 0 mod 2
+						if(!cofaceList.empty() && pivot->hash == cofaceList.front()->hash){ //Coface is in twice -> evaluates to 0 mod 2
+							delete pivot;
+							delete cofaceList.front();
 
 							//Rotate the heap
 							std::pop_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
@@ -158,9 +178,9 @@ void fastPersistence::runPipe(pipePacket &inData){
 
 					if(cofaceList.empty()){ //Column completely reduced
 						break;
-					} else if(pivotPairs.find(pivot) == pivotPairs.end()){ //Column cannot be reduced
-						pivotPairs.insert({pivot, simplex});
-						nextPivots.push_back(pivot);
+					} else if(pivotPairs.find(pivot->hash) == pivotPairs.end()){ //Column cannot be reduced
+						pivotPairs.insert({pivot->hash, simplex});
+						nextPivots.push_back(std::shared_ptr<simplexNode>(pivot));
 
 						std::sort(columnV.begin(), columnV.end());
 						auto it = columnV.begin();
@@ -170,6 +190,9 @@ void fastPersistence::runPipe(pipePacket &inData){
 							++it;
 						}
 
+						//Don't delete the first entry because that is converted to a smart pointer and stored as a pivot
+						for(int i=1; i<cofaceList.size(); i++) delete cofaceList[i];
+
 						if(simplex->weight != pivot->weight){
 							bettiBoundaryTableEntry des = { d, simplex->weight, pivot->weight, ut.extractBoundaryPoints(v[simplex]) };
 							inData.bettiTable.push_back(des);
@@ -177,9 +200,9 @@ void fastPersistence::runPipe(pipePacket &inData){
 
 						break;
 					} else{ //Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
-						for(simplexNode_P simp : v[pivotPairs[pivot]]){
+						for(simplexNode_P simp : v[pivotPairs[pivot->hash]]){
 							columnV.push_back(simp);
-							std::vector<simplexNode_P> cofaces = inData.complex->getAllCofacets((simp->simplex));
+							std::vector<simplexNode*> cofaces = complex->getAllCofacets(simp);
 							cofaceList.insert(cofaceList.end(), cofaces.begin(), cofaces.end());
 						}
 						std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
@@ -208,7 +231,7 @@ void fastPersistence::runPipe(pipePacket &inData){
 
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-void fastPersistence::outputData(pipePacket &inData){
+void incrementalPersistence::outputData(pipePacket &inData){
 	std::ofstream file;
 	if(fnmod.size() > 0)
 		file.open("output/"+pipeType+"_bettis_output"+fnmod+".csv");
@@ -238,7 +261,7 @@ void fastPersistence::outputData(pipePacket &inData){
 
 
 // configPipe -> configure the function settings of this pipeline segment
-bool fastPersistence::configPipe(std::map<std::string, std::string> &configMap){
+bool incrementalPersistence::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
 
 	auto pipe = configMap.find("debug");
@@ -267,8 +290,8 @@ bool fastPersistence::configPipe(std::map<std::string, std::string> &configMap){
 		fnmod = configMap["fn"];
 
 	configured = true;
-	ut.writeDebug("fastPersistence","Configured with parameters { dim: " + configMap["dimensions"] + ", complexType: " + configMap["complexType"] + ", eps: " + configMap["epsilon"]);
-	ut.writeDebug("fastPersistence","\t\t\t\tdebug: " + strDebug + ", outputFile: " + outputFile + " }");
+	ut.writeDebug("incrementalPersistence","Configured with parameters { dim: " + configMap["dimensions"] + ", complexType: " + configMap["complexType"] + ", eps: " + configMap["epsilon"]);
+	ut.writeDebug("incrementalPersistence","\t\t\t\tdebug: " + strDebug + ", outputFile: " + outputFile + " }");
 
 	return true;
 }

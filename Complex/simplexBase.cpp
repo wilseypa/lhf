@@ -9,9 +9,8 @@
 
 simplexBase::simplexBase(){return;}
 
-simplexBase::simplexBase(std::map<std::string, std::string> configMap){
+simplexBase::simplexBase(std::map<std::string, std::string> &configMap){
 	setConfig(configMap);
-
 	return;
 }
 
@@ -20,7 +19,7 @@ simplexBase::simplexBase(double maxE, int maxDim){
 	maxDimension = maxDim;
 }
 
-void simplexBase::setConfig(std::map<std::string, std::string> configMap){
+void simplexBase::setConfig(std::map<std::string, std::string> &configMap){
 	std::string debug;
 	std::string outputFile;
 
@@ -52,43 +51,44 @@ void simplexBase::setDistanceMatrix(std::vector<std::vector<double>>* _distMatri
 }
 
 // simplexTree constructor, currently no needed information for the class constructor
-simplexBase* simplexBase::newSimplex(const std::string &simplexT, std::map<std::string, std::string> configMap){
-	simplexType = simplexT;
-
-	if(simplexType == "simplexTree"){
-		auto t = new simplexTree(maxEpsilon, distMatrix, maxDimension);
+simplexBase* simplexBase::newSimplex(const std::string &simplexT, std::map<std::string, std::string> &configMap){
+	if(simplexT == "simplexTree"){
+		//maxEpsilon and maxDimension are overwritten by setConfig
+		auto t = new simplexTree(0, 0);
 		t->setConfig(configMap);
 		return t;
-	} else if (simplexType == "simplexArrayList"){
-		auto t = new simplexArrayList(maxEpsilon, maxDimension, distMatrix);
+	} else if (simplexT == "simplexArrayList"){
+		auto t = new simplexArrayList(0, 0);
 		t->setConfig(configMap);
 		return t;
 	}
 	return 0;
 }
 
+void simplexBase::setEnclosingRadius(double r){
+	maxEpsilon = r;
+}
 
-std::set<simplexNode*, cmpByWeight> simplexBase::getDimEdges(int dim){
+std::set<simplexNode_P, cmpByWeight> simplexBase::getDimEdges(int dim){
 	if(dim >= simplexList.size()){
 		ut.writeLog(simplexType,"Error: requested dimension beyond complex");
-		std::set<simplexNode*, cmpByWeight> a;
+		std::set<simplexNode_P, cmpByWeight> a;
 		return a;
 	}
 	return simplexList[dim];
 }
 
-std::vector<std::set<simplexNode*, cmpByWeight>> simplexBase::getAllEdges(){
+std::vector<std::set<simplexNode_P, cmpByWeight>> simplexBase::getAllEdges(){
 	return simplexList;
 }
 
-std::vector<simplexNode*> simplexBase::getAllCofacets(const std::set<unsigned>& simplex){
-	return getAllCofacets(simplex, 0, std::unordered_map<simplexNode*, simplexNode*>(), false);
+std::vector<simplexNode_P> simplexBase::getAllCofacets(const std::set<unsigned>& simplex){
+	return getAllCofacets(simplex, 0, std::unordered_map<simplexNode_P, simplexNode_P>(), false);
 }
 
-std::vector<simplexNode*> simplexBase::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode*, simplexNode*>& pivotPairs, bool checkEmergent){
+std::vector<simplexNode_P> simplexBase::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode_P, simplexNode_P>& pivotPairs, bool checkEmergent){
 	ut.writeLog(simplexType,"No get cofacets function defined");
-	std::vector<simplexNode*> ret;
-	return ret;
+	return std::vector<simplexNode_P>();
 }
 
 double simplexBase::getSize(){
@@ -215,7 +215,4 @@ bool simplexBase::streamEvaluator(std::vector<double>& vector, std::vector<std::
 	return false;
 }
 
-void simplexBase::clear(){
-	ut.writeLog(simplexType,"No clear function defined");
-	return;
-}
+simplexBase::~simplexBase(){}

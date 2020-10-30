@@ -11,8 +11,9 @@ class upscalePipe : public basePipe {
 	int dim;
 	double scalarV;
     upscalePipe();
-    pipePacket runPipe(pipePacket inData);
-    bool configPipe(std::map<std::string, std::string> configMap);
-	void runSubPipeline(pipePacket);
+	void runSubPipeline(pipePacket&);
+	//void outputData(pipePacket&);
+    void runPipe(pipePacket&);
+    bool configPipe(std::map<std::string, std::string>&);    
 };
 

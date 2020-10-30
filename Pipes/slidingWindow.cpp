@@ -639,18 +639,18 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
                 {
                     std::cout << "Initializing complex" << std::endl;
 
-                    inData.originalData = windowValues;
+                    inData.workData = windowValues;
 
-                    distMatrix.resize(inData.originalData.size(), std::vector<double>(inData.originalData.size(),0));
+                    distMatrix.resize(inData.workData.size(), std::vector<double>(inData.workData.size(),0));
 
 					//Iterate through each vector
-                    for(unsigned i = 0; i < inData.originalData.size(); i++)
+                    for(unsigned i = 0; i < inData.workData.size(); i++)
                     {
-                        if(!inData.originalData[i].empty())
+                        if(!inData.workData[i].empty())
                         {
                             std::vector<double> distsFromCurrVect;
 
-                            for(unsigned j = 0; j < inData.originalData.size(); j++)
+                            for(unsigned j = 0; j < inData.workData.size(); j++)
                             {
                                 if (j < i)
                                 {
@@ -659,7 +659,7 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
                                 else if (j > i)
                                 {
                                     //Calculate vector distance
-                                    auto dist = ut.vectors_distance(inData.originalData[i], inData.originalData[j]);
+                                    auto dist = ut.vectors_distance(inData.workData[i], inData.workData[j]);
                                     distMatrix[i][j] = dist;
                                     distsFromCurrVect.push_back( dist );
                                 }
@@ -719,7 +719,7 @@ pipePacket slidingWindow::runPipe(pipePacket inData)
                 // intervals from the complex being maintained.
                 std::cout << "pointCounter: " << pointCounter << "\tSimplex Count: " << inData.complex->simplexCount() << "\tVertex Count: " << inData.complex->vertexCount() << std::endl;
                 std::cout << "\tWindowSize: " << windowValues.size() << std::endl;
-                inData.originalData = windowValues;
+                inData.workData = windowValues;
                 runSubPipeline(inData);
 
             }
@@ -758,7 +758,7 @@ void slidingWindow::writeComplexStats(pipePacket &inData)
 
 void slidingWindow::runSubPipeline(pipePacket wrData)
 {
-    if(wrData.originalData.size() == 0)
+    if(wrData.workData.size() == 0)
         return;
 
     pipePacket inData = wrData;
@@ -777,13 +777,13 @@ void slidingWindow::runSubPipeline(pipePacket wrData)
         pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
 
         //Build the pipe component, configure and run
-        auto *cp = basePipe::newPipe(curFunct, "simplexTree");
+        auto cp = basePipe::newPipe(curFunct, "simplexTree");
 
         //Check if the pipe was created and configure
         if(cp != 0 && cp->configPipe(subConfigMap))
         {
             //Run the pipe function (wrapper)
-            inData = cp->runPipeWrapper(inData);
+            cp->runPipeWrapper(inData);
         }
         else
         {
@@ -840,7 +840,7 @@ void slidingWindow::outputData(pipePacket inData)
 {
     std::ofstream file ("output/" + pipeType + "_" + std::to_string(repCounter) + "_output.csv");
 
-    for(auto a : inData.originalData)
+    for(auto a : inData.workData)
     {
         for(auto d : a)
         {

@@ -8,19 +8,45 @@
 
 class simplexTree : public simplexBase {
   private:
+	
+	//SimplexTreeNode wraps a simplexNode and tree pointers
+	struct simplexTreeNode{
+		struct cmpByIndex{
+			bool operator()(const simplexTreeNode* lhs, const simplexTreeNode* rhs) const{
+				return lhs->simpNode->index < rhs->simpNode->index;
+			}
+			bool operator()(const simplexTreeNode& lhs, const simplexTreeNode& rhs) const{
+				return lhs.simpNode->index < rhs.simpNode->index;
+			}
+		};
+		
+		simplexTreeNode* child = nullptr;
+		simplexTreeNode* sibling = nullptr;
+		simplexTreeNode* parent = nullptr;
+		std::set<simplexTreeNode*, cmpByIndex> children;
+		simplexNode_P simpNode;
+		
+		
+		
+		simplexTreeNode(){simpNode = std::make_shared<simplexNode>(simplexNode());}
+		simplexTreeNode(std::set<unsigned> simp, double wt){simpNode = std::make_shared<simplexNode>(simplexNode(simp, wt));}
+	};
+  
+	typedef std::shared_ptr<simplexTreeNode> simplexTreeNode_P;
+  
+	simplexTreeNode* find(std::set<unsigned>::iterator, std::set<unsigned>::iterator, simplexTreeNode*);
+  
   public:
-	simplexNode* head = nullptr; //First simplex in the tree (0 vertex)
-	simplexNode* root = nullptr; //Empty node at root of tree (empty simplex)
+	simplexTreeNode* root = nullptr; //Empty node at root of tree (empty simplex)
 
-	simplexTree(double, std::vector<std::vector<double>>*, int);
-	std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(simplexNode*, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
-	void printTree(simplexNode*);
-	void recurseInsert(simplexNode*, unsigned, int, double, std::set<unsigned>);
+	simplexTree(double, int);
+	std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(simplexTreeNode*, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
+	void printTree(simplexTreeNode*);
+	void recurseInsert(simplexTreeNode*, unsigned, int, double, std::set<unsigned>);
 	double findWeight(std::set<unsigned>);
-	void deleteIndexRecurse(int, simplexNode*);
+	void deleteIndexRecurse(int, simplexTreeNode*);
 	void deleteWeightEdgeGraph(int index);
 
-	simplexNode* find(std::set<unsigned>::iterator, std::set<unsigned>::iterator, simplexNode*);
 
 	//virtual interface functions
 	void outputComplex();
@@ -34,9 +60,9 @@ class simplexTree : public simplexBase {
 	int simplexCount();
 	int vertexCount();
 	void prepareCofacets(int){return;}
-	std::vector<simplexNode*> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode*, simplexNode*>&, bool);
+	std::vector<simplexNode_P> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode_P, simplexNode_P>&, bool);
 	bool deletion(std::set<unsigned>);
-	bool deletion(simplexNode*);
+	bool deletion(simplexTreeNode*);
 	void expandDimensions(int){return;};
 	void reduceComplex();
 	void clear();

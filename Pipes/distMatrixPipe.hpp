@@ -6,11 +6,11 @@
 
 class distMatrixPipe : public basePipe {
   private:
-	double maxEpsilon;
+	double enclosingRadius;
   public:
     distMatrixPipe();
-    pipePacket runPipe(pipePacket inData);
-    bool configPipe(std::map<std::string, std::string> configMap);
-	void outputData(pipePacket);
+    void runPipe(pipePacket& inData);
+    bool configPipe(std::map<std::string, std::string> &configMap);
+	void outputData(pipePacket&);
 };
 
