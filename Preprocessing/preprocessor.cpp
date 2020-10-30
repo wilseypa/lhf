@@ -81,8 +81,8 @@ pipePacket preprocessor::runPreprocessorWrapper(pipePacket inData){
 	*/
 	inData.stats += procName + "," + std::to_string(elapsed.count()/1000.0) + "\n"; // + "," + std::to_string(dataSize) + "," + unit + "\n";
 	
-	outputData(inData.originalData);
-	outputData(inData.originalLabels);
+	outputData(inData.workData);
+	outputData(inData.centroidLabels);
 	
 	return inData;
 }

@@ -25,7 +25,7 @@ Additional pipelines have been created for preprocessing, approximations of the 
 
 ###  RUNNING 
 
-	##    cd LHF
+	##    cd LHFmain
 	##    ./LHF <args>
 
 ---

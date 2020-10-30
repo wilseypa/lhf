@@ -104,30 +104,30 @@ pipePacket denStream::runPreprocessor(pipePacket inData){
 
   ///////initialize p micro clusters... DBSCAN first N points (N has to be less than size of input data to simulate stream)///////
   //this returns cluster labels corresponding to current points
-  std::vector<int> clusterLabels = dbscan::cluster(inData.originalData, minPoints, epsilon, initPoints);
+  std::vector<int> clusterLabels = dbscan::cluster(inData.workData, minPoints, epsilon, initPoints);
   int pClusters = *std::max_element(clusterLabels.begin(), clusterLabels.end()); //Number of clusters found
 
   timestamp = initPoints/streamSpeed;
   numPerTime = initPoints % streamSpeed;
 
   if(pClusters == -1) pClusters = 1;
-  pMicroClusters = std::vector<microCluster>(pClusters, microCluster(timestamp, inData.originalData[0].size(), lambda));
+  pMicroClusters = std::vector<microCluster>(pClusters, microCluster(timestamp, inData.workData[0].size(), lambda));
 
   //Take labels of each point and insert into appropriate microCluster
   for(int i = 0; i<initPoints; i++){
     if(clusterLabels[i] != -1){ //Not noise
-      pMicroClusters[clusterLabels[i]-1].insertPoint(inData.originalData[i], timestamp);
+      pMicroClusters[clusterLabels[i]-1].insertPoint(inData.workData[i], timestamp);
     }
   }
 
-  for(int i = initPoints; i<inData.originalData.size(); i++){
+  for(int i = initPoints; i<inData.workData.size(); i++){
     numPerTime++;
     if(numPerTime == streamSpeed){ //1 unit time has elapsed
       numPerTime = 0;
       timestamp++;
     }
 
-    merging(inData.originalData, i, timestamp);
+    merging(inData.workData, i, timestamp);
 
     if(timestamp % Tp == 0 && numPerTime == 0){ //Check microclusters after Tp units of time
       auto itP = pMicroClusters.begin();
@@ -159,7 +159,7 @@ pipePacket denStream::runPreprocessor(pipePacket inData){
     centers[i] = pMicroClusters[i].getCenter();
   }
 
-  inData.originalData = centers;
+  inData.workData = centers;
 	return inData;
 }
 
