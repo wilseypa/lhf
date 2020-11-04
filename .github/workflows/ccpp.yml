@@ -39,4 +39,4 @@ jobs:
       with:
         path: "docs/html"
       env:
-        GH_PERSONAL_ACCESS_TOKEN: ${{ secret.GH_PERSONAL_ACCESS_TOKEN }}
+        GH_PERSONAL_ACCESS_TOKEN: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
