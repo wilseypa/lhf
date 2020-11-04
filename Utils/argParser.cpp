@@ -72,6 +72,11 @@ void argParser::printUsage(){
 	return;
 }
 
+
+// argParser::parse -> Parse through arguments and return a map (dictionary)
+//		-argc - argument count from Main()
+//		-argv - array of arguments from Main()
+// 
 std::map<std::string, std::string> argParser::parse(int argc, char** argv){
 	std::map<std::string,std::string> retVal;
 	//Remove and map the initial arguments (may be led with -- or -)

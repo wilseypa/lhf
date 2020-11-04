@@ -2,24 +2,6 @@
 # and include sub-projects here.
 #
 enable_testing()
-option(BUILD_DOC "Build documentation" ON)
-
-
-#Build doxygen documentation
-find_package(Doxygen)
-if (DOXYGEN_FOUND)
-	
-	set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/docs/Doxyfile.in)
-	set(DOXYGEN_OUT ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
-	
-	configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
-	
-	add_custom_target( doc_doxygen ALL
-		COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
-		COMMENT "Generating Doxygen API documentation"
-		VERBATIM )
-endif (DOXYGEN_FOUND)
-
 
 cmake_minimum_required(VERSION 3.5)
 set (CMAKE_CXX_STANDARD_LIBRARIES "-lpthread")
