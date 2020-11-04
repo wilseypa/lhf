@@ -16,7 +16,7 @@ jobs:
     steps:
     # Get dependencies
     - name: Get dependencies
-      run: sudo apt-get install -y openmpi-bin openmpi-common libopenmpi-dev cppcheck
+      run: sudo apt-get install -y openmpi-bin openmpi-common libopenmpi-dev cppcheck doxygen
           
     # Checkout v2 : https://github.com/actions/checkout
     - uses: actions/checkout@v2
@@ -29,5 +29,14 @@ jobs:
     - name: ctest
       run: make test
     
+    # Run cppcheck
     - name: cppcheck
       run: cppcheck --enable=all --force .
+
+    # Generate and publish doxygen documentation to wiki
+    - name: Upload Wiki documentation
+      uses: SwiftDocOrg/github-wiki-publish-action@v1
+      with:
+        path: "docs/html"
+      env:
+        GH_PERSONAL_ACCESS_TOKEN: ${{ secret.GH_PERSONAL_ACCESS_TOKEN }}

@@ -10,7 +10,6 @@
 
  
 
-
 void LHF::outputBettis(std::map<std::string, std::string> args, pipePacket &wD){
 	auto ws = writeOutput();
 
@@ -25,6 +24,8 @@ void LHF::outputBettis(std::map<std::string, std::string> args, pipePacket &wD){
 		}
 	}
 }
+
+
 
 void LHF::runPipeline(std::map<std::string, std::string> args, pipePacket &wD){
 	// Begin processing parts of the pipeline
@@ -80,6 +81,7 @@ void LHF::processDataWrapper(std::map<std::string, std::string> args, pipePacket
 		delete prePipe;
 	}
 }	
+
 
 std::vector<bettiBoundaryTableEntry> LHF::processIterUpscale(std::map<std::string, std::string> args, pipePacket &wD, bool runPartition){
 	
