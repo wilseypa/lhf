@@ -34,9 +34,16 @@ jobs:
       run: cppcheck --enable=all --force .
 
     # Generate and publish doxygen documentation to wiki
-    - name: Upload Wiki documentation
-      uses: SwiftDocOrg/github-wiki-publish-action@v1
+    #- name: Upload Wiki documentation
+    #  uses: SwiftDocOrg/github-wiki-publish-action@v1
+    #  with:
+    #    path: "docs/html"
+    #  env:
+    #    GH_PERSONAL_ACCESS_TOKEN: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+        
+    - name: Publish generated content to GitHub Pages
+      uses: tsunematsu21/actions-publish-gh-pages@v1.0.1
       with:
-        path: "docs/html"
-      env:
-        GH_PERSONAL_ACCESS_TOKEN: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+        dir: docs/html
+        branch: master
+        token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
