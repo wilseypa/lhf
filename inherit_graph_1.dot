@@ -1,0 +1,25 @@
+digraph "Graphical Class Hierarchy"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node0 [label="basePipe",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classbasePipe.html"];
+  Node0 -> Node1 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node1 [label="distMatrixPipe",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classdistMatrixPipe.html"];
+  Node0 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="fastPersistence",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classfastPersistence.html"];
+  Node0 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="incrementalPersistence",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classincrementalPersistence.html"];
+  Node0 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="naiveWindow",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classnaiveWindow.html"];
+  Node0 -> Node5 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="neighGraphPipe",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classneighGraphPipe.html"];
+  Node0 -> Node6 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 [label="persistencePairs",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classpersistencePairs.html"];
+  Node0 -> Node7 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node7 [label="ripsPipe",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classripsPipe.html"];
+  Node0 -> Node8 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node8 [label="slidingWindow",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classslidingWindow.html"];
+  Node0 -> Node9 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node9 [label="upscalePipe",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classupscalePipe.html"];
+}
