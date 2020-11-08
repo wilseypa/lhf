@@ -18,7 +18,7 @@ argParser::argParser(){
 }
 
 // argParser::defaultArguments -> 
-std::map<std::string, std::string> argParser::defaultArguments(std::map<std::string, std::string>  &map){
+void argParser::defaultArguments(std::map<std::string, std::string>  &map){
 	
 	//Loop through each pair in argMap (maps shorthand arguments)
 	//	if the short argument exists, replace it
@@ -35,8 +35,6 @@ std::map<std::string, std::string> argParser::defaultArguments(std::map<std::str
 			}
 		}
 	}
-	
-	return map;
 }
 
 

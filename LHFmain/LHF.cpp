@@ -97,9 +97,6 @@ std::vector<bettiBoundaryTableEntry> LHF::processIterUpscale(std::map<std::strin
 	auto threads = std::atoi(args["threads"].c_str());
 	auto clusters = std::atoi(args["clusters"].c_str());
 	
-	//		Referenced Libraries
-	utils ut;
-	
 	//		Local Storage
 	std::vector<bettiBoundaryTableEntry> mergedBettiTable;
 	std::vector<bettiBoundaryTableEntry> partBettiTable[threads];
@@ -120,8 +117,8 @@ std::vector<bettiBoundaryTableEntry> LHF::processIterUpscale(std::map<std::strin
 	}
 
 	//		Compute partition statistics for fuzzy partition distance
-	auto maxRadius = ut.computeMaxRadius(clusters, iterwD.workData, iterwD.inputData, iterwD.centroidLabels);
-	auto avgRadius = ut.computeAvgRadius(clusters, iterwD.workData, iterwD.inputData, iterwD.centroidLabels);
+	auto maxRadius = utils::computeMaxRadius(clusters, iterwD.workData, iterwD.inputData, iterwD.centroidLabels);
+	auto avgRadius = utils::computeAvgRadius(clusters, iterwD.workData, iterwD.inputData, iterwD.centroidLabels);
 
 	//		Count the size of each partition for identifying source partitions when looking at the betti table results
 	std::vector<unsigned> binCounts;
@@ -129,11 +126,11 @@ std::vector<bettiBoundaryTableEntry> LHF::processIterUpscale(std::map<std::strin
 		binCounts.push_back(std::count(iterwD.centroidLabels.begin(), iterwD.centroidLabels.end(), a));
 	}
 	std::cout << "Bin Counts: ";
-	ut.print1DVector(binCounts);
+	utils::print1DVector(binCounts);
 	
 	//		Sort our fuzzy partitions into individual vectors
 	args["scalarV"] = std::to_string(scalar*maxRadius);
-	auto partitionedData = ut.separatePartitions(std::atof(args["scalarV"].c_str()), iterwD.workData, iterwD.inputData, iterwD.centroidLabels);
+	auto partitionedData = utils::separatePartitions(std::atof(args["scalarV"].c_str()), iterwD.workData, iterwD.inputData, iterwD.centroidLabels);
 	std::cout << "Using scalar value: " << args["scalarV"] << std::endl;
 	std::cout << "Partitions: " << partitionedData.second.size() << std::endl << "Partition Bin Counts: ";
 	
@@ -141,7 +138,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processIterUpscale(std::map<std::strin
 	std::vector<unsigned> partitionsize;
 	for(auto a: partitionedData.second)
 		partitionsize.push_back(a.size());
-	ut.print1DVector(partitionsize);
+	utils::print1DVector(partitionsize);
 	
 	//		Append the centroid dataset to run in parallel as well
 	partitionedData.second.push_back(iterwD.workData);
@@ -204,10 +201,10 @@ std::vector<bettiBoundaryTableEntry> LHF::processIterUpscale(std::map<std::strin
 				delete curwD.complex;
 				//4. Process and merge bettis - whether they are from runPipeline or IterUpscale
 				bool foundExt = false;
-				// ut.extractBoundaryPoints(curwD.bettiTable);
+				// utils::extractBoundaryPoints(curwD.bettiTable);
 
 				//Remap the boundary indices into the original point space
-				curwD.bettiTable = ut.mapPartitionIndexing(partitionedData.first[z], curwD.bettiTable);
+				curwD.bettiTable = utils::mapPartitionIndexing(partitionedData.first[z], curwD.bettiTable);
 
 				for(auto betEntry : curwD.bettiTable){
 					auto boundIter = betEntry.boundaryPoints.begin();
@@ -298,7 +295,6 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 	auto clusters = std::atoi(args["clusters"].c_str());
 	
 	//Local classes for reading, writing, utilities
-	utils ut;
 	auto rs = readInput();
 
 	// check if 1 process only
@@ -373,10 +369,10 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 		originalLabels_size = wD.centroidLabels.size();
 		
 		//Separate our partitions for distribution
-		auto maxRadius = ut.computeMaxRadius(std::atoi(args["clusters"].c_str()), wD.workData, wD.inputData, wD.centroidLabels);
-		auto avgRadius = ut.computeAvgRadius(std::atoi(args["clusters"].c_str()), wD.workData, wD.inputData, wD.centroidLabels);
+		auto maxRadius = utils::computeMaxRadius(std::atoi(args["clusters"].c_str()), wD.workData, wD.inputData, wD.centroidLabels);
+		auto avgRadius = utils::computeAvgRadius(std::atoi(args["clusters"].c_str()), wD.workData, wD.inputData, wD.centroidLabels);
 
-       	auto partitionedData1 = ut.separatePartitions(scalar*maxRadius, wD.workData, wD.inputData, wD.centroidLabels);
+       	auto partitionedData1 = utils::separatePartitions(scalar*maxRadius, wD.workData, wD.inputData, wD.centroidLabels);
         
         partitionedData1.second.push_back(wD.workData);
 		//	Each node/slave will process at least 1 partition
@@ -451,7 +447,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 		}		
 		partitionsize_size = partitionsize.size();
 		std::cout << "partitionsize:";
-		ut.print1DVector(partitionsize);
+		utils::print1DVector(partitionsize);
 	}
 
 	//	broadcasting all the required information by slaves.
@@ -607,10 +603,10 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 				//4. Process and merge bettis - whether they are from runPipeline or IterUpscale
 				bool foundExt = false;
 				std::vector<bettiBoundaryTableEntry> temp;
-				//ut.extractBoundaryPoints(curwD.bettiTable);
+				//utils::extractBoundaryPoints(curwD.bettiTable);
 
 				//Remap the boundary indices into the original point space
-				curwD->bettiTable = ut.mapPartitionIndexing(partitionedData.first[z], curwD->bettiTable);
+				curwD->bettiTable = utils::mapPartitionIndexing(partitionedData.first[z], curwD->bettiTable);
                		
 				for(auto betEntry : curwD->bettiTable){
 					auto boundIter = betEntry.boundaryPoints.begin();

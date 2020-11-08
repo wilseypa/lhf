@@ -44,13 +44,12 @@ int main(int argc, char* argv[]){
 	//Define external classes used for reading input, parsing arguments, writing output
 	auto lhflib = LHF();
 	auto rs = readInput();
-	auto ap = argParser();
 	
 	//Parse the command-line arguments
-	auto args = ap.parse(argc, argv);
+	auto args = argParser::parse(argc, argv);
 	
 	//Determine what pipe we will be running
-	ap.setPipeline(args);
+	argParser::setPipeline(args);
 	
 	//Create a pipePacket (datatype) to store the complex and pass between engines
 	auto wD = pipePacket(args, args["complexType"]);	//wD (workingData)
@@ -60,7 +59,7 @@ int main(int argc, char* argv[]){
 		wD.inputData = rs.readCSV(args["inputFile"]);
 		wD.workData = wD.inputData;
 	}
-	
+
 	//If data was found in the inputFile
 	if(wD.inputData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
 
@@ -87,17 +86,15 @@ int main(int argc, char* argv[]){
 		lhflib.outputBettis(args, wD);
 
 	} else {
-		ap.printUsage();
+		argParser::printUsage();
 	}
-	
-	utils ut;
-	
+		
 	if((args["debug"] == "1" || args["debug"] == "true") && wD.bettiTable.size() > 0 ){
 		std::cout << std::endl << "_______Merged BETTIS_______" << std::endl;
 
 		for(auto a : wD.bettiTable){
 			std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
-			ut.print1DVector(a.boundaryPoints);
+			utils::print1DVector(a.boundaryPoints);
 		}
 	}
 	
