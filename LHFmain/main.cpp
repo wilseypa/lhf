@@ -9,6 +9,7 @@
 #include <string> 
 
 int main(int argc, char* argv[]){
+	double start = omp_get_wtime();
 	//	Steps to compute PH with preprocessing:
 	//
 	//		1.  Preprocess the input data
@@ -59,6 +60,7 @@ int main(int argc, char* argv[]){
 		wD.inputData = rs.readCSV(args["inputFile"]);
 		wD.workData = wD.inputData;
 	}
+	
 	//If data was found in the inputFile
 	if(wD.inputData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
 
@@ -71,26 +73,19 @@ int main(int argc, char* argv[]){
 			wD.bettiTable = lhflib.processUpscaleWrapper(args, wD);
 			sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
 			MPI_Finalize();
-			
-			//Output the data using writeOutput library
-			lhflib.outputBettis(args, wD);
 
 		} else if(args["mode"] == "reduced" || args["mode"] == "iterUpscale" || args["mode"] == "iter"){	
 			wD.bettiTable = lhflib.processIterUpscale(args,wD);
 			sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
-			//Output the data using writeOutput library
-			lhflib.outputBettis(args, wD);
 			
 		} else {
 			lhflib.processDataWrapper(args, wD);
 			lhflib.runPipeline(args, wD);
-			
-			//Output the data using writeOutput library
-			lhflib.outputBettis(args, wD);
-			
-			
-			
 		}
+
+		//Output the data using writeOutput library
+		lhflib.outputBettis(args, wD);
+
 	} else {
 		ap.printUsage();
 	}
@@ -107,6 +102,9 @@ int main(int argc, char* argv[]){
 	}
 	
 	delete wD.complex;
+
+	double end = omp_get_wtime();
+	std::cout<<"Time in seconds: "<<end-start<<'\n';
 
 	return 0;
 }

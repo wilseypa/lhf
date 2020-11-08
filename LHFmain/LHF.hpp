@@ -17,18 +17,12 @@ struct sortBettis{
 class LHF {
   private:
 	
-  
   public:
-	
 	int nprocs,id;
-
-
 
 	void outputBettis(std::map<std::string, std::string>, pipePacket &);
 	void runPipeline(std::map<std::string, std::string>, pipePacket &);
 	void processDataWrapper(std::map<std::string, std::string>, pipePacket &);
-	std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, std::string> args, pipePacket &wd){return processIterUpscale(args, wd, true);}
-	std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, std::string>, pipePacket &, bool);
+	std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, std::string>, pipePacket &, bool = true);
 	std::vector<bettiBoundaryTableEntry> processUpscaleWrapper(std::map<std::string, std::string>, pipePacket &);
-
 };

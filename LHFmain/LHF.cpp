@@ -8,20 +8,15 @@
 #include <thread>
 #include <string> 
 
- 
-
-
 void LHF::outputBettis(std::map<std::string, std::string> args, pipePacket &wD){
-	auto ws = writeOutput();
-
 	//Output the data using writeOutput library
 	auto pipe = args.find("outputFile");
 	if(pipe != args.end()){
 		if (args["outputFile"] == "console"){
 			//ws->writeConsole(wD);
 		} else {
-			ws.writeStats(wD.stats, args["outputFile"]);
-			ws.writeBarcodes(wD.bettiTable, args["outputFile"]);	
+			writeOutput::writeStats(wD.stats, args["outputFile"]);
+			writeOutput::writeBarcodes(wD.bettiTable, args["outputFile"]);	
 		}
 	}
 }
@@ -209,7 +204,6 @@ std::vector<bettiBoundaryTableEntry> LHF::processIterUpscale(std::map<std::strin
 				delete curwD.complex;
 				//4. Process and merge bettis - whether they are from runPipeline or IterUpscale
 				bool foundExt = false;
-				std::vector<bettiBoundaryTableEntry> temp;
 				// ut.extractBoundaryPoints(curwD.bettiTable);
 
 				//Remap the boundary indices into the original point space
@@ -237,13 +231,13 @@ std::vector<bettiBoundaryTableEntry> LHF::processIterUpscale(std::map<std::strin
 							
 							//Check if second entry is in the partition
 							if(iterwD.centroidLabels[*boundIter] == z){
-								temp.push_back(betEntry);
+								partBettiTable[np].push_back(betEntry);
 							} else if(!foundExt){
 								foundExt = true;
-								temp.push_back(betEntry);
+								partBettiTable[np].push_back(betEntry);
 							}						
 						} else{
-							temp.push_back(betEntry);
+							partBettiTable[np].push_back(betEntry);
 						}
 					}
 				}
@@ -254,17 +248,17 @@ std::vector<bettiBoundaryTableEntry> LHF::processIterUpscale(std::map<std::strin
 				// 	temp.push_back(des);
 				// }
 		
-				for(auto newEntry : temp){
-					bool found = false;
-					for(auto curEntry : partBettiTable[np]){
-						if(newEntry.death == curEntry.death && newEntry.boundaryPoints == curEntry.boundaryPoints){
-							found = true;
-						}
-					}
-					if(!found)
-						partBettiTable[np].push_back(newEntry);
-				}
-				
+				// for(auto newEntry : temp){
+				// 	bool found = false;
+				// 	for(auto curEntry : partBettiTable[np]){
+				// 		if(newEntry.death == curEntry.death && newEntry.boundaryPoints == curEntry.boundaryPoints){
+				// 			found = true;
+				// 		}
+				// 	}
+				// 	if(!found)
+				// 		partBettiTable[np].push_back(newEntry);
+				// }
+
 			} else 
 				std::cout << "skipping" << std::endl;
 		}
@@ -304,7 +298,6 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 	auto clusters = std::atoi(args["clusters"].c_str());
 	
 	//Local classes for reading, writing, utilities
-	auto ws = writeOutput();
 	utils ut;
 	auto rs = readInput();
 
