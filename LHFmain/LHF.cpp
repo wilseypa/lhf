@@ -136,14 +136,19 @@ std::vector<bettiBoundaryTableEntry> LHF::processIterUpscale(std::map<std::strin
 	
 	//		Get sizes of the new fuzzy partitions
 	std::vector<unsigned> partitionsize;
-	for(auto a: partitionedData.second)
-		partitionsize.push_back(a.size());
+	//		Process fuzzy partitions in order of size
+	std::vector<std::pair<unsigned, unsigned>> sortpartitions;
+
+	for(int i = 0; i < partitionedData.second.size(); i++){
+		partitionsize.push_back(partitionedData.second[i].size());
+		sortpartitions.push_back(std::make_pair(partitionedData.second[i].size(), i));
+	}
 	utils::print1DVector(partitionsize);
-	
+	std::sort(sortpartitions.begin(), sortpartitions.end());
+
 	//		Append the centroid dataset to run in parallel as well
 	partitionedData.second.push_back(iterwD.workData);
-	
-	
+
 	//3. Process each partition using OpenMP to handle multithreaded scheduling
 	
 	std::cout << "Running with " << threads << " threads" << std::endl;
@@ -158,10 +163,10 @@ std::vector<bettiBoundaryTableEntry> LHF::processIterUpscale(std::map<std::strin
 		//		Schedule each thread to compute one of the partitions in any order
 		//			When finished, thread will grab next iteration available
 		#pragma omp for schedule(dynamic)
-		for(int z = partitionedData.second.size()-1; z >= 0; z--){
+		for(int p = partitionedData.second.size()-1; p >= 0; p--){
 			
 			//Check if we are running the centroid dataset (there's no label associated)
-			if(z == partitionedData.first.size()){
+			if(p == partitionedData.first.size()){
 				//		Run on full dataset
 				//		Set the pipeline to include the boundary and upscaling steps
 				auto centArgs = args;
@@ -172,8 +177,8 @@ std::vector<bettiBoundaryTableEntry> LHF::processIterUpscale(std::map<std::strin
 					
 				//Run against the original dataset
 			
-				if(partitionedData.second[z].size() > 0){
-					iterwD.workData = partitionedData.second[z];
+				if(partitionedData.second[p].size() > 0){
+					iterwD.workData = partitionedData.second[p];
 					runPipeline(centArgs, iterwD);
 					
 					//wD.complex->clear();
@@ -183,8 +188,9 @@ std::vector<bettiBoundaryTableEntry> LHF::processIterUpscale(std::map<std::strin
 					
 				//Determine if we need to upscale any additional boundaries based on the output of the centroid approximated PH
 					
-			} else if(partitionedData.second[z].size() > 0){
-				
+			} else if(sortpartitions[p].first > 0){ //Nonempty partition
+				unsigned z = sortpartitions[p].second;
+
 				//		Clone the pipePacket to prevent shared memory race conditions
 				auto curwD = pipePacket(args, args["complexType"]);	
 				curwD.workData = partitionedData.second[z];
@@ -269,7 +275,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processIterUpscale(std::map<std::strin
 		
 	//		Merge bettis from the centroid based data
 	for(auto betEntry : iterwD.bettiTable){
-		if(betEntry.bettiDim > 0 ){
+		if(betEntry.bettiDim > 0){
 			mergedBettiTable.push_back(betEntry);
 		}
 	}
