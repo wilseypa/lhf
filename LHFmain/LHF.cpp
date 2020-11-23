@@ -580,9 +580,9 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 				//		Set the pipeline to include the boundary and upscaling steps
 				auto centArgs = args;
 				if(args["upscale"] == "true" || args["upscale"] == "1")
-					centArgs["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence.boundary.upscale";
+					centArgs["pipeline"] = "distMatrix.neighGraph.incrementalPersistence.upscale";
 				else
-					centArgs["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
+					centArgs["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";
 					
 				//Run against the original dataset
 			
@@ -605,11 +605,11 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 				
 				//		If the current partition is smaller than the threshold, process
 				//			Otherwise recurse to reduce the number of points
-				if(args["mode"] == "reduced" || partitionedData.second[z].size() < threshold){
+				//if(args["mode"] == "reduced" || partitionedData.second[z].size() < threshold){
 					runPipeline(args, *curwD);
-				} else {
-					curwD->bettiTable = processIterUpscale(args, *curwD);
-     			}
+				//} else {
+				//	curwD->bettiTable = processIterUpscale(args, *curwD);
+     			//}
 				delete curwD->complex;
 				//4. Process and merge bettis - whether they are from runPipeline or IterUpscale
 				bool foundExt = false;

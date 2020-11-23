@@ -112,11 +112,11 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 	if(args["pipeline"] == ""){
 		if(args["mode"] == "mpi"){
 			//Set up our pipeline
-			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
+			args["complexType"] = "simplexArrayList";
+			args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";
 			if(args["preprocessor"] == ""){
 				args["preprocessor"] = "kmeans++";
 			}
-			args["upscale"] = "true";
 		}else if(args["mode"] == "standard"){
 			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
 		}else if(args["mode"] == "reduced"){
