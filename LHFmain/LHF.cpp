@@ -6,10 +6,7 @@
 #include <algorithm>
 #include <typeinfo>
 #include <thread>
-#include <string> 
-
- 
-
+#include <string>
 
 void LHF::outputBettis(std::map<std::string, std::string> args, pipePacket &wD){
 	auto ws = writeOutput();
@@ -81,6 +78,167 @@ void LHF::processDataWrapper(std::map<std::string, std::string> args, pipePacket
 	}
 }	
 
+std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, std::string> args, 	std::vector<unsigned> &centroidLabels, std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> &partitionedData, int displacement){
+	//		Parameters	
+	auto threshold = std::atoi(args["threshold"].c_str());
+	auto maxEpsilon = std::atof(args["epsilon"].c_str());
+	auto threads = std::atoi(args["threads"].c_str());
+	auto clusters = std::atoi(args["clusters"].c_str());
+
+	utils ut;
+
+	//		Local Storage
+	std::vector<bettiBoundaryTableEntry> mergedBettiTable;
+	std::vector<bettiBoundaryTableEntry> partBettiTable[threads];
+	
+	//		Initalize a copy of the pipePacket
+	auto iterwD = pipePacket(args, args["complexType"]);
+
+	//3. Process each partition using OpenMP to handle multithreaded scheduling
+	std::cout << "Running with " << threads << " threads" << std::endl;
+	
+	//		This begins the parallel region; # threads are spun up within these braces
+	#pragma omp parallel num_threads(threads)
+	{
+		
+		//		Get the thread number with OpenMP - prevents simultaneous accesses to the betti tables
+		int np = omp_get_thread_num();
+		
+		//		Schedule each thread to compute one of the partitions in any order
+		//			When finished, thread will grab next iteration available
+		#pragma omp for schedule(dynamic)
+		for(int z = partitionedData.second.size()-1; z >= 0; z--){			
+			//Check if we are running the centroid dataset (there's no label associated)
+			//---------------------------------TODO: FIX WITH BOTH VERSIONS -------------------------------------------------------------
+			if(partitionedData.second[z].size() == clusters){
+				
+				std::cout<<"Running centroids with "<<clusters<<" clusters; id = "<<id<<std::endl;
+				//		Run on full dataset
+				//		Set the pipeline to include the boundary and upscaling steps
+				auto centArgs = args;
+				if(args["upscale"] == "true" || args["upscale"] == "1")
+					centArgs["pipeline"] = "distMatrix.neighGraph.incrementalPersistence.upscale";
+				else
+					centArgs["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";
+					
+				//Run against the original dataset
+			
+				if(partitionedData.second[z].size() > 0){
+					iterwD.inputData = partitionedData.second[z];
+					iterwD.workData = partitionedData.second[z];
+					runPipeline(centArgs, iterwD);
+
+					delete iterwD.complex;
+				} else 
+					std::cout << "skipping full data, no centroids" << std::endl;
+					
+				//Determine if we need to upscale any additional boundaries based on the output of the centroid approximated PH
+					
+			} else if(partitionedData.second[z].size() > 0){
+				
+				//		Clone the pipePacket to prevent shared memory race conditions
+				auto curwD = pipePacket(args, args["complexType"]);	
+				curwD.workData = partitionedData.second[z];
+				curwD.inputData = partitionedData.second[z];
+				
+				//		If the current partition is smaller than the threshold, process
+				//			Otherwise recurse to reduce the number of points
+				
+				if((args["mode"] == "iter" || args["mode"] == "iterUpscale") && partitionedData.second[z].size() >= threshold){
+					curwD.bettiTable = processIterUpscale(args, curwD);
+				} else{
+					runPipeline(args, curwD);
+				}
+
+				delete curwD.complex;
+
+				//4. Process and merge bettis - whether they are from runPipeline or IterUpscale
+				bool foundExt = false;
+				std::vector<bettiBoundaryTableEntry> temp;
+				//ut.extractBoundaryPoints(curwD.bettiTable);
+
+				//Remap the boundary indices into the original point space
+				curwD.bettiTable = ut.mapPartitionIndexing(partitionedData.first[z], curwD.bettiTable);
+               		
+				for(auto betEntry : curwD.bettiTable){
+					auto boundIter = betEntry.boundaryPoints.begin();
+					
+					//REWRITE::
+					
+					//The new (improved) approach to merging d0 bettis (pretty sure this works....)
+					//	1. Use a binary array to track each point within the original partition
+					//	2. Iterate the betti entries by weight, increasing
+					//		a. If both indices are less than the partition size, check the binary array
+					//			-If binary array for either of the two indices isn't filled, insert and fill all
+					//		b. If one index is less than the partition size, the other greater, and this is the first instance of this
+					//			-Add this to the connection list; this is the minimum connection outside of the partition
+					//		c. If neither of the indices are less than the partition size, remove
+					//	3. Once all entries have been iterated - if (b) was traversed there is a connection outside to another partition
+					//		-If (b) was not traversed, need to add a {0, maxEps} entry for the independent component (Check this?)
+					if(betEntry.boundaryPoints.size() > 0 && centroidLabels[*boundIter] == displacement+z){
+						if(betEntry.bettiDim == 0){
+							boundIter++;
+							
+							//Check if second entry is in the partition
+							if(centroidLabels[*boundIter] == displacement+z){
+								temp.push_back(betEntry);
+							} else if(!foundExt){
+								foundExt = true;
+								temp.push_back(betEntry);
+							}						
+						} else{
+							temp.push_back(betEntry);
+						}
+					}
+				}
+
+				// //If we never found an external connection, add the infinite connection here
+				// if(!foundExt){
+				// 	bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
+				// 	temp.push_back(des);
+				// }
+
+		      	for(auto newEntry : temp){
+					bool found = false;
+					for(auto curEntry : partBettiTable[np]){
+						if(newEntry.death == curEntry.death && newEntry.boundaryPoints == curEntry.boundaryPoints){
+							found = true;
+						}
+					}
+					if(!found)
+						partBettiTable[np].push_back(newEntry);
+				}
+								
+			} else 
+				std::cout << "skipping" << std::endl;
+		}
+	}
+
+	//5. Merge partitions, compute PH on original centroid dataset, and report results
+
+	//		Merge partitioned betti tables together
+	for(auto partTable : partBettiTable)
+		mergedBettiTable.insert(mergedBettiTable.end(), partTable.begin(), partTable.end());	
+
+		
+	//		Merge bettis from the centroid based data
+	// ---------------------------------- TODO: Fix for nprocs --------------------------------------
+	if(id == nprocs-1){
+		for(auto betEntry : iterwD.bettiTable){
+			if(betEntry.bettiDim > 0){
+				mergedBettiTable.push_back(betEntry);
+			}
+		}
+
+		//		Add open d0 intervals for the remaining d0 bettis
+		bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {} };
+		mergedBettiTable.push_back(des);
+	}
+
+	//		Return the final merged betti table for this iteration
+	return mergedBettiTable;
+}
+
 std::vector<bettiBoundaryTableEntry> LHF::processIterUpscale(std::map<std::string, std::string> args, pipePacket &wD, bool runPartition){
 	
 	//This function is called when the number of points in a partition are greater than the point threshold
@@ -151,146 +309,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processIterUpscale(std::map<std::strin
 	//		Append the centroid dataset to run in parallel as well
 	partitionedData.second.push_back(iterwD.workData);
 	
-	
-	//3. Process each partition using OpenMP to handle multithreaded scheduling
-	
-	std::cout << "Running with " << threads << " threads" << std::endl;
-	
-	//		This begins the parallel region; # threads are spun up within these braces
-	#pragma omp parallel num_threads(threads)
-	{
-		
-		//		Get the thread number with OpenMP - prevents simultaneous accesses to the betti tables
-		int np = omp_get_thread_num();
-		
-		//		Schedule each thread to compute one of the partitions in any order
-		//			When finished, thread will grab next iteration available
-		#pragma omp for schedule(dynamic)
-		for(int z = partitionedData.second.size()-1; z >= 0; z--){
-			
-			//Check if we are running the centroid dataset (there's no label associated)
-			if(z == partitionedData.first.size()){
-				//		Run on full dataset
-				//		Set the pipeline to include the boundary and upscaling steps
-				auto centArgs = args;
-				if(args["upscale"] == "true" || args["upscale"] == "1")
-					centArgs["pipeline"] = "distMatrix.neighGraph.incrementalPersistence.upscale";
-				else
-					centArgs["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";
-					
-				//Run against the original dataset
-			
-				if(partitionedData.second[z].size() > 0){
-					iterwD.workData = partitionedData.second[z];
-					runPipeline(centArgs, iterwD);
-					
-					//wD.complex->clear();
-					delete iterwD.complex;
-				} else 
-					std::cout << "skipping full data, no centroids" << std::endl;
-					
-				//Determine if we need to upscale any additional boundaries based on the output of the centroid approximated PH
-					
-			} else if(partitionedData.second[z].size() > 0){
-				
-				//		Clone the pipePacket to prevent shared memory race conditions
-				auto curwD = pipePacket(args, args["complexType"]);	
-				curwD.workData = partitionedData.second[z];
-				curwD.inputData = partitionedData.second[z];
-				
-				//		If the current partition is smaller than the threshold, process
-				//			Otherwise recurse to reduce the number of points
-				if(args["mode"] == "reduced" || partitionedData.second[z].size() < threshold){
-					runPipeline(args, curwD);
-				} else {
-					curwD.bettiTable = processIterUpscale(args, curwD);
-				}
-				
-				delete curwD.complex;
-				//4. Process and merge bettis - whether they are from runPipeline or IterUpscale
-				bool foundExt = false;
-				std::vector<bettiBoundaryTableEntry> temp;
-				// ut.extractBoundaryPoints(curwD.bettiTable);
-
-				//Remap the boundary indices into the original point space
-				curwD.bettiTable = ut.mapPartitionIndexing(partitionedData.first[z], curwD.bettiTable);
-
-				for(auto betEntry : curwD.bettiTable){
-					auto boundIter = betEntry.boundaryPoints.begin();
-					
-					//REWRITE::
-					
-					//The new (improved) approach to merging d0 bettis (pretty sure this works....)
-					//	1. Use a binary array to track each point within the original partition
-					//	2. Iterate the betti entries by weight, increasing
-					//		a. If both indices are less than the partition size, check the binary array
-					//			-If binary array for either of the two indices isn't filled, insert and fill all
-					//		b. If one index is less than the partition size, the other greater, and this is the first instance of this
-					//			-Add this to the connection list; this is the minimum connection outside of the partition
-					//		c. If neither of the indices are less than the partition size, remove
-					//	3. Once all entries have been iterated - if (b) was traversed there is a connection outside to another partition
-					//		-If (b) was not traversed, need to add a {0, maxEps} entry for the independent component (Check this?)
-					
-					if(betEntry.boundaryPoints.size() > 0 && iterwD.centroidLabels[*boundIter] == z){
-						if(betEntry.bettiDim == 0){
-							boundIter++;
-							
-							//Check if second entry is in the partition
-							if(iterwD.centroidLabels[*boundIter] == z){
-								temp.push_back(betEntry);
-							} else if(!foundExt){
-								foundExt = true;
-								temp.push_back(betEntry);
-							}						
-						} else{
-							temp.push_back(betEntry);
-						}
-					}
-				}
-
-				// //If we never found an external connection, add the infinite connection here
-				// if(!foundExt){
-				// 	bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
-				// 	temp.push_back(des);
-				// }
-		
-				for(auto newEntry : temp){
-					bool found = false;
-					for(auto curEntry : partBettiTable[np]){
-						if(newEntry.death == curEntry.death && newEntry.boundaryPoints == curEntry.boundaryPoints){
-							found = true;
-						}
-					}
-					if(!found)
-						partBettiTable[np].push_back(newEntry);
-				}
-				
-			} else 
-				std::cout << "skipping" << std::endl;
-		}
-	}
-	
-	//5. Merge partitions, compute PH on original centroid dataset, and report results
-	
-	//		Merge partitioned betti tables together
-	for(auto partTable : partBettiTable)
-		mergedBettiTable.insert(mergedBettiTable.end(), partTable.begin(), partTable.end());	
-		
-	//		Merge bettis from the centroid based data
-	for(auto betEntry : iterwD.bettiTable){
-		if(betEntry.bettiDim > 0 ){
-			mergedBettiTable.push_back(betEntry);
-		}
-	}
-		
-	// //		Add open d0 intervals for the remaining d0 bettis
-	// auto addlIntervals = std::count_if(mergedBettiTable.begin(), mergedBettiTable.end(), [&](bettiBoundaryTableEntry const &i) { return ( i.bettiDim == 0); });
-	// for(auto i = 0; i < originalDataSize - addlIntervals; i++)
-	bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {} };
-	mergedBettiTable.push_back(des);
-	
-	//		Return the final merged betti table for this iteration
-	return mergedBettiTable;
+	return processParallel(args, iterwD.centroidLabels, partitionedData);
 }
 
 
@@ -555,143 +574,9 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 	std::vector<bettiBoundaryTableEntry> mergedBettiTable;
 	std::vector<bettiBoundaryTableEntry> partBettiTable[threads];
 	auto originalDataSize = wD.workData.size();
-		
-	//3. Process each partition using OpenMP to handle multithreaded scheduling
-	
-	std::cout << "Running with " << threads << " threads" << std::endl;
-	
-	//		This begins the parallel region; # threads are spun up within these braces
-	#pragma omp parallel num_threads(threads)
-	{
-		
-		//		Get the thread number with OpenMP - prevents simultaneous accesses to the betti tables
-		int np = omp_get_thread_num();
-		
-		//		Schedule each thread to compute one of the partitions in any order
-		//			When finished, thread will grab next iteration available
-		#pragma omp for schedule(dynamic)
-		for(int z = partitionedData.second.size()-1; z >= 0; z--){
-			
-			//Check if we are running the centroid dataset (there's no label associated)
-			if(partitionedData.second[z].size() == clusters){
-				
-				std::cout<<"Running centroid "<<clusters<<"  id = "<<id<<std::endl;
-				//		Run on full dataset
-				//		Set the pipeline to include the boundary and upscaling steps
-				auto centArgs = args;
-				if(args["upscale"] == "true" || args["upscale"] == "1")
-					centArgs["pipeline"] = "distMatrix.neighGraph.incrementalPersistence.upscale";
-				else
-					centArgs["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";
-					
-				//Run against the original dataset
-			
-				if(partitionedData.second[z].size() > 0){
-					iterwD->workData = partitionedData.second[z];
-					runPipeline(centArgs, *iterwD);
-					delete iterwD->complex;
-				} else 
-					std::cout << "skipping full data, no centroids" << std::endl;
-					
-				//Determine if we need to upscale any additional boundaries based on the output of the centroid approximated PH
-					
-			} else if(partitionedData.second[z].size() > 0){
-				
-				//		Clone the pipePacket to prevent shared memory race conditions
-			
-				auto curwD = new pipePacket(args, args["complexType"]);	
-				curwD->workData = partitionedData.second[z];
-				curwD->inputData = partitionedData.second[z];
-				
-				//		If the current partition is smaller than the threshold, process
-				//			Otherwise recurse to reduce the number of points
-				//if(args["mode"] == "reduced" || partitionedData.second[z].size() < threshold){
-					runPipeline(args, *curwD);
-				//} else {
-				//	curwD->bettiTable = processIterUpscale(args, *curwD);
-     			//}
-				delete curwD->complex;
-				//4. Process and merge bettis - whether they are from runPipeline or IterUpscale
-				bool foundExt = false;
-				std::vector<bettiBoundaryTableEntry> temp;
-				//ut.extractBoundaryPoints(curwD.bettiTable);
 
-				//Remap the boundary indices into the original point space
-				curwD->bettiTable = ut.mapPartitionIndexing(partitionedData.first[z], curwD->bettiTable);
-               		
-				for(auto betEntry : curwD->bettiTable){
-					auto boundIter = betEntry.boundaryPoints.begin();
-					
-					//REWRITE::
-					
-					//The new (improved) approach to merging d0 bettis (pretty sure this works....)
-					//	1. Use a binary array to track each point within the original partition
-					//	2. Iterate the betti entries by weight, increasing
-					//		a. If both indices are less than the partition size, check the binary array
-					//			-If binary array for either of the two indices isn't filled, insert and fill all
-					//		b. If one index is less than the partition size, the other greater, and this is the first instance of this
-					//			-Add this to the connection list; this is the minimum connection outside of the partition
-					//		c. If neither of the indices are less than the partition size, remove
-					//	3. Once all entries have been iterated - if (b) was traversed there is a connection outside to another partition
-					//		-If (b) was not traversed, need to add a {0, maxEps} entry for the independent component (Check this?)
-					if(betEntry.boundaryPoints.size() > 0 && originalLabels[*boundIter] == displacement+z){
-						if(betEntry.bettiDim == 0){
-							boundIter++;
-							
-							//Check if second entry is in the partition
-							if(originalLabels[*boundIter] == displacement+z){
-								temp.push_back(betEntry);
-							} else if(!foundExt){
-								foundExt = true;
-								temp.push_back(betEntry);
-							}						
-						} else{
-							temp.push_back(betEntry);
-						}
-					}
-				}
+	mergedBettiTable = processParallel(args, originalLabels, partitionedData, displacement);
 
-				// //If we never found an external connection, add the infinite connection here
-				// if(!foundExt){
-				// 	bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
-				// 	temp.push_back(des);
-				// }
-		      	for(auto newEntry : temp){
-					bool found = false;
-					for(auto curEntry : partBettiTable[np]){
-						if(newEntry.death == curEntry.death && newEntry.boundaryPoints == curEntry.boundaryPoints){
-							found = true;
-						}
-					}
-					if(!found)
-						partBettiTable[np].push_back(newEntry);
-				}
-								
-			} else 
-				std::cout << "skipping" << std::endl;
-		}
-	}
-		
-	//		Merge partitioned betti tables together
-	for(auto partTable : partBettiTable)
-		mergedBettiTable.insert(mergedBettiTable.end(), partTable.begin(), partTable.end());	
-		
-		
-	//		Merge bettis from the centroid based data
-	if(id==nprocs-1)
-	{
-	for(auto betEntry : iterwD->bettiTable){
-		if(betEntry.bettiDim > 0 ){
-			mergedBettiTable.push_back(betEntry);
-		}
-	}
-	}
-	
-	// //		Add open d0 intervals for the remaining d0 bettis
-
-	bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {} };
-	mergedBettiTable.push_back(des);
-	
 		//Serialize bettie table to send to master process for merging
 		for(auto bet : mergedBettiTable){
 			betti_dim.push_back(bet.bettiDim);
