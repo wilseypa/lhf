@@ -85,8 +85,6 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 	auto threads = std::atoi(args["threads"].c_str());
 	auto clusters = std::atoi(args["clusters"].c_str());
 
-	utils ut;
-
 	//		Local Storage
 	std::vector<bettiBoundaryTableEntry> mergedBettiTable;
 	std::vector<bettiBoundaryTableEntry> partBettiTable[threads];
@@ -254,18 +252,10 @@ std::vector<bettiBoundaryTableEntry> LHF::processIterUpscale(std::map<std::strin
 	//1. Local objects and storage
 	
 	//		Parameters	
-	auto threshold = std::atoi(args["threshold"].c_str());
-	auto maxEpsilon = std::atof(args["epsilon"].c_str());
 	auto scalar = std::atof(args["scalar"].c_str());
-	auto threads = std::atoi(args["threads"].c_str());
 	auto clusters = std::atoi(args["clusters"].c_str());
 	
-	//		Referenced Libraries
-	utils ut;
-	
 	//		Local Storage
-	std::vector<bettiBoundaryTableEntry> mergedBettiTable;
-	std::vector<bettiBoundaryTableEntry> partBettiTable[threads];
 	auto originalDataSize = wD.inputData.size();
 	
 	//		Initalize a copy of the pipePacket
@@ -316,15 +306,10 @@ std::vector<bettiBoundaryTableEntry> LHF::processIterUpscale(std::map<std::strin
 std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket &wD){
 	
 	//Local arguments for controlling partitioning and merging
-	auto threshold = std::atoi(args["threshold"].c_str());
-	auto maxEpsilon = std::atof(args["epsilon"].c_str());
 	auto scalar = std::atof(args["scalar"].c_str());
-	auto threads = std::atoi(args["threads"].c_str());
 	auto clusters = std::atoi(args["clusters"].c_str());
 	
 	//Local classes for reading, writing, utilities
-	auto ws = writeOutput();
-	utils ut;
 	auto rs = readInput();
 
 	// check if 1 process only
@@ -414,18 +399,20 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 		//Get the partition sizes
 		for(auto a: partitionedData1.second)
 			 partitionsize.push_back(a.size());
+		
 		//serializing all the data 
 		for(auto a : partitionedData1.second)
 			for(auto b : a)
 				for(auto c : b)
 					sdata.push_back(c);
+	    
 	    //serialize all the labels
 		for(auto a : partitionedData1.first)
 			for(auto b : a)
 				sdatalabel.push_back(b);
 			
 	    //intitalizing to 0
-		for(int i=0;i<nprocs;i++){
+		for(int i=0; i<nprocs; i++){
 			scounts[i] = 0;
 			displs[i]= 0;
 			scountslabel[i] = 0;
@@ -433,48 +420,53 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 		}
 		
 		//distributing partitions sizes in scounts and scountslabel
-		int temp=0,k=0;
-         	for(auto a : partitionsize){
-			if(k<firstk){
-				if(temp>=minPartitions+1){
-					temp=0;
+		int temp = 0, k = 0;
+        for(auto a : partitionsize){
+			if(k < firstk){
+				if(temp >= minPartitions+1){
+					temp = 0;
 					k++;
 				}
-			}
-			else{
+			} else{
 				if(temp>=minPartitions){
 					temp=0;
 					k++;
-					}
+				}
 			}
 			scounts[k] += a*dimension;
 			scountslabel[k] +=a;
 			temp++;
 		}
+
 		k=0;
 		maxsize=0;
 		maxsizelabel=0;
 		auto bd = scounts[0];
+		
 		// find the maximum buffer size required for partition + offset for each partition
-        	for(auto  a : scounts){
+       	for(auto  a : scounts){
 			if(k>0)
-			displs[k] = bd + displs[k-1];
+				displs[k] = bd + displs[k-1];
 			k++;
 			bd = a;
+			
 			if(a>maxsize)
 				maxsize = a;
 		}
-		k=0;
+		
+		k = 0;
 		auto bl = scountslabel[0];
 		// find maximum buffer size required by label partition	+ offset for each partition
 		for(auto  a : scountslabel){
 			if(k>0)
-			displslabel[k] = bl + displslabel[k-1];
+				displslabel[k] = bl + displslabel[k-1];
 			k++;
 			bl=a;
+
 			if(a>maxsizelabel)
 				maxsizelabel = a;
 		}		
+
 		partitionsize_size = partitionsize.size();
 		std::cout << "partitionsize:";
 		ut.print1DVector(partitionsize);
@@ -511,19 +503,19 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
     receivedData = (double *)malloc(maxsize*sizeof(double));
 	receivedDataLabel = (unsigned *)malloc(maxsizelabel*sizeof(unsigned));
 	//Initializing buffers to zeros
-	for(int i=0;i<maxsize;i++){
-			receivedData[i] = 0.0;
+	for(int i=0; i<maxsize; i++){
+		receivedData[i] = 0.0;
 	}
-	for(int i=0;i<maxsizelabel;i++){
-			receivedDataLabel[i] = 0;
+	for(int i=0; i<maxsizelabel; i++){
+		receivedDataLabel[i] = 0;
 	}
 
 	//scatter the point cloud partitions to slaves.
-	MPI_Scatterv( &sdata[0],scounts,displs, MPI_DOUBLE, receivedData, maxsize, MPI_DOUBLE,0, MPI_COMM_WORLD);
+	MPI_Scatterv(&sdata[0], scounts,displs, MPI_DOUBLE, receivedData, maxsize, MPI_DOUBLE,0, MPI_COMM_WORLD);
 	// scatter label information
-	MPI_Scatterv( &sdatalabel[0],scountslabel,displslabel, MPI_UNSIGNED, receivedDataLabel, maxsizelabel, MPI_UNSIGNED,0, MPI_COMM_WORLD);
+	MPI_Scatterv(&sdatalabel[0], scountslabel, displslabel, MPI_UNSIGNED, receivedDataLabel, maxsizelabel, MPI_UNSIGNED,0, MPI_COMM_WORLD);
 
-	if(minPartitions>0){
+	if(minPartitions > 0){
 
 		int displacement=0;    // offset for each processes to read partitions
 		if(id < firstk)
@@ -540,42 +532,41 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 		
 		//Each process separate their data partitions
 		
-		for(int i=0;i<minPartitions;i++){
+		for(int i=0; i<minPartitions; i++){
 			std::vector<std::vector<double>> partition;
-			for(int j=0;j<partitionsize[displacement+i];j++){
+			for(int j=0; j<partitionsize[displacement+i]; j++){
 				std::vector<double> row;
-				for(int k=0;k<dimension;k++){
+				for(int k=0; k<dimension; k++){
 				   row.push_back(receivedData[counter++]);
 				}
-			partition.push_back(row);	
+				
+				partition.push_back(row);	
 			}
+			
 			partitionData.push_back(partition);
-			}
+		}
         
 		//Each process separate thier label partitions
 		counter=0;
-        for(int i=0;i<minPartitions;i++){
+        for(int i=0; i<minPartitions; i++){
 			std::vector<unsigned> partitionlabel;
-			for(int j=0;j<partitionsize[displacement+i];j++){
+			for(int j=0; j<partitionsize[displacement+i]; j++){
 				partitionlabel.push_back(receivedDataLabel[counter++]);
 			}
 			labels.push_back(partitionlabel);
-			}
+		}
 			
-	auto partitionedData = make_pair(labels,partitionData);	
-			
+		auto partitionedData = make_pair(labels,partitionData);			
 
-	//Initalize a copy of the pipePacket
-	auto iterwD = new pipePacket(args, args["complexType"]);
-	iterwD->workData = wD.workData;
-	iterwD->inputData = wD.inputData;
-	
-	//Local Storage
-	std::vector<bettiBoundaryTableEntry> mergedBettiTable;
-	std::vector<bettiBoundaryTableEntry> partBettiTable[threads];
-	auto originalDataSize = wD.workData.size();
+		//Initalize a copy of the pipePacket
+		auto iterwD = new pipePacket(args, args["complexType"]);
+		iterwD->workData = wD.workData;
+		iterwD->inputData = wD.inputData;
+		
+		//Local Storage
+		auto originalDataSize = wD.workData.size();
 
-	mergedBettiTable = processParallel(args, originalLabels, partitionedData, displacement);
+		std::vector<bettiBoundaryTableEntry> mergedBettiTable = processParallel(args, originalLabels, partitionedData, displacement);
 
 		//Serialize bettie table to send to master process for merging
 		for(auto bet : mergedBettiTable){
@@ -584,17 +575,16 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 			betti_death.push_back(bet.death);
 			betti_boundarysize.push_back(bet.boundaryPoints.size());
 			betti_boundaries.insert(betti_boundaries.end(),bet.boundaryPoints.begin(),bet.boundaryPoints.end());
-	  
 		}
 		
 		bettiTableSize = betti_dim.size();
 		boundary_size = 0;
 		for(auto a : betti_boundarysize)
-			boundary_size +=a;
-	}	
-    else{
+			boundary_size += a;
+	} else{
 		std::cout<<"**********************\n"<<std::endl;
 	}
+
 	//gather all the betties from slaves
 	int totalsize =0;
 	//Sum up all the betties sizes from diffrent processes at process 0
@@ -605,7 +595,6 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 	std::vector<double> recvbuffbirth(totalsize);
 	std::vector<double> recvbuffdeath(totalsize);
 	std::vector<unsigned> recvbuffboundaries_size(totalsize);
-    	
 	
 	//gether each process table sizes
 	std::vector<int> betties_table_size(nprocs);
@@ -635,7 +624,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 	displsgb[0]=0;
     
 	//Calculate offsets
-	for(int i=1;i<=nprocs;i++){
+	for(int i=1; i<=nprocs; i++){
 		displsgb[i] = displsgb[i-1] + betties_table_boundary_size[i-1];
 	}
 	
@@ -643,30 +632,30 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 	//Gather Boundary information
 	MPI_Gatherv(&betti_boundaries[0],boundary_size, MPI_UNSIGNED, &recvbuffboundaries[0], &betties_table_boundary_size[0], &displsgb[0],MPI_UNSIGNED,0,MPI_COMM_WORLD);
 
-	if(id==0){
+	if(id == 0){
 		//master prune out the duplicates across slaves.
 		
-		int beg=0;
-		for(int i=0;i<totalsize;i++){
+		int beg = 0;
+		for(int i=0; i<totalsize; i++){
 			bettiBoundaryTableEntry bettiEntry;
 			bettiEntry.bettiDim = recvbuffdim[i];
 			bettiEntry.birth = recvbuffbirth[i];
 			bettiEntry.death = recvbuffdeath[i];
-			for(int bi = beg;bi<(beg+recvbuffboundaries_size[i]);bi++)
+			for(int bi = beg; bi<(beg+recvbuffboundaries_size[i]); bi++)
 				bettiEntry.boundaryPoints.insert(recvbuffboundaries[bi]);
 			
-			beg +=recvbuffboundaries_size[i];
+			beg += recvbuffboundaries_size[i];
 			bool found = false;
 			for(auto curEntry : finalMergedBettiTable){
 				if(bettiEntry.death == curEntry.death && bettiEntry.boundaryPoints == curEntry.boundaryPoints){
 					found = true;
-					}
+				}
 			}
+
 			if(!found)
 				finalMergedBettiTable.push_back(bettiEntry);
 		}
 	}
 	
 	return finalMergedBettiTable;
-		
 }	
