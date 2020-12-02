@@ -206,7 +206,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processIterUpscale(std::map<std::strin
 				
 				delete curwD.complex;
 				//4. Process and merge bettis - whether they are from runPipeline or IterUpscale
-				bool foundExt = false;
+				unsigned h0count = 0;
 				// utils::extractBoundaryPoints(curwD.bettiTable);
 
 				//Remap the boundary indices into the original point space
@@ -234,22 +234,33 @@ std::vector<bettiBoundaryTableEntry> LHF::processIterUpscale(std::map<std::strin
 							
 							//Check if second entry is in the partition
 							if(iterwD.centroidLabels[*boundIter] == z){
+								h0count++;
 								partBettiTable[np].push_back(betEntry);
-							} else if(!foundExt){
-								foundExt = true;
-								partBettiTable[np].push_back(betEntry);
-							}						
+							}
 						} else{
 							partBettiTable[np].push_back(betEntry);
 						}
 					}
 				}
 
-				// //If we never found an external connection, add the infinite connection here
-				// if(!foundExt){
-				// 	bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {}, {} };
-				// 	temp.push_back(des);
-				// }
+				unsigned additionalExternal = binCounts[z] - h0count;
+
+				for(auto betEntry : curwD.bettiTable){
+					auto boundIter = betEntry.boundaryPoints.begin();
+					
+					if(betEntry.boundaryPoints.size() > 0 && iterwD.centroidLabels[*boundIter] == z){
+						if(betEntry.bettiDim == 0){
+							boundIter++;
+							
+							//Check if second entry is not in the partition
+							if(iterwD.centroidLabels[*boundIter] != z && additionalExternal > 0){
+								additionalExternal--;
+								partBettiTable[np].push_back(betEntry);
+							}
+							if(additionalExternal == 0) break;
+						} else break;
+					}
+				}
 		
 				// for(auto newEntry : temp){
 				// 	bool found = false;
