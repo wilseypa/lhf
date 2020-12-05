@@ -206,12 +206,6 @@ void utils::print1DVector(const std::set<unsigned>& a){
 	return;
 }
 
-std::vector<double> utils::feature_distance(std::vector<double>* a, std::vector<double>* b){
-	std::vector<double> ret;
-	
-	return ret;
-}
-
 double utils::vectors_distance(const double& a, const double& b){
 		return pow((a-b),2);
 }
@@ -230,16 +224,16 @@ std::set<unsigned> utils::setXOR(std::set<unsigned>& setA, std::set<unsigned>& s
 }
 
 double utils::vectors_distance(const std::vector<double>& a, const std::vector<double>& b){		
-		std::vector<double> temp;
-		
-		if(b.size() == 0)
-			return 0;
-		
-		std::transform(a.begin(), a.end(), b.begin(), std::back_inserter(temp),[](double e1, double e2) {return pow((e1-e2),2);});
+	std::vector<double> temp;
 	
-		
+	if(b.size() == 0)
+		return 0;
 	
-		return sqrt(std::accumulate(temp.begin(), temp.end(), 0.0));
+	std::transform(a.begin(), a.end(), b.begin(), std::back_inserter(temp),[](double e1, double e2) {
+		return pow((e1-e2),2);
+	});
+
+	return sqrt(std::accumulate(temp.begin(), temp.end(), 0.0));
 }
 
 std::vector<unsigned> utils::setIntersect(std::vector<unsigned> v1, std::vector<unsigned> v2, bool isSorted){

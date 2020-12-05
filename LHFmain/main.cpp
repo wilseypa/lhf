@@ -9,6 +9,7 @@
 #include <string> 
 
 int main(int argc, char* argv[]){
+	double start = omp_get_wtime();
 	//	Steps to compute PH with preprocessing:
 	//
 	//		1.  Preprocess the input data
@@ -43,13 +44,12 @@ int main(int argc, char* argv[]){
 	//Define external classes used for reading input, parsing arguments, writing output
 	auto lhflib = LHF();
 	auto rs = readInput();
-	auto ap = argParser();
 	
 	//Parse the command-line arguments
-	auto args = ap.parse(argc, argv);
+	auto args = argParser::parse(argc, argv);
 	
 	//Determine what pipe we will be running
-	ap.setPipeline(args);
+	argParser::setPipeline(args);
 	
 	//Create a pipePacket (datatype) to store the complex and pass between engines
 	auto wD = pipePacket(args, args["complexType"]);	//wD (workingData)
@@ -59,6 +59,7 @@ int main(int argc, char* argv[]){
 		wD.inputData = rs.readCSV(args["inputFile"]);
 		wD.workData = wD.inputData;
 	}
+
 	//If data was found in the inputFile
 	if(wD.inputData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
 
@@ -71,42 +72,36 @@ int main(int argc, char* argv[]){
 			wD.bettiTable = lhflib.processUpscaleWrapper(args, wD);
 			sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
 			MPI_Finalize();
-			
-			//Output the data using writeOutput library
-			lhflib.outputBettis(args, wD);
 
 		} else if(args["mode"] == "reduced" || args["mode"] == "iterUpscale" || args["mode"] == "iter"){	
 			wD.bettiTable = lhflib.processIterUpscale(args,wD);
 			sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
-			//Output the data using writeOutput library
-			lhflib.outputBettis(args, wD);
 			
 		} else {
 			lhflib.processDataWrapper(args, wD);
 			lhflib.runPipeline(args, wD);
-			
-			//Output the data using writeOutput library
-			lhflib.outputBettis(args, wD);
-			
-			
-			
 		}
+
+		//Output the data using writeOutput library
+		lhflib.outputBettis(args, wD);
+
 	} else {
-		ap.printUsage();
+		argParser::printUsage();
 	}
-	
-	utils ut;
-	
+		
 	if((args["debug"] == "1" || args["debug"] == "true") && wD.bettiTable.size() > 0 ){
 		std::cout << std::endl << "_______Merged BETTIS_______" << std::endl;
 
 		for(auto a : wD.bettiTable){
 			std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
-			ut.print1DVector(a.boundaryPoints);
+			utils::print1DVector(a.boundaryPoints);
 		}
 	}
 	
 	delete wD.complex;
+
+	double end = omp_get_wtime();
+	std::cout<<"Time in seconds: "<<end-start<<'\n';
 
 	return 0;
 }
