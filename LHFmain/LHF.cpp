@@ -76,7 +76,7 @@ void LHF::processDataWrapper(std::map<std::string, std::string> args, pipePacket
 	}
 }	
 
-std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, std::string> args, std::vector<unsigned> &centroidLabels, std::vector<unsigned> &binCounts, std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> &partitionedData, int displacement){
+std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, std::string> args, std::vector<unsigned> &centroidLabels, std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> &partitionedData, int displacement){
 	//		Parameters	
 	auto threshold = std::atoi(args["threshold"].c_str());
 	auto maxEpsilon = std::atof(args["epsilon"].c_str());
@@ -196,7 +196,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 					}
 				}
 
-				unsigned additionalExternal = sortpartitions[p].first - h0count;
+				unsigned additionalExternal = std::count(centroidLabels.begin(), centroidLabels.end(), displacement+z) - h0count;
 
 				for(auto betEntry : curwD.bettiTable){
 					auto boundIter = betEntry.boundaryPoints.begin();
@@ -318,7 +318,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processIterUpscale(std::map<std::strin
 	//		Append the centroid dataset to run in parallel as well
 	partitionedData.second.push_back(iterwD.workData);
 	
-	return processParallel(args, iterwD.centroidLabels, binCounts, partitionedData);
+	return processParallel(args, iterwD.centroidLabels, partitionedData);
 }
 
 
@@ -585,7 +585,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 		//Local Storage
 		auto originalDataSize = wD.workData.size();
 
-		std::vector<bettiBoundaryTableEntry> mergedBettiTable = processParallel(args, originalLabels, partitionsize, partitionedData, displacement);
+		std::vector<bettiBoundaryTableEntry> mergedBettiTable = processParallel(args, originalLabels, partitionedData, displacement);
 
 		//Serialize bettie table to send to master process for merging
 		for(auto bet : mergedBettiTable){
