@@ -6,6 +6,29 @@
 
 
 // Header file for utils class - see utils.cpp for descriptions
+
+struct bettiTables{
+
+vector<bettiBoundaryTableEntry> bettiTab;
+unsigned numpts;
+double maxEpsilon;
+bettiTables(vector<bettiBoundaryTableEntry> bt, double wt, unsigned npts) : bettiTab(bt),maxEpsilon(wt), numpts(npts) {}
+
+};
+
+struct cmpByPandE{      
+	bool operator()(bettiTables a, bettiTables b) const{
+		if(a.numpts == b.numpts){
+			if(a.maxEpsilon == b.maxEpsilon){
+               return true; // Just put in order they arive
+			}
+			else
+                return a.maxEpsilon < b.maxEpsilon;
+		} else{
+			return a.numpts > b.numpts;
+		}
+	}
+};
 struct simplexNode{
 	unsigned index;
 	long long hash = -1;
@@ -42,7 +65,19 @@ struct bettiBoundaryTableEntry{
 	std::set<unsigned> boundaryPoints;
 }; 
 
+typedef std::pair<double, double> TriPoint;
 
+class d_simplexIntersection{
+	private:
+
+    public:
+		d_simplexIntersection(){};
+		static double Det2D(TriPoint &p1, TriPoint &p2, TriPoint &p3);
+		static void CheckTriWinding(TriPoint &p1, TriPoint &p2, TriPoint &p3, bool allowReversed);
+		static bool BoundaryCollideChk(TriPoint &p1, TriPoint &p2, TriPoint &p3, double eps);
+		static bool BoundaryDoesntCollideChk(TriPoint &p1, TriPoint &p2, TriPoint &p3, double eps);
+		static bool TriTri2D(TriPoint *t1,	TriPoint *t2,double eps = 0.0, bool allowReversed = true, bool onBoundary = false);
+};
 class unionFind{
 	private:
 		std::vector<int> rank, parent;

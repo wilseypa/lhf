@@ -10,6 +10,9 @@
 class pipePacket {
   private:
   public:
+  	std::vector<std::vector<std::set<unsigned>>> VUdsimplexes;  // Keep all the unique and valid d-simplexes enumerations
+    std::set<bettiTables,cmpByPandE> bTbs;	//Store betties from individual VSC
+
 	std::vector<bettiBoundaryTableEntry> bettiTable;
   
 	pipePacket(const std::string &, const double, const int);
