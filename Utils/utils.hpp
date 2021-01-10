@@ -7,26 +7,28 @@
 
 // Header file for utils class - see utils.cpp for descriptions
 
+struct bettiBoundaryTableEntry{
+	unsigned bettiDim;
+	double birth;
+	double death;
+	std::set<unsigned> boundaryPoints;
+}; 
+
 struct bettiTables{
 
-vector<bettiBoundaryTableEntry> bettiTab;
-unsigned numpts;
+std::vector<bettiBoundaryTableEntry> bettiTab;
+double averageEW;
 double maxEpsilon;
-bettiTables(vector<bettiBoundaryTableEntry> bt, double wt, unsigned npts) : bettiTab(bt),maxEpsilon(wt), numpts(npts) {}
+bettiTables(std::vector<bettiBoundaryTableEntry> bt, double wt, double avgEW) : bettiTab(bt),maxEpsilon(wt), averageEW(avgEW) {}
 
 };
 
 struct cmpByPandE{      
 	bool operator()(bettiTables a, bettiTables b) const{
-		if(a.numpts == b.numpts){
-			if(a.maxEpsilon == b.maxEpsilon){
-               return true; // Just put in order they arive
-			}
-			else
-                return a.maxEpsilon < b.maxEpsilon;
-		} else{
-			return a.numpts > b.numpts;
-		}
+		if(a.maxEpsilon == b.maxEpsilon)
+			return a.averageEW < b.averageEW;
+                else
+			return a.maxEpsilon < b.maxEpsilon;
 	}
 };
 struct simplexNode{
@@ -56,28 +58,17 @@ struct cmpByWeight{
 		}
 	}
 };
-
-
-struct bettiBoundaryTableEntry{
-	unsigned bettiDim;
-	double birth;
-	double death;
-	std::set<unsigned> boundaryPoints;
-}; 
-
-typedef std::pair<double, double> TriPoint;
-
+	typedef std::pair<double, double> TriPoint;
 class d_simplexIntersection{
-	private:
-
-    public:
+        public:
 		d_simplexIntersection(){};
 		static double Det2D(TriPoint &p1, TriPoint &p2, TriPoint &p3);
 		static void CheckTriWinding(TriPoint &p1, TriPoint &p2, TriPoint &p3, bool allowReversed);
 		static bool BoundaryCollideChk(TriPoint &p1, TriPoint &p2, TriPoint &p3, double eps);
 		static bool BoundaryDoesntCollideChk(TriPoint &p1, TriPoint &p2, TriPoint &p3, double eps);
-		static bool TriTri2D(TriPoint *t1,	TriPoint *t2,double eps = 0.0, bool allowReversed = true, bool onBoundary = false);
+		static bool TriTri2D(TriPoint *t1,TriPoint *t2,double eps = 0.0, bool allowReversed = true, bool onBoundary = false);
 };
+
 class unionFind{
 	private:
 		std::vector<int> rank, parent;

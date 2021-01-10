@@ -15,6 +15,10 @@ add_library(slidingWindow "slidingWindow.cpp" "slidingWindow.hpp")
 add_library(fastPersistence "fastPersistence.cpp" "fastPersistence.hpp")
 add_library(incrementalPersistence "incrementalPersistence.cpp" "incrementalPersistence.hpp")
 add_library(naiveWindow "naiveWindow.cpp" "naiveWindow.hpp")
+add_library(enumerateUVSC "enumerateUVSC.cpp" "enumerateUVSC.hpp")
+add_library(distBuildSCExecutePH "distBuildSCExecutePH.cpp" "distBuildSCExecutePH.hpp")
+add_library(interpolateMerge "interpolateMerge.cpp" "interpolateMerge.hpp")
+
 
 include_directories(../Complex)
 link_directories(../Complex)
@@ -26,7 +30,7 @@ include_directories(../Utils)
 link_directories(../Utils)
 
 # target_link_libraries(LHF PipeFunctions)
-target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe ripsPipe upscalePipe persistencePairs slidingWindow fastPersistence incrementalPersistence naiveWindow)
+target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe ripsPipe upscalePipe persistencePairs slidingWindow fastPersistence incrementalPersistence naiveWindow enumerateUVSC distBuildSCExecutePH interpolateMerge)
 
 INSTALL (TARGETS basePipe
 	LIBRARY DESTINATION lib

@@ -14,7 +14,7 @@ class simplexBase {
   private:
   public:
 	std::vector<std::set<simplexNode_P, cmpByWeight>> simplexList;		//Holds ordered list of simplices in each dimension
-																//Needs to sort by the weight for insertion
+ 																//Needs to sort by the weight for insertion
 
 	unsigned simplexOffset = 0;
 
@@ -73,9 +73,11 @@ class simplexBase {
 	virtual std::vector<simplexNode_P> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode_P, simplexNode_P>& pivotPairs, bool = true);
 	virtual std::set<simplexNode_P, cmpByWeight> getDimEdges(int);
 	virtual std::vector<std::set<simplexNode_P, cmpByWeight>> getAllEdges();
-
+        
 	virtual void expandDimensions(int);
 	virtual void reduceComplex();
 	virtual ~simplexBase();
 	virtual void outputComplex();
+
+	virtual std::vector<std::set<simplexNode_P,cmpByWeight>> buildValidSimplicialComplex(std::vector<std::set<unsigned>>);
 };

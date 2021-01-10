@@ -13,7 +13,7 @@
 #include <functional>
 #include <set>
 #include <algorithm>
-#include "distMatrixPipe.hpp"
+#include "interpolateMerge.hpp"
 #include "utils.hpp"
 
 // basePipe constructor
@@ -23,15 +23,15 @@ interpolateMergePipe::interpolateMergePipe(){
 }
 
 
-void distBuildSCExecutePHPipe::runPipe(pipePacket &inData){
+void interpolateMergePipe::runPipe(pipePacket &inData){
 
 std::vector<bettiBoundaryTableEntry> finalbettiTable;
 std::ofstream file("bettisequence.csv");
-for(auto entry : bTbs){
+for(auto entry : inData.bTbs){
  //   file<<entry.bettiTab.size()<<","<<entry.numpts<<","<<entry.maxEpsilon;
  //   file<<endl;
     for(auto a : entry.bettiTab){
-        file<<a.bettiDim<<","<<a.birth<<","<<a.death<<endl;
+        file<<a.bettiDim<<","<<a.birth<<","<<a.death<<std::endl;
         bool found = false;
         for(auto x : finalbettiTable)
         {
@@ -46,12 +46,12 @@ for(auto entry : bTbs){
     }
  //   file<<endl;
 }
-file<<endl<<"Final Betti Table"<<endl;
+file<<std::endl<<"Final Betti Table"<<std::endl;
 for(auto a : finalbettiTable){
         file<<a.bettiDim<<","<<a.birth<<","<<a.death;
         for(auto k : a.boundaryPoints)
             file<<k<<",";
-    file<<endl;
+    file<<std::endl;
 }
 file.close();
 }

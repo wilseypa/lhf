@@ -287,6 +287,46 @@ std::vector<simplexNode_P> simplexArrayList::expandDimension(std::vector<simplex
 	return nextEdges;
 }
 
+
+
+std::vector<std::set<simplexNode_P, cmpByWeight>> simplexArrayList::buildValidSimplicialComplex(std::vector<std::set<unsigned>> dsimplexes){
+
+   std::vector<std::set<simplexNode_P, cmpByWeight>> dim;
+   unsigned maxDimension = dsimplexes[0].size()-1;
+   for(int i =0;i<=maxDimension;i++)
+       dim.push_back({});
+
+
+   for(auto simplex : dsimplexes)
+   {
+    unsigned int pow_set_size = pow(2, simplex.size());
+    unsigned counter, j;
+     for(counter = 1; counter < pow_set_size; counter++)
+    {
+        double weight =0;
+        std::set<unsigned> gensimp;
+    for(j = 0; j < simplex.size(); j++)
+    {
+       if(counter & (1 << j))
+            {
+               unsigned indnew = *(std::next(simplex.begin(),j));
+              for(auto x : gensimp)
+                if(weight<(*distMatrix)[x][indnew])
+                    weight = (*distMatrix)[x][indnew];
+              gensimp.insert(indnew);
+            }
+    }
+
+     simplexNode_P tot = std::make_shared<simplexNode>(simplexNode(gensimp, weight));
+     tot->hash = simplexHash(gensimp);
+     dim[gensimp.size()-1].insert(tot);
+    }
+}
+simplexList = dim;
+
+return dim;
+}
+
 void simplexArrayList::reduceComplex(){
 	
 	//Start with the largest dimension

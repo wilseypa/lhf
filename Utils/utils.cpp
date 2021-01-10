@@ -41,7 +41,7 @@ bool d_simplexIntersection::BoundaryDoesntCollideChk(TriPoint &p1, TriPoint &p2,
 	return Det2D(p1, p2, p3) <= eps;
 }
 
-bool d_simplexIntersection::TriTri2D(TriPoint *t1,	TriPoint *t2,double eps = 0.0, bool allowReversed = true, bool onBoundary = false)
+bool d_simplexIntersection::TriTri2D(TriPoint *t1,TriPoint *t2,double eps, bool allowReversed , bool onBoundary)
 {
 	//Trangles must be expressed anti-clockwise
 	CheckTriWinding(t1[0], t1[1], t1[2], allowReversed);
