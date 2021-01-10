@@ -115,7 +115,7 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 			if(args["preprocessor"] == ""){
 				args["preprocessor"] = "kmeans++";
 			}
-		}else if(args["mode"] == "distributedVSC"){
+		}else if(args["mode"] == "validph"){
 			args["pipeline"] = "distMatrix.enumerateUVSC.distBuildSCExecutePH.interpolateMerge";
 		}else if(args["mode"] == "standard"){
 			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";

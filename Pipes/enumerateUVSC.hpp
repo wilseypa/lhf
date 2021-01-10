@@ -5,13 +5,12 @@
 #include "basePipe.hpp"
 
 class enumerateUVSCPipe : public basePipe {
-	private:
-		
+	
  	public:
-		int dim;
+	    int dim;
 	    enumerateUVSCPipe();
 	    void runPipe(pipePacket &inData);
 	    bool configPipe(std::map<std::string, std::string> &configMap);
-		void outputData(pipePacket&);
+            void outputData(pipePacket&);
 };
 

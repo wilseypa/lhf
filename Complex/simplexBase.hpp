@@ -79,5 +79,5 @@ class simplexBase {
 	virtual ~simplexBase();
 	virtual void outputComplex();
 
-	virtual std::vector<std::set<simplexNode_P,cmpByWeight>> buildValidSimplicialComplex(std::vector<std::set<unsigned>>);
+	virtual std::vector<std::set<simplexNode_P,cmpByWeight>> buildValidSimplicialComplex(std::vector<std::set<unsigned>>,int);
 };

@@ -90,7 +90,7 @@ std::vector<simplexNode_P> simplexBase::getAllCofacets(const std::set<unsigned>&
 	ut.writeLog(simplexType,"No get cofacets function defined");
 	return std::vector<simplexNode_P>();
 }
-std::vector<std::set<simplexNode_P,cmpByWeight>> simplexBase::  buildValidSimplicialComplex(std::vector<std::set<unsigned>>){
+std::vector<std::set<simplexNode_P,cmpByWeight>> simplexBase::  buildValidSimplicialComplex(std::vector<std::set<unsigned>>,int npts){
 	ut.writeLog(simplexType,"No buildValidSimplex Function defined");
 	std::vector<std::set<simplexNode_P,cmpByWeight>> empty;
 	return empty;

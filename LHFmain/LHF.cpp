@@ -34,20 +34,20 @@ void LHF::runPipeline(std::map<std::string, std::string> args, pipePacket &wD){
 		//For each '.' separated pipeline function (count of '.' + 1 -> lim)
 		for(unsigned i = 0; i < lim; i++){
 			auto curFunct = pipeFuncts.substr(0,pipeFuncts.find('.'));
+
 			pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
 			//Build the pipe component, configure and run
 			auto cp = basePipe::newPipe(curFunct, args["complexType"]);
 		
 			//Check if the pipe was created and configure
 			if(cp != 0 && cp->configPipe(args)){
-				//Run the pipe function (wrapper)
+				//Run the pipe function (wrapper;
 				cp->runPipeWrapper(wD);
 			} else {
 				std::cout << "LHF runPipeline: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 			}
 			
 			delete cp;
-			
 		}
 	}
 	//If the pipeline was undefined...

@@ -18,8 +18,9 @@ class vscPersistence{
 };
 class distBuildSCExecutePHPipe : public basePipe {
 	private:
+	   int dim;
+	   double epsilon;
  	public:
-           int dim;
 	   distBuildSCExecutePHPipe();
            void runPipe(pipePacket &inData);
 	   bool configPipe(std::map<std::string, std::string> &configMap);

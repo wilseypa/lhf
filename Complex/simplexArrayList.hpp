@@ -31,7 +31,7 @@ class simplexArrayList : public simplexBase{
 		std::vector<simplexNode*> getAllCofacets(simplexNode_P, const std::unordered_map<long long, simplexNode_P>&, bool = true);
 		std::vector<simplexNode*> getAllCofacets(simplexNode_P);
 		std::vector<simplexNode_P> expandDimension(std::vector<simplexNode_P> edges);
-                std::vector<std::set<simplexNode_P, cmpByWeight>> buildValidSimplicialComplex(std::vector<std::set<unsigned>> dsimplexes);
+                std::vector<std::set<simplexNode_P, cmpByWeight>> buildValidSimplicialComplex(std::vector<std::set<unsigned>> dsimplexes,int npts);
 		//virtual interface functions
 		double getSize();
 		void insert();

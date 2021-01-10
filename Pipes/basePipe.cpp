@@ -19,6 +19,10 @@
 #include "fastPersistence.hpp"
 #include "incrementalPersistence.hpp"
 #include "naiveWindow.hpp"
+#include "enumerateUVSC.hpp"
+#include "distBuildSCExecutePH.hpp"
+#include "interpolateMerge.hpp"
+
 
 basePipe* basePipe::newPipe(const std::string &pipeType, const std::string &complexType){
 	utils ut;
@@ -43,7 +47,13 @@ basePipe* basePipe::newPipe(const std::string &pipeType, const std::string &comp
 		return new incrementalPersistence();
 	} else if (pipeType == "naivewindow" || pipeType == "naive"){
 		return new naiveWindow();
-	}
+	} else if (pipeType == "enumerateUVSC"){
+		return new enumerateUVSCPipe();
+	} else if (pipeType == "distBuildSCExecutePH"){
+		return new distBuildSCExecutePHPipe();
+	} else if (pipeType == "interpolateMerge"){
+		return new interpolateMergePipe();
+	} 
 	
 	return 0;
 }
@@ -59,9 +69,7 @@ void basePipe::runPipeWrapper(pipePacket &inData){
 	}
 	//Start a timer for physical time passed during the pipe's function
 	auto startTime = std::chrono::high_resolution_clock::now();
-	
 	runPipe(inData);
-	
 	//Stop the timer for time passed during the pipe's function
 	auto endTime = std::chrono::high_resolution_clock::now();
 	
@@ -73,7 +81,6 @@ void basePipe::runPipeWrapper(pipePacket &inData){
 	
 	auto dataSize = inData.getSize();
 	auto unit = "B";
-	
 	//Convert large datatypes (GB, MB, KB)
 	if(dataSize > 1000000000){
 		//Convert to GB
