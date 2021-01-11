@@ -116,7 +116,8 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 				args["preprocessor"] = "kmeans++";
 			}
 		}else if(args["mode"] == "validph"){
-			args["pipeline"] = "distMatrix.enumerateUVSC.distBuildSCExecutePH.interpolateMerge";
+			args["complexType"] = "simplexArrayList";
+			args["pipeline"] = "distMatrix.enumerateUVSC.distBuildSCExecutePH.fastPersistence.interpolateMerge";
 		}else if(args["mode"] == "standard"){
 			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
 		}else if(args["mode"] == "reduced"){

@@ -37,13 +37,22 @@ struct simplexNode{
 	
 	std::set<unsigned> simplex;
 	double weight = 0;
-
+        double avgwt = 0;
 	simplexNode(){}
+	simplexNode(std::set<unsigned> simp, double wt,double awt) : simplex(simp),weight(wt), avgwt(awt) {}
 	simplexNode(std::set<unsigned> simp, double wt) : simplex(simp), weight(wt) {}
 };
 
 typedef std::shared_ptr<simplexNode> simplexNode_P;
 
+struct cmpByavgwt{      
+	bool operator()(simplexNode_P a, simplexNode_P b) const{
+		if(a->weight == b->weight)
+			return a->avgwt < b->avgwt;
+                else
+			return a->weight < b->weight;
+	}
+};
 struct cmpByWeight{
 	bool operator()(simplexNode_P a, simplexNode_P b) const{
 		if(a->weight == b->weight){ //If the simplices have the same weight, sort by reverse lexicographic order for fastPersistence

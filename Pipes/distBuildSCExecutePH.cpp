@@ -37,7 +37,7 @@ for(auto validSC : inData.VUdsimplexes)
 	simplicialComplex.clear();          // Complex
 
 	simplicialComplex =  inData.complex->buildValidSimplicialComplex(validSC,inData.inputData.size());
-	if(counter%1000==0)
+/*	if(counter%1000==0)
 		std::cout<<counter;
 	counter++;
 	double aEW=0;
@@ -52,6 +52,7 @@ for(auto validSC : inData.VUdsimplexes)
 	bettiTables BT =  bettiTables(bettiTable,(*(simplicialComplex[1].rbegin()))->weight,aEW) ;
 
         inData.bTbs.insert(BT);
+	*/	
 }	
 return;
 	
@@ -93,6 +94,21 @@ bool distBuildSCExecutePHPipe::configPipe(std::map<std::string, std::string> &co
 
 
 
-void distBuildSCExecutePHPipe::outputData(pipePacket &inData){
-	return;	
+void distBuildSCExecutePHPipe::outputData(pipePacket &inData){	
+	std::ofstream file;
+	
+	if(inData.complex->simplexType == "simplexArrayList"){
+		file.open("output/" + pipeType + "_output.csv");
+		for (int i = 0; i < inData.complex->simplexList.size(); i++){
+			for(auto a : inData.complex->simplexList[i]){
+				for(auto d : a->simplex){
+					file << d << ",";
+				}
+				file << a->weight << "\n";
+			}
+		}
+		
+		file.close();
+	}
+	return;
 }	

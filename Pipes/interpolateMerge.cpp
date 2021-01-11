@@ -24,10 +24,9 @@ interpolateMergePipe::interpolateMergePipe(){
 
 
 void interpolateMergePipe::runPipe(pipePacket &inData){
-
-std::vector<bettiBoundaryTableEntry> finalbettiTable;
+//std::vector<bettiBoundaryTableEntry> finalbettiTable;
 std::ofstream file("bettisequence.csv");
-for(auto entry : inData.bTbs){
+/*for(auto entry : inData.bTbs){
  //   file<<entry.bettiTab.size()<<","<<entry.numpts<<","<<entry.maxEpsilon;
  //   file<<endl;
     for(auto a : entry.bettiTab){
@@ -46,14 +45,18 @@ for(auto entry : inData.bTbs){
     }
  //   file<<endl;
 }
+*/
 file<<std::endl<<"Final Betti Table"<<std::endl;
-for(auto a : finalbettiTable){
+for(auto a : inData.bettiTable){
         file<<a.bettiDim<<","<<a.birth<<","<<a.death;
         for(auto k : a.boundaryPoints)
             file<<k<<",";
     file<<std::endl;
 }
 file.close();
+
+
+
 }
 
 // configPipe -> configure the function settings of this pipeline segment

@@ -293,7 +293,7 @@ std::vector<std::set<simplexNode_P, cmpByWeight>> simplexArrayList::buildValidSi
 
   // std::vector<std::set<simplexNode_P, cmpByWeight>> dim;
    unsigned maxDimension = dsimplexes[0].size()-1;
-  bin = binomialTable(npts,maxDimension+1);
+   bin = binomialTable(npts,maxDimension+1);
    for(int i =0;i<=maxDimension;i++)
        simplexList.push_back({});
   
@@ -312,7 +312,7 @@ std::vector<std::set<simplexNode_P, cmpByWeight>> simplexArrayList::buildValidSi
 	       unsigned indnew;
                indnew = *(std::next(simplex.begin(),j));
  	       for(auto x : gensimp){
-		      if(x>indnew){
+		      if(x<indnew){
                 	if(weight<(*distMatrix)[x][indnew])
                     		weight = (*distMatrix)[x][indnew];
 		      }
@@ -327,13 +327,14 @@ std::vector<std::set<simplexNode_P, cmpByWeight>> simplexArrayList::buildValidSi
     }
       simplexNode_P tot = std::make_shared<simplexNode>(simplexNode(gensimp, weight));
       if(gensimp.size()==1)
-	     tot->hash = *(simplex.begin());
+	     tot->hash = *(gensimp.begin());
       else
 	     tot->hash = simplexHash(gensimp);
      simplexList[gensimp.size()-1].insert(tot);
      gensimp.clear();
     }
 }
+std::cout<<simplexList[0].size()<<" "<<simplexList[1].size()<<" "<<simplexList[2].size()<<std::endl;
 return simplexList;;
 }
 
