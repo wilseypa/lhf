@@ -24,17 +24,24 @@ enumerateUVSCPipe::enumerateUVSCPipe(){
 // runPipe -> Run the configured functions of this pipeline segment
 void enumerateUVSCPipe::runPipe(pipePacket &inData){
 
-// Doing permutaion for large point cloud is not feasible !! Hence optimization or approximation is required
-std::vector<unsigned> permut(inData.inputData.size());
-unsigned convex_hull_points = 14;
-unsigned totaltriangles = 2*inData.inputData.size()-convex_hull_points-2;
+/*
+ 
+    inData.VUdsimplexes.insert(intersectionfreemesh);
+    std::vector<std::set<unsigned>> intersectionfreemesh;
+*/
 
 /*
+// Doing permutaion for large point cloud is not feasible !! Hence optimization or approximation is required
+std::vector<unsigned> permut(inData.inputData.size());
+unsigned convex_hull_points = 10;
+unsigned totaltriangles = 2*inData.inputData.size()-convex_hull_points-2;
+
+
 unsigned i = -1;            // incrementor
 for_each(permut.begin(), permut.end(), [&](unsigned& item) { ++i; item += i;});
 unsigned counter =0;
 unsigned n = inData.inputData.size();
-*/
+
 std::vector<std::set<unsigned>> intersectionfreemesh;
 std::vector<unsigned> intersectioncount(totaltriangles,0);
 
@@ -45,12 +52,12 @@ std::vector<std::vector<double>> p;
 std::vector<std::vector<double>> q;
 
 int pk;
-/* do {
+do {
 	intersectionfreemesh.clear();
 	firstflag = true;
 
 //Curently it is 2-simplexes need to be generalized to d dimensions
-*/
+
 std::set<simplexNode_P,cmpByavgwt> dsimplexes;
 std::vector<std::vector<double>> *distM = inData.complex->distMatrix; 
 unsigned counter = 0,collin=0,noncollin=0;
@@ -90,6 +97,7 @@ std::cout<<dsimplexes.size()<<" "<<(*dsimplexes.begin())->avgwt<<" "<<(*dsimplex
 
 std::cout<<counter<<" "<<collin<<" "<<noncollin<<std::endl;
 std::cout<<dsimplexes.size()<<" "<<(*dsimplexes.begin())->avgwt<<" "<<(*dsimplexes.rbegin())->avgwt<<std::endl;
+
 counter = 0;
     for(auto x : dsimplexes){
 	    
@@ -129,7 +137,7 @@ counter = 0;
 	      break;
 	  if(counter%100000==0)
 	  {std::cout<<counter<<"  "<<totaltriangles<<" "<<intersectionfreemesh.size()<<std::endl;
-	/*	 unsigned maxintersect = 0,index=0,cnt=0; 
+		 unsigned maxintersect = 0,index=0,cnt=0; 
    	 	 for(auto x:intersectioncount){
 	   //      	std::cout<<" "<<x<<"-->";
 
@@ -141,20 +149,22 @@ counter = 0;
 	 std::cout<<maxintersect<<" "<<index<<" ";
 	 intersectionfreemesh.erase(intersectionfreemesh.begin()+index);
 	 std::fill(intersectioncount.begin(),intersectioncount.end(),0);
-	 */
-	  /*  int tp;
+	 
+	    int tp;
 	    std::cin>>tp;
 	    if(tp)
 		    break;
-		    */
+		    
 		 
 	  }
 	  firstflag = false;
       counter ++;
     }
+    std::cout<<counter<<"  "<<totaltriangles<<" "<<intersectionfreemesh.size()<<std::endl;
+  //  std::cin>>pk;
     inData.VUdsimplexes.insert(intersectionfreemesh);
 
-/*	  
+	  
 	  newsimplex.clear();
           newsimplex.insert(permut[i]);
           newsimplex.insert(permut[j]);

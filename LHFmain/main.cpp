@@ -77,9 +77,23 @@ int main(int argc, char* argv[]){
 			wD.bettiTable = lhflib.processIterUpscale(args,wD);
 			sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
 			
-		} else {
+		} else if(args["mode"]=="validph"){
+   
+                        std::vector<std::vector<double>> intersectionfreemesh = rs.readCSV(args["triangulatedMesh"]);
+
+                        std::vector<std::set<unsigned>> orderedintersectionfreemesh;
+			for(auto x: intersectionfreemesh)
+                              {
+				std::set<unsigned> dsimplex(x.begin(),x.end());
+				orderedintersectionfreemesh.push_back(dsimplex);
+			      }
+			std::cout<<orderedintersectionfreemesh.size()<<std::endl;
+                        wD.VUdsimplexes.insert(orderedintersectionfreemesh);
 			lhflib.processDataWrapper(args, wD);
 			lhflib.runPipeline(args, wD);
+		}else{
+			lhflib.processDataWrapper(args, wD);
+			lhflib.runPipeline(args,wD);
 		}
 
 		//Output the data using writeOutput library
