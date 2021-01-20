@@ -11,6 +11,7 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <ctime>
 #include <regex>
 #include <fstream>
 #include "writeOutput.hpp"
@@ -23,10 +24,19 @@ writeOutput::writeOutput(){
 // writeStat -> write the pipeline statistics to a csv formatted file
 bool writeOutput::writeStats(std::string stats, std::string filename){
 	std::ofstream file(filename + "_stats.csv");
-	file << "PipeName,PhysExecutionTime,MemorySize,MemoryUnits,VertexCount,SimplexCount\n";
+	file << "PipeName,PhysExecutionTime,TransientMemorySize,MemoryUnits,VertexCount,SimplexCount\n";
 	file << stats;
 	file.close();
 	return true;	
+}
+
+// writeRunLog -> write the run log to a csv formatted file
+bool writeOutput::writeRunLog(std::string stats, std::string filename){
+	std::ofstream file(filename + "_runLog.csv");
+	file << "Timestamp,Process_#,Workload_#,PointSize,simplexCount,runtime(s),Arguments...\n";
+	file << stats;
+	file.close();
+	return true;
 }
 
 bool writeOutput::writeBarcodes(std::vector<bettiBoundaryTableEntry> data, std::string filename){
@@ -107,16 +117,28 @@ bool writeOutput::writeMAT(std::vector<std::vector<double>> data, std::string fi
 	return true;
 }
 
-/*
+
 // writeConsole -> write data input to console (hopefully pretty-print)
-bool writeOutput::writeConsole(pipePacket* workData){
-	std::vector<std::vector<double>> result;
+bool writeOutput::writeConsole(std::vector<bettiBoundaryTableEntry> data){
+	std::cout << "dimension,birth,death" << std::endl;
 	
-	std::cout << "_________Persistent Homology OUTPUT__________" << std::endl;
-		
-	std::cout << workData->bettiOutput << std::endl;
-	
+	for(auto row : data)
+		std::cout << std::to_string(row.bettiDim) << "," << std::to_string(row.birth) << "," << std::to_string(row.death) << std::endl;
+	std::cout << std::endl;
 	return true;
+}
+
+std::string writeOutput::logRun(std::map<std::string, std::string> args, std::string ident, std::string wdStats, std::string runtime){
+	//Get current time
+	auto res = std::time(nullptr);
+	
+	std::string ret = std::to_string(res) + "," + ident + "," + wdStats + "," + runtime + ",";
+	
+	for(auto arg : args)
+		ret += arg.first + ":" + arg.second + ",";
+	
+	ret += "\n";
+	
+	return ret;
 	
 }
-*/

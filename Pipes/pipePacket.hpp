@@ -11,10 +11,12 @@ class pipePacket {
   private:
   public:
 	std::vector<bettiBoundaryTableEntry> bettiTable;
+	std::string ident;
   
 	pipePacket(const std::string &, const double, const int);
 	pipePacket(std::map<std::string, std::string>, const std::string&);
 	std::string stats;
+	std::string runLog;
   
 	std::vector<std::vector<double>> workData;
 	std::vector<unsigned> centroidLabels;
@@ -27,5 +29,6 @@ class pipePacket {
 	std::string bettiOutput;
 	
 	double getSize();	
+	std::string getStats();
 };
 

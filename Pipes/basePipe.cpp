@@ -68,7 +68,7 @@ void basePipe::runPipeWrapper(pipePacket &inData){
 	//Calculate the duration (physical time) for the pipe's function
 	std::chrono::duration<double, std::milli> elapsed = endTime - startTime;
 	
-	//Output the time and memory used for this pipeline segment
+	//Output the time and transient memory used for this pipeline segment
 	ut.writeLog(pipeType,"\tPipeline " + pipeType + " executed in " + std::to_string(elapsed.count()/1000.0) + " seconds (physical time)");
 	
 	auto dataSize = inData.getSize();
@@ -117,8 +117,6 @@ void basePipe::outputData(pipePacket &inData){
 	file.close();
 	return;
 }
-	
-
 
 // runPipe -> Run the configured functions of this pipeline segment
 void basePipe::runPipe(pipePacket &inData){
