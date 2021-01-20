@@ -95,7 +95,7 @@ void LHF::processDataWrapper(std::map<std::string, std::string> args, pipePacket
 		auto prePipe = preprocessor::newPreprocessor(pre);
 
 		if(prePipe != 0 && prePipe->configPreprocessor(args)){
-			wD = prePipe->runPreprocessorWrapper(wD);
+			prePipe->runPreprocessorWrapper(wD);
 		} else {
 			std::cout << "LHF processData: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 		}

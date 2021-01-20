@@ -12,7 +12,7 @@ class basePipe {
 	std::string fnmod = "";
 	utils ut;
 	std::string pipeType = "basePipe";
-	int debug = 0;
+	bool debug = 0;
 	std::string outputFile;
     basePipe(){};
     static basePipe* newPipe(const std::string&, const std::string&);
