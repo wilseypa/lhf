@@ -103,23 +103,37 @@ void simplexTree::printTree(simplexTreeNode* headPointer){
 		std::cout << "Empty tree... " << std::endl;
 		return;
 	}
+	auto temp = headPointer;
 
 	std::cout << "ROOT: " << headPointer->simpNode->index << "\t" << headPointer << "\t" << headPointer->child << "\t" << headPointer->sibling << std::endl;
-	/*std::cout << "sList Size: " << simplexList.size() << std::endl;
+	
 
-	for(int i = 0; i < simplexList.size() ; i++){
-		std::cout << std::endl << "Dim: " << i << "\tSize: " << simplexList[i].size() << std::endl;
-		std::cout << "[index , address, sibling, child, parent]" << std::endl << std::endl;
+	std::cout << "[index , address, sibling, child, parent]" << std::endl << std::endl;
 
-		for(auto simplexIter = simplexList[i].begin(); simplexIter != simplexList[i].end(); simplexIter++){
-			std::cout << (*simplexIter)->index << "\t" << (*simplexIter) << "\t" << (*simplexIter)->sibling << "\t" << (*simplexIter)->child << "\t" << (*simplexIter)->parent << "\t";
-			ut.print1DVector((*simplexIter)->simplex);
-		}
-
-		std::cout << std::endl;
-	}*/
+	for(auto simplexIter = headPointer; simplexIter != nullptr; simplexIter = simplexIter->sibling){
+		std::cout << simplexIter->simpNode->index << "\t";
+		std::cout << simplexIter << "\t" ;
+		std::cout << simplexIter->sibling << "\t" ;
+		std::cout << simplexIter->child << "\t" ;
+		std::cout << simplexIter->parent << "\t";
+		ut.print1DVector(simplexIter->simpNode->simplex);
+		
+		//temp = simplexIter;
+	}
 
 	std::cout << "_____________________________________" << std::endl;
+	
+	std::cout << "Children of root->child (" << temp->sibling->sibling->sibling->sibling->child << ")" << std::endl << std::endl;
+	
+	for(auto simplexIter = temp->sibling->sibling->sibling->sibling->child; simplexIter != nullptr; simplexIter = simplexIter->sibling){
+		std::cout << simplexIter->simpNode->index << "\t";
+		std::cout << simplexIter << "\t" ;
+		std::cout << simplexIter->sibling << "\t" ;
+		std::cout << simplexIter->child << "\t" ;
+		std::cout << simplexIter->parent << "\t";
+		ut.print1DVector(simplexIter->simpNode->simplex);
+	}
+	
 	return;
 }
 
@@ -443,6 +457,27 @@ simplexTree::simplexTreeNode* simplexTree::find(std::set<unsigned>::iterator it,
 	//delete temp;
 	return curNode;
 }
+
+
+std::vector<std::set<simplexNode_P, cmpByWeight>> simplexTree::getAllEdges(){
+	std::vector<std::set<simplexNode_P, cmpByWeight>> ret(2,std::set<simplexNode_P, cmpByWeight>());
+	recurseGetEdges(ret, root, 0, 1);
+	return ret;
+}
+
+void simplexTree::recurseGetEdges(std::vector<std::set<simplexNode_P, cmpByWeight>> &edgeList, simplexTreeNode* current, int depth, int maxDepth){
+	
+	for(auto ptr = current->child; ptr != nullptr; ptr = ptr->sibling){
+		
+		edgeList[depth].insert(ptr->simpNode);
+		
+		if(ptr->child != nullptr && depth+1 <= maxDepth)
+			recurseGetEdges(edgeList, ptr, depth+1, maxDepth);
+	
+	}
+	return;
+}
+
 
 std::vector<simplexNode_P> simplexTree::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode_P, simplexNode_P>& pivotPairs, bool checkEmergent){
 	std::vector<simplexNode_P> ret;

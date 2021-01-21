@@ -32,6 +32,9 @@ void fastPersistence::runPipe(pipePacket &inData){
 	//Get all edges for the simplexArrayList or simplexTree
 	std::vector<std::set<simplexNode_P, cmpByWeight>> edges = inData.complex->getAllEdges();
 
+	std::cout << "Edge size: " << edges.size() << std::endl;
+	for(auto a : edges)
+		std::cout << "\tDsize: " << a.size() << std::endl;
 
 	if(edges.size() <= 1) return;
 
