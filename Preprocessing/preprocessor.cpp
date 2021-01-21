@@ -85,8 +85,7 @@ void preprocessor::runPreprocessorWrapper(pipePacket &inData){
 		
 		inData.stats += procName + "," + std::to_string(elapsed.count()/1000.0) + "\n"; // + "," + std::to_string(dataSize) + "," + unit + "\n";
 		
-		outputData(inData.workData);
-		outputData(inData.centroidLabels);
+		outputData(inData);
 	
 	} else {
 		runPreprocessor(inData);
@@ -104,6 +103,15 @@ void preprocessor::outputData(std::vector<unsigned> data){
 	return;
 }
 	
+void preprocessor::outputData(pipePacket &data){
+	
+	outputData(data.workData);
+	outputData(data.centroidLabels);
+	
+	return;
+	
+	
+}
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
 void preprocessor::outputData(std::vector<std::vector<double>> data){
