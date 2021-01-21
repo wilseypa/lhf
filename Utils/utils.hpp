@@ -3,6 +3,7 @@
 #include <set>
 #include <vector>
 #include <memory>
+#include <map>
 
 
 // Header file for utils class - see utils.cpp for descriptions
