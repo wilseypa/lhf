@@ -9,15 +9,16 @@ class preprocessor {
   public:
 	bool configured = false;
 	std::string procName = "preprocessor";
-	int debug;
+	bool debug = 0;
 	std::string outputFile;
 	utils ut;
     preprocessor();
     static preprocessor* newPreprocessor(const std::string&);
-    pipePacket runPreprocessorWrapper(pipePacket inData);
-    virtual pipePacket runPreprocessor(pipePacket inData);
+    void runPreprocessorWrapper(pipePacket &inData);
+    virtual void runPreprocessor(pipePacket &inData);
+    virtual void outputData(pipePacket&);
 	virtual void outputData(std::vector<unsigned>);
 	virtual void outputData(std::vector<std::vector<double>>);
-    virtual bool configPreprocessor(std::map<std::string, std::string> configMap);
+    virtual bool configPreprocessor(std::map<std::string, std::string> &configMap);
 };
 

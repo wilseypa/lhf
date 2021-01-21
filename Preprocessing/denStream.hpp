@@ -45,6 +45,6 @@ class denStream : public preprocessor {
   	
 	public:
 		denStream();
-		pipePacket runPreprocessor(pipePacket inData);
-		bool configPreprocessor(std::map<std::string, std::string> configMap);
+		void runPreprocessor(pipePacket&);
+		bool configPreprocessor(std::map<std::string, std::string>&);
 }; 

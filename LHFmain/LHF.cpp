@@ -13,10 +13,24 @@ void LHF::outputBettis(std::map<std::string, std::string> args, pipePacket &wD){
 	auto pipe = args.find("outputFile");
 	if(pipe != args.end()){
 		if (args["outputFile"] == "console"){
-			//ws->writeConsole(wD);
+			writeOutput::writeConsole(wD.bettiTable);
+			
+			//Check if debug mode for runLog, stats	
+			pipe = args.find("debug");
+			if(pipe != args.end() && args["debug"] == "1"){	
+				writeOutput::writeRunLog(wD.runLog, args["outputFile"]);
+				writeOutput::writeStats(wD.stats, args["outputFile"]);
+			}
+			
 		} else {
-			writeOutput::writeStats(wD.stats, args["outputFile"]);
-			writeOutput::writeBarcodes(wD.bettiTable, args["outputFile"]);	
+			writeOutput::writeBarcodes(wD.bettiTable, args["outputFile"]);
+			
+			//Check if debug mode for runLog, stats	
+			pipe = args.find("debug");
+			if(pipe != args.end() && args["debug"] == "1"){	
+				writeOutput::writeRunLog(wD.runLog, args["outputFile"]);
+				writeOutput::writeStats(wD.stats, args["outputFile"]);
+			}
 		}
 	}
 }
@@ -28,11 +42,16 @@ void LHF::runPipeline(std::map<std::string, std::string> args, pipePacket &wD){
 	auto pipe = args.find("pipeline");
 	
 	if(pipe != args.end()){
+		
 		auto pipeFuncts = std::string(args["pipeline"]);
 		auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
 		
+		//Start the timer for time passed during the pipeline
+		auto startTime = std::chrono::high_resolution_clock::now();
+		
 		//For each '.' separated pipeline function (count of '.' + 1 -> lim)
 		for(unsigned i = 0; i < lim; i++){
+			
 			auto curFunct = pipeFuncts.substr(0,pipeFuncts.find('.'));
 			pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
 			//Build the pipe component, configure and run
@@ -47,14 +66,26 @@ void LHF::runPipeline(std::map<std::string, std::string> args, pipePacket &wD){
 			}
 			
 			delete cp;
-			
 		}
+		
+		//Stop the timer for time passed during the pipeline
+		auto endTime = std::chrono::high_resolution_clock::now();
+		
+		//Calculate the duration (physical time) for the pipeline
+		std::chrono::duration<double, std::milli> elapsed = endTime - startTime;
+		
+		//Log the current execution to runLog
+		wD.runLog += writeOutput::logRun(args, wD.ident, wD.getStats(), std::to_string(elapsed.count()/1000.0));
+		
 	}
 	//If the pipeline was undefined...
 	else {
 		std::cout << "LHF runPipeline: Failed to find a suitable pipeline, exiting..." << std::endl;
 		return;
 	}
+	
+	outputBettis(args, wD);
+	
 }
 
 
@@ -67,11 +98,10 @@ void LHF::processDataWrapper(std::map<std::string, std::string> args, pipePacket
 		auto prePipe = preprocessor::newPreprocessor(pre);
 
 		if(prePipe != 0 && prePipe->configPreprocessor(args)){
-			wD = prePipe->runPreprocessorWrapper(wD);
+			prePipe->runPreprocessorWrapper(wD);
 		} else {
 			std::cout << "LHF processData: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 		}
-		
 		delete prePipe;
 	}
 }	
@@ -86,6 +116,8 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 	//		Local Storage
 	std::vector<bettiBoundaryTableEntry> mergedBettiTable;
 	std::vector<bettiBoundaryTableEntry> partBettiTable[threads];
+	std::string runLogs[threads];
+	std::string stats[threads];
 	
 	//		Initalize a copy of the pipePacket
 	auto iterwD = pipePacket(args, args["complexType"]);
@@ -127,14 +159,16 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 					centArgs["pipeline"] = "distMatrix.neighGraph.incrementalPersistence.upscale";
 				else
 					centArgs["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";
-					
+				
+				iterwD.ident = std::to_string(np) + "," + std::to_string(p);
+				
 				//Run against the original dataset
 			
 				if(partitionedData.second[z].size() > 0){
 					iterwD.inputData = partitionedData.second[z];
 					iterwD.workData = partitionedData.second[z];
 					runPipeline(centArgs, iterwD);
-
+					
 					delete iterwD.complex;
 				} else 
 					std::cout << "skipping full data, no centroids" << std::endl;
@@ -147,6 +181,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 				auto curwD = pipePacket(args, args["complexType"]);	
 				curwD.workData = partitionedData.second[z];
 				curwD.inputData = partitionedData.second[z];
+				curwD.ident = std::to_string(np) + "," + std::to_string(p);
 				
 				//		If the current partition is smaller than the threshold, process
 				//			Otherwise recurse to reduce the number of points
@@ -156,6 +191,9 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 				} else{
 					runPipeline(args, curwD);
 				}
+				
+				runLogs[np] += curwD.runLog;
+				stats[np] += curwD.stats;
 
 				delete curwD.complex;
 
@@ -251,6 +289,15 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 		bettiBoundaryTableEntry des = { 0, 0, maxEpsilon, {} };
 		mergedBettiTable.push_back(des);
 	}
+
+	for(auto stat : stats)
+		iterwD.stats += stat;
+		
+	for(auto runLog : runLogs)
+		iterwD.runLog += runLog;
+
+	iterwD.bettiTable = mergedBettiTable;
+	outputBettis(args, iterwD);
 
 	//		Return the final merged betti table for this iteration
 	return mergedBettiTable;
@@ -356,7 +403,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 	//Minimum Partitions per process
 	int minPartitions=0;
 	
-	//During distribution firstk processes that will receive one more partition than minPartitions
+	//During distribution first k processes that will receive one more partition than minPartitions
 	int firstk=0;
 	
 	//Each Process is aware of fuzzy partition sizes

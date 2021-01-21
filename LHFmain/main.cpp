@@ -82,9 +82,6 @@ int main(int argc, char* argv[]){
 			lhflib.runPipeline(args, wD);
 		}
 
-		//Output the data using writeOutput library
-		lhflib.outputBettis(args, wD);
-
 	} else {
 		argParser::printUsage();
 	}
@@ -101,7 +98,7 @@ int main(int argc, char* argv[]){
 	delete wD.complex;
 
 	double end = omp_get_wtime();
-	std::cout<<"Time in seconds: "<<end-start<<'\n';
+	std::cout << "Total LHF execution time (s): " << end-start << std::endl;
 
 	return 0;
 }

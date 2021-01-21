@@ -25,10 +25,10 @@ kMeansPlusPlus::kMeansPlusPlus(){
 
 
 // runPipe -> Run the configured functions of this pipeline segment
-pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
+void kMeansPlusPlus::runPreprocessor(pipePacket& inData){
 	if(!configured){
 		ut.writeLog(procName,"Preprocessor not configured");
-		return inData;
+		return;
 	}
 	
     //Arguments - num_clusters, num_iterations
@@ -144,20 +144,19 @@ pipePacket kMeansPlusPlus::runPreprocessor(pipePacket inData){
 		
 	}
     
-	std::cout << "Clustered data..." << std::endl;
 	//Assign to the pipepacket
 	inData.workData = centroids;
 	inData.centroidLabels = lastLabels;
-	return inData;
+	return;
 }
 
 // configPipe -> configure the function settings of this pipeline segment
-bool kMeansPlusPlus::configPreprocessor(std::map<std::string, std::string> configMap){
+bool kMeansPlusPlus::configPreprocessor(std::map<std::string, std::string>& configMap){
 	std::string strDebug;
 	
 	auto pipe = configMap.find("debug");
 	if(pipe != configMap.end()){
-		debug = std::atoi(configMap["debug"].c_str());
+		debug = (std::atoi(configMap["debug"].c_str()) > 0 ? true : false);
 		strDebug = configMap["debug"];
 	}
 	pipe = configMap.find("outputFile");

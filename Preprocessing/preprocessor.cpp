@@ -37,54 +37,57 @@ preprocessor* preprocessor::newPreprocessor(const std::string &procName){
 }
 
 // runPipeWrapper -> wrapper for timing of runPipe and other misc. functions
-pipePacket preprocessor::runPreprocessorWrapper(pipePacket inData){
+void preprocessor::runPreprocessorWrapper(pipePacket &inData){
 	
+	//Check if the preprocessor has been configured
 	if(!configured){
-		ut.writeLog(procName,"Preprocessor not configured");
-		return inData;
+		ut.writeLog(procName,"Pipe not configured");
+		std::cout << "Pipe not configured" << std::endl;
+		return;
 	}
 	
-	//Start a timer for physical time passed during the pipe's function
-	auto startTime = std::chrono::high_resolution_clock::now();
+	if(debug){
+		
+		//Start a timer for physical time passed during the pipe's function
+		auto startTime = std::chrono::high_resolution_clock::now();
+		
+		runPreprocessor(inData);
+		
+		//Stop the timer for time passed during the pipe's function
+		auto endTime = std::chrono::high_resolution_clock::now();
+		
+		//Calculate the duration (physical time) for the pipe's function
+		std::chrono::duration<double, std::milli> elapsed = endTime - startTime;
+		
+		//Output the time and memory used for this pipeline segment
+		std::cout << "\tPipeline " << procName << " executed in " << (elapsed.count()/1000.0) << " seconds (physical time)" << std::endl << std::endl;
+		
+		auto dataSize = inData.getSize();
+		auto unit = "B";
+		
+		std::cout << "Test" << std::endl;
+		//Convert large datatypes (GB, MB, KB)
+		if(dataSize > 1000000000){
+			//Convert to GB
+			dataSize = dataSize/1000000000;
+			unit = "GB";
+		} else if(dataSize > 1000000){
+			//Convert to MB
+			dataSize = dataSize/1000000;
+			unit = "MB";
+		} else if (dataSize > 1000){
+			//Convert to KB
+			dataSize = dataSize/1000;
+			unit = "KB";
+		}
+		
+		inData.stats += procName + "," + std::to_string(elapsed.count()/1000.0) + "," + std::to_string(dataSize) + "," + unit + "\n";
+		
+		outputData(inData);
 	
-	inData = runPreprocessor(inData);
-	
-	//Stop the timer for time passed during the pipe's function
-	auto endTime = std::chrono::high_resolution_clock::now();
-	
-	//Calculate the duration (physical time) for the pipe's function
-	std::chrono::duration<double, std::milli> elapsed = endTime - startTime;
-	
-	//Output the time and memory used for this pipeline segment
-	std::cout << "\tPipeline " << procName << " executed in " << (elapsed.count()/1000.0) << " seconds (physical time)" << std::endl << std::endl;
-	
-	/*auto dataSize = inData.getSize();
-	auto unit = "B";
-	
-	std::cout << "Test" << std::endl;
-	//Convert large datatypes (GB, MB, KB)
-	if(dataSize > 1000000000){
-		//Convert to GB
-		dataSize = dataSize/1000000000;
-		unit = "GB";
-	} else if(dataSize > 1000000){
-		//Convert to MB
-		dataSize = dataSize/1000000;
-		unit = "MB";
-	} else if (dataSize > 1000){
-		//Convert to KB
-		dataSize = dataSize/1000;
-		unit = "KB";
+	} else {
+		runPreprocessor(inData);
 	}
-	
-	std::cout << "\tData size: " << dataSize << " " << unit << std::endl << std::endl;
-	*/
-	inData.stats += procName + "," + std::to_string(elapsed.count()/1000.0) + "\n"; // + "," + std::to_string(dataSize) + "," + unit + "\n";
-	
-	outputData(inData.workData);
-	outputData(inData.centroidLabels);
-	
-	return inData;
 }
 
 void preprocessor::outputData(std::vector<unsigned> data){
@@ -98,6 +101,15 @@ void preprocessor::outputData(std::vector<unsigned> data){
 	return;
 }
 	
+void preprocessor::outputData(pipePacket &data){
+	
+	outputData(data.workData);
+	outputData(data.centroidLabels);
+	
+	return;
+	
+	
+}
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
 void preprocessor::outputData(std::vector<std::vector<double>> data){
@@ -116,18 +128,17 @@ void preprocessor::outputData(std::vector<std::vector<double>> data){
 }
 	
 // runPipe -> Run the configured functions of this pipeline segment
-pipePacket preprocessor::runPreprocessor(pipePacket inData){
+void preprocessor::runPreprocessor(pipePacket &inData){
 	
 	std::cout << "No run function defined for: " << procName << std::endl;
 	
-	return inData;
+	return;
 }	
 
 // configPipe -> configure the function settings of this pipeline segment
-bool preprocessor::configPreprocessor(std::map<std::string, std::string> configMap){
-	
+bool preprocessor::configPreprocessor(std::map<std::string, std::string> &configMap){
 	std::cout << "No configure function defined for: " << procName << std::endl;
 	
-	return true;
+	return false;
 }
 

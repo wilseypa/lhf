@@ -40,6 +40,10 @@ struct bettiBoundaryTableEntry{
 	double birth;
 	double death;
 	std::set<unsigned> boundaryPoints;
+	
+	double getSize(){ 
+		return (sizeof(double)*2) + ((boundaryPoints.size() + 1) * sizeof(unsigned)); 
+	} 
 }; 
 
 

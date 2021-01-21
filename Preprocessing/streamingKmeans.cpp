@@ -28,11 +28,11 @@ streamingKmeans::streamingKmeans(){
 
 
 // runPipe -> Run the configured functions of this pipeline segment
-pipePacket streamingKmeans::runPreprocessor(pipePacket inData){
+void streamingKmeans::runPreprocessor(pipePacket &inData){
 	
 	if(!configured){
 		ut.writeLog(procName,"Preprocessor not configured");
-		return inData;
+		return;
 	}
 	
 	//Arguments - num_clusters, num_iterations
@@ -292,14 +292,14 @@ std::vector<std::vector<double>> summedCentroidVectors(numClusters, std::vector<
 
 
 	inData.workData = finalClusters;	
-	return inData;	
+	return;	
 }
 
 
 
 
 // configPipe -> configure the function settings of this pipeline segment
-bool streamingKmeans::configPreprocessor(std::map<std::string, std::string> configMap){
+bool streamingKmeans::configPreprocessor(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
 	
 	auto pipe = configMap.find("debug");
