@@ -144,7 +144,6 @@ void kMeansPlusPlus::runPreprocessor(pipePacket& inData){
 		
 	}
     
-	std::cout << "Clustered data..." << std::endl;
 	//Assign to the pipepacket
 	inData.workData = centroids;
 	inData.centroidLabels = lastLabels;

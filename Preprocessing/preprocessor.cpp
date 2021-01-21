@@ -81,9 +81,7 @@ void preprocessor::runPreprocessorWrapper(pipePacket &inData){
 			unit = "KB";
 		}
 		
-		std::cout << "\tData size: " << dataSize << " " << unit << std::endl << std::endl;
-		
-		inData.stats += procName + "," + std::to_string(elapsed.count()/1000.0) + "\n"; // + "," + std::to_string(dataSize) + "," + unit + "\n";
+		inData.stats += procName + "," + std::to_string(elapsed.count()/1000.0) + "," + std::to_string(dataSize) + "," + unit + "\n";
 		
 		outputData(inData);
 	

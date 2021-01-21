@@ -51,6 +51,7 @@ void LHF::runPipeline(std::map<std::string, std::string> args, pipePacket &wD){
 		
 		//For each '.' separated pipeline function (count of '.' + 1 -> lim)
 		for(unsigned i = 0; i < lim; i++){
+			
 			auto curFunct = pipeFuncts.substr(0,pipeFuncts.find('.'));
 			pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
 			//Build the pipe component, configure and run
@@ -83,6 +84,8 @@ void LHF::runPipeline(std::map<std::string, std::string> args, pipePacket &wD){
 		return;
 	}
 	
+	outputBettis(args, wD);
+	
 }
 
 
@@ -99,7 +102,6 @@ void LHF::processDataWrapper(std::map<std::string, std::string> args, pipePacket
 		} else {
 			std::cout << "LHF processData: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 		}
-		
 		delete prePipe;
 	}
 }	
