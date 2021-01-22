@@ -54,7 +54,7 @@ void simplexTree::recurseInsert(simplexTreeNode* node, unsigned curIndex, int de
 	curE = curE > maxE ? curE : maxE;
 
 	//Check if the node needs inserted at this level
-	if(curE < maxEpsilon){
+	if(curE <= maxEpsilon){
 		simp.insert(node->simpNode->index);
 		//Get the largest weight of this simplex
 		maxE = curE > node->simpNode->weight ? curE : node->simpNode->weight;

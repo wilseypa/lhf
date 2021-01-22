@@ -81,10 +81,9 @@ void fastPersistence::runPipe(pipePacket &inData){
 			uf.join(c1, c2);
 			mstSize++;
 
-			simplexNode_P temp = std::make_shared<simplexNode>(simplexNode((*edgeIter)->simplex, (*edgeIter)->weight));
-			pivots.push_back(temp);
+			pivots.push_back((*edgeIter));
 
-			bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, temp->simplex };
+			bettiBoundaryTableEntry des = { 0, 0, (*edgeIter)->weight, (*edgeIter)->simplex };
 			inData.bettiTable.push_back(des);
 		}
 
