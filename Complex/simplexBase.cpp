@@ -91,6 +91,16 @@ std::vector<simplexNode_P> simplexBase::getAllCofacets(const std::set<unsigned>&
 	return std::vector<simplexNode_P>();
 }
 
+std::vector<simplexNode*> simplexBase::getAllCofacets(simplexNode_P, const std::unordered_map<long long, simplexNode_P>&, bool){
+	ut.writeLog(simplexType,"No get cofacets function defined");
+	return std::vector<simplexNode*>();
+}
+
+std::vector<simplexNode*> simplexBase::getAllCofacets(simplexNode_P){
+	ut.writeLog(simplexType,"No get cofacets function defined");
+	return std::vector<simplexNode*>();
+}
+
 double simplexBase::getSize(){
 	ut.writeLog(simplexType,"No size function defined");
 	return -1;
@@ -216,3 +226,9 @@ bool simplexBase::streamEvaluator(std::vector<double>& vector, std::vector<std::
 }
 
 simplexBase::~simplexBase(){}
+
+std::vector<simplexNode_P> simplexBase::expandDimension(std::vector<simplexNode_P> edges){
+	std::vector<simplexNode_P> ret;
+	ut.writeLog(simplexType,"No expandDimension function defined");
+	return ret;	
+}

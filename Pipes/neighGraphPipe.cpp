@@ -31,8 +31,6 @@ void neighGraphPipe::runPipe(pipePacket &inData){
 		}
 	}
 
-	inData.complex->outputComplex();
-
 	return;
 }
 

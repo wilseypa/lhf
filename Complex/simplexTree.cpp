@@ -8,7 +8,6 @@
 
 simplexTree::simplexTree(double _maxEpsilon, int _maxDim){
 	indexCounter = 0;
-	std::cout << "simplexTree set indexCounter" << std::endl;
 	maxDimension = _maxDim;
 	maxEpsilon = _maxEpsilon;
 	simplexType = "simplexTree";
@@ -60,6 +59,7 @@ void simplexTree::recurseInsert(simplexTreeNode* node, unsigned curIndex, int de
 		maxE = curE > node->simpNode->weight ? curE : node->simpNode->weight;
 		simplexTreeNode* insNode = new simplexTreeNode(simp, maxE);
 		insNode->simpNode->index = curIndex;
+	    insNode->simpNode->hash = nodeCount;
 		nodeCount++;
 
 
@@ -72,7 +72,7 @@ void simplexTree::recurseInsert(simplexTreeNode* node, unsigned curIndex, int de
 		if(node->child == nullptr){
 			node->child = insNode;
 			insNode->parent = node;
-			node->children.insert(insNode);
+			//node->children.insert(insNode);
 
 		//Node has children, add to the beginning of children
 		} else {
@@ -80,7 +80,7 @@ void simplexTree::recurseInsert(simplexTreeNode* node, unsigned curIndex, int de
 			insNode->parent = node;
 			insNode->sibling = node->child;
 			node->child = insNode;
-			node->children.insert(insNode);
+			//node->children.insert(insNode);
 
 			temp = insNode->sibling;
 
@@ -300,7 +300,7 @@ void simplexTree::deleteIndexRecurse(int vectorIndex, simplexTreeNode* curNode){
 		}
 
 		//Remove our index from the parent
-		curNode->parent->children.erase(curNode);
+		//curNode->parent->children.erase(curNode);
 
 		//Delete this node and sub-nodes in the tree
 		deletion(curNode);
@@ -350,7 +350,7 @@ void simplexTree::insert() {
 		root = new simplexTreeNode();
 		insNode->parent = root;
 		root->child = insNode;
-		root->children.insert(insNode);
+		//root->children.insert(insNode);
 		indexCounter++;
 		runningVectorCount++;
 		nodeCount++;
@@ -394,11 +394,12 @@ void simplexTree::insert() {
 	insNode->parent = root;
 	insNode->sibling = root->child;
 	root->child = insNode;
-	root->children.insert(insNode);
+	//root->children.insert(insNode);
 
 	//simplexList[0].insert(insNode);
 
 	// runningVectorCount++;
+	insNode->simpNode->hash = nodeCount;
 	nodeCount++;
 	indexCounter++;
 }
@@ -453,21 +454,6 @@ simplexTree::simplexTreeNode* simplexTree::find(std::set<unsigned>::iterator beg
 	}
 	
 	return curNode;
-	// //Iterate by index in reverse
-	// auto it = end;
-	// it--;
-
-	// for(auto ptr = curNode->child; ptr != nullptr; ptr = ptr->sibling){
-	// 	if(ptr->simpNode->index == (*it)){
-	// 		--it;
-	// 		curNode = ptr;
-	// 	} else if (ptr->sibling == nullptr){
-	// 		return nullptr;
-	// 	}
-	// 	if(it == begin){
-	// 		return curNode;
-	// 	}
-	// }
 }
 
 
@@ -489,10 +475,50 @@ void simplexTree::recurseGetEdges(std::vector<std::set<simplexNode_P, cmpByWeigh
 	return;
 }
 
+std::vector<simplexNode*> simplexTree::getAllCofacets(simplexNode_P simp){
+	return getAllCofacets(simp, std::unordered_map<long long, simplexNode_P>(), false);
+}
+
+std::vector<simplexNode*> simplexTree::getAllCofacets(simplexNode_P simp, const std::unordered_map<long long, simplexNode_P>& pivotPairs, bool checkEmergent){
+	std::vector<simplexNode*> ret;
+	simplexTreeNode* parentNode = find(simp->simplex.begin(), simp->simplex.end(), root);
+	if(parentNode == nullptr) return ret; //Simplex isn't in the simplex tree
+
+	simplexTreeNode* tempNode;
+	auto it = simp->simplex.end();
+
+	while(true){
+		//Insert all of the children in reverse lexicographic order
+		for(auto ptr = parentNode->child; ptr != nullptr; ptr = ptr->sibling){
+			if(it == simp->simplex.end()) {
+				ret.push_back(ptr->simpNode.get()); //All children of simplex are cofacets
+			} else {
+				tempNode = find(it, simp->simplex.end(), ptr); //See if cofacet is in the tree
+				if(tempNode != nullptr){
+					ret.push_back(tempNode->simpNode.get());
+					
+					//If we haven't found an emergent candidate and the weight of the maximal cofacet is equal to the simplex's weight
+					//		we have identified an emergent pair; at this point we can break because the interval is born and dies at the
+					//		same epsilon
+					if(checkEmergent && tempNode->simpNode->weight == simp->weight){
+						if(pivotPairs.find(tempNode->simpNode->hash) == pivotPairs.end()) return ret; //Check to make sure the identified cofacet isn't a pivot
+						checkEmergent = false;
+					}
+				}
+			}
+		}
+		
+		//Recurse backwards up the tree and try adding vertices at each level
+		--it;
+		if(parentNode->parent != nullptr) parentNode = parentNode->parent;
+		else break;
+	}
+	
+	return ret;
+}
 
 std::vector<simplexNode_P> simplexTree::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode_P, simplexNode_P>& pivotPairs, bool checkEmergent){
 	std::vector<simplexNode_P> ret;
-	ut.print1DVector(simplex);
 	simplexTreeNode* parentNode = find(simplex.begin(), simplex.end(), root);
 	if(parentNode == nullptr) return ret; //Simplex isn't in the simplex tree
 

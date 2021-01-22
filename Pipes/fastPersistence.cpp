@@ -32,10 +32,6 @@ void fastPersistence::runPipe(pipePacket &inData){
 	//Get all edges for the simplexArrayList or simplexTree
 	std::vector<std::set<simplexNode_P, cmpByWeight>> edges = inData.complex->getAllEdges();
 
-	std::cout << "Edge size: " << edges.size() << std::endl;
-	for(auto a : edges)
-		std::cout << "\tDsize: " << a.size() << std::endl;
-
 	if(edges.size() <= 1) return;
 
 	//Some notes on fast persistence:
@@ -129,7 +125,7 @@ void fastPersistence::runPipe(pipePacket &inData){
 			//Not a pivot -> need to reduce
 			if((*it)->weight != simplex->weight || (*it)->simplex != simplex->simplex){
 				//Get all cofacets using emergent pair optimization
-				std::vector<simplexNode_P> cofaceList = inData.complex->getAllCofacets(simplex->simplex, simplex->weight, pivotPairs);
+				std::vector<simplexNode_P> cofaceList = inData.complex->getAllCofacets(simplex->simplex, simplex->weight, pivotPairs, true);
 				std::vector<simplexNode_P> columnV;	//Reduction column of matrix V
 				columnV.push_back(simplex); //Initially V=I -> 1's along diagonal
 
