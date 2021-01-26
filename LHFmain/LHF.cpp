@@ -155,10 +155,10 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 				//		Run on full dataset
 				//		Set the pipeline to include the boundary and upscaling steps
 				auto centArgs = args;
-				if(args["upscale"] == "true" || args["upscale"] == "1")
-					centArgs["pipeline"] = "distMatrix.neighGraph.incrementalPersistence.upscale";
-				else
-					centArgs["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";
+				//if(args["upscale"] == "true" || args["upscale"] == "1")
+				//	centArgs["pipeline"] = "distMatrix.neighGraph.incrementalPersistence.upscale";
+				//else
+				//	centArgs["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";
 				
 				iterwD.ident = std::to_string(np) + "," + std::to_string(p);
 				

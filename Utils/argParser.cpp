@@ -107,46 +107,110 @@ void argParser::printArguments(std::map<std::string,std::string> args){
 }
 
 void argParser::setPipeline(std::map<std::string, std::string>& args){
-	if(args["pipeline"] == ""){
-		if(args["mode"] == "mpi"){
-			//Set up our pipeline
-			args["complexType"] = "simplexArrayList";
-			args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";
-			if(args["preprocessor"] == ""){
-				args["preprocessor"] = "kmeans++";
-			}
-		}else if(args["mode"] == "standard"){
-			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
-		}else if(args["mode"] == "reduced"){
-			if(args["preprocessor"] == "")
-				args["preprocessor"] = "kmeans++";
-			args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";
-		} else if(args["mode"] == "upscale"){
-			if(args["preprocessor"] == "")
-				args["preprocessor"] = "kmeans++";
-			args["upscale"] = "true";
-			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence.upscale";
-		} else if(args["mode"] == "stream"){
-			if(args["preprocessor"] == "")
-				args["preprocessor"] = "streamingkmeans";
-			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
-		} else if(args["mode"] == "sw" || args["mode"] == "slidingwindow"){
-			args["preprocessor"] = "";
-			args["pipeline"] = "slidingwindow";
-			args["upscale"] = "false";
-			args["complexType"] = "simplexTree";
-		} else if(args["mode"] == "fast"){
-			args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";
-			args["upscale"] = "false";
-		} else if(args["mode"] == "naive" || args["mode"] == "naivewindow"){
-			args["preprocessor"] = "";
-			args["pipeline"] = "naivewindow";
-			args["upscale"] = "false";
-		} else if(args["mode"] == "iterUpscale" || args["mode"] == "iter"){
+	//Configure the base pipeline from the complex storage type
+	std::string basePipeline;
+	
+	//If using SAL:
+	if(args["complexType"] == "simplexArrayList"){
+		if(args["upscale"] == "true")
+			basePipeline = "distMatrix.neighGraph.incrementalPersistence.upscale";
+		else 
+			basePipeline = "distMatrix.neighGraph.incrementalPersistence";
+	
+	} else if (args["complexType"] == "simplexTree"){
+		if(args["upscale"] == "true")
+			basePipeline = "distMatrix.neighGraph.rips.fast.upscale";
+		else 
+			basePipeline = "distMatrix.neighGraph.rips.fast";
+		
+	}	
+	
+	//Handle basic modes; set pipeline if not initialized
+	if(args["mode"] == "mpi"){
+		//Set up MPI pipeline ; requires setting pipeline, any complex storage
+		if(args["pipeline"] == "")
+			args["pipeline"] = basePipeline;
+		
+		//Requires preprocessor
+		if(args["preprocessor"] == "")
 			args["preprocessor"] = "kmeans++";
+			
+	}else if(args["mode"] == "standard"){
+		//Set up standard mode; 
+		if(args["pipeline"] == "")
+			args["pipeline"] = basePipeline;
+			
+	}else if(args["mode"] == "reduced"){
+		//Set up reduced pipeline for centroid approximation
+		
+		//Requires preprocessor
+		if(args["preprocessor"] == "")
+			args["preprocessor"] = "kmeans++";
+			
+		if(args["preprocessor"] == "")
+			args["pipeline"] = basePipeline;
+		
+	} else if(args["mode"] == "upscale"){
+		
+		//Check if upscale was set or not, should be set in this mode
+		if(args["upscale"] != "true"){
+			args["upscale"] = "true";
+			basePipeline += ".upscale";
+		}
+		
+		//Requires preprocessor
+		if(args["preprocessor"] == "")
+			args["preprocessor"] = "kmeans++";
+		if(args["pipeline"] == "")
+			args["pipeline"] = basePipeline;
+		
+	} else if(args["mode"] == "stream"){
+		if(args["preprocessor"] == "")
+			args["preprocessor"] = "streamingkmeans";
+		if(args["pipeline"] == "")
+			args["pipeline"] = basePipeline;
+		
+	} else if(args["mode"] == "sw" || args["mode"] == "slidingwindow"){
+		args["preprocessor"] = "";
+		args["pipeline"] = "slidingwindow";
+		args["complexType"] = "simplexTree";
+		
+	} else if(args["mode"] == "fast"){
+		//Fast mode; uses the fast pipe regardless of simplexType
+		
+		if(args["upscale"] == "true") {
+			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence.upscale";
+		} else {
 			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
-		} else if(args["mode"] == "inc" || args["mode"] == "incremental"){
-			args["complexType"] = "simplexArrayList";
+		}
+		
+	} else if(args["mode"] == "naive" || args["mode"] == "naivewindow"){
+		args["preprocessor"] = "";
+		args["pipeline"] = "naivewindow";
+		
+	} else if(args["mode"] == "iterUpscale" || args["mode"] == "iter"){
+		//Iterative upscaling pipe; requires preprocessor and uses basePipeline
+		
+		//Requires preprocessor
+		if(args["preprocessor"] == "")
+			args["preprocessor"] = "kmeans++";
+			
+		if(args["pipeline"] == "")
+			args["pipeline"] = basePipeline;
+		
+	} else if(args["mode"] == "inc" || args["mode"] == "incremental"){
+		//Incremental Mode; uses the incremental pipe regardless of simplexType
+		
+		if(args["complexType"] != "simplexArrayList")
+			std::cout << "**SimplexArrayList is required for incremental persistence. Changing automatically.**" << std::endl;
+			
+		//Requires SAL
+		args["complexType"] = "simplexArrayList";
+		
+		//Reset the pipe after complex change
+		if(args["upscale"] == "true") {
+			args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence.upscale";
+		} else {
 			args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";
 		}
 	}
