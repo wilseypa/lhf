@@ -122,14 +122,17 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 	//		Initalize a copy of the pipePacket
 	auto iterwD = pipePacket(args, args["complexType"]);
 
+
 	//		Process fuzzy partitions in order of size
 	std::vector<std::pair<unsigned, unsigned>> sortpartitions;
 
 	for(int i = 0; i < partitionedData.second.size(); i++){
 		sortpartitions.push_back(std::make_pair(partitionedData.second[i].size(), i));
+		
 	}
+	
 	std::sort(sortpartitions.begin(), sortpartitions.end());
-
+	
 	//3. Process each partition using OpenMP to handle multithreaded scheduling
 	std::cout << "Running with " << threads << " threads" << std::endl;
 	
@@ -147,8 +150,9 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 			unsigned z = sortpartitions[p].second;
 
 			//Check if we are running the centroid dataset (there's no label associated)
+			
 			//---------------------------------TODO: FIX WITH BOTH VERSIONS -------------------------------------------------------------
-			if(partitionedData.second[z].size() == clusters){
+			if(partitionedData.second[z].size() == clusters && (args["mode"]=="mpi" || z == partitionedData.second.size() - 1)){
 				
 				std::cout<<"Running centroids with "<<clusters<<" clusters; id = "<<id<<std::endl;
 

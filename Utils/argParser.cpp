@@ -147,7 +147,7 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 		if(args["preprocessor"] == "")
 			args["preprocessor"] = "kmeans++";
 			
-		if(args["preprocessor"] == "")
+		if(args["pipeline"] == "")
 			args["pipeline"] = basePipeline;
 		
 	} else if(args["mode"] == "upscale"){
