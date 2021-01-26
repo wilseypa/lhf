@@ -30,39 +30,23 @@ incrementalPersistence::incrementalPersistence(){
 //	IncrementalPersistence: For computing the persistence pairs from simplicial complex:
 //		1. See Bauer-19 for algorithm/description
 void incrementalPersistence::runPipe(pipePacket &inData){
-	std::set<simplexNode_P, cmpByWeight> e;
-	bool incremental = false;
-	std::vector<std::set<simplexNode_P, cmpByWeight>> edgeList;
-	std::vector<simplexNode_P> edges;
+	simplexArrayList* complex;
 
 	if(inData.complex->simplexType == "simplexArrayList"){
-		incremental = true;
-		
-		simplexArrayList* complex;
 		complex = (simplexArrayList*) inData.complex;
-		
-		//Initialize the binomial table
-	    complex->initBinom();
-	    
-		//Get the set of all points
-		e = complex->getDimEdges(0);
-		
-		//Convert the set to a vector
-		edges = std::vector<simplexNode_P>(e.begin(), e.end());
-		
-		//Get the next dimension (edges)
-		edges = complex->expandDimension(edges);
 	} else{
-		edgeList = inData.complex->getAllEdges();
-		std::cout << "Running without incremental..." << std::endl;
+		std::cout<<"IncrementalPersistence does not support complexes other than simplexArrayList\n";
+		return;
 	}
 
-
-    if(incremental){
-		
-	} else {
-		edges = std::vector<simplexNode_P>(edgeList[1].begin(), edgeList[1].end());
-	}
+	//Get the set of all points
+	std::set<simplexNode_P, cmpByWeight> e = complex->getDimEdges(0);
+	//Convert the set to a vector
+	std::vector<simplexNode_P> edges = std::vector<simplexNode_P>(e.begin(), e.end());
+	//Initialize the binomial table
+	complex->initBinom();
+	//Get the next dimension (edges)
+	edges = complex->expandDimension(edges);
 
 	//Some notes on fast persistence:
 
@@ -129,8 +113,6 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 		}
 	}
 
-	std::cout << "Finished MST" << std::endl;
-
 	//For higher dimensional persistence intervals
 	//
 		//Build next dimension of ordered simplices, ignoring previous dimension pivots
@@ -153,18 +135,17 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 
 		//If d=1, we have already expanded the points into edges
 		//Otherwise, we need to generate the higher dimensional edges (equivalent to simplexList[d])
-		if(d != 1 && incremental) edges = inData.complex->expandDimension(edges);
-		else if(!incremental) edges = std::vector<simplexNode_P>(edgeList[d].begin(), edgeList[d].end());
+		if(d != 1) edges = complex->expandDimension(edges);
 
 		//Iterate over columns to reduce in reverse order
 		for(auto columnIndexIter = edges.rbegin(); columnIndexIter != edges.rend(); columnIndexIter++){
 			simplexNode_P simplex = (*columnIndexIter);		//The current simplex
+
 			//Only need to test hash for equality
 			//Not a pivot -> need to reduce
 			if((*it)->hash != simplex->hash){
 				//Get all cofacets using emergent pair optimization
-				std::vector<simplexNode*> cofaceList = inData.complex->getAllCofacets(simplex, pivotPairs, true);
-				
+				std::vector<simplexNode*> cofaceList = complex->getAllCofacets(simplex, pivotPairs);
 				std::vector<simplexNode_P> columnV;	//Reduction column of matrix V
 				columnV.push_back(simplex); //Initially V=I -> 1's along diagonal
 
@@ -175,26 +156,26 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 					simplexNode* pivot;
 					while(!cofaceList.empty()){
 						pivot = cofaceList.front();
-						
+
 						//Rotate the heap
 						std::pop_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
 						cofaceList.pop_back();
 
 						if(!cofaceList.empty() && pivot->hash == cofaceList.front()->hash){ //Coface is in twice -> evaluates to 0 mod 2
-							if(incremental) delete pivot;
-							if(incremental)	delete cofaceList.front();
+							delete pivot;
+							delete cofaceList.front();
 
 							//Rotate the heap
 							std::pop_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
-						
 							cofaceList.pop_back();
 						} else{
-							
+
 							cofaceList.push_back(pivot);
 							std::push_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
 							break;
 						}
 					}
+
 					if(cofaceList.empty()){ //Column completely reduced
 						break;
 					} else if(pivotPairs.find(pivot->hash) == pivotPairs.end()){ //Column cannot be reduced
@@ -210,10 +191,7 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 						}
 
 						//Don't delete the first entry because that is converted to a smart pointer and stored as a pivot
-						if(incremental)
-							for(int i=1; i<cofaceList.size(); i++) delete cofaceList[i];
-						else
-							cofaceList.resize(1);
+						for(int i=1; i<cofaceList.size(); i++) delete cofaceList[i];
 
 						if(simplex->weight != pivot->weight){
 							bettiBoundaryTableEntry des = { d, simplex->weight, pivot->weight, ut.extractBoundaryPoints(v[simplex]) };
@@ -222,9 +200,9 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 
 						break;
 					} else{ //Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
-						for(auto simp : v[pivotPairs[pivot->hash]]){
+						for(simplexNode_P simp : v[pivotPairs[pivot->hash]]){
 							columnV.push_back(simp);
-							std::vector<simplexNode*> cofaces = inData.complex->getAllCofacets(simp);
+							std::vector<simplexNode*> cofaces = complex->getAllCofacets(simp);
 							cofaceList.insert(cofaceList.end(), cofaces.begin(), cofaces.end());
 						}
 						std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
@@ -247,8 +225,6 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 	//Output the time and memory used for this pipeline segment
 	ut.writeDebug("persistence","Bettis executed in " + std::to_string(elapsed.count()/1000.0) + " seconds (physical time)");;
 
-	std::cout << "RET" << std::endl;
-
 	return;
 }
 
@@ -257,8 +233,6 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
 void incrementalPersistence::outputData(pipePacket &inData){
 	std::ofstream file;
-	std::cout << "OUTPUT" << std::endl;
-	
 	if(fnmod.size() > 0)
 		file.open("output/"+pipeType+"_bettis_output"+fnmod+".csv");
 	else
