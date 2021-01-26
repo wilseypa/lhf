@@ -459,7 +459,8 @@ simplexTree::simplexTreeNode* simplexTree::find(std::set<unsigned>::iterator beg
 
 std::vector<std::set<simplexNode_P, cmpByWeight>> simplexTree::getAllEdges(){
 	std::vector<std::set<simplexNode_P, cmpByWeight>> ret(maxDimension + 1, std::set<simplexNode_P, cmpByWeight>());
-	recurseGetEdges(ret, root, 0, maxDimension);
+	if(root != nullptr)
+		recurseGetEdges(ret, root, 0, maxDimension);
 	return ret;
 }
 
