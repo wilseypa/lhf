@@ -6,7 +6,8 @@
 #  SET(CMAKE_CXX_COMPILER "${MPI_CXX_COMPILER}" CACHE FILEPATH "CXX compiler overridden with MPI C++ wrapper")
 #ENDIF(DEFINED MPI_CXX_COMPILER)
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 2.8)
+cmake_policy(SET CMP0015 NEW)
 
 find_package(MPI REQUIRED)
 add_definitions(-DOMPI_SKIP_MPICXX)

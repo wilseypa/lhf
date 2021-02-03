@@ -2,7 +2,8 @@
 # project specific logic here.
 #
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 2.8)
+cmake_policy(SET CMP0015 NEW)
 
 add_library(pipePacket "pipePacket.cpp" "pipePacket.hpp")
 add_library(basePipe "basePipe.cpp" "basePipe.hpp")
