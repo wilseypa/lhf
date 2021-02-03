@@ -6,6 +6,13 @@
 #  SET(CMAKE_CXX_COMPILER "${MPI_CXX_COMPILER}" CACHE FILEPATH "CXX compiler overridden with MPI C++ wrapper")
 #ENDIF(DEFINED MPI_CXX_COMPILER)
 
+find_package(MPI REQUIRED)
+IF(MPI_FOUND)
+  include_directories(SYSTEM ${MPI_INCLUDE_PATH})
+ELSE (MPI_FOUND)
+  message(SEND_ERROR "Application requires MPI")
+ENDIF(MPI_FOUND)
+
 cmake_minimum_required(VERSION 2.8)
 cmake_policy(SET CMP0015 NEW)
 
@@ -13,11 +20,14 @@ find_package(MPI REQUIRED)
 add_definitions(-DOMPI_SKIP_MPICXX)
 include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 
-find_package(OpenMP)
+#find_package(OpenMP)
 
 set (CMAKE_CXX_STANDARD 14)
 set (CMAKE_CXX_STANDARD_LIBRARIES "-lpthread -lmpi")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fopenmp")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fopenmp -std=c++17")
+
+include_directories(/export/apps/openmpi/4.0.0v2/lib/)
+link_directories(/export/apps/openmpi/4.0.0v2/lib/)
 
 include_directories(../Complex)
 link_directories(../Complex)
@@ -34,11 +44,11 @@ link_directories(../Utils)
 #Add Source to this project's executable
 
 add_library(LHFlib SHARED "LHF.cpp" "LHF.hpp")
-set_target_properties(LHFlib PROPERTIES VERSION ${PROJECT_VERSION})
-set_target_properties(LHFlib PROPERTIES SOVERSION 1)
+#set_target_properties(LHFlib PROPERTIES VERSION ${PROJECT_VERSION})
+#set_target_properties(LHFlib PROPERTIES SOVERSION 1)
 #set_target_properties(LHF PROPERTIES PUBLIC_HEADER "LHF.hpp")
 
-target_link_libraries(LHFlib simplexBase pipePacket utils readInput writeOutput basePipe preprocessor OpenMP::OpenMP_CXX)
+target_link_libraries(LHFlib simplexBase pipePacket utils readInput writeOutput basePipe preprocessor)
 
 INSTALL (TARGETS LHFlib
 	LIBRARY DESTINATION lib
