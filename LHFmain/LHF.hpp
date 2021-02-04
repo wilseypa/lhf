@@ -24,6 +24,8 @@ class LHF {
 
 
 
+	void testFunc(int num1);
+	void myprint(void);
 	void outputBettis(std::map<std::string, std::string>, pipePacket &);
 	void runPipeline(std::map<std::string, std::string>, pipePacket &);
 	void processDataWrapper(std::map<std::string, std::string>, pipePacket &);
@@ -32,3 +34,26 @@ class LHF {
 	std::vector<bettiBoundaryTableEntry> processUpscaleWrapper(std::map<std::string, std::string>, pipePacket &);
 
 };
+extern "C" {
+
+	LHF void outputBettis(std::map<std::string, std::string>, pipePacket &);
+	LHF void runPipeline(std::map<std::string, std::string>, pipePacket &);
+	LHF void processDataWrapper(std::map<std::string, std::string>, pipePacket &);
+	LHF std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, std::string> args, pipePacket &wd){return processIterUpscale(args, wd, true);}
+	LHF std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, std::string>, pipePacket &, bool);
+	LHF std::vector<bettiBoundaryTableEntry> processUpscaleWrapper(std::map<std::string, std::string>, pipePacket &);
+	
+	//wrapper for c++ class
+
+	LHF void wrapper_init_class(int id);
+	LHF void wrapper_free_class();
+	
+	//wrapper versions?
+
+	// LHF void wrapper_outputBettis(std::map<std::string, std::string>, pipePacket &);
+	// LHF void wrapper_runPipeline(std::map<std::string, std::string>, pipePacket &);
+	// LHF void wrapper_processDataWrapper(std::map<std::string, std::string>, pipePacket &);
+	// LHF std::vector<bettiBoundaryTableEntry> wrapper_processIterUpscale(std::map<std::string, std::string> args, pipePacket &wd){return processIterUpscale(args, wd, true);}
+	// LHF std::vector<bettiBoundaryTableEntry> wrapper_processIterUpscale(std::map<std::string, std::string>, pipePacket &, bool);
+	// LHF std::vector<bettiBoundaryTableEntry> wrapper_processUpscaleWrapper(std::map<std::string, std::string>, pipePacket &); 
+}
