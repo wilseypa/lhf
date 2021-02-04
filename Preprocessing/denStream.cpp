@@ -89,7 +89,7 @@ denStream::denStream(){
 
 
 // runPipe -> Run the configured functions of this pipeline segment
-pipePacket denStream::runPreprocessor(pipePacket inData){
+void denStream::runPreprocessor(pipePacket& inData){
   /////////constants//////////
   initPoints = 1000; // points to generate p clusters (large data sets, use 1000) 
   minPoints = 20; //For DBSCAN 
@@ -160,7 +160,7 @@ pipePacket denStream::runPreprocessor(pipePacket inData){
   }
 
   inData.workData = centers;
-	return inData;
+	return;
 }
 
 //Index of nearest p-micro-cluster
@@ -228,7 +228,7 @@ void denStream::merging(std::vector<std::vector<double>> &data, int p, int times
   
 
 // configPipe -> configure the function settings of this pipeline segment
-bool denStream::configPreprocessor(std::map<std::string, std::string> configMap){
+bool denStream::configPreprocessor(std::map<std::string, std::string> &configMap){
   std::string strDebug;
   
   auto pipe = configMap.find("debug");

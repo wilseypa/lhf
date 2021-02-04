@@ -11,7 +11,7 @@ class kMeansPlusPlus : public preprocessor {
 	int num_iterations;			
   public:
 	kMeansPlusPlus();
-    pipePacket runPreprocessor(pipePacket inData);
-    bool configPreprocessor(std::map<std::string, std::string> configMap);
+    void runPreprocessor(pipePacket&);
+    bool configPreprocessor(std::map<std::string, std::string>&);
 };
 

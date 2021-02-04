@@ -57,45 +57,48 @@ void basePipe::runPipeWrapper(pipePacket &inData){
 		std::cout << "Pipe not configured" << std::endl;
 		return;
 	}
-	//Start a timer for physical time passed during the pipe's function
-	auto startTime = std::chrono::high_resolution_clock::now();
 	
-	runPipe(inData);
-	
-	//Stop the timer for time passed during the pipe's function
-	auto endTime = std::chrono::high_resolution_clock::now();
-	
-	//Calculate the duration (physical time) for the pipe's function
-	std::chrono::duration<double, std::milli> elapsed = endTime - startTime;
-	
-	//Output the time and memory used for this pipeline segment
-	ut.writeLog(pipeType,"\tPipeline " + pipeType + " executed in " + std::to_string(elapsed.count()/1000.0) + " seconds (physical time)");
-	
-	auto dataSize = inData.getSize();
-	auto unit = "B";
-	
-	//Convert large datatypes (GB, MB, KB)
-	if(dataSize > 1000000000){
-		//Convert to GB
-		dataSize = dataSize/1000000000;
-		unit = "GB";
-	} else if(dataSize > 1000000){
-		//Convert to MB
-		dataSize = dataSize/1000000;
-		unit = "MB";
-	} else if (dataSize > 1000){
-		//Convert to KB
-		dataSize = dataSize/1000;
-		unit = "KB";
-	}
-	
-	inData.stats += pipeType + "," + std::to_string(elapsed.count()/1000.0) + "," + std::to_string(dataSize) + "," + unit + "," + std::to_string(inData.complex->vertexCount()) + "," + std::to_string(inData.complex->simplexCount()) + "\n";
-	
-	std::string ds = std::to_string(dataSize);
-	ut.writeLog(pipeType,"\t\tData size: " + ds + " " + unit + "\n");
-	
-	if(debug)
+	if(debug){	
+		//Start a timer for physical time passed during the pipe's function
+		auto startTime = std::chrono::high_resolution_clock::now();
+		
+		runPipe(inData);
+		
+		//Stop the timer for time passed during the pipe's function
+		auto endTime = std::chrono::high_resolution_clock::now();
+		
+		//Calculate the duration (physical time) for the pipe's function
+		std::chrono::duration<double, std::milli> elapsed = endTime - startTime;
+		
+		//Output the time and transient memory used for this pipeline segment
+		ut.writeLog(pipeType,"\tPipeline " + pipeType + " executed in " + std::to_string(elapsed.count()/1000.0) + " seconds (physical time)");
+		
+		auto dataSize = inData.getSize();
+		auto unit = "B";
+		
+		//Convert large datatypes (GB, MB, KB)
+		if(dataSize > 1000000000){
+			//Convert to GB
+			dataSize = dataSize/1000000000;
+			unit = "GB";
+		} else if(dataSize > 1000000){
+			//Convert to MB
+			dataSize = dataSize/1000000;
+			unit = "MB";
+		} else if (dataSize > 1000){
+			//Convert to KB
+			dataSize = dataSize/1000;
+			unit = "KB";
+		}
+		
+		inData.stats += pipeType + "," + std::to_string(elapsed.count()/1000.0) + "," + std::to_string(dataSize) + "," + unit + "," + std::to_string(inData.complex->vertexCount()) + "," + std::to_string(inData.complex->simplexCount()) + "\n";
+		
+		std::string ds = std::to_string(dataSize);
+		ut.writeLog(pipeType,"\t\tData size: " + ds + " " + unit + "\n");
 		outputData(inData);
+	} else {
+		runPipe(inData);
+	}
 	
 	return;
 }
@@ -117,8 +120,6 @@ void basePipe::outputData(pipePacket &inData){
 	file.close();
 	return;
 }
-	
-
 
 // runPipe -> Run the configured functions of this pipeline segment
 void basePipe::runPipe(pipePacket &inData){
@@ -133,7 +134,7 @@ bool basePipe::configPipe(std::map<std::string, std::string> &configMap){
 
 	auto pipe = configMap.find("debug");
 	if(pipe != configMap.end())
-		debug = std::atoi(configMap["debug"].c_str());
+		debug = (std::atoi(configMap["debug"].c_str()) > 0 ? true : false);
 	
 	return true;
 }

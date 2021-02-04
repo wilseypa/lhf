@@ -7,10 +7,10 @@ class argParser {
   private:
   public:
     argParser();
-    void printUsage();
-	void printArguments(std::map<std::string,std::string>);
-    std::map<std::string, std::string> parse(int argc, char** argv);
-    std::map<std::string, std::string> defaultArguments(std::map<std::string, std::string>  &map);
-    void setPipeline(std::map<std::string, std::string>&);
+    static void printUsage();
+    static void printArguments(std::map<std::string,std::string>);
+    static std::map<std::string, std::string> parse(int argc, char** argv);
+    static void defaultArguments(std::map<std::string, std::string> &map);
+    static void setPipeline(std::map<std::string, std::string>&);
 };
 

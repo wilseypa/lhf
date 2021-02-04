@@ -35,6 +35,7 @@ class simplexTree : public simplexBase {
 	typedef std::shared_ptr<simplexTreeNode> simplexTreeNode_P;
   
 	simplexTreeNode* find(std::set<unsigned>::iterator, std::set<unsigned>::iterator, simplexTreeNode*);
+	void recurseGetEdges(std::vector<std::set<simplexNode_P, cmpByWeight>> &, simplexTreeNode*, int, int);
   
   public:
 	simplexTreeNode* root = nullptr; //Empty node at root of tree (empty simplex)
@@ -60,7 +61,11 @@ class simplexTree : public simplexBase {
 	int simplexCount();
 	int vertexCount();
 	void prepareCofacets(int){return;}
-	std::vector<simplexNode_P> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode_P, simplexNode_P>&, bool);
+	std::vector<simplexNode_P> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode_P, simplexNode_P>&, bool = true);
+	std::vector<simplexNode*> getAllCofacets(simplexNode_P, const std::unordered_map<long long, simplexNode_P>&, bool = true);
+	std::vector<simplexNode*> getAllCofacets(simplexNode_P);
+	std::vector<std::set<simplexNode_P, cmpByWeight>> getAllEdges();
+	
 	bool deletion(std::set<unsigned>);
 	bool deletion(simplexTreeNode*);
 	void expandDimensions(int){return;};
