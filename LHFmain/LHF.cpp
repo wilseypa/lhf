@@ -736,9 +736,47 @@ extern "C"
 {
 	
 	void pyRunWrapper(std::map<std::string, std::string> args, std::vector<std::vector<double>> pointCloud){
+		//C interface for python to call into LHF
+		auto lhflib = LHF();
+		double start = omp_get_wtime();
 		
+		//Create a pipePacket (datatype) to store the complex and pass between engines
+		auto wD = pipePacket(args, args["complexType"]);	//wD (workingData)
 		
+		wD.inputData = pointCloud;
+		wD.workData = wD.inputData;
 		
+
+		//If data was found in the inputFile
+		if(wD.inputData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
+
+			if(args["mode"] == "reduced" || args["mode"] == "iterUpscale" || args["mode"] == "iter"){	
+				wD.bettiTable = lhflib.processIterUpscale(args,wD);
+				sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
+				
+			} else {
+				lhflib.processDataWrapper(args, wD);
+				lhflib.runPipeline(args, wD);
+			}
+
+		} else {
+			argParser::printUsage();
+		}
+			
+		if((args["debug"] == "1" || args["debug"] == "true") && wD.bettiTable.size() > 0 ){
+			std::cout << std::endl << "_______Merged BETTIS_______" << std::endl;
+
+			for(auto a : wD.bettiTable){
+				std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
+				utils::print1DVector(a.boundaryPoints);
+			}
+		}
+		
+		delete wD.complex;
+
+		double end = omp_get_wtime();
+		std::cout << "Total LHF execution time (s): " << end-start << std::endl;
+
 		return;
 	}
 	
