@@ -35,6 +35,6 @@ class LHF {
 
 
 extern "C" {
-	void testFunc(int) { std::cout << "Test" << std::endl;};
-	void pyRunWrapper(std::map<std::string, std::string>, std::vector<std::vector<unsigned>>);
+	void testFunc(int) { std::cout << "Test new" << std::endl;};
+	void pyRunWrapper(std::map<std::string, std::string>, std::vector<std::vector<double>>);
 }

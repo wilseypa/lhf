@@ -735,10 +735,11 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 extern "C"
 {
 	
-	void pyRunWrapper(std::map<std::string, std::string> args, std::vector<std::vector<unsigned>> pointCloud){
+	void pyRunWrapper(std::map<std::string, std::string> args, std::vector<std::vector<double>> pointCloud){
+		
+		
 		
 		return;
-		
 	}
 	
 	
