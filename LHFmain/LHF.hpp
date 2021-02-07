@@ -21,7 +21,7 @@ class LHF {
 	
 	int nprocs = 1, id = 0;
 
-	void testFunc(int num1) { std::cout << "Test" << std::endl;};
+	void testFunc(int num1) { std::cout << num1 << std::endl;};
 	void myprint(void);
 	void outputBettis(std::map<std::string, std::string>, pipePacket &);
 	void runPipeline(std::map<std::string, std::string>, pipePacket &);
@@ -35,6 +35,6 @@ class LHF {
 
 
 extern "C" {
-	void testFunc(int) { std::cout << "Test" << std::endl;};
+	void testFunc(int num1) { std::cout << "Test: " << num1 << std::endl;};
 	void pyRunWrapper(std::map<std::string, std::string>, std::vector<std::vector<unsigned>>);
 }

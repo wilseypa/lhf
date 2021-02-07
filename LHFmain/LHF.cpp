@@ -736,7 +736,8 @@ extern "C"
 {
 	
 	void pyRunWrapper(std::map<std::string, std::string> args, std::vector<std::vector<unsigned>> pointCloud){
-		
+
+		std::cout << "Test" << std::endl;
 		return;
 		
 	}
