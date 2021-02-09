@@ -55,40 +55,87 @@ class pipePacket(ctypes.Structure):
                 ("bettiOutput", ctypes.c_char_p)] 
                 #getSize?
                 #getStats?
-class map(ctypes.Structure):
-    _fields_ = [("string 1", ctypes.c_char_p),
-                ("string2", ctypes.c_char_p)]
+                
+                
+class argMap(ctypes.Structure):
+    _fields_ = [("key", ctypes.c_char_p),
+                ("value", ctypes.c_char_p)]
+                
+class argArray(ctypes.Structure):
+    _fields_ = [("arr", argMap * 22)]
 
 class LHF:
     lib = ctypes.cdll.LoadLibrary("./libLHFlib.so")
     dim = 0
     size = 0
+    point = 0
+    array = 0
     
-    def __init__(self, dim, size):   
-        self.dim = dim 
-        self.size = size
+    def __init__(self):  
+        self.dim = 0
+        self.size = 0
+         
+    def configData(self, data):
+        self.dim = len(data[0])
+        self.size = len(data)
         
-        class point(ctypes.Structure):
-            _files = [("x", ctypes.c_double) for x in range(dimension)];
+        print("Created data size of d:",self.dim,", n:",self.size)
+
+        self.point = type("point", (ctypes.Structure, ), {
+            
+            # data members
+            "_fields_" : [("x", ctypes.c_double * self.dim)]
+        })
         
-        class array2d(ctypes.Structure):
-            _fields_ = [("a", ctypes.c_int),
-                        ("b", ctypes.c_float),
-                        ("arr", point * size)]
+        self.array = type("array", (ctypes.Structure, ), {
+            
+            # data members
+            "_fields_" : [("arr", self.point * self.size)]
+        })
         
         self.lib.testFunc.argtypes = [ctypes.c_int]
         self.lib.testFunc.restype = None
 
-        self.lib.pyRunWrapper.argtypes = [map, ctypes.Structure]
+        self.lib.pyRunWrapper.argtypes = [argArray, ctypes.Structure]
         self.lib.pyRunWrapper.restype = None
         
+    def getDefaultArgs(self):
+        return {"reductionPercentage":"10","maxSize":"2000","threads":"30","threshold":"250","scalar":"2.0","mpi": "0","mode": "standard","dimensions":"1","iterations":"250","pipeline":"","inputFile":"None","outputFile":"output","epsilon":"5","lambda":".25","debug":"0","complexType":"simplexArrayList","clusters":"20","preprocessor":"","upscale":"false","seed":"-1","twist":"false","collapse":"false"}    
+        
+    def list2map(self, inList):
+        i = 0
+        retArray = argArray()
+        for a in inList:            
+            retArray.arr[i] = argMap(ctypes.c_char_p(a.encode('utf-8')), ctypes.c_char_p(inList[a].encode('utf-8')))
+            i+=1
+            
+        return retArray
+        
+    def data2array(self, inData):
+        i = 0
+        retArray = self.array()
+        for row in inData:
+            curPoint = self.point()
+            
+            #populate dimensions
+            d = 0
+            for dim in row:
+                curPoint.x[d] = ctypes.c_double(dim)
+                d+=1
+                
+            retArray.arr[i] = curPoint;
+            i+=1;
+        
+        return retArray;
+        
+        
+        
     def pyRunWrapper(self, args, data):
-        return self.lib.pyRunWrapper(args, data)
+        print("Running LHF")      
+        
+        return self.lib.pyRunWrapper(self.list2map(args), self.data2array(data))
 
     def testFunc(self, num):
         return self.lib.testFunc(num)
 
-a = LHF(3,2)
-a.testFunc(1)
-a.pyRunWrapper(map(), array2d())
 
