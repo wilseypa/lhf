@@ -735,17 +735,69 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 extern "C"
 {
 	
-	void pyRunWrapper(std::map<std::string, std::string> args, std::vector<std::vector<double>> pointCloud){
+	void pyRunWrapper(const int argc, char* argv, const double *pointCloud){
+		
+		std::cout << "Successfully called python runWrapper" << std::endl;
+		
+		//First we need to convert arguments from char* to map
+		std::map<std::string, std::string> args;
+		std::vector<std::string> rawArgs;
+		
+		//Split arguments into list
+		std::string tempstr = "";
+		for(auto i = 0; i < argc; i++){
+			//Check for space (32)
+			if(argv[i] == 32){
+				rawArgs.push_back(tempstr);
+				tempstr = "";
+			} else
+				tempstr += argv[i];
+		}
+		
+		//Split argument list into map
+		for(auto i = 0; i < rawArgs.size(); i += 2)
+			args[rawArgs[i]] = rawArgs[i+1];
+				
+				
+		//Next, decode the data
+		std::vector<std::vector<double>> data(std::atoi(args["datasize"].c_str()), std::vector<double>(std::atoi(args["datadim"].c_str())));
+			
+		std::cout << "Decoding data... " << std::endl;
+		
+		for(auto row = 0; row < std::atoi(args["datasize"].c_str()); row++){
+			std::cout << "Row: " << row << std::endl;
+			
+			for(auto dim = 0; dim < std::atoi(args["datadim"].c_str()); dim++){
+				data[row][dim] = pointCloud[row*dim + dim];
+				
+				
+				
+			}
+			
+			
+			
+		}
+		
+		std::cout << "Running from LHF with decoded data..." << std::endl;
+		
+		/*
+		for( auto arg: d_args)
+			std::cout << arg.first << "\t" << arg.second << std::endl;
+		
 		//C interface for python to call into LHF
 		auto lhflib = LHF();
 		double start = omp_get_wtime();
 		
+		std::cout << "Constructing Complex" << std::endl;
 		//Create a pipePacket (datatype) to store the complex and pass between engines
 		auto wD = pipePacket(args, args["complexType"]);	//wD (workingData)
+		
+		std::cout << "Created complex!" << std::endl;
 		
 		wD.inputData = pointCloud;
 		wD.workData = wD.inputData;
 		
+		std::cout << "Starting LHF Mode calls" << std::endl;
 
 		//If data was found in the inputFile
 		if(wD.inputData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
@@ -776,7 +828,7 @@ extern "C"
 
 		double end = omp_get_wtime();
 		std::cout << "Total LHF execution time (s): " << end-start << std::endl;
-
+		*/
 		return;
 	}
 	

@@ -56,13 +56,6 @@ class pipePacket(ctypes.Structure):
                 #getSize?
                 #getStats?
                 
-                
-class argMap(ctypes.Structure):
-    _fields_ = [("key", ctypes.c_char_p),
-                ("value", ctypes.c_char_p)]
-                
-class argArray(ctypes.Structure):
-    _fields_ = [("arr", argMap * 22)]
 
 class LHF:
     lib = ctypes.cdll.LoadLibrary("./libLHFlib.so")
@@ -93,23 +86,23 @@ class LHF:
             "_fields_" : [("arr", self.point * self.size)]
         })
         
-        self.lib.testFunc.argtypes = [ctypes.c_int]
+        self.lib.testFunc.argtypes = [ctypes.c_int, ctypes.c_char_p]
         self.lib.testFunc.restype = None
 
-        self.lib.pyRunWrapper.argtypes = [argArray, ctypes.Structure]
+        self.lib.pyRunWrapper.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.Structure]
         self.lib.pyRunWrapper.restype = None
         
     def getDefaultArgs(self):
-        return {"reductionPercentage":"10","maxSize":"2000","threads":"30","threshold":"250","scalar":"2.0","mpi": "0","mode": "standard","dimensions":"1","iterations":"250","pipeline":"","inputFile":"None","outputFile":"output","epsilon":"5","lambda":".25","debug":"0","complexType":"simplexArrayList","clusters":"20","preprocessor":"","upscale":"false","seed":"-1","twist":"false","collapse":"false"}    
+        return {"datadim":str(self.dim),"datasize":str(self.size),"reductionPercentage":"10","maxSize":"2000","threads":"30","threshold":"250","scalar":"2.0","mpi": "0","mode": "standard","dimensions":"1","iterations":"250","pipeline":"","inputFile":"None","outputFile":"output","epsilon":"5","lambda":".25","debug":"0","complexType":"simplexArrayList","clusters":"20","preprocessor":"","upscale":"false","seed":"-1","twist":"false","collapse":"false"}    
         
-    def list2map(self, inList):
-        i = 0
-        retArray = argArray()
-        for a in inList:            
-            retArray.arr[i] = argMap(ctypes.c_char_p(a.encode('utf-8')), ctypes.c_char_p(inList[a].encode('utf-8')))
-            i+=1
+    def args2string(self, inList):
+        ret = ""
+        
+        for a in inList:
+            ret += a+" "
+            ret += inList[a]+" "
             
-        return retArray
+        return ret.encode('utf-8')
         
     def data2array(self, inData):
         i = 0
@@ -133,9 +126,11 @@ class LHF:
     def pyRunWrapper(self, args, data):
         print("Running LHF")      
         
-        return self.lib.pyRunWrapper(self.list2map(args), self.data2array(data))
+        #Create char* for passing to C++
+        temp = self.args2string(args)
+        return self.lib.pyRunWrapper(len(temp),ctypes.c_char_p(temp), self.data2array(data))
 
-    def testFunc(self, num):
-        return self.lib.testFunc(num)
+    def testFunc(self, num, st):
+        return self.lib.testFunc(num, ctypes.c_char_p(st.encode('utf-8')))
 
 

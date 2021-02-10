@@ -19,7 +19,7 @@ args = pyLHF.getDefaultArgs()
 
 
 #Call a test function to ensure the library is properly loaded
-pyLHF.testFunc(1)
+pyLHF.testFunc(1, "HELLO")
 
 #Call the runwrapper with default arguments and generated dataset
 pyLHF.pyRunWrapper(args, data)
