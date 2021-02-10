@@ -3,6 +3,7 @@
 // Header file for bettiPipe class - see bettiPipe.cpp for descriptions
 #include <map>
 #include <vector>
+#include <string>
 #include "basePipe.hpp"
 #include "simplexBase.hpp"
 #include "utils.hpp"
@@ -12,6 +13,7 @@ class incrementalPersistence : public basePipe {
 		int shift = 0;
 		double maxEpsilon;
 		std::map<std::string, std::string> configMap;
+		std::string mode;
 
 		struct cmpBySecond{ //Sort nodes by weight, then by lexicographic order
 			bool operator()(simplexNode_P a, simplexNode_P b) const{

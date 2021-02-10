@@ -180,8 +180,6 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 					if(cofaceList.empty()){ //Column completely reduced
 						break;
 					} else if(pivotPairs.find(pivot->hash) == pivotPairs.end()){ //Column cannot be reduced
-						z += 1;
-
 						pivotPairs.insert({pivot->hash, simplex});
 						nextPivots.push_back(std::shared_ptr<simplexNode>(pivot));
 
@@ -196,7 +194,7 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 						//Don't delete the first entry because that is converted to a smart pointer and stored as a pivot
 						for(int i=1; i<cofaceList.size(); i++) delete cofaceList[i];
 
-						if(simplex->weight != pivot->weight){
+						if(simplex->weight != pivot->weight && mode != "involuted"){
 							bettiBoundaryTableEntry des = { d, simplex->weight, pivot->weight, ut.extractBoundaryPoints(v[simplex]) };
 							inData.bettiTable.push_back(des);
 						}
@@ -217,17 +215,17 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 		}
 
 		pivots = nextPivots;
-	}
 
-	std::vector<simplexNode*> simplices;
-	for(auto pivot : edges){
-		simplices.push_back(pivot.get());
-	}
+		std::vector<simplexNode*> simplices;
+		for(auto pivot : pivots){
+			simplices.push_back(pivot.get());
+		}
 
-	involutedPersistence* ip = new involutedPersistence();
-	ip->configPipe(configMap);
-	ip->setupSimplices(simplices, 0);
-	ip->runPipe(inData);
+		involutedPersistence* ip = new involutedPersistence();
+		ip->configPipe(configMap);
+		ip->setupSimplices(simplices, d);
+		ip->runPipe(inData);
+	}
 
 	//Stop the timer for time passed during the pipe's function
 	auto endTime = std::chrono::high_resolution_clock::now();
@@ -292,6 +290,11 @@ bool incrementalPersistence::configPipe(std::map<std::string, std::string> &conf
 	pipe = configMap.find("dimensions");
 	if(pipe != configMap.end())
 		dim = std::atoi(configMap["dimensions"].c_str());
+	else return false;
+
+	pipe = configMap.find("mode");
+	if(pipe != configMap.end())
+		mode = configMap["dimensions"];
 	else return false;
 
 	pipe = configMap.find("epsilon");
