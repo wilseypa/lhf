@@ -29,6 +29,7 @@ class simplexArrayList : public simplexBase{
 		void initBinom();
 		std::vector<simplexNode*> getAllCofacets(simplexNode_P, const std::unordered_map<long long, simplexNode_P>&, bool = true);
 		std::vector<simplexNode*> getAllCofacets(simplexNode_P);
+		std::vector<simplexNode*> getAllFacets(simplexNode*);
 		std::vector<simplexNode_P> expandDimension(std::vector<simplexNode_P> edges);
 
 		//virtual interface functions

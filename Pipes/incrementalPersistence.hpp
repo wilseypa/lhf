@@ -11,6 +11,7 @@ class incrementalPersistence : public basePipe {
 	private:
 		int shift = 0;
 		double maxEpsilon;
+		std::map<std::string, std::string> configMap;
 
 		struct cmpBySecond{ //Sort nodes by weight, then by lexicographic order
 			bool operator()(simplexNode_P a, simplexNode_P b) const{

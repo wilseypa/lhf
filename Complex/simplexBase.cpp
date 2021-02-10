@@ -101,6 +101,11 @@ std::vector<simplexNode*> simplexBase::getAllCofacets(simplexNode_P){
 	return std::vector<simplexNode*>();
 }
 
+std::vector<simplexNode*> simplexBase::getAllFacets(simplexNode*){
+	ut.writeLog(simplexType,"No get facets function defined");
+	return std::vector<simplexNode*>();
+}
+
 double simplexBase::getSize(){
 	ut.writeLog(simplexType,"No size function defined");
 	return -1;

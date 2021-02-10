@@ -150,6 +150,12 @@ std::set<unsigned> utils::extractBoundaryPoints(std::vector<simplexNode_P> bound
 	return boundaryPoints;
 }
 
+std::set<unsigned> utils::extractBoundaryPoints(std::vector<simplexNode*> boundary){
+	std::set<unsigned> boundaryPoints;
+	for(auto simplex : boundary) boundaryPoints.insert(simplex->simplex.begin(), simplex->simplex.end());
+	return boundaryPoints;
+}
+
 std::vector<bettiBoundaryTableEntry> utils::mapPartitionIndexing(std::vector<unsigned> partitionedLabels, std::vector<bettiBoundaryTableEntry> bettiTable){
 	for(auto& bet : bettiTable){
 		std::set<unsigned> convBound;

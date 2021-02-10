@@ -16,6 +16,7 @@
 #include <unordered_map>
 #include <queue>
 #include "incrementalPersistence.hpp"
+#include "involutedPersistence.hpp"
 #include "simplexArrayList.hpp"
 #include "utils.hpp"
 
@@ -179,6 +180,8 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 					if(cofaceList.empty()){ //Column completely reduced
 						break;
 					} else if(pivotPairs.find(pivot->hash) == pivotPairs.end()){ //Column cannot be reduced
+						z += 1;
+
 						pivotPairs.insert({pivot->hash, simplex});
 						nextPivots.push_back(std::shared_ptr<simplexNode>(pivot));
 
@@ -215,6 +218,16 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 
 		pivots = nextPivots;
 	}
+
+	std::vector<simplexNode*> simplices;
+	for(auto pivot : edges){
+		simplices.push_back(pivot.get());
+	}
+
+	involutedPersistence* ip = new involutedPersistence();
+	ip->configPipe(configMap);
+	ip->setupSimplices(simplices, 0);
+	ip->runPipe(inData);
 
 	//Stop the timer for time passed during the pipe's function
 	auto endTime = std::chrono::high_resolution_clock::now();
@@ -262,6 +275,7 @@ void incrementalPersistence::outputData(pipePacket &inData){
 
 // configPipe -> configure the function settings of this pipeline segment
 bool incrementalPersistence::configPipe(std::map<std::string, std::string> &configMap){
+	configMap = configMap;
 	std::string strDebug;
 
 	auto pipe = configMap.find("debug");

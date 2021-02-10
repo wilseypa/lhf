@@ -147,6 +147,30 @@ std::vector<simplexNode*> simplexArrayList::getAllCofacets(simplexNode_P simp){
 	return getAllCofacets(simp, std::unordered_map<long long, simplexNode_P>(), false);
 }
 
+std::vector<simplexNode*> simplexArrayList::getAllFacets(simplexNode* simp){
+	std::vector<simplexNode*> ret;
+
+	for(auto pt : simp->simplex){
+		simplexNode* x = new simplexNode(simp->simplex, 0);
+		x->simplex.erase(x->simplex.find(pt));
+
+		double maxWeight = 0;
+		for(auto it = x->simplex.begin(); it != x->simplex.end(); ++it){
+			auto it2 = it;
+			++it2;
+			for(; it2 != x->simplex.end(); ++it2){
+				maxWeight = std::max(maxWeight, (*distMatrix)[*it][*it2]);
+			}
+		}
+
+		x->weight = maxWeight;
+		x->hash = simplexHash(x->simplex);
+		ret.push_back(x);
+	}
+
+	return ret;
+}
+
 double simplexArrayList::getSize(){
 	//Calculate size of original data
 	size_t size = 0;
