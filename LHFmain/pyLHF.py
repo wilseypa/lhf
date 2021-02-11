@@ -17,6 +17,9 @@ pyLHF.configData(data)
 #Create argument dictionary and set any additional arguments
 args = pyLHF.getDefaultArgs()
 
+#Set debug mode to true, configure other arguments (optional)
+args["debug"] = "1"
+args["dimensions"] = "3"
 
 #Call a test function to ensure the library is properly loaded
 pyLHF.testFunc(1, "HELLO")

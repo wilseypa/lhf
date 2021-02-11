@@ -737,8 +737,6 @@ extern "C"
 	
 	void pyRunWrapper(const int argc, char* argv, const double *pointCloud){
 		
-		std::cout << "Successfully called python runWrapper" << std::endl;
-		
 		//First we need to convert arguments from char* to map
 		std::map<std::string, std::string> args;
 		std::vector<std::string> rawArgs;
@@ -760,44 +758,31 @@ extern "C"
 				
 				
 		//Next, decode the data
-		std::vector<std::vector<double>> data(std::atoi(args["datasize"].c_str()), std::vector<double>(std::atoi(args["datadim"].c_str())));
-			
-		std::cout << "Decoding data... " << std::endl;
+		int dataSize = std::atoi(args["datasize"].c_str());
+		int dataDim = std::atoi(args["datadim"].c_str());
 		
-		for(auto row = 0; row < std::atoi(args["datasize"].c_str()); row++){
-			std::cout << "Row: " << row << std::endl;
+		std::vector<std::vector<double>> data(dataSize, std::vector<double>(dataDim));
+		
+		for(auto row = 0; row < dataSize; row++){
 			
-			for(auto dim = 0; dim < std::atoi(args["datadim"].c_str()); dim++){
+			for(auto dim = 0; dim < dataDim; dim++){
+				
 				data[row][dim] = pointCloud[row*dim + dim];
-				
-				
-				
 			}
-			
-			
-			
 		}
-		
-		std::cout << "Running from LHF with decoded data..." << std::endl;
-		
-		/*
-		for( auto arg: d_args)
-			std::cout << arg.first << "\t" << arg.second << std::endl;
 		
 		//C interface for python to call into LHF
 		auto lhflib = LHF();
 		double start = omp_get_wtime();
 		
-		std::cout << "Constructing Complex" << std::endl;
 		//Create a pipePacket (datatype) to store the complex and pass between engines
 		auto wD = pipePacket(args, args["complexType"]);	//wD (workingData)
 		
-		std::cout << "Created complex!" << std::endl;
-		
-		wD.inputData = pointCloud;
+		wD.inputData = data;
 		wD.workData = wD.inputData;
-		
-		std::cout << "Starting LHF Mode calls" << std::endl;
+
+		//Determine what pipe we will be running
+		argParser::setPipeline(args);
 
 		//If data was found in the inputFile
 		if(wD.inputData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
@@ -828,7 +813,7 @@ extern "C"
 
 		double end = omp_get_wtime();
 		std::cout << "Total LHF execution time (s): " << end-start << std::endl;
-		*/
+		
 		return;
 	}
 	

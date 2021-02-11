@@ -89,7 +89,7 @@ class LHF:
         self.lib.testFunc.argtypes = [ctypes.c_int, ctypes.c_char_p]
         self.lib.testFunc.restype = None
 
-        self.lib.pyRunWrapper.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.Structure]
+        self.lib.pyRunWrapper.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.POINTER(ctypes.c_double)]
         self.lib.pyRunWrapper.restype = None
         
     def getDefaultArgs(self):
@@ -128,7 +128,7 @@ class LHF:
         
         #Create char* for passing to C++
         temp = self.args2string(args)
-        return self.lib.pyRunWrapper(len(temp),ctypes.c_char_p(temp), self.data2array(data))
+        return self.lib.pyRunWrapper(len(temp),ctypes.c_char_p(temp), data.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
 
     def testFunc(self, num, st):
         return self.lib.testFunc(num, ctypes.c_char_p(st.encode('utf-8')))
