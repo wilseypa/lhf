@@ -10,7 +10,7 @@
 
 struct sortBettis{
 	bool operator()(bettiBoundaryTableEntry lhs, bettiBoundaryTableEntry rhs){
-		return lhs.bettiDim < rhs.bettiDim || (lhs.bettiDim == rhs.bettiDim && lhs.death < rhs.death);
+		return lhs.bettiDim < rhs.bettiDim || (lhs.bettiDim == rhs.bettiDim && lhs.birth > rhs.birth);
 	}
 };
 

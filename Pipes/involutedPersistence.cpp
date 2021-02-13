@@ -67,8 +67,10 @@ void involutedPersistence::runPipe(pipePacket &inData){
 				faceList.pop_back();
 
 				if(!faceList.empty() && pivot->hash == faceList.front()->hash){ //Coface is in twice -> evaluates to 0 mod 2
-					delete pivot;
-					delete faceList.front();
+					if(inData.complex->simplexType == "simplexArrayList"){
+						delete pivot;
+						delete faceList.front();
+					}
 
 					//Rotate the heap
 					std::pop_heap(faceList.begin(), faceList.end(), sortLexicographic());
@@ -101,7 +103,9 @@ void involutedPersistence::runPipe(pipePacket &inData){
 				}
 
 				//Don't delete the first entry because that is converted to a smart pointer and stored as a pivot
-				for(int i=0; i<faceList.size(); i++) delete faceList[i];
+				if(inData.complex->simplexType == "simplexArrayList"){
+					for(int i=0; i<faceList.size(); i++) delete faceList[i];
+				}
 
 				break;
 			} else{ //Reduce the column of R by computing the appropriate columns of D by enumerating cofacets

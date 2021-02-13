@@ -65,6 +65,8 @@ class simplexTree : public simplexBase {
 	std::vector<simplexNode*> getAllCofacets(simplexNode_P, const std::unordered_map<long long, simplexNode_P>&, bool = true);
 	std::vector<simplexNode*> getAllCofacets(simplexNode_P);
 	std::vector<std::set<simplexNode_P, cmpByWeight>> getAllEdges();
+
+	std::vector<simplexNode*> getAllFacets(simplexNode*);
 	
 	bool deletion(std::set<unsigned>);
 	bool deletion(simplexTreeNode*);

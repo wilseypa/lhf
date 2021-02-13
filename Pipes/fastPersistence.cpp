@@ -16,6 +16,7 @@
 #include <unordered_map>
 #include <queue>
 #include "fastPersistence.hpp"
+#include "involutedPersistence.hpp"
 #include "utils.hpp"
 
 // basePipe constructor
@@ -168,9 +169,11 @@ void fastPersistence::runPipe(pipePacket &inData){
 							++it;
 						}
 
-						if(simplex->weight != pivot->weight){
-							bettiBoundaryTableEntry des = { d, simplex->weight, pivot->weight, ut.extractBoundaryPoints(v[simplex]) };
-							inData.bettiTable.push_back(des);
+						if(mode != "involuted"){
+							if(simplex->weight != pivot->weight){
+								bettiBoundaryTableEntry des = { d, simplex->weight, pivot->weight, ut.extractBoundaryPoints(v[simplex]) };
+								inData.bettiTable.push_back(des);
+							}
 						}
 
 						break;
@@ -189,6 +192,19 @@ void fastPersistence::runPipe(pipePacket &inData){
 		}
 
 		pivots = nextPivots;
+
+		if(mode == "involuted"){
+			std::vector<simplexNode*> simplices;
+			for(auto pivot : pivots){
+				simplices.push_back(pivot.get());
+			}
+
+			involutedPersistence* ip = new involutedPersistence();
+			ip->configPipe(configMap);
+			ip->setupSimplices(simplices, d);
+			ip->runPipe(inData);
+			delete ip;
+		}
 	}
 
 	//Stop the timer for time passed during the pipe's function
@@ -238,6 +254,7 @@ void fastPersistence::outputData(pipePacket &inData){
 // configPipe -> configure the function settings of this pipeline segment
 bool fastPersistence::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
+	configMap = configMap;
 
 	auto pipe = configMap.find("debug");
 	if(pipe != configMap.end()){
@@ -258,6 +275,11 @@ bool fastPersistence::configPipe(std::map<std::string, std::string> &configMap){
 	pipe = configMap.find("epsilon");
 	if(pipe != configMap.end())
 		maxEpsilon = std::atof(configMap["epsilon"].c_str());
+	else return false;
+
+	pipe = configMap.find("mode");
+	if(pipe != configMap.end())
+		mode = configMap["mode"];
 	else return false;
 
 	pipe = configMap.find("fn");

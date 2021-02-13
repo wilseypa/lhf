@@ -156,9 +156,7 @@ std::vector<simplexNode*> simplexArrayList::getAllFacets(simplexNode* simp){
 
 		double maxWeight = 0;
 		for(auto it = x->simplex.begin(); it != x->simplex.end(); ++it){
-			auto it2 = it;
-			++it2;
-			for(; it2 != x->simplex.end(); ++it2){
+			for(auto it2 = it; ++it2 != x->simplex.end(); ){
 				maxWeight = std::max(maxWeight, (*distMatrix)[*it][*it2]);
 			}
 		}
