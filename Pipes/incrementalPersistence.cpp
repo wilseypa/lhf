@@ -216,15 +216,18 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 
 		pivots = nextPivots;
 
-		std::vector<simplexNode*> simplices;
-		for(auto pivot : pivots){
-			simplices.push_back(pivot.get());
-		}
+		if(mode == "involuted"){
+			std::vector<simplexNode*> simplices;
+			for(auto pivot : pivots){
+				simplices.push_back(pivot.get());
+			}
 
-		involutedPersistence* ip = new involutedPersistence();
-		ip->configPipe(configMap);
-		ip->setupSimplices(simplices, d);
-		ip->runPipe(inData);
+			involutedPersistence* ip = new involutedPersistence();
+			ip->configPipe(configMap);
+			ip->setupSimplices(simplices, d);
+			ip->runPipe(inData);
+			delete ip;
+		}
 	}
 
 	//Stop the timer for time passed during the pipe's function
@@ -294,7 +297,7 @@ bool incrementalPersistence::configPipe(std::map<std::string, std::string> &conf
 
 	pipe = configMap.find("mode");
 	if(pipe != configMap.end())
-		mode = configMap["dimensions"];
+		mode = configMap["mode"];
 	else return false;
 
 	pipe = configMap.find("epsilon");

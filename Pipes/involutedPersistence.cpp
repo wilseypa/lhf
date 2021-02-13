@@ -95,13 +95,13 @@ void involutedPersistence::runPipe(pipePacket &inData){
 					++it;
 				}
 
-				//Don't delete the first entry because that is converted to a smart pointer and stored as a pivot
-				for(int i=1; i<faceList.size(); i++) delete faceList[i];
-
 				if(simplex->weight != pivot->weight){
 					bettiBoundaryTableEntry des = { dim, pivot->weight, simplex->weight, ut.extractBoundaryPoints(v[simplex]) };
 					inData.bettiTable.push_back(des);
 				}
+
+				//Don't delete the first entry because that is converted to a smart pointer and stored as a pivot
+				for(int i=0; i<faceList.size(); i++) delete faceList[i];
 
 				break;
 			} else{ //Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
