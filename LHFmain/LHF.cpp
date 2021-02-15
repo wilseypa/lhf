@@ -737,6 +737,7 @@ extern "C"
 	
 	void pyRunWrapper(const int argc, char* argv, const double *pointCloud){
 		
+		//std::cout << std::endl << "argc: " << argc << std::endl;
 		//First we need to convert arguments from char* to map
 		std::map<std::string, std::string> args;
 		std::vector<std::string> rawArgs;
@@ -813,9 +814,133 @@ extern "C"
 
 		double end = omp_get_wtime();
 		std::cout << "Total LHF execution time (s): " << end-start << std::endl;
-		
+
+
 		return;
 	}
+
 	
-	
+	auto pyRunWrapper2(const int argc, char* argv, const double *pointCloud){
+		
+		//std::cout << std::endl << "argc: " << argc << std::endl;
+		//First we need to convert arguments from char* to map
+		std::cout << "Got this far!" << std::endl;
+		std::map<std::string, std::string> args;
+		std::vector<std::string> rawArgs;
+		
+		//Split arguments into list
+		std::string tempstr = "";
+		for(auto i = 0; i < argc; i++){
+			//Check for space (32)
+			if(argv[i] == 32){
+				rawArgs.push_back(tempstr);
+				tempstr = "";
+			} else
+				tempstr += argv[i];
+		}
+		
+		//Split argument list into map
+		for(auto i = 0; i < rawArgs.size(); i += 2)
+			args[rawArgs[i]] = rawArgs[i+1];
+				
+				
+		//Next, decode the data
+		int dataSize = std::atoi(args["datasize"].c_str());
+		int dataDim = std::atoi(args["datadim"].c_str());
+		
+		std::vector<std::vector<double>> data(dataSize, std::vector<double>(dataDim));
+		
+		for(auto row = 0; row < dataSize; row++){
+			
+			for(auto dim = 0; dim < dataDim; dim++){
+				
+				data[row][dim] = pointCloud[row*dim + dim];
+			}
+		}
+		
+		//C interface for python to call into LHF
+		auto lhflib = LHF();
+		double start = omp_get_wtime();
+		
+		//Create a pipePacket (datatype) to store the complex and pass between engines
+		auto wD = pipePacket(args, args["complexType"]);	//wD (workingData)
+		
+		wD.inputData = data;
+		wD.workData = wD.inputData;
+
+		//Determine what pipe we will be running
+		argParser::setPipeline(args);
+
+		//If data was found in the inputFile
+		if(wD.inputData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
+
+			if(args["mode"] == "reduced" || args["mode"] == "iterUpscale" || args["mode"] == "iter"){	
+				wD.bettiTable = lhflib.processIterUpscale(args,wD);
+				sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
+				
+			} else {
+				lhflib.processDataWrapper(args, wD);
+				lhflib.runPipeline(args, wD);
+			}
+
+		} else {
+			argParser::printUsage();
+		}
+			
+		if((args["debug"] == "1" || args["debug"] == "true") && wD.bettiTable.size() > 0 ){
+			std::cout << std::endl << "_______Merged BETTIS_______" << std::endl;
+
+			for(auto a : wD.bettiTable){
+				std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
+				utils::print1DVector(a.boundaryPoints);
+			}
+		}
+		
+		delete wD.complex;
+
+		double end = omp_get_wtime();
+		std::cout << "Total LHF execution time (s): " << end-start << std::endl;
+		
+		//return bettitable
+
+		// if(wD.bettiTable.size() > 0){
+		// 	for (auto a:wD.bettiTable){
+		// 		std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
+		// 		int bettiDimArray = a.bettiDim;
+		// 		double bettideath = a.death;
+		// 	}
+		// 	return int bettiDimArray, double bettideath;
+		// }
+		int sizof2 = wD.bettiTable.size();
+		double bettiDim[sizof2];
+		double bettiBirth[sizof2];
+		double bettiDeath[sizof2];
+		int sizof = 0;
+		for(auto a : wD.bettiTable){
+			// std::cout << "size: " <<  sizof << std::endl;
+			// std::cout << a.bettiDim << std::endl;
+			// std::cout << a.birth << std::endl;
+			// std::cout<< a.death << std::endl;
+			bettiDim[sizof] = a.bettiDim;
+			bettiBirth[sizof] = a.birth;
+			bettiDeath[sizof] = a.death;
+			sizof++;
+		}
+		// sizof = 0;
+		// for(auto a : wD.bettiTable){
+		// 	// std::cout << "size: " <<  sizof << std::endl;
+		// 	// std::cout << "bettiDim: " << a.bettiDim << std::endl;
+		// 	// std::cout << "bettiDim2: " << bettiDim[sizof] << std::endl;
+		// 	// std::cout << "birth: " << a.birth << std::endl;
+		// 	// std::cout << "bettiBirth: " << bettiBirth[sizof] << std::endl;
+		// 	// std::cout << "death: " << a.death << std::endl;
+		// 	// std::cout << "bettiDeath: " << bettiDeath[sizof] << std::endl;
+		// 	sizof++;
+		// }
+		std::cout << "size = " << sizof << std::endl;
+		std::cout << "size = " << sizof2 << std::endl;
+
+		std::cout << "Got this far!!" << std::endl;
+		return bettiDim, bettiBirth, bettiDeath, sizof2;
+	}
 }

@@ -1,10 +1,24 @@
 import ctypes
+from numpy.ctypeslib import ndpointer
+
 
 class bettiBoundaryTableEntry(ctypes.Structure):
-	_fields_ = [("Bettidim", ctypes.c_uint),
-			("birth", ctypes.c_double),
-			("death", ctypes.c_double),
-			("boundaryPoints", ctypes.POINTER(ctypes.c_uint))] ##dynamic
+    _fields_ = [("Bettidim", ctypes.POINTER(ctypes.c_uint)),
+    		("birth", ctypes.POINTER(ctypes.c_double)),
+    		("death", ctypes.POINTER(ctypes.c_double)),
+            ("dim", ctypes.c_int)]
+    		#("boundaryPoints", ctypes.POINTER(ctypes.c_uint))] ##dynamic
+    #]
+
+    def __init__(self,dim):
+        bettidim = (ctypes.c_uint * dim)
+        bettiBirth = (ctypes.c_double * dim)
+        bettiDeath = (ctypes.c_double * dim)
+        #self.Bettidim = ctypes.cast(bettidim, ctypes.POINTER(ctypes.c_uint))
+        #self.birth = ctypes.cast(bettiBirth, ctypes.POINTER(ctypes.c_double))
+        #self.death = ctypes.cast(bettiDeath, ctypes.POINTER(ctypes.c_double))
+        self.BettiDim = (ctypes.c_uint * dim)
+
 
 class LHF:
     lib = ctypes.cdll.LoadLibrary("./libLHFlib.so")
@@ -42,13 +56,16 @@ class LHF:
         self.args["datadim"] = len(data[0])
         self.args["datasize"] = len(data)
         
-        self.data = data;
+        self.data = data
         
         self.lib.testFunc.argtypes = [ctypes.c_int, ctypes.c_char_p]
         self.lib.testFunc.restype = None
 
         self.lib.pyRunWrapper.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.POINTER(ctypes.c_double)]
         self.lib.pyRunWrapper.restype = None
+
+        self.lib.pyRunWrapper2.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.POINTER(ctypes.c_double)]
+        #self.lib.pyRunWrapper2.restype = None
    
     def args2string(self, inList):
         ret = ""
@@ -69,4 +86,12 @@ class LHF:
     def testFunc(self, num, st):
         return self.lib.testFunc(num, ctypes.c_char_p(st.encode('utf-8')))
 
+    def runPH2(self):
+        #Create char* for passing to C++
+        temp = self.args2string(self.args)
+        
+        
+        test = bettiBoundaryTableEntry(self.lib.pyRunWrapper2(len(temp),ctypes.c_char_p(temp), self.data.ctypes.data_as(ctypes.POINTER(ctypes.c_double))))
+        print(test.dim)
 
+        return
