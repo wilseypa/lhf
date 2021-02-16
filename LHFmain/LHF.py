@@ -10,14 +10,14 @@ class bettiBoundaryTableEntry(ctypes.Structure):
     		#("boundaryPoints", ctypes.POINTER(ctypes.c_uint))] ##dynamic
     #]
 
-    def __init__(self,dim):
-        bettidim = (ctypes.c_uint * dim)
-        bettiBirth = (ctypes.c_double * dim)
-        bettiDeath = (ctypes.c_double * dim)
-        #self.Bettidim = ctypes.cast(bettidim, ctypes.POINTER(ctypes.c_uint))
-        #self.birth = ctypes.cast(bettiBirth, ctypes.POINTER(ctypes.c_double))
-        #self.death = ctypes.cast(bettiDeath, ctypes.POINTER(ctypes.c_double))
-        self.BettiDim = (ctypes.c_uint * dim)
+    # def __init__(self,dim):
+    #     bettidim = (ctypes.c_uint)
+    #     bettiBirth = (ctypes.c_double)
+    #     bettiDeath = (ctypes.c_double)
+    #     #self.Bettidim = ctypes.cast(bettidim, ctypes.POINTER(ctypes.c_uint))
+    #     #self.birth = ctypes.cast(bettiBirth, ctypes.POINTER(ctypes.c_double))
+    #     #self.death = ctypes.cast(bettiDeath, ctypes.POINTER(ctypes.c_double))
+    #     self.BettiDim = (ctypes.c_uint * dim)
 
 
 class LHF:
@@ -65,7 +65,7 @@ class LHF:
         self.lib.pyRunWrapper.restype = None
 
         self.lib.pyRunWrapper2.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.POINTER(ctypes.c_double)]
-        #self.lib.pyRunWrapper2.restype = None
+        self.lib.pyRunWrapper2.restype = ctypes.POINTER(bettiBoundaryTableEntry)
    
     def args2string(self, inList):
         ret = ""
