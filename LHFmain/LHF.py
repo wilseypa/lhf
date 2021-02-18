@@ -19,6 +19,11 @@ class bettiBoundaryTableEntry(ctypes.Structure):
     #     #self.death = ctypes.cast(bettiDeath, ctypes.POINTER(ctypes.c_double))
     #     self.BettiDim = (ctypes.c_uint * dim)
 
+class bettiBoundaryTableEntry(ctypes.Structure):
+    _fields_ = [("Bettidim", ctypes.POINTER(ctypes.c_uint)),
+    		("birth", ctypes.POINTER(ctypes.c_double)),
+    		("death", ctypes.POINTER(ctypes.c_double)),
+            ("dim", ctypes.c_int)]
 
 class LHF:
     lib = ctypes.cdll.LoadLibrary("./libLHFlib.so")
@@ -39,7 +44,8 @@ class LHF:
     ##          
     ##
     class pipePacket(ctypes.Structure):
-        _fields_ = [("bettiBoundaryTableEntry", ctypes.POINTER(bettiBoundaryTableEntry)), ##dynamic
+        _fields_ = [("dim", ctypes.c_int),
+        ("bettiBoundaryTableEntry", ctypes.POINTER(bettiBoundaryTableEntry)), ##dynamic
                     ("ident", ctypes.c_char_p),
                     ("stats", ctypes.c_char_p),
                     ("runLog", ctypes.c_char_p),
@@ -65,7 +71,7 @@ class LHF:
         self.lib.pyRunWrapper.restype = None
 
         self.lib.pyRunWrapper2.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.POINTER(ctypes.c_double)]
-        self.lib.pyRunWrapper2.restype = ctypes.POINTER(bettiBoundaryTableEntry)
+        self.lib.pyRunWrapper2.restype = ctypes.c_void_p
    
     def args2string(self, inList):
         ret = ""
@@ -91,7 +97,8 @@ class LHF:
         temp = self.args2string(self.args)
         
         
-        test = bettiBoundaryTableEntry(self.lib.pyRunWrapper2(len(temp),ctypes.c_char_p(temp), self.data.ctypes.data_as(ctypes.POINTER(ctypes.c_double))))
-        print(test.dim)
+        retPH = self.pipePacket.from_address(self.lib.pyRunWrapper2(len(temp),ctypes.c_char_p(temp), self.data.ctypes.data_as(ctypes.POINTER(ctypes.c_double))))
+        
+        print(retPH.dim)
 
         return

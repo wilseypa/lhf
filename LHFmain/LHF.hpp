@@ -37,5 +37,5 @@ class LHF {
 extern "C" {
 	void testFunc(int num1, char* st) { std::cout << "Test: " << num1 << std::endl; std::cout << "\t" << st << std::endl;};
 	void pyRunWrapper(const int, char*, const double *);
-	auto pyRunWrapper2(const int, char*, const double *);
+	void* pyRunWrapper2(const int, char*, const double *);
 }

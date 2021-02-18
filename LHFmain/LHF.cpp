@@ -820,7 +820,7 @@ extern "C"
 	}
 
 	
-	auto pyRunWrapper2(const int argc, char* argv, const double *pointCloud){
+	void* pyRunWrapper2(const int argc, char* argv, const double *pointCloud){
 		
 		//std::cout << std::endl << "argc: " << argc << std::endl;
 		//First we need to convert arguments from char* to map
@@ -911,6 +911,17 @@ extern "C"
 		// 	}
 		// 	return int bettiDimArray, double bettideath;
 		// }
+		struct testStruct{
+			int dim;
+			double* bettiDim;
+			double* bettiBirth;
+			double* bettiDeath;
+			int sizof;
+		} *a;
+		
+		a = new testStruct();
+		a->dim = 2;
+		
 		int sizof2 = wD.bettiTable.size();
 		double bettiDim[sizof2];
 		double bettiBirth[sizof2];
@@ -941,6 +952,6 @@ extern "C"
 		std::cout << "size = " << sizof2 << std::endl;
 
 		std::cout << "Got this far!!" << std::endl;
-		return bettiDim, bettiBirth, bettiDeath, sizof2;
+		return a;
 	}
 }
