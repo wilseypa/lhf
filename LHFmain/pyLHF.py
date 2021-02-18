@@ -1,5 +1,5 @@
 from LHF import LHF
-from LHF import bettiBoundaryTableEntry 
+#from LHF import bettiBoundaryTableEntry 
 import tadasets
 
 #Load data from file/generate data

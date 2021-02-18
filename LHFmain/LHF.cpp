@@ -919,35 +919,29 @@ extern "C"
 			int sizof;
 		} *a;
 		
-		a = new testStruct();
-		a->dim = 2;
+		
 		
 		int sizof2 = wD.bettiTable.size();
-		double bettiDim[sizof2];
-		double bettiBirth[sizof2];
-		double bettiDeath[sizof2];
+		a = new testStruct();
+
+
+		double pybettiDim[sizof2];
+		double pybettiBirth[sizof2];
+		double pybettiDeath[sizof2];
 		int sizof = 0;
-		for(auto a : wD.bettiTable){
-			// std::cout << "size: " <<  sizof << std::endl;
-			// std::cout << a.bettiDim << std::endl;
-			// std::cout << a.birth << std::endl;
-			// std::cout<< a.death << std::endl;
-			bettiDim[sizof] = a.bettiDim;
-			bettiBirth[sizof] = a.birth;
-			bettiDeath[sizof] = a.death;
+		for(auto b : wD.bettiTable){
+			pybettiDim[sizof] = b.bettiDim;
+			pybettiBirth[sizof] = b.birth;
+			pybettiDeath[sizof] = b.death;
 			sizof++;
 		}
-		// sizof = 0;
-		// for(auto a : wD.bettiTable){
-		// 	// std::cout << "size: " <<  sizof << std::endl;
-		// 	// std::cout << "bettiDim: " << a.bettiDim << std::endl;
-		// 	// std::cout << "bettiDim2: " << bettiDim[sizof] << std::endl;
-		// 	// std::cout << "birth: " << a.birth << std::endl;
-		// 	// std::cout << "bettiBirth: " << bettiBirth[sizof] << std::endl;
-		// 	// std::cout << "death: " << a.death << std::endl;
-		// 	// std::cout << "bettiDeath: " << bettiDeath[sizof] << std::endl;
-		// 	sizof++;
-		// }
+
+		a->dim = 2;
+		a->bettiDim=pybettiDim;
+		a->bettiDeath=pybettiDeath;
+		a->bettiBirth=pybettiBirth;
+		a->sizof=sizof;
+		//a->bettiDim = 
 		std::cout << "size = " << sizof << std::endl;
 		std::cout << "size = " << sizof2 << std::endl;
 
