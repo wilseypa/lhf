@@ -1,5 +1,6 @@
 #pragma once
 
+#include "libqhull.h"
 #include "readInput.hpp"
 #include "argParser.hpp"
 #include "basePipe.hpp"

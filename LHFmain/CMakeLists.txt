@@ -13,6 +13,8 @@ add_definitions(-DOMPI_SKIP_MPICXX)
 include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 
 find_package(OpenMP)
+link_directories("/usr/lib/x86_64-linux-gnu")
+include_directories("/usr/include/libqhull")
 
 set (CMAKE_CXX_STANDARD 14)
 set (CMAKE_CXX_STANDARD_LIBRARIES "-lpthread")
