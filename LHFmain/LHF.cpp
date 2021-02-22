@@ -919,15 +919,22 @@ extern "C"
 			int sizof;
 		} *a;
 		
-		
+		struct testStruct* allocate(int sizof2){
+			/*Allocate memory for TestStruct*/
+			struct testStruct *test =  malloc(sizof2 * sizeof(struct testStruct));
+			assert (test !=0);
+
+			return test;
+		}
 		
 		int sizof2 = wD.bettiTable.size();
+		a = allocate(sizof2);
 		a = new testStruct();
 
 
-		double pybettiDim[sizof2];
-		double pybettiBirth[sizof2];
-		double pybettiDeath[sizof2];
+		double* pybettiDim[sizof2];
+		double* pybettiBirth[sizof2];
+		double* pybettiDeath[sizof2];
 		int sizof = 0;
 		for(auto b : wD.bettiTable){
 			pybettiDim[sizof] = b.bettiDim;
@@ -936,7 +943,7 @@ extern "C"
 			sizof++;
 		}
 
-		a->dim = 2;
+		a->dim=2;
 		a->bettiDim=pybettiDim;
 		a->bettiDeath=pybettiDeath;
 		a->bettiBirth=pybettiBirth;

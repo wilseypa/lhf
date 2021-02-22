@@ -2,11 +2,23 @@ import ctypes
 from numpy.ctypeslib import ndpointer
 
 
+#("dim", ctypes.POINTER(ctypes.c_int)),
 class bettiBoundaryTableEntry(ctypes.Structure):
-    _fields_ = [("Bettidim", ctypes.POINTER(ctypes.c_uint)),
-    		("birth", ctypes.POINTER(ctypes.c_double)),
-    		("death", ctypes.POINTER(ctypes.c_double)),
-            ("dim", ctypes.c_int)]
+    _fields_ = [#("dim", ctypes.POINTER(ctypes.c_int)),
+            ("dim", ctypes.c_int),
+            ("Bettidim", ctypes.POINTER(ctypes.c_double)),
+            ("birth", ctypes.POINTER(ctypes.c_double)),
+            ("death", ctypes.POINTER(ctypes.c_double)),
+            ("sizof", ctypes.c_int)]
+
+
+
+
+# class bettiBoundaryTableEntry(ctypes.Structure):
+#     _fields_ = [("Bettidim", ctypes.POINTER(ctypes.c_uint)),
+#     		("birth", ctypes.POINTER(ctypes.c_double)),
+#     		("death", ctypes.POINTER(ctypes.c_double)),
+#             ("dim", ctypes.c_int)]
     		#("boundaryPoints", ctypes.POINTER(ctypes.c_uint))] ##dynamic
     #]
 
@@ -19,11 +31,11 @@ class bettiBoundaryTableEntry(ctypes.Structure):
     #     #self.death = ctypes.cast(bettiDeath, ctypes.POINTER(ctypes.c_double))
     #     self.BettiDim = (ctypes.c_uint * dim)
 
-class bettiBoundaryTableEntry(ctypes.Structure):
-    _fields_ = [("Bettidim", ctypes.POINTER(ctypes.c_uint)),
-    		("birth", ctypes.POINTER(ctypes.c_double)),
-    		("death", ctypes.POINTER(ctypes.c_double)),
-            ("dim", ctypes.c_int)]
+# class bettiBoundaryTableEntry(ctypes.Structure):
+#     _fields_ = [("Bettidim", ctypes.POINTER(ctypes.c_uint)),
+#     		("birth", ctypes.POINTER(ctypes.c_double)),
+#     		("death", ctypes.POINTER(ctypes.c_double)),
+#             ("dim", ctypes.c_int)]
 
 class LHF:
     lib = ctypes.cdll.LoadLibrary("./libLHFlib.so")
@@ -43,9 +55,17 @@ class LHF:
     ##          distMatrix = (LHF.size x LHF.size) - distance matrix
     ##          
     ##
+    # class bettiBoundaryTableEntry(ctypes.Structure):
+    #     _fields_ = [("dim", ctypes.POINTER(ctypes.c_int)),
+    #             ("Bettidim", ctypes.POINTER(ctypes.c_double)),
+    #             ("birth", ctypes.POINTER(ctypes.c_double)),
+    #             ("death", ctypes.POINTER(ctypes.c_double)),
+    #             ("sizof", ctypes.POINTER(ctypes.c_int))]
+
+
     class pipePacket(ctypes.Structure):
         _fields_ = [("dim", ctypes.c_int),
-        ("bettiBoundaryTableEntry", ctypes.POINTER(bettiBoundaryTableEntry)), ##dynamic
+        #("bettiBoundaryTableEntry", ctypes.POINTER(bettiBoundaryTableEntry)), ##dynamic
                     ("ident", ctypes.c_char_p),
                     ("stats", ctypes.c_char_p),
                     ("runLog", ctypes.c_char_p),
@@ -73,6 +93,15 @@ class LHF:
         self.lib.pyRunWrapper2.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.POINTER(ctypes.c_double)]
         self.lib.pyRunWrapper2.restype = ctypes.c_void_p
    
+    def allocation(size):
+        class pybettiBoundaryTableEntry(ctypes.Structure):
+            _fields_ = [("dim", ctypes.c_int),
+                    #("Bettidim", ctypes.POINTER(ctypes.c_uint)),
+                    ("Bettidim", ctypes.c_double * size),
+                    ("birth", ctypes.c_double * size),
+                    ("death", types.c_double * size)]
+
+
     def args2string(self, inList):
         ret = ""
         
@@ -97,8 +126,20 @@ class LHF:
         temp = self.args2string(self.args)
         
         
-        retPH = self.pipePacket.from_address(self.lib.pyRunWrapper2(len(temp),ctypes.c_char_p(temp), self.data.ctypes.data_as(ctypes.POINTER(ctypes.c_double))))
+        retPH = bettiBoundaryTableEntry(self.lib.pyRunWrapper2(len(temp),ctypes.c_char_p(temp), self.data.ctypes.data_as(ctypes.POINTER(ctypes.c_double))))
         
+        #retPH2 = self.allocation(retPH.sizof)
+        # num = retPH.sizof
+        # list_of_results = retPH.BettiDim:num
+
+        returned = bettiBoundaryTableEntry.from_address(retPH.dim)
+
         print(retPH.dim)
+        print(returned.dim)
+        print(retPH.BettiDim)
+        print(returned.BettiDim)
+        print((retPH.sizof))
+        print((returned.sizof))
+
 
         return
