@@ -106,6 +106,10 @@ std::vector<simplexNode*> simplexBase::getAllFacets(simplexNode*){
 	return std::vector<simplexNode*>();
 }
 
+std::vector<simplexNode*> simplexBase::getAllFacets(simplexNode_P simplex){
+	return getAllFacets(simplex.get());
+}
+
 double simplexBase::getSize(){
 	ut.writeLog(simplexType,"No size function defined");
 	return -1;

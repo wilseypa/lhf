@@ -76,6 +76,7 @@ class simplexBase {
 	virtual std::vector<simplexNode*> getAllCofacets(simplexNode_P);
 	virtual std::vector<simplexNode_P> getAllCofacets(const std::set<unsigned>&);
 	virtual std::vector<simplexNode*> getAllFacets(simplexNode*);
+	virtual std::vector<simplexNode*> getAllFacets(simplexNode_P);
 
 	
 	virtual std::set<simplexNode_P, cmpByWeight> getDimEdges(int);

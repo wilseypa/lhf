@@ -39,5 +39,8 @@ class incrementalPersistence : public basePipe {
 	    void runPipe(pipePacket &inData);
 	    bool configPipe(std::map<std::string, std::string> &configMap);
 		void outputData(pipePacket&);
+
+		template <class simplexNodePointer, class comp>
+		std::vector<simplexNodePointer> incrementalByDimension(pipePacket&, std::vector<simplexNodePointer>, std::vector<simplexNodePointer> pivots, unsigned dimension, comp compStruct, std::string mode);
 };
 
