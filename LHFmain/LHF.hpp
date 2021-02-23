@@ -1,6 +1,5 @@
 #pragma once
 
-#include "libqhull.h"
 #include "readInput.hpp"
 #include "argParser.hpp"
 #include "basePipe.hpp"
@@ -28,4 +27,5 @@ class LHF {
 	std::vector<bettiBoundaryTableEntry> processParallel(std::map<std::string, std::string>, std::vector<unsigned>&, std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>>&, int = 0);
 	std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, std::string>, pipePacket &, bool = true);
 	std::vector<bettiBoundaryTableEntry> processUpscaleWrapper(std::map<std::string, std::string>, pipePacket &);
+	void testInitQhull(int argc, char* argv[]);
 };

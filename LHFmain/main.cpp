@@ -41,6 +41,9 @@ int main(int argc, char* argv[]){
 	//			dimension is created (or merged into another simplex)
 	
 	
+	
+	
+	
 	//Define external classes used for reading input, parsing arguments, writing output
 	auto lhflib = LHF();
 	auto rs = readInput();
