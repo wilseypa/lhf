@@ -2,24 +2,26 @@ import ctypes
 from numpy.ctypeslib import ndpointer
 
 
+
 #("dim", ctypes.POINTER(ctypes.c_int)),
 class bettiBoundaryTableEntry(ctypes.Structure):
     _fields_ = [#("dim", ctypes.POINTER(ctypes.c_int)),
             ("dim", ctypes.c_int),
-            ("Bettidim", ctypes.POINTER(ctypes.c_double)),
-            ("birth", ctypes.POINTER(ctypes.c_double)),
-            ("death", ctypes.POINTER(ctypes.c_double)),
-            ("sizof", ctypes.c_int)]
+            ("birth", ctypes.c_double),
+            ("death", ctypes.c_double)]
 
+class bettiBoundaryTable(ctypes.Structure):
+    _fields_ = [ ("size", ctypes.c_int),
+                 ("bettis", ctypes.c_void_p)]
 
 
 
 # class bettiBoundaryTableEntry(ctypes.Structure):
 #     _fields_ = [("Bettidim", ctypes.POINTER(ctypes.c_uint)),
-#     		("birth", ctypes.POINTER(ctypes.c_double)),
-#     		("death", ctypes.POINTER(ctypes.c_double)),
+#           ("birth", ctypes.POINTER(ctypes.c_double)),
+#           ("death", ctypes.POINTER(ctypes.c_double)),
 #             ("dim", ctypes.c_int)]
-    		#("boundaryPoints", ctypes.POINTER(ctypes.c_uint))] ##dynamic
+            #("boundaryPoints", ctypes.POINTER(ctypes.c_uint))] ##dynamic
     #]
 
     # def __init__(self,dim):
@@ -33,8 +35,8 @@ class bettiBoundaryTableEntry(ctypes.Structure):
 
 # class bettiBoundaryTableEntry(ctypes.Structure):
 #     _fields_ = [("Bettidim", ctypes.POINTER(ctypes.c_uint)),
-#     		("birth", ctypes.POINTER(ctypes.c_double)),
-#     		("death", ctypes.POINTER(ctypes.c_double)),
+#           ("birth", ctypes.POINTER(ctypes.c_double)),
+#           ("death", ctypes.POINTER(ctypes.c_double)),
 #             ("dim", ctypes.c_int)]
 
 class LHF:
@@ -126,20 +128,22 @@ class LHF:
         temp = self.args2string(self.args)
         
         
-        retPH = bettiBoundaryTableEntry(self.lib.pyRunWrapper2(len(temp),ctypes.c_char_p(temp), self.data.ctypes.data_as(ctypes.POINTER(ctypes.c_double))))
+        retPH = bettiBoundaryTable.from_address(self.lib.pyRunWrapper2(len(temp),ctypes.c_char_p(temp), self.data.ctypes.data_as(ctypes.POINTER(ctypes.c_double))))
         
-        #retPH2 = self.allocation(retPH.sizof)
-        # num = retPH.sizof
-        # list_of_results = retPH.BettiDim:num
 
-        returned = bettiBoundaryTableEntry.from_address(retPH.dim)
+        print("Total Boundaries",retPH.size)
 
-        print(retPH.dim)
-        print(returned.dim)
-        print(retPH.BettiDim)
-        print(returned.BettiDim)
-        print((retPH.sizof))
-        print((returned.sizof))
+        #Reconstruct the boundary table array from the address?
+        
+        bettiBoundaryTableEntries = type("array", (ctypes.Structure, ), {
+            # data members
+            "_fields_" : [("arr", bettiBoundaryTableEntry * retPH.size)]
+        })
 
+
+        retBounds = bettiBoundaryTableEntries.from_address(retPH.bettis)
+
+        for i in range(retPH.size):
+            print(retBounds.arr[i].dim,retBounds.arr[i].birth,retBounds.arr[i].death)
 
         return

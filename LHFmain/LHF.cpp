@@ -819,8 +819,7 @@ extern "C"
 		return;
 	}
 
-	
-	void* pyRunWrapper2(const int argc, char* argv, const double *pointCloud){
+	BRAP* pyRunWrapper2(const int argc, char* argv, const double *pointCloud){
 		
 		//std::cout << std::endl << "argc: " << argc << std::endl;
 		//First we need to convert arguments from char* to map
@@ -901,56 +900,20 @@ extern "C"
 		double end = omp_get_wtime();
 		std::cout << "Total LHF execution time (s): " << end-start << std::endl;
 		
-		//return bettitable
-
-		// if(wD.bettiTable.size() > 0){
-		// 	for (auto a:wD.bettiTable){
-		// 		std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
-		// 		int bettiDimArray = a.bettiDim;
-		// 		double bettideath = a.death;
-		// 	}
-		// 	return int bettiDimArray, double bettideath;
-		// }
-		struct testStruct{
-			int dim;
-			double* bettiDim;
-			double* bettiBirth;
-			double* bettiDeath;
-			int sizof;
-		} *a;
 		
-		struct testStruct* allocate(int sizof2){
-			/*Allocate memory for TestStruct*/
-			struct testStruct *test =  malloc(sizof2 * sizeof(struct testStruct));
-			assert (test !=0);
-
-			return test;
+		BRET *retStruct = (BRET*)malloc(sizeof(BRET) * wD.bettiTable.size()); // = new testStruct(wD.bettiTable.size());
+		
+		for(auto i = 0; i < wD.bettiTable.size(); i++){
+			retStruct[i].dim = wD.bettiTable[i].bettiDim;
+			retStruct[i].birth = wD.bettiTable[i].birth;
+			retStruct[i].death = wD.bettiTable[i].death;
 		}
 		
-		int sizof2 = wD.bettiTable.size();
-		a = allocate(sizof2);
-		a = new testStruct();
-
-
-		double* pybettiDim[sizof2];
-		double* pybettiBirth[sizof2];
-		double* pybettiDeath[sizof2];
-		int sizof = 0;
-		for(auto b : wD.bettiTable){
-			pybettiDim[sizof] = b.bettiDim;
-			pybettiBirth[sizof] = b.birth;
-			pybettiDeath[sizof] = b.death;
-			sizof++;
-		}
-
-		a->dim=2;
-		a->bettiDim=pybettiDim;
-		a->bettiDeath=pybettiDeath;
-		a->bettiBirth=pybettiBirth;
-		a->sizof=sizof;
-		//a->bettiDim = 
-		std::cout << "size = " << sizof << std::endl;
-		std::cout << "size = " << sizof2 << std::endl;
+		//Wrap the structure in the size...
+		
+		BRAP* a = (BRAP*)malloc(sizeof(int) + (sizeof(BRET) * wD.bettiTable.size()));
+		a->size = wD.bettiTable.size();
+		a->ret = retStruct;
 
 		std::cout << "Got this far!!" << std::endl;
 		return a;

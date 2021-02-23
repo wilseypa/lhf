@@ -16,7 +16,7 @@ pyLHF.args["dimensions"] = "3"
 pyLHF.testFunc(1, "HELLO")
 
 #Call LHF with configured arguments and generated dataset
-pyLHF.runPH()
+#pyLHF.runPH()
 
 
 #Call LHF with configured arguments and generated dataset

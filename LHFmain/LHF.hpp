@@ -35,7 +35,25 @@ class LHF {
 
 
 extern "C" {
+	//Handle Betti Return Structure allocation	
+	typedef struct bRetStructure {
+		int dim;
+		double birth;
+		double death;
+	} BRET;
+	
+	
+	void free_bRet(BRET *b){
+		free(b);
+	}
+	
+	typedef struct bWrapStructure{
+		int size;
+		BRET* ret;
+	} BRAP;
+	
+	
 	void testFunc(int num1, char* st) { std::cout << "Test: " << num1 << std::endl; std::cout << "\t" << st << std::endl;};
 	void pyRunWrapper(const int, char*, const double *);
-	void* pyRunWrapper2(const int, char*, const double *);
+	BRAP* pyRunWrapper2(const int, char*, const double *);
 }
