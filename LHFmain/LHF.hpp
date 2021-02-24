@@ -38,8 +38,7 @@ extern "C" {
 	//Handle Betti Return Structure allocation	
 	typedef struct bRetStructure {
 		int dim;
-		double birth;
-		double death;
+		double birth,death;
 	} BRET;
 	
 	

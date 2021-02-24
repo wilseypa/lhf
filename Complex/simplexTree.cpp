@@ -338,7 +338,7 @@ void simplexTree::insert() {
 	}
 	
 	//Create our new node to insert (Ref Count = 1)
-	simplexTreeNode* insNode = new simplexTreeNode({indexCounter}, 0); 	
+	simplexTreeNode* insNode = new simplexTreeNode({(unsigned)indexCounter}, 0); 	
 	insNode->simpNode->index = indexCounter;
 
 	//Track this index in our current window (for sliding window)
@@ -386,7 +386,7 @@ void simplexTree::insert() {
 	runningVectorCount++;
 
 	for(auto it = root->child; it != nullptr; it = it->sibling){
-		recurseInsert(it, indexCounter, 0, 0, {indexCounter});
+		recurseInsert(it, indexCounter, 0, 0, {(unsigned)indexCounter});
 	}
 
 	//Insert into the right of the tree

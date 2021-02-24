@@ -3,7 +3,7 @@
 #
 enable_testing()
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.11)
 set (CMAKE_CXX_STANDARD_LIBRARIES "-lpthread")
 set (CMAKE_CXX_STANDARD 14)
 
