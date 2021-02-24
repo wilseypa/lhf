@@ -40,7 +40,8 @@ class bettiBoundaryTable(ctypes.Structure):
 #             ("dim", ctypes.c_int)]
 
 class LHF:
-    lib = ctypes.cdll.LoadLibrary("./libLHFlib.so")
+	#Use RTLD_LAZY mode due to undefined symbols
+    lib = ctypes.CDLL("./libLHFlib.so",mode=1)
     args = {"reductionPercentage":"10","maxSize":"2000","threads":"30","threshold":"250","scalar":"2.0","mpi": "0","mode": "standard","dimensions":"1","iterations":"250","pipeline":"","inputFile":"None","outputFile":"output","epsilon":"5","lambda":".25","debug":"0","complexType":"simplexArrayList","clusters":"20","preprocessor":"","upscale":"false","seed":"-1","twist":"false","collapse":"false"}    
     data = []
 
