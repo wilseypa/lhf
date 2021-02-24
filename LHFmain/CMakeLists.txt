@@ -6,19 +6,7 @@
 #  SET(CMAKE_CXX_COMPILER "${MPI_CXX_COMPILER}" CACHE FILEPATH "CXX compiler overridden with MPI C++ wrapper")
 #ENDIF(DEFINED MPI_CXX_COMPILER)
 
-cmake_minimum_required(VERSION 3.11)
-
-
-
-# Use external project for qhull integration
-include(FetchContent)
-
-FetchContent_Declare(qhullext
-    GIT_REPOSITORY https://github.com/qhull/qhull.git
-)
-
-FetchContent_MakeAvailable(qhullext)
-include_directories(./_deps/qhullext-src/src/)
+cmake_minimum_required(VERSION 3.14)
 
 find_package(MPI REQUIRED)
 add_definitions(-DOMPI_SKIP_MPICXX)
@@ -30,24 +18,24 @@ set (CMAKE_CXX_STANDARD 14)
 set (CMAKE_CXX_STANDARD_LIBRARIES "-lpthread")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fopenmp")
 
-include_directories(../Complex)
-link_directories(../Complex)
+include_directories(${PROJECT_SOURCE_DIR}/Complex)
+link_directories(${PROJECT_SOURCE_DIR}/Complex)
 
-include_directories(../Pipes)
-link_directories(../Pipes)
+include_directories(${PROJECT_SOURCE_DIR}/Pipes)
+link_directories(${PROJECT_SOURCE_DIR}/Pipes)
 
-include_directories(../Preprocessing)
-link_directories(../Preprocessing)
+include_directories(${PROJECT_SOURCE_DIR}/Preprocessing)
+link_directories(${PROJECT_SOURCE_DIR}/Preprocessing)
 
-include_directories(../Utils)
-link_directories(../Utils)
+include_directories(${PROJECT_SOURCE_DIR}/Utils)
+link_directories(${PROJECT_SOURCE_DIR}/Utils)
 
 #Add Source to this project's executable
 add_library(LHFlib SHARED "LHF.cpp" "LHF.hpp")
 set_target_properties(LHFlib PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(LHFlib PROPERTIES SOVERSION 1)
 
-target_link_libraries(LHFlib simplexBase pipePacket utils readInput writeOutput basePipe preprocessor OpenMP::OpenMP_CXX MPI::MPI_C qhullcpp qhullstatic_r)
+target_link_libraries(LHFlib pipePacket utils readInput writeOutput simplexBase basePipe preprocessor OpenMP::OpenMP_CXX MPI::MPI_C)
 
 INSTALL (TARGETS LHFlib
 	LIBRARY DESTINATION lib

@@ -19,6 +19,7 @@
 #include "fastPersistence.hpp"
 #include "incrementalPersistence.hpp"
 #include "naiveWindow.hpp"
+#include "qhullPipe.hpp"
 
 basePipe* basePipe::newPipe(const std::string &pipeType, const std::string &complexType){
 	utils ut;
@@ -43,6 +44,8 @@ basePipe* basePipe::newPipe(const std::string &pipeType, const std::string &comp
 		return new incrementalPersistence();
 	} else if (pipeType == "naivewindow" || pipeType == "naive"){
 		return new naiveWindow();
+	} else if (pipeType == "qhullPipe" || pipeType == "qhull"){
+		return new qhullPipe();
 	}
 	
 	return 0;

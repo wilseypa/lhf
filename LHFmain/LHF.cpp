@@ -6,20 +6,7 @@
 #include <algorithm>
 #include <typeinfo>
 #include <thread>
-#include <string>
-
-#include "libqhullcpp/RboxPoints.h"
-#include "libqhullcpp/QhullError.h"
-#include "libqhullcpp/QhullQh.h"
-#include "libqhullcpp/QhullFacet.h"
-#include "libqhullcpp/QhullFacetList.h"
-#include "libqhullcpp/QhullFacetSet.h"
-#include "libqhullcpp/QhullLinkedList.h"
-#include "libqhullcpp/QhullPoint.h"
-#include "libqhullcpp/QhullUser.h"
-#include "libqhullcpp/QhullVertex.h"
-#include "libqhullcpp/QhullVertexSet.h"
-#include "libqhullcpp/Qhull.h"
+#include <string> 
 
 void LHF::outputBettis(std::map<std::string, std::string> args, pipePacket &wD){
 	//Output the data using writeOutput library
@@ -436,7 +423,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 	std::vector<unsigned> partitionsize;
 	unsigned partitionsize_size=0;
 		
-    //Serialised Point Cloud and their labels 
+	//Serialised Point Cloud and their labels 
 	std::vector<double> sdata;
 	std::vector<unsigned> sdatalabel;
 	
@@ -467,7 +454,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 		//Read our input data
 		wD.inputData = rs.readCSV(args["inputFile"]);
 		wD.workData = wD.inputData;
-     
+	 
 		//Partition the data with the configured preprocessor
 		processDataWrapper(args, wD);
 		
@@ -479,9 +466,9 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 		auto maxRadius = utils::computeMaxRadius(std::atoi(args["clusters"].c_str()), wD.workData, wD.inputData, wD.centroidLabels);
 		auto avgRadius = utils::computeAvgRadius(std::atoi(args["clusters"].c_str()), wD.workData, wD.inputData, wD.centroidLabels);
 
-       	auto partitionedData1 = utils::separatePartitions(scalar*maxRadius, wD.workData, wD.inputData, wD.centroidLabels);
-        
-        partitionedData1.second.push_back(wD.workData);
+		auto partitionedData1 = utils::separatePartitions(scalar*maxRadius, wD.workData, wD.inputData, wD.centroidLabels);
+		
+		partitionedData1.second.push_back(wD.workData);
 		//	Each node/slave will process at least 1 partition
 		//	NOTE: the partition may contain points outside partition that are within 2*Rmax
 		minPartitions = partitionedData1.second.size() / nprocs;
@@ -497,13 +484,13 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 			for(auto b : a)
 				for(auto c : b)
 					sdata.push_back(c);
-	    
-	    //serialize all the labels
+		
+		//serialize all the labels
 		for(auto a : partitionedData1.first)
 			for(auto b : a)
 				sdatalabel.push_back(b);
 			
-	    //intitalizing to 0
+		//intitalizing to 0
 		for(int i=0; i<nprocs; i++){
 			scounts[i] = 0;
 			displs[i]= 0;
@@ -513,7 +500,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 		
 		//distributing partitions sizes in scounts and scountslabel
 		int temp = 0, k = 0;
-        for(auto a : partitionsize){
+		for(auto a : partitionsize){
 			if(k < firstk){
 				if(temp >= minPartitions+1){
 					temp = 0;
@@ -536,7 +523,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 		auto bd = scounts[0];
 		
 		// find the maximum buffer size required for partition + offset for each partition
-       	for(auto  a : scounts){
+		for(auto  a : scounts){
 			if(k>0)
 				displs[k] = bd + displs[k-1];
 			k++;
@@ -583,16 +570,16 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 	MPI_Bcast(&maxsize,1,MPI_INT,0,MPI_COMM_WORLD);
 	MPI_Bcast(&maxsizelabel,1,MPI_INT,0,MPI_COMM_WORLD);
 	
-    //Chunk sizes for each processes
+	//Chunk sizes for each processes
 	MPI_Bcast(&scounts,nprocs,MPI_INT,0,MPI_COMM_WORLD);
 	MPI_Bcast(&scountslabel,nprocs,MPI_INT,0,MPI_COMM_WORLD);
  
-    //firstk receive one more partition
+	//firstk receive one more partition
 	if(id < firstk)
 		minPartitions = minPartitions + 1;
 	
 	// Allocating buffers
-    receivedData = (double *)malloc(maxsize*sizeof(double));
+	receivedData = (double *)malloc(maxsize*sizeof(double));
 	receivedDataLabel = (unsigned *)malloc(maxsizelabel*sizeof(unsigned));
 	//Initializing buffers to zeros
 	for(int i=0; i<maxsize; i++){
@@ -637,10 +624,10 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 			
 			partitionData.push_back(partition);
 		}
-        
+		
 		//Each process separate thier label partitions
 		counter=0;
-        for(int i=0; i<minPartitions; i++){
+		for(int i=0; i<minPartitions; i++){
 			std::vector<unsigned> partitionlabel;
 			for(int j=0; j<partitionsize[displacement+i]; j++){
 				partitionlabel.push_back(receivedDataLabel[counter++]);
@@ -691,30 +678,30 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 	//gether each process table sizes
 	std::vector<int> betties_table_size(nprocs);
 	MPI_Gather( &bettiTableSize, 1, MPI_INT, &betties_table_size[0], 1, MPI_INT,0, MPI_COMM_WORLD); 
-    
+	
 	std::vector<int> displsg(nprocs);
 	displsg[0]=0;
 	
-    // Calculate offsets
+	// Calculate offsets
 	for(int i=1;i<=nprocs;i++)
 		displsg[i] = displsg[i-1] + betties_table_size[i-1];
 
-    // Gather betties info
+	// Gather betties info
 	MPI_Gatherv(&betti_dim[0],bettiTableSize, MPI_UNSIGNED, &recvbuffdim[0], &betties_table_size[0], &displsg[0],MPI_UNSIGNED,0,MPI_COMM_WORLD);
 	MPI_Gatherv(&betti_birth[0],bettiTableSize, MPI_DOUBLE, &recvbuffbirth[0], &betties_table_size[0], &displsg[0],MPI_DOUBLE,0,MPI_COMM_WORLD);
 	MPI_Gatherv(&betti_death[0],bettiTableSize, MPI_DOUBLE, &recvbuffdeath[0], &betties_table_size[0], &displsg[0],MPI_DOUBLE,0,MPI_COMM_WORLD);
 	MPI_Gatherv(&betti_boundarysize[0],bettiTableSize, MPI_UNSIGNED, &recvbuffboundaries_size[0], &betties_table_size[0], &displsg[0],MPI_UNSIGNED,0,MPI_COMM_WORLD);
   
-    int totalboundarysize =0;
+	int totalboundarysize =0;
 	MPI_Reduce(&boundary_size, &totalboundarysize, 1, MPI_UNSIGNED, MPI_SUM, 0,MPI_COMM_WORLD);
 	
 	//Gather boundary size information
 	std::vector<int> betties_table_boundary_size(nprocs);
 	MPI_Gather(&boundary_size, 1, MPI_UNSIGNED, &betties_table_boundary_size[0], 1, MPI_UNSIGNED,0, MPI_COMM_WORLD);
   
-    std::vector<int> displsgb(nprocs);
+	std::vector<int> displsgb(nprocs);
 	displsgb[0]=0;
-    
+	
 	//Calculate offsets
 	for(int i=1; i<=nprocs; i++){
 		displsgb[i] = displsgb[i-1] + betties_table_boundary_size[i-1];
@@ -751,3 +738,192 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 	
 	return finalMergedBettiTable;
 }	
+
+
+extern "C"
+{
+	
+	void pyRunWrapper(const int argc, char* argv, const double *pointCloud){
+		
+		//std::cout << std::endl << "argc: " << argc << std::endl;
+		//First we need to convert arguments from char* to map
+		std::map<std::string, std::string> args;
+		std::vector<std::string> rawArgs;
+		
+		//Split arguments into list
+		std::string tempstr = "";
+		for(auto i = 0; i < argc; i++){
+			//Check for space (32)
+			if(argv[i] == 32){
+				rawArgs.push_back(tempstr);
+				tempstr = "";
+			} else
+				tempstr += argv[i];
+		}
+		
+		//Split argument list into map
+		for(auto i = 0; i < rawArgs.size(); i += 2)
+			args[rawArgs[i]] = rawArgs[i+1];
+				
+				
+		//Next, decode the data
+		int dataSize = std::atoi(args["datasize"].c_str());
+		int dataDim = std::atoi(args["datadim"].c_str());
+		
+		std::vector<std::vector<double>> data(dataSize, std::vector<double>(dataDim));
+		
+		for(auto row = 0; row < dataSize; row++){
+			
+			for(auto dim = 0; dim < dataDim; dim++){
+				
+				data[row][dim] = pointCloud[row*dim + dim];
+			}
+		}
+		
+		//C interface for python to call into LHF
+		auto lhflib = LHF();
+		double start = omp_get_wtime();
+		
+		//Create a pipePacket (datatype) to store the complex and pass between engines
+		auto wD = pipePacket(args, args["complexType"]);	//wD (workingData)
+		
+		wD.inputData = data;
+		wD.workData = wD.inputData;
+
+		//Determine what pipe we will be running
+		argParser::setPipeline(args);
+
+		//If data was found in the inputFile
+		if(wD.inputData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
+
+			if(args["mode"] == "reduced" || args["mode"] == "iterUpscale" || args["mode"] == "iter"){	
+				wD.bettiTable = lhflib.processIterUpscale(args,wD);
+				sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
+				
+			} else {
+				lhflib.processDataWrapper(args, wD);
+				lhflib.runPipeline(args, wD);
+			}
+
+		} else {
+			argParser::printUsage();
+		}
+			
+		if((args["debug"] == "1" || args["debug"] == "true") && wD.bettiTable.size() > 0 ){
+			std::cout << std::endl << "_______Merged BETTIS_______" << std::endl;
+
+			for(auto a : wD.bettiTable){
+				std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
+				utils::print1DVector(a.boundaryPoints);
+			}
+		}
+		
+		delete wD.complex;
+
+		double end = omp_get_wtime();
+		std::cout << "Total LHF execution time (s): " << end-start << std::endl;
+
+
+		return;
+	}
+
+	BRAP* pyRunWrapper2(const int argc, char* argv, const double *pointCloud){
+		
+		//std::cout << std::endl << "argc: " << argc << std::endl;
+		//First we need to convert arguments from char* to map
+		std::cout << "Got this far!" << std::endl;
+		std::map<std::string, std::string> args;
+		std::vector<std::string> rawArgs;
+		
+		//Split arguments into list
+		std::string tempstr = "";
+		for(auto i = 0; i < argc; i++){
+			//Check for space (32)
+			if(argv[i] == 32){
+				rawArgs.push_back(tempstr);
+				tempstr = "";
+			} else
+				tempstr += argv[i];
+		}
+		
+		//Split argument list into map
+		for(auto i = 0; i < rawArgs.size(); i += 2)
+			args[rawArgs[i]] = rawArgs[i+1];
+				
+				
+		//Next, decode the data
+		int dataSize = std::atoi(args["datasize"].c_str());
+		int dataDim = std::atoi(args["datadim"].c_str());
+		
+		std::vector<std::vector<double>> data(dataSize, std::vector<double>(dataDim));
+		
+		for(auto row = 0; row < dataSize; row++){
+			
+			for(auto dim = 0; dim < dataDim; dim++){
+				
+				data[row][dim] = pointCloud[row*dim + dim];
+			}
+		}
+		
+		//C interface for python to call into LHF
+		auto lhflib = LHF();
+		double start = omp_get_wtime();
+		
+		//Create a pipePacket (datatype) to store the complex and pass between engines
+		auto wD = pipePacket(args, args["complexType"]);	//wD (workingData)
+		
+		wD.inputData = data;
+		wD.workData = wD.inputData;
+
+		//Determine what pipe we will be running
+		argParser::setPipeline(args);
+
+		//If data was found in the inputFile
+		if(wD.inputData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
+
+			if(args["mode"] == "reduced" || args["mode"] == "iterUpscale" || args["mode"] == "iter"){	
+				wD.bettiTable = lhflib.processIterUpscale(args,wD);
+				sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
+				
+			} else {
+				lhflib.processDataWrapper(args, wD);
+				lhflib.runPipeline(args, wD);
+			}
+
+		} else {
+			argParser::printUsage();
+		}
+			
+		if((args["debug"] == "1" || args["debug"] == "true") && wD.bettiTable.size() > 0 ){
+			std::cout << std::endl << "_______Merged BETTIS_______" << std::endl;
+
+			for(auto a : wD.bettiTable){
+				std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
+				utils::print1DVector(a.boundaryPoints);
+			}
+		}
+		
+		delete wD.complex;
+
+		double end = omp_get_wtime();
+		std::cout << "Total LHF execution time (s): " << end-start << std::endl;
+		
+		
+		BRET *retStruct = (BRET*)malloc(sizeof(BRET) * wD.bettiTable.size()); // = new testStruct(wD.bettiTable.size());
+		
+		for(auto i = 0; i < wD.bettiTable.size(); i++){
+			retStruct[i].dim = wD.bettiTable[i].bettiDim;
+			retStruct[i].birth = wD.bettiTable[i].birth;
+			retStruct[i].death = wD.bettiTable[i].death;
+		}
+		
+		//Wrap the structure in the size...
+		
+		BRAP* a = (BRAP*)malloc(sizeof(int) + (sizeof(BRET) * wD.bettiTable.size()));
+		a->size = wD.bettiTable.size();
+		a->ret = retStruct;
+
+		std::cout << "Got this far!!" << std::endl;
+		return a;
+	}
+}
