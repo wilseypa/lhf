@@ -179,7 +179,7 @@ bool kMeansPlusPlus::configPreprocessor(std::map<std::string, std::string>& conf
 	else return false;
 	
 	configured = true;
-	ut.writeDebug("StreamKMeans","Configured with parameters { clusters: " + configMap["clusters"] + ", iterations: " + configMap["iterations"] + ", debug: " + strDebug + ", outputFile: " + outputFile + " }");
+	ut.writeDebug(procName,"Configured with parameters { clusters: " + configMap["clusters"] + ", iterations: " + configMap["iterations"] + ", debug: " + strDebug + ", outputFile: " + outputFile + " }");
 
 	return true;
 }

@@ -8,7 +8,6 @@
 #include <thread>
 #include <string> 
 
-		
 void LHF::outputBettis(std::map<std::string, std::string> args, pipePacket &wD){
 	//Output the data using writeOutput library
 	auto pipe = args.find("outputFile");
@@ -34,6 +33,16 @@ void LHF::outputBettis(std::map<std::string, std::string> args, pipePacket &wD){
 			}
 		}
 	}
+}
+
+void testInitQhull(int argc, char* argv[]){
+	
+	qhT *a;
+	qh_init_A(a, stdin, stdout, stderr, argc, argv);
+	
+	
+	
+	return;
 }
 
 void LHF::runPipeline(std::map<std::string, std::string> args, pipePacket &wD){
@@ -132,7 +141,13 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 		
 	}
 	
-	std::sort(sortpartitions.begin(), sortpartitions.end());
+	//std::sort(sortpartitions.begin(), sortpartitions.end());
+	
+	std::cout << "Sorted bins: ";
+	for(auto a : sortpartitions)
+		std::cout << a.first << " ";
+			
+	std::cout << std::endl;
 	
 	//3. Process each partition using OpenMP to handle multithreaded scheduling
 	std::cout << "Running with " << threads << " threads" << std::endl;
@@ -359,13 +374,6 @@ std::vector<bettiBoundaryTableEntry> LHF::processIterUpscale(std::map<std::strin
 	args["scalarV"] = std::to_string(scalar*maxRadius);
 	auto partitionedData = utils::separatePartitions(std::atof(args["scalarV"].c_str()), iterwD.workData, iterwD.inputData, iterwD.centroidLabels);
 	std::cout << "Using scalar value: " << args["scalarV"] << std::endl;
-	std::cout << "Partitions: " << partitionedData.second.size() << std::endl << "Partition Bin Counts: ";
-	
-	//		Get sizes of the new fuzzy partitions
-	std::vector<unsigned> partitionsize;
-	for(auto a: partitionedData.second)
-		partitionsize.push_back(a.size());
-	utils::print1DVector(partitionsize);
 	
 	//		Append the centroid dataset to run in parallel as well
 	partitionedData.second.push_back(iterwD.workData);
