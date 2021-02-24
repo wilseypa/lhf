@@ -35,16 +35,6 @@ void LHF::outputBettis(std::map<std::string, std::string> args, pipePacket &wD){
 	}
 }
 
-void testInitQhull(int argc, char* argv[]){
-	
-	qhT *a;
-	qh_init_A(a, stdin, stdout, stderr, argc, argv);
-	
-	
-	
-	return;
-}
-
 void LHF::runPipeline(std::map<std::string, std::string> args, pipePacket &wD){
 	// Begin processing parts of the pipeline
 	// DataInput -> A -> B -> ... -> DataOutput
