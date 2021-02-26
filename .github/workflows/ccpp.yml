@@ -11,15 +11,44 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        mpi:
+          - mpich
+          - openmpi
+          - msmpi
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+        exclude:
+          - os: ubuntu-latest
+            mpi: msmpi
+          - os: macos-latest
+            mpi: msmpi
+          - os: windows-latest
+            mpi: mpich
+          - os: windows-latest
+            mpi: openmpi
     
     steps:
     # Get dependencies
-    - name: Get dependencies
-      run: sudo apt-get install -y openmpi-bin openmpi-common libopenmpi-dev cppcheck
+    - name: Get dependencies (${{ matrix.mpi }})
+      if:   runner.os == 'Linux'
+      run:  sudo apt-get install -y openmpi-bin openmpi-common libopenmpi-dev cppcheck
+      
+    - name: Get dependencies (${{ matrix.mpi }})
+      if:   runner.os == 'macOS'
+      run:  sudo apt-get install -y openmpi-bin openmpi-common libopenmpi-dev cppcheck
           
     # Checkout v2 : https://github.com/actions/checkout
     - uses: actions/checkout@v2
+      
+    # Check CMake Version 
+    - name: Check CMake (${{ matrix.mpi }})
+      run: cmake --version
       
     # Make the project
     - name: cmake
@@ -30,4 +59,5 @@ jobs:
       run: make test
     
     - name: cppcheck
-      run: cppcheck --enable=all --force .
+      if:   runner.os == 'Linux'
+      run:  cppcheck --enable=all --force .
