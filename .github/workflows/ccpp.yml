@@ -37,43 +37,43 @@ jobs:
     steps:
     # Get dependencies
     
-    - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
-      if:   runner.os == 'Linux' && ${{ matrix.mpi }} == 'openmpi'
+    - name: Get Linux OpenMPI dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
+      if:   ${{matrix.os}} == 'ubuntu-latest' && ${{ matrix.mpi }} == 'openmpi'
       run:  sudo apt-get install -y openmpi-bin openmpi-common libopenmpi-dev cppcheck
       
-    - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
-      if:   runner.os == 'Linux' && ${{ matrix.mpi }} == 'mpich'
+    - name: Get Linux MPICH dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
+      if:   ${{matrix.os}} == 'ubuntu-latest' && ${{ matrix.mpi }} == 'mpich'
       run:  sudo apt-get install -y mpich cppcheck
       
     - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
-      if:   runner.os == 'macOS' && ${{ matrix.mpi }} == 'openmpi'
+      if:   ${{matrix.os}} == 'macos-latest' && ${{ matrix.mpi }} == 'openmpi'
       run:  sudo brew install openmpi
       
     - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
-      if:   runner.os == 'macOS' && ${{ matrix.mpi }} == 'mpich'
-      run:  sudo brew install openmpi
+      if:   ${{matrix.os}} == 'macos-latest' && ${{ matrix.mpi }} == 'mpich'
+      run:  sudo brew install mpich
       
     - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
-      if:   runner.os == 'Windows' && ${{ matrix.mpi }} == 'openmpi'
+      if:   ${{matrix.os}} == 'windows-latest' && ${{ matrix.mpi }} == 'openmpi'
       run:  sudo brew install openmpi
           
     - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
-      if:   runner.os == 'Windows' && ${{ matrix.mpi }} == 'openmpi'
-      run: wget https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.2.tar.gz
+      if:   ${{matrix.os}} == 'windows-latest' && ${{ matrix.mpi }} == 'openmpi'
+      run:  wget https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.2.tar.gz
       
     - name: Windows extract-openmpi 
-      if:   runner.os == 'Windows' && ${{ matrix.mpi }} == 'openmpi'
-      run: tar -xvf ./openmpi-4.0.2.tar.gz
+      if:   ${{matrix.os}} == 'windows-latest' && ${{ matrix.mpi }} == 'openmpi'
+      run:  tar -xvf ./openmpi-4.0.2.tar.gz
       
     - name: Windows configure-openmpi
-      if:   runner.os == 'Windows' && ${{ matrix.mpi }} == 'openmpi'
-      run: ./openmpi-4.0.2/configure --prefix="/home/${USER}/.openmpi"
+      if:   ${{matrix.os}} == 'windows-latest' && ${{ matrix.mpi }} == 'openmpi'
+      run:  ./openmpi-4.0.2/configure --prefix="/home/${USER}/.openmpi"
       
     - name: Windows install-openmpi
-      if:   runner.os == 'Windows' && ${{ matrix.mpi }} == 'openmpi'
+      if:  ${{matrix.os}} == 'windows-latest' && ${{ matrix.mpi }} == 'openmpi'
       run: |
-        make -j
-        sudo make install
+          make -j
+          sudo make install
           
     # Checkout v2 : https://github.com/actions/checkout
     - uses: actions/checkout@v2
