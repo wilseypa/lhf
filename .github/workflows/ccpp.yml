@@ -38,19 +38,19 @@ jobs:
     # Get dependencies
     
     - name: Get Linux OpenMPI dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
-      if:   ${{matrix.os}} == 'ubuntu-latest' && ${{ matrix.mpi }} == 'openmpi'
+      if:   contains(${{matrix.os}},'ubuntu-latest') && contains(${{ matrix.mpi }},'openmpi')
       run:  sudo apt-get install -y openmpi-bin openmpi-common libopenmpi-dev cppcheck
       
     - name: Get Linux MPICH dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
-      if:   ${{matrix.os}} == 'ubuntu-latest' && ${{ matrix.mpi }} == 'mpich'
+      if:   contains(${{matrix.os}},'ubuntu-latest') && contains(${{ matrix.mpi }},'mpich')
       run:  sudo apt-get install -y mpich cppcheck
       
     - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
-      if:   ${{matrix.os}} == 'macos-latest' && ${{ matrix.mpi }} == 'openmpi'
+      if:   contains(${{matrix.os}},'macos-latest') && contains(${{ matrix.mpi }},'openmpi')
       run:  sudo brew install openmpi
       
     - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
-      if:   ${{matrix.os}} == 'macos-latest' && ${{ matrix.mpi }} == 'mpich'
+      if:   contains(${{matrix.os}},'macos-latest') && contains(${{ matrix.mpi }},'mpich')
       run:  sudo brew install mpich
       
     - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
