@@ -13,6 +13,7 @@ class preprocessor {
 	std::string outputFile;
 	utils ut;
     preprocessor();
+    virtual ~preprocessor(){};
     static preprocessor* newPreprocessor(const std::string&);
     void runPreprocessorWrapper(pipePacket &inData);
     virtual void runPreprocessor(pipePacket &inData);

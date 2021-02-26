@@ -15,10 +15,12 @@ class basePipe {
 	bool debug = 0;
 	std::string outputFile;
     basePipe(){};
+    virtual ~basePipe(){};
     static basePipe* newPipe(const std::string&, const std::string&);
     void runPipeWrapper(pipePacket&);
 	virtual void outputData(pipePacket&);
     virtual void runPipe(pipePacket&);
     virtual bool configPipe(std::map<std::string, std::string>&);    
+    
 };
 
