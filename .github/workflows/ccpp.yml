@@ -38,39 +38,39 @@ jobs:
     # Get dependencies
     
     - name: Get Linux OpenMPI dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
-      if:   contains(${{matrix.os}},'ubuntu-latest') && contains(${{ matrix.mpi }},'openmpi')
+      if:   contains(matrix.os,'ubuntu') && contains(matrix.mpi,'openmpi')
       run:  sudo apt-get install -y openmpi-bin openmpi-common libopenmpi-dev cppcheck
       
     - name: Get Linux MPICH dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
-      if:   contains(${{matrix.os}},'ubuntu-latest') && contains(${{ matrix.mpi }},'mpich')
+      if:   contains(matrix.os,'ubuntu') && contains(matrix.mpi,'mpich')
       run:  sudo apt-get install -y mpich cppcheck
       
     - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
-      if:   contains(${{matrix.os}},'macos-latest') && contains(${{ matrix.mpi }},'openmpi')
+      if:   contains(matrix.os,'macos') && contains(matrix.mpi,'openmpi')
       run:  sudo brew install openmpi
       
     - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
-      if:   contains(${{matrix.os}},'macos-latest') && contains(${{ matrix.mpi }},'mpich')
+      if:   contains(matrix.os,'macos') && contains(matrix.mpi,'mpich')
       run:  sudo brew install mpich
       
     - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
-      if:   ${{matrix.os}} == 'windows-latest' && ${{ matrix.mpi }} == 'openmpi'
+      if:   contains(matrix.os,'windows-latest') && contains(matrix.mpi,'openmpi')
       run:  sudo brew install openmpi
           
     - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
-      if:   ${{matrix.os}} == 'windows-latest' && ${{ matrix.mpi }} == 'openmpi'
+      if:   contains(matrix.os,'windows-latest') && contains(matrix.mpi,'openmpi')
       run:  wget https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.2.tar.gz
       
     - name: Windows extract-openmpi 
-      if:   ${{matrix.os}} == 'windows-latest' && ${{ matrix.mpi }} == 'openmpi'
+      if:   contains(matrix.os,'windows-latest') && contains(matrix.mpi,'openmpi')
       run:  tar -xvf ./openmpi-4.0.2.tar.gz
       
     - name: Windows configure-openmpi
-      if:   ${{matrix.os}} == 'windows-latest' && ${{ matrix.mpi }} == 'openmpi'
+      if:   contains(matrix.os,'windows-latest') && contains(matrix.mpi,'openmpi')
       run:  ./openmpi-4.0.2/configure --prefix="/home/${USER}/.openmpi"
       
     - name: Windows install-openmpi
-      if:  ${{matrix.os}} == 'windows-latest' && ${{ matrix.mpi }} == 'openmpi'
+      if:  contains(matrix.os,'windows-latest') && contains(matrix.mpi,'openmpi')
       run: |
           make -j
           sudo make install
