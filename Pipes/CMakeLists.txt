@@ -2,7 +2,7 @@
 # project specific logic here.
 #
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.11)
 
 add_library(pipePacket "pipePacket.cpp" "pipePacket.hpp")
 add_library(basePipe "basePipe.cpp" "basePipe.hpp")
@@ -35,7 +35,17 @@ FetchContent_Declare(qhullext
     #BUILD_SHARED_LIBS ON
 )
 
-FetchContent_MakeAvailable(qhullext)
+if(${CMAKE_VERSION} VERSION_LESS 3.14)
+    FetchContent_GetProperties(qhullext)
+    if(NOT qhullext_POPULATED)
+        FetchContent_Populate(qhullext)
+        add_subdirectory(${qhullext_SOURCE_DIR} ${qhullext_BINARY_DIR})
+    endif()
+else()
+    FetchContent_MakeAvailable(qhullext)
+endif()
+    
+    
 include_directories(${PROJECT_SOURCE_DIR}/_deps/qhullext-src/src/)
 
 # target_link_libraries(LHF PipeFunctions)
