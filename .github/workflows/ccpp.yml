@@ -32,6 +32,8 @@ jobs:
             mpi: mpich
           - os: windows-latest
             mpi: msmpi
+          - os: windows-latest
+            mpi: openmpi
             ##TODO: Test with windows-latest and msmpi
     
     steps:
@@ -47,11 +49,11 @@ jobs:
       
     - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
       if:   contains(matrix.os,'macos') && contains(matrix.mpi,'openmpi')
-      run:  brew install openmpi
+      run:  brew install openmpi libomp
       
     - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
       if:   contains(matrix.os,'macos') && contains(matrix.mpi,'mpich')
-      run:  brew install mpich
+      run:  brew install mpich libomp
                
     - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
       if:   contains(matrix.os,'windows-latest') && contains(matrix.mpi,'openmpi')
