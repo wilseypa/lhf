@@ -47,16 +47,12 @@ jobs:
       
     - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
       if:   contains(matrix.os,'macos') && contains(matrix.mpi,'openmpi')
-      run:  sudo brew install openmpi
+      run:  brew install openmpi
       
     - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
       if:   contains(matrix.os,'macos') && contains(matrix.mpi,'mpich')
-      run:  sudo brew install mpich
-      
-    - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
-      if:   contains(matrix.os,'windows-latest') && contains(matrix.mpi,'openmpi')
-      run:  sudo brew install openmpi
-          
+      run:  brew install mpich
+               
     - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
       if:   contains(matrix.os,'windows-latest') && contains(matrix.mpi,'openmpi')
       run:  wget https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.2.tar.gz
