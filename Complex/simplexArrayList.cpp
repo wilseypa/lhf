@@ -63,7 +63,14 @@ std::set<unsigned> simplexArrayList::getVertices(long long simplexHash, int dim,
 void simplexArrayList::prepareCofacets(int dim){
 	indexConverter.clear();
 	for(auto simplex : simplexList[dim+1]){
-		indexConverter.insert(std::make_pair(simplexHash(simplex->simplex), simplex));
+		indexConverter.insert(std::make_pair(simplex->hash, simplex));
+	}
+}
+
+void simplexArrayList::prepareFacets(int dim){
+	indexConverter.clear();
+	for(auto simplex : simplexList[dim-1]){
+		indexConverter.insert(std::make_pair(simplex->hash, simplex));
 	}
 }
 
@@ -199,6 +206,27 @@ std::vector<simplexNode*> simplexArrayList::getAllFacets(simplexNode_P simp, boo
 	return getAllFacets(simp.get(), recordVertices, dimension);
 }
 
+std::vector<simplexNode_P> simplexArrayList::getAllFacets_P(simplexNode_P simp){
+	std::vector<simplexNode_P> ret;
+
+	long long index = simp->hash;
+	unsigned k = simp->simplex.size();
+
+	for(auto it = simp->simplex.rbegin(); it != simp->simplex.rend(); ++it){
+		unsigned pt = *it;
+
+		index -= bin.binom(pt, k);
+
+		auto tempNode = indexConverter.find(index);
+		if(tempNode != indexConverter.end()){ //If this is a valid simplex, add it to the heap
+			ret.push_back(tempNode->second);
+		}
+
+		index += bin.binom(pt, --k);
+	}
+
+	return ret;
+}
 
 double simplexArrayList::getSize(){
 	//Calculate size of original data

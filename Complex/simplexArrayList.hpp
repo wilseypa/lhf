@@ -32,6 +32,7 @@ class simplexArrayList : public simplexBase{
 		std::vector<simplexNode*> getAllCofacets(simplexNode_P);
 		std::vector<simplexNode*> getAllFacets(simplexNode*, bool = true, unsigned = 0);
 		std::vector<simplexNode*> getAllFacets(simplexNode_P, bool = true, unsigned = 0);
+		std::vector<simplexNode_P> getAllFacets_P(simplexNode_P);
 
 		std::vector<simplexNode_P> expandDimension(std::vector<simplexNode_P>, bool = true, unsigned = 0);
 
@@ -43,6 +44,7 @@ class simplexArrayList : public simplexBase{
 		int simplexCount();
 		int vertexCount();
 		void prepareCofacets(int);
+		void prepareFacets(int);
 		std::vector<simplexNode_P> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode_P, simplexNode_P>&, bool = true);
 		bool deletion(std::set<unsigned>);
 		void expandDimensions(int);

@@ -110,6 +110,11 @@ std::vector<simplexNode*> simplexBase::getAllFacets(simplexNode_P simplex){
 	return getAllFacets(simplex.get());
 }
 
+std::vector<simplexNode_P> simplexBase::getAllFacets_P(simplexNode_P simplex){
+	ut.writeLog(simplexType,"No get facets function defined");
+	return std::vector<simplexNode_P>();
+}
+
 double simplexBase::getSize(){
 	ut.writeLog(simplexType,"No size function defined");
 	return -1;
@@ -160,6 +165,11 @@ int simplexBase::vertexCount(){
 
 void simplexBase::prepareCofacets(int dim){
 	ut.writeLog(simplexType,"No prepareCofacets function defined");
+	return;
+}
+
+void simplexBase::prepareFacets(int dim){
+	ut.writeLog(simplexType,"No prepareFacets function defined");
 	return;
 }
 
