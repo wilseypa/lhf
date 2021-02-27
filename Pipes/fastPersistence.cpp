@@ -192,19 +192,6 @@ void fastPersistence::runPipe(pipePacket &inData){
 		}
 
 		pivots = nextPivots;
-
-		if(mode == "involuted"){
-			std::vector<simplexNode*> simplices;
-			for(auto pivot : pivots){
-				simplices.push_back(pivot.get());
-			}
-
-			involutedPersistence* ip = new involutedPersistence();
-			ip->configPipe(configMap);
-			ip->setupSimplices(simplices, d);
-			ip->runPipe(inData);
-			delete ip;
-		}
 	}
 
 	//Stop the timer for time passed during the pipe's function

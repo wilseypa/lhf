@@ -160,7 +160,7 @@ std::vector<simplexNode*> simplexArrayList::getAllFacets(simplexNode* simp, bool
 	std::set<unsigned> vertices;
 
 	if(recordVertices) vertices = simp->simplex;
-	else vertices = getVertices(simp->hash, dim, simplexList[0].size());
+	else vertices = getVertices(simp->hash, dim + 1, simplexList[0].size());
 
 	for(auto pt : vertices){
 		double maxWeight = 0;
@@ -315,7 +315,7 @@ std::vector<simplexNode_P> simplexArrayList::expandDimension(std::vector<simplex
 		std::set<unsigned> vertices;
 
 		if(recordVertices) vertices = (*it)->simplex;
-		else vertices = getVertices((*it)->hash, dim, simplexList[0].size());
+		else vertices = getVertices((*it)->hash, dim - 1, simplexList[0].size());
 
 		//Iterate over points to possibly add to the simplex
 		//Use points larger than the maximal vertex in the simplex to prevent double counting
@@ -333,7 +333,7 @@ std::vector<simplexNode_P> simplexArrayList::expandDimension(std::vector<simplex
 					tot->simplex.insert(pt);
 				}
 				tot->weight = maxWeight;
-				tot->hash = (*it)->hash + bin.binom(pt, (recordVertices ? tot->simplex.size() : dim + 2));
+				tot->hash = (*it)->hash + bin.binom(pt, (recordVertices ? tot->simplex.size() : dim + 1));
 				nextEdges.push_back(tot);
 			}
 		}
