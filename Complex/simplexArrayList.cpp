@@ -50,11 +50,11 @@ unsigned simplexArrayList::maxVertex(long long simplexHash, unsigned high, unsig
 	return high - 1;
 }
 
-std::vector<unsigned> simplexArrayList::getVertices(long long simplexHash, int dim, unsigned n){
-	std::vector<unsigned> v;
+std::set<unsigned> simplexArrayList::getVertices(long long simplexHash, int dim, unsigned n){
+	std::set<unsigned> v;
 	for(unsigned k = dim+1; k>0; k--){ //Get all vertices by repeated binary search for max vertex
 		n = maxVertex(simplexHash, n, k-1, k);
-		v.push_back(n);
+		v.insert(n);
 		simplexHash -= bin.binom(n, k);
 	}
 	return v;
@@ -103,18 +103,22 @@ std::vector<simplexNode_P> simplexArrayList::getAllCofacets(const std::set<unsig
 	return ret;
 }
 
-std::vector<simplexNode*> simplexArrayList::getAllCofacets(simplexNode_P simp, const std::unordered_map<long long, simplexNode_P>& pivotPairs, bool checkEmergent){
+std::vector<simplexNode*> simplexArrayList::getAllCofacets(simplexNode_P simp, const std::unordered_map<long long, simplexNode_P>& pivotPairs, bool checkEmergent, bool recordVertices, unsigned dim){
 	//Method builds out cofacets for incrementalPersistence
 
 	std::vector<simplexNode*> ret;
+	std::set<unsigned> vertices;
 
-	unsigned k = simp->simplex.size() + 1;
-	std::set<unsigned>::reverse_iterator it = simp->simplex.rbegin();
+	if(recordVertices) vertices = simp->simplex;
+	else vertices = getVertices(simp->hash, dim, simplexList[0].size());
+
+	unsigned k = vertices.size() + 1;
+	std::set<unsigned>::reverse_iterator it = vertices.rbegin();
 	long long index = simp->hash;
 
 	// Try inserting other vertices into the simplex
 	for(unsigned i = simplexList[0].size(); i-- != 0; ){ 
-		if(it != simp->simplex.rend() && i == *it - simplexOffset){ //Vertex i is already in the simplex
+		if(it != vertices.rend() && i == *it - simplexOffset){ //Vertex i is already in the simplex
 			//Now adding vertices less than i -> i is now the kth largest vertex in the simplex instead of the (k-1)th
 			index -= bin.binom(i, k-1);
 			index += bin.binom(i, k); //Recompute the index accordingly
@@ -122,13 +126,17 @@ std::vector<simplexNode*> simplexArrayList::getAllCofacets(simplexNode_P simp, c
 			++it; 	//Check for the previous vertex in the simplex (it is a reverse iterator)
 		} else{
 			double maxWeight = simp->weight;
-			for(auto pt : simp->simplex){
+			for(auto pt : vertices){
 				maxWeight = std::max(maxWeight, (*distMatrix)[std::min(i, pt)][std::max(i, pt)]);
 			}
 
 			if(maxWeight <= maxEpsilon){ //Valid simplex
-				simplexNode* x = new simplexNode(simp->simplex, maxWeight);
-				x->simplex.insert(i);
+				simplexNode* x = new simplexNode();
+				if(recordVertices){
+					x->simplex = vertices;
+					x->simplex.insert(i);
+				}
+				x->weight = maxWeight;
 				x->hash = index + bin.binom(i, k);
 				ret.push_back(x);
 
@@ -144,30 +152,47 @@ std::vector<simplexNode*> simplexArrayList::getAllCofacets(simplexNode_P simp, c
 }
 
 std::vector<simplexNode*> simplexArrayList::getAllCofacets(simplexNode_P simp){
-	return getAllCofacets(simp, std::unordered_map<long long, simplexNode_P>(), false);
+	return getAllCofacets(simp, std::unordered_map<long long, simplexNode_P>(), false, true, 0);
 }
 
-std::vector<simplexNode*> simplexArrayList::getAllFacets(simplexNode* simp){
+std::vector<simplexNode*> simplexArrayList::getAllFacets(simplexNode* simp, bool recordVertices, unsigned dim){
 	std::vector<simplexNode*> ret;
+	std::set<unsigned> vertices;
 
-	for(auto pt : simp->simplex){
-		simplexNode* x = new simplexNode(simp->simplex, 0);
-		x->simplex.erase(x->simplex.find(pt));
+	if(recordVertices) vertices = simp->simplex;
+	else vertices = getVertices(simp->hash, dim, simplexList[0].size());
 
+	for(auto pt : vertices){
 		double maxWeight = 0;
-		for(auto it = x->simplex.begin(); it != x->simplex.end(); ++it){
-			for(auto it2 = it; ++it2 != x->simplex.end(); ){
+		for(auto it = vertices.begin(); it != vertices.end(); ++it){
+			if(*it == pt) continue;
+			for(auto it2 = it; ++it2 != vertices.end(); ){
+				if(*it2 == pt) continue;
 				maxWeight = std::max(maxWeight, (*distMatrix)[*it][*it2]);
 			}
 		}
 
+		simplexNode* x = new simplexNode();
 		x->weight = maxWeight;
-		x->hash = simplexHash(x->simplex);
+
+		auto temp = vertices; //----------- FIX TO BE BETTER --------------------
+		temp.erase(temp.find(pt));
+		x->hash = simplexHash(temp);
+
+		if(recordVertices){
+			x->simplex = vertices;
+			x->simplex.erase(x->simplex.find(pt));
+		}
 		ret.push_back(x);
 	}
 
 	return ret;
 }
+
+std::vector<simplexNode*> simplexArrayList::getAllFacets(simplexNode_P simp, bool recordVertices, unsigned dimension){
+	return getAllFacets(simp.get(), recordVertices, dimension);
+}
+
 
 double simplexArrayList::getSize(){
 	//Calculate size of original data
@@ -282,30 +307,39 @@ void simplexArrayList::expandDimensions(int dim){
 	}
 }
 
-std::vector<simplexNode_P> simplexArrayList::expandDimension(std::vector<simplexNode_P> edges){
+std::vector<simplexNode_P> simplexArrayList::expandDimension(std::vector<simplexNode_P> edges, bool recordVertices, unsigned dim){
 	std::vector<simplexNode_P> nextEdges;
 
 	//Iterate through each element in the current dimension's edges
 	for(auto it = edges.begin(); it != edges.end(); it++){
+		std::set<unsigned> vertices;
+
+		if(recordVertices) vertices = (*it)->simplex;
+		else vertices = getVertices((*it)->hash, dim, simplexList[0].size());
+
 		//Iterate over points to possibly add to the simplex
 		//Use points larger than the maximal vertex in the simplex to prevent double counting
-		unsigned minPt = *(*it)->simplex.rbegin() + 1;
+		unsigned minPt = *vertices.rbegin() + 1;
 		
 		for(unsigned pt = minPt; pt < simplexList[0].size(); pt++){
 			//Compute the weight using all edges
 			double maxWeight = (*it)->weight;
-			for(auto i : (*it)->simplex) maxWeight = std::max(maxWeight, (*distMatrix)[i][pt]);
+			for(auto i : vertices) maxWeight = std::max(maxWeight, (*distMatrix)[i][pt]);
 			
 			if(maxWeight <= maxEpsilon){ //Valid simplex
-				simplexNode_P tot = std::make_shared<simplexNode>(simplexNode((*it)->simplex, maxWeight));
-				tot->simplex.insert(pt);
-				tot->hash = (*it)->hash + bin.binom(pt, tot->simplex.size());
+				simplexNode_P tot = std::make_shared<simplexNode>(simplexNode());
+				if(recordVertices){
+					tot->simplex = vertices;
+					tot->simplex.insert(pt);
+				}
+				tot->weight = maxWeight;
+				tot->hash = (*it)->hash + bin.binom(pt, (recordVertices ? tot->simplex.size() : dim + 2));
 				nextEdges.push_back(tot);
 			}
 		}
 	}
 
-	std::sort(nextEdges.begin(), nextEdges.end(), cmpByWeight());
+	if(recordVertices) std::sort(nextEdges.begin(), nextEdges.end(), cmpByWeight());
 	return nextEdges;
 }
 

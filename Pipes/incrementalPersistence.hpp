@@ -12,23 +12,26 @@ class incrementalPersistence : public basePipe {
 	private:
 		int shift = 0;
 		double maxEpsilon;
-		std::map<std::string, std::string> configMap;
 		std::string mode;
 
-		struct cmpBySecond{ //Sort nodes by weight, then by lexicographic order
-			bool operator()(simplexNode_P a, simplexNode_P b) const{
-				if(a->weight == b->weight){ //If the simplices have the same weight, sort by reverse lexicographic order for fastPersistence
+		struct cmpBySecond{ //Sort nodes by weight, then by reverse lexicographic order
+			template <class simplexNodePointer>
+			bool operator()(simplexNodePointer a, simplexNodePointer b) const{
+				if(a->weight == b->weight){ //If the simplices have the same weight, sort by reverse lexicographic order
 					return a->hash < b->hash;
 				} else{
 					return a->weight > b->weight;
 				}
 			}
+		};
 
-			bool operator()(simplexNode* a, simplexNode* b) const{
-				if(a->weight == b->weight){ //If the simplices have the same weight, sort by reverse lexicographic order for fastPersistence
+		struct sortLexicographic{ //Sort nodes by weight, then by lexicographic order
+			template <class simplexNodePointer>
+			bool operator()(simplexNodePointer a, simplexNodePointer b) const{
+				if(a->weight == b->weight){ //If the simplices have the same weight, sort by lexicographic order
 					return a->hash < b->hash;
 				} else{
-					return a->weight > b->weight;
+					return a->weight < b->weight;
 				}
 			}
 		};
@@ -41,6 +44,6 @@ class incrementalPersistence : public basePipe {
 		void outputData(pipePacket&);
 
 		template <class simplexNodePointer, class comp>
-		std::vector<simplexNodePointer> incrementalByDimension(pipePacket&, std::vector<simplexNodePointer>, std::vector<simplexNodePointer> pivots, unsigned dimension, comp compStruct, std::string mode);
+		std::vector<simplexNodePointer> incrementalByDimension(pipePacket&, std::vector<simplexNodePointer>&, std::vector<simplexNodePointer> pivots, unsigned, comp, std::string, bool);
 };
 
