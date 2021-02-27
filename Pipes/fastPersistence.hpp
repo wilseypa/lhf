@@ -11,7 +11,6 @@ class fastPersistence : public basePipe {
 	private:
 		int shift = 0;
 		double maxEpsilon;
-		std::map<std::string, std::string> configMap;
 		std::string mode;
 
 		struct sortReverseLexicographic{ //Sort nodes by weight, then by lexicographic order
