@@ -162,8 +162,13 @@ std::vector<simplexNode*> simplexArrayList::getAllFacets(simplexNode* simp, bool
 	if(recordVertices) vertices = simp->simplex;
 	else vertices = getVertices(simp->hash, dim + 1, simplexList[0].size());
 
-	for(auto pt : vertices){
+	long long index = simp->hash;
+	unsigned k = vertices.size();
+
+	for(auto it = vertices.rbegin(); it != vertices.rend(); ++it){
+		unsigned pt = *it;
 		double maxWeight = 0;
+
 		for(auto it = vertices.begin(); it != vertices.end(); ++it){
 			if(*it == pt) continue;
 			for(auto it2 = it; ++it2 != vertices.end(); ){
@@ -175,14 +180,15 @@ std::vector<simplexNode*> simplexArrayList::getAllFacets(simplexNode* simp, bool
 		simplexNode* x = new simplexNode();
 		x->weight = maxWeight;
 
-		auto temp = vertices; //----------- FIX TO BE BETTER --------------------
-		temp.erase(temp.find(pt));
-		x->hash = simplexHash(temp);
-
 		if(recordVertices){
 			x->simplex = vertices;
 			x->simplex.erase(x->simplex.find(pt));
 		}
+
+		index -= bin.binom(pt, k);
+		x->hash = index;
+		index += bin.binom(pt, --k);
+
 		ret.push_back(x);
 	}
 

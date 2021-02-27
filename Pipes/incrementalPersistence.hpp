@@ -11,10 +11,13 @@
 class incrementalPersistence : public basePipe {
 	private:
 		int shift = 0;
+		unsigned nPts = 0;
 		double maxEpsilon;
 		std::string mode;
 
-		struct cmpBySecond{ //Sort nodes by weight, then by reverse lexicographic order
+		bool saveVertices = false; //Should we save the vertices of the simplices, or just their hashes
+
+		struct sortReverseLexicographic{ //Sort nodes by weight, then by reverse lexicographic order
 			template <class simplexNodePointer>
 			bool operator()(simplexNodePointer a, simplexNodePointer b) const{
 				if(a->weight == b->weight){ //If the simplices have the same weight, sort by reverse lexicographic order
