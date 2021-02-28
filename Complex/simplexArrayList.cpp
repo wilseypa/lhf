@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <math.h>
 #include <algorithm>
 #include "simplexArrayList.hpp"
 
@@ -322,6 +323,47 @@ void simplexArrayList::reduceComplex(){
 	
 	return;
 }
+
+
+void simplexArrayList:: build_del_complex(std::vector<std::vector<int>> dsimplexmesh, int npts){
+unsigned maxDimension = dsimplexmesh[0].size()-1;
+bin = binomialTable(npts,maxDimension+1);
+for(int i=0;i<=maxDimension;i++)
+	simplexList.push_back({});
+
+for(auto simplex : dsimplexmesh){
+	unsigned int pow_set_size = pow(2, simplex.size());
+	for(int counter =1;counter<pow_set_size;counter++){
+		double weight =0;
+		std::set<unsigned> gensimp;
+		for(int j=0;j<simplex.size();j++){
+			if(counter & (1<<j)){
+				unsigned indnew;
+				indnew = *(std::next(simplex.begin(),j));
+				for(auto x:gensimp){
+					if(x<indnew){
+						if(weight<(*distMatrix)[x][indnew])
+							weight = (*distMatrix)[x][indnew];
+					}
+					else if(weight<(*distMatrix)[indnew][x])
+						weight = (*distMatrix)[indnew][x];
+				}
+				gensimp.insert(indnew);
+			}
+		}
+		simplexNode_P tot = std::make_shared<simplexNode>(simplexNode(gensimp,weight));
+		if(gensimp.size()==1)
+			tot->hash = *(gensimp.begin());
+		else
+			tot->hash = simplexHash(gensimp);
+		simplexList[gensimp.size()-1].insert(tot);
+		gensimp.clear();
+	}
+}				
+return;
+}
+
+
 
 std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> simplexArrayList::recurseReduce(simplexNode_P simplex, std::vector<std::set<unsigned>> removals, std::vector<std::set<unsigned>> checked){
 	checked.push_back(simplex->simplex);

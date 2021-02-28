@@ -30,7 +30,7 @@ class simplexArrayList : public simplexBase{
 		std::vector<simplexNode*> getAllCofacets(simplexNode_P, const std::unordered_map<long long, simplexNode_P>&, bool = true);
 		std::vector<simplexNode*> getAllCofacets(simplexNode_P);
 		std::vector<simplexNode_P> expandDimension(std::vector<simplexNode_P> edges);
-
+                void build_del_complex(std::vector<std::vector<int>> dsimplexmesh, int pts);                 
 		//virtual interface functions
 		double getSize();
 		void insert();

@@ -65,8 +65,7 @@ int main(int argc, char* argv[]){
 
 	//If data was found in the inputFile
 	if(wD.inputData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
-
-		if(args["mode"] == "mpi"){
+        	if(args["mode"] == "mpi"){
 			
 			MPI_Init(&argc,&argv);
 			MPI_Comm_size(MPI_COMM_WORLD,&lhflib.nprocs);
@@ -80,6 +79,8 @@ int main(int argc, char* argv[]){
 			wD.bettiTable = lhflib.processIterUpscale(args,wD);
 			sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
 			
+		} else if(args["mode"] == "dcomplex"){
+			lhflib.runPipeline(args, wD);
 		} else {
 			lhflib.processDataWrapper(args, wD);
 			lhflib.runPipeline(args, wD);

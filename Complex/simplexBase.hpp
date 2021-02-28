@@ -80,7 +80,7 @@ class simplexBase {
 	virtual std::set<simplexNode_P, cmpByWeight> getDimEdges(int);
 	virtual std::vector<std::set<simplexNode_P, cmpByWeight>> getAllEdges();
 	virtual std::vector<simplexNode_P> expandDimension(std::vector<simplexNode_P> edges);
-
+        virtual void build_del_complex(std::vector<std::vector<int>> dsimplexmesh, int npts);
 	virtual void expandDimensions(int);
 	virtual void reduceComplex();
 	virtual ~simplexBase();

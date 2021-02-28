@@ -126,7 +126,11 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 	}	
 	
 	//Handle basic modes; set pipeline if not initialized
-	if(args["mode"] == "mpi"){
+	if(args["mode"] == "dcomplex"){
+		args["pipeline"] = "distMatrix.qhull.fastPersistence";
+		args["complexType"] = "simplexArrayList";
+	}
+	else if(args["mode"] == "mpi"){
 		//Set up MPI pipeline ; requires setting pipeline, any complex storage
 		if(args["pipeline"] == "")
 			args["pipeline"] = basePipeline;

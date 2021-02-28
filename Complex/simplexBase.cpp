@@ -164,6 +164,10 @@ void simplexBase::outputComplex(){
 	return;
 }
 
+void simplexBase::build_del_complex(std::vector<std::vector<int>> dsimplexmesh, int npts){
+	ut.writeLog(simplexType,"No build Delaunay Complex  function defined");
+	return;
+}
 void simplexBase::expandDimensions(int dim){
 	ut.writeLog(simplexType,"No expandDimensions function defined");
 	return;
