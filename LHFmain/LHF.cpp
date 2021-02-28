@@ -817,7 +817,7 @@ extern "C"
 		return;
 	}
 
-	BRAP* pyRunWrapper2(const int argc, char* argv, const double *pointCloud){
+	PRAP* pyRunWrapper2(const int argc, char* argv, const double *pointCloud){
 		
 		//std::cout << std::endl << "argc: " << argc << std::endl;
 		//First we need to convert arguments from char* to map
@@ -900,6 +900,8 @@ extern "C"
 		
 		
 		BRET *retStruct = (BRET*)malloc(sizeof(BRET) * wD.bettiTable.size()); // = new testStruct(wD.bettiTable.size());
+
+		//PRET *retStruct2 = (PRET*)malloc(sizeof(PRET) * wD.size()); 
 		
 		for(auto i = 0; i < wD.bettiTable.size(); i++){
 			retStruct[i].dim = wD.bettiTable[i].bettiDim;
@@ -907,13 +909,21 @@ extern "C"
 			retStruct[i].death = wD.bettiTable[i].death;
 		}
 		
+		
 		//Wrap the structure in the size...
 		
 		BRAP* a = (BRAP*)malloc(sizeof(int) + (sizeof(BRET) * wD.bettiTable.size()));
+		PRAP* b = (PRAP*)malloc(sizeof(int) + (sizeof(BRET) * wD.bettiTable.size()));
 		a->size = wD.bettiTable.size();
 		a->ret = retStruct;
 
-		std::cout << "Got this far!!" << std::endl;
-		return a;
+		b->size = wD.bettiTable.size();
+		b->BettiTable = a;
+		b->ident = wD.ident;
+		// b->stats = wD.stats;
+		// b->runLog = wD.runLog;
+
+		std::cout << "Got this far!! -> " << wD.bettiTable.size() << std::endl;
+		return b;
 	}
 }

@@ -50,9 +50,42 @@ extern "C" {
 		int size;
 		BRET* ret;
 	} BRAP;
-	
-	
+
+	//### pipepacket ###//
+
+	typedef struct pipeRetStructure {
+		BRET* BettiTable;
+		std::string ident;
+
+		std::string stats;
+		std::string runLog;
+
+		double* workdata, inputdata, distMatrix, weights; //vector
+		unsigned* centroidlabels, boundaries; //vecor
+
+		//SimplexBase
+
+		std::string bettioutput; 
+
+	} PRET;
+
+	void free_pRet(PRET *b){
+		free(b);
+	}
+
+	typedef struct pipeWrapStructure{
+		int size; //multiple sizes?
+		BRAP* BettiTable;
+
+		std::string ident;
+
+		// std::string stats;
+		// std::string runLog;
+
+	} PRAP;
+
+	//##################//
 	void testFunc(int num1, char* st) { std::cout << "Test: " << num1 << std::endl; std::cout << "\t" << st << std::endl;};
 	void pyRunWrapper(const int, char*, const double *);
-	BRAP* pyRunWrapper2(const int, char*, const double *);
+	PRAP* pyRunWrapper2(const int, char*, const double *);
 }
