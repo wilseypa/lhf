@@ -518,6 +518,53 @@ std::vector<simplexNode*> simplexTree::getAllCofacets(simplexNode_P simp, const 
 	return ret;
 }
 
+
+std::vector<simplexNode*> simplexTree::getAllFacets(simplexNode* simp){
+	std::vector<simplexNode*> ret;
+	simplexTreeNode* parentNode = find(simp->simplex.begin(), simp->simplex.end(), root);
+	if(parentNode == nullptr) return ret; //Simplex isn't in the simplex tree
+
+	simplexTreeNode* tempNode;
+	auto it = simp->simplex.end();
+
+	while(true){
+		--it;
+		if(parentNode != root) parentNode = parentNode->parent;
+		else break;
+
+		//Insert all of the children in reverse lexicographic order
+		tempNode = find(std::next(it), simp->simplex.end(), parentNode);
+		if(tempNode != nullptr){
+			ret.push_back(tempNode->simpNode.get());
+		}
+	}
+	
+	return ret;
+}
+
+std::vector<simplexNode_P> simplexTree::getAllFacets_P(simplexNode_P simp){
+	std::vector<simplexNode_P> ret;
+	simplexTreeNode* parentNode = find(simp->simplex.begin(), simp->simplex.end(), root);
+	if(parentNode == nullptr) return ret; //Simplex isn't in the simplex tree
+
+	simplexTreeNode* tempNode;
+	auto it = simp->simplex.end();
+
+	while(true){
+		--it;
+		if(parentNode != root) parentNode = parentNode->parent;
+		else break;
+
+		//Insert all of the children in reverse lexicographic order
+		tempNode = find(std::next(it), simp->simplex.end(), parentNode);
+		if(tempNode != nullptr){
+			ret.push_back(tempNode->simpNode);
+		}
+	}
+	
+	return ret;
+}
+
 std::vector<simplexNode_P> simplexTree::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode_P, simplexNode_P>& pivotPairs, bool checkEmergent){
 	std::vector<simplexNode_P> ret;
 	simplexTreeNode* parentNode = find(simplex.begin(), simplex.end(), root);

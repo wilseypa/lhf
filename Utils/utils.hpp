@@ -73,6 +73,7 @@ class utils {
 	static std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> separatePartitions(double, std::vector<std::vector<double>>, std::vector<std::vector<double>>, std::vector<unsigned>);
 	// void extractBoundaryPoints(std::vector<bettiBoundaryTableEntry>&);
 	static std::set<unsigned> extractBoundaryPoints(std::vector<simplexNode_P>);
+	static std::set<unsigned> extractBoundaryPoints(std::vector<simplexNode*>);
 	static std::vector<bettiBoundaryTableEntry> mapPartitionIndexing(std::vector<unsigned>, std::vector<bettiBoundaryTableEntry>);
 	static void print2DVector(const std::vector<std::vector<unsigned>>&);
 	static void print1DVector(const std::vector<unsigned>&);

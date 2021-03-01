@@ -217,6 +217,8 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 		} else {
 			args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";
 		}
+	} else if(args["mode"] == "involuted"){
+		args["pipeline"] = basePipeline;
 	}
 	
 	return;

@@ -23,6 +23,7 @@ void LHF::outputBettis(std::map<std::string, std::string> args, pipePacket &wD){
 			}
 			
 		} else {
+			sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
 			writeOutput::writeBarcodes(wD.bettiTable, args["outputFile"]);
 			
 			//Check if debug mode for runLog, stats	
