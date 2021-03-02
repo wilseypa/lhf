@@ -926,8 +926,23 @@ extern "C"
 		std::cout << "size-> " << wD.distMatrix.size() << std::endl;
 		std::cout << "size[0]-> " << wD.distMatrix[0].size() << std::endl;
 
-		double *distMatrix_retStruct = (double*)malloc(sizeof(double) * (wD.distMatrix.size() * wD.distMatrix[0].size()));
+		double *distMatrix_retStruct = (double*)malloc(sizeof(double) * (wD.distMatrix.size() * wD.distMatrix.size()));
 
+		sizof = 0;
+		for (int i = 0; i < wD.distMatrix.size(); i++)
+		{
+			for (int j = 0; j < wD.distMatrix[i].size(); j++)
+			{
+				// if(sizof % 100 == 0){
+				// 	std::cout << sizof << " = " << wD.distMatrix[i][j] << std::endl;
+				// }
+				if(sizof < 100){
+					std::cout << sizof << " = " << wD.distMatrix[i][j] << std::endl;
+				}
+				distMatrix_retStruct[sizof] = wD.distMatrix[i][j];
+				sizof++;
+			};
+		}
 		///////////////////////////////////////////////////////////////////////////////////////////
 		//Wrap the structure in the size...
 		
@@ -940,9 +955,10 @@ extern "C"
 		b->size_betti = wD.bettiTable.size();
 		b->BettiTable = retStruct;
 
-		b->size_inputData = wD.inputData.size();
-		b->dim_inputData = wD.inputData[0].size();
+		b->LHF_size = wD.inputData.size();
+		b->LHF_dim = wD.inputData[0].size();
 		b->inputData = inputData_retStruct;
+		b->distMatrix = distMatrix_retStruct;
 
 		// std::cout << "inputData_size-> " << wD.inputData.size() << std::endl;
 		// std::cout << "inputData_size[1]-> " << wD.inputData[0].size() << std::endl;

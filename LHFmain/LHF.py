@@ -16,10 +16,11 @@ class bettiBoundaryTable(ctypes.Structure):
 
 class pipePacketAtt(ctypes.Structure):
     _fields_ = [ ("size", ctypes.c_int),
-                 ("size_inputData", ctypes.c_int),
-                 ("dim_inputData", ctypes.c_int),
+                 ("LHF_size", ctypes.c_int),
+                 ("LHF_dim", ctypes.c_int),
                  ("bettiTable", ctypes.c_void_p),
-                 ("inputData", ctypes.c_void_p)]
+                 ("inputData", ctypes.c_void_p),
+                 ("distMatrix", ctypes.c_void_p)]
 
 class LHF:
 	#Use RTLD_LAZY mode due to undefined symbols
@@ -40,28 +41,6 @@ class LHF:
     ##          distMatrix = (LHF.size x LHF.size) - distance matrix
     ##          
     ##
-    # class bettiBoundaryTableEntry(ctypes.Structure):
-    #     _fields_ = [("dim", ctypes.POINTER(ctypes.c_int)),
-    #             ("Bettidim", ctypes.POINTER(ctypes.c_double)),
-    #             ("birth", ctypes.POINTER(ctypes.c_double)),
-    #             ("death", ctypes.POINTER(ctypes.c_double)),
-    #             ("sizof", ctypes.POINTER(ctypes.c_int))]
-
-
-    # class pipePacket(ctypes.Structure):
-    #     _fields_ = [("dim", ctypes.c_int),
-    #     #("bettiBoundaryTableEntry", ctypes.POINTER(bettiBoundaryTableEntry)), ##dynamic
-    #                 ("ident", ctypes.c_char_p),
-    #                 ("stats", ctypes.c_char_p),
-    #                 ("runLog", ctypes.c_char_p),
-    #                 ("workData", ctypes.POINTER(ctypes.c_double)), ###dynamic
-    #                 ("centroidLabels", ctypes.POINTER(ctypes.c_double)), ##dynamic
-    #                 ("inputData", ctypes.POINTER(ctypes.c_uint)), ##dynamic
-    #                 ("distMatrix", ctypes.POINTER(ctypes.c_double)), ##dynamic
-    #                 ("boundaries", ctypes.POINTER(ctypes.c_uint)), ##dynamic
-    #                 ("weights", ctypes.POINTER(ctypes.c_double)), ##dynamic
-    #                 ("bettiOutput", ctypes.c_char_p)] 
-    
     
     def __init__(self, data):  
         self.args["datadim"] = len(data[0])
@@ -131,17 +110,30 @@ class LHF:
         # for i in range(retPH.size):
         #     print(retBounds.arr[i].dim,retBounds.arr[i].birth,retBounds.arr[i].death)
 
-        print("inputData size",retPH.size_inputData)
-        print("inputData dim",retPH.dim_inputData)
+        print("inputData size",retPH.LHF_size)
+        print("inputData dim",retPH.LHF_dim)
         
         inputDataEntries = type("array", (ctypes.Structure, ), {
             # data members
-            "_fields_" : [("arr", ctypes.c_double * (retPH.size_inputData * retPH.dim_inputData))]
+            "_fields_" : [("arr", ctypes.c_double * (retPH.LHF_size * retPH.LHF_dim))]
         }) 
 
         retinputData = inputDataEntries.from_address(retPH.inputData)
 
-        for i in range(retPH.size_inputData * retPH.dim_inputData):
-            print(i, ": ", retinputData.arr[i])
+        # for i in range(retPH.LHF_size * retPH.LHF_dim):
+        #     print(i, ": ", retinputData.arr[i])
 
+        distMatrixEntries = type("array", (ctypes.Structure, ), {
+            # data members
+            "_fields_" : [("arr", ctypes.c_double * (retPH.LHF_size * retPH.LHF_size))]
+        }) 
+
+        retdistMatrix = distMatrixEntries.from_address(retPH.distMatrix)
+
+        # for i in range(retPH.LHF_size * retPH.LHF_size):
+        #     if(i < 100):
+        #         print(i, ": ", retdistMatrix.arr[i])
+            # if(i % 100 == 0):
+            #     print(i, ": ", retdistMatrix.arr[i])
+            # print(i, ": ", retdistMatrix.arr[i])
         return

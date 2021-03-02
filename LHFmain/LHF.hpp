@@ -59,10 +59,8 @@ extern "C" {
 
 	typedef struct pipeWrapStructure{
 		int size_betti; //multiple sizes?
-		int size_inputData;
-		int dim_inputData;
-		int size_distMatrix;
-		int dim_distMatrix;
+		int LHF_size;
+		int LHF_dim;
 		BRET* BettiTable;
 		double* inputData;
 		double* distMatrix;
