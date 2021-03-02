@@ -53,35 +53,16 @@ extern "C" {
 
 	//### pipepacket ###//
 
-	typedef struct pipeRetStructure {
-		BRET* BettiTable;
-		std::string ident;
-
-		std::string stats;
-		std::string runLog;
-
-		double* workdata, inputdata, distMatrix, weights; //vector
-		unsigned* centroidlabels, boundaries; //vecor
-
-		//SimplexBase
-
-		std::string bettioutput; 
-
-	} PRET;
-
-	void free_pRet(PRET *b){
-		free(b);
-	}
+	// void free_pRet(PRET *b){
+	// 	free(b);
+	// }
 
 	typedef struct pipeWrapStructure{
-		int size; //multiple sizes?
-		BRAP* BettiTable;
-
-		std::string ident;
-
-		// std::string stats;
-		// std::string runLog;
-
+		int size_betti; //multiple sizes?
+		int size_inputData;
+		int dim_inputData;
+		BRET* BettiTable;
+		double* inputData;
 	} PRAP;
 
 	//##################//

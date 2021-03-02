@@ -909,17 +909,38 @@ extern "C"
 			retStruct[i].death = wD.bettiTable[i].death;
 		}
 		
-		
+		///////////////////////////////////////////////////////////////////////////////////////////
+		double *inputData_retStruct = (double*)malloc(sizeof(double) * (wD.inputData.size() * wD.inputData[0].size()));
+
+		int sizof = 0;
+		for (int i = 0; i < wD.inputData.size(); i++)
+		{
+			for (int j = 0; j < wD.inputData[i].size(); j++)
+			{
+				std::cout << sizof << " = " << wD.inputData[i][j] << std::endl;
+				inputData_retStruct[i] = wD.inputData[i][j];
+				sizof++;
+			}
+		}
+		///////////////////////////////////////////////////////////////////////////////////////////
 		//Wrap the structure in the size...
 		
 		BRAP* a = (BRAP*)malloc(sizeof(int) + (sizeof(BRET) * wD.bettiTable.size()));
-		PRAP* b = (PRAP*)malloc(sizeof(int) + (sizeof(BRET) * wD.bettiTable.size()));
+    	PRAP* b = (PRAP*)malloc(sizeof(int) + (sizeof(BRET) * (wD.bettiTable.size() * (wD.inputData.size() * wD.inputData[0].size())));
 		a->size = wD.bettiTable.size();
 		a->ret = retStruct;
 
-		b->size = wD.bettiTable.size();
-		b->BettiTable = a;
-		b->ident = wD.ident;
+		b->size_betti = wD.bettiTable.size();
+		b->BettiTable = retStruct;
+
+		b->size_inputData = wD.inputData.size();
+		b->dim_inputData = wD.inputData[0].size();
+		b->inputData = inputData_retStruct;
+
+		std::cout << "inputData_size-> " << wD.inputData.size() << std::endl;
+		std::cout << "inputData_size[1]-> " << wD.inputData[1].size() << std::endl;
+
+		//b->ident = wD.ident;
 		// b->stats = wD.stats;
 		// b->runLog = wD.runLog;
 
