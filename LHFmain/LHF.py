@@ -128,8 +128,8 @@ class LHF:
 
         retBounds = bettiBoundaryTableEntries.from_address(retPH.bettiTable)
 
-        for i in range(retPH.size):
-            print(retBounds.arr[i].dim,retBounds.arr[i].birth,retBounds.arr[i].death)
+        # for i in range(retPH.size):
+        #     print(retBounds.arr[i].dim,retBounds.arr[i].birth,retBounds.arr[i].death)
 
         print("inputData size",retPH.size_inputData)
         print("inputData dim",retPH.dim_inputData)
