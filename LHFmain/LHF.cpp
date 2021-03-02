@@ -917,11 +917,17 @@ extern "C"
 		{
 			for (int j = 0; j < wD.inputData[i].size(); j++)
 			{
-				std::cout << sizof << " = " << wD.inputData[i][j] << std::endl;
+				// std::cout << sizof << " = " << wD.inputData[i][j] << std::endl;
 				inputData_retStruct[sizof] = wD.inputData[i][j];
 				sizof++;
 			}
 		}
+
+		std::cout << "size-> " << wD.distMatrix.size() << std::endl;
+		std::cout << "size[0]-> " << wD.distMatrix[0].size() << std::endl;
+
+		double *distMatrix_retStruct = (double*)malloc(sizeof(double) * (wD.distMatrix.size() * wD.distMatrix[0].size()));
+
 		///////////////////////////////////////////////////////////////////////////////////////////
 		//Wrap the structure in the size...
 		
@@ -938,8 +944,8 @@ extern "C"
 		b->dim_inputData = wD.inputData[0].size();
 		b->inputData = inputData_retStruct;
 
-		std::cout << "inputData_size-> " << wD.inputData.size() << std::endl;
-		std::cout << "inputData_size[1]-> " << wD.inputData[0].size() << std::endl;
+		// std::cout << "inputData_size-> " << wD.inputData.size() << std::endl;
+		// std::cout << "inputData_size[1]-> " << wD.inputData[0].size() << std::endl;
 
 		//b->ident = wD.ident;
 		// b->stats = wD.stats;
