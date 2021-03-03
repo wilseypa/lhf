@@ -829,7 +829,9 @@ extern "C"
 		std::string tempstr = "";
 		for(auto i = 0; i < argc; i++){
 			//Check for space (32)
+			//std::cout << argv[i] << std::endl;
 			if(argv[i] == 32){
+				//std::cout << argv[i] << std::endl;
 				rawArgs.push_back(tempstr);
 				tempstr = "";
 			} else
@@ -837,10 +839,10 @@ extern "C"
 		}
 		
 		//Split argument list into map
-		for(auto i = 0; i < rawArgs.size(); i += 2)
+		for(auto i = 0; i < rawArgs.size(); i += 2){
 			args[rawArgs[i]] = rawArgs[i+1];
-				
-				
+			// std::cout << args[rawArgs[i]] << " = " << rawArgs[i+1] << std::endl;
+		}
 		//Next, decode the data
 		int dataSize = std::atoi(args["datasize"].c_str());
 		int dataDim = std::atoi(args["datadim"].c_str());
@@ -950,6 +952,7 @@ extern "C"
 		unsigned *centroidLabels_retStruct = (unsigned*)malloc(sizeof(unsigned) * (wD.centroidLabels.size()));
 
 		sizof = 0;
+		std::cout << wD.centroidLabels.size() << std::endl;
 		for (int i = 0; i < wD.centroidLabels.size(); i++)
 		{
 			std::cout << sizof << " = " << wD.centroidLabels[i] << std::endl;
@@ -979,35 +982,58 @@ extern "C"
 
 		char *stats_retStruct = (char*)malloc(sizeof(char) * wD.stats.length());
 
+		
 		int n = wD.stats.length();
 
-		char stats_char_array[n + 1];
+		if(wD.stats.empty()){}else{
+			char stats_char_array[n + 1];
 
-		strcpy(stats_char_array, wD.stats.c_str());
- 
-		for (int i = 0; i < n; i++){
-			std::cout << stats_char_array[i];
-			stats_retStruct[i] = stats_char_array[i];
+			strcpy(stats_char_array, wD.stats.c_str());
+	
+			for (int i = 0; i < n; i++){
+				// std::cout << stats_char_array[i];
+				stats_retStruct[i] = stats_char_array[i];
+			}
 		}
-
 		////////////////////////////////////////////
 
 		char *runLog_retStruct = (char*)malloc(sizeof(char) * wD.runLog.length());
 
-		n = wD.runLog.length();
+		if(wD.runLog.empty()){}else{
+			n = wD.runLog.length();
 
-		char runLog_char_array[n + 1];
+			char runLog_char_array[n + 1];
 
-		strcpy(runLog_char_array, wD.runLog.c_str());
- 
-		for (int i = 0; i < n; i++){
-			std::cout << runLog_char_array[i];
-			runLog_retStruct[i] = runLog_char_array[i];
-		}		
+			strcpy(runLog_char_array, wD.runLog.c_str());
+	
+			for (int i = 0; i < n; i++){
+				// std::cout << runLog_char_array[i];
+				runLog_retStruct[i] = runLog_char_array[i];
+			}		
+		}
 
+		char *ident_retStruct = (char*)malloc(sizeof(char) * wD.ident.length());
+		if(wD.ident.empty()){}else{
+			std::cout << wD.ident << std::endl;
+
+			char *ident_retStruct = (char*)malloc(sizeof(char) * wD.ident.length());
+
+			n = wD.ident.length();
+
+			char ident_char_array[n + 1];
+
+			strcpy(ident_char_array, wD.ident.c_str());
+	
+			for (int i = 0; i < n; i++){
+				std::cout << ident_char_array[i];
+				ident_retStruct[i] = ident_char_array[i];
+			}		
+		}
 		///////////////////////////////////////////////////////////////////////////////////////////
 		//Wrap the structure in the size...
 		
+		// std::cout << wD.inputData << std::endl;
+
 		BRAP* a = (BRAP*)malloc(sizeof(int) + (sizeof(BRET) * wD.bettiTable.size()));
     	PRAP* b = (PRAP*)malloc(sizeof(int) + (sizeof(BRET) * (wD.bettiTable.size() * (wD.inputData.size() * wD.inputData[0].size()) * wD.bettiTable.size())));
 		//PRAP* b;
@@ -1022,11 +1048,22 @@ extern "C"
 		b->workData_size = wD.workData.size();
 		b->inputData = inputData_retStruct;
 		b->distMatrix = distMatrix_retStruct;
-		b->centroidLabels = centroidLabels_retStruct;
+		if(wD.centroidLabels.size() == 0){
+			// centroidLabels_retStruct = ;
+			b->centroidLabels = centroidLabels_retStruct;
+		}else{
+			b->centroidLabels = centroidLabels_retStruct;
+		}
 		b->workData = workData_retStruct;
-		b->stats = stats_retStruct;
-		b->runLog = runLog_retStruct;
-
+		if(wD.stats.empty()){}else{
+			b->stats = stats_retStruct;
+		}
+		if(wD.runLog.empty()){}else{
+			b->runLog = runLog_retStruct;
+		}
+		if(wD.ident.empty()){}else{
+			b->ident = ident_retStruct;
+		}
 		// std::cout << "inputData_size-> " << wD.inputData.size() << std::endl;
 		// std::cout << "inputData_size[1]-> " << wD.inputData[0].size() << std::endl;
 

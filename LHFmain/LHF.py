@@ -25,7 +25,8 @@ class pipePacketAtt(ctypes.Structure):
                  ("workData", ctypes.c_void_p),
                  ("centroidLabels", ctypes.c_void_p),
                  ("stats", ctypes.c_char_p),
-                 ("runLog", ctypes.c_char_p)]
+                 ("runLog", ctypes.c_char_p),
+                 ("ident", ctypes.c_char_p)]
 
 class LHF:
 	#Use RTLD_LAZY mode due to undefined symbols
@@ -75,8 +76,10 @@ class LHF:
         ret = ""
         
         for a in inList:
+            #print(a)
             ret += a+" "
             ret += str(inList[a])+" "
+            #print(ret)
             
         return ret.encode('utf-8')
         
@@ -94,6 +97,7 @@ class LHF:
         #Create char* for passing to C++
         temp = self.args2string(self.args)
         
+        #temp = self.args2string(cmd_input[1])
         
         #retPH = pipePacketAtt.from_address(self.lib.pyRunWrapper2(len(temp),ctypes.c_char_p(temp), self.data.ctypes.data_as(ctypes.POINTER(ctypes.c_double))))
         retPH = pipePacketAtt.from_address(self.lib.pyRunWrapper2(len(temp),ctypes.c_char_p(temp), self.data.ctypes.data_as(ctypes.POINTER(ctypes.c_double))))
@@ -128,12 +132,33 @@ class LHF:
         # for i in range(retPH.LHF_size * retPH.LHF_dim):
         #     print(i, ": ", retinputData.arr[i])
 
+        inputData = [[0]*retPH.LHF_dim]*retPH.LHF_size 
+        sizof=0
+        for i in range(retPH.LHF_size):
+            for j in range(retPH.LHF_dim): 
+                # print(retinputData.arr[sizof])
+                inputData[i][j] = retinputData.arr[sizof]
+                sizof = sizof + 1
+
+        # print(inputData)
+
         distMatrixEntries = type("array", (ctypes.Structure, ), {
             # data members
             "_fields_" : [("arr", ctypes.c_double * (retPH.LHF_size * retPH.LHF_size))]
         }) 
 
         retdistMatrix = distMatrixEntries.from_address(retPH.distMatrix)
+
+
+        distMatrix = [[0]*retPH.LHF_size]*retPH.LHF_size 
+        sizof=0
+        for i in range(retPH.LHF_size):
+            for j in range(retPH.LHF_size): 
+                # print(retdistMatrix.arr[sizof])
+                distMatrix[i][j] = retdistMatrix.arr[sizof]
+                sizof = sizof + 1
+
+        # print(distMatrix)
 
         # for i in range(retPH.LHF_size * retPH.LHF_size):
         #     if(i < 100):
@@ -144,10 +169,41 @@ class LHF:
 
         centroidLabelsEntries = type("array", (ctypes.Structure, ), {
             # data members
-            "_fields_" : [("arr", ctypes.c_double * (retPH.LHF_size))]
+            "_fields_" : [("arr", ctypes.c_double * (retPH.LHF_size)*1)]
         }) 
 
         retcentroidLabels = centroidLabelsEntries.from_address(retPH.centroidLabels)
+
+        #print(type(retcentroidLabels.arr[0]))
+        if isinstance(retcentroidLabels.arr[0], int):
+            for i in range(retPH.LHF_size * 1):
+                print(i, ": ", retcentroidLabels.arr[i])
+
+            
+            centroidLabels = [[0]*1]*retPH.LHF_size
+            sizof=0
+            for i in range(retPH.LHF_size):
+                for j in range(1): 
+                    # print(retdistMatrix.arr[sizof])
+                    centroidLabels[i][j] = retcentroidLabels.arr[sizof]
+                    sizof = sizof + 1
+
+            print(centroidLabels)
+        else:
+            retcentroidLabels = ""
+        # for i in range(retPH.LHF_size * 1):
+        #     print(i, ": ", retcentroidLabels.arr[i])
+
+        
+        # centroidLabels = [[0]*1]*retPH.LHF_size
+        # sizof=0
+        # for i in range(retPH.LHF_size):
+        #     for j in range(1): 
+        #         # print(retdistMatrix.arr[sizof])
+        #         centroidLabels[i][j] = retcentroidLabels.arr[sizof]
+        #         sizof = sizof + 1
+
+        # print(centroidLabels)
 
         # print("workData size",retPH.workData_size)
         # print("LHF dim",retPH.LHF_dim)
@@ -159,6 +215,8 @@ class LHF:
 
         retworkData= workDataEntries.from_address(retPH.workData)
 
+        #print(type(retworkData.arr[0]))
+        # print(retworkData.arr[0])
         # for i in range(retPH.workData_size * retPH.LHF_dim):
         #     print(i, ": ", retworkData.arr[i])
 
@@ -168,5 +226,8 @@ class LHF:
 
         pyrunLog = str(retPH.runLog).replace('\\n', '\n').replace('b\'', '').replace('\'','')
         # print(pyrunLog)
+
+        pyident = str(retPH.ident).replace('\\n', '\n').replace('b\'', '').replace('\'','')
+        # print(pyident)
 
         return

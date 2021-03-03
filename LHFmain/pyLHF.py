@@ -1,4 +1,5 @@
 from LHF import LHF
+import sys
 #from LHF import bettiBoundaryTableEntry 
 import tadasets
 
@@ -18,8 +19,9 @@ pyLHF.testFunc(1, "HELLO")
 #Call LHF with configured arguments and generated dataset
 #pyLHF.runPH()
 
-
+pyLHF.runPH2()
 #Call LHF with configured arguments and generated dataset
 #store = bettiBoundaryTableEntry()
-pyLHF.runPH2()
+# print ('Argument List:', str(sys.argv))
+# pyLHF.runPH2(sys.argv)
  

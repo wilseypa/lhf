@@ -69,6 +69,7 @@ extern "C" {
 		unsigned* centroidLabels;
 		char* stats;
 		char* runLog;
+		char* ident;
 	} PRAP;
 
 	//##################//
