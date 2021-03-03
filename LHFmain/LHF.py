@@ -18,9 +18,14 @@ class pipePacketAtt(ctypes.Structure):
     _fields_ = [ ("size", ctypes.c_int),
                  ("LHF_size", ctypes.c_int),
                  ("LHF_dim", ctypes.c_int),
+                 ("workData_size", ctypes.c_int),
                  ("bettiTable", ctypes.c_void_p),
                  ("inputData", ctypes.c_void_p),
-                 ("distMatrix", ctypes.c_void_p)]
+                 ("distMatrix", ctypes.c_void_p),
+                 ("workData", ctypes.c_void_p),
+                 ("centroidLabels", ctypes.c_void_p),
+                 ("stats", ctypes.c_char_p),
+                 ("runLog", ctypes.c_char_p)]
 
 class LHF:
 	#Use RTLD_LAZY mode due to undefined symbols
@@ -110,8 +115,8 @@ class LHF:
         # for i in range(retPH.size):
         #     print(retBounds.arr[i].dim,retBounds.arr[i].birth,retBounds.arr[i].death)
 
-        print("inputData size",retPH.LHF_size)
-        print("inputData dim",retPH.LHF_dim)
+        # print("inputData size",retPH.LHF_size)
+        # print("inputData dim",retPH.LHF_dim)
         
         inputDataEntries = type("array", (ctypes.Structure, ), {
             # data members
@@ -136,4 +141,32 @@ class LHF:
             # if(i % 100 == 0):
             #     print(i, ": ", retdistMatrix.arr[i])
             # print(i, ": ", retdistMatrix.arr[i])
+
+        centroidLabelsEntries = type("array", (ctypes.Structure, ), {
+            # data members
+            "_fields_" : [("arr", ctypes.c_double * (retPH.LHF_size))]
+        }) 
+
+        retcentroidLabels = centroidLabelsEntries.from_address(retPH.centroidLabels)
+
+        # print("workData size",retPH.workData_size)
+        # print("LHF dim",retPH.LHF_dim)
+
+        workDataEntries = type("array", (ctypes.Structure, ), {
+            # data members
+            "_fields_" : [("arr", ctypes.c_double * (retPH.workData_size * retPH.LHF_dim))]
+        }) 
+
+        retworkData= workDataEntries.from_address(retPH.workData)
+
+        # for i in range(retPH.workData_size * retPH.LHF_dim):
+        #     print(i, ": ", retworkData.arr[i])
+
+
+        pystats = str(retPH.stats).replace('\\n', '\n').replace('b\'', '').replace('\'','')
+        # print(pystats)
+
+        pyrunLog = str(retPH.runLog).replace('\\n', '\n').replace('b\'', '').replace('\'','')
+        # print(pyrunLog)
+
         return

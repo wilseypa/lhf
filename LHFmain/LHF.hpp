@@ -61,9 +61,14 @@ extern "C" {
 		int size_betti; //multiple sizes?
 		int LHF_size;
 		int LHF_dim;
+		int workData_size;
 		BRET* BettiTable;
 		double* inputData;
 		double* distMatrix;
+		double* workData;
+		unsigned* centroidLabels;
+		char* stats;
+		char* runLog;
 	} PRAP;
 
 	//##################//

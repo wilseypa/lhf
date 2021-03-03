@@ -923,8 +923,8 @@ extern "C"
 			}
 		}
 
-		std::cout << "size-> " << wD.distMatrix.size() << std::endl;
-		std::cout << "size[0]-> " << wD.distMatrix[0].size() << std::endl;
+		// std::cout << "size-> " << wD.distMatrix.size() << std::endl;
+		// std::cout << "size[0]-> " << wD.distMatrix[0].size() << std::endl;
 
 		double *distMatrix_retStruct = (double*)malloc(sizeof(double) * (wD.distMatrix.size() * wD.distMatrix.size()));
 
@@ -936,18 +936,80 @@ extern "C"
 				// if(sizof % 100 == 0){
 				// 	std::cout << sizof << " = " << wD.distMatrix[i][j] << std::endl;
 				// }
-				if(sizof < 100){
-					std::cout << sizof << " = " << wD.distMatrix[i][j] << std::endl;
-				}
+				// if(sizof < 100){
+				// 	std::cout << sizof << " = " << wD.distMatrix[i][j] << std::endl;
+				// }
 				distMatrix_retStruct[sizof] = wD.distMatrix[i][j];
 				sizof++;
-			};
+			}
 		}
+
+		// std::cout << "size-> " << wD.centroidLabels.size() << std::endl;
+		// std::cout << "size[0]-> " << wD.centroidLabels[0].size() << std::endl;
+
+		unsigned *centroidLabels_retStruct = (unsigned*)malloc(sizeof(unsigned) * (wD.centroidLabels.size()));
+
+		sizof = 0;
+		for (int i = 0; i < wD.centroidLabels.size(); i++)
+		{
+			std::cout << sizof << " = " << wD.centroidLabels[i] << std::endl;
+			centroidLabels_retStruct[sizof] = wD.centroidLabels[i];
+			sizof++;
+		}
+
+
+		// std::cout << "size-> " << wD.workData.size() << std::endl;
+
+		double *workData_retStruct = (double*)malloc(sizeof(double) * (wD.workData.size() * wD.workData[0].size()));
+
+		sizof = 0;
+		for (int i = 0; i < wD.workData.size(); i++)
+		{
+			// std::cout << "size() = "  << wD.workData[i].size() << std::endl;
+			for (int j = 0; j < wD.workData[i].size(); j++)
+			{
+				// std::cout << sizof << " = " << wD.workData[i][j] << std::endl;
+				workData_retStruct[sizof] = wD.workData[i][j];
+				// std::cout << sizof << " = " << workData_retStruct[sizof] << std::endl;
+				sizof++;
+			}
+		}
+
+		// std::cout << wD.stats << std::endl;
+
+		char *stats_retStruct = (char*)malloc(sizeof(char) * wD.stats.length());
+
+		int n = wD.stats.length();
+
+		char stats_char_array[n + 1];
+
+		strcpy(stats_char_array, wD.stats.c_str());
+ 
+		for (int i = 0; i < n; i++){
+			std::cout << stats_char_array[i];
+			stats_retStruct[i] = stats_char_array[i];
+		}
+
+		////////////////////////////////////////////
+
+		char *runLog_retStruct = (char*)malloc(sizeof(char) * wD.runLog.length());
+
+		n = wD.runLog.length();
+
+		char runLog_char_array[n + 1];
+
+		strcpy(runLog_char_array, wD.runLog.c_str());
+ 
+		for (int i = 0; i < n; i++){
+			std::cout << runLog_char_array[i];
+			runLog_retStruct[i] = runLog_char_array[i];
+		}		
+
 		///////////////////////////////////////////////////////////////////////////////////////////
 		//Wrap the structure in the size...
 		
 		BRAP* a = (BRAP*)malloc(sizeof(int) + (sizeof(BRET) * wD.bettiTable.size()));
-    	PRAP* b = (PRAP*)malloc(sizeof(int) + (sizeof(BRET) * (wD.bettiTable.size() * (wD.inputData.size() * wD.inputData[0].size()))));
+    	PRAP* b = (PRAP*)malloc(sizeof(int) + (sizeof(BRET) * (wD.bettiTable.size() * (wD.inputData.size() * wD.inputData[0].size()) * wD.bettiTable.size())));
 		//PRAP* b;
 		a->size = wD.bettiTable.size();
 		a->ret = retStruct;
@@ -957,8 +1019,13 @@ extern "C"
 
 		b->LHF_size = wD.inputData.size();
 		b->LHF_dim = wD.inputData[0].size();
+		b->workData_size = wD.workData.size();
 		b->inputData = inputData_retStruct;
 		b->distMatrix = distMatrix_retStruct;
+		b->centroidLabels = centroidLabels_retStruct;
+		b->workData = workData_retStruct;
+		b->stats = stats_retStruct;
+		b->runLog = runLog_retStruct;
 
 		// std::cout << "inputData_size-> " << wD.inputData.size() << std::endl;
 		// std::cout << "inputData_size[1]-> " << wD.inputData[0].size() << std::endl;
