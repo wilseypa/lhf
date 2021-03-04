@@ -1,4 +1,5 @@
 from LHF import LHF
+from LHF import pipePackett
 import sys
 #from LHF import bettiBoundaryTableEntry 
 import tadasets
@@ -14,17 +15,8 @@ pyLHF.args["debug"] = "1"
 pyLHF.args["dimensions"] = "3"
 
 #Call a test function to ensure the library is properly loaded
-pyLHF.testFunc(1, "HELLO")
+# pyLHF.testFunc(1, "HELLO")
 
-#Call LHF with configured arguments and generated dataset
-#pyLHF.runPH()
 
-#pyLHF.runPH2()
-#Call LHF with configured arguments and generated dataset
-#store = bettiBoundaryTableEntry()
-print ('Argument List:', str(sys.argv))
-# print(type(sys.argv))
-# print(type(sys.argv[1]))
-# print(type(sys.argv[2]))
-pyLHF.runPH3(sys.argv)
+testrun = pyLHF.runPH3(sys.argv)
  

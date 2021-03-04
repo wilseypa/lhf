@@ -1,6 +1,27 @@
 import ctypes
-from numpy.ctypeslib import ndpointer
+import numpy as np
 
+
+
+class pipePackett:
+    def __init__(self,arr1,inputData,distMatrix,workData,centroidLabels,stats,runLog,ident):
+        self.betti = arr1
+        self.inputData = inputData
+        self.distMatrix = distMatrix
+        self.workData = workData
+        self.centroidLabels = centroidLabels
+        self.stats = stats
+        self.runLog = runLog
+        self.ident =  ident
+        #######coming soon
+        #bettidim 
+        #???
+
+class BettiTable:
+    def __init__(self,arr1,arr2,arr3):
+        self.dim = arr1
+        self.birth = arr2
+        self.death = arr3
 
 #("dim", ctypes.POINTER(ctypes.c_int)),
 class bettiBoundaryTableEntry(ctypes.Structure):
@@ -102,144 +123,6 @@ class LHF:
     def testFunc(self, num, st):
         return self.lib.testFunc(num, ctypes.c_char_p(st.encode('utf-8')))
 
-    def runPH2(self):
-        # Create char* for passing to C++
-        temp = self.args2string(self.args)
-
-        #temp = self.args2string(cmd_input[1])
-
-        #retPH = pipePacketAtt.from_address(self.lib.pyRunWrapper2(len(temp),ctypes.c_char_p(temp), self.data.ctypes.data_as(ctypes.POINTER(ctypes.c_double))))
-        retPH = pipePacketAtt.from_address(self.lib.pyRunWrapper2(len(temp), ctypes.c_char_p(
-            temp), self.data.ctypes.data_as(ctypes.POINTER(ctypes.c_double))))
-
-        print("Total Boundaries", retPH.size)
-        # print(retPH.ident)
-
-        # Reconstruct the boundary table array from the address?
-
-        bettiBoundaryTableEntries = type("array", (ctypes.Structure, ), {
-            # data members
-            "_fields_": [("arr", bettiBoundaryTableEntry * retPH.size)]
-        })
-
-        retBounds = bettiBoundaryTableEntries.from_address(retPH.bettiTable)
-
-        # for i in range(retPH.size):
-        #     print(retBounds.arr[i].dim,retBounds.arr[i].birth,retBounds.arr[i].death)
-
-        # print("inputData size",retPH.LHF_size)
-        # print("inputData dim",retPH.LHF_dim)
-
-        inputDataEntries = type("array", (ctypes.Structure, ), {
-            # data members
-            "_fields_": [("arr", ctypes.c_double * (retPH.LHF_size * retPH.LHF_dim))]
-        })
-
-        retinputData = inputDataEntries.from_address(retPH.inputData)
-
-        # for i in range(retPH.LHF_size * retPH.LHF_dim):
-        #     print(i, ": ", retinputData.arr[i])
-
-        inputData = [[0]*retPH.LHF_dim]*retPH.LHF_size
-        sizof = 0
-        for i in range(retPH.LHF_size):
-            for j in range(retPH.LHF_dim):
-                # print(retinputData.arr[sizof])
-                inputData[i][j] = retinputData.arr[sizof]
-                sizof = sizof + 1
-
-        # print(inputData)
-
-        distMatrixEntries = type("array", (ctypes.Structure, ), {
-            # data members
-            "_fields_": [("arr", ctypes.c_double * (retPH.LHF_size * retPH.LHF_size))]
-        })
-
-        retdistMatrix = distMatrixEntries.from_address(retPH.distMatrix)
-
-        distMatrix = [[0]*retPH.LHF_size]*retPH.LHF_size
-        sizof = 0
-        for i in range(retPH.LHF_size):
-            for j in range(retPH.LHF_size):
-                # print(retdistMatrix.arr[sizof])
-                distMatrix[i][j] = retdistMatrix.arr[sizof]
-                sizof = sizof + 1
-
-        # print(distMatrix)
-
-        # for i in range(retPH.LHF_size * retPH.LHF_size):
-        #     if(i < 100):
-        #         print(i, ": ", retdistMatrix.arr[i])
-            # if(i % 100 == 0):
-            #     print(i, ": ", retdistMatrix.arr[i])
-            # print(i, ": ", retdistMatrix.arr[i])
-
-        centroidLabelsEntries = type("array", (ctypes.Structure, ), {
-            # data members
-            "_fields_": [("arr", ctypes.c_double * (retPH.LHF_size)*1)]
-        })
-
-        retcentroidLabels = centroidLabelsEntries.from_address(
-            retPH.centroidLabels)
-
-        # print(type(retcentroidLabels.arr[0]))
-        if isinstance(retcentroidLabels.arr[0], int):
-            for i in range(retPH.LHF_size * 1):
-                print(i, ": ", retcentroidLabels.arr[i])
-
-            centroidLabels = [[0]*1]*retPH.LHF_size
-            sizof = 0
-            for i in range(retPH.LHF_size):
-                for j in range(1):
-                    # print(retdistMatrix.arr[sizof])
-                    centroidLabels[i][j] = retcentroidLabels.arr[sizof]
-                    sizof = sizof + 1
-
-            print(centroidLabels)
-        else:
-            retcentroidLabels = ""
-        # for i in range(retPH.LHF_size * 1):
-        #     print(i, ": ", retcentroidLabels.arr[i])
-
-        # centroidLabels = [[0]*1]*retPH.LHF_size
-        # sizof=0
-        # for i in range(retPH.LHF_size):
-        #     for j in range(1):
-        #         # print(retdistMatrix.arr[sizof])
-        #         centroidLabels[i][j] = retcentroidLabels.arr[sizof]
-        #         sizof = sizof + 1
-
-        # print(centroidLabels)
-
-        # print("workData size",retPH.workData_size)
-        # print("LHF dim",retPH.LHF_dim)
-
-        workDataEntries = type("array", (ctypes.Structure, ), {
-            # data members
-            "_fields_": [("arr", ctypes.c_double * (retPH.workData_size * retPH.LHF_dim))]
-        })
-
-        retworkData = workDataEntries.from_address(retPH.workData)
-
-        # print(type(retworkData.arr[0]))
-        # print(retworkData.arr[0])
-        # for i in range(retPH.workData_size * retPH.LHF_dim):
-        #     print(i, ": ", retworkData.arr[i])
-
-        pystats = str(retPH.stats).replace(
-            '\\n', '\n').replace('b\'', '').replace('\'', '')
-        # print(pystats)
-
-        pyrunLog = str(retPH.runLog).replace(
-            '\\n', '\n').replace('b\'', '').replace('\'', '')
-        # print(pyrunLog)
-
-        pyident = str(retPH.ident).replace(
-            '\\n', '\n').replace('b\'', '').replace('\'', '')
-        # print(pyident)
-
-        return
-
     def runPH3(self, cmd_input):
         # Create char* for passing to C++
         # att = {"inputFile" : str(cmd_input[1])}
@@ -259,8 +142,7 @@ class LHF:
         na = ctypes.cast(p, ctypes.POINTER(ctypes.POINTER(ctypes.c_char)))
 
         #retPH = pipePacketAtt.from_address(self.lib.pyRunWrapper2(len(temp),ctypes.c_char_p(temp), self.data.ctypes.data_as(ctypes.POINTER(ctypes.c_double))))
-        # retPH = pipePacketAtt.from_address(self.lib.pyRunWrapper2(
-        #     argc, na, self.data.ctypes.data_as(ctypes.POINTER(ctypes.c_double))))
+        retPH = pipePacketAtt.from_address(self.lib.pyRunWrapper2(argc, na, self.data.ctypes.data_as(ctypes.POINTER(ctypes.c_double))))
 
         print("Total Boundaries", retPH.size)
         # print(retPH.ident)
@@ -274,8 +156,8 @@ class LHF:
 
         retBounds = bettiBoundaryTableEntries.from_address(retPH.bettiTable)
 
-        for i in range(retPH.size):
-            print(retBounds.arr[i].dim,retBounds.arr[i].birth,retBounds.arr[i].death)
+        # for i in range(retPH.size):
+            # print(retBounds.arr[i].dim,retBounds.arr[i].birth,retBounds.arr[i].death)
 
         ###############################################################################
         # Reconstruct the inputData array from the address
@@ -323,13 +205,12 @@ class LHF:
             "_fields_": [("arr", ctypes.c_double * (retPH.LHF_size)*1)]
         })
 
-        retcentroidLabels = centroidLabelsEntries.from_address(
-            retPH.centroidLabels)
+        retcentroidLabels = centroidLabelsEntries.from_address(retPH.centroidLabels)
 
         # print(type(retcentroidLabels.arr[0]))
         if isinstance(retcentroidLabels.arr[0], int):
-            for i in range(retPH.LHF_size * 1):
-                print(i, ": ", retcentroidLabels.arr[i])
+            # for i in range(retPH.LHF_size * 1):
+            #     print(i, ": ", retcentroidLabels.arr[i])
 
             centroidLabels = [[0]*1]*retPH.LHF_size
             sizof = 0
@@ -339,9 +220,9 @@ class LHF:
                     centroidLabels[i][j] = retcentroidLabels.arr[sizof]
                     sizof = sizof + 1
 
-            print(centroidLabels)
+            # print(centroidLabels)
         else:
-            retcentroidLabels = ""
+            centroidLabels = ""
         # for i in range(retPH.LHF_size * 1):
         #     print(i, ": ", retcentroidLabels.arr[i])
 
@@ -384,4 +265,21 @@ class LHF:
         # pyident = retPH.ident.decode('UTF-8') ##does not work when c++ returns None
         # print(pyident)
 
-        return
+        ########################################################################################
+        ### Reconstruct the return
+        dim = []
+        birth = []
+        death = []
+        for i in range(retPH.size):
+            # print(retBounds.arr[i].dim,retBounds.arr[i].birth,retBounds.arr[i].death)
+            dim.append(retBounds.arr[i].dim)
+            birth.append(retBounds.arr[i].birth)
+            death.append(retBounds.arr[i].death)
+
+
+        
+        result = BettiTable(np.asarray(dim),np.asarray(birth),np.asarray(death))
+        result2 = pipePackett(result,np.asarray(inputData),np.asarray(distMatrix),np.asarray(workData),np.asarray(centroidLabels),pystats,pyrunLog,pyident)
+
+
+        return result2
