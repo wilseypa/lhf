@@ -19,9 +19,12 @@ pyLHF.testFunc(1, "HELLO")
 #Call LHF with configured arguments and generated dataset
 #pyLHF.runPH()
 
-pyLHF.runPH2()
+#pyLHF.runPH2()
 #Call LHF with configured arguments and generated dataset
 #store = bettiBoundaryTableEntry()
-# print ('Argument List:', str(sys.argv))
-# pyLHF.runPH2(sys.argv)
+print ('Argument List:', str(sys.argv))
+# print(type(sys.argv))
+# print(type(sys.argv[1]))
+# print(type(sys.argv[2]))
+pyLHF.runPH3(sys.argv)
  

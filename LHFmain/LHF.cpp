@@ -817,32 +817,45 @@ extern "C"
 		return;
 	}
 
-	PRAP* pyRunWrapper2(const int argc, char* argv, const double *pointCloud){
+	PRAP* pyRunWrapper2(const int argc, char* argv[], const double *pointCloud){
 		
 		//std::cout << std::endl << "argc: " << argc << std::endl;
 		//First we need to convert arguments from char* to map
 		std::cout << "Got this far!" << std::endl;
-		std::map<std::string, std::string> args;
+
+		for (int i=0;i<argc;i++)
+		{
+			puts(argv[i]);
+			// std::cout << typeid(argv[i]).name() << '\n';
+		}
+
+		auto args = argParser::parse(argc, argv);
+		std::cout << 'Work?\n';
+
+		//std::map<std::string, std::string> args;
 		std::vector<std::string> rawArgs;
 		
 		//Split arguments into list
 		std::string tempstr = "";
-		for(auto i = 0; i < argc; i++){
-			//Check for space (32)
-			//std::cout << argv[i] << std::endl;
-			if(argv[i] == 32){
-				//std::cout << argv[i] << std::endl;
-				rawArgs.push_back(tempstr);
-				tempstr = "";
-			} else
-				tempstr += argv[i];
-		}
+		// for(auto i = 0; i < argc; i++){
+		// 	//Check for space (32)
+		// 	// std::cout << argv[i] << std::endl;
+		// 	if(argv[i] == 32){
+		// 		// std::cout << argv[i] << std::endl;
+		// 		rawArgs.push_back(tempstr);
+		// 		tempstr = "";
+		// 	} else
+		// 		// std::cout << argv[i] << std::endl;
+		// 		tempstr += argv[i];
+		// }
 		
 		//Split argument list into map
 		for(auto i = 0; i < rawArgs.size(); i += 2){
 			args[rawArgs[i]] = rawArgs[i+1];
 			// std::cout << args[rawArgs[i]] << " = " << rawArgs[i+1] << std::endl;
+			std::cout << rawArgs[i] << " = " <<rawArgs[i+1] <<std::endl;
 		}
+		std::cout << args["inputFile"] <<std::endl;
 		//Next, decode the data
 		int dataSize = std::atoi(args["datasize"].c_str());
 		int dataDim = std::atoi(args["datadim"].c_str());
