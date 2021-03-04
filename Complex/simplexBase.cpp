@@ -96,6 +96,10 @@ std::vector<simplexNode*> simplexBase::getAllCofacets(simplexNode_P, const std::
 	return std::vector<simplexNode*>();
 }
 
+std::vector<simplexNode_P> simplexBase::getAllDelaunayCofacets(simplexNode_P){
+	ut.writeLog(simplexType,"No getdelaunay cofacets function defined");
+	return std::vector<simplexNode_P>();
+}
 std::vector<simplexNode*> simplexBase::getAllCofacets(simplexNode_P){
 	ut.writeLog(simplexType,"No get cofacets function defined");
 	return std::vector<simplexNode*>();

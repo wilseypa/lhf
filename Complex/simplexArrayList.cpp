@@ -163,6 +163,21 @@ std::vector<simplexNode*> simplexArrayList::getAllCofacets(simplexNode_P simp){
 	return getAllCofacets(simp, std::unordered_map<long long, simplexNode_P>(), false, true, 0);
 }
 
+std::vector<simplexNode_P> simplexArrayList::getAllDelaunayCofacets(simplexNode_P simp){
+
+	std::vector<simplexNode_P> ret;
+	unsigned dimension  = simp->simplex.size();
+        for(auto simplex : simplexList[dimension]){
+                std::vector<unsigned> :: iterator it;
+		std::vector<unsigned> v(simplex->simplex.size());
+		it = std::set_intersection(simp->simplex.begin(),simp->simplex.end(),simplex->simplex.begin(),simplex->simplex.end(),v.begin());
+		v.resize(it-v.begin());
+		if(v.size() == simp->simplex.size())
+			ret.push_back(simplex);
+	}
+	return ret;
+
+}
 std::vector<simplexNode*> simplexArrayList::getAllFacets(simplexNode* simp, bool recordVertices, unsigned dim){
 	std::vector<simplexNode*> ret;
 	std::set<unsigned> vertices;
