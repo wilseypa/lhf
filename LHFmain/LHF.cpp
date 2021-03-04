@@ -1042,7 +1042,10 @@ extern "C"
 			}
 		}
 
-		// std::cout << "size-> " << wD.distMatrix.size() << std::endl;
+		// std::cout << "distsize-> " << wD.distMatrix.size() << std::endl;
+		// std::cout << "inputsize-> " << wD.inputData.size() << std::endl;
+		// std::cout << "centroidLabelssize-> " << wD.centroidLabels.size() << std::endl;
+		// std::cout << "workDatasize-> " << wD.workData.size() << std::endl;
 		// std::cout << "size[0]-> " << wD.distMatrix[0].size() << std::endl;
 
 		double *distMatrix_retStruct = (double *)malloc(sizeof(double) * (wD.distMatrix.size() * wD.distMatrix.size()));
@@ -1072,7 +1075,7 @@ extern "C"
 		// std::cout << wD.centroidLabels.size() << std::endl;
 		for (int i = 0; i < wD.centroidLabels.size(); i++)
 		{
-			std::cout << sizof << " = " << wD.centroidLabels[i] << std::endl;
+			// std::cout << sizof << " = " << wD.centroidLabels[i] << std::endl;
 			centroidLabels_retStruct[sizof] = wD.centroidLabels[i];
 			sizof++;
 		}
@@ -1105,6 +1108,7 @@ extern "C"
 		}
 		else
 		{
+			// std::cout << wD.stats << std::endl;
 			char stats_char_array[n + 1];
 
 			strcpy(stats_char_array, wD.stats.c_str());
@@ -1124,6 +1128,7 @@ extern "C"
 		}
 		else
 		{
+			// std::cout << wD.runLog << std::endl;
 			n = wD.runLog.length();
 
 			char runLog_char_array[n + 1];
@@ -1143,7 +1148,7 @@ extern "C"
 		}
 		else
 		{
-			// std::cout << wD.ident << std::endl;
+			std::cout << wD.ident << std::endl;
 
 			char *ident_retStruct = (char *)malloc(sizeof(char) * wD.ident.length());
 
@@ -1165,12 +1170,14 @@ extern "C"
 		// std::cout << wD.inputData << std::endl;
 
 		BRAP *a = (BRAP *)malloc(sizeof(int) + (sizeof(BRET) * wD.bettiTable.size()));
-		PRAP *b = (PRAP *)malloc(sizeof(int) + (sizeof(BRET) * (wD.bettiTable.size() * (wD.inputData.size() * wD.inputData[0].size()) * wD.bettiTable.size())));
+		PRAP *b = (PRAP *)malloc(sizeof(int) + (sizeof(BRET) * (wD.bettiTable.size()))); //* (wD.inputData.size() * wD.inputData[0].size()) * wD.bettiTable.size())));
 		//PRAP* b;
 		a->size = wD.bettiTable.size();
 		a->ret = retStruct;
 
+		// std::cout << "bettisize = " << wD.bettiTable.size() << std::endl;
 		b->size_betti = wD.bettiTable.size();
+		// std::cout << "bettisize = " << wD.bettiTable.size() << std::endl;
 		b->BettiTable = retStruct;
 
 		b->LHF_size = wD.inputData.size();
@@ -1216,7 +1223,7 @@ extern "C"
 		// b->stats = wD.stats;
 		// b->runLog = wD.runLog;
 
-		std::cout << "Got this far!! -> " << wD.bettiTable.size() << std::endl;
+		std::cout << "Finished on the c++ side -> " << wD.bettiTable.size() << std::endl;
 		return b;
 	}
 }
