@@ -896,69 +896,23 @@ extern "C"
 	PRAP *pyRunWrapper2(int argc, char *argv[], const double *pointCloud)
 	{
 
-		//std::cout << std::endl << "argc: " << argc << std::endl;
-		//First we need to convert arguments from char* to map
-		std::cout << "Got this far!" << std::endl;
-		// std::cout << argc << std::endl;
-		// std::cout << argv[0] << std::endl;
-		// for (int i = 0; i < argc; i++)
-		// {
-		// 	puts(argv[i]);
-		// 	// std::cout << typeid(argv[i]).name() << '\n';
-		// }
-
-		// char **tokens = (char **)malloc(sizeof(char **) * 1024);
-
-		// for (int i = 0; i < argc; i++)
-		// {
-		// 	puts(argv[i]);
-		// 	tokens[i] = argv[i];
-		// 	std::cout << tokens[i] << std:: endl;
-		// }
-
 		auto args = argParser::parse(argc, argv);
-		// std::cout << 'Work?\n';
 
-		//std::map<std::string, std::string> args;
-		std::vector<std::string> rawArgs;
 
-		//Split arguments into list
-		std::string tempstr = "";
-		// for(auto i = 0; i < argc; i++){
-		// 	//Check for space (32)
-		// 	// std::cout << argv[i] << std::endl;
-		// 	if(argv[i] == 32){
-		// 		// std::cout << argv[i] << std::endl;
-		// 		rawArgs.push_back(tempstr);
-		// 		tempstr = "";
-		// 	} else
-		// 		// std::cout << argv[i] << std::endl;
-		// 		tempstr += argv[i];
-		// }
+		// int dataSize = std::atoi(args["datasize"].c_str());
+		// int dataDim = std::atoi(args["datadim"].c_str());
 
-		//Split argument list into map
-		// for (auto i = 0; i < rawArgs.size(); i += 2)
+		// std::vector<std::vector<double>> data(dataSize, std::vector<double>(dataDim));
+
+		// for (auto row = 0; row < dataSize; row++)
 		// {
-		// 	args[rawArgs[i]] = rawArgs[i + 1];
-		// 	// std::cout << args[rawArgs[i]] << " = " << rawArgs[i+1] << std::endl;
-		// 	std::cout << rawArgs[i] << " = " << rawArgs[i + 1] << std::endl;
+
+		// 	for (auto dim = 0; dim < dataDim; dim++)
+		// 	{
+
+		// 		data[row][dim] = pointCloud[row * dim + dim];
+		// 	}
 		// }
-		// std::cout << args["inputFile"] << std::endl;
-		// //Next, decode the data
-		int dataSize = std::atoi(args["datasize"].c_str());
-		int dataDim = std::atoi(args["datadim"].c_str());
-
-		std::vector<std::vector<double>> data(dataSize, std::vector<double>(dataDim));
-
-		for (auto row = 0; row < dataSize; row++)
-		{
-
-			for (auto dim = 0; dim < dataDim; dim++)
-			{
-
-				data[row][dim] = pointCloud[row * dim + dim];
-			}
-		}
 
 		//C interface for python to call into LHF
 		auto lhflib = LHF();

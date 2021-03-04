@@ -259,8 +259,8 @@ class LHF:
         na = ctypes.cast(p, ctypes.POINTER(ctypes.POINTER(ctypes.c_char)))
 
         #retPH = pipePacketAtt.from_address(self.lib.pyRunWrapper2(len(temp),ctypes.c_char_p(temp), self.data.ctypes.data_as(ctypes.POINTER(ctypes.c_double))))
-        retPH = pipePacketAtt.from_address(self.lib.pyRunWrapper2(
-            argc, na, self.data.ctypes.data_as(ctypes.POINTER(ctypes.c_double))))
+        # retPH = pipePacketAtt.from_address(self.lib.pyRunWrapper2(
+        #     argc, na, self.data.ctypes.data_as(ctypes.POINTER(ctypes.c_double))))
 
         print("Total Boundaries", retPH.size)
         # print(retPH.ident)
@@ -274,8 +274,8 @@ class LHF:
 
         retBounds = bettiBoundaryTableEntries.from_address(retPH.bettiTable)
 
-        # for i in range(retPH.size):
-        #     print(retBounds.arr[i].dim,retBounds.arr[i].birth,retBounds.arr[i].death)
+        for i in range(retPH.size):
+            print(retBounds.arr[i].dim,retBounds.arr[i].birth,retBounds.arr[i].death)
 
         ###############################################################################
         # Reconstruct the inputData array from the address
