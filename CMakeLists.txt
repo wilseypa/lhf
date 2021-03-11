@@ -7,7 +7,18 @@ cmake_minimum_required(VERSION 3.11)
 set (CMAKE_CXX_STANDARD_LIBRARIES "-lpthread")
 set (CMAKE_CXX_STANDARD 14)
 
-SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS} -O1 -undefined dynamic_lookup")
+if(UNIX AND NOT APPLE)
+        set(LINUX TRUE)
+endif()
+# if(NOT LINUX) should work, too, if you need that
+if(LINUX) 
+    message(STATUS ">>> Linux")
+	SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS} -O1")
+else()
+    message(STATUS ">>> Not Linux")
+	SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS} -O1 -undefined dynamic_lookup")
+endif()
+
 SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_COVERAGE_LINK_FLAGS}")
 SET(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
