@@ -23,10 +23,10 @@ endif()
 # if(NOT LINUX) should work, too, if you need that
 if(LINUX) 
     message(STATUS ">>> Linux")
-	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fopenmp")
 else()
     message(STATUS ">>> Not Linux")
-	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fopenmp")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/Complex)
