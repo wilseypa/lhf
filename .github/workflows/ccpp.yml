@@ -39,6 +39,10 @@ jobs:
     steps:
     # Get dependencies
     
+    - name: Linux Apt update (${{ matrix.os }} , ${{ matrix.mpi }})
+      if:   contains(matrix.os,'ubuntu')
+      run:  sudo apt-get update
+    
     - name: Get Linux OpenMPI dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
       if:   contains(matrix.os,'ubuntu') && contains(matrix.mpi,'openmpi')
       run:  sudo apt-get install -y openmpi-bin openmpi-common libopenmpi-dev cppcheck
