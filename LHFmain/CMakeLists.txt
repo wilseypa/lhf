@@ -16,7 +16,18 @@ find_package(OpenMP)
 
 set (CMAKE_CXX_STANDARD 14)
 set (CMAKE_CXX_STANDARD_LIBRARIES "-lpthread")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fopenmp")
+
+if(UNIX AND NOT APPLE)
+        set(LINUX TRUE)
+endif()
+# if(NOT LINUX) should work, too, if you need that
+if(LINUX) 
+    message(STATUS ">>> Linux")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+else()
+    message(STATUS ">>> Not Linux")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fopenmp")
+endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/Complex)
 link_directories(${PROJECT_SOURCE_DIR}/Complex)
