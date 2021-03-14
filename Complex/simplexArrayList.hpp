@@ -7,7 +7,7 @@
 
 class binomialTable{
 	private:
-		std::vector<std::vector<long long>> v; 
+		std::vector<std::vector<long long>> v;
 	public:
 		binomialTable(unsigned n, unsigned k);
 		long long binom(unsigned n, unsigned k);
@@ -37,7 +37,9 @@ class simplexArrayList : public simplexBase{
 		std::vector<simplexNode_P> getAllFacets_P(simplexNode_P);
 
 		std::vector<simplexNode_P> expandDimension(std::vector<simplexNode_P>, bool = true, unsigned = 0);
-    void build_del_complex(std::vector<std::vector<int>> dsimplexmesh, int pts);                 
+    void build_del_complex(std::vector<std::vector<int>> dsimplexmesh, int pts);
+		double determinantOfMatrix(std::vector<std::vector<double>> mat, int n);
+		double circumRadius(std::set<unsigned> simplex);
 
 		//virtual interface functions
 		double getSize();
@@ -53,4 +55,3 @@ class simplexArrayList : public simplexBase{
 		void reduceComplex();
 		~simplexArrayList();
 };
-

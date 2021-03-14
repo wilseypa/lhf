@@ -14,7 +14,7 @@ simplexArrayList::simplexArrayList(double maxE, double maxD) : bin(0,0) {
 
 binomialTable::binomialTable(unsigned n, unsigned k) : v(n+1, std::vector<long long>(k+1, 0)){ //Fast computation of binomials with precomputed table
 	v[0][0] = 1;
-	
+
 	for(int i=1; i<=n; i++){
 		v[i][0] = 1;
 		for(int j=1; j<=k; j++){
@@ -30,7 +30,7 @@ long long binomialTable::binom(unsigned n, unsigned k){ //Return binomial coeffi
 }
 
 //Hash the set by converting to a remapped index
-long long simplexArrayList::simplexHash(const std::set<unsigned>& simplex){ 
+long long simplexArrayList::simplexHash(const std::set<unsigned>& simplex){
 	long long simplexIndex = 0;
 	unsigned i = 0;
 	auto it = simplex.begin();
@@ -83,13 +83,13 @@ std::vector<simplexNode_P> simplexArrayList::getAllCofacets(const std::set<unsig
 	long long index = simplexHash(simplex);
 
 	//Try inserting other vertices into the simplex
-	for(unsigned i=nPts; i-- != 0; ){ 
+	for(unsigned i=nPts; i-- != 0; ){
 		if(it != simplex.rend() && i == *it - simplexOffset){ //Vertex i is already in the simplex
 			//Now adding vertices less than i -> i is now the kth largest vertex in the simplex instead of the (k-1)th
 			index -= bin.binom(i, k-1);
 			index += bin.binom(i, k); //Recompute the index accordingly
 
-			--k;	//Now need to check for the (k-1)th vertex in the simplex			
+			--k;	//Now need to check for the (k-1)th vertex in the simplex
 			++it; 	//Check for the previous vertex in the simplex (it is a reverse iterator)
 		} else{
 			auto tempNode = indexConverter.find(index + bin.binom(i, k));
@@ -97,11 +97,11 @@ std::vector<simplexNode_P> simplexArrayList::getAllCofacets(const std::set<unsig
 				ret.push_back(tempNode->second);
 
 				//If we haven't found an emergent candidate and the weight of the maximal cofacet is equal to the simplex's weight
-				//		we have identified an emergent pair; at this point we can break because the interval is born and dies at the 
+				//		we have identified an emergent pair; at this point we can break because the interval is born and dies at the
 				//		same epsilon
 				if(checkEmergent && tempNode->second->weight == simplexWeight){
 					//Check to make sure the identified cofacet isn't a pivot
-					if(pivotPairs.find(tempNode->second) == pivotPairs.end()) return ret;	
+					if(pivotPairs.find(tempNode->second) == pivotPairs.end()) return ret;
 					checkEmergent = false;
 				}
 			}
@@ -125,12 +125,12 @@ std::vector<simplexNode*> simplexArrayList::getAllCofacets(simplexNode_P simp, c
 	long long index = simp->hash;
 
 	// Try inserting other vertices into the simplex
-	for(unsigned i = simplexList[0].size(); i-- != 0; ){ 
+	for(unsigned i = simplexList[0].size(); i-- != 0; ){
 		if(it != vertices.rend() && i == *it - simplexOffset){ //Vertex i is already in the simplex
 			//Now adding vertices less than i -> i is now the kth largest vertex in the simplex instead of the (k-1)th
 			index -= bin.binom(i, k-1);
 			index += bin.binom(i, k); //Recompute the index accordingly
-			--k;	//Now need to check for the (k-1)th vertex in the simplex			
+			--k;	//Now need to check for the (k-1)th vertex in the simplex
 			++it; 	//Check for the previous vertex in the simplex (it is a reverse iterator)
 		} else{
 			double maxWeight = simp->weight;
@@ -247,14 +247,14 @@ std::vector<simplexNode_P> simplexArrayList::getAllFacets_P(simplexNode_P simp){
 double simplexArrayList::getSize(){
 	//Calculate size of original data
 	size_t size = 0;
-	
+
 	//Calculate size of edges
 	for(int i = 0; i < simplexList.size(); i++){
-		
-		//Size is the ([# weighted graph entries] x [std::pair size]) + ([dimension of graph] * [vector entry size]) 
+
+		//Size is the ([# weighted graph entries] x [std::pair size]) + ([dimension of graph] * [vector entry size])
 		size += (simplexList[i].size() * sizeof((*simplexList[i].begin())));
 	}
-	
+
 	return size;
 }
 
@@ -262,10 +262,10 @@ double simplexArrayList::getSize(){
 // Insert for simplexArrayList -> O((n+1)(n+2)/2) -> O(n^2)
 //		Sequence: 0 , 1 , 3 , 6 , 10 , 15
 //
-void simplexArrayList::insert(){		
+void simplexArrayList::insert(){
 	//If this is the first point inserted...
 	if(simplexList.size() == 0) simplexList.push_back({});
-	
+
 	unsigned i = simplexList[0].size();
 
 	simplexNode_P insNode = std::make_shared<simplexNode>(simplexNode({i}, 0.0));
@@ -277,7 +277,7 @@ void simplexArrayList::insert(){
 // weightedGraph[d][v][p] dimension d stores vectors v of point elements p of simplexes formed
 bool simplexArrayList::find(std::set<unsigned> vector){
 	if (simplexList.size() == 0) return false;
-	
+
 	for(auto simplexSetIter = simplexList[vector.size() - 1].begin(); simplexSetIter != simplexList[vector.size() - 1].end(); simplexSetIter++){
 		if((*simplexSetIter)->simplex == vector){
 			return true;
@@ -301,11 +301,11 @@ double simplexArrayList::findWeight(std::set<unsigned> vector){
 // Output the total simplices stored in the simplical complex
 int simplexArrayList::simplexCount(){
 	int simplexRet = 0;
-	
+
 	for(auto a : simplexList){
 		simplexRet += a.size();
 	}
-	
+
 	return simplexRet;
 }
 
@@ -320,32 +320,32 @@ void simplexArrayList::initBinom(){
 	bin = binomialTable(simplexList[0].size(), maxDimension+1);
 }
 
-// Expand the simplexArrayList to incorporate higher-level simplices 
+// Expand the simplexArrayList to incorporate higher-level simplices
 //	-> O(dnk) -> where n is the number of points, d is the dimension, and k is the number of d-1 simplices
 //
 //	Do this by comparing each simplex with points to insert
 //
-void simplexArrayList::expandDimensions(int dim){		
+void simplexArrayList::expandDimensions(int dim){
 	initBinom();
 
 	//Iterate up to max dimension of simplex, starting at dim 2 (edges)
 	for(unsigned d = 1; d <= dim; d++){
-		
+
 		//Check if we need to break from expanding dimensions (no more edges)
 		if(simplexList.size() < d) break;
 		if(simplexList.size() == d) simplexList.push_back({});
-		
+
 		//Iterate through each element in the current dimension's edges
 		for(auto it = simplexList[d-1].begin(); it != simplexList[d-1].end(); it++){
 			//Iterate over points to possibly add to the simplex
 			//Use points larger than the maximal vertex in the simplex to prevent double counting
 			unsigned minPt = *(*it)->simplex.rbegin() + 1;
-			
+
 			for(unsigned pt = minPt; pt < simplexList[0].size(); pt++){
 				//Compute the weight using all edges
 				double maxWeight = (*it)->weight;
 				for(auto i : (*it)->simplex) maxWeight = std::max(maxWeight, (*distMatrix)[i][pt]);
-				
+
 				if(maxWeight <= maxEpsilon){ //Valid simplex
 					simplexNode_P tot = std::make_shared<simplexNode>(simplexNode((*it)->simplex, maxWeight));
 					tot->simplex.insert(pt);
@@ -370,12 +370,12 @@ std::vector<simplexNode_P> simplexArrayList::expandDimension(std::vector<simplex
 		//Iterate over points to possibly add to the simplex
 		//Use points larger than the maximal vertex in the simplex to prevent double counting
 		unsigned minPt = *vertices.rbegin() + 1;
-		
+
 		for(unsigned pt = minPt; pt < simplexList[0].size(); pt++){
 			//Compute the weight using all edges
 			double maxWeight = (*it)->weight;
 			for(auto i : vertices) maxWeight = std::max(maxWeight, (*distMatrix)[i][pt]);
-			
+
 			if(maxWeight <= maxEpsilon){ //Valid simplex
 				simplexNode_P tot = std::make_shared<simplexNode>(simplexNode());
 				if(recordVertices){
@@ -393,16 +393,79 @@ std::vector<simplexNode_P> simplexArrayList::expandDimension(std::vector<simplex
 	return nextEdges;
 }
 
+double simplexArrayList :: determinantOfMatrix(std::vector<std::vector<double>> mat, int n)
+{
+  double num1, num2, det = 1, total = 1; // Initialize result
+  int index;
+  double temp[n + 1];
+  for (unsigned i = 0; i < n; i++){
+        index = i;
+        double rectemp = mat[i][i];
+        for (unsigned j = i; j < n; j++)
+                mat[i][j] /= rectemp;
+        for (unsigned j = i + 1; j < n; j++){
+					      double rectemp2 = mat[j][i];
+                for (unsigned t = i;  t< n; t++)
+									             mat[i][t] *= rectemp2;
+                for (unsigned t = i;  t< n; t++)
+                               mat[j][t] -= mat[i][t];
+                for (unsigned k = 0; k < n; k++)
+                           		 mat[i][k] /= rectemp2;
+        }
+        for (unsigned k = 0; k < n; k++){
+              mat[i][k] *= rectemp;
+          }
+      }
+  for (unsigned i = 0; i < n; i++)
+	        det = det * mat[i][i];
+
+	return (det);
+}
+
+
+double simplexArrayList :: circumRadius(std::set<unsigned> simplex){
+    std::vector<std::vector<double>>  matA(simplex.size());
+		std::vector<std::vector<double>>  matACap(simplex.size()+1);
+		int ii=0;
+    for(auto i : simplex){
+			matACap[ii+1].push_back(1);
+			for(auto j :simplex){
+				if((*distMatrix)[i][j]!=0){
+		   	matA[ii].push_back(pow(((*distMatrix)[i][j]),2));
+				matACap[ii+1].push_back(pow(((*distMatrix)[i][j]),2));
+			}
+			else{
+				matA[ii].push_back(pow(((*distMatrix)[j][i]),2));
+		  	matACap[ii+1].push_back(pow(((*distMatrix)[j][i]),2));
+			}
+	  }
+		ii++;
+	}
+	matACap[0].push_back(0);
+	for(auto i : simplex)
+    matACap[0].push_back(1);
+
+  for(auto x : matA){
+		for(auto y : x){
+			std::cout<<y<<" ";
+		}
+		std::cout<<std::endl;
+	}
+
+	std::cout<<determinantOfMatrix(matA,simplex.size())<< " "<<determinantOfMatrix(matACap,simplex.size()+1)<<std::endl;
+	return -(determinantOfMatrix(matA,simplex.size())/(2*determinantOfMatrix(matACap,simplex.size()+1)));
+}
+
 void simplexArrayList::reduceComplex(){
-	
+
 	//Start with the largest dimension
 	ut.writeDebug("simplexArrayList","Reducing complex, starting simplex count: " + std::to_string(simplexCount()));
 	if(simplexList.size() == 0){
 		return;
 	}
-	
+
 	for(auto i = simplexList.size()-1; i > 1; i--){
-		
+
 		std::vector<std::set<unsigned>> removals;
 		std::vector<std::set<unsigned>> checked;
 		std::vector<unsigned> currentSimplex;
@@ -415,17 +478,17 @@ void simplexArrayList::reduceComplex(){
 					checked = ret.second;
 				}
 			}
-		}	
-		
+		}
+
 		//Remove the removals
 		for(auto rem : removals){
 			deletion(rem);
 		}
-			
+
 	}
-	
+
 	ut.writeDebug("simplexArrayList","Finished reducing complex, reduced simplex count: " + std::to_string(simplexCount()));
-	
+
 	return;
 }
 
@@ -456,6 +519,12 @@ for(auto simplex : dsimplexmesh){
 				gensimp.insert(indnew);
 			}
 		}
+		for(auto x : gensimp)
+				std::cout<<x<<" ";
+		if(gensimp.size()>2)
+				std::cout<<"circumRadius :"<<circumRadius(gensimp)<<std::endl;
+		else
+				std::cout<<"Distance Half";
 		simplexNode_P tot = std::make_shared<simplexNode>(simplexNode(gensimp,weight));
 		if(gensimp.size()==1)
 			tot->hash = *(gensimp.begin());
@@ -464,7 +533,7 @@ for(auto simplex : dsimplexmesh){
 		simplexList[gensimp.size()-1].insert(tot);
 		gensimp.clear();
 	}
-}				
+}
 return;
 }
 
@@ -474,15 +543,15 @@ std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> simp
 	checked.push_back(simplex->simplex);
 	auto subsets = ut.getSubsets(simplex->simplex);
 	std::set<unsigned> maxFace;
-	
+
 	bool canRemove = true;
-	
+
 	//Look at each face
 	for(auto face : subsets){
-		
+
 		//Check if the face is shared; if so, recurse
 		for(auto simp : simplexList[simplex->simplex.size() - 1]){
-			
+
 			if(simp != simplex && std::find(checked.begin(), checked.end(), simp->simplex) == checked.end()){
 				auto sDiff = ut.symmetricDiff(simp->simplex, face,true);
 
@@ -491,32 +560,32 @@ std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> simp
 					auto ret = recurseReduce(simp, removals, checked);
 					removals = ret.first;
 					checked = ret.second;
-				
+
 					//Check if the simplex was not removed
 					if(std::find(removals.begin(), removals.end(), simp->simplex) == removals.end()){
 						canRemove = false;
 						break;
 					}
 				}
-				
+
 			}
 		}
-		
+
 		//Check if the face is the max face
 		double wt = -1;
 		//if((wt = findWeight(face)) == simplex->weight){
 		//	maxFace = face;
 		//}
-		
-	}	
-	
+
+	}
+
 	if(canRemove){
 		removals.push_back(simplex->simplex);
 		removals.push_back(maxFace);
-	}	
-	
+	}
+
 	return std::make_pair(removals, checked);
-	
+
 }
 
 bool simplexArrayList::deletion(std::set<unsigned> vector){
@@ -530,6 +599,6 @@ bool simplexArrayList::deletion(std::set<unsigned> vector){
 	return false;
 }
 
-simplexArrayList::~simplexArrayList(){	
+simplexArrayList::~simplexArrayList(){
 	simplexList.clear();
 }
