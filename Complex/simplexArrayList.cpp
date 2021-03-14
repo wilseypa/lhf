@@ -395,15 +395,28 @@ std::vector<simplexNode_P> simplexArrayList::expandDimension(std::vector<simplex
 
 double simplexArrayList :: determinantOfMatrix(std::vector<std::vector<double>> mat, int n)
 {
-  double num1, num2, det = 1, total = 1; // Initialize result
+  double num1, num2, det = 1, total = 1;
   int index;
   double temp[n + 1];
   for (unsigned i = 0; i < n; i++){
         index = i;
+				while (mat[index][i] == 0 && index < n)
+				       index++;
+	      if (index == n)
+				       continue;
+				if (index != i){
+				  for (int j = 0; j < n; j++){
+						  double temp12 = mat[index][j];
+				      mat[index][j] = mat[i][j];
+				      mat[i][j] = temp12;
+				  }
+				  det = det * pow(-1, index - i);
+			  }
         double rectemp = mat[i][i];
         for (unsigned j = i; j < n; j++)
                 mat[i][j] /= rectemp;
         for (unsigned j = i + 1; j < n; j++){
+					if(mat[j][i] != 0){
 					      double rectemp2 = mat[j][i];
                 for (unsigned t = i;  t< n; t++)
 									             mat[i][t] *= rectemp2;
@@ -411,10 +424,10 @@ double simplexArrayList :: determinantOfMatrix(std::vector<std::vector<double>> 
                                mat[j][t] -= mat[i][t];
                 for (unsigned k = 0; k < n; k++)
                            		 mat[i][k] /= rectemp2;
+						}
         }
-        for (unsigned k = 0; k < n; k++){
+        for (unsigned k = 0; k < n; k++)
               mat[i][k] *= rectemp;
-          }
       }
   for (unsigned i = 0; i < n; i++)
 	        det = det * mat[i][i];
@@ -445,14 +458,6 @@ double simplexArrayList :: circumRadius(std::set<unsigned> simplex){
 	for(auto i : simplex)
     matACap[0].push_back(1);
 
-  for(auto x : matA){
-		for(auto y : x){
-			std::cout<<y<<" ";
-		}
-		std::cout<<std::endl;
-	}
-
-	std::cout<<determinantOfMatrix(matA,simplex.size())<< " "<<determinantOfMatrix(matACap,simplex.size()+1)<<std::endl;
 	return -(determinantOfMatrix(matA,simplex.size())/(2*determinantOfMatrix(matACap,simplex.size()+1)));
 }
 
@@ -519,13 +524,12 @@ for(auto simplex : dsimplexmesh){
 				gensimp.insert(indnew);
 			}
 		}
-		for(auto x : gensimp)
-				std::cout<<x<<" ";
-		if(gensimp.size()>2)
-				std::cout<<"circumRadius :"<<circumRadius(gensimp)<<std::endl;
-		else
-				std::cout<<"Distance Half";
 		simplexNode_P tot = std::make_shared<simplexNode>(simplexNode(gensimp,weight));
+		if(gensimp.size()>2)
+				tot->circumRadius = circumRadius(gensimp);
+		else
+		    tot->circumRadius = weight/2;
+
 		if(gensimp.size()==1)
 			tot->hash = *(gensimp.begin());
 		else
