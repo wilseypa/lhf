@@ -187,8 +187,8 @@ void simplexBase::outputComplex(){
 	return;
 }
 
-void simplexBase::build_del_complex(std::vector<std::vector<int>> dsimplexmesh, int npts){
-	ut.writeLog(simplexType,"No build Delaunay Complex  function defined");
+void simplexBase::buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, int npts,std::vector<std::vector<double>> inputData){
+	ut.writeLog(simplexType,"No build Alpha Complex function defined");
 	return;
 }
 void simplexBase::expandDimensions(int dim){
@@ -257,5 +257,5 @@ simplexBase::~simplexBase(){}
 std::vector<simplexNode_P> simplexBase::expandDimension(std::vector<simplexNode_P> edges){
 	std::vector<simplexNode_P> ret;
 	ut.writeLog(simplexType,"No expandDimension function defined");
-	return ret;	
+	return ret;
 }

@@ -69,8 +69,8 @@ class simplexBase {
 	virtual int simplexCount();
 	virtual int vertexCount();
 	virtual void prepareCofacets(int);
-	virtual void prepareFacets(int);	
-	
+	virtual void prepareFacets(int);
+
 	virtual std::vector<simplexNode_P> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode_P, simplexNode_P>&, bool);
 	virtual std::vector<simplexNode*> getAllCofacets(simplexNode_P, const std::unordered_map<long long, simplexNode_P>&, bool);
 	virtual std::vector<simplexNode*> getAllCofacets(simplexNode_P);
@@ -80,11 +80,11 @@ class simplexBase {
 	virtual std::vector<simplexNode*> getAllFacets(simplexNode_P);
 	virtual std::vector<simplexNode_P> getAllFacets_P(simplexNode_P);
 
-	
+
 	virtual std::set<simplexNode_P, cmpByWeight> getDimEdges(int);
 	virtual std::vector<std::set<simplexNode_P, cmpByWeight>> getAllEdges();
 	virtual std::vector<simplexNode_P> expandDimension(std::vector<simplexNode_P> edges);
-        virtual void build_del_complex(std::vector<std::vector<int>> dsimplexmesh, int npts);
+  virtual void buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, int npts,std::vector<std::vector<double>> inputData);
 	virtual void expandDimensions(int);
 	virtual void reduceComplex();
 	virtual ~simplexBase();

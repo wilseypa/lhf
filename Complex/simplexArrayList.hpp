@@ -37,9 +37,10 @@ class simplexArrayList : public simplexBase{
 		std::vector<simplexNode_P> getAllFacets_P(simplexNode_P);
 
 		std::vector<simplexNode_P> expandDimension(std::vector<simplexNode_P>, bool = true, unsigned = 0);
-    void build_del_complex(std::vector<std::vector<int>> dsimplexmesh, int pts);
+    void buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, int pts,std::vector<std::vector<double>> inputData);
 		double determinantOfMatrix(std::vector<std::vector<double>> mat, int n);
 		double circumRadius(std::set<unsigned> simplex);
+		std::vector<double> circumCenter(std::set<unsigned> simplex,std::vector<std::vector<double>> inputData);
 
 		//virtual interface functions
 		double getSize();

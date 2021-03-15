@@ -25,14 +25,14 @@ void qhullPipe::runPipe(pipePacket &inData){
     std::vector<double> sdata;
     //serializing all the data
     for(auto a : inData.inputData)
- 	for(auto b : a)
- 		sdata.push_back(b);
+ 			for(auto b : a)
+ 				sdata.push_back(b);
     PointCoordinates *pts = new PointCoordinates(qh,inData.inputData[0].size(),"UCI Data Sets");
     pts->append(sdata);
     qh.runQhull(pts->comment().c_str(),pts->dimension(),pts->count(),&*pts->coordinates(),"d o");
     auto dsimplexes = qdelaunay_o(qh);
-    inData.complex->build_del_complex(dsimplexes,inData.inputData.size());
-       
+    inData.complex->buildAlphaComplex(dsimplexes,inData.inputData.size(),inData.inputData);
+
 	ut.writeDebug("qhullPipe", "\tSuccessfully Executed pipe");
 	return;
 }
@@ -83,7 +83,7 @@ std::vector<std::vector<int>>  qhullPipe::qdelaunay_o(const Qhull &qhull){
 // configPipe -> configure the function settings of this pipeline segment
 bool qhullPipe::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
-	
+
 	auto pipe = configMap.find("debug");
 	if(pipe != configMap.end()){
 		debug = std::atoi(configMap["debug"].c_str());
@@ -92,12 +92,12 @@ bool qhullPipe::configPipe(std::map<std::string, std::string> &configMap){
 	pipe = configMap.find("outputFile");
 	if(pipe != configMap.end())
 		outputFile = configMap["outputFile"].c_str();
-	
+
 	ut = utils(strDebug, outputFile);
 
 	configured = true;
 	ut.writeDebug("qhullPipe","Configured with parameters { eps: " + configMap["epsilon"] + " , debug: " + strDebug + ", outputFile: " + outputFile + " }");
-	
+
 	return true;
 }
 
@@ -105,10 +105,9 @@ bool qhullPipe::configPipe(std::map<std::string, std::string> &configMap){
 void qhullPipe::outputData(pipePacket &inData){
 	std::ofstream file;
 	file.open("output/" + pipeType + "_output.csv");
-	
-	
-	
+
+
+
 	file.close();
 	return;
 }
-

@@ -13,7 +13,9 @@ struct simplexNode{
 
 	std::set<unsigned> simplex;
 	double weight = 0;
+	double filterationvalue = -1;
   double circumRadius = 0;
+	std::vector<double> circumCenter;
 	simplexNode(){}
 	simplexNode(std::set<unsigned> simp, double wt) : simplex(simp), weight(wt) {}
 };
