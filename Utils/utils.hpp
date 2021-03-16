@@ -15,6 +15,7 @@ struct simplexNode{
 	double weight = 0;
 	double filterationvalue = -1;
   double circumRadius = 0;
+	std::vector<double> simplexhyperplane;
 	std::vector<double> circumCenter;
 	simplexNode(){}
 	simplexNode(std::set<unsigned> simp, double wt) : simplex(simp), weight(wt) {}
@@ -104,7 +105,11 @@ class utils {
 	static std::vector<std::set<unsigned>> getSubsets(std::set<unsigned> set);
 	static std::vector<std::vector<unsigned>> getSubsets(std::vector<unsigned> set);
 
-
+	static double determinantOfMatrix(std::vector<std::vector<double>> mat, int n);
+	static double circumRadius(std::set<unsigned> simplex,std::vector<std::vector<double>>* distMatrix);
+	static std::vector<double> circumCenter(std::set<unsigned> simplex,std::vector<std::vector<double>> inputData);
+	static std::vector<std::vector<double>> inverseOfMatrix(std::vector<std::vector<double>> mat, int n);
+	static std::vector<std::vector<double>> matrixMultiplication(std::vector<std::vector<double>> matA, std::vector<std::vector<double>> matB);
 
 	static std::vector<double> serialize(std::vector<std::vector<double>>& );
 	static std::vector<std::vector<double>> deserialize(std::vector<double> , unsigned);
