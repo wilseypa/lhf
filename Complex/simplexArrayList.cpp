@@ -169,12 +169,12 @@ std::vector<simplexNode_P> simplexArrayList::getAllDelaunayCofacets(simplexNode_
 	unsigned dimension  = simp->simplex.size();
         for(auto simplex : simplexList[dimension]){
                 std::vector<unsigned> :: iterator it;
-		std::vector<unsigned> v(simplex->simplex.size());
-		it = std::set_intersection(simp->simplex.begin(),simp->simplex.end(),simplex->simplex.begin(),simplex->simplex.end(),v.begin());
-		v.resize(it-v.begin());
-		if(v.size() == simp->simplex.size())
-			ret.push_back(simplex);
-	}
+								std::vector<unsigned> v(simplex->simplex.size());
+								it = std::set_intersection(simp->simplex.begin(),simp->simplex.end(),simplex->simplex.begin(),simplex->simplex.end(),v.begin());
+								v.resize(it-v.begin());
+								if(v.size() == simp->simplex.size())
+									ret.push_back(simplex);
+				}
 	return ret;
 
 }
@@ -636,10 +636,10 @@ for(auto simplex : dsimplexmesh){
 		simplexNode_P tot = std::make_shared<simplexNode>(simplexNode(gensimp,weight));
 		if(gensimp.size()>2)
 				tot->circumRadius = circumRadius(gensimp);
-		else
+		else{
 		    tot->circumRadius = weight/2;
-    std::cout<<std::endl<<std::endl<<gensimp.size()<<std::endl;
-    std::cout<<"CircumRadius ::"<<tot->circumRadius<<std::endl;
+				tot->filterationvalue = weight/2;
+			}
 		if(gensimp.size()>2)
 				tot->circumCenter = circumCenter(gensimp,inputData);
 		else if(gensimp.size()==2){
@@ -651,11 +651,6 @@ for(auto simplex : dsimplexmesh){
    		std::transform(A.begin(), A.end(), B.begin(), std::back_inserter(R),[](double e1,double e2){return ((e1+e2)/2);});
 		  tot->circumCenter = R;
     }
-		std::cout<<"CircumCenter :: ";
-		for(auto  x :tot->circumCenter)
-	    	std::cout<<x<<" ";
-		std::cout<<std::endl;
-
 		if(gensimp.size()==1)
 			tot->hash = *(gensimp.begin());
 		else
@@ -689,7 +684,67 @@ end for
 make_filtration_non_decreasing()
 prune_above_filtration()
 
-  */  
+  */
+
+utils ut;
+for(int dim = simplexList.size()-1;dim>=2;dim--){
+	   for(auto simplex :simplexList[dim]){
+	        if(simplex->filterationvalue ==-1)
+	            simplex->filterationvalue = simplex->circumRadius;
+					for(int cofacedim = dim-1;cofacedim>=2;cofacedim--){
+							for(auto face :simplexList[cofacedim]){
+								std::vector<unsigned> :: iterator it;
+								std::vector<unsigned> v(face->simplex.size());
+								it = std::set_intersection(simplex->simplex.begin(),simplex->simplex.end(),face->simplex.begin(),face->simplex.end(),v.begin());
+								v.resize(it-v.begin());
+								if(v.size() == face->simplex.size()){
+                     if(face->filterationvalue !=-1)
+										 			face->filterationvalue = std::min(face->filterationvalue ,simplex->filterationvalue);
+										 else {
+													std::vector<unsigned> points_check(simplex->simplex.size());
+													std::vector<unsigned>::iterator it;
+													bool gabriel = true;
+													it=std::set_difference (simplex->simplex.begin(), simplex->simplex.end(), face->simplex.begin(), face->simplex.end(), points_check.begin());
+													points_check.resize(it-points_check.begin());
+													for(it = points_check.begin(); it !=points_check.end();++it){
+														std::vector<double> coordinates;
+                            for(int i =0;i<face->circumCenter.size();i++)
+																	coordinates.push_back(inputData[*it][i]);
+														double distance = ut.vectors_distance(coordinates,face->circumCenter);
+														if(distance<simplex->circumRadius)
+																gabriel = false;
+																break;
+													}
+													if(!gabriel)
+										 					face->filterationvalue = simplex->filterationvalue;
+		   							}
+								}
+							}
+						}
+					}
+}
+std::vector<std::set<simplexNode_P, cmpByWeight>> simplexList1;		//Holds ordered list of simplices in each dimension
+for(int dim=0;dim < simplexList.size();dim++){
+	   simplexList1.push_back({});
+	   for(auto simplex :simplexList[dim]){
+			 simplexList1[dim].insert(simplex);
+		 }
+	 }
+simplexList = simplexList1;
+
+for(auto x:simplexList)
+   for(auto simplex :x){
+		 		 std::cout<<std::endl<<std::endl<<simplex->simplex.size()<<std::endl;
+		 		 std::cout<<"Filteration Value ::"<<simplex->filterationvalue<<std::endl;
+		 		 std::cout<<"CircumRadius ::"<<simplex->circumRadius<<std::endl;
+		 		 simplex->weight = simplex->filterationvalue;
+		 		 std::cout<<"Weight ::"<<simplex->weight<<std::endl;
+		 		 std::cout<<"CircumCenter :: ";
+		 		 for(auto  x :simplex->circumCenter)
+		 		 		std::cout<<x<<" ";
+		 		 std::cout<<std::endl;
+
+		 	 }
 
 return;
 }
