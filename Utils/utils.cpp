@@ -161,6 +161,8 @@ std::vector<double> utils :: circumCenter(std::set<unsigned> simplex,std::vector
 	 std::vector<std::vector<double>>  matC(simplex.size());
 	 std::vector<std::vector<double>> rawCircumCenter;
 	 std::vector<double> circumCenter;
+	 std::set<unsigned> simplexcopy = simplex;
+
 	 auto it = simplex.end();
 	 it--;
 	 int ii =0;
@@ -169,14 +171,15 @@ std::vector<double> utils :: circumCenter(std::set<unsigned> simplex,std::vector
 	 for(auto i : simplex){
 	 		for(auto j : simplex){
 				  std::vector<double> d1,d2;
-					double dotProduct;
+					double dotProduct=0;
 					std::transform(inputData[i].begin(), inputData[i].end(), inputData[Sn].begin(), std::back_inserter(d1),[](double e1,double e2){return (e1-e2);});
 					std::transform(inputData[j].begin(), inputData[j].end(), inputData[Sn].begin(), std::back_inserter(d2),[](double e1,double e2){return (e1-e2);});
-					for (int i = 0; i < inputData[0].size(); i++)
-              dotProduct = dotProduct + d1[i] * d2[i];
+					for (int k = 0; k < inputData[0].size(); k++){
+              dotProduct = dotProduct + d1[k] * d2[k];
+						}
 					matA[ii].push_back(dotProduct);
 				 if(i==j)
-				 	matC[ii].push_back(dotProduct);
+				 	matC[ii].push_back(dotProduct/2);
 			}
 			matA[ii].push_back(0);
 			ii++;
@@ -186,8 +189,17 @@ std::vector<double> utils :: circumCenter(std::set<unsigned> simplex,std::vector
 		matC[simplex.size()].push_back(1);
 		invmatA = inverseOfMatrix(matA,matA[0].size());
 		rawCircumCenter = matrixMultiplication(invmatA,matC);
-		for(int j =0;j<rawCircumCenter.size();j++)
-			circumCenter.push_back(rawCircumCenter[j][0]);
+		for(int i = 0; i < inputData[0].size(); i++){
+       double coordinate = 0;
+			 std::set<unsigned> ::iterator index = simplexcopy.begin();
+			for(int j =0;j<rawCircumCenter.size();j++){
+				coordinate += rawCircumCenter[j][0]*inputData[(*index)][i];
+				index++;
+			}
+			circumCenter.push_back(coordinate);
+		}
+
+
 
 		return circumCenter;
 
