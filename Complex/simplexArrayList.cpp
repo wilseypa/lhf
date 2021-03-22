@@ -497,7 +497,7 @@ for(auto simplex : dsimplexmesh){
 	}
 }
 
-//NEED to CREATE ALPHA COMPLEX FILTERTION BASED on FOLOWING algorithm
+//ALPHA COMPLEX FILTERTION BASED on FOLLOWING algorithm
 /*Filtration value computation algorithm
 
 
@@ -538,92 +538,45 @@ for(int dim = simplexList.size()-1;dim>=0;dim--){
 								it = std::set_intersection(simplex->simplex.begin(),simplex->simplex.end(),face->simplex.begin(),face->simplex.end(),v.begin());
 								v.resize(it-v.begin());
 								if(v.size() == face->simplex.size()){
-								//	std::cout<<"  \n dim Simplex"<<dim<<" Face "<<facedim<<"\n";
-								//	for(auto x : simplex->simplex)
-								//		std::cout<<x<<" *";
-								//	std::cout<<std::endl;
-							//		for(auto x : face->simplex)
-								//		std::cout<<x<<" -";
-							//		std::cout<<std::endl;
                      if(face->filterationvalue !=-1){
-     								//			std::cout<<face->circumRadius<<" "<<face->filterationvalue<<" "<<simplex->filterationvalue<<std::endl;
 										 			face->filterationvalue = std::min(face->filterationvalue ,simplex->filterationvalue);
-										//			std::cout<<face->circumRadius<<" "<<face->filterationvalue<<" "<<simplex->filterationvalue<<std::endl;
 												}
 										 else {
 													std::vector<unsigned>::iterator it;
 													it=std::set_difference (simplex->simplex.begin(), simplex->simplex.end(), face->simplex.begin(), face->simplex.end(), points_check.begin());
 													points_check.resize(it-points_check.begin());
-									//				for(auto x : points_check)
-									//					std::cout<<"Points "<<x<<" ";
-									//				std::cout<<std::endl;
-									//				std::cout<<face->circumRadius<<" "<<face->filterationvalue<<" "<<simplex->filterationvalue<<std::endl;
-													for(it = points_check.begin(); it !=points_check.end();++it){
+    											for(it = points_check.begin(); it !=points_check.end();++it){
 														std::vector<double> coordinates;
                             for(int i =0;i<face->circumCenter.size();i++)
 																	coordinates.push_back(inputData[*it][i]);
 														double distance = utils::vectors_distance(coordinates,face->circumCenter);
-													//	std::cout<<pow(distance,2)<<"  "<<face->circumRadius<<" "<<face->filterationvalue<<" "<<simplex->filterationvalue<<std::endl;
 														if(pow(distance,2)<face->circumRadius){
-										//				   std::cout<<" Not Gabriel due to "<<*it<<std::endl;
-
 															 gabriel = false;
 															 guilty_points_check.push_back((*it));
 													}
 		   							}
 						  		}
-							//		for(auto x:simplexList){
-							//			std::cout<<std::endl;
-							//			 for(auto simplex :x){
-							//						 std::cout<<"[";
-							//						for(auto x : simplex->simplex)
-							//								 std::cout<<x;
-							//							 std::cout<<"],"<<simplex->filterationvalue<<"::  ";
-//
-							//						 }
-							//					 }
+
 							}
 							if(!gabriel){
-								  //std::cout<<"Update Weight Immediately";
-									//int k;
-								//	std::cin>>k;
-								//	face->filterationvalue = simplex->filterationvalue;
-								/*	unsigned int pow_set_size = pow(2, guilty_points_check.size());
-									for(int counter =1;counter<pow_set_size;counter++){
-										std::set<unsigned> cosimp;
-										for(int j=0;j<guilty_points_check.size();j++){
-											if(counter & (1<<j)){
-												unsigned indnew = *(std::next(guilty_points_check.begin(),j));
-												cosimp.insert(indnew);
-											}
-										}*/
-										//update Simplex Fileration value
 										std::vector<unsigned> v(simplex->simplex.size());
 										std::vector<unsigned>::iterator it;
 										it=std::set_union (face->simplex.begin(), face->simplex.end(), guilty_points_check.begin(), guilty_points_check.end(), v.begin());
 										v.resize(it-v.begin());
 										for(auto face1 :simplexList[v.size()-1]){
-										std::vector<unsigned> v1(simplex->simplex.size());
-										it = std::set_intersection(v.begin(),v.end(),face1->simplex.begin(),face1->simplex.end(),v1.begin());
-										v1.resize(it-v1.begin());
-										if(v1.size() == face1->simplex.size())
+											std::vector<unsigned> v1(simplex->simplex.size());
+											it = std::set_intersection(v.begin(),v.end(),face1->simplex.begin(),face1->simplex.end(),v1.begin());
+											v1.resize(it-v1.begin());
+											if(v1.size() == face1->simplex.size())
 														face->filterationvalue = face1->filterationvalue;
-										//				std::cout<<"Updating value";
-                    //        int k;
-											//			std::cin>>k;
-										   }
-								//	std::cout<<face->circumRadius<<" "<<face->filterationvalue<<" ";
-            	 }
-							// else
-							// face->filterationvalue = face->circumRadius;
 
-						}
-						//if(facedim==dim-1)
-						//			break;
+										   }
+					           }
+									}
 					}
    }
 }
-
+//Reinserting to sort by filterationvalue
 std::vector<std::set<simplexNode_P, cmpByWeight>> simplexList1;		//Holds ordered list of simplices in each dimension
 for(int dim=0;dim < simplexList.size();dim++){
 	   simplexList1.push_back({});
@@ -633,24 +586,6 @@ for(int dim=0;dim < simplexList.size();dim++){
 		 }
 	 }
 simplexList = simplexList1;
-
-for(auto x:simplexList1)
-   for(auto simplex :x){
-		 		 std::cout<<std::endl<<std::endl<<simplex->simplex.size()<<std::endl;
-					 for(auto x : simplex->simplex)
-					 		std::cout<<x<<" ";
-						std::cout<<std::endl;
-		 		 std::cout<<"Filteration Value ::"<<simplex->filterationvalue<<std::endl;
-		 		 std::cout<<"CircumRadius ::"<<simplex->circumRadius<<std::endl;
-		 		 //simplex->weight = simplex->filterationvalue;
-		 		 std::cout<<"Weight ::"<<simplex->weight<<std::endl;
-		 		 std::cout<<"CircumCenter :: ";
-		 		 for(auto  x :simplex->circumCenter)
-		 		 		std::cout<<x<<" ";
-		 		 std::cout<<std::endl;
-
-		 	 }
-
 return;
 }
 
