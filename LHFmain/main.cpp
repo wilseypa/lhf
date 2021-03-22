@@ -99,7 +99,7 @@ int main(int argc, char* argv[]){
 			utils::print1DVector(a.boundaryPoints);
 		}
 	}
-
+	
 	delete wD.complex;
 
 	double end = omp_get_wtime();
