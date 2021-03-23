@@ -198,7 +198,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 				//			Otherwise recurse to reduce the number of points
 				
 				if((args["mode"] == "iter" || args["mode"] == "iterUpscale") && partitionedData.second[z].size() >= threshold){
-					curwD.bettiTable = processIterUpscale(args, curwD);
+					curwD.bettiTable = processParallelWrapper(args, curwD);
 				} else{
 					runPipeline(args, curwD);
 				}
@@ -314,7 +314,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 	return mergedBettiTable;
 }
 
-std::vector<bettiBoundaryTableEntry> LHF::processIterUpscale(std::map<std::string, std::string> args, pipePacket &wD, bool runPartition){
+std::vector<bettiBoundaryTableEntry> LHF::processParallelWrapper(std::map<std::string, std::string> args, pipePacket &wD, bool runPartition){
 	
 	//This function is called when the number of points in a partition are greater than the point threshold
 	//	If the number of points in the new partitions are under the point threshold, continue
@@ -373,7 +373,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processIterUpscale(std::map<std::strin
 }
 
 
-std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::string, std::string> args, pipePacket &wD){
+std::vector<bettiBoundaryTableEntry> LHF::processDistributedWrapper(std::map<std::string, std::string> args, pipePacket &wD){
 	
 	//Local arguments for controlling partitioning and merging
 	auto scalar = std::atof(args["scalar"].c_str());
@@ -388,7 +388,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processUpscaleWrapper(std::map<std::st
 		wD.inputData = rs.readCSV(args["inputFile"]);
 		wD.workData = wD.inputData;
 		
-		return processIterUpscale(args,wD);
+		return processParallelWrapper(args,wD);
 	}
 		
 	//Final Betties result will be saved here
@@ -788,7 +788,7 @@ extern "C"
 		if(wD.inputData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
 
 			if(args["mode"] == "reduced" || args["mode"] == "iterUpscale" || args["mode"] == "iter"){	
-				wD.bettiTable = lhflib.processIterUpscale(args,wD);
+				wD.bettiTable = lhflib.processParallelWrapper(args,wD);
 				sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
 				
 			} else {
@@ -873,7 +873,7 @@ extern "C"
 		if(wD.inputData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
 
 			if(args["mode"] == "reduced" || args["mode"] == "iterUpscale" || args["mode"] == "iter"){	
-				wD.bettiTable = lhflib.processIterUpscale(args,wD);
+				wD.bettiTable = lhflib.processParallelWrapper(args,wD);
 				sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
 				
 			} else {

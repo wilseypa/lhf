@@ -71,12 +71,12 @@ int main(int argc, char* argv[]){
 			MPI_Comm_size(MPI_COMM_WORLD,&lhflib.nprocs);
 			MPI_Comm_rank(MPI_COMM_WORLD,&lhflib.id);
 
-			wD.bettiTable = lhflib.processUpscaleWrapper(args, wD);
+			wD.bettiTable = lhflib.processDistributedWrapper(args, wD);
 			sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
 			MPI_Finalize();
 
 		} else if(args["mode"] == "reduced" || args["mode"] == "iterUpscale" || args["mode"] == "iter"){
-			wD.bettiTable = lhflib.processIterUpscale(args,wD);
+			wD.bettiTable = lhflib.processParallelWrapper(args,wD);
 			sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
 
 		} else if(args["mode"] == "dcomplex"){
