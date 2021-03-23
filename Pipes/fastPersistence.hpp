@@ -11,7 +11,7 @@ class fastPersistence : public basePipe {
 	private:
 		int shift = 0;
 		double maxEpsilon;
-		std::string mode;
+		std::string inv = "false";
 
 		struct sortReverseLexicographic{ //Sort nodes by weight, then by lexicographic order
 			bool operator()(simplexNode_P a, simplexNode_P b) const{
