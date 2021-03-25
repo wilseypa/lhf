@@ -142,3 +142,4 @@ bool preprocessor::configPreprocessor(std::map<std::string, std::string> &config
 	return false;
 }
 
+preprocessor::~preprocessor(){}

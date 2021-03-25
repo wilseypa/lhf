@@ -96,9 +96,27 @@ std::vector<simplexNode*> simplexBase::getAllCofacets(simplexNode_P, const std::
 	return std::vector<simplexNode*>();
 }
 
+std::vector<simplexNode_P> simplexBase::getAllDelaunayCofacets(simplexNode_P){
+	ut.writeLog(simplexType,"No getdelaunay cofacets function defined");
+	return std::vector<simplexNode_P>();
+}
 std::vector<simplexNode*> simplexBase::getAllCofacets(simplexNode_P){
 	ut.writeLog(simplexType,"No get cofacets function defined");
 	return std::vector<simplexNode*>();
+}
+
+std::vector<simplexNode*> simplexBase::getAllFacets(simplexNode*){
+	ut.writeLog(simplexType,"No get facets function defined");
+	return std::vector<simplexNode*>();
+}
+
+std::vector<simplexNode*> simplexBase::getAllFacets(simplexNode_P simplex){
+	return getAllFacets(simplex.get());
+}
+
+std::vector<simplexNode_P> simplexBase::getAllFacets_P(simplexNode_P simplex){
+	ut.writeLog(simplexType,"No get facets function defined");
+	return std::vector<simplexNode_P>();
 }
 
 double simplexBase::getSize(){
@@ -154,6 +172,11 @@ void simplexBase::prepareCofacets(int dim){
 	return;
 }
 
+void simplexBase::prepareFacets(int dim){
+	ut.writeLog(simplexType,"No prepareFacets function defined");
+	return;
+}
+
 int simplexBase::simplexCount(){
 	ut.writeLog(simplexType,"No simplexCount function defined");
 	return -1;
@@ -164,6 +187,10 @@ void simplexBase::outputComplex(){
 	return;
 }
 
+void simplexBase::buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, int npts,std::vector<std::vector<double>> inputData){
+	ut.writeLog(simplexType,"No build Alpha Complex function defined");
+	return;
+}
 void simplexBase::expandDimensions(int dim){
 	ut.writeLog(simplexType,"No expandDimensions function defined");
 	return;
@@ -230,5 +257,5 @@ simplexBase::~simplexBase(){}
 std::vector<simplexNode_P> simplexBase::expandDimension(std::vector<simplexNode_P> edges){
 	std::vector<simplexNode_P> ret;
 	ut.writeLog(simplexType,"No expandDimension function defined");
-	return ret;	
+	return ret;
 }

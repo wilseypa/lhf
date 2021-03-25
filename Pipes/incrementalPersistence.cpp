@@ -25,6 +25,114 @@ incrementalPersistence::incrementalPersistence(){
 	return;
 }
 
+template <class simplexNodePointer, class comp>
+std::vector<simplexNodePointer> incrementalPersistence::incrementalByDimension(pipePacket& inData, std::vector<simplexNodePointer>& edges, std::vector<simplexNodePointer> pivots, unsigned dimension, comp compStruct, std::string mode, bool recordIntervals){
+	std::sort(edges.begin(), edges.end(), compStruct);
+	std::sort(pivots.begin(), pivots.end(), compStruct);
+
+	typename std::vector<simplexNodePointer>::iterator it = pivots.begin();
+
+	std::vector<simplexNodePointer> nextPivots;	 	//Pivots for the next dimension
+	std::unordered_map<simplexNodePointer, std::vector<simplexNodePointer>> v;	//Store only the reduction matrix V and compute R implicity
+	std::unordered_map<long long, simplexNodePointer> pivotPairs;	//For each pivot, which column has that pivot
+
+	simplexArrayList* complex;
+	if(inData.complex->simplexType == "simplexArrayList"){
+		complex = (simplexArrayList*) inData.complex;
+	} else{
+		std::cout<<"IncrementalPersistence does not support complexes other than simplexArrayList\n";
+		return nextPivots;
+	}
+
+	//Iterate over columns to reduce in reverse order
+	for(auto columnIndexIter = edges.begin(); columnIndexIter != edges.end(); columnIndexIter++){
+		simplexNodePointer simplex = (*columnIndexIter);	//The current simplex
+
+		//Only need to test hash for equality
+		//Not a pivot -> need to reduce
+		if(it == pivots.end() || (*it)->hash != simplex->hash){
+
+			//Get all cofacets using emergent pair optimization
+			std::vector<simplexNode*> faceList = (mode == "homology" ? complex->getAllFacets(simplex, saveVertices, dimension) : complex->getAllCofacets(simplex, pivotPairs, true, saveVertices, dimension));
+
+			std::vector<simplexNodePointer> columnV;	//Reduction column of matrix V
+			columnV.push_back(simplex); //Initially V=I -> 1's along diagonal
+
+			//Build a heap using the coface list to reduce and store in V
+			std::make_heap(faceList.begin(), faceList.end(), compStruct);
+
+			while(true){
+				simplexNode* pivot;
+
+				while(!faceList.empty()){
+					pivot = faceList.front();
+
+					//Rotate the heap
+					std::pop_heap(faceList.begin(), faceList.end(), compStruct);
+					faceList.pop_back();
+
+					if(!faceList.empty() && pivot->hash == faceList.front()->hash){ //Coface is in twice -> evaluates to 0 mod 2
+						delete pivot;
+						delete faceList.front();
+
+						//Rotate the heap
+						std::pop_heap(faceList.begin(), faceList.end(), compStruct);
+						faceList.pop_back();
+					} else{
+
+						faceList.push_back(pivot);
+						std::push_heap(faceList.begin(), faceList.end(), compStruct);
+						break;
+					}
+				}
+
+				if(faceList.empty()){ //Column completely reduced
+					break;
+				} else if(pivotPairs.find(pivot->hash) == pivotPairs.end()){ //Column cannot be reduced
+					pivotPairs.insert({pivot->hash, simplex});
+					nextPivots.push_back(std::shared_ptr<simplexNode>(pivot));
+
+					std::sort(columnV.begin(), columnV.end(), compStruct);
+					auto it = columnV.begin();
+					while(it != columnV.end()){
+						if((it+1) != columnV.end() && (*it)->hash == (*(it+1))->hash) ++it;
+						else v[simplex].push_back(*it);
+						++it;
+					}
+
+					if(recordIntervals && simplex->weight != pivot->weight){
+						//If we haven't saved the vertices in each simplex, we need to recover them now to determine the boundary points
+						if(!saveVertices){
+							for(simplexNodePointer simplex : v[simplex]){
+								simplex->simplex = complex->getVertices(simplex->hash, dimension + 1, nPts);
+							}
+						}
+
+						bettiBoundaryTableEntry des = { dimension, std::min(pivot->weight, simplex->weight), std::max(pivot->weight, simplex->weight), ut.extractBoundaryPoints(v[simplex]) };
+						inData.bettiTable.push_back(des);
+					}
+
+					//Don't delete the first entry because that is converted to a smart pointer and stored as a pivot
+					for(int i=1; i<faceList.size(); i++) delete faceList[i];
+
+					break;
+				} else{ 
+					//Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
+					for(simplexNodePointer simp : v[pivotPairs[pivot->hash]]){
+						columnV.push_back(simp);
+						std::vector<simplexNode*> faces = (mode == "homology" ? complex->getAllFacets(simp, saveVertices, dimension) : complex->getAllCofacets(simp, pivotPairs, false, saveVertices, dimension));
+						faceList.insert(faceList.end(), faces.begin(), faces.end());
+					}
+					std::make_heap(faceList.begin(), faceList.end(), compStruct);
+				}
+			}
+		//Was a pivot, skip the evaluation and queue next pivot
+		} else ++it;
+	}
+
+	return nextPivots;
+}
+
 // runPipe -> Run the configured functions of this pipeline segment
 //
 //	IncrementalPersistence: For computing the persistence pairs from simplicial complex:
@@ -48,6 +156,7 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 	//Get the next dimension (edges)
 	edges = complex->expandDimension(edges);
 
+	nPts = e.size();
 	//Some notes on fast persistence:
 
 	//	-Vectors need to be stored in a lexicograhically ordered set of decreasing (d+1)-tuples (e.g. {3, 1, 0})
@@ -125,95 +234,19 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 		//Track V (reduction matrix) for each column j that has been reduced to identify the constituent
 		//		boundary simplices
 
+	bool involuted = (inv == "true" || inv == "1");
+
 	for(unsigned d = 1; d < dim && !edges.empty(); d++){
-		std::sort(pivots.begin(), pivots.end(), cmpBySecond());
-		std::vector<simplexNode_P>::iterator it = pivots.begin();
+		// //If d=1, we have already expanded the points into edges
+		// //Otherwise, we need to generate the higher dimensional edges (equivalent to simplexList[d])
+		if(d != 1) edges = complex->expandDimension(edges, saveVertices, d);
 
-		std::vector<simplexNode_P> nextPivots;	 					//Pivots for the next dimension
-		std::unordered_map<simplexNode_P, std::vector<simplexNode_P>> v;				//Store only the reduction matrix V and compute R implicity
-		std::unordered_map<long long, simplexNode_P> pivotPairs;	//For each pivot, which column has that pivot
+		pivots = incrementalByDimension(inData, edges, pivots, d, sortReverseLexicographic(), "cohomology", !involuted);
 
-		//If d=1, we have already expanded the points into edges
-		//Otherwise, we need to generate the higher dimensional edges (equivalent to simplexList[d])
-		if(d != 1) edges = complex->expandDimension(edges);
-
-		//Iterate over columns to reduce in reverse order
-		for(auto columnIndexIter = edges.rbegin(); columnIndexIter != edges.rend(); columnIndexIter++){
-			simplexNode_P simplex = (*columnIndexIter);		//The current simplex
-
-			//Only need to test hash for equality
-			//Not a pivot -> need to reduce
-			if((*it)->hash != simplex->hash){
-				//Get all cofacets using emergent pair optimization
-				std::vector<simplexNode*> cofaceList = complex->getAllCofacets(simplex, pivotPairs);
-				std::vector<simplexNode_P> columnV;	//Reduction column of matrix V
-				columnV.push_back(simplex); //Initially V=I -> 1's along diagonal
-
-				//Build a heap using the coface list to reduce and store in V
-				std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
-
-				while(true){
-					simplexNode* pivot;
-					while(!cofaceList.empty()){
-						pivot = cofaceList.front();
-
-						//Rotate the heap
-						std::pop_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
-						cofaceList.pop_back();
-
-						if(!cofaceList.empty() && pivot->hash == cofaceList.front()->hash){ //Coface is in twice -> evaluates to 0 mod 2
-							delete pivot;
-							delete cofaceList.front();
-
-							//Rotate the heap
-							std::pop_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
-							cofaceList.pop_back();
-						} else{
-
-							cofaceList.push_back(pivot);
-							std::push_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
-							break;
-						}
-					}
-
-					if(cofaceList.empty()){ //Column completely reduced
-						break;
-					} else if(pivotPairs.find(pivot->hash) == pivotPairs.end()){ //Column cannot be reduced
-						pivotPairs.insert({pivot->hash, simplex});
-						nextPivots.push_back(std::shared_ptr<simplexNode>(pivot));
-
-						std::sort(columnV.begin(), columnV.end());
-						auto it = columnV.begin();
-						while(it != columnV.end()){
-							if((it+1) != columnV.end() && *it==*(it+1)) ++it;
-							else v[simplex].push_back(*it);
-							++it;
-						}
-
-						//Don't delete the first entry because that is converted to a smart pointer and stored as a pivot
-						for(int i=1; i<cofaceList.size(); i++) delete cofaceList[i];
-
-						if(simplex->weight != pivot->weight){
-							bettiBoundaryTableEntry des = { d, simplex->weight, pivot->weight, ut.extractBoundaryPoints(v[simplex]) };
-							inData.bettiTable.push_back(des);
-						}
-
-						break;
-					} else{ //Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
-						for(simplexNode_P simp : v[pivotPairs[pivot->hash]]){
-							columnV.push_back(simp);
-							std::vector<simplexNode*> cofaces = complex->getAllCofacets(simp);
-							cofaceList.insert(cofaceList.end(), cofaces.begin(), cofaces.end());
-						}
-						std::make_heap(cofaceList.begin(), cofaceList.end(), cmpBySecond());
-					}
-				}
-
-			//Was a pivot, skip the evaluation and queue next pivot
-			} else ++it;
+		//To recover the representative cycles from the cocycles, we compute homology on just the pivot columns
+		if(involuted){
+			incrementalByDimension(inData, pivots, std::vector<simplexNode_P>(), d, sortLexicographic(), "homology", true);
 		}
-
-		pivots = nextPivots;
 	}
 
 	//Stop the timer for time passed during the pipe's function
@@ -274,6 +307,10 @@ bool incrementalPersistence::configPipe(std::map<std::string, std::string> &conf
 		outputFile = configMap["outputFile"].c_str();
 
 	ut = utils(strDebug, outputFile);
+
+	pipe = configMap.find("involuted");
+	if(pipe != configMap.end())
+		inv = configMap["involuted"];
 
 	pipe = configMap.find("dimensions");
 	if(pipe != configMap.end())

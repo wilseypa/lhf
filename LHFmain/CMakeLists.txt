@@ -6,7 +6,7 @@
 #  SET(CMAKE_CXX_COMPILER "${MPI_CXX_COMPILER}" CACHE FILEPATH "CXX compiler overridden with MPI C++ wrapper")
 #ENDIF(DEFINED MPI_CXX_COMPILER)
 
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.11)
 
 find_package(MPI REQUIRED)
 add_definitions(-DOMPI_SKIP_MPICXX)
@@ -16,7 +16,18 @@ find_package(OpenMP)
 
 set (CMAKE_CXX_STANDARD 14)
 set (CMAKE_CXX_STANDARD_LIBRARIES "-lpthread")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fopenmp")
+
+if(UNIX AND NOT APPLE)
+        set(LINUX TRUE)
+endif()
+# if(NOT LINUX) should work, too, if you need that
+if(LINUX) 
+    message(STATUS ">>> Linux")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fopenmp")
+else()
+    message(STATUS ">>> Not Linux")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/Complex)
 link_directories(${PROJECT_SOURCE_DIR}/Complex)

@@ -10,7 +10,7 @@
 
 struct sortBettis{
 	bool operator()(bettiBoundaryTableEntry lhs, bettiBoundaryTableEntry rhs){
-		return lhs.bettiDim < rhs.bettiDim || (lhs.bettiDim == rhs.bettiDim && lhs.death < rhs.death);
+		return lhs.bettiDim < rhs.bettiDim || (lhs.bettiDim == rhs.bettiDim && lhs.birth > rhs.birth);
 	}
 };
 
@@ -27,8 +27,8 @@ class LHF {
 	void runPipeline(std::map<std::string, std::string>, pipePacket &);
 	void processDataWrapper(std::map<std::string, std::string>, pipePacket &);
 	std::vector<bettiBoundaryTableEntry> processParallel(std::map<std::string, std::string>, std::vector<unsigned>&, std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>>&, int = 0);
-	std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, std::string>, pipePacket &, bool = true);
-	std::vector<bettiBoundaryTableEntry> processUpscaleWrapper(std::map<std::string, std::string>, pipePacket &);
+	std::vector<bettiBoundaryTableEntry> processParallelWrapper(std::map<std::string, std::string>, pipePacket &, bool = true);
+	std::vector<bettiBoundaryTableEntry> processDistributedWrapper(std::map<std::string, std::string>, pipePacket &);
 
 };
 

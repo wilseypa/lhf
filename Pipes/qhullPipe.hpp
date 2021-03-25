@@ -34,6 +34,8 @@ using orgQhull::QhullVertexListIterator;
 using orgQhull::QhullVertexSet;
 using orgQhull::QhullVertexSetIterator;
 using orgQhull::RboxPoints;
+using orgQhull::PointCoordinates;
+using orgQhull::Coordinates;
 
 class qhullPipe : public basePipe {
   private:
@@ -41,6 +43,7 @@ class qhullPipe : public basePipe {
     qhullPipe();
     void runPipe(pipePacket& inData);
     bool configPipe(std::map<std::string, std::string> &configMap);
-	void outputData(pipePacket&);
+    void outputData(pipePacket&);
+    std::vector<std::vector<int>> qdelaunay_o(const Qhull &qhull);
 };
 
