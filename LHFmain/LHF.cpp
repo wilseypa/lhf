@@ -218,7 +218,9 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 				if((args["mode"] == "iter" || args["mode"] == "iterUpscale") && partitionedData.second[z].size() >= threshold){
 					curwD.bettiTable = processParallelWrapper(args, curwD);
 				} else{
-
+					runPipeline(args, curwD);
+				}
+				
 				runLogs[np] += curwD.runLog;
 				stats[np] += curwD.stats;
 
@@ -304,8 +306,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 				// 		partBettiTable[np].push_back(newEntry);
 				// }
 			}
-			else
-				std::cout << "skipping" << std::endl;
+			else std::cout << "skipping" << std::endl;
 		}
 	}
 
