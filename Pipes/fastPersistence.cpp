@@ -197,7 +197,7 @@ void fastPersistence::runPipe(pipePacket &inData){
 		//Track V (reduction matrix) for each column j that has been reduced to identify the constituent
 		//		boundary simplices
 
-	bool involuted = (mode == "involuted");
+	bool involuted = (inv == "true" || inv == "1");
 
 	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
 		inData.complex->prepareCofacets(d);
@@ -270,6 +270,10 @@ bool fastPersistence::configPipe(std::map<std::string, std::string> &configMap){
 
 	ut = utils(strDebug, outputFile);
 
+	pipe = configMap.find("involuted");
+	if(pipe != configMap.end())
+		inv = configMap["involuted"];
+
 	pipe = configMap.find("dimensions");
 	if(pipe != configMap.end())
 		dim = std::atoi(configMap["dimensions"].c_str());
@@ -278,11 +282,6 @@ bool fastPersistence::configPipe(std::map<std::string, std::string> &configMap){
 	pipe = configMap.find("epsilon");
 	if(pipe != configMap.end())
 		maxEpsilon = std::atof(configMap["epsilon"].c_str());
-	else return false;
-
-	pipe = configMap.find("mode");
-	if(pipe != configMap.end())
-		mode = configMap["mode"];
 	else return false;
 
 	pipe = configMap.find("fn");

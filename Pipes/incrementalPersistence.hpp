@@ -13,7 +13,7 @@ class incrementalPersistence : public basePipe {
 		int shift = 0;
 		unsigned nPts = 0;
 		double maxEpsilon;
-		std::string mode;
+		std::string inv = "false";
 
 		bool saveVertices = false; //Should we save the vertices of the simplices, or just their hashes
 

@@ -27,8 +27,8 @@ class LHF {
 	void runPipeline(std::map<std::string, std::string>, pipePacket &);
 	void processDataWrapper(std::map<std::string, std::string>, pipePacket &);
 	std::vector<bettiBoundaryTableEntry> processParallel(std::map<std::string, std::string>, std::vector<unsigned>&, std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>>&, int = 0);
-	std::vector<bettiBoundaryTableEntry> processIterUpscale(std::map<std::string, std::string>, pipePacket &, bool = true);
-	std::vector<bettiBoundaryTableEntry> processUpscaleWrapper(std::map<std::string, std::string>, pipePacket &);
+	std::vector<bettiBoundaryTableEntry> processParallelWrapper(std::map<std::string, std::string>, pipePacket &, bool = true);
+	std::vector<bettiBoundaryTableEntry> processDistributedWrapper(std::map<std::string, std::string>, pipePacket &);
 
 };
 
@@ -50,9 +50,30 @@ extern "C" {
 		int size;
 		BRET* ret;
 	} BRAP;
-	
-	
+
+	//### pipepacket ###//
+
+	// void free_pRet(PRET *b){
+	// 	free(b);
+	// }
+
+	typedef struct pipeWrapStructure{
+		int size_betti; //multiple sizes?
+		int LHF_size;
+		int LHF_dim;
+		int workData_size;
+		BRET* BettiTable;
+		double* inputData;
+		double* distMatrix;
+		double* workData;
+		unsigned* centroidLabels;
+		char* stats;
+		char* runLog;
+		char* ident;
+	} PRAP;
+
+	//##################//
 	void testFunc(int num1, char* st) { std::cout << "Test: " << num1 << std::endl; std::cout << "\t" << st << std::endl;};
 	void pyRunWrapper(const int, char*, const double *);
-	BRAP* pyRunWrapper2(const int, char*, const double *);
+	PRAP* pyRunWrapper2(int, char *argv[], const double *);
 }

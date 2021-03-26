@@ -234,7 +234,7 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 		//Track V (reduction matrix) for each column j that has been reduced to identify the constituent
 		//		boundary simplices
 
-	bool involuted = (mode == "involuted");
+	bool involuted = (inv == "true" || inv == "1");
 
 	for(unsigned d = 1; d < dim && !edges.empty(); d++){
 		// //If d=1, we have already expanded the points into edges
@@ -308,14 +308,13 @@ bool incrementalPersistence::configPipe(std::map<std::string, std::string> &conf
 
 	ut = utils(strDebug, outputFile);
 
+	pipe = configMap.find("involuted");
+	if(pipe != configMap.end())
+		inv = configMap["involuted"];
+
 	pipe = configMap.find("dimensions");
 	if(pipe != configMap.end())
 		dim = std::atoi(configMap["dimensions"].c_str());
-	else return false;
-
-	pipe = configMap.find("mode");
-	if(pipe != configMap.end())
-		mode = configMap["mode"];
 	else return false;
 
 	pipe = configMap.find("epsilon");
