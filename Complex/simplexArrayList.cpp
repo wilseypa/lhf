@@ -576,13 +576,15 @@ for(int dim = simplexList.size()-1;dim>=0;dim--){
 					}
    }
 }
-//Reinserting to sort by filterationvalue
+//Reinserting to sort by filterationvalue and remove simplexes with weight greater than alphafilteration value (maxEpsilon)
 std::vector<std::set<simplexNode_P, cmpByWeight>> simplexList1;		//Holds ordered list of simplices in each dimension
 for(int dim=0;dim < simplexList.size();dim++){
 	   simplexList1.push_back({});
 	   for(auto simplex :simplexList[dim]){
-			 simplex->weight = simplex->filterationvalue;
-			 simplexList1[dim].insert(simplex);
+			 if(simplex->filterationvalue <= maxEpsilon){ //Valid Simplex after filteration
+			 			 simplex->weight = simplex->filterationvalue;
+			 		   simplexList1[dim].insert(simplex);
+					 }
 		 }
 	 }
 simplexList = simplexList1;

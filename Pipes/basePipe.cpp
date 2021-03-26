@@ -1,7 +1,7 @@
 /*
  * basePipe hpp + cpp protoype and define a base class for building
- * pipeline functions to execute  
- * 
+ * pipeline functions to execute
+ *
  */
 
 #include <chrono>
@@ -44,41 +44,41 @@ basePipe* basePipe::newPipe(const std::string &pipeType, const std::string &comp
 		return new incrementalPersistence();
 	} else if (pipeType == "naivewindow" || pipeType == "naive"){
 		return new naiveWindow();
-	} else if (pipeType == "qhullPipe" || pipeType == "qhull"){
+	} else if (pipeType == "qhullPipe" || pipeType == "qhull" || pipeType == "alpha"){
 		return new qhullPipe();
 	}
-	
+
 	return 0;
 }
 
 // runPipeWrapper -> wrapper for timing of runPipe and other misc. functions
 void basePipe::runPipeWrapper(pipePacket &inData){
-	
+
 	//Check if the pipe has been configured
 	if(!configured){
 		ut.writeLog(pipeType,"Pipe not configured");
 		std::cout << "Pipe not configured" << std::endl;
 		return;
 	}
-	
-	if(debug){	
+
+	if(debug){
 		//Start a timer for physical time passed during the pipe's function
 		auto startTime = std::chrono::high_resolution_clock::now();
-		
+
 		runPipe(inData);
-		
+
 		//Stop the timer for time passed during the pipe's function
 		auto endTime = std::chrono::high_resolution_clock::now();
-		
+
 		//Calculate the duration (physical time) for the pipe's function
 		std::chrono::duration<double, std::milli> elapsed = endTime - startTime;
-		
+
 		//Output the time and transient memory used for this pipeline segment
 		ut.writeLog(pipeType,"\tPipeline " + pipeType + " executed in " + std::to_string(elapsed.count()/1000.0) + " seconds (physical time)");
-		
+
 		auto dataSize = inData.getSize();
 		auto unit = "B";
-		
+
 		//Convert large datatypes (GB, MB, KB)
 		if(dataSize > 1000000000){
 			//Convert to GB
@@ -93,33 +93,33 @@ void basePipe::runPipeWrapper(pipePacket &inData){
 			dataSize = dataSize/1000;
 			unit = "KB";
 		}
-		
+
 		inData.stats += pipeType + "," + std::to_string(elapsed.count()/1000.0) + "," + std::to_string(dataSize) + "," + unit + "," + std::to_string(inData.complex->vertexCount()) + "," + std::to_string(inData.complex->simplexCount()) + "\n";
-		
+
 		std::string ds = std::to_string(dataSize);
 		ut.writeLog(pipeType,"\t\tData size: " + ds + " " + unit + "\n");
 		outputData(inData);
 	} else {
 		runPipe(inData);
 	}
-	
+
 	return;
 }
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
 void basePipe::outputData(pipePacket &inData){
 	ut.writeDebug("basePipe","No output function defined for: " + pipeType);
-	
+
 	std::ofstream file;
 	file.open("output/" + pipeType + "_output.csv");
-	
+
 	for (auto a : inData.workData){
 		for (auto d : a){
 			file << std::to_string(d) << ",";
 		}
 		file << "\n";
 	}
-	
+
 	file.close();
 	return;
 }
@@ -127,9 +127,9 @@ void basePipe::outputData(pipePacket &inData){
 // runPipe -> Run the configured functions of this pipeline segment
 void basePipe::runPipe(pipePacket &inData){
 	ut.writeError("basePipe","No run function defined for: " + pipeType);
-	
+
 	return;
-}	
+}
 
 // configPipe -> configure the function settings of this pipeline segment
 bool basePipe::configPipe(std::map<std::string, std::string> &configMap){
@@ -138,6 +138,6 @@ bool basePipe::configPipe(std::map<std::string, std::string> &configMap){
 	auto pipe = configMap.find("debug");
 	if(pipe != configMap.end())
 		debug = (std::atoi(configMap["debug"].c_str()) > 0 ? true : false);
-	
+
 	return true;
 }
