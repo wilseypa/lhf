@@ -469,7 +469,7 @@ for(auto simplex : dsimplexmesh){
 		if(gensimp.size()>1)
 				tot->circumRadius = utils::circumRadius(gensimp,distMatrix);
 		else{
-		    tot->circumRadius = weight;
+		    tot->circumRadius = weight/2;
 			}
 		if(gensimp.size()>2)
 				tot->circumCenter = utils::circumCenter(gensimp,inputData);
@@ -528,8 +528,9 @@ for(int dim = simplexList.size()-1;dim>=0;dim--){
 			    simplexNode_P simplex = (*simplexiter);
 	        if(simplex->filterationvalue ==-1)
 	            simplex->filterationvalue = simplex->circumRadius;
-					for(int facedim = dim;facedim>=0;facedim--){
-							for(auto face :simplexList[facedim]){
+				//	for(int facedim = dim;facedim>=0;facedim--)
+				      if(dim>0){
+							for(auto face :simplexList[dim-1]){
 								bool gabriel = true;
 								std::vector<unsigned> points_check(simplex->simplex.size());
 								std::vector<unsigned> guilty_points_check;
