@@ -37,9 +37,8 @@ upscalePipe::upscalePipe(){
 //		
 //
 void upscalePipe::runPipe(pipePacket &inData){
-	utils ut;
-	
-	std::vector<std::pair<std::set<unsigned>,std::vector<bettiBoundaryTableEntry>>> upscaleBoundaries;
+
+	std::vector<std::pair<std::set<unsigned>, std::vector<bettiBoundaryTableEntry>>> upscaleBoundaries;
 	
 	//Handle two types of boundary sets coming in -
 	//		1. Sets with only 2 centroids, indicating a minDist
@@ -50,42 +49,38 @@ void upscalePipe::runPipe(pipePacket &inData){
 	//First, filter and join all of our boundaries by union of sets
 	
 	for(auto pi = inData.bettiTable.begin(); pi != inData.bettiTable.end(); pi++){
-		std::cout << (*pi).bettiDim << ",\t" << (*pi).birth << ",\t" << (*pi).death << ",\t";
-		ut.print1DVector((*pi).boundaryPoints);
+		std::cout << pi->bettiDim << ",\t" << pi->birth << ",\t" << pi->death << ",\t";
+		ut.print1DVector(pi->boundaryPoints);
 		
 		//Check if this interval lives for longer than scalarV
-		if(((*pi).death - (*pi).birth) > scalarV && (*pi).bettiDim > 0){
+		if((pi->death - pi->birth) > scalarV && pi->bettiDim > 0){
 			
 			//Check if there is a set intersection with any of the existing boundary sets
 			bool isFound = false;
-			int index = 0;
-			int firstIntersect = -1;
+			auto firstIntersect = upscaleBoundaries.begin();
 			
 			for(auto bp = upscaleBoundaries.begin(); bp != upscaleBoundaries.end(); bp++){
-				if(ut.setIntersect((*bp).first, (*pi).boundaryPoints, true).size() > 0){
+				if(ut.setIntersect(bp->first, pi->boundaryPoints, true).size() > 0){
 					
 					if(!isFound){
-						upscaleBoundaries[index].first = ut.setUnion((*bp).first, (*pi).boundaryPoints);
-						//for(auto bp : pi.boundaryPoints)
-						//	upscaleBoundaries[i].insert(bp);
-						(*bp).second.push_back((*pi));
+						bp->first = ut.setUnion(bp->first, pi->boundaryPoints);
+						bp->second.push_back(*pi);
+
 						isFound = true;
-						firstIntersect = index;
+						firstIntersect = bp;
 					} else {
-						upscaleBoundaries[firstIntersect].first = ut.setUnion((*bp).first, upscaleBoundaries[firstIntersect].first);
-						
-						for(auto betti : (*bp).second)
-							upscaleBoundaries[firstIntersect].second.push_back(betti);
+						firstIntersect->first = ut.setUnion(bp->first, firstIntersect->first);
+						firstIntersect->second.insert(firstIntersect->second.end(), bp->second.begin(), bp->second.end());
 						
 						upscaleBoundaries.erase(bp--);
 					}
 						
 				}
-				index++;
 			}
+
 			if(!isFound){
 				std::vector<bettiBoundaryTableEntry> a = {(*pi)};
-				upscaleBoundaries.push_back(std::make_pair((*pi).boundaryPoints, a));
+				upscaleBoundaries.push_back(std::make_pair(pi->boundaryPoints, a));
 			}
 			
 			inData.bettiTable.erase(pi--);
@@ -111,11 +106,10 @@ void upscalePipe::runPipe(pipePacket &inData){
 			}
 		} else {
 			
-			
 			auto curwD = pipePacket(subConfigMap,subConfigMap["complexType"]);//args, args["complexType"]);
 			
 			for(unsigned index = 0; index < inData.centroidLabels.size(); index++){
-				
+
 				if(bound.first.find(inData.centroidLabels[index]) != bound.first.end()){
 					curwD.workData.push_back(inData.inputData[index]);
 				}
@@ -147,35 +141,28 @@ void upscalePipe::runPipe(pipePacket &inData){
 }
 
 
-void upscalePipe::runSubPipeline(pipePacket& wrData)
-{
+void upscalePipe::runSubPipeline(pipePacket& wrData){
     if(wrData.workData.size() == 0)
         return;
 
     outputData(wrData);
-    
-    
 
-	std::string pipeFuncts = "distMatrix.neighGraph.rips.fast";
+	std::string pipeFuncts = "distMatrix.neighGraph.incrementalPersistence";
     auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
 
     //For each '.' separated pipeline function (count of '.' + 1 -> lim)
-    for(unsigned i = 0; i < lim; i++)
-    {
+    for(unsigned i = 0; i < lim; i++){
         auto curFunct = pipeFuncts.substr(0,pipeFuncts.find('.'));
         pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
 
         //Build the pipe component, configure and run
-        auto cp = basePipe::newPipe(curFunct, "simplexTree");
+        auto cp = basePipe::newPipe(curFunct, subConfigMap["complexType"]);
 
         //Check if the pipe was created and configure
-        if(cp != 0 && cp->configPipe(subConfigMap))
-        {
+        if(cp != 0 && cp->configPipe(subConfigMap)){
             //Run the pipe function (wrapper)
             cp->runPipeWrapper(wrData);
-        }
-        else
-        {
+        } else{
             std::cout << "LHF : Failed to configure pipeline: " << curFunct << std::endl;
         }
     }
