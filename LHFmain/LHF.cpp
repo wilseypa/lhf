@@ -8,20 +8,16 @@
 #include <thread>
 #include <string>
 
-void LHF::outputBettis(std::map<std::string, std::string> args, pipePacket &wD)
-{
+void LHF::outputBettis(std::map<std::string, std::string> args, pipePacket &wD){
 	//Output the data using writeOutput library
 	auto pipe = args.find("outputFile");
-	if (pipe != args.end())
-	{
-		if (args["outputFile"] == "console")
-		{
+	if (pipe != args.end()){
+		if (args["outputFile"] == "console"){
 			writeOutput::writeConsole(wD.bettiTable);
 
 			//Check if debug mode for runLog, stats
 			pipe = args.find("debug");
-			if (pipe != args.end() && args["debug"] == "1")
-			{
+			if (pipe != args.end() && args["debug"] == "1"){
 				writeOutput::writeRunLog(wD.runLog, args["outputFile"]);
 				writeOutput::writeStats(wD.stats, args["outputFile"]);
 			}
@@ -32,8 +28,7 @@ void LHF::outputBettis(std::map<std::string, std::string> args, pipePacket &wD)
 
 			//Check if debug mode for runLog, stats
 			pipe = args.find("debug");
-			if (pipe != args.end() && args["debug"] == "1")
-			{
+			if (pipe != args.end() && args["debug"] == "1"){
 				writeOutput::writeRunLog(wD.runLog, args["outputFile"]);
 				writeOutput::writeStats(wD.stats, args["outputFile"]);
 			}
@@ -41,15 +36,13 @@ void LHF::outputBettis(std::map<std::string, std::string> args, pipePacket &wD)
 	}
 }
 
-void LHF::runPipeline(std::map<std::string, std::string> args, pipePacket &wD)
-{
+void LHF::runPipeline(std::map<std::string, std::string> args, pipePacket &wD){
 	// Begin processing parts of the pipeline
 	// DataInput -> A -> B -> ... -> DataOutput
 	// Parsed by "." -> i.e. A.B.C.D
 	auto pipe = args.find("pipeline");
 
-	if (pipe != args.end())
-	{
+	if (pipe != args.end()){
 
 		auto pipeFuncts = std::string(args["pipeline"]);
 		auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
@@ -58,8 +51,7 @@ void LHF::runPipeline(std::map<std::string, std::string> args, pipePacket &wD)
 		auto startTime = std::chrono::high_resolution_clock::now();
 
 		//For each '.' separated pipeline function (count of '.' + 1 -> lim)
-		for (unsigned i = 0; i < lim; i++)
-		{
+		for (unsigned i = 0; i < lim; i++){
 
 			auto curFunct = pipeFuncts.substr(0, pipeFuncts.find('.'));
 			pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
@@ -67,13 +59,11 @@ void LHF::runPipeline(std::map<std::string, std::string> args, pipePacket &wD)
 			auto cp = basePipe::newPipe(curFunct, args["complexType"]);
 
 			//Check if the pipe was created and configure
-			if (cp != 0 && cp->configPipe(args))
-			{
+			if (cp != 0 && cp->configPipe(args)){
 				//Run the pipe function (wrapper)
 				cp->runPipeWrapper(wD);
 			}
-			else
-			{
+			else{
 				std::cout << "LHF runPipeline: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 			}
 
@@ -90,8 +80,7 @@ void LHF::runPipeline(std::map<std::string, std::string> args, pipePacket &wD)
 		wD.runLog += writeOutput::logRun(args, wD.ident, wD.getStats(), std::to_string(elapsed.count() / 1000.0));
 	}
 	//If the pipeline was undefined...
-	else
-	{
+	else{
 		std::cout << "LHF runPipeline: Failed to find a suitable pipeline, exiting..." << std::endl;
 		return;
 	}
@@ -99,29 +88,24 @@ void LHF::runPipeline(std::map<std::string, std::string> args, pipePacket &wD)
 	outputBettis(args, wD);
 }
 
-void LHF::processDataWrapper(std::map<std::string, std::string> args, pipePacket &wD)
-{
+void LHF::processDataWrapper(std::map<std::string, std::string> args, pipePacket &wD){
 
 	//Start with the preprocessing function, if enabled
 	auto pre = args["preprocessor"];
-	if (pre != "")
-	{
+	if (pre != ""){
 		auto prePipe = preprocessor::newPreprocessor(pre);
 
-		if (prePipe != 0 && prePipe->configPreprocessor(args))
-		{
+		if (prePipe != 0 && prePipe->configPreprocessor(args)){
 			prePipe->runPreprocessorWrapper(wD);
 		}
-		else
-		{
+		else{
 			std::cout << "LHF processData: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 		}
 		delete prePipe;
 	}
 }
 
-std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, std::string> args, std::vector<unsigned> &centroidLabels, std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> &partitionedData, int displacement)
-{
+std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, std::string> args, std::vector<unsigned> &centroidLabels, std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> &partitionedData, int displacement){
 	//		Parameters
 	auto threshold = std::atoi(args["threshold"].c_str());
 	auto maxEpsilon = std::atof(args["epsilon"].c_str());
@@ -140,8 +124,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 	//		Process fuzzy partitions in order of size
 	std::vector<std::pair<unsigned, unsigned>> sortpartitions;
 
-	for (int i = 0; i < partitionedData.second.size(); i++)
-	{
+	for (int i = 0; i < partitionedData.second.size(); i++){
 		sortpartitions.push_back(std::make_pair(partitionedData.second[i].size(), i));
 	}
 
@@ -156,25 +139,34 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 	//3. Process each partition using OpenMP to handle multithreaded scheduling
 	std::cout << "Running with " << threads << " threads" << std::endl;
 
-//		This begins the parallel region; # threads are spun up within these braces
-#pragma omp parallel num_threads(threads)
+	//Args, but without the upscale pipe in pipeline so that we don't upscale the regional intervals
+	std::map<std::string, std::string> argsNoUpscale = args;
+	auto pipe = args.find("pipeline");
+	if(pipe != args.end()){
+		std::string pipeline = args["pipeline"];
+		if(pipeline.length() > 8 && pipeline.substr(pipeline.length()-8) == ".upscale"){
+			pipeline = pipeline.substr(0, pipeline.length()-8);
+			argsNoUpscale["pipeline"] = pipeline;
+		}
+	}
+
+	//		This begins the parallel region; # threads are spun up within these braces
+	#pragma omp parallel num_threads(threads)
 	{
 
 		//		Get the thread number with OpenMP - prevents simultaneous accesses to the betti tables
 		int np = omp_get_thread_num();
 
-//		Schedule each thread to compute one of the partitions in any order
-//			When finished, thread will grab next iteration available
-#pragma omp for schedule(dynamic)
-		for (int p = partitionedData.second.size() - 1; p >= 0; p--)
-		{
+		//		Schedule each thread to compute one of the partitions in any order
+		//			When finished, thread will grab next iteration available
+		#pragma omp for schedule(dynamic)
+		for (int p = partitionedData.second.size() - 1; p >= 0; p--){
 			unsigned z = sortpartitions[p].second;
 
 			//Check if we are running the centroid dataset (there's no label associated)
 
 			//---------------------------------TODO: FIX WITH BOTH VERSIONS -------------------------------------------------------------
-			if (partitionedData.second[z].size() == clusters && (args["mode"] == "mpi" || z == partitionedData.second.size() - 1))
-			{
+			if (partitionedData.second[z].size() == clusters && (args["mode"] == "mpi" || z == partitionedData.second.size() - 1)){
 
 				std::cout << "Running centroids with " << clusters << " clusters; id = " << id << std::endl;
 
@@ -190,8 +182,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 
 				//Run against the original dataset
 
-				if (partitionedData.second[z].size() > 0)
-				{
+				if (partitionedData.second[z].size() > 0){
 					iterwD.inputData = partitionedData.second[z];
 					iterwD.workData = partitionedData.second[z];
 					runPipeline(centArgs, iterwD);
@@ -202,9 +193,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 					std::cout << "skipping full data, no centroids" << std::endl;
 
 				//Determine if we need to upscale any additional boundaries based on the output of the centroid approximated PH
-			}
-			else if (sortpartitions[p].first > 0)
-			{ //Nonempty partition
+			} else if (sortpartitions[p].first > 0){ //Nonempty partition
 
 				//		Clone the pipePacket to prevent shared memory race conditions
 				auto curwD = pipePacket(args, args["complexType"]);
@@ -218,7 +207,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 				if((args["mode"] == "iter" || args["mode"] == "iterUpscale") && partitionedData.second[z].size() >= threshold){
 					curwD.bettiTable = processParallelWrapper(args, curwD);
 				} else{
-					runPipeline(args, curwD);
+					runPipeline(argsNoUpscale, curwD);
 				}
 				
 				runLogs[np] += curwD.runLog;
@@ -233,8 +222,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 				//Remap the boundary indices into the original point space
 				curwD.bettiTable = utils::mapPartitionIndexing(partitionedData.first[z], curwD.bettiTable);
 
-				for (auto betEntry : curwD.bettiTable)
-				{
+				for (auto betEntry : curwD.bettiTable){
 					auto boundIter = betEntry.boundaryPoints.begin();
 
 					//REWRITE::
@@ -249,21 +237,17 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 					//		c. If neither of the indices are less than the partition size, remove
 					//	3. Once all entries have been iterated - if (b) was traversed there is a connection outside to another partition
 					//		-If (b) was not traversed, need to add a {0, maxEps} entry for the independent component (Check this?)
-					if (betEntry.boundaryPoints.size() > 0 && centroidLabels[*boundIter] == displacement + z)
-					{
-						if (betEntry.bettiDim == 0)
-						{
+					if (betEntry.boundaryPoints.size() > 0 && centroidLabels[*boundIter] == displacement + z){
+						if (betEntry.bettiDim == 0){
 							boundIter++;
 
 							//Check if second entry is in the partition
-							if (centroidLabels[*boundIter] == displacement + z)
-							{
+							if (centroidLabels[*boundIter] == displacement + z){
 								h0count++;
 								partBettiTable[np].push_back(betEntry);
 							}
 						}
-						else
-						{
+						else{
 							partBettiTable[np].push_back(betEntry);
 						}
 					}
@@ -271,19 +255,15 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 
 				unsigned additionalExternal = std::count(centroidLabels.begin(), centroidLabels.end(), displacement + z) - h0count;
 
-				for (auto betEntry : curwD.bettiTable)
-				{
+				for (auto betEntry : curwD.bettiTable){
 					auto boundIter = betEntry.boundaryPoints.begin();
 
-					if (betEntry.boundaryPoints.size() > 0 && centroidLabels[*boundIter] == displacement + z)
-					{
-						if (betEntry.bettiDim == 0)
-						{
+					if (betEntry.boundaryPoints.size() > 0 && centroidLabels[*boundIter] == displacement + z){
+						if (betEntry.bettiDim == 0){
 							boundIter++;
 
 							//Check if second entry is not in the partition
-							if (centroidLabels[*boundIter] != displacement + z && additionalExternal > 0)
-							{
+							if (centroidLabels[*boundIter] != displacement + z && additionalExternal > 0){
 								additionalExternal--;
 								partBettiTable[np].push_back(betEntry);
 							}
@@ -318,12 +298,10 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 
 	//		Merge bettis from the centroid based data
 	// ---------------------------------- TODO: Fix for nprocs --------------------------------------
-	if (id == nprocs - 1)
-	{
-		for (auto betEntry : iterwD.bettiTable)
-		{
-			if (betEntry.bettiDim > 0)
-			{
+	if(id == nprocs - 1){
+		for(auto betEntry : iterwD.bettiTable){
+			betEntry.isCentroid = true;
+			if(betEntry.bettiDim > 0){
 				mergedBettiTable.push_back(betEntry);
 			}
 		}
@@ -372,13 +350,11 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallelWrapper(std::map<std::s
 	iterwD.workData = wD.inputData;
 
 	//2. Partition the source point cloud separate datasets accordingly
-	if (runPartition)
-	{
+	if (runPartition){
 		//		Run preprocessor pipeline to partition
 		processDataWrapper(args, iterwD);
 	}
-	else
-	{
+	else{
 		//		Copy partition data from source
 		iterwD.centroidLabels = wD.centroidLabels;
 	}
@@ -389,8 +365,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallelWrapper(std::map<std::s
 
 	//		Count the size of each partition for identifying source partitions when looking at the betti table results
 	std::vector<unsigned> binCounts;
-	for (unsigned a = 0; a < clusters; a++)
-	{
+	for (unsigned a = 0; a < clusters; a++){
 		binCounts.push_back(std::count(iterwD.centroidLabels.begin(), iterwD.centroidLabels.end(), a));
 	}
 	std::cout << "Bin Counts: ";
@@ -418,8 +393,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processDistributedWrapper(std::map<std
 	auto rs = readInput();
 
 	// check if 1 process only
-	if (nprocs == 1)
-	{
+	if (nprocs == 1){
 		//Read our input data
 		wD.inputData = rs.readCSV(args["inputFile"]);
 		wD.workData = wD.inputData;
@@ -475,8 +449,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processDistributedWrapper(std::map<std
 	unsigned boundary_size = 0;
 
 	//Check if we are the master process for upscaling
-	if (id == 0)
-	{
+	if (id == 0){
 
 		//Read our input data
 		wD.inputData = rs.readCSV(args["inputFile"]);
@@ -518,8 +491,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processDistributedWrapper(std::map<std
 				sdatalabel.push_back(b);
 
 		//intitalizing to 0
-		for (int i = 0; i < nprocs; i++)
-		{
+		for (int i = 0; i < nprocs; i++){
 			scounts[i] = 0;
 			displs[i] = 0;
 			scountslabel[i] = 0;
@@ -528,20 +500,15 @@ std::vector<bettiBoundaryTableEntry> LHF::processDistributedWrapper(std::map<std
 
 		//distributing partitions sizes in scounts and scountslabel
 		int temp = 0, k = 0;
-		for (auto a : partitionsize)
-		{
-			if (k < firstk)
-			{
-				if (temp >= minPartitions + 1)
-				{
+		for (auto a : partitionsize){
+			if (k < firstk){
+				if (temp >= minPartitions + 1){
 					temp = 0;
 					k++;
 				}
 			}
-			else
-			{
-				if (temp >= minPartitions)
-				{
+			else{
+				if (temp >= minPartitions){
 					temp = 0;
 					k++;
 				}
@@ -557,8 +524,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processDistributedWrapper(std::map<std
 		auto bd = scounts[0];
 
 		// find the maximum buffer size required for partition + offset for each partition
-		for (auto a : scounts)
-		{
+		for (auto a : scounts){
 			if (k > 0)
 				displs[k] = bd + displs[k - 1];
 			k++;
@@ -571,8 +537,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processDistributedWrapper(std::map<std
 		k = 0;
 		auto bl = scountslabel[0];
 		// find maximum buffer size required by label partition	+ offset for each partition
-		for (auto a : scountslabel)
-		{
+		for (auto a : scountslabel){
 			if (k > 0)
 				displslabel[k] = bl + displslabel[k - 1];
 			k++;
@@ -618,12 +583,10 @@ std::vector<bettiBoundaryTableEntry> LHF::processDistributedWrapper(std::map<std
 	receivedData = (double *)malloc(maxsize * sizeof(double));
 	receivedDataLabel = (unsigned *)malloc(maxsizelabel * sizeof(unsigned));
 	//Initializing buffers to zeros
-	for (int i = 0; i < maxsize; i++)
-	{
+	for (int i = 0; i < maxsize; i++){
 		receivedData[i] = 0.0;
 	}
-	for (int i = 0; i < maxsizelabel; i++)
-	{
+	for (int i = 0; i < maxsizelabel; i++){
 		receivedDataLabel[i] = 0;
 	}
 
@@ -632,8 +595,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processDistributedWrapper(std::map<std
 	// scatter label information
 	MPI_Scatterv(&sdatalabel[0], scountslabel, displslabel, MPI_UNSIGNED, receivedDataLabel, maxsizelabel, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
 
-	if (minPartitions > 0)
-	{
+	if (minPartitions > 0){
 
 		int displacement = 0; // offset for each processes to read partitions
 		if (id < firstk)
@@ -649,14 +611,11 @@ std::vector<bettiBoundaryTableEntry> LHF::processDistributedWrapper(std::map<std
 
 		//Each process separate their data partitions
 
-		for (int i = 0; i < minPartitions; i++)
-		{
+		for (int i = 0; i < minPartitions; i++){
 			std::vector<std::vector<double>> partition;
-			for (int j = 0; j < partitionsize[displacement + i]; j++)
-			{
+			for (int j = 0; j < partitionsize[displacement + i]; j++){
 				std::vector<double> row;
-				for (int k = 0; k < dimension; k++)
-				{
+				for (int k = 0; k < dimension; k++){
 					row.push_back(receivedData[counter++]);
 				}
 
@@ -668,11 +627,9 @@ std::vector<bettiBoundaryTableEntry> LHF::processDistributedWrapper(std::map<std
 
 		//Each process separate thier label partitions
 		counter = 0;
-		for (int i = 0; i < minPartitions; i++)
-		{
+		for (int i = 0; i < minPartitions; i++){
 			std::vector<unsigned> partitionlabel;
-			for (int j = 0; j < partitionsize[displacement + i]; j++)
-			{
+			for (int j = 0; j < partitionsize[displacement + i]; j++){
 				partitionlabel.push_back(receivedDataLabel[counter++]);
 			}
 			labels.push_back(partitionlabel);
@@ -691,8 +648,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processDistributedWrapper(std::map<std
 		std::vector<bettiBoundaryTableEntry> mergedBettiTable = processParallel(args, originalLabels, partitionedData, displacement);
 
 		//Serialize bettie table to send to master process for merging
-		for (auto bet : mergedBettiTable)
-		{
+		for (auto bet : mergedBettiTable){
 			betti_dim.push_back(bet.bettiDim);
 			betti_birth.push_back(bet.birth);
 			betti_death.push_back(bet.death);
@@ -705,8 +661,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processDistributedWrapper(std::map<std
 		for (auto a : betti_boundarysize)
 			boundary_size += a;
 	}
-	else
-	{
+	else{
 		std::cout << "**********************\n"
 				  << std::endl;
 	}
@@ -750,8 +705,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processDistributedWrapper(std::map<std
 	displsgb[0] = 0;
 
 	//Calculate offsets
-	for (int i = 1; i <= nprocs; i++)
-	{
+	for (int i = 1; i <= nprocs; i++){
 		displsgb[i] = displsgb[i - 1] + betties_table_boundary_size[i - 1];
 	}
 
@@ -759,13 +713,11 @@ std::vector<bettiBoundaryTableEntry> LHF::processDistributedWrapper(std::map<std
 	//Gather Boundary information
 	MPI_Gatherv(&betti_boundaries[0], boundary_size, MPI_UNSIGNED, &recvbuffboundaries[0], &betties_table_boundary_size[0], &displsgb[0], MPI_UNSIGNED, 0, MPI_COMM_WORLD);
 
-	if (id == 0)
-	{
+	if (id == 0){
 		//master prune out the duplicates across slaves.
 
 		int beg = 0;
-		for (int i = 0; i < totalsize; i++)
-		{
+		for (int i = 0; i < totalsize; i++){
 			bettiBoundaryTableEntry bettiEntry;
 			bettiEntry.bettiDim = recvbuffdim[i];
 			bettiEntry.birth = recvbuffbirth[i];
@@ -775,10 +727,8 @@ std::vector<bettiBoundaryTableEntry> LHF::processDistributedWrapper(std::map<std
 
 			beg += recvbuffboundaries_size[i];
 			bool found = false;
-			for (auto curEntry : finalMergedBettiTable)
-			{
-				if (bettiEntry.death == curEntry.death && bettiEntry.boundaryPoints == curEntry.boundaryPoints)
-				{
+			for (auto curEntry : finalMergedBettiTable){
+				if (bettiEntry.death == curEntry.death && bettiEntry.boundaryPoints == curEntry.boundaryPoints){
 					found = true;
 				}
 			}
@@ -791,11 +741,9 @@ std::vector<bettiBoundaryTableEntry> LHF::processDistributedWrapper(std::map<std
 	return finalMergedBettiTable;
 }
 
-extern "C"
-{
+extern "C"{
 
-	void pyRunWrapper(const int argc, char *argv, const double *pointCloud)
-	{
+	void pyRunWrapper(const int argc, char *argv, const double *pointCloud){
 
 		//std::cout << std::endl << "argc: " << argc << std::endl;
 		//First we need to convert arguments from char* to map
@@ -804,11 +752,9 @@ extern "C"
 
 		//Split arguments into list
 		std::string tempstr = "";
-		for (auto i = 0; i < argc; i++)
-		{
+		for (auto i = 0; i < argc; i++){
 			//Check for space (32)
-			if (argv[i] == 32)
-			{
+			if (argv[i] == 32){
 				rawArgs.push_back(tempstr);
 				tempstr = "";
 			}
@@ -826,11 +772,9 @@ extern "C"
 
 		std::vector<std::vector<double>> data(dataSize, std::vector<double>(dataDim));
 
-		for (auto row = 0; row < dataSize; row++)
-		{
+		for (auto row = 0; row < dataSize; row++){
 
-			for (auto dim = 0; dim < dataDim; dim++)
-			{
+			for (auto dim = 0; dim < dataDim; dim++){
 
 				data[row][dim] = pointCloud[row * dim + dim];
 			}
@@ -850,32 +794,27 @@ extern "C"
 		argParser::setPipeline(args);
 
 		//If data was found in the inputFile
-		if (wD.inputData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi")
-		{
+		if (wD.inputData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
 
 			if(args["mode"] == "reduced" || args["mode"] == "iterUpscale" || args["mode"] == "iter"){	
 				wD.bettiTable = lhflib.processParallelWrapper(args,wD);
 
 				sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
 			}
-			else
-			{
+			else{
 				lhflib.processDataWrapper(args, wD);
 				lhflib.runPipeline(args, wD);
 			}
 		}
-		else
-		{
+		else{
 			argParser::printUsage();
 		}
 
-		if ((args["debug"] == "1" || args["debug"] == "true") && wD.bettiTable.size() > 0)
-		{
+		if ((args["debug"] == "1" || args["debug"] == "true") && wD.bettiTable.size() > 0){
 			std::cout << std::endl
 					  << "_______Merged BETTIS_______" << std::endl;
 
-			for (auto a : wD.bettiTable)
-			{
+			for (auto a : wD.bettiTable){
 				std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
 				utils::print1DVector(a.boundaryPoints);
 			}
@@ -889,8 +828,7 @@ extern "C"
 		return;
 	}
 
-	PRAP *pyRunWrapper2(int argc, char *argv[], const double *pointCloud)
-	{
+	PRAP *pyRunWrapper2(int argc, char *argv[], const double *pointCloud){
 
 		auto args = argParser::parse(argc, argv);
 
@@ -931,31 +869,26 @@ extern "C"
 		argParser::setPipeline(args);
 
 		//If data was found in the inputFile
-		if (wD.inputData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi")
-		{
+		if (wD.inputData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
 
 			if(args["mode"] == "reduced" || args["mode"] == "iterUpscale" || args["mode"] == "iter"){	
 				wD.bettiTable = lhflib.processParallelWrapper(args,wD);
 				sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
 			}
-			else
-			{
+			else{
 				lhflib.processDataWrapper(args, wD);
 				lhflib.runPipeline(args, wD);
 			}
 		}
-		else
-		{
+		else{
 			argParser::printUsage();
 		}
 
-		if ((args["debug"] == "1" || args["debug"] == "true") && wD.bettiTable.size() > 0)
-		{
+		if ((args["debug"] == "1" || args["debug"] == "true") && wD.bettiTable.size() > 0){
 			std::cout << std::endl
 					  << "_______Merged BETTIS_______" << std::endl;
 
-			for (auto a : wD.bettiTable)
-			{
+			for (auto a : wD.bettiTable){
 				std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
 				utils::print1DVector(a.boundaryPoints);
 			}
@@ -970,8 +903,7 @@ extern "C"
 
 		//PRET *retStruct2 = (PRET*)malloc(sizeof(PRET) * wD.size());
 
-		for (auto i = 0; i < wD.bettiTable.size(); i++)
-		{
+		for (auto i = 0; i < wD.bettiTable.size(); i++){
 			retStruct[i].dim = wD.bettiTable[i].bettiDim;
 			retStruct[i].birth = wD.bettiTable[i].birth;
 			retStruct[i].death = wD.bettiTable[i].death;
@@ -981,10 +913,8 @@ extern "C"
 		double *inputData_retStruct = (double *)malloc(sizeof(double) * (wD.inputData.size() * wD.inputData[0].size()));
 
 		int sizof = 0;
-		for (int i = 0; i < wD.inputData.size(); i++)
-		{
-			for (int j = 0; j < wD.inputData[i].size(); j++)
-			{
+		for (int i = 0; i < wD.inputData.size(); i++){
+			for (int j = 0; j < wD.inputData[i].size(); j++){
 				// std::cout << sizof << " = " << wD.inputData[i][j] << std::endl;
 				inputData_retStruct[sizof] = wD.inputData[i][j];
 				sizof++;
@@ -1000,10 +930,8 @@ extern "C"
 		double *distMatrix_retStruct = (double *)malloc(sizeof(double) * (wD.distMatrix.size() * wD.distMatrix.size()));
 
 		sizof = 0;
-		for (int i = 0; i < wD.distMatrix.size(); i++)
-		{
-			for (int j = 0; j < wD.distMatrix[i].size(); j++)
-			{
+		for (int i = 0; i < wD.distMatrix.size(); i++){
+			for (int j = 0; j < wD.distMatrix[i].size(); j++){
 				// if(sizof % 100 == 0){
 				// 	std::cout << sizof << " = " << wD.distMatrix[i][j] << std::endl;
 				// }
@@ -1022,8 +950,7 @@ extern "C"
 
 		sizof = 0;
 		// std::cout << wD.centroidLabels.size() << std::endl;
-		for (int i = 0; i < wD.centroidLabels.size(); i++)
-		{
+		for (int i = 0; i < wD.centroidLabels.size(); i++){
 			// std::cout << sizof << " = " << wD.centroidLabels[i] << std::endl;
 			centroidLabels_retStruct[sizof] = wD.centroidLabels[i];
 			sizof++;
@@ -1034,11 +961,9 @@ extern "C"
 		double *workData_retStruct = (double *)malloc(sizeof(double) * (wD.workData.size() * wD.workData[0].size()));
 
 		sizof = 0;
-		for (int i = 0; i < wD.workData.size(); i++)
-		{
+		for (int i = 0; i < wD.workData.size(); i++){
 			// std::cout << "size() = "  << wD.workData[i].size() << std::endl;
-			for (int j = 0; j < wD.workData[i].size(); j++)
-			{
+			for (int j = 0; j < wD.workData[i].size(); j++){
 				// std::cout << sizof << " = " << wD.workData[i][j] << std::endl;
 				workData_retStruct[sizof] = wD.workData[i][j];
 				// std::cout << sizof << " = " << workData_retStruct[sizof] << std::endl;
@@ -1052,18 +977,15 @@ extern "C"
 
 		int n = wD.stats.length();
 
-		if (wD.stats.empty())
-		{
+		if (wD.stats.empty()){
 		}
-		else
-		{
+		else{
 			// std::cout << wD.stats << std::endl;
 			char stats_char_array[n + 1];
 
 			strcpy(stats_char_array, wD.stats.c_str());
 
-			for (int i = 0; i < n; i++)
-			{
+			for (int i = 0; i < n; i++){
 				// std::cout << stats_char_array[i];
 				stats_retStruct[i] = stats_char_array[i];
 			}
@@ -1072,11 +994,9 @@ extern "C"
 
 		char *runLog_retStruct = (char *)malloc(sizeof(char) * wD.runLog.length());
 
-		if (wD.runLog.empty())
-		{
+		if (wD.runLog.empty()){
 		}
-		else
-		{
+		else{
 			// std::cout << wD.runLog << std::endl;
 			n = wD.runLog.length();
 
@@ -1084,19 +1004,16 @@ extern "C"
 
 			strcpy(runLog_char_array, wD.runLog.c_str());
 
-			for (int i = 0; i < n; i++)
-			{
+			for (int i = 0; i < n; i++){
 				// std::cout << runLog_char_array[i];
 				runLog_retStruct[i] = runLog_char_array[i];
 			}
 		}
 
 		char *ident_retStruct = (char *)malloc(sizeof(char) * wD.ident.length());
-		if (wD.ident.empty())
-		{
+		if (wD.ident.empty()){
 		}
-		else
-		{
+		else{
 			std::cout << wD.ident << std::endl;
 
 			char *ident_retStruct = (char *)malloc(sizeof(char) * wD.ident.length());
@@ -1107,8 +1024,7 @@ extern "C"
 
 			strcpy(ident_char_array, wD.ident.c_str());
 
-			for (int i = 0; i < n; i++)
-			{
+			for (int i = 0; i < n; i++){
 				// std::cout << ident_char_array[i];
 				ident_retStruct[i] = ident_char_array[i];
 			}
@@ -1134,35 +1050,27 @@ extern "C"
 		b->workData_size = wD.workData.size();
 		b->inputData = inputData_retStruct;
 		b->distMatrix = distMatrix_retStruct;
-		if (wD.centroidLabels.size() == 0)
-		{
+		if (wD.centroidLabels.size() == 0){
 			// centroidLabels_retStruct = ;
 			b->centroidLabels = centroidLabels_retStruct;
 		}
-		else
-		{
+		else{
 			b->centroidLabels = centroidLabels_retStruct;
 		}
 		b->workData = workData_retStruct;
-		if (wD.stats.empty())
-		{
+		if (wD.stats.empty()){
 		}
-		else
-		{
+		else{
 			b->stats = stats_retStruct;
 		}
-		if (wD.runLog.empty())
-		{
+		if (wD.runLog.empty()){
 		}
-		else
-		{
+		else{
 			b->runLog = runLog_retStruct;
 		}
-		if (wD.ident.empty())
-		{
+		if (wD.ident.empty()){
 		}
-		else
-		{
+		else{
 			b->ident = ident_retStruct;
 		}
 		// std::cout << "inputData_size-> " << wD.inputData.size() << std::endl;

@@ -44,6 +44,7 @@ struct bettiBoundaryTableEntry{
 	double birth;
 	double death;
 	std::set<unsigned> boundaryPoints;
+	bool isCentroid = false;
 
 	double getSize(){
 		return (sizeof(double)*2) + ((boundaryPoints.size() + 1) * sizeof(unsigned));
