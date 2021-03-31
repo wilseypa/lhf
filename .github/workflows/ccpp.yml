@@ -80,6 +80,8 @@ jobs:
           make -j
           sudo make install
           
+    
+          
     # Checkout v2 : https://github.com/actions/checkout
     - uses: actions/checkout@v2
       
@@ -98,3 +100,31 @@ jobs:
     - name: cppcheck
       if:   runner.os == 'Linux'
       run:  cppcheck --enable=all --force .
+
+    - name: Set up Python
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install numpy
+        
+    - name: Build manylinux Python wheels
+      if:   runner.os == 'Linux'
+      uses: RalfG/python-wheels-manylinux-build@v0.3.3-manylinux2010_x86_64
+      with:
+        python-versions: 'cp36-cp36m cp37-cp37m'
+        build-requirements: 'cython numpy'
+        system-packages: 'lrzip-devel zlib-devel'
+        pre-build-command: ''
+        package-path: 'pyLHF'
+        pip-wheel-args: '-w ./dist --no-deps'
+        
+    - name: Publish wheels to PyPI
+      if:   runner.os == 'Linux'
+      run:  ls pyLHF/
+
+
+
