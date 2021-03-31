@@ -1,12 +1,11 @@
-name: C/C++ CI
+name: LHF/pyLHF release
 
 on:
-  push:
+  release:
     branches:
       - master
-      - MPI_Development
-      - cmake_development
-      - parUpscale
+  push:
+    branches:
       - sharedLHF
 
 jobs:
@@ -16,27 +15,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        mpi:
-          - mpich
-          - openmpi
-          - msmpi
         os:
           - ubuntu-latest
           - macos-latest
           - windows-latest
         exclude:
-          - os: ubuntu-latest
-            mpi: msmpi
           - os: macos-latest
-            mpi: msmpi
-          - os: macos-latest
-            mpi: mpich
           - os: windows-latest
-            mpi: mpich
-          - os: windows-latest
-            mpi: msmpi
-          - os: windows-latest
-            mpi: openmpi
             ##TODO: Test with windows-latest and msmpi
     
     steps:

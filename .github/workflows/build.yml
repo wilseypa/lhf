@@ -1,5 +1,4 @@
-
-name: test
+name: C++ CI build/test
 
 on:
   push:
