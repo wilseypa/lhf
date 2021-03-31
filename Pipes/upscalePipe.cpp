@@ -45,7 +45,7 @@ void upscalePipe::runPipe(pipePacket &inData){
 	//		2. Sets with >2 centroids, indicating a feature for upscaling
 	
 	std::cout << "Running upscale pipe" << std::endl;
-	
+
 	//First, filter and join all of our boundaries by union of sets
 	
 	for(auto pi = inData.bettiTable.begin(); pi != inData.bettiTable.end(); pi++){
@@ -106,7 +106,7 @@ void upscalePipe::runPipe(pipePacket &inData){
 			}
 		} else {
 			
-			auto curwD = pipePacket(subConfigMap,subConfigMap["complexType"]);//args, args["complexType"]);
+			auto curwD = pipePacket(subConfigMap, subConfigMap["complexType"]);
 			
 			for(unsigned index = 0; index < inData.centroidLabels.size(); index++){
 				if(bound.first.find(inData.centroidLabels[index]) != bound.first.end()){
@@ -195,10 +195,10 @@ bool upscalePipe::configPipe(std::map<std::string, std::string> &configMap){
 	
 	ut = utils(strDebug, outputFile);
 	
-	//pipe = configMap.find("scalarV");
-	//if(pipe != configMap.end())
-	//	scalarV = std::atof(configMap["scalarV"].c_str());
-	//else return false;
+	pipe = configMap.find("scalarV");
+	if(pipe != configMap.end())
+		scalarV = std::atof(configMap["scalarV"].c_str());
+	else return false;
 	
 	configured = true;
 	ut.writeDebug("upscale","Configured with parameters { debug: " + strDebug + ", outputFile: " + outputFile + " }");
