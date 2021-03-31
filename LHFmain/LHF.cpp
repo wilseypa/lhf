@@ -105,7 +105,7 @@ void LHF::processDataWrapper(std::map<std::string, std::string> args, pipePacket
 	}
 }
 
-std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, std::string> args, std::vector<unsigned> &centroidLabels, std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> &partitionedData, int displacement){
+std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, std::string> args, std::vector<unsigned> &centroidLabels, std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> &partitionedData, std::vector<std::vector<double>> &inputData, int displacement){
 	//		Parameters
 	auto threshold = std::atoi(args["threshold"].c_str());
 	auto maxEpsilon = std::atof(args["epsilon"].c_str());
@@ -183,8 +183,9 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 				//Run against the original dataset
 
 				if (partitionedData.second[z].size() > 0){
-					iterwD.inputData = partitionedData.second[z];
+					iterwD.inputData = inputData;
 					iterwD.workData = partitionedData.second[z];
+					iterwD.centroidLabels = centroidLabels;
 					runPipeline(centArgs, iterwD);
 
 					delete iterwD.complex;
@@ -379,7 +380,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallelWrapper(std::map<std::s
 	//		Append the centroid dataset to run in parallel as well
 	partitionedData.second.push_back(iterwD.workData);
 
-	return processParallel(args, iterwD.centroidLabels, partitionedData);
+	return processParallel(args, iterwD.centroidLabels, partitionedData, wD.inputData);
 }
 
 
@@ -637,15 +638,10 @@ std::vector<bettiBoundaryTableEntry> LHF::processDistributedWrapper(std::map<std
 
 		auto partitionedData = make_pair(labels, partitionData);
 
-		//Initalize a copy of the pipePacket
-		auto iterwD = new pipePacket(args, args["complexType"]);
-		iterwD->workData = wD.workData;
-		iterwD->inputData = wD.inputData;
-
 		//Local Storage
 		auto originalDataSize = wD.workData.size();
 
-		std::vector<bettiBoundaryTableEntry> mergedBettiTable = processParallel(args, originalLabels, partitionedData, displacement);
+		std::vector<bettiBoundaryTableEntry> mergedBettiTable = processParallel(args, originalLabels, partitionedData, wD.inputData, displacement);
 
 		//Serialize bettie table to send to master process for merging
 		for (auto bet : mergedBettiTable){

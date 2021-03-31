@@ -109,11 +109,9 @@ void upscalePipe::runPipe(pipePacket &inData){
 			auto curwD = pipePacket(subConfigMap,subConfigMap["complexType"]);//args, args["complexType"]);
 			
 			for(unsigned index = 0; index < inData.centroidLabels.size(); index++){
-
 				if(bound.first.find(inData.centroidLabels[index]) != bound.first.end()){
 					curwD.workData.push_back(inData.inputData[index]);
 				}
-			
 			}
 			
 			std::cout << "Gathered " << curwD.workData.size() << " original points" << std::endl;
