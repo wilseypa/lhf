@@ -92,12 +92,12 @@ jobs:
         build-requirements: 'cython numpy'
         system-packages: 'lrzip-devel zlib-devel'
         pre-build-command: ''
-        package-path: 'pyLHF'
+        package-path: 'pyLHF/src'
         pip-wheel-args: '-w ./dist --no-deps'
         
     - name: Publish wheels to PyPI
       if:   runner.os == 'Linux'
-      run:  ls pyLHF/
+      run:  ls pyLHF/src/ && ls pyLHF/
 
 
 
