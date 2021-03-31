@@ -7,6 +7,7 @@ on:
       - MPI_Development
       - cmake_development
       - parUpscale
+      - sharedLHF
 
 jobs:
   build:
@@ -28,6 +29,8 @@ jobs:
             mpi: msmpi
           - os: macos-latest
             mpi: msmpi
+          - os: macos-latest
+            mpi: mpich
           - os: windows-latest
             mpi: mpich
           - os: windows-latest
