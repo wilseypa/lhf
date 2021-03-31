@@ -7,7 +7,6 @@ on:
       - MPI_Development
       - cmake_development
       - parUpscale
-      - sharedLHF
       
 jobs:
   build:

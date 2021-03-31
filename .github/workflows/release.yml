@@ -80,9 +80,7 @@ jobs:
         python-version: 3.8
         
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install numpy
+      run: pip install --upgrade pip && pip install numpy twine
         
     - name: Build manylinux Python wheels
       if:   runner.os == 'Linux'
@@ -94,10 +92,17 @@ jobs:
         pre-build-command: ''
         package-path: 'pyLHF/src'
         pip-wheel-args: '-w ./dist --no-deps'
+
+    - name: Check source files
+      if:   runner.os == 'Linux'
+      run:  ls pyLHF/src/dist/
         
     - name: Publish wheels to PyPI
       if:   runner.os == 'Linux'
-      run:  ls pyLHF/src/ && ls pyLHF/
-
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        twine upload dist/*-manylinux*.whl
 
 
