@@ -9,8 +9,8 @@
 #include <iostream>
 #include "argParser.hpp"
 
-std::map<std::string, std::string> argMap = {{"simplicialComplex","sc"},{"reductionPercentage","rp"},{"maxSize","ms"},{"threads","t"},{"threshold","th"},{"scalar","s"},{"mpi","a"},{"mode","m"},{"dimensions","d"},{"iterations","r"},{"pipeline","p"},{"inputFile","i"},{"outputFile","o"},{"epsilon","e"},{"lambda","l"},{"debug","x"},{"complexType","c"},{"clusters","k"},{"preprocessor","pre"},{"upscale","u"},{"twist","w"},{"collapse","z"},{"seed","q"}};
-std::map<std::string, std::string> defaultMap = {{"simplicialComplex","rips"},{"reductionPercentage","10"},{"maxSize","2000"},{"threads","30"},{"threshold","250"},{"scalar","0.5"},{"mpi", "0"},{"mode", "standard"},{"dimensions","1"},{"iterations","250"},{"pipeline",""},{"inputFile","None"},{"outputFile","output"},{"epsilon","5"},{"lambda",".25"},{"debug","0"},{"complexType","simplexArrayList"},{"clusters","20"},{"preprocessor",""},{"upscale","false"},{"seed","-1"},{"twist","false"},{"collapse","false"}};
+std::map<std::string, std::string> argMap = {{"simplicialComplex","sc"},{"reductionPercentage","rp"},{"maxSize","ms"},{"threads","t"},{"threshold","th"},{"scalar","s"},{"mpi","a"},{"mode","m"},{"dimensions","d"},{"iterations","r"},{"pipeline","p"},{"inputFile","i"},{"outputFile","o"},{"epsilon","e"},{"lambda","l"},{"debug","x"},{"complexType","c"},{"clusters","k"},{"preprocessor","pre"},{"upscale","u"},{"twist","w"},{"collapse","z"},{"seed","q"},{"involutedUpscale","iu"}, {"involuted","inv"}};
+std::map<std::string, std::string> defaultMap = {{"simplicialComplex","rips"},{"reductionPercentage","10"},{"maxSize","2000"},{"threads","30"},{"threshold","250"},{"scalar","0.5"},{"mpi", "0"},{"mode", "standard"},{"dimensions","1"},{"iterations","250"},{"pipeline",""},{"inputFile","None"},{"outputFile","output"},{"epsilon","5"},{"lambda",".25"},{"debug","0"},{"complexType","simplexArrayList"},{"clusters","20"},{"preprocessor",""},{"upscale","false"},{"seed","-1"},{"twist","false"},{"collapse","false"},{"involutedUpscale","false"},{"involuted","false"}};
 // argParse constructor, currently no needed information for the class constructor
 argParser::argParser(){
 
@@ -109,9 +109,13 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 	//Configure the base pipeline from the complex storage type
 	std::string basePipeline;
 
+	if(args["mode"] == "iterUpscale" || args["involutedUpscale"] == "true"){
+		args["upscale"] = "true";
+	}
+
 	//If using SAL:
-  //I think we should call it Data Structure Type (DSType) rather than calling complex Type
-  // which in this context should be VR, Alpha, witness etc.
+	//I think we should call it Data Structure Type (DSType) rather than calling complex Type
+	// which in this context should be VR, Alpha, witness etc.
 	if(args["complexType"] == "simplexArrayList"){
 		if(args["upscale"] == "true")
 			basePipeline = "distMatrix.neighGraph.incrementalPersistence.upscale";
@@ -123,7 +127,6 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 			basePipeline = "distMatrix.neighGraph.rips.fast.upscale";
 		else
 			basePipeline = "distMatrix.neighGraph.rips.fast";
-
 	}
 
 	//Handle basic modes; set pipeline if not initialized
@@ -219,8 +222,6 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 		} else {
 			args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";
 		}
-	} else if(args["mode"] == "involuted"){
-		args["pipeline"] = basePipeline;
 	}
 
 	return;

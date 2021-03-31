@@ -186,6 +186,11 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallel(std::map<std::string, 
 					iterwD.inputData = inputData;
 					iterwD.workData = partitionedData.second[z];
 					iterwD.centroidLabels = centroidLabels;
+
+					if(centArgs["involutedUpscale"] == "true"){
+						centArgs["involuted"] = "true";
+					}
+
 					runPipeline(centArgs, iterwD);
 
 					delete iterwD.complex;
@@ -345,42 +350,33 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallelWrapper(std::map<std::s
 	//		Local Storage
 	auto originalDataSize = wD.inputData.size();
 
-	//		Initalize a copy of the pipePacket
-	auto iterwD = pipePacket(args, args["complexType"]);
-	iterwD.inputData = wD.inputData;
-	iterwD.workData = wD.inputData;
-
 	//2. Partition the source point cloud separate datasets accordingly
 	if (runPartition){
 		//		Run preprocessor pipeline to partition
-		processDataWrapper(args, iterwD);
-	}
-	else{
-		//		Copy partition data from source
-		iterwD.centroidLabels = wD.centroidLabels;
+		processDataWrapper(args, wD);
 	}
 
 	//		Compute partition statistics for fuzzy partition distance
-	auto maxRadius = utils::computeMaxRadius(clusters, iterwD.workData, iterwD.inputData, iterwD.centroidLabels);
-	auto avgRadius = utils::computeAvgRadius(clusters, iterwD.workData, iterwD.inputData, iterwD.centroidLabels);
+	auto maxRadius = utils::computeMaxRadius(clusters, wD.workData, wD.inputData, wD.centroidLabels);
+	auto avgRadius = utils::computeAvgRadius(clusters, wD.workData, wD.inputData, wD.centroidLabels);
 
 	//		Count the size of each partition for identifying source partitions when looking at the betti table results
 	std::vector<unsigned> binCounts;
 	for (unsigned a = 0; a < clusters; a++){
-		binCounts.push_back(std::count(iterwD.centroidLabels.begin(), iterwD.centroidLabels.end(), a));
+		binCounts.push_back(std::count(wD.centroidLabels.begin(), wD.centroidLabels.end(), a));
 	}
 	std::cout << "Bin Counts: ";
 	utils::print1DVector(binCounts);
 
 	//		Sort our fuzzy partitions into individual vectors
 	args["scalarV"] = std::to_string(scalar * maxRadius);
-	auto partitionedData = utils::separatePartitions(std::atof(args["scalarV"].c_str()), iterwD.workData, iterwD.inputData, iterwD.centroidLabels);
+	auto partitionedData = utils::separatePartitions(std::atof(args["scalarV"].c_str()), wD.workData, wD.inputData, wD.centroidLabels);
 	std::cout << "Using scalar value: " << args["scalarV"] << std::endl;
 
 	//		Append the centroid dataset to run in parallel as well
-	partitionedData.second.push_back(iterwD.workData);
+	partitionedData.second.push_back(wD.workData);
 
-	return processParallel(args, iterwD.centroidLabels, partitionedData, wD.inputData);
+	return processParallel(args, wD.centroidLabels, partitionedData, wD.inputData);
 }
 
 

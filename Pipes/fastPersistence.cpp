@@ -197,7 +197,7 @@ void fastPersistence::runPipe(pipePacket &inData){
 		//Track V (reduction matrix) for each column j that has been reduced to identify the constituent
 		//		boundary simplices
 
-	bool involuted = (inv == "true" || inv == "1");
+	bool involuted = (inv == "true");
 
 	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
 		inData.complex->prepareCofacets(d);
