@@ -46,4 +46,3 @@ class qhullPipe : public basePipe {
     void outputData(pipePacket&);
     std::vector<std::vector<int>> qdelaunay_o(const Qhull &qhull);
 };
-
