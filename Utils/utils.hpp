@@ -11,11 +11,10 @@ struct simplexNode{
 	unsigned index;
 	long long hash = -1;
 
-	std::set<unsigned> simplex;
+	std::set<unsigned> simplex = {};
 	double weight = 0;
 	double filterationvalue = -1;
-  double circumRadius = 0;
-	std::vector<double> simplexhyperplane;
+        double circumRadius = 0;
 	std::vector<double> circumCenter;
 	simplexNode(){}
 	simplexNode(std::set<unsigned> simp, double wt) : simplex(simp), weight(wt) {}

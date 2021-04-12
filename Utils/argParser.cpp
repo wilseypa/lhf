@@ -133,7 +133,7 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
   //
 	if(args["simplicialComplex"] == "alpha"){
 		args["pipeline"] = "distMatrix.alpha.fastPersistence";
-		args["complexType"] = "simplexArrayList";
+		args["complexType"] = "simplexTree";
 	}
 	else if(args["mode"] == "mpi"){
 		//Set up MPI pipeline ; requires setting pipeline, any complex storage

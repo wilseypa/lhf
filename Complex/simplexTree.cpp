@@ -18,6 +18,97 @@ void simplexTree::outputComplex(){
 	return printTree(root->child);
 }
 
+
+void simplexTree::recurseInsertDsimplex(simplexTreeNode* node, std::vector<int> simp,std::vector<std::vector<double>> inputData){
+	
+	//This algorithm insert a simplex and all its subfaces in the simplex tree. Let σ be a simplex we want to insert with all its subfaces.
+	// Let [l0, · · · , lj ] be its word representation. For i from 0 to j we insert, if not already present, a node Nli , storing label li, as a child of the root.
+	// We recursively call the algorithm on the subtree rooted at Nli for the insertion of the suffix [li+1,··· ,lj]. 
+	// Since the number of subfaces ofr
+	//  a simplex of dimension j is 􏰆 􏰁j+1􏰂 = 2j+1, this algorithm takes time O(2jDm).
+ int p;
+int firstind =0;
+int lastind = simp.size();
+for(auto x : simp)
+	std::cout<<x<<" ";
+for(auto x : simp){
+        firstind++;
+	std::vector<int> :: const_iterator first = simp.begin() + firstind;
+	std::vector<int> :: const_iterator last = simp.begin() + lastind;
+
+	std::vector<int> subsimplex(first,last);
+        std::set<unsigned> simplex;
+	if(node==nullptr)
+             simplex = {};
+	else
+	     simplex = node->simpNode->simplex;
+	simplex.insert(x);
+	std::cin>>p;
+        double weight = 0;
+	double circumRadius;
+
+	std::vector<double> circumCenter;
+	if(simplex.size()>1)
+		circumRadius = utils::circumRadius(simplex,distMatrix);
+	else
+		circumRadius = weight/2;
+			
+	if(simplex.size()>2)
+		circumCenter = utils::circumCenter(simplex,inputData);
+	else if(simplex.size()==2){
+ 			auto first = simplex.begin();
+			std::vector<double> R;
+			std::vector<double> A = inputData[*first];
+                        std::advance(first, 1);
+			std::vector<double> B = inputData[*first];
+   	        	std::transform(A.begin(), A.end(), B.begin(), std::back_inserter(R),[](double e1,double e2){return ((e1+e2)/2);});
+		        circumCenter = R;
+                }
+		else
+   	        	circumCenter = inputData[*(simplex.begin())];
+
+	simplexTreeNode* insNode = new simplexTreeNode(simplex, circumRadius);
+        insNode->simpNode->circumCenter = circumCenter;	
+        	
+        
+        if(root == nullptr){
+		root = new simplexTreeNode();
+		insNode->parent = root;
+		root->child = insNode;
+		if(subsimplex.size() > 1)
+			recurseInsertDsimplex(root->child,subsimplex,inputData);
+       	}
+	else{
+	bool found = false;
+	for(auto it = node->child; it != nullptr; it = it->sibling){
+		if(it->simpNode->simplex == simplex){
+		     found = true;
+        	if(subsimplex.size() > 1)
+	             recurseInsertDsimplex(it,subsimplex,inputData);
+		break;
+       		}
+	}
+
+		if(!found){	
+	                if(node->child == nullptr){
+	                	node->child = insNode;
+	                	insNode->parent = node;
+                	}else{
+			insNode->parent = node;
+			insNode->sibling = node->child;
+       			node->child = insNode;
+			}
+	        	if(subsimplex.size() > 1)
+		        	recurseInsertDsimplex(node->child,subsimplex,inputData);
+
+    		}
+     	}
+}
+printTree(root);
+	return;
+}
+
+
 void simplexTree::recurseInsert(simplexTreeNode* node, unsigned curIndex, int depth, double maxE, std::set<unsigned> simp){
 	//Incremental insertion
 	//Recurse to each child (which we'll use the parent pointer for...)
@@ -640,6 +731,171 @@ void simplexTree::reduceComplex(){
 	ut.writeDebug("simplexTree","Finished reducing complex, reduced simplex count: " + std::to_string(simplexCount()));
 
 	return;
+}
+
+
+
+void simplexTree:: buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, int npts,std::vector<std::vector<double>> inputData){
+
+for(auto simplex : dsimplexmesh){
+        for(auto x : simplex)
+		std::cout<<x;
+        std::cout<<std::endl;
+	recurseInsertDsimplex(root, simplex,inputData);
+
+	/*
+   	unsigned int pow_set_size = pow(2, simplex.size());
+	for(int counter =1;counter<pow_set_size;counter++){
+		double weight =0;
+		std::set<unsigned> gensimp;
+		for(int j=0;j<simplex.size();j++){
+			if(counter & (1<<j)){
+				unsigned indnew;
+				indnew = *(std::next(simplex.begin(),j));
+				for(auto x:gensimp){
+					if(x<indnew){
+						if(weight<(*distMatrix)[x][indnew])
+							weight = (*distMatrix)[x][indnew];
+					}
+					else if(weight<(*distMatrix)[indnew][x])
+						weight = (*distMatrix)[indnew][x];
+				}
+				gensimp.insert(indnew);
+			}
+		}
+		//overwriting for Alpha
+		double weight1;
+		if(gensimp.size()>1)
+	              weight1 = utils::circumRadius(gensimp,distMatrix);
+                else
+		      weight1 = weight/2;
+
+		simplexNode_P tot = std::make_shared<simplexNode>(simplexNode(gensimp,weight1));
+		if(gensimp.size()>1)
+				tot->circumRadius = utils::circumRadius(gensimp,distMatrix);
+		else{
+		    tot->circumRadius = weight/2;
+			}
+		if(gensimp.size()>2)
+				tot->circumCenter = utils::circumCenter(gensimp,inputData);
+	
+		else if(gensimp.size()==2){
+ 			auto first = gensimp.begin();
+			std::vector<double> R;
+			std::vector<double> A = inputData[*first];
+                        std::advance(first, 1);
+			std::vector<double> B = inputData[*first];
+   	        	std::transform(A.begin(), A.end(), B.begin(), std::back_inserter(R),[](double e1,double e2){return ((e1+e2)/2);});
+		  tot->circumCenter = R;
+    }
+		else
+   		tot->circumCenter = inputData[*(gensimp.begin())];
+
+
+		if(gensimp.size()==1)
+			tot->hash = *(gensimp.begin());
+		else
+			tot->hash = simplexHash(gensimp);
+		simplexList[gensimp.size()-1].insert(tot);
+		gensimp.clear();
+	}
+	*/
+}
+
+//ALPHA COMPLEX FILTERTION BASED on FOLLOWING algorithm
+/*Filtration value computation algorithm
+
+
+for i : dimension →0 do
+   for all σ of dimension i
+        if filtration(σ) is NaN then
+            filtration(σ)=α2(σ)
+        end if
+        for all τ face of σ do            // propagate alpha filtration value
+          if  filtration(τ) is not NaN then
+               filtration(τ) = min( filtration(τ), filtration(σ) )
+          else
+             if τ is not Gabriel for σ then
+               filtration(τ) = filtration(σ)
+          end if
+       end if
+     end for
+  end for
+end for
+
+make_filtration_non_decreasing()
+prune_above_filtration()
+
+  */
+/*
+for(int dim = simplexList.size()-1;dim>=0;dim--){
+	   for(auto simplexiter = simplexList[dim].rbegin();simplexiter != simplexList[dim].rend();simplexiter++){
+			    simplexNode_P simplex = (*simplexiter);
+	        if(simplex->filterationvalue ==-1)
+	            simplex->filterationvalue = simplex->circumRadius;
+				//	for(int facedim = dim;facedim>=0;facedim--)
+				      if(dim>0){
+							for(auto face :simplexList[dim-1]){
+								bool gabriel = true;
+								std::vector<unsigned> points_check(simplex->simplex.size());
+								std::vector<unsigned> guilty_points_check;
+								std::vector<unsigned> :: iterator it;
+								std::vector<unsigned> v(face->simplex.size());
+								it = std::set_intersection(simplex->simplex.begin(),simplex->simplex.end(),face->simplex.begin(),face->simplex.end(),v.begin());
+								v.resize(it-v.begin());
+								if(v.size() == face->simplex.size()){
+                     if(face->filterationvalue !=-1){
+										 			face->filterationvalue = std::min(face->filterationvalue ,simplex->filterationvalue);
+												}
+										 else {
+													std::vector<unsigned>::iterator it;
+													it=std::set_difference (simplex->simplex.begin(), simplex->simplex.end(), face->simplex.begin(), face->simplex.end(), points_check.begin());
+													points_check.resize(it-points_check.begin());
+    											for(it = points_check.begin(); it !=points_check.end();++it){
+														std::vector<double> coordinates;
+                            for(int i =0;i<face->circumCenter.size();i++)
+																	coordinates.push_back(inputData[*it][i]);
+														double distance = utils::vectors_distance(coordinates,face->circumCenter);
+														if(pow(distance,2)<face->circumRadius){
+															 gabriel = false;
+															 guilty_points_check.push_back((*it));
+													}
+		   							}
+						  		}
+
+							}
+							if(!gabriel){
+										std::vector<unsigned> v(simplex->simplex.size());
+										std::vector<unsigned>::iterator it;
+										it=std::set_union (face->simplex.begin(), face->simplex.end(), guilty_points_check.begin(), guilty_points_check.end(), v.begin());
+										v.resize(it-v.begin());
+										for(auto face1 :simplexList[v.size()-1]){
+											std::vector<unsigned> v1(simplex->simplex.size());
+											it = std::set_intersection(v.begin(),v.end(),face1->simplex.begin(),face1->simplex.end(),v1.begin());
+											v1.resize(it-v1.begin());
+											if(v1.size() == face1->simplex.size())
+														face->filterationvalue = face1->filterationvalue;
+
+										   }
+					           }
+									}
+					}
+   }
+}
+//Reinserting to sort by filterationvalue and remove simplexes with weight greater than alphafilteration value (maxEpsilon)
+std::vector<std::set<simplexNode_P, cmpByWeight>> simplexList1;		//Holds ordered list of simplices in each dimension
+for(int dim=0;dim < simplexList.size();dim++){
+	   simplexList1.push_back({});
+	   for(auto simplex :simplexList[dim]){
+			 if(simplex->filterationvalue <= maxEpsilon){ //Valid Simplex after filteration
+			 			 simplex->weight = simplex->filterationvalue;
+			 		   simplexList1[dim].insert(simplex);
+					 }
+		 }
+	 }
+simplexList = simplexList1;
+*/
+return;
 }
 
 std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> simplexTree::recurseReduce(simplexTreeNode* simplex, std::vector<std::set<unsigned>> removals, std::vector<std::set<unsigned>> checked){

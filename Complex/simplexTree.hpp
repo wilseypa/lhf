@@ -67,6 +67,8 @@ class simplexTree : public simplexBase {
 	std::vector<simplexNode*> getAllCofacets(simplexNode_P);
 	std::vector<std::set<simplexNode_P, cmpByWeight>> getAllEdges();
 
+        void recurseInsertDsimplex(simplexTreeNode* node, std::vector<int> simp,std::vector<std::vector<double>> inputData);
+        void buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, int npts,std::vector<std::vector<double>> inputData);
 	std::vector<simplexNode*> getAllFacets(simplexNode*);
 	std::vector<simplexNode_P> getAllFacets_P(simplexNode_P);
 	
