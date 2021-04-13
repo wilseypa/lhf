@@ -43,6 +43,7 @@ class simplexTree : public simplexBase {
 	simplexTree(double, int);
 	std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(simplexTreeNode*, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
 	void printTree(simplexTreeNode*);
+	void printTree1(simplexTreeNode*);
 	void recurseInsert(simplexTreeNode*, unsigned, int, double, std::set<unsigned>);
 	double findWeight(std::set<unsigned>);
 	void deleteIndexRecurse(int, simplexTreeNode*);
