@@ -88,7 +88,7 @@ void LHF::runPipeline(std::map<std::string, std::string> args, pipePacket &wD){
 	outputBettis(args, wD);
 }
 
-void LHF::processDataWrapper(std::map<std::string, std::string> args, pipePacket &wD){
+void LHF::runPreprocessor(std::map<std::string, std::string>& args, pipePacket &wD){
 
 	//Start with the preprocessing function, if enabled
 	auto pre = args["preprocessor"];
@@ -102,6 +102,13 @@ void LHF::processDataWrapper(std::map<std::string, std::string> args, pipePacket
 			std::cout << "LHF processData: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 		}
 		delete prePipe;
+	}
+	
+	auto sv = args.find("scalarV");
+	if(sv == args.end()){
+		auto clusters = std::atoi(args["clusters"].c_str());
+		auto scalar = std::atof(args["scalar"].c_str());
+		args["scalarV"] = std::to_string(scalar * utils::computeMaxRadius(clusters, wD.workData, wD.inputData, wD.centroidLabels));
 	}
 }
 
@@ -353,12 +360,12 @@ std::vector<bettiBoundaryTableEntry> LHF::processParallelWrapper(std::map<std::s
 	//2. Partition the source point cloud separate datasets accordingly
 	if (runPartition){
 		//		Run preprocessor pipeline to partition
-		processDataWrapper(args, wD);
+		runPreprocessor(args, wD);
 	}
 
 	//		Compute partition statistics for fuzzy partition distance
 	auto maxRadius = utils::computeMaxRadius(clusters, wD.workData, wD.inputData, wD.centroidLabels);
-	auto avgRadius = utils::computeAvgRadius(clusters, wD.workData, wD.inputData, wD.centroidLabels);
+	//auto avgRadius = utils::computeAvgRadius(clusters, wD.workData, wD.inputData, wD.centroidLabels);
 
 	//		Count the size of each partition for identifying source partitions when looking at the betti table results
 	std::vector<unsigned> binCounts;
@@ -453,7 +460,7 @@ std::vector<bettiBoundaryTableEntry> LHF::processDistributedWrapper(std::map<std
 		wD.workData = wD.inputData;
 
 		//Partition the data with the configured preprocessor
-		processDataWrapper(args, wD);
+		runPreprocessor(args, wD);
 
 		//original Labels to be sent our to all processes
 		originalLabels = wD.centroidLabels;
@@ -794,7 +801,7 @@ extern "C"{
 				sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
 			}
 			else{
-				lhflib.processDataWrapper(args, wD);
+				lhflib.runPreprocessor(args, wD);
 				lhflib.runPipeline(args, wD);
 			}
 		}
@@ -868,7 +875,7 @@ extern "C"{
 				sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
 			}
 			else{
-				lhflib.processDataWrapper(args, wD);
+				lhflib.runPreprocessor(args, wD);
 				lhflib.runPipeline(args, wD);
 			}
 		}

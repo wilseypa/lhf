@@ -83,7 +83,7 @@ int main(int argc, char* argv[]){
 			lhflib.runPipeline(args, wD);
 			sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
 		} else {
-			lhflib.processDataWrapper(args, wD);
+			lhflib.runPreprocessor(args, wD);
 			lhflib.runPipeline(args, wD);
 		}
 
