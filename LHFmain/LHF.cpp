@@ -102,13 +102,15 @@ void LHF::runPreprocessor(std::map<std::string, std::string>& args, pipePacket &
 			std::cout << "LHF processData: Failed to configure pipeline: " << args["pipeline"] << std::endl;
 		}
 		delete prePipe;
-	}
 	
-	auto sv = args.find("scalarV");
-	if(sv == args.end()){
-		auto clusters = std::atoi(args["clusters"].c_str());
-		auto scalar = std::atof(args["scalar"].c_str());
-		args["scalarV"] = std::to_string(scalar * utils::computeMaxRadius(clusters, wD.workData, wD.inputData, wD.centroidLabels));
+	
+		auto sv = args.find("scalarV");
+		if(sv == args.end()){
+			auto clusters = std::atoi(args["clusters"].c_str());
+			auto scalar = std::atof(args["scalar"].c_str());
+			args["scalarV"] = std::to_string(scalar * utils::computeMaxRadius(clusters, wD.workData, wD.inputData, wD.centroidLabels));
+			std::cout << "Using scalarV: " << args["scalarV"] << std::endl;
+		}
 	}
 }
 
