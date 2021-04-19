@@ -45,7 +45,8 @@ std::vector<simplexNodePointer> fastPersistence::persistenceByDimension(pipePack
 
 			//Get all cofacets using emergent pair optimization
 			std::vector<simplexNodePointer> faceList = (mode == "homology" ? inData.complex->getAllFacets_P(simplex) : inData.complex->getAllCofacets(simplex->simplex, simplex->weight, pivotPairs, true));
-
+		//	std::vector<simplexNodePointer> faceList = inData.complex->getAllDelaunayCofacets(simplex);
+                        
 			std::vector<simplexNodePointer> columnV;	//Reduction column of matrix V
 			columnV.push_back(simplex); //Initially V=I -> 1's along diagonal
 
@@ -100,6 +101,8 @@ std::vector<simplexNodePointer> fastPersistence::persistenceByDimension(pipePack
 					for(simplexNodePointer simp : v[pivotPairs[pivot]]){
 						columnV.push_back(simp);
 						std::vector<simplexNodePointer> faces = (mode == "homology" ? inData.complex->getAllFacets_P(simp) : inData.complex->getAllCofacets(simp->simplex));
+					
+					//	std::vector<simplexNodePointer> faces = inData.complex->getAllDelaunayCofacets(simp);
 						faceList.insert(faceList.end(), faces.begin(), faces.end());
 					}
 					std::make_heap(faceList.begin(), faceList.end(), compStruct);

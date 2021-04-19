@@ -30,7 +30,6 @@ void distMatrixPipe::runPipe(pipePacket &inData){
 	//Store our distance matrix
 	if(inData.distMatrix.size() > 0) inData.distMatrix.clear();
 	inData.distMatrix.resize(inData.workData.size(), std::vector<double>(inData.workData.size(),0));
-	
 	//Iterate through each vector, create lower
 	for(unsigned i = 0; i < inData.workData.size(); i++){
 		//Grab a second vector to compare to 

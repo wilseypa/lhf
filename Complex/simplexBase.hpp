@@ -29,6 +29,7 @@ class simplexBase {
 
 	double maxEpsilon;							//Maximum epsilon, loaded from configuration
 	int maxDimension;							//Maximum dimension, loaded from configuration
+	float alphaFilterationValue;						//alpha FilterationValue for alpha Complex
 	std::vector<std::vector<double>>* distMatrix;	//Pointer to distance matrix for current complex
 
 

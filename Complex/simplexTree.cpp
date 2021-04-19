@@ -64,6 +64,8 @@ void simplexTree::recurseInsertDsimplex(simplexTreeNode* node, std::vector<int> 
 
 		simplexTreeNode* insNode = new simplexTreeNode(simplex, circumRadius);
     		insNode->simpNode->circumCenter = circumCenter;	
+    		insNode->simpNode->circumRadius = circumRadius;	
+    		insNode->simpNode->filterationvalue = circumRadius;	
        		insNode->simpNode->index = x;
      		if(root == nullptr){
 			root = new simplexTreeNode();
@@ -190,11 +192,33 @@ void simplexTree::recurseInsert(simplexTreeNode* node, unsigned curIndex, int de
 void simplexTree::printTree1(simplexTreeNode* headPointer){
         if(headPointer == nullptr)
 		return;
+	if(headPointer->valid){
 	for(auto x :headPointer->simpNode->simplex)
 		std::cout<<x<<",";
-	std::cout<<std::endl;
+	std::cout<<headPointer->simpNode->weight<<std::endl;
+	}
     	for(auto it = headPointer->child;it!=nullptr;it=it->sibling)
 	     printTree1(it);
+
+	return;
+}
+
+void simplexTree :: validateNodes(simplexTreeNode* headPointer){
+        if(headPointer == nullptr)
+		return;
+	if(headPointer->simpNode->filterationvalue > alphaFilterationValue){
+		headPointer->valid = false;
+		std::cout<<headPointer->simpNode->filterationvalue<<"  false\n";
+	}
+	else{
+		headPointer->valid = true;
+	
+		std::cout<<headPointer->simpNode->filterationvalue<<" true \n";
+	}
+	std::cout<<headPointer->valid<< " "<<alphaFilterationValue;
+
+    	for(auto it = headPointer->child;it!=nullptr;it=it->sibling)
+	     validateNodes(it);
 
 	return;
 }
@@ -618,7 +642,6 @@ std::vector<simplexNode*> simplexTree::getAllCofacets(simplexNode_P simp, const 
 	return ret;
 }
 
-
 std::vector<simplexNode*> simplexTree::getAllFacets(simplexNode* simp){
 	std::vector<simplexNode*> ret;
 	simplexTreeNode* parentNode = find(simp->simplex.begin(), simp->simplex.end(), root);
@@ -751,7 +774,12 @@ for(auto simplex : dsimplexmesh){
        	recurseInsertDsimplex(root, simplex,inputData);
        	simplexNode *simp  = new simplexNode(simplexset,0);
 	dsimplexes.insert(simp);
+
 }
+
+
+validateNodes(root);
+printTree1(root);
 //ALPHA COMPLEX FILTERTION BASED on FOLLOWING algorithm
 /*Filtration value computation algorithm
 
@@ -781,8 +809,9 @@ bool cont = true;
 while(cont){
         std::set<simplexNode*> nextFacets;
 	for(auto simp : dsimplexes){
-		if(simp->filterationvalue == -1)
-			simp->filterationvalue = simp->circumRadius;
+		simplexTreeNode *simpTN = find(simp->simplex.begin(),simp->simplex.end(),root);
+		if(simpTN->simpNode->filterationvalue == -1)
+			simpTN->simpNode->filterationvalue = simpTN->simpNode->circumRadius;
 
 		std::vector<simplexNode*> facets = getAllFacets(simp);
                	nextFacets.insert(facets.begin(),facets.end());
@@ -791,7 +820,8 @@ while(cont){
 			std::vector<unsigned> points_check(simp->simplex.size());
 			std::vector<unsigned> guilty_points_check;
                         if(face->filterationvalue !=-1){
-				face->filterationvalue = std::min(face->filterationvalue ,simp->filterationvalue);
+				face->filterationvalue = std::min(face->filterationvalue ,simpTN->simpNode->filterationvalue);
+				std::cout<<"  "<<simp->filterationvalue;
 			}
 		        else {
 				std::vector<unsigned>::iterator it;
@@ -827,20 +857,9 @@ while(cont){
 	}
 	dsimplexes = nextFacets;
 }
-/*
-//Reinserting to sort by filterationvalue and remove simplexes with weight greater than alphafilteration value (maxEpsilon)
-std::vector<std::set<simplexNode_P, cmpByWeight>> simplexList1;		//Holds ordered list of simplices in each dimension
-for(int dim=0;dim < simplexList.size();dim++){
-	   simplexList1.push_back({});
-	   for(auto simplex :simplexList[dim]){
-			 if(simplex->filterationvalue <= maxEpsilon){ //Valid Simplex after filteration
-			 			 simplex->weight = simplex->filterationvalue;
-			 		   simplexList1[dim].insert(simplex);
-					 }
-		 }
-	 }
-simplexList = simplexList1;
-*/
+//Reinserting to sort by filterationvalue and remove simplexes with weight greater than alphafilteration value
+validateNodes(root);
+printTree1(root);
 return;
 }
 

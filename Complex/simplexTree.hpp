@@ -25,7 +25,7 @@ class simplexTree : public simplexBase {
 		simplexTreeNode* parent = nullptr;
 		std::set<simplexTreeNode*, cmpByIndex> children;
 		simplexNode_P simpNode;
-		
+		bool valid;	
 		
 		
 		simplexTreeNode(){simpNode = std::make_shared<simplexNode>(simplexNode());}
@@ -72,7 +72,7 @@ class simplexTree : public simplexBase {
         void buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, int npts,std::vector<std::vector<double>> inputData);
 	std::vector<simplexNode*> getAllFacets(simplexNode*);
 	std::vector<simplexNode_P> getAllFacets_P(simplexNode_P);
-	
+	void validateNodes(simplexTreeNode* headPointer);
 	bool deletion(std::set<unsigned>);
 	bool deletion(simplexTreeNode*);
 	void expandDimensions(int){return;};

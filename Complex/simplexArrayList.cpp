@@ -574,9 +574,12 @@ void simplexArrayList:: buildAlphaComplex(std::vector<std::vector<int>> dsimplex
 	for(int dim=0;dim < simplexList.size();dim++){
 		simplexList1.push_back({});
 	   	for(auto simplex :simplexList[dim]){
-			 if(simplex->filterationvalue <= maxEpsilon){ //Valid Simplex after filteration
+			 if(simplex->filterationvalue <= alphaFilterationValue){ //Valid Simplex after filteration
 				 simplex->weight = simplex->filterationvalue;
 				 simplexList1[dim].insert(simplex);
+				 for(auto x : simplex->simplex)
+					 std::cout<<x<<" ";
+			 	 std::cout<<simplex->weight<<" "<<std::endl;
 			 }
 		}
 	}

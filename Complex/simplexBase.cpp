@@ -38,6 +38,12 @@ void simplexBase::setConfig(std::map<std::string, std::string> &configMap){
 		maxEpsilon = std::atof(configMap["epsilon"].c_str());
 	else return;
 
+	pipe = configMap.find("alphaFilterationValue");
+	if(pipe != configMap.end())
+		alphaFilterationValue = std::atof(configMap["alphaFilterationValue"].c_str());
+	else return;
+
+	std::cout<<"  afv::"<<alphaFilterationValue;
 	ut = utils(debug, outputFile);
 	ut.writeLog(simplexType,"Configured utils for : " + simplexType);
 

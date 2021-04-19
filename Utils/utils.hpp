@@ -10,7 +10,7 @@
 struct simplexNode{
 	unsigned index;
 	long long hash = -1;
-
+	
 	std::set<unsigned> simplex = {};
 	double weight = 0;
 	double filterationvalue = -1;
