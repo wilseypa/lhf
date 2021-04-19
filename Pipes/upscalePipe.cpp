@@ -198,8 +198,10 @@ bool upscalePipe::configPipe(std::map<std::string, std::string> &configMap){
 	pipe = configMap.find("scalarV");
 	if(pipe != configMap.end())
 		scalarV = std::atof(configMap["scalarV"].c_str());
-	else return false;
-	
+	else{
+		ut.writeDebug("upscale","No scalarV set; this indicates no partitioning was done and upscaling is not required");
+		return false;
+	}
 	configured = true;
 	ut.writeDebug("upscale","Configured with parameters { debug: " + strDebug + ", outputFile: " + outputFile + " }");
 	
