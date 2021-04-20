@@ -439,6 +439,9 @@ void simplexArrayList:: buildAlphaComplex(std::vector<std::vector<int>> dsimplex
 		simplexList.push_back({});
 
 	for(auto simplex : dsimplexmesh){
+		for(auto x : simplex)
+			std::cout<<x<<",";
+		std::cout<<std::endl;
 		unsigned int pow_set_size = pow(2, simplex.size());
 		for(int counter =1;counter<pow_set_size;counter++){
 			double weight =0;

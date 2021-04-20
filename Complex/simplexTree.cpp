@@ -770,10 +770,13 @@ void simplexTree::reduceComplex(){
 void simplexTree:: buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, int npts,std::vector<std::vector<double>> inputData){
 	std::set<simplexNode*> dsimplexes;
 for(auto simplex : dsimplexmesh){
-	std::set<unsigned> simplexset(simplex.begin(),simplex.end());
+	    for(auto x:simplex)
+			std::cout<<x<<",";
+		std::cout<<std::endl;
+		std::set<unsigned> simplexset(simplex.begin(),simplex.end());
        	recurseInsertDsimplex(root, simplex,inputData);
        	simplexNode *simp  = new simplexNode(simplexset,0);
-	dsimplexes.insert(simp);
+		dsimplexes.insert(simp);
 
 }
 
