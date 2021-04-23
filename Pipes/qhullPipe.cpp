@@ -22,7 +22,6 @@ qhullPipe::qhullPipe(){
 // runPipe -> Run the configured functions of this pipeline segment
 void qhullPipe::runPipe(pipePacket &inData){
     Qhull qh;
-    std::cout<<inData.complex->alphaFilterationValue<<"   hgfdsrewrtyey";
     std::vector<double> sdata;
     //serializing all the data
     for(auto a : inData.inputData)

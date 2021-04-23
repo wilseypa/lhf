@@ -37,13 +37,18 @@ void simplexBase::setConfig(std::map<std::string, std::string> &configMap){
 	if(pipe != configMap.end())
 		maxEpsilon = std::atof(configMap["epsilon"].c_str());
 	else return;
-
+	pipe = configMap.find("complexType");
+	if(pipe != configMap.end())
+		simplexType = configMap["complexType"];
+	
+	pipe = configMap.find("simplicialComplex");
+	if(pipe != configMap.end())
+		simplicialComplex = configMap["simplicialComplex"];
+	
 	pipe = configMap.find("alphaFilterationValue");
 	if(pipe != configMap.end())
 		alphaFilterationValue = std::atof(configMap["alphaFilterationValue"].c_str());
 	else return;
-
-	std::cout<<"  afv::"<<alphaFilterationValue;
 	ut = utils(debug, outputFile);
 	ut.writeLog(simplexType,"Configured utils for : " + simplexType);
 
@@ -106,6 +111,7 @@ std::vector<simplexNode_P> simplexBase::getAllDelaunayCofacets(simplexNode_P){
 	ut.writeLog(simplexType,"No getdelaunay cofacets function defined");
 	return std::vector<simplexNode_P>();
 }
+
 std::vector<simplexNode*> simplexBase::getAllCofacets(simplexNode_P){
 	ut.writeLog(simplexType,"No get cofacets function defined");
 	return std::vector<simplexNode*>();

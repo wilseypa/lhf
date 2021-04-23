@@ -13,6 +13,8 @@ class basePipe {
     utils ut;
     std::string pipeType = "basePipe";
     bool debug = 0;
+    std::string simplicialComplex = "";
+    std::string complexType = "";
     std::string outputFile;
     
     basePipe(){};

@@ -35,18 +35,17 @@ std::vector<simplexNodePointer> fastPersistence::persistenceByDimension(pipePack
 	std::vector<simplexNodePointer> nextPivots;	 	//Pivots for the next dimension
 	std::unordered_map<simplexNodePointer, std::vector<simplexNodePointer>> v;	//Store only the reduction matrix V and compute R implicity
 	std::unordered_map<simplexNodePointer, simplexNodePointer> pivotPairs;	//For each pivot, which column has that pivot
-
+	
 	//Iterate over columns to reduce in reverse order
 	for(auto columnIndexIter = edges.begin(); columnIndexIter != edges.end(); columnIndexIter++){
 		simplexNodePointer simplex = (*columnIndexIter);	//The current simplex
 
 		//Not a pivot -> need to reduce
 		if(it == pivots.end() || (*it)->weight != simplex->weight || (*it)->simplex != simplex->simplex){
-
+		//	std::cout<<mode<<" "<<simplicialComplex<<" "<<complexType<<std::endl;
 			//Get all cofacets using emergent pair optimization
-			std::vector<simplexNodePointer> faceList = (mode == "homology" ? inData.complex->getAllFacets_P(simplex) : inData.complex->getAllCofacets(simplex->simplex, simplex->weight, pivotPairs, true));
-		//	std::vector<simplexNodePointer> faceList = inData.complex->getAllDelaunayCofacets(simplex);
-                        
+			std::vector<simplexNodePointer> faceList = (mode == "homology" ? inData.complex->getAllFacets_P(simplex) : ((simplicialComplex == "alpha" && complexType == "simplexArrayList")? inData.complex->getAllDelaunayCofacets(simplex):inData.complex->getAllCofacets(simplex->simplex, simplex->weight, pivotPairs, true)));
+		
 			std::vector<simplexNodePointer> columnV;	//Reduction column of matrix V
 			columnV.push_back(simplex); //Initially V=I -> 1's along diagonal
 
@@ -81,7 +80,7 @@ std::vector<simplexNodePointer> fastPersistence::persistenceByDimension(pipePack
 				} else if(pivotPairs.find(pivot) == pivotPairs.end()){ //Column cannot be reduced
 					pivotPairs.insert({pivot, simplex});
 					nextPivots.push_back(pivot);
-
+					
 					std::sort(columnV.begin(), columnV.end());
 					auto it = columnV.begin();
 					while(it != columnV.end()){
@@ -100,9 +99,8 @@ std::vector<simplexNodePointer> fastPersistence::persistenceByDimension(pipePack
 					//Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
 					for(simplexNodePointer simp : v[pivotPairs[pivot]]){
 						columnV.push_back(simp);
-						std::vector<simplexNodePointer> faces = (mode == "homology" ? inData.complex->getAllFacets_P(simp) : inData.complex->getAllCofacets(simp->simplex));
+						std::vector<simplexNodePointer> faces = (mode == "homology" ? inData.complex->getAllFacets_P(simp) : ((simplicialComplex == "alpha" && complexType =="simplexArrayList")? inData.complex->getAllDelaunayCofacets(simp):inData.complex->getAllCofacets(simp->simplex)));
 					
-					//	std::vector<simplexNodePointer> faces = inData.complex->getAllDelaunayCofacets(simp);
 						faceList.insert(faceList.end(), faces.begin(), faces.end());
 					}
 					std::make_heap(faceList.begin(), faceList.end(), compStruct);
@@ -291,6 +289,13 @@ bool fastPersistence::configPipe(std::map<std::string, std::string> &configMap){
 	if(pipe != configMap.end())
 		fnmod = configMap["fn"];
 
+	pipe = configMap.find("simplicialComplex");
+	if(pipe != configMap.end())
+		simplicialComplex = configMap["simplicialComplex"];
+
+	pipe = configMap.find("complexType");
+	if(pipe != configMap.end())
+		complexType = configMap["complexType"];
 	configured = true;
 	ut.writeDebug("fastPersistence","Configured with parameters { dim: " + configMap["dimensions"] + ", complexType: " + configMap["complexType"] + ", eps: " + configMap["epsilon"]);
 	ut.writeDebug("fastPersistence","\t\t\t\tdebug: " + strDebug + ", outputFile: " + outputFile + " }");

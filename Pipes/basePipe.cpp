@@ -139,5 +139,13 @@ bool basePipe::configPipe(std::map<std::string, std::string> &configMap){
 	if(pipe != configMap.end())
 		debug = (std::atoi(configMap["debug"].c_str()) > 0 ? true : false);
 
+	pipe = configMap.find("complexType");
+	if(pipe != configMap.end())
+		complexType = configMap["complexType"].c_str();
+
+	pipe = configMap.find("simplicialComplex");
+	if(pipe != configMap.end())
+		simplicialComplex = configMap["simplicialComplex"].c_str();
+	std::cout<<"Simplicial Complex "<<simplicialComplex;
 	return true;
 }

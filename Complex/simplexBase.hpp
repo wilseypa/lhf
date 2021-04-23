@@ -23,7 +23,7 @@ class simplexBase {
 
 	utils ut;									//Utilities functions
 	std::string simplexType = "simplexBase";	//Complex Type Identifier
-
+	std::string simplicialComplex = "";
 	simplexNode_P root;							//Root of the simplexNode tree (if applicable)
 	simplexNode_P head;							//Root of the simplexNode tree (if applicable)
 

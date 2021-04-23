@@ -65,8 +65,10 @@ void simplexTree::recurseInsertDsimplex(simplexTreeNode* node, std::vector<int> 
 		simplexTreeNode* insNode = new simplexTreeNode(simplex, circumRadius);
     		insNode->simpNode->circumCenter = circumCenter;	
     		insNode->simpNode->circumRadius = circumRadius;	
-    		insNode->simpNode->filterationvalue = circumRadius;	
+    	//	insNode->simpNode->filterationvalue = circumRadius;	
        		insNode->simpNode->index = x;
+		insNode->simpNode->hash = nodeCount;
+		nodeCount++;
      		if(root == nullptr){
 			root = new simplexTreeNode();
 			insNode->parent = root;
@@ -195,7 +197,7 @@ void simplexTree::printTree1(simplexTreeNode* headPointer){
 	if(headPointer->valid){
 	for(auto x :headPointer->simpNode->simplex)
 		std::cout<<x<<",";
-	std::cout<<headPointer->simpNode->weight<<std::endl;
+	std::cout<<headPointer->simpNode->filterationvalue<<std::endl;
 	}
     	for(auto it = headPointer->child;it!=nullptr;it=it->sibling)
 	     printTree1(it);
@@ -208,16 +210,16 @@ void simplexTree :: validateNodes(simplexTreeNode* headPointer){
 		return;
 	if(headPointer->simpNode->filterationvalue > alphaFilterationValue){
 		headPointer->valid = false;
-		std::cout<<headPointer->simpNode->filterationvalue<<"  false\n";
+//		std::cout<<headPointer->simpNode->filterationvalue<<"  false\n";
 	}
 	else{
 		headPointer->valid = true;
 	
-		std::cout<<headPointer->simpNode->filterationvalue<<" true \n";
+//		std::cout<<headPointer->simpNode->filterationvalue<<" true \n";
 	}
-	std::cout<<headPointer->valid<< " "<<alphaFilterationValue;
-
-    	for(auto it = headPointer->child;it!=nullptr;it=it->sibling)
+//	std::cout<<headPointer->valid<< " "<<alphaFilterationValue;
+        headPointer->simpNode->weight = headPointer->simpNode->filterationvalue; 
+	for(auto it = headPointer->child;it!=nullptr;it=it->sibling)
 	     validateNodes(it);
 
 	return;
@@ -591,8 +593,8 @@ std::vector<std::set<simplexNode_P, cmpByWeight>> simplexTree::getAllEdges(){
 
 void simplexTree::recurseGetEdges(std::vector<std::set<simplexNode_P, cmpByWeight>> &edgeList, simplexTreeNode* current, int depth, int maxDepth){
 	for(auto ptr = current->child; ptr != nullptr; ptr = ptr->sibling){
-		
-		edgeList[depth].insert(ptr->simpNode);
+		if(ptr->valid)
+			edgeList[depth].insert(ptr->simpNode);
 		
 		if(ptr->child != nullptr && depth+1 <= maxDepth)
 			recurseGetEdges(edgeList, ptr, depth+1, maxDepth);
@@ -603,6 +605,7 @@ void simplexTree::recurseGetEdges(std::vector<std::set<simplexNode_P, cmpByWeigh
 
 std::vector<simplexNode*> simplexTree::getAllCofacets(simplexNode_P simp){
 	return getAllCofacets(simp, std::unordered_map<long long, simplexNode_P>(), false);
+
 }
 
 std::vector<simplexNode*> simplexTree::getAllCofacets(simplexNode_P simp, const std::unordered_map<long long, simplexNode_P>& pivotPairs, bool checkEmergent){
@@ -617,16 +620,16 @@ std::vector<simplexNode*> simplexTree::getAllCofacets(simplexNode_P simp, const 
 		//Insert all of the children in reverse lexicographic order
 		for(auto ptr = parentNode->child; ptr != nullptr; ptr = ptr->sibling){
 			if(it == simp->simplex.end()) {
-				ret.push_back(ptr->simpNode.get()); //All children of simplex are cofacets
+					ret.push_back(ptr->simpNode.get()); //All children of simplex are cofacets
 			} else {
 				tempNode = find(it, simp->simplex.end(), ptr); //See if cofacet is in the tree
-				if(tempNode != nullptr){
-					ret.push_back(tempNode->simpNode.get());
+				if(tempNode != nullptr&&ptr->valid){
+						ret.push_back(tempNode->simpNode.get());
 					
 					//If we haven't found an emergent candidate and the weight of the maximal cofacet is equal to the simplex's weight
 					//		we have identified an emergent pair; at this point we can break because the interval is born and dies at the
 					//		same epsilon
-					if(checkEmergent && tempNode->simpNode->weight == simp->weight){
+					if(checkEmergent && tempNode->simpNode->weight == simp->weight&&simplicialComplex != "alpha"){
 						if(pivotPairs.find(tempNode->simpNode->hash) == pivotPairs.end()) return ret; //Check to make sure the identified cofacet isn't a pivot
 						checkEmergent = false;
 					}
@@ -657,7 +660,7 @@ std::vector<simplexNode*> simplexTree::getAllFacets(simplexNode* simp){
 
 		//Insert all of the children in reverse lexicographic order
 		tempNode = find(std::next(it), simp->simplex.end(), parentNode);
-		if(tempNode != nullptr){
+		if(tempNode != nullptr&&tempNode->valid){
 			ret.push_back(tempNode->simpNode.get());
 		}
 	}
@@ -680,7 +683,7 @@ std::vector<simplexNode_P> simplexTree::getAllFacets_P(simplexNode_P simp){
 
 		//Insert all of the children in reverse lexicographic order
 		tempNode = find(std::next(it), simp->simplex.end(), parentNode);
-		if(tempNode != nullptr){
+		if(tempNode != nullptr&&tempNode->valid){
 			ret.push_back(tempNode->simpNode);
 		}
 	}
@@ -692,10 +695,8 @@ std::vector<simplexNode_P> simplexTree::getAllCofacets(const std::set<unsigned>&
 	std::vector<simplexNode_P> ret;
 	simplexTreeNode* parentNode = find(simplex.begin(), simplex.end(), root);
 	if(parentNode == nullptr) return ret; //Simplex isn't in the simplex tree
-
-	simplexTreeNode* tempNode;
+     	simplexTreeNode* tempNode;
 	auto it = simplex.end();
-
 	while(true){
 		//Insert all of the children in reverse lexicographic order
 		for(auto ptr = parentNode->child; ptr != nullptr; ptr = ptr->sibling){
@@ -704,12 +705,12 @@ std::vector<simplexNode_P> simplexTree::getAllCofacets(const std::set<unsigned>&
 			} else {
 				tempNode = find(it, simplex.end(), ptr); //See if cofacet is in the tree
 				if(tempNode != nullptr){
-					ret.push_back(tempNode->simpNode);
+						ret.push_back(tempNode->simpNode);
 					
 					//If we haven't found an emergent candidate and the weight of the maximal cofacet is equal to the simplex's weight
 					//		we have identified an emergent pair; at this point we can break because the interval is born and dies at the
 					//		same epsilon
-					if(checkEmergent && tempNode->simpNode->weight == simplexWeight){
+					if(checkEmergent && tempNode->simpNode->weight == simplexWeight && simplicialComplex!="alpha"){
 						if(pivotPairs.find(tempNode->simpNode) == pivotPairs.end()) return ret; //Check to make sure the identified cofacet isn't a pivot
 						checkEmergent = false;
 					}
@@ -722,7 +723,6 @@ std::vector<simplexNode_P> simplexTree::getAllCofacets(const std::set<unsigned>&
 		if(parentNode->parent != nullptr) parentNode = parentNode->parent;
 		else break;
 	}
-	
 	return ret;
 }
 
@@ -768,21 +768,18 @@ void simplexTree::reduceComplex(){
 
 
 void simplexTree:: buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, int npts,std::vector<std::vector<double>> inputData){
-	std::set<simplexNode*> dsimplexes;
+	std::set<simplexNode_P,cmpByWeight> dsimplexes;
 for(auto simplex : dsimplexmesh){
-	    for(auto x:simplex)
-			std::cout<<x<<",";
-		std::cout<<std::endl;
-		std::set<unsigned> simplexset(simplex.begin(),simplex.end());
+	std::set<unsigned> simplexset(simplex.begin(),simplex.end());
        	recurseInsertDsimplex(root, simplex,inputData);
-       	simplexNode *simp  = new simplexNode(simplexset,0);
+	simplexNode_P simp = std::make_shared<simplexNode>(simplexNode(simplexset,0));
 		dsimplexes.insert(simp);
 
 }
 
 
-validateNodes(root);
-printTree1(root);
+//validateNodes(root);
+//printTree1(root);
 //ALPHA COMPLEX FILTERTION BASED on FOLLOWING algorithm
 /*Filtration value computation algorithm
 
@@ -808,23 +805,22 @@ make_filtration_non_decreasing()
 prune_above_filtration()
 
   */
-bool cont = true;
-while(cont){
-        std::set<simplexNode*> nextFacets;
-	for(auto simp : dsimplexes){
+
+std::vector<std::set<simplexNode_P, cmpByWeight>>  edges = getAllEdges();
+for(auto dim = edges.size()-1;dim >0;dim--){
+	for(auto simp : edges[dim]){
 		simplexTreeNode *simpTN = find(simp->simplex.begin(),simp->simplex.end(),root);
 		if(simpTN->simpNode->filterationvalue == -1)
 			simpTN->simpNode->filterationvalue = simpTN->simpNode->circumRadius;
 
-		std::vector<simplexNode*> facets = getAllFacets(simp);
-               	nextFacets.insert(facets.begin(),facets.end());
+	      if(dim>0){
+		std::vector<simplexNode_P> facets = getAllFacets_P(simp);
                 for(auto face : facets){
 			bool gabriel = true;
 			std::vector<unsigned> points_check(simp->simplex.size());
 			std::vector<unsigned> guilty_points_check;
                         if(face->filterationvalue !=-1){
 				face->filterationvalue = std::min(face->filterationvalue ,simpTN->simpNode->filterationvalue);
-				std::cout<<"  "<<simp->filterationvalue;
 			}
 		        else {
 				std::vector<unsigned>::iterator it;
@@ -848,21 +844,20 @@ while(cont){
 				v.resize(it-v.begin());
 				std::set<unsigned> simplexsetNG(v.begin(),v.end());
 	                	simplexTreeNode *cofacetNG = find(simplexsetNG.begin(),simplexsetNG.end(),root);
-				face->filterationvalue = cofacetNG->simpNode->filterationvalue;
+		        	face->filterationvalue = cofacetNG->simpNode->filterationvalue;
 			}
 		}
+	      }
 	}
-        for(auto x: nextFacets){
-	    if(x->simplex.size() <=1){
-		    cont = false;
-	    }
-	    break;
+        for(auto simp: edges[0]){
+		simplexTreeNode *simpTN = find(simp->simplex.begin(),simp->simplex.end(),root);
+		if(simpTN->simpNode->filterationvalue == -1)
+			simpTN->simpNode->filterationvalue = simpTN->simpNode->circumRadius;
 	}
-	dsimplexes = nextFacets;
+  
 }
 //Reinserting to sort by filterationvalue and remove simplexes with weight greater than alphafilteration value
 validateNodes(root);
-printTree1(root);
 return;
 }
 

@@ -25,7 +25,7 @@ class simplexTree : public simplexBase {
 		simplexTreeNode* parent = nullptr;
 		std::set<simplexTreeNode*, cmpByIndex> children;
 		simplexNode_P simpNode;
-		bool valid;	
+		bool valid= true;	
 		
 		
 		simplexTreeNode(){simpNode = std::make_shared<simplexNode>(simplexNode());}
@@ -66,6 +66,7 @@ class simplexTree : public simplexBase {
 	std::vector<simplexNode_P> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode_P, simplexNode_P>&, bool = true);
 	std::vector<simplexNode*> getAllCofacets(simplexNode_P, const std::unordered_map<long long, simplexNode_P>&, bool = true);
 	std::vector<simplexNode*> getAllCofacets(simplexNode_P);
+	std::vector<simplexNode_P> getAllDelaunayCofacets(simplexNode_P){return std::vector<simplexNode_P>();};
 	std::vector<std::set<simplexNode_P, cmpByWeight>> getAllEdges();
 
         void recurseInsertDsimplex(simplexTreeNode* node, std::vector<int> simp,std::vector<std::vector<double>> inputData);
