@@ -103,5 +103,4 @@ jobs:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: | 
-        ls . && 
-        twine upload dist/lhf-*-py3-none-any.whl
+        twine upload pyLHF/src/dist/lhf-*-py3-none-any.whl
