@@ -81,9 +81,6 @@ jobs:
         
     - name: Install dependencies
       run: pip install --upgrade pip && pip install numpy twine
-      
-    - name: Chmod for manylinux pip
-      run: chmod -R 755 /github/home/.cache/pip
         
     - name: Build manylinux Python wheels
       if:   runner.os == 'Linux'
@@ -106,6 +103,4 @@ jobs:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
-        twine upload dist/*-manylinux*.whl
-
-
+        twine upload dist/lhf-*-py3-none-any.whl
