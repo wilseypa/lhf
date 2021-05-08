@@ -133,8 +133,14 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
   //
 	if(args["simplicialComplex"] == "alpha"){
 		args["pipeline"] = "distMatrix.alpha.fastPersistence";
-	}
-	else if(args["mode"] == "mpi"){
+	}else if(args["simplicialComplex" == "graphInducedComplex"){
+               arge["pipeline"] = "distMatrix.generateBetaSkeleton.graphInducedComplex.fastPersistence";
+
+		//generate edges belonging to beta skeleton based graph
+		// from graph edges find the list of simplex in order of there sizes
+		// Build Simplicial Complex
+		// Compute fast Persistence 
+       }else if(args["mode"] == "mpi"){
 		//Set up MPI pipeline ; requires setting pipeline, any complex storage
 		if(args["pipeline"] == "")
 			args["pipeline"] = basePipeline;
