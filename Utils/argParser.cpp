@@ -132,14 +132,12 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 	//Handle basic modes; set pipeline if not initialized
   //
 	if(args["simplicialComplex"] == "alpha"){
-		std::cout<<"Make File";
 		args["pipeline"] = "distMatrix.alpha.fastPersistence";
 	}else if(args["simplicialComplex"] == "graphInducedComplex"){
-               args["pipeline"] = "distMatrix.generateBetaSkeleton.graphInducedComplex.fastPersistence";
-
-		//generate edges belonging to beta skeleton based graph
-		// from graph edges find the list of simplex in order of there sizes
-		// Build Simplicial Complex
+               args["pipeline"] = "distMatrix.kdTree.generateBetaSkeleton.graphInducedComplex.fastPersistence";
+        // build kd-Tree for the given point cloud    
+		// generate simplexes dimension wise belonging to beta skeleton. Find a normal to simplex hyperplane at circumcenter of the simplex. Use K-d tree to efficiently validate simplex.
+		// if Valid Insert simplex to simplicial Complex Complex
 		// Compute fast Persistence 
        }else if(args["mode"] == "mpi"){
 		//Set up MPI pipeline ; requires setting pipeline, any complex storage

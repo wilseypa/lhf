@@ -48,14 +48,18 @@ void simplexTree::recurseInsertDsimplex(simplexTreeNode* node, std::vector<int> 
 			circumRadius = utils::circumRadius(simplex,distMatrix);
 		else
 			circumRadius = weight/2;
-			
+		std::cout<<simplex.size()<<std::endl;
 		if(simplex.size()>2){
 			circumCenter = utils::circumCenter(simplex,inputData);
 		  for(double x : circumCenter)
 			std::cout<<x<<" ";
 		  std::cout<<std::endl;
+		  std::cout<<circumRadius;
+		  std::cout<<std::endl;
 		  for(auto y : simplex)
 			std::cout<<y<<" ";
+		std::cout<<"Here I am";
+			exit(0);
 		  
 		}
 		else if(simplex.size()==2){
@@ -66,8 +70,8 @@ void simplexTree::recurseInsertDsimplex(simplexTreeNode* node, std::vector<int> 
 			std::vector<double> B = inputData[*first];
    	        	std::transform(A.begin(), A.end(), B.begin(), std::back_inserter(R),[](double e1,double e2){return ((e1+e2)/2);});
 		        circumCenter = R;
-                }else
-   	        	circumCenter = inputData[*(simplex.begin())];
+       }else
+   	   circumCenter = inputData[*(simplex.begin())];
 
 		simplexTreeNode* insNode = new simplexTreeNode(simplex, circumRadius);
     		insNode->simpNode->circumCenter = circumCenter;	
