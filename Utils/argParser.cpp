@@ -132,9 +132,10 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 	//Handle basic modes; set pipeline if not initialized
   //
 	if(args["simplicialComplex"] == "alpha"){
+		std::cout<<"Make File";
 		args["pipeline"] = "distMatrix.alpha.fastPersistence";
-	}else if(args["simplicialComplex" == "graphInducedComplex"){
-               arge["pipeline"] = "distMatrix.generateBetaSkeleton.graphInducedComplex.fastPersistence";
+	}else if(args["simplicialComplex"] == "graphInducedComplex"){
+               args["pipeline"] = "distMatrix.generateBetaSkeleton.graphInducedComplex.fastPersistence";
 
 		//generate edges belonging to beta skeleton based graph
 		// from graph edges find the list of simplex in order of there sizes
