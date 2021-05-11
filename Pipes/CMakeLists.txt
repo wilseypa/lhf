@@ -9,6 +9,8 @@ add_library(basePipe "basePipe.cpp" "basePipe.hpp")
 add_library(distMatrixPipe "distMatrixPipe.cpp" "distMatrixPipe.hpp")
 add_library(neighGraphPipe "neighGraphPipe.cpp" "neighGraphPipe.hpp")
 add_library(ripsPipe "ripsPipe.cpp" "ripsPipe.hpp")
+add_library(kdTreePipe "betaSkeletonBasedComplex.cpp" "betaSkeletonBasedComplex.hpp")
+add_library(betaSkeletonBasedComplexPipe "kdTree.cpp" "kdTree.hpp")
 add_library(upscalePipe "upscalePipe.cpp" "upscalePipe.hpp")
 add_library(persistencePairs "persistencePairs.cpp" "persistencePairs.hpp")
 add_library(slidingWindow "slidingWindow.cpp" "slidingWindow.hpp")
@@ -49,7 +51,7 @@ endif()
 include_directories(${PROJECT_SOURCE_DIR}/_deps/qhullext-src/src/)
 
 # target_link_libraries(LHF PipeFunctions)
-target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe ripsPipe upscalePipe persistencePairs slidingWindow fastPersistence incrementalPersistence naiveWindow qhullcpp qhullstatic_r qhullPipe)
+target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe ripsPipe betaSkeletonBasedComplexPipe kdTreePipe upscalePipe persistencePairs slidingWindow fastPersistence incrementalPersistence naiveWindow qhullcpp qhullstatic_r qhullPipe)
 
 INSTALL (TARGETS basePipe
 	LIBRARY DESTINATION lib
