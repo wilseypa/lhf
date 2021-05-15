@@ -6,7 +6,7 @@
 #include <iostream>
 #include <fstream>
 #include "utils.hpp"
-
+#include <time.h>
 unionFind::unionFind(int n) : rank(n, 0), parent(n, 0) {
 	for(int i=0; i<n; i++) parent[i]=i;
 }
@@ -154,6 +154,95 @@ std::vector<std::vector<double>> utils :: inverseOfMatrix(std::vector<std::vecto
 	}
   return matinv;
 }
+std::vector<double> utils :: nullSpaceOfMatrix(std::set<unsigned> simplex,std::vector<std::vector<double>> inputData,std::vector<double> cc, double radius){
+    int index;
+    srand(time(NULL));
+    int k;
+    int n = inputData[0].size();
+    std::vector<double> matns(n,1);
+    std::vector<std::vector<double>> mat;
+    do{	
+		std::vector<std::vector<double>> mat1;
+		mat = mat1;
+		if(simplex.size()>=n){
+			for(auto x : simplex){
+				mat.push_back(inputData[x]);
+				std::cout<<x<<" ";}
+		}
+		else{
+			for(auto x : simplex){
+				mat.push_back(inputData[x]);
+				std::cout<<x<<" ";}
+				for(int i=0;i<(n-simplex.size());i++){
+					std::vector<double> pos;
+					for(int j=0;j<n;j++){
+						if(j==i){
+							double square = 0;			// Need to modify if lies on same hyperplane
+							for(int k = 0;k<n;k++)
+								if(k!=j) 
+									square += cc[k]*cc[k];
+							double axis  = cc[j] + sqrt(radius - square);
+							pos.push_back(axis);
+						}
+						else
+							pos.push_back(0);
+					}
+					mat.push_back(pos);
+				}
+		}
+	}while(simplexVolume(mat) == 0);
+			
+	
+	
+    for (unsigned i = 0; i < n; i++)
+    {
+        index = i;
+        while (mat[index][i] == 0 && index < n)
+      			index++;
+        if (index == n)
+            continue;
+        if (index != i){
+            for (int j = 0; j < n; j++){
+                double temp12 = mat[index][j];
+                  mat[index][j] = mat[i][j];
+                  mat[i][j] = temp12;
+			  }
+                double temp121 = matns[index];
+                    matns[index] = matns[i];
+                    matns[i] = temp121;
+            
+		}
+        double rectemp = mat[i][i];
+        if(mat[i][i]!=1){
+          for (unsigned j = 0; j < n; j++){
+                mat[i][j] /= rectemp;
+			}
+                matns[i] /= rectemp;
+        }
+        for (unsigned j = 0; j < n; j++)
+        {
+           if(mat[j][i] != 0 && j!=i){
+           			double rectemp2 = mat[j][i];
+           			for (unsigned t = 0;  t< n; t++){
+             				mat[i][t] *= rectemp2;
+             		}
+             				matns[i] *= rectemp2;
+            		for (unsigned t = 0;  t< n; t++){
+              			mat[j][t] -= mat[i][t];
+              		}
+              			matns[j] -= matns[i];
+               for (unsigned k = 0; k < n; k++){
+                   mat[i][k] /= rectemp2;
+			   }
+                   matns[i] /= rectemp2;
+			}
+		}
+  }
+  std::cout<<"\nMat Null Space\n";
+    for(auto x : matns)
+		std::cout<<x<<" ";
+  return matns;
+}
 std::vector<double> utils :: circumCenter(std::set<unsigned> simplex,std::vector<std::vector<double>> inputData){
 // Soluiton  = inv(matA) * matC
    std::vector<std::vector<double>>  matA(simplex.size());
@@ -228,7 +317,52 @@ double utils :: circumRadius(std::set<unsigned> simplex,std::vector<std::vector<
 
 	return -(determinantOfMatrix(matA,simplex.size())/(2*determinantOfMatrix(matACap,simplex.size()+1)));
 }
-
+double utils :: simplexVolume(std::set<unsigned> simplex,std::vector<std::vector<double>>* distMatrix,int dd){
+		std::vector<std::vector<double>>  matACap(simplex.size()+1);
+		int ii=0;
+	  for(auto i : simplex){
+			matACap[ii+1].push_back(1);
+			for(auto j :simplex){
+				if((*distMatrix)[i][j]!=0){
+				matACap[ii+1].push_back(pow(((*distMatrix)[i][j]),2));
+			}
+			else{
+		  	matACap[ii+1].push_back(pow(((*distMatrix)[j][i]),2));
+			}
+	  }
+		ii++;
+	}
+	matACap[0].push_back(0);
+	for(auto i : simplex)
+		matACap[0].push_back(1);
+    if(dd%2==0)
+		return ((-1)*determinantOfMatrix(matACap,simplex.size()+1))/(pow(2,dd)*(pow(tgamma(dd+1),2)));
+	else
+		return (determinantOfMatrix(matACap,simplex.size()+1))/(pow(2,dd)*(pow(tgamma(dd+1),2)));
+}
+double utils :: simplexVolume(std::vector<std::vector<double>> spoints){
+		std::vector<std::vector<double>>  matACap(spoints.size()+1);
+		int ii=0;
+	  for(auto i : spoints){
+			matACap[ii+1].push_back(1);
+			for(auto j :spoints){
+				if(vectors_distance(i,j)!=0){
+				matACap[ii+1].push_back(pow(vectors_distance(i,j),2));
+			}
+			else{
+		  	matACap[ii+1].push_back(pow(vectors_distance(i,j),2));
+			}
+	  }
+		ii++;
+	}
+	matACap[0].push_back(0);
+	for(int i =0; i< spoints.size(); i++)
+		matACap[0].push_back(1);
+    if(spoints.size()%2==0)
+		return ((-1)*determinantOfMatrix(matACap,spoints.size()+1))/(pow(2,spoints[0].size())*(pow(tgamma(spoints[0].size()+1),2)));
+	else
+		return (determinantOfMatrix(matACap,spoints.size()+1))/(pow(2,spoints[0].size())*(pow(tgamma(spoints[0].size()+1),2)));
+}
 
 double utils::computeMaxRadius(int k, std::vector<std::vector<double>> &centroids, std::vector<std::vector<double>> &originalData, std::vector<unsigned> &labels){
 	double maxRadius = 0;
@@ -258,7 +392,6 @@ double utils::computeAvgRadius(int k, std::vector<std::vector<double>> &centroid
 	}
 
 	return totalRadius / originalData.size();
-
 }
 
 std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> utils::separatePartitions(int k, std::vector<std::vector<double>> originalData, std::vector<unsigned> labels){

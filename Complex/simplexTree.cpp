@@ -30,6 +30,7 @@ void simplexTree::recurseInsertDsimplex(simplexTreeNode* node, std::vector<int> 
 	sort(simp.begin(),simp.end());
 	int firstind =0;
 	int lastind = simp.size();
+	std::cout<<"Rohit "<<simp.size()<<std::endl;
 	for(auto x : simp){
         	firstind++;
 		std::vector<int> :: const_iterator first = simp.begin() + firstind;
@@ -41,16 +42,23 @@ void simplexTree::recurseInsertDsimplex(simplexTreeNode* node, std::vector<int> 
 		else
 		     simplex = node->simpNode->simplex;
 		simplex.insert(x);
-	        double weight = 0;
+	    double weight = 0;
 		double circumRadius;
+		double volume;
 		std::vector<double> circumCenter;
-		if(simplex.size()>1)
+		if(simplex.size()>2){
 			circumRadius = utils::circumRadius(simplex,distMatrix);
-		else
+			volume = utils::simplexVolume(simplex,distMatrix,inputData[0].size());
+		}
+		else{
 			circumRadius = weight/2;
+			volume = weight;
+		}
 		std::cout<<simplex.size()<<std::endl;
 		if(simplex.size()>2){
 			circumCenter = utils::circumCenter(simplex,inputData);
+			std::vector<double> hpcoff = utils::nullSpaceOfMatrix(simplex,inputData,circumCenter,circumRadius);
+		   std::cout<<"\n";
 		  for(double x : circumCenter)
 			std::cout<<x<<" ";
 		  std::cout<<std::endl;
@@ -59,7 +67,7 @@ void simplexTree::recurseInsertDsimplex(simplexTreeNode* node, std::vector<int> 
 		  for(auto y : simplex)
 			std::cout<<y<<" ";
 		std::cout<<"Here I am";
-			exit(0);
+			//exit(0);
 		  
 		}
 		else if(simplex.size()==2){
@@ -72,7 +80,8 @@ void simplexTree::recurseInsertDsimplex(simplexTreeNode* node, std::vector<int> 
 		        circumCenter = R;
        }else
    	   circumCenter = inputData[*(simplex.begin())];
-
+       // int k;
+      /// std::cin>>k; 
 		simplexTreeNode* insNode = new simplexTreeNode(simplex, circumRadius);
     		insNode->simpNode->circumCenter = circumCenter;	
     		insNode->simpNode->circumRadius = circumRadius;	

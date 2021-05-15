@@ -14,7 +14,8 @@ struct simplexNode{
 	std::set<unsigned> simplex = {};
 	double weight = 0;
 	double filterationvalue = -1;
-        double circumRadius = 0;
+    double circumRadius = 0;
+    std::vector<double> hpcoff; // cofficient of simplex hyperplane
 	std::vector<double> circumCenter;
 	simplexNode(){}
 	simplexNode(std::set<unsigned> simp, double wt) : simplex(simp), weight(wt) {}
@@ -110,6 +111,9 @@ class utils {
 	static std::vector<double> circumCenter(std::set<unsigned> simplex,std::vector<std::vector<double>> inputData);
 	static std::vector<std::vector<double>> inverseOfMatrix(std::vector<std::vector<double>> mat, int n);
 	static std::vector<std::vector<double>> matrixMultiplication(std::vector<std::vector<double>> matA, std::vector<std::vector<double>> matB);
+    static std::vector<double> nullSpaceOfMatrix(std::set<unsigned> simplex, std::vector<std::vector<double>> inputdata,std::vector<double> cc, double radius);
+	static double simplexVolume(std::set<unsigned> simplex,std::vector<std::vector<double>>* distMatrix,int dd);
+	static double simplexVolume(std::vector<std::vector<double>>mat);
 
 	static std::vector<double> serialize(std::vector<std::vector<double>>& );
 	static std::vector<std::vector<double>> deserialize(std::vector<double> , unsigned);
