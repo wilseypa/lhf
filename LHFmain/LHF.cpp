@@ -41,7 +41,7 @@ void LHF::runPipeline(std::map<std::string, std::string> args, pipePacket &wD){
 	// DataInput -> A -> B -> ... -> DataOutput
 	// Parsed by "." -> i.e. A.B.C.D
 	auto pipe = args.find("pipeline");
-
+	
 	if (pipe != args.end()){
 
 		auto pipeFuncts = std::string(args["pipeline"]);
@@ -89,10 +89,9 @@ void LHF::runPipeline(std::map<std::string, std::string> args, pipePacket &wD){
 }
 
 void LHF::runPreprocessor(std::map<std::string, std::string>& args, pipePacket &wD){
-
 	//Start with the preprocessing function, if enabled
 	auto pre = args["preprocessor"];
-	if (pre != ""){
+	if (pre != ""){	
 		auto prePipe = preprocessor::newPreprocessor(pre);
 
 		if (prePipe != 0 && prePipe->configPreprocessor(args)){

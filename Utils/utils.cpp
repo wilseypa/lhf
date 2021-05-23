@@ -197,7 +197,7 @@ std::vector<std::vector<double>> utils :: betaCentersCalculation(std::vector<dou
 std::vector<double> utils :: nullSpaceOfMatrix(std::set<unsigned> simplex,std::vector<std::vector<double>> inputData,std::vector<double> cc, double radius){
     int index;
     srand(time(NULL));
-    int k;
+
     int n = inputData[0].size();
     std::vector<double> matns(n,1);
     std::vector<std::vector<double>> mat;
@@ -221,27 +221,27 @@ std::vector<double> utils :: nullSpaceOfMatrix(std::set<unsigned> simplex,std::v
 				mat.push_back(inputData[x]);
 				}	
 				for(int i=0;i<(n-simplex.size());i++){
-					std::vector<double> pos;
-					for(int j=0;j<n;j++){
-						if(j==n-1-i){
-							double square = 0;			// Need to modify if lies on same hyperplane
-							for(int k = 0;k<n;k++)
-								if(k!=n-1-i) 
-									square += cc[k]*cc[k];
-							double axis  = cc[n-1-i] + sqrt(abs(radius - square));
-							pos.push_back(axis);
-						}
+					std::vector<double> pos(n,1);
+					std::vector<unsigned> angles(n-1,0);
+					for(int j=1;j<n;j++){
+						if(j!=n-1)
+							angles[j] = rand()%180 + 1;
 						else
-							pos.push_back(0);
+							angles[j] = rand()%360 + 1;
+						pos[j] = sin(angles[j])*pos[j-1];
 					}
-
+					for(int j=0;j<n-1;j++){
+						pos[j] *= radius*cos(angles[j+1]);
+					}
+					for(int j=0;j<n;j++)
+						pos[j] += cc[j];
 					mat.push_back(pos);
+
 				}
 		}
 	}while(simplexVolume(mat) == 0);
 	
-	
-	
+
     for (unsigned i = 0; i < n; i++)
     {
         index = i;
