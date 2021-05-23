@@ -4,6 +4,7 @@
 #include <math.h>
 #include <algorithm>
 #include "simplexArrayList.hpp"
+#include "../Preprocessing/kdTree.hpp"
 
 // simplexArrayList constructor, currently no needed information for the class constructor
 simplexArrayList::simplexArrayList(double maxE, double maxD) : bin(0,0) {
@@ -350,6 +351,93 @@ void simplexArrayList::expandDimensions(int dim){
 					tot->simplex.insert(pt);
 					tot->hash = (*it)->hash + bin.binom(pt, tot->simplex.size());
 					simplexList[d].insert(tot);
+				}
+			}
+		}
+	}
+}
+
+void simplexArrayList::graphInducedComplex(int dim,std::vector<std::vector<double>> inputData,double beta){
+	initBinom();
+	bool intersection;
+	kdTree tree(inputData, inputData.size()); //KDTree for efficient nearest neighbor search
+    if(beta < 1){
+		intersection = true;
+		beta = 1/beta;
+	}
+	else
+		intersection = false;
+
+
+
+	//Iterate up to max dimension of simplex, starting at dim 2 (edges)
+	for(unsigned d = 1; d <= dim; d++){
+
+		//Check if we need to break from expanding dimensions (no more edges)
+		if(simplexList.size() < d) break;
+		if(simplexList.size() == d) simplexList.push_back({});
+
+		//Iterate through each element in the current dimension's edges
+		for(auto it = simplexList[d-1].begin(); it != simplexList[d-1].end(); it++){
+			//Iterate over points to possibly add to the simplex
+			//Use points larger than the maximal vertex in the simplex to prevent double counting
+			unsigned minPt = *(*it)->simplex.rbegin() + 1;
+
+			for(unsigned pt = minPt; pt < simplexList[0].size(); pt++){
+		    std::set<unsigned> simplex = (*it)->simplex;
+            simplex.insert(pt);
+            std::vector<double> circumCenter;
+
+            if(simplex.size()>2)
+				circumCenter = utils::circumCenter(simplex,inputData);
+			else if(simplex.size()==2){
+ 				auto first = simplex.begin();
+				std::vector<double> R;
+				std::vector<double> A = inputData[*first];
+      			std::advance(first, 1);
+				std::vector<double> B = inputData[*first];
+	   			std::transform(A.begin(), A.end(), B.begin(), std::back_inserter(R),[](double e1,double e2){return ((e1+e2)/2);});
+				circumCenter = R;
+   			 }
+			double circumRadius = utils::circumRadius(simplex,distMatrix);
+			std::vector<double> hpcoff = utils::nullSpaceOfMatrix(simplex,inputData,circumCenter,sqrt(circumRadius));
+			std::vector<std::vector<double>> betaCenters = utils::betaCentersCalculation(hpcoff, beta, sqrt(circumRadius),circumCenter);
+			double betaRadius = beta*sqrt(circumRadius);
+			double volume = utils::simplexVolume(simplex,distMatrix,inputData[0].size());
+
+		    std::vector<size_t> neighbors1 = tree.neighborhoodIndices(betaCenters[0], betaRadius); //All neighbors in epsilon-ball
+    		std::vector<size_t> neighbors2 = tree.neighborhoodIndices(betaCenters[1], betaRadius); //All neighbors in epsilon-ball
+            std::vector<size_t> neighbors;
+            if(intersection == true){
+				std::vector<size_t> v(std::min(neighbors1.size(),neighbors2.size()));
+				std::vector<size_t>::iterator it;
+				std::sort (neighbors1.begin(),neighbors1.end());
+				std::sort (neighbors2.begin(),neighbors2.end()); 
+				it=std::set_intersection (neighbors1.begin(), neighbors1.end(), neighbors2.begin(), neighbors2.end(), v.begin());
+				v.resize(it-v.begin()); 
+				neighbors = v;				
+			}
+			else{
+				std::vector<size_t> v(neighbors1.size() + neighbors2.size());
+				std::vector<size_t>::iterator it;	
+				std::sort (neighbors1.begin(),neighbors1.end());
+				std::sort (neighbors2.begin(),neighbors2.end()); 
+				it=std::set_union (neighbors1.begin(), neighbors1.end(), neighbors2.begin(), neighbors2.end(), v.begin());
+				v.resize(it-v.begin()); 
+				neighbors = v;
+			}
+				
+			if(neighbors.size() > simplex.size()){
+					simplexNode_P tot = std::make_shared<simplexNode>(simplexNode((*it)->simplex, betaRadius));
+					tot->simplex.insert(pt);
+					tot->hash = (*it)->hash + bin.binom(pt, tot->simplex.size());
+					tot->circumCenter = circumCenter;	
+					tot->circumRadius = circumRadius;	
+					tot->betaCenters = betaCenters;
+					tot->betaRadius = betaRadius;
+					tot->hpcoff = hpcoff;
+					tot->volume = volume;
+					simplexList[d].insert(tot);   //insert simplex into complex
 				}
 			}
 		}

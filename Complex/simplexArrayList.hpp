@@ -37,7 +37,8 @@ class simplexArrayList : public simplexBase{
 		std::vector<simplexNode_P> getAllFacets_P(simplexNode_P);
 
 		std::vector<simplexNode_P> expandDimension(std::vector<simplexNode_P>, bool = true, unsigned = 0);
-    void buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, int pts,std::vector<std::vector<double>> inputData);
+
+        void buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, int pts,std::vector<std::vector<double>> inputData);
 
 		//virtual interface functions
 		double getSize();
@@ -50,6 +51,8 @@ class simplexArrayList : public simplexBase{
 		std::vector<simplexNode_P> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode_P, simplexNode_P>&, bool = true);
 		bool deletion(std::set<unsigned>);
 		void expandDimensions(int);
+	    void graphInducedComplex(int dim,std::vector<std::vector<double>> inputData,double beta);
+
 		void reduceComplex();
 		~simplexArrayList();
 };
