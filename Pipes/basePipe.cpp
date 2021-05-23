@@ -21,7 +21,6 @@
 #include "naiveWindow.hpp"
 #include "qhullPipe.hpp"
 #include "betaSkeletonBasedComplex.hpp"
-#include "kdTree.hpp"
 
 
 basePipe* basePipe::newPipe(const std::string &pipeType, const std::string &complexType){
@@ -49,8 +48,6 @@ basePipe* basePipe::newPipe(const std::string &pipeType, const std::string &comp
 		return new naiveWindow();
 	} else if (pipeType == "qhullPipe" || pipeType == "qhull" || pipeType == "alpha"){
 		return new qhullPipe();
-	}else if (pipeType == "kdTreePipe" || pipeType == "kdTree"){
-		return new kdTreePipe();
 	}else if (pipeType == "betaSkeletonBasedComplex"){
 		return new betaSkeletonBasedComplexPipe();
 	}

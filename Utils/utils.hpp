@@ -15,8 +15,11 @@ struct simplexNode{
 	double weight = 0;
 	double filterationvalue = -1;
     double circumRadius = 0;
+    double betaRadius = 0;
+    double volume;
     std::vector<double> hpcoff; // cofficient of simplex hyperplane
 	std::vector<double> circumCenter;
+	std::vector<std::vector<double>> betaCenters;
 	simplexNode(){}
 	simplexNode(std::set<unsigned> simp, double wt) : simplex(simp), weight(wt) {}
 };
@@ -112,6 +115,7 @@ class utils {
 	static std::vector<std::vector<double>> inverseOfMatrix(std::vector<std::vector<double>> mat, int n);
 	static std::vector<std::vector<double>> matrixMultiplication(std::vector<std::vector<double>> matA, std::vector<std::vector<double>> matB);
     static std::vector<double> nullSpaceOfMatrix(std::set<unsigned> simplex, std::vector<std::vector<double>> inputdata,std::vector<double> cc, double radius);
+    static std::vector<std::vector<double>> betaCentersCalculation(std::vector<double> hpcoff, double beta, double circumRadius,std::vector<double> circumCenter);
 	static double simplexVolume(std::set<unsigned> simplex,std::vector<std::vector<double>>* distMatrix,int dd);
 	static double simplexVolume(std::vector<std::vector<double>>mat);
 

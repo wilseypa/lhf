@@ -27,6 +27,10 @@ betaSkeletonBasedComplexPipe::betaSkeletonBasedComplexPipe(){
 // runPipe -> Run the configured functions of this pipeline segment
 void betaSkeletonBasedComplexPipe::runPipe(pipePacket &inData){
 	// Generate Beta Skeleton Based Complex
+	
+	inData.complex->graphInducedComplex(dim,inData.inputData,beta);
+		
+	
 	ut.writeDebug("betaSkeletonBasedComplex Pipe", "\tbetaSkeletonBasedComplex Size: ");
 	return;
 }
@@ -50,6 +54,10 @@ bool betaSkeletonBasedComplexPipe::configPipe(std::map<std::string, std::string>
 		beta = std::atof(configMap["beta"].c_str());
 		
 	ut = utils(strDebug, outputFile);
+	pipe = configMap.find("dimensions");
+	if(pipe != configMap.end()){
+		dim = std::atoi(configMap["dimensions"].c_str());
+	}
 	
 	pipe = configMap.find("epsilon");
 	if(pipe != configMap.end())

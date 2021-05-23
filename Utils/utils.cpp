@@ -154,6 +154,46 @@ std::vector<std::vector<double>> utils :: inverseOfMatrix(std::vector<std::vecto
 	}
   return matinv;
 }
+
+std::vector<std::vector<double>> utils :: betaCentersCalculation(std::vector<double> hpcoff, double beta, double circumRadius,std::vector<double> circumCenter){
+	
+	double distance = sqrt(pow((beta*circumRadius),2) - pow(circumRadius,2));
+	double d1 , d2;   // Parallel Plane coefficient
+	double sqrtofsquaredsum =0,squaredsum=0;
+	double dotproduct = 0;
+    int i=0;
+	for(auto x: hpcoff){
+		squaredsum += x*x;
+	    dotproduct += x*circumCenter[i];
+	    i++;
+	}
+	
+	sqrtofsquaredsum = sqrt(squaredsum);
+	 
+	 
+	d1 = -dotproduct + distance*sqrtofsquaredsum;
+	d2 = -dotproduct - distance*sqrtofsquaredsum; 
+	
+	double t1 , t2;
+	
+	t1 = (-dotproduct -d1)/squaredsum;
+	
+	t2 = (-dotproduct -d2)/squaredsum;
+	
+	std::vector<std::vector<double>> centers;
+	std::vector<double> center1;
+	std::vector<double> center2;
+	i=0;
+	for(auto x: hpcoff){
+	    center1.push_back(x*t1 + circumCenter[i]);
+	    center2.push_back(x*t2 + circumCenter[i]);
+	    i++;
+	}
+	centers.push_back(center1);
+	centers.push_back(center2);
+	return centers;
+}
+
 std::vector<double> utils :: nullSpaceOfMatrix(std::set<unsigned> simplex,std::vector<std::vector<double>> inputData,std::vector<double> cc, double radius){
     int index;
     srand(time(NULL));
@@ -164,34 +204,42 @@ std::vector<double> utils :: nullSpaceOfMatrix(std::set<unsigned> simplex,std::v
     do{	
 		std::vector<std::vector<double>> mat1;
 		mat = mat1;
-		if(simplex.size()>=n){
+		if(simplex.size()==n){
+			for(auto x : simplex)
+				mat.push_back(inputData[x]);
+		}else if(simplex.size()>n){
+			int count = 0;
 			for(auto x : simplex){
 				mat.push_back(inputData[x]);
-				std::cout<<x<<" ";}
+				count++;
+				if(count==n)
+				 break;	
+			}
 		}
 		else{
 			for(auto x : simplex){
 				mat.push_back(inputData[x]);
-				std::cout<<x<<" ";}
+				}	
 				for(int i=0;i<(n-simplex.size());i++){
 					std::vector<double> pos;
 					for(int j=0;j<n;j++){
-						if(j==i){
+						if(j==n-1-i){
 							double square = 0;			// Need to modify if lies on same hyperplane
 							for(int k = 0;k<n;k++)
-								if(k!=j) 
+								if(k!=n-1-i) 
 									square += cc[k]*cc[k];
-							double axis  = cc[j] + sqrt(radius - square);
+							double axis  = cc[n-1-i] + sqrt(abs(radius - square));
 							pos.push_back(axis);
 						}
 						else
 							pos.push_back(0);
 					}
+
 					mat.push_back(pos);
 				}
 		}
 	}while(simplexVolume(mat) == 0);
-			
+	
 	
 	
     for (unsigned i = 0; i < n; i++)
@@ -238,9 +286,6 @@ std::vector<double> utils :: nullSpaceOfMatrix(std::set<unsigned> simplex,std::v
 			}
 		}
   }
-  std::cout<<"\nMat Null Space\n";
-    for(auto x : matns)
-		std::cout<<x<<" ";
   return matns;
 }
 std::vector<double> utils :: circumCenter(std::set<unsigned> simplex,std::vector<std::vector<double>> inputData){
@@ -346,13 +391,8 @@ double utils :: simplexVolume(std::vector<std::vector<double>> spoints){
 	  for(auto i : spoints){
 			matACap[ii+1].push_back(1);
 			for(auto j :spoints){
-				if(vectors_distance(i,j)!=0){
 				matACap[ii+1].push_back(pow(vectors_distance(i,j),2));
 			}
-			else{
-		  	matACap[ii+1].push_back(pow(vectors_distance(i,j),2));
-			}
-	  }
 		ii++;
 	}
 	matACap[0].push_back(0);
@@ -370,7 +410,6 @@ double utils::computeMaxRadius(int k, std::vector<std::vector<double>> &centroid
 
 	//Iterate through each point
 	for(unsigned i = 0; i < originalData.size(); i++){
-
 		//Check the distance of this point to it's centroid
 		curRadius = vectors_distance(originalData[i], centroids[labels[i]]);
 

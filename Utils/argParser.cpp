@@ -129,12 +129,13 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 			basePipeline = "distMatrix.neighGraph.rips.fast";
 	}
 
-	//Handle basic modes; set pipeline if not initialized
-  //
-	if(args["simplicialComplex"] == "alpha" || args["simplicialComplex"] == "Alpha" || args["simplicialComplex"] == "ALPHA"){
-		args["pipeline"] = "distMatrix.alpha.fastPersistence";
-	}else if(args["simplicialComplex"] == "gic" || args["simplicialComplex"] == "GIC" || args["simplicialComplex"] == "graphInducedComplex"){
-               args["pipeline"] = "distMatrix.kdTree.betaSkeletonBasedComplex.fastPersistence";
+		//Handle basic modes; set pipeline if not initialized
+	//
+		if(args["simplicialComplex"] == "alpha" || args["simplicialComplex"] == "Alpha" || args["simplicialComplex"] == "ALPHA"){
+			args["pipeline"] = "distMatrix.alpha.fastPersistence";
+		}else if(args["simplicialComplex"] == "gic" || args["simplicialComplex"] == "GIC" || args["simplicialComplex"] == "graphInducedComplex"){
+		       args["complexType"] = "simplexArrayList";
+               args["pipeline"] = "distMatrix.neighGraph.betaSkeletonBasedComplex.fastPersistence";
         // build kd-Tree for the given point cloud    
 		// generate simplexes dimension wise belonging to beta skeleton. Find a normal to simplex hyperplane at circumcenter of the simplex. Use K-d tree to efficiently validate simplex.
 		// if Valid Insert simplex to simplicial Complex Complex
