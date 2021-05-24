@@ -14,6 +14,9 @@ class simplexBase {
   private:
   public:
 	std::vector<std::set<simplexNode_P, cmpByWeight>> simplexList;		//Holds ordered list of simplices in each dimension
+															// Thinking to implement a distributed version of simplex List across cluster nodes to increase efficiency.
+															// We can always store data structures accross different cluster nodes, with function defined to yield similar results.
+															// Such structures are used to maintain huge data with centralized node to manage cohrence between diffrent storage nodes.
 																//Needs to sort by the weight for insertion
 
 	unsigned simplexOffset = 0;
@@ -26,6 +29,8 @@ class simplexBase {
 	std::string simplicialComplex = "";
 	simplexNode_P root;							//Root of the simplexNode tree (if applicable)
 	simplexNode_P head;							//Root of the simplexNode tree (if applicable)
+	
+												// Also a similar implementaiton for simplex Tree
 
 	double maxEpsilon;							//Maximum epsilon, loaded from configuration
 	int maxDimension;							//Maximum dimension, loaded from configuration
