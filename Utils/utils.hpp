@@ -24,24 +24,6 @@ struct simplexNode{
 	simplexNode(std::set<unsigned> simp, double wt) : simplex(simp), weight(wt) {}
 };
 
-typedef std::shared_ptr<simplexNode> simplexNode_P;
-
-struct cmpByWeight{
-	bool operator()(simplexNode_P a, simplexNode_P b) const{
-		if(a->weight == b->weight){ //If the simplices have the same weight, sort by reverse lexicographic order for fastPersistence
-			auto itA = a->simplex.rbegin(), itB = b->simplex.rbegin();
-			while(itA != a->simplex.rend()){
-				if(*itA != *itB) return *itA > *itB;
-				++itA; ++itB;
-			}
-			return false;
-		} else{
-			return a->weight < b->weight;
-		}
-	}
-};
-
-
 struct bettiBoundaryTableEntry{
 	unsigned bettiDim;
 	double birth;
@@ -79,8 +61,8 @@ class utils {
 	static std::vector<std::vector<std::vector<double>>> separateBoundaryPartitions(std::vector<std::set<unsigned>>, std::vector<std::vector<double>>, std::vector<unsigned>);
 	static std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> separatePartitions(double, std::vector<std::vector<double>>, std::vector<std::vector<double>>, std::vector<unsigned>);
 	// void extractBoundaryPoints(std::vector<bettiBoundaryTableEntry>&);
-	static std::set<unsigned> extractBoundaryPoints(std::vector<simplexNode_P>);
-	static std::set<unsigned> extractBoundaryPoints(std::vector<simplexNode*>);
+	//static std::set<unsigned> extractBoundaryPoints(std::vector<simplexNode_P>);
+	//static std::set<unsigned> extractBoundaryPoints(std::vector<simplexNode*>);
 	static std::vector<bettiBoundaryTableEntry> mapPartitionIndexing(std::vector<unsigned>, std::vector<bettiBoundaryTableEntry>);
 	static void print2DVector(const std::vector<std::vector<unsigned>>&);
 	static void print1DVector(const std::vector<unsigned>&);

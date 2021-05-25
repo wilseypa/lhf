@@ -505,7 +505,7 @@ std::vector<std::vector<std::vector<double>>> utils::separateBoundaryPartitions(
 // 	}
 // }
 
-std::set<unsigned> utils::extractBoundaryPoints(std::vector<simplexNode_P> boundary){
+/*std::set<unsigned> utils::extractBoundaryPoints(std::vector<simplexNode_P> boundary){
 	std::set<unsigned> boundaryPoints;
 	for(auto simplex : boundary) boundaryPoints.insert(simplex->simplex.begin(), simplex->simplex.end());
 	return boundaryPoints;
@@ -515,7 +515,7 @@ std::set<unsigned> utils::extractBoundaryPoints(std::vector<simplexNode*> bounda
 	std::set<unsigned> boundaryPoints;
 	for(auto simplex : boundary) boundaryPoints.insert(simplex->simplex.begin(), simplex->simplex.end());
 	return boundaryPoints;
-}
+}*/
 
 std::vector<bettiBoundaryTableEntry> utils::mapPartitionIndexing(std::vector<unsigned> partitionedLabels, std::vector<bettiBoundaryTableEntry> bettiTable){
 	for(auto& bet : bettiTable){

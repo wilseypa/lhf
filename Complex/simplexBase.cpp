@@ -4,22 +4,26 @@
 #include <numeric>
 #include <typeinfo>
 #include "simplexBase.hpp"
-#include "simplexTree.hpp"
+//#include "simplexTree.hpp"
 #include "simplexArrayList.hpp"
 
-simplexBase::simplexBase(){return;}
+template<typename T>
+simplexBase<T>::simplexBase(){return;}
 
-simplexBase::simplexBase(std::map<std::string, std::string> &configMap){
+template<typename T>
+simplexBase<T>::simplexBase(std::map<std::string, std::string> &configMap){
 	setConfig(configMap);
 	return;
 }
 
-simplexBase::simplexBase(double maxE, int maxDim){
+template<typename T>
+simplexBase<T>::simplexBase(double maxE, int maxDim){
 	maxEpsilon = maxE;
 	maxDimension = maxDim;
 }
 
-void simplexBase::setConfig(std::map<std::string, std::string> &configMap){
+template<typename T>
+void simplexBase<T>::setConfig(std::map<std::string, std::string> &configMap){
 	std::string debug;
 	std::string outputFile;
 
@@ -56,176 +60,198 @@ void simplexBase::setConfig(std::map<std::string, std::string> &configMap){
 }
 
 
-void simplexBase::setDistanceMatrix(std::vector<std::vector<double>>* _distMatrix){
+template<typename T>
+void simplexBase<T>::setDistanceMatrix(std::vector<std::vector<double>>* _distMatrix){
 	distMatrix = _distMatrix;
 	return;
 }
 
 // simplexTree constructor, currently no needed information for the class constructor
-simplexBase* simplexBase::newSimplex(const std::string &simplexT, std::map<std::string, std::string> &configMap){
+template<typename T>
+simplexBase<T>* simplexBase<T>::newSimplex(const std::string &simplexT, std::map<std::string, std::string> &configMap){
 	if(simplexT == "simplexTree"){
 		//maxEpsilon and maxDimension are overwritten by setConfig
-		auto t = new simplexTree(0, 0);
-		t->setConfig(configMap);
-		return t;
+		//auto t = new simplexTree(0, 0);
+		//t->setConfig(configMap);
+		return;
 	} else if (simplexT == "simplexArrayList"){
-		auto t = new simplexArrayList(0, 0);
+		auto t = new simplexArrayList<T>(0, 0);
 		t->setConfig(configMap);
 		return t;
 	}
 	return 0;
 }
 
-void simplexBase::setEnclosingRadius(double r){
+template<typename T>
+void simplexBase<T>::setEnclosingRadius(double r){
 	maxEpsilon = r;
 }
 
-std::set<simplexNode_P, cmpByWeight> simplexBase::getDimEdges(int dim){
+template<typename T>
+std::set<std::shared_ptr<T>, cmpByWeight<std::shared_ptr<T>>> simplexBase<T>::getDimEdges(int dim){
 	if(dim >= simplexList.size()){
 		ut.writeLog(simplexType,"Error: requested dimension beyond complex");
-		std::set<simplexNode_P, cmpByWeight> a;
+		std::set<std::shared_ptr<T>, cmpByWeight<T>> a;
 		return a;
 	}
 	return simplexList[dim];
 }
 
-std::vector<std::set<simplexNode_P, cmpByWeight>> simplexBase::getAllEdges(){
+template<typename T>
+std::vector<std::set<std::shared_ptr<T>, cmpByWeight<std::shared_ptr<T>>>> simplexBase<T>::getAllEdges(){
 	return simplexList;
 }
 
-std::vector<simplexNode_P> simplexBase::getAllCofacets(const std::set<unsigned>& simplex){
-	return getAllCofacets(simplex, 0, std::unordered_map<simplexNode_P, simplexNode_P>(), false);
+template<typename T>
+std::vector<std::shared_ptr<T>> simplexBase<T>::getAllCofacets(const std::set<unsigned>& simplex){
+	return getAllCofacets(simplex, 0, std::unordered_map<std::shared_ptr<T>, std::shared_ptr<T>>(), false);
 }
 
-std::vector<simplexNode_P> simplexBase::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<simplexNode_P, simplexNode_P>& pivotPairs, bool checkEmergent){
+template<typename T>
+std::vector<std::shared_ptr<T>> simplexBase<T>::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<std::shared_ptr<T>, std::shared_ptr<T>>& pivotPairs, bool checkEmergent){
 	ut.writeLog(simplexType,"No get cofacets function defined");
-	return std::vector<simplexNode_P>();
+	return std::vector<std::shared_ptr<T>>();
 }
 
-std::vector<simplexNode*> simplexBase::getAllCofacets(simplexNode_P, const std::unordered_map<long long, simplexNode_P>&, bool){
+template<typename T>
+std::vector<T*> simplexBase<T>::getAllCofacets(std::shared_ptr<T>, const std::unordered_map<long long, std::shared_ptr<T>>&, bool){
 	ut.writeLog(simplexType,"No get cofacets function defined");
-	return std::vector<simplexNode*>();
+	return std::vector<T*>();
 }
 
-std::vector<simplexNode_P> simplexBase::getAllDelaunayCofacets(simplexNode_P){
+template<typename T>
+std::vector<std::shared_ptr<T>> simplexBase<T>::getAllDelaunayCofacets(std::shared_ptr<T>){
 	ut.writeLog(simplexType,"No getdelaunay cofacets function defined");
-	return std::vector<simplexNode_P>();
+	return std::vector<std::shared_ptr<T>>();
 }
 
-std::vector<simplexNode*> simplexBase::getAllCofacets(simplexNode_P){
+template<typename T>
+std::vector<T*> simplexBase<T>::getAllCofacets(std::shared_ptr<T>){
 	ut.writeLog(simplexType,"No get cofacets function defined");
-	return std::vector<simplexNode*>();
+	return std::vector<T*>();
 }
 
-std::vector<simplexNode*> simplexBase::getAllFacets(simplexNode*){
+template<typename T>
+std::vector<T*> simplexBase<T>::getAllFacets(T*){
 	ut.writeLog(simplexType,"No get facets function defined");
-	return std::vector<simplexNode*>();
+	return std::vector<T*>();
 }
 
-std::vector<simplexNode*> simplexBase::getAllFacets(simplexNode_P simplex){
+template<typename T>
+std::vector<T*> simplexBase<T>::getAllFacets(std::shared_ptr<T> simplex){
 	return getAllFacets(simplex.get());
 }
 
-std::vector<simplexNode_P> simplexBase::getAllFacets_P(simplexNode_P simplex){
+template<typename T>
+std::vector<std::shared_ptr<T>> simplexBase<T>::getAllFacets_P(std::shared_ptr<T> simplex){
 	ut.writeLog(simplexType,"No get facets function defined");
-	return std::vector<simplexNode_P>();
+	return std::vector<std::shared_ptr<T>>();
 }
 
-double simplexBase::getSize(){
+template<typename T>
+double simplexBase<T>::getSize(){
 	ut.writeLog(simplexType,"No size function defined");
 	return -1;
 }
 
-bool simplexBase::insertIterative(std::vector<double>&, std::vector<std::vector<double>>&, int&, int&){
+template<typename T>
+bool simplexBase<T>::insertIterative(std::vector<double>&, std::vector<std::vector<double>>&, int&, int&){
 	ut.writeLog(simplexType,"No insert iterative function defined");
 	return false;
 }
 
-bool simplexBase::insertIterative(std::vector<double>&, std::vector<std::vector<double>>&){
+template<typename T>
+bool simplexBase<T>::insertIterative(std::vector<double>&, std::vector<std::vector<double>>&){
 	ut.writeLog(simplexType,"No insert iterative function defined");
 	return false;
 }
 
 
-void simplexBase::deleteIterative(int){
+template<typename T>
+void simplexBase<T>::deleteIterative(int){
 	ut.writeLog(simplexType,"No delete iterative function defined");
 	return;
 }
 
 
-void simplexBase::deleteIndexRecurse(int){
+template<typename T>
+void simplexBase<T>::deleteIndexRecurse(int){
 	ut.writeLog(simplexType,"No recursive delete function defined");
 	return;
 }
 
 
-void simplexBase::insert(){
+template<typename T>
+void simplexBase<T>::insert(){
 	ut.writeLog(simplexType,"No insert function defined");
 	return;
 }
 
-bool simplexBase::find(std::vector<unsigned>){
+template<typename T>
+bool simplexBase<T>::find(std::vector<unsigned>){
 	ut.writeLog(simplexType,"No find function defined");
 	return false;
 }
 
-bool simplexBase::find(std::set<unsigned>){
+template<typename T>
+bool simplexBase<T>::find(std::set<unsigned>){
 	ut.writeLog(simplexType,"No find function defined");
 	return false;
 }
 
-int simplexBase::vertexCount(){
+template<typename T>
+int simplexBase<T>::vertexCount(){
 	ut.writeLog(simplexType,"No vertexCount function defined");
 	return -1;
 }
 
-void simplexBase::prepareCofacets(int dim){
+template<typename T>
+void simplexBase<T>::prepareCofacets(int dim){
 	ut.writeLog(simplexType,"No prepareCofacets function defined");
 	return;
 }
 
-void simplexBase::prepareFacets(int dim){
+template<typename T>
+void simplexBase<T>::prepareFacets(int dim){
 	ut.writeLog(simplexType,"No prepareFacets function defined");
 	return;
 }
 
-int simplexBase::simplexCount(){
+template<typename T>
+int simplexBase<T>::simplexCount(){
 	ut.writeLog(simplexType,"No simplexCount function defined");
 	return -1;
 }
 
-void simplexBase::outputComplex(){
+template<typename T>
+void simplexBase<T>::outputComplex(){
 	ut.writeLog(simplexType,"No outputComplex function defined");
 	return;
 }
 
-void simplexBase::buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, int npts,std::vector<std::vector<double>> inputData){
-	ut.writeLog(simplexType,"No build Alpha Complex function defined");
-	return;
-}
-void simplexBase :: graphInducedComplex(int dim,std::vector<std::vector<double>> inputData,double beta){
-	ut.writeLog(simplexType,"No graph Induced Complex function defined");
-	return;
-}
 
-void simplexBase::expandDimensions(int dim){
+template<typename T>
+void simplexBase<T>::expandDimensions(int dim){
 	ut.writeLog(simplexType,"No expandDimensions function defined");
 	return;
 }
 
-void simplexBase::reduceComplex(){
+template<typename T>
+void simplexBase<T>::reduceComplex(){
 	ut.writeLog(simplexType,"No reduceComplex function defined");
 	return;
 }
 
-void simplexBase::setStreamEvaluator(bool (*f) (std::vector<double>&, std::vector<std::vector<double>>&)){
+template<typename T>
+void simplexBase<T>::setStreamEvaluator(bool (*f) (std::vector<double>&, std::vector<std::vector<double>>&)){
 	streamEval = f;
 	ut.writeLog(simplexType,"Changed stream evaluator");
 	return;
 }
 
 
-bool simplexBase::streamEvaluator(std::vector<double>& vector, std::vector<std::vector<double>>& window){
+template<typename T>
+bool simplexBase<T>::streamEvaluator(std::vector<double>& vector, std::vector<std::vector<double>>& window){
 	//Do some evaluation of whether the point should stay or not
 	//		For now, let's look at the deviation of connections
 
@@ -269,10 +295,12 @@ bool simplexBase::streamEvaluator(std::vector<double>& vector, std::vector<std::
 	return false;
 }
 
-simplexBase::~simplexBase(){}
+template<typename T>
+simplexBase<T>::~simplexBase(){}
 
-std::vector<simplexNode_P> simplexBase::expandDimension(std::vector<simplexNode_P> edges){
-	std::vector<simplexNode_P> ret;
+template<typename T>
+std::vector<std::shared_ptr<T>> simplexBase<T>::expandDimension(std::vector<std::shared_ptr<T>> edges){
+	std::vector<std::shared_ptr<T>> ret;
 	ut.writeLog(simplexType,"No expandDimension function defined");
 	return ret;
 }

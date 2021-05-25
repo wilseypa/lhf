@@ -9,28 +9,41 @@
 
 // Header file for simplexBase class - see simplexTree.cpp for descriptions
 
+template <typename T>
+struct cmpByWeight{
+	bool operator()(T a, T b) const{
+		if(a->weight == b->weight){ //If the simplices have the same weight, sort by reverse lexicographic order for fastPersistence
+			auto itA = a->simplex.rbegin(), itB = b->simplex.rbegin();
+			while(itA != a->simplex.rend()){
+				if(*itA != *itB) return *itA > *itB;
+				++itA; ++itB;
+			}
+			return false;
+		} else{
+			return a->weight < b->weight;
+		}
+	}
+};
 
+
+template <class T>
 class simplexBase {
   private:
+  
   public:
-	std::vector<std::set<simplexNode_P, cmpByWeight>> simplexList;		//Holds ordered list of simplices in each dimension
-															// Thinking to implement a distributed version of simplex List across cluster nodes to increase efficiency.
-															// We can always store data structures accross different cluster nodes, with function defined to yield similar results.
-															// Such structures are used to maintain huge data with centralized node to manage cohrence between diffrent storage nodes.
-																//Needs to sort by the weight for insertion
-
+	typedef std::shared_ptr<T> templateNode_P;
+	std::vector<std::set<templateNode_P, cmpByWeight<templateNode_P>>> simplexList;		//Holds ordered list of simplices in each dimension
 	unsigned simplexOffset = 0;
 
+	
 	long long nodeCount = 0;					//Total number of nodes stored
 	long long indexCounter;						//Current insertion index
 
 	utils ut;									//Utilities functions
 	std::string simplexType = "simplexBase";	//Complex Type Identifier
 	std::string simplicialComplex = "";
-	simplexNode_P root;							//Root of the simplexNode tree (if applicable)
-	simplexNode_P head;							//Root of the simplexNode tree (if applicable)
-	
-												// Also a similar implementaiton for simplex Tree
+	templateNode_P root;							//Root of the simplexNode tree (if applicable)
+	templateNode_P head;							//Root of the simplexNode tree (if applicable)
 
 	double maxEpsilon;							//Maximum epsilon, loaded from configuration
 	int maxDimension;							//Maximum dimension, loaded from configuration
@@ -77,21 +90,19 @@ class simplexBase {
 	virtual void prepareCofacets(int);
 	virtual void prepareFacets(int);
 
-	virtual std::vector<simplexNode_P> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode_P, simplexNode_P>&, bool);
-	virtual std::vector<simplexNode*> getAllCofacets(simplexNode_P, const std::unordered_map<long long, simplexNode_P>&, bool);
-	virtual std::vector<simplexNode*> getAllCofacets(simplexNode_P);
-	virtual std::vector<simplexNode_P> getAllDelaunayCofacets(simplexNode_P);
-	virtual std::vector<simplexNode_P> getAllCofacets(const std::set<unsigned>&);
-	virtual std::vector<simplexNode*> getAllFacets(simplexNode*);
-	virtual std::vector<simplexNode*> getAllFacets(simplexNode_P);
-	virtual std::vector<simplexNode_P> getAllFacets_P(simplexNode_P);
+	virtual std::vector<templateNode_P> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<templateNode_P, templateNode_P>&, bool);
+	virtual std::vector<T*> getAllCofacets(templateNode_P, const std::unordered_map<long long, templateNode_P>&, bool);
+	virtual std::vector<T*> getAllCofacets(templateNode_P);
+	virtual std::vector<templateNode_P> getAllDelaunayCofacets(templateNode_P);
+	virtual std::vector<templateNode_P> getAllCofacets(const std::set<unsigned>&);
+	virtual std::vector<T*> getAllFacets(T*);
+	virtual std::vector<T*> getAllFacets(templateNode_P);
+	virtual std::vector<templateNode_P> getAllFacets_P(templateNode_P);
 
 
-	virtual std::set<simplexNode_P, cmpByWeight> getDimEdges(int);
-	virtual std::vector<std::set<simplexNode_P, cmpByWeight>> getAllEdges();
-	virtual std::vector<simplexNode_P> expandDimension(std::vector<simplexNode_P> edges);
-	virtual void buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, int npts,std::vector<std::vector<double>> inputData);
-	virtual void graphInducedComplex(int dim,std::vector<std::vector<double>> inputData,double beta);
+	virtual std::set<templateNode_P, cmpByWeight<templateNode_P>> getDimEdges(int);
+	virtual std::vector<std::set<templateNode_P, cmpByWeight<templateNode_P>>> getAllEdges();
+	virtual std::vector<templateNode_P> expandDimension(std::vector<templateNode_P> edges);
 
 	virtual void expandDimensions(int);
 	virtual void reduceComplex();
