@@ -4,14 +4,19 @@
 #include <map>
 #include "preprocessor.hpp"
 
-class kMeansPlusPlus : public preprocessor {
+template<typename T>
+class kMeansPlusPlus : public preprocessor<T> {
   private:
     int seed;
 	int num_clusters;			
 	int num_iterations;			
   public:
 	kMeansPlusPlus();
-    void runPreprocessor(pipePacket&);
+    void runPreprocessor(pipePacket<T>&);
     bool configPreprocessor(std::map<std::string, std::string>&);
 };
 
+
+//Explicit Template Class Instantiation
+template class kMeansPlusPlus<simplexNode>;
+template class kMeansPlusPlus<alphaNode>;

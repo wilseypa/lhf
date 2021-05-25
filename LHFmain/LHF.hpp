@@ -14,6 +14,9 @@ struct sortBettis{
 	}
 };
 
+
+
+template<class T>
 class LHF {
   private:
 	
@@ -23,16 +26,18 @@ class LHF {
 
 	void testFunc(int num1) { std::cout << num1 << std::endl;};
 	void myprint(void);
-	void outputBettis(std::map<std::string, std::string>, pipePacket &);
-	void runPipeline(std::map<std::string, std::string>, pipePacket &);
-	void runPreprocessor(std::map<std::string, std::string> &, pipePacket &);
+	void outputBettis(std::map<std::string, std::string>, pipePacket<T> &);
+	void runPipeline(std::map<std::string, std::string>, pipePacket<T> &);
+	void runPreprocessor(std::map<std::string, std::string> &, pipePacket<T> &);
 	std::vector<bettiBoundaryTableEntry> processParallel(std::map<std::string, std::string>, std::vector<unsigned>&, std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>>&, std::vector<std::vector<double>>&, int = 0);
-	std::vector<bettiBoundaryTableEntry> processParallelWrapper(std::map<std::string, std::string>, pipePacket &, bool = true);
-	std::vector<bettiBoundaryTableEntry> processDistributedWrapper(std::map<std::string, std::string>, pipePacket &);
+	std::vector<bettiBoundaryTableEntry> processParallelWrapper(std::map<std::string, std::string>, pipePacket<T> &, bool = true);
+	std::vector<bettiBoundaryTableEntry> processDistributedWrapper(std::map<std::string, std::string>, pipePacket<T> &);
 
 };
 
-
+//Explicit Template Class Instantiation
+template class LHF<simplexNode>;
+template class LHF<alphaNode>;
 
 extern "C" {
 	//Handle Betti Return Structure allocation	

@@ -73,7 +73,9 @@ simplexBase<T>* simplexBase<T>::newSimplex(const std::string &simplexT, std::map
 		//maxEpsilon and maxDimension are overwritten by setConfig
 		//auto t = new simplexTree(0, 0);
 		//t->setConfig(configMap);
-		return;
+		auto t = new simplexArrayList<T>(0, 0);
+		t->setConfig(configMap);
+		return t;
 	} else if (simplexT == "simplexArrayList"){
 		auto t = new simplexArrayList<T>(0, 0);
 		t->setConfig(configMap);
@@ -91,7 +93,7 @@ template<typename T>
 std::set<std::shared_ptr<T>, cmpByWeight<std::shared_ptr<T>>> simplexBase<T>::getDimEdges(int dim){
 	if(dim >= simplexList.size()){
 		ut.writeLog(simplexType,"Error: requested dimension beyond complex");
-		std::set<std::shared_ptr<T>, cmpByWeight<T>> a;
+		std::set<std::shared_ptr<T>, cmpByWeight<std::shared_ptr<T>>> a;
 		return a;
 	}
 	return simplexList[dim];
@@ -236,11 +238,11 @@ void simplexBase<T>::expandDimensions(int dim){
 	return;
 }
 
-template<typename T>
+/*template<typename T>
 void simplexBase<T>::reduceComplex(){
 	ut.writeLog(simplexType,"No reduceComplex function defined");
 	return;
-}
+}*/
 
 template<typename T>
 void simplexBase<T>::setStreamEvaluator(bool (*f) (std::vector<double>&, std::vector<std::vector<double>>&)){

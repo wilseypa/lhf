@@ -45,7 +45,7 @@ int main(int argc, char* argv[]){
 
 
 	//Define external classes used for reading input, parsing arguments, writing output
-	auto lhflib = LHF();
+	auto lhflib = LHF<simplexNode>();
 	auto rs = readInput();
 
 	//Parse the command-line arguments
@@ -55,7 +55,8 @@ int main(int argc, char* argv[]){
 	argParser::setPipeline(args);
 
 	//Create a pipePacket (datatype) to store the complex and pass between engines
-	auto wD = pipePacket(args, args["complexType"]);	//wD (workingData)
+	
+	auto wD = pipePacket<simplexNode>(args, args["complexType"]);	//wD (workingData)
 
 	if(args["pipeline"] != "slidingwindow" && args["pipeline"] != "naivewindow" && args["mode"] != "mpi"){
 		//Read data from inputFile CSV
@@ -100,7 +101,7 @@ int main(int argc, char* argv[]){
 		}
 	}
 
-	delete wD.complex;
+	//delete wD.complex;
 
 	double end = omp_get_wtime();
 	std::cout << "Total LHF execution time (s): " << end-start << std::endl;

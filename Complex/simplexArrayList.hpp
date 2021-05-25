@@ -60,3 +60,9 @@ class simplexArrayList : public simplexBase<T>{
 		void reduceComplex();
 		~simplexArrayList();
 };
+
+
+
+//Explicit Template Class Instantiation
+template class simplexArrayList<simplexNode>;
+template class simplexArrayList<alphaNode>;

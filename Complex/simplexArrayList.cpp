@@ -4,7 +4,7 @@
 #include <math.h>
 #include <algorithm>
 #include "simplexArrayList.hpp"
-#include "../Preprocessing/kdTree.hpp"
+//#include "../Preprocessing/kdTree.hpp"
 
 // simplexArrayList constructor, currently no needed information for the class constructor
 template<typename T>
@@ -413,7 +413,7 @@ std::vector<std::shared_ptr<T>> simplexArrayList<T>::expandDimension(std::vector
 		}
 	}
 
-	if(recordVertices) std::sort(nextEdges.begin(), nextEdges.end(), cmpByWeight<T>());
+	if(recordVertices) std::sort(nextEdges.begin(), nextEdges.end(), cmpByWeight<std::shared_ptr<T>>());
 	return nextEdges;
 }
 

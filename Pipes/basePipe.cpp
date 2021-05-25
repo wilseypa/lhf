@@ -11,6 +11,8 @@
 #include <vector>
 #include "basePipe.hpp"
 #include "distMatrixPipe.hpp"
+
+/*
 #include "neighGraphPipe.hpp"
 #include "ripsPipe.hpp"
 #include "upscalePipe.hpp"
@@ -21,15 +23,18 @@
 #include "naiveWindow.hpp"
 #include "qhullPipe.hpp"
 #include "betaSkeletonBasedComplex.hpp"
+*/
 
-
-basePipe* basePipe::newPipe(const std::string &pipeType, const std::string &complexType){
+template<typename T>
+basePipe<T>* basePipe<T>::newPipe(const std::string &pipeType, const std::string &complexType){
 	utils ut;
 	ut.writeDebug("basePipe","Building pipeline: " + pipeType + " for " + complexType);
 
 	if(pipeType == "distMatrix"){
-		return new distMatrixPipe();
-	} else if (pipeType == "neighGraph"){
+		return new distMatrixPipe<T>();
+	}
+	
+	/* else if (pipeType == "neighGraph"){
 		return new neighGraphPipe();
 	} else if (pipeType == "rips"){
 		return new ripsPipe();
@@ -50,13 +55,14 @@ basePipe* basePipe::newPipe(const std::string &pipeType, const std::string &comp
 		return new qhullPipe();
 	}else if (pipeType == "betaSkeletonBasedComplex"){
 		return new betaSkeletonBasedComplexPipe();
-	}
+	}*/
 
 	return 0;
 }
 
 // runPipeWrapper -> wrapper for timing of runPipe and other misc. functions
-void basePipe::runPipeWrapper(pipePacket &inData){
+template<typename T>
+void basePipe<T>::runPipeWrapper(pipePacket<T> &inData){
 
 	//Check if the pipe has been configured
 	if(!configured){
@@ -111,7 +117,8 @@ void basePipe::runPipeWrapper(pipePacket &inData){
 }
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-void basePipe::outputData(pipePacket &inData){
+template<typename T>
+void basePipe<T>::outputData(pipePacket<T> &inData){
 	ut.writeDebug("basePipe","No output function defined for: " + pipeType);
 
 	std::ofstream file;
@@ -129,14 +136,16 @@ void basePipe::outputData(pipePacket &inData){
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
-void basePipe::runPipe(pipePacket &inData){
+template<typename T>
+void basePipe<T>::runPipe(pipePacket<T> &inData){
 	ut.writeError("basePipe","No run function defined for: " + pipeType);
 
 	return;
 }
 
 // configPipe -> configure the function settings of this pipeline segment
-bool basePipe::configPipe(std::map<std::string, std::string> &configMap){
+template<typename T>
+bool basePipe<T>::configPipe(std::map<std::string, std::string> &configMap){
 	ut.writeDebug("basePipe","No configure function defined for: " + pipeType);
 
 	auto pipe = configMap.find("debug");

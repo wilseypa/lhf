@@ -105,7 +105,12 @@ class simplexBase {
 	virtual std::vector<templateNode_P> expandDimension(std::vector<templateNode_P> edges);
 
 	virtual void expandDimensions(int);
-	virtual void reduceComplex();
+	//virtual void reduceComplex();
 	virtual ~simplexBase();
 	virtual void outputComplex();
 };
+
+
+//Explicit Template Class Instantiation
+template class simplexBase<simplexNode>;
+template class simplexBase<alphaNode>;

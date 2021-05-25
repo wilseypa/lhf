@@ -33,3 +33,7 @@ class pipePacket {
 	std::string getStats();
 };
 
+
+//Explicit Template Class Instantiation
+template class pipePacket<simplexNode>;
+template class pipePacket<alphaNode>;

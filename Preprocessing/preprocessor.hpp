@@ -4,6 +4,7 @@
 #include <map>
 #include "pipePacket.hpp"
 
+template<typename T>
 class preprocessor {
   private:
   public:
@@ -16,11 +17,14 @@ class preprocessor {
     preprocessor();
     virtual ~preprocessor();
     static preprocessor* newPreprocessor(const std::string&);
-    void runPreprocessorWrapper(pipePacket &inData);
-    virtual void runPreprocessor(pipePacket &inData);
-    virtual void outputData(pipePacket&);
+    void runPreprocessorWrapper(pipePacket<T> &inData);
+    virtual void runPreprocessor(pipePacket<T> &inData);
+    virtual void outputData(pipePacket<T>&);
     virtual void outputData(std::vector<unsigned>);
     virtual void outputData(std::vector<std::vector<double>>);
     virtual bool configPreprocessor(std::map<std::string, std::string> &configMap);
 };
 
+//Explicit Template Class Instantiation
+template class preprocessor<simplexNode>;
+template class preprocessor<alphaNode>;

@@ -13,6 +13,17 @@ struct simplexNode{
 	
 	std::set<unsigned> simplex = {};
 	double weight = 0;
+	simplexNode(){}
+	simplexNode(std::set<unsigned> simp, double wt) : simplex(simp), weight(wt) {}
+};
+
+// Header file for utils class - see utils.cpp for descriptions
+struct alphaNode{
+	unsigned index;
+	long long hash = -1;
+	
+	std::set<unsigned> simplex = {};
+	double weight = 0;
 	double filterationvalue = -1;
     double circumRadius = 0;
     double betaRadius = 0;
@@ -20,8 +31,8 @@ struct simplexNode{
     std::vector<double> hpcoff; // cofficient of simplex hyperplane
 	std::vector<double> circumCenter;
 	std::vector<std::vector<double>> betaCenters;
-	simplexNode(){}
-	simplexNode(std::set<unsigned> simp, double wt) : simplex(simp), weight(wt) {}
+	alphaNode(){}
+	alphaNode(std::set<unsigned> simp, double wt) : simplex(simp), weight(wt) {}
 };
 
 struct bettiBoundaryTableEntry{
