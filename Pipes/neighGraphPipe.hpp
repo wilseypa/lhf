@@ -4,14 +4,19 @@
 #include <map>
 #include "basePipe.hpp"
 
-class neighGraphPipe : public basePipe {
+template<typename T>
+class neighGraphPipe : public basePipe<T> {
   private:
 	double epsilon;
 	int dim;
   public:
     neighGraphPipe();
-    void runPipe(pipePacket&);
-	void outputData(pipePacket&);
+    void runPipe(pipePacket<T>&);
+	void outputData(pipePacket<T>&);
     bool configPipe(std::map<std::string, std::string>&);
 };
 
+
+//Explicit Template Class Instantiation
+template class neighGraphPipe<simplexNode>;
+template class neighGraphPipe<alphaNode>;

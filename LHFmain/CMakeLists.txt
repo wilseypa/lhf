@@ -12,7 +12,7 @@ find_package(MPI REQUIRED)
 add_definitions(-DOMPI_SKIP_MPICXX)
 include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 
-find_package(OpenMP)
+find_package(OpenMP REQUIRED)
 
 set (CMAKE_CXX_STANDARD 14)
 set (CMAKE_CXX_STANDARD_LIBRARIES "-lpthread")
@@ -49,7 +49,7 @@ set_target_properties(LHFlib PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(LHFlib PROPERTIES SOVERSION 1)
 set_target_properties(LHFlib PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-target_link_libraries(LHFlib pipePacket utils readInput writeOutput simplexBase basePipe preprocessor OpenMP::OpenMP_CXX MPI::MPI_C) # qhullcpp qhullstatic_r)
+target_link_libraries(LHFlib pipePacket utils readInput writeOutput simplexBase basePipe preprocessor OpenMP::OpenMP_CXX MPI::MPI_CXX) # qhullcpp qhullstatic_r)
 
 INSTALL (TARGETS LHFlib
 	LIBRARY DESTINATION lib

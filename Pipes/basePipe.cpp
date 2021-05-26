@@ -11,9 +11,9 @@
 #include <vector>
 #include "basePipe.hpp"
 #include "distMatrixPipe.hpp"
+#include "neighGraphPipe.hpp"
 
 /*
-#include "neighGraphPipe.hpp"
 #include "ripsPipe.hpp"
 #include "upscalePipe.hpp"
 #include "persistencePairs.hpp"
@@ -32,11 +32,9 @@ basePipe<T>* basePipe<T>::newPipe(const std::string &pipeType, const std::string
 
 	if(pipeType == "distMatrix"){
 		return new distMatrixPipe<T>();
-	}
-	
-	/* else if (pipeType == "neighGraph"){
-		return new neighGraphPipe();
-	} else if (pipeType == "rips"){
+	} else if (pipeType == "neighGraph"){
+		return new neighGraphPipe<T>();
+	} /*else if (pipeType == "rips"){
 		return new ripsPipe();
 	} else if (pipeType == "upscale"){
 		std::cout << "Building upscale" << std::endl;
