@@ -6,7 +6,7 @@
 
 // TEST simplexBase Functions
 void t_simp_functions(std::string &log){
-	simplexBase* testComplex = new simplexBase();
+	/*simplexBase* testComplex = new simplexBase();
 	std::string failLog = "";
 	std::vector<double> testValue = {0.0, 1.0, 2.0};
 	std::vector<std::vector<double>> testValueArray {{0.0, 1.0, 2.0},{2.0, 1.0, 0.0}};
@@ -92,7 +92,7 @@ void t_simp_functions(std::string &log){
 	} else {
 		 log += "PASSED: simplexBase Test Functions---------------------------\n";
 	}
-
+	*/
 	std::cout << "\tFinished simplexBase tests" << std::endl;
 	return;
 }
@@ -100,6 +100,8 @@ void t_simp_functions(std::string &log){
 
 // Test simplexTree insertion, removal, etc. functions for sliding window
 void t_simp_tree_functions(std::string &log){
+	
+	/*
 	std::map<std::string, std::string> config;
 	std::string failLog = "";
 	std::vector<std::vector<double>> testValueArray = {{0.0, 1.0, 2.0},{2.0, 1.0, 0.0}, {1.0, 1.0, 2.0}, \
@@ -237,11 +239,12 @@ void t_simp_base_functions(std::string &log, std::string type){
 	}
 	
 	std::cout << "\tFinished simplexBase functions for " << type << std::endl;
-
+	*/
 }
 
 // TEST simplexArrayList Functions
 void t_simp_empty_functions(std::string &log, std::string type){
+	/*
 	std::map<std::string,std::string> config;
 	std::string failLog = "";
 	std::vector<double> testValue = {0.0, 1.0, 2.0};
@@ -320,6 +323,7 @@ void t_simp_empty_functions(std::string &log, std::string type){
 	}
 	
 	std::cout << "\tFinished simplexBase empty functions for " << type << std::endl;
+	*/
 }
 
 int main (int, char**){
@@ -337,3 +341,4 @@ int main (int, char**){
 
 	std::cout << std::endl << log << std::endl;
 }
+
