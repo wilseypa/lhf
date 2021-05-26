@@ -7,6 +7,10 @@
 #include <fstream>
 #include "utils.hpp"
 #include <time.h>
+
+template std::set<unsigned int, std::less<unsigned int>, std::allocator<unsigned int> > utils::extractBoundaryPoints<simplexNode>(std::vector<std::shared_ptr<simplexNode>, std::allocator<std::shared_ptr<simplexNode> > >);
+template std::set<unsigned int, std::less<unsigned int>, std::allocator<unsigned int> > utils::extractBoundaryPoints<alphaNode>(std::vector<std::shared_ptr<alphaNode>, std::allocator<std::shared_ptr<alphaNode> > >);
+
 unionFind::unionFind(int n) : rank(n, 0), parent(n, 0) {
 	for(int i=0; i<n; i++) parent[i]=i;
 }
@@ -505,17 +509,19 @@ std::vector<std::vector<std::vector<double>>> utils::separateBoundaryPartitions(
 // 	}
 // }
 
-/*std::set<unsigned> utils::extractBoundaryPoints(std::vector<simplexNode_P> boundary){
+template <typename T>
+std::set<unsigned> utils::extractBoundaryPoints(std::vector<std::shared_ptr<T>> boundary){
 	std::set<unsigned> boundaryPoints;
 	for(auto simplex : boundary) boundaryPoints.insert(simplex->simplex.begin(), simplex->simplex.end());
 	return boundaryPoints;
 }
 
-std::set<unsigned> utils::extractBoundaryPoints(std::vector<simplexNode*> boundary){
+template <typename T>
+std::set<unsigned> utils::extractBoundaryPoints(std::vector<T*> boundary){
 	std::set<unsigned> boundaryPoints;
 	for(auto simplex : boundary) boundaryPoints.insert(simplex->simplex.begin(), simplex->simplex.end());
 	return boundaryPoints;
-}*/
+}
 
 std::vector<bettiBoundaryTableEntry> utils::mapPartitionIndexing(std::vector<unsigned> partitionedLabels, std::vector<bettiBoundaryTableEntry> bettiTable){
 	for(auto& bet : bettiTable){

@@ -8,7 +8,8 @@
 #include "simplexBase.hpp"
 #include "utils.hpp"
 
-class incrementalPersistence : public basePipe {
+template <typename T>
+class incrementalPersistence : public basePipe<T> {
 	private:
 		int shift = 0;
 		unsigned nPts = 0;
@@ -38,15 +39,20 @@ class incrementalPersistence : public basePipe {
 				}
 			}
 		};
+		
+		
+		typedef std::shared_ptr<T> templateNode_P;
 
 	public:
 		int dim;
 	    incrementalPersistence();
-	    void runPipe(pipePacket &inData);
+	    void runPipe(pipePacket<T> &inData);
 	    bool configPipe(std::map<std::string, std::string> &configMap);
-		void outputData(pipePacket&);
+		void outputData(pipePacket<T>&);
 
-		template <class simplexNodePointer, class comp>
-		std::vector<simplexNodePointer> incrementalByDimension(pipePacket&, std::vector<simplexNodePointer>&, std::vector<simplexNodePointer> pivots, unsigned, comp, std::string, bool);
+		template <typename simplexNodePointer, typename comp>
+		std::vector<simplexNodePointer> incrementalByDimension(pipePacket<T>&, std::vector<simplexNodePointer>&, std::vector<simplexNodePointer> pivots, unsigned, comp, std::string, bool);
 };
 
+template class incrementalPersistence<simplexNode>;
+template class incrementalPersistence<alphaNode>;

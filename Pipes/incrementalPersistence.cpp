@@ -20,13 +20,15 @@
 #include "utils.hpp"
 
 // basePipe constructor
-incrementalPersistence::incrementalPersistence(){
-	pipeType = "IncrementalPersistence";
+template<typename T>
+incrementalPersistence<T>::incrementalPersistence(){
+	this->pipeType = "IncrementalPersistence";
 	return;
 }
 
-template <class simplexNodePointer, class comp>
-std::vector<simplexNodePointer> incrementalPersistence::incrementalByDimension(pipePacket& inData, std::vector<simplexNodePointer>& edges, std::vector<simplexNodePointer> pivots, unsigned dimension, comp compStruct, std::string mode, bool recordIntervals){
+template <class T>
+template <typename simplexNodePointer, typename comp>
+std::vector<simplexNodePointer> incrementalPersistence<T>::incrementalByDimension(pipePacket<T>& inData, std::vector<simplexNodePointer>& edges, std::vector<simplexNodePointer> pivots, unsigned dimension, comp compStruct, std::string mode, bool recordIntervals){
 	std::sort(edges.begin(), edges.end(), compStruct);
 	std::sort(pivots.begin(), pivots.end(), compStruct);
 
@@ -36,9 +38,9 @@ std::vector<simplexNodePointer> incrementalPersistence::incrementalByDimension(p
 	std::unordered_map<simplexNodePointer, std::vector<simplexNodePointer>> v;	//Store only the reduction matrix V and compute R implicity
 	std::unordered_map<long long, simplexNodePointer> pivotPairs;	//For each pivot, which column has that pivot
 
-	simplexArrayList* complex;
+	simplexArrayList<T>* complex;
 	if(inData.complex->simplexType == "simplexArrayList"){
-		complex = (simplexArrayList*) inData.complex;
+		complex = (simplexArrayList<T>*) inData.complex;
 	} else{
 		std::cout<<"IncrementalPersistence does not support complexes other than simplexArrayList\n";
 		return nextPivots;
@@ -53,7 +55,7 @@ std::vector<simplexNodePointer> incrementalPersistence::incrementalByDimension(p
 		if(it == pivots.end() || (*it)->hash != simplex->hash){
 
 			//Get all cofacets using emergent pair optimization
-			std::vector<simplexNode*> faceList = (mode == "homology" ? complex->getAllFacets(simplex, saveVertices, dimension) : complex->getAllCofacets(simplex, pivotPairs, true, saveVertices, dimension));
+			std::vector<T*> faceList = (mode == "homology" ? complex->getAllFacets(simplex, saveVertices, dimension) : complex->getAllCofacets(simplex, pivotPairs, true, saveVertices, dimension));
 
 			std::vector<simplexNodePointer> columnV;	//Reduction column of matrix V
 			columnV.push_back(simplex); //Initially V=I -> 1's along diagonal
@@ -62,7 +64,7 @@ std::vector<simplexNodePointer> incrementalPersistence::incrementalByDimension(p
 			std::make_heap(faceList.begin(), faceList.end(), compStruct);
 
 			while(true){
-				simplexNode* pivot;
+				T* pivot;
 
 				while(!faceList.empty()){
 					pivot = faceList.front();
@@ -90,7 +92,7 @@ std::vector<simplexNodePointer> incrementalPersistence::incrementalByDimension(p
 					break;
 				} else if(pivotPairs.find(pivot->hash) == pivotPairs.end()){ //Column cannot be reduced
 					pivotPairs.insert({pivot->hash, simplex});
-					nextPivots.push_back(std::shared_ptr<simplexNode>(pivot));
+					nextPivots.push_back(std::shared_ptr<T>(pivot));
 
 					std::sort(columnV.begin(), columnV.end(), compStruct);
 					auto it = columnV.begin();
@@ -108,7 +110,7 @@ std::vector<simplexNodePointer> incrementalPersistence::incrementalByDimension(p
 							}
 						}
 
-						bettiBoundaryTableEntry des = { dimension, std::min(pivot->weight, simplex->weight), std::max(pivot->weight, simplex->weight), ut.extractBoundaryPoints(v[simplex]) };
+						bettiBoundaryTableEntry des = { dimension, std::min(pivot->weight, simplex->weight), std::max(pivot->weight, simplex->weight), this->ut.extractBoundaryPoints(v[simplex]) };
 						inData.bettiTable.push_back(des);
 					}
 
@@ -120,7 +122,7 @@ std::vector<simplexNodePointer> incrementalPersistence::incrementalByDimension(p
 					//Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
 					for(simplexNodePointer simp : v[pivotPairs[pivot->hash]]){
 						columnV.push_back(simp);
-						std::vector<simplexNode*> faces = (mode == "homology" ? complex->getAllFacets(simp, saveVertices, dimension) : complex->getAllCofacets(simp, pivotPairs, false, saveVertices, dimension));
+						std::vector<T*> faces = (mode == "homology" ? complex->getAllFacets(simp, saveVertices, dimension) : complex->getAllCofacets(simp, pivotPairs, false, saveVertices, dimension));
 						faceList.insert(faceList.end(), faces.begin(), faces.end());
 					}
 					std::make_heap(faceList.begin(), faceList.end(), compStruct);
@@ -137,20 +139,21 @@ std::vector<simplexNodePointer> incrementalPersistence::incrementalByDimension(p
 //
 //	IncrementalPersistence: For computing the persistence pairs from simplicial complex:
 //		1. See Bauer-19 for algorithm/description
-void incrementalPersistence::runPipe(pipePacket &inData){
-	simplexArrayList* complex;
+template<typename T>
+void incrementalPersistence<T>::runPipe(pipePacket<T> &inData){
+	simplexArrayList<T>* complex;
 
 	if(inData.complex->simplexType == "simplexArrayList"){
-		complex = (simplexArrayList*) inData.complex;
+		complex = (simplexArrayList<T>*) inData.complex;
 	} else{
 		std::cout<<"IncrementalPersistence does not support complexes other than simplexArrayList\n";
 		return;
 	}
 
 	//Get the set of all points
-	std::set<simplexNode_P, cmpByWeight> e = complex->getDimEdges(0);
+	auto e = complex->getDimEdges(0);
 	//Convert the set to a vector
-	std::vector<simplexNode_P> edges = std::vector<simplexNode_P>(e.begin(), e.end());
+	std::vector<std::shared_ptr<T>> edges = std::vector<std::shared_ptr<T>>(e.begin(), e.end());
 	//Initialize the binomial table
 	complex->initBinom();
 	//Get the next dimension (edges)
@@ -177,7 +180,7 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 	//For streaming data, indices will not be 0-N; instead sparse
 	//	So in streaming, create a hash map to quickly lookup points
 	//TODO - POSSIBLY FIX
-	std::vector<simplexNode_P> pivots; //Store identified pivots
+	std::vector<std::shared_ptr<T>> pivots; //Store identified pivots
 	unsigned mstSize = 0;
 	unsigned nPts = inData.workData.size();
 
@@ -200,7 +203,7 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 			uf.join(c1, c2);
 			mstSize++;
 
-			simplexNode_P temp = std::make_shared<simplexNode>(simplexNode((*edgeIter)->simplex, (*edgeIter)->weight));
+			std::shared_ptr<T> temp = std::make_shared<T>(T((*edgeIter)->simplex, (*edgeIter)->weight));
 			temp->hash = v1 + v2*(v2-1)/2;
 			pivots.push_back(temp);
 
@@ -245,7 +248,7 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 
 		//To recover the representative cycles from the cocycles, we compute homology on just the pivot columns
 		if(involuted){
-			incrementalByDimension(inData, pivots, std::vector<simplexNode_P>(), d, sortLexicographic(), "homology", true);
+			incrementalByDimension(inData, pivots, std::vector<std::shared_ptr<T>>(), d, sortLexicographic(), "homology", true);
 		}
 	}
 
@@ -256,7 +259,7 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 	std::chrono::duration<double, std::milli> elapsed = endTime - startTime;
 
 	//Output the time and memory used for this pipeline segment
-	ut.writeDebug("persistence","Bettis executed in " + std::to_string(elapsed.count()/1000.0) + " seconds (physical time)");;
+	this->ut.writeDebug("persistence","Bettis executed in " + std::to_string(elapsed.count()/1000.0) + " seconds (physical time)");;
 
 	return;
 }
@@ -264,12 +267,13 @@ void incrementalPersistence::runPipe(pipePacket &inData){
 
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-void incrementalPersistence::outputData(pipePacket &inData){
+template<typename T>
+void incrementalPersistence<T>::outputData(pipePacket<T> &inData){
 	std::ofstream file;
-	if(fnmod.size() > 0)
-		file.open("output/"+pipeType+"_bettis_output"+fnmod+".csv");
+	if(this->fnmod.size() > 0)
+		file.open("output/"+this->pipeType+"_bettis_output"+this->fnmod+".csv");
 	else
-		file.open("output/" + pipeType + "_bettis_output.csv");
+		file.open("output/" + this->pipeType + "_bettis_output.csv");
 
 	for(auto row : inData.bettiTable)
 		file << std::to_string(row.bettiDim) << "," << std::to_string(row.birth) << "," << std::to_string(row.death) << std::endl;
@@ -294,41 +298,42 @@ void incrementalPersistence::outputData(pipePacket &inData){
 
 
 // configPipe -> configure the function settings of this pipeline segment
-bool incrementalPersistence::configPipe(std::map<std::string, std::string> &configMap){
+template<typename T>
+bool incrementalPersistence<T>::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
 
 	auto pipe = configMap.find("debug");
 	if(pipe != configMap.end()){
-		debug = std::atoi(configMap["debug"].c_str());
+		this->debug = std::atoi(configMap["debug"].c_str());
 		strDebug = configMap["debug"];
 	}
 	pipe = configMap.find("outputFile");
 	if(pipe != configMap.end())
-		outputFile = configMap["outputFile"].c_str();
+		this->outputFile = configMap["outputFile"].c_str();
 
-	ut = utils(strDebug, outputFile);
+	this->ut = utils(strDebug, this->outputFile);
 
 	pipe = configMap.find("involuted");
 	if(pipe != configMap.end())
-		inv = configMap["involuted"];
+		this->inv = configMap["involuted"];
 
 	pipe = configMap.find("dimensions");
 	if(pipe != configMap.end())
-		dim = std::atoi(configMap["dimensions"].c_str());
+		this->dim = std::atoi(configMap["dimensions"].c_str());
 	else return false;
 
 	pipe = configMap.find("epsilon");
 	if(pipe != configMap.end())
-		maxEpsilon = std::atof(configMap["epsilon"].c_str());
+		this->maxEpsilon = std::atof(configMap["epsilon"].c_str());
 	else return false;
 
 	pipe = configMap.find("fn");
 	if(pipe != configMap.end())
-		fnmod = configMap["fn"];
+		this->fnmod = configMap["fn"];
 
-	configured = true;
-	ut.writeDebug("incrementalPersistence","Configured with parameters { dim: " + configMap["dimensions"] + ", complexType: " + configMap["complexType"] + ", eps: " + configMap["epsilon"]);
-	ut.writeDebug("incrementalPersistence","\t\t\t\tdebug: " + strDebug + ", outputFile: " + outputFile + " }");
+	this->configured = true;
+	this->ut.writeDebug("incrementalPersistence","Configured with parameters { dim: " + configMap["dimensions"] + ", complexType: " + configMap["complexType"] + ", eps: " + configMap["epsilon"]);
+	this->ut.writeDebug("incrementalPersistence","\t\t\t\tdebug: " + strDebug + ", outputFile: " + this->outputFile + " }");
 
 	return true;
 }

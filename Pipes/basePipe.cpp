@@ -12,6 +12,7 @@
 #include "basePipe.hpp"
 #include "distMatrixPipe.hpp"
 #include "neighGraphPipe.hpp"
+#include "incrementalPersistence.hpp"
 
 /*
 #include "ripsPipe.hpp"
@@ -19,7 +20,6 @@
 #include "persistencePairs.hpp"
 #include "slidingWindow.hpp"
 #include "fastPersistence.hpp"
-#include "incrementalPersistence.hpp"
 #include "naiveWindow.hpp"
 #include "qhullPipe.hpp"
 #include "betaSkeletonBasedComplex.hpp"
@@ -34,6 +34,8 @@ basePipe<T>* basePipe<T>::newPipe(const std::string &pipeType, const std::string
 		return new distMatrixPipe<T>();
 	} else if (pipeType == "neighGraph"){
 		return new neighGraphPipe<T>();
+	} else if (pipeType == "incrementalPersistence" || pipeType == "inc"){
+		return new incrementalPersistence<T>();
 	} /*else if (pipeType == "rips"){
 		return new ripsPipe();
 	} else if (pipeType == "upscale"){
@@ -45,8 +47,6 @@ basePipe<T>* basePipe<T>::newPipe(const std::string &pipeType, const std::string
 		return new slidingWindow();
 	} else if (pipeType == "fastPersistence" || pipeType == "fast"){
 		return new fastPersistence();
-	} else if (pipeType == "incrementalPersistence" || pipeType == "inc"){
-		return new incrementalPersistence();
 	} else if (pipeType == "naivewindow" || pipeType == "naive"){
 		return new naiveWindow();
 	} else if (pipeType == "qhullPipe" || pipeType == "qhull" || pipeType == "alpha"){
