@@ -18,11 +18,10 @@
 #include "naiveWindow.hpp"
 #include "betaSkeletonBasedComplex.hpp"
 #include "upscalePipe.hpp"
+#include "qhullPipe.hpp"
 
 /*
-#include "persistencePairs.hpp"
 #include "slidingWindow.hpp"
-#include "qhullPipe.hpp"
 */
 
 template<typename T>
@@ -47,12 +46,11 @@ basePipe<T>* basePipe<T>::newPipe(const std::string &pipeType, const std::string
 		return new upscalePipe<T>();
 	} else if (pipeType == "betaSkeletonBasedComplex"){
 		return new betaSkeletonBasedComplexPipe<T>();
-	}/*else if (pipeType == "persistence"){
-		return new persistencePairs();
-	} else if (pipeType == "slidingwindow" || pipeType == "sliding"){
+	}  else if (pipeType == "qhullPipe" || pipeType == "qhull" || pipeType == "alpha"){
+		return new qhullPipe<T>();
+	} /*else if (pipeType == "slidingwindow" || pipeType == "sliding"){
 		return new slidingWindow();
-	} else if (pipeType == "qhullPipe" || pipeType == "qhull" || pipeType == "alpha"){
-		return new qhullPipe();
+	
 	}*/
 
 	return 0;

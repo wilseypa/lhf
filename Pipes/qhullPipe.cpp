@@ -14,13 +14,15 @@
 #include "utils.hpp"
 
 // basePipe constructor
-qhullPipe::qhullPipe(){
-	pipeType = "qhullPipe";
+template <typename T>
+qhullPipe<T>::qhullPipe(){
+	this->pipeType = "qhullPipe";
 	return;
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
-void qhullPipe::runPipe(pipePacket &inData){
+template <typename T>
+void qhullPipe<T>::runPipe(pipePacket<T> &inData){
     Qhull qh;
     std::vector<double> sdata;
     //serializing all the data
@@ -31,13 +33,18 @@ void qhullPipe::runPipe(pipePacket &inData){
     pts->append(sdata);
     qh.runQhull(pts->comment().c_str(),pts->dimension(),pts->count(),&*pts->coordinates(),"d o");
     auto dsimplexes = qdelaunay_o(qh);
-    inData.complex->buildAlphaComplex(dsimplexes,inData.inputData.size(),inData.inputData);
+    
+    //Again, (as stated in betaSkeletonBasedComplex) this should be a function of a different
+    //	class instead of a new virtual function (because not every complex implements this).
+    //		So cast and run, such as:
+    //    ((graphArrayList*)inData.complex)->buildAlphaComplex(dsimplexes,inData.inputData.size(),inData.inputData);
 
-	ut.writeDebug("qhullPipe", "\tSuccessfully Executed pipe");
+	this->ut.writeDebug("qhullPipe", "\tSuccessfully Executed pipe");
 	return;
 }
 
-std::vector<std::vector<int>>  qhullPipe::qdelaunay_o(const Qhull &qhull){
+template <typename T>
+std::vector<std::vector<int>>  qhullPipe<T>::qdelaunay_o(const Qhull &qhull){
 	int hullDimension = qhull.hullDimension();
         std::vector<std::vector<double> > inputSites;
 	QhullPoints points = qhull.points();
@@ -81,30 +88,32 @@ std::vector<std::vector<int>>  qhullPipe::qdelaunay_o(const Qhull &qhull){
 
 
 // configPipe -> configure the function settings of this pipeline segment
-bool qhullPipe::configPipe(std::map<std::string, std::string> &configMap){
+template <typename T>
+bool qhullPipe<T>::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
 
 	auto pipe = configMap.find("debug");
 	if(pipe != configMap.end()){
-		debug = std::atoi(configMap["debug"].c_str());
+		this->debug = std::atoi(configMap["debug"].c_str());
 		strDebug = configMap["debug"];
 	}
 	pipe = configMap.find("outputFile");
 	if(pipe != configMap.end())
-		outputFile = configMap["outputFile"].c_str();
+		this->outputFile = configMap["outputFile"].c_str();
 
-	ut = utils(strDebug, outputFile);
+	this->ut = utils(strDebug, this->outputFile);
 
-	configured = true;
-	ut.writeDebug("qhullPipe","Configured with parameters { eps: " + configMap["epsilon"] + " , debug: " + strDebug + ", outputFile: " + outputFile + " }");
+	this->configured = true;
+	this->ut.writeDebug("qhullPipe","Configured with parameters { eps: " + configMap["epsilon"] + " , debug: " + strDebug + ", outputFile: " + this->outputFile + " }");
 
 	return true;
 }
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-void qhullPipe::outputData(pipePacket &inData){
+template <typename T>
+void qhullPipe<T>::outputData(pipePacket<T> &inData){
 	std::ofstream file;
-	file.open("output/" + pipeType + "_output.csv");
+	file.open("output/" + this->pipeType + "_output.csv");
 
 
 
