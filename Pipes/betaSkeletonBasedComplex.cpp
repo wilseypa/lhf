@@ -19,59 +19,67 @@
 #include "utils.hpp"
 
 // basePipe constructor
-betaSkeletonBasedComplexPipe::betaSkeletonBasedComplexPipe(){
-	pipeType = "betaSkeletonBasedComplex";
+template <typename T>
+betaSkeletonBasedComplexPipe<T>::betaSkeletonBasedComplexPipe(){
+	this->pipeType = "betaSkeletonBasedComplex";
 	return;
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
-void betaSkeletonBasedComplexPipe::runPipe(pipePacket &inData){
+template <typename T>
+void betaSkeletonBasedComplexPipe<T>::runPipe(pipePacket<T> &inData){
 	// Generate Beta Skeleton Based Complex
 	
-	inData.complex->graphInducedComplex(dim,inData.inputData,beta);
+	// Temporarily commenting this out - need to check inData.complex type
+	//		If type is the graph-based simplexArrayList (inherited) then
+	//			cast to gAL and run non-virtual function:
+	
+	//	((graphArrayList*)inData.complex)->graphInducedComplex(dim,inData.inputData,beta);
 		
 	
-	ut.writeDebug("betaSkeletonBasedComplex Pipe", "\tbetaSkeletonBasedComplex Size: ");
+	this->ut.writeDebug("betaSkeletonBasedComplex Pipe", "\tbetaSkeletonBasedComplex Size: ");
 	return;
 }
 
 
 // configPipe -> configure the function settings of this pipeline segment
-bool betaSkeletonBasedComplexPipe::configPipe(std::map<std::string, std::string> &configMap){
+template <typename T>
+bool betaSkeletonBasedComplexPipe<T>::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
 	
 	auto pipe = configMap.find("debug");
 	if(pipe != configMap.end()){
-		debug = std::atoi(configMap["debug"].c_str());
+		this->debug = std::atoi(configMap["debug"].c_str());
 		strDebug = configMap["debug"];
 	}
 	pipe = configMap.find("outputFile");
 	if(pipe != configMap.end())
-		outputFile = configMap["outputFile"].c_str();
+		this->outputFile = configMap["outputFile"].c_str();
 	
 	pipe = configMap.find("beta");
 	if(pipe != configMap.end())
-		beta = std::atof(configMap["beta"].c_str());
+		this->beta = std::atof(configMap["beta"].c_str());
 		
-	ut = utils(strDebug, outputFile);
+	this->ut = utils(strDebug, this->outputFile);
 	pipe = configMap.find("dimensions");
 	if(pipe != configMap.end()){
-		dim = std::atoi(configMap["dimensions"].c_str());
+		this->dim = std::atoi(configMap["dimensions"].c_str());
 	}
 	
 	pipe = configMap.find("epsilon");
 	if(pipe != configMap.end())
-		enclosingRadius = std::atof(configMap["epsilon"].c_str());
+		this->enclosingRadius = std::atof(configMap["epsilon"].c_str());
 	else return false;
 
-	configured = true;
-	ut.writeDebug("betaSkeletonBasedComplex Pipe ","Configured with parameters { eps: " + configMap["epsilon"] + configMap["beta"] + " , debug: " + strDebug + ", outputFile: " + outputFile + " }");
+	this->configured = true;
+	this->ut.writeDebug("betaSkeletonBasedComplex Pipe ","Configured with parameters { eps: " + configMap["epsilon"] + configMap["beta"] + " , debug: " + strDebug + ", outputFile: " + this->outputFile + " }");
 	
 	return true;
 }
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-void betaSkeletonBasedComplexPipe::outputData(pipePacket &inData){
+template <typename T>
+void betaSkeletonBasedComplexPipe<T>::outputData(pipePacket<T> &inData){
 	// Output related to betaSkeletonBasedComplex
 	return;
 }
