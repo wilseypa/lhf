@@ -16,13 +16,13 @@
 #include "fastPersistence.hpp"
 #include "ripsPipe.hpp"
 #include "naiveWindow.hpp"
+#include "betaSkeletonBasedComplex.hpp"
+#include "upscalePipe.hpp"
 
 /*
-#include "upscalePipe.hpp"
 #include "persistencePairs.hpp"
 #include "slidingWindow.hpp"
 #include "qhullPipe.hpp"
-#include "betaSkeletonBasedComplex.hpp"
 */
 
 template<typename T>
@@ -42,17 +42,17 @@ basePipe<T>* basePipe<T>::newPipe(const std::string &pipeType, const std::string
 		return new ripsPipe<T>();
 	} else if (pipeType == "naivewindow" || pipeType == "naive"){
 		return new naiveWindow<T>();
-	} /*else if (pipeType == "upscale"){
+	} else if (pipeType == "upscale"){
 		std::cout << "Building upscale" << std::endl;
-		return new upscalePipe();
-	} else if (pipeType == "persistence"){
+		return new upscalePipe<T>();
+	} else if (pipeType == "betaSkeletonBasedComplex"){
+		return new betaSkeletonBasedComplexPipe<T>();
+	}/*else if (pipeType == "persistence"){
 		return new persistencePairs();
 	} else if (pipeType == "slidingwindow" || pipeType == "sliding"){
 		return new slidingWindow();
 	} else if (pipeType == "qhullPipe" || pipeType == "qhull" || pipeType == "alpha"){
 		return new qhullPipe();
-	}else if (pipeType == "betaSkeletonBasedComplex"){
-		return new betaSkeletonBasedComplexPipe();
 	}*/
 
 	return 0;
