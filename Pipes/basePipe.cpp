@@ -15,12 +15,12 @@
 #include "incrementalPersistence.hpp"
 #include "fastPersistence.hpp"
 #include "ripsPipe.hpp"
+#include "naiveWindow.hpp"
 
 /*
 #include "upscalePipe.hpp"
 #include "persistencePairs.hpp"
 #include "slidingWindow.hpp"
-#include "naiveWindow.hpp"
 #include "qhullPipe.hpp"
 #include "betaSkeletonBasedComplex.hpp"
 */
@@ -40,6 +40,8 @@ basePipe<T>* basePipe<T>::newPipe(const std::string &pipeType, const std::string
 		return new fastPersistence<T>();
 	} else if (pipeType == "rips"){
 		return new ripsPipe<T>();
+	} else if (pipeType == "naivewindow" || pipeType == "naive"){
+		return new naiveWindow<T>();
 	} /*else if (pipeType == "upscale"){
 		std::cout << "Building upscale" << std::endl;
 		return new upscalePipe();
@@ -47,8 +49,6 @@ basePipe<T>* basePipe<T>::newPipe(const std::string &pipeType, const std::string
 		return new persistencePairs();
 	} else if (pipeType == "slidingwindow" || pipeType == "sliding"){
 		return new slidingWindow();
-	} else if (pipeType == "naivewindow" || pipeType == "naive"){
-		return new naiveWindow();
 	} else if (pipeType == "qhullPipe" || pipeType == "qhull" || pipeType == "alpha"){
 		return new qhullPipe();
 	}else if (pipeType == "betaSkeletonBasedComplex"){

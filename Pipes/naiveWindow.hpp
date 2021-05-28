@@ -5,7 +5,8 @@
 #include "basePipe.hpp"
 #include "utils.hpp"
 
-class naiveWindow : public basePipe {
+template <class T>
+class naiveWindow : public basePipe<T> {
   private:
 	double epsilon;
 	int dim;
@@ -15,14 +16,15 @@ class naiveWindow : public basePipe {
 	std::map<std::string, std::string> subConfigMap;
 	//void runComplexInitializer(pipePacket &);
   public:
-	//Store our distance matrix
-	std::vector<std::vector<double>> distMatrix;
+    std::vector<std::vector<double>> distMatrix;
     naiveWindow();
-    void runPipe(pipePacket&);
-	void outputData(pipePacket&);
+    void runPipe(pipePacket<T>&);
+    void outputData(pipePacket<T>&);
     bool configPipe(std::map<std::string, std::string>&);
-    void runSubPipeline(pipePacket);
-	void writeComplexStats(pipePacket &);
-	static bool sampleStreamEvaluator(std::vector<double>&, std::vector<std::vector<double>>&);
+    void runSubPipeline(pipePacket<T>);
+    void writeComplexStats(pipePacket<T> &);
+    static bool sampleStreamEvaluator(std::vector<double>&, std::vector<std::vector<double>>&);
 };
 
+template class naiveWindow<simplexNode>;
+template class naiveWindow<alphaNode>;

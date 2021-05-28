@@ -15,7 +15,7 @@ add_library(ripsPipe "ripsPipe.cpp" "ripsPipe.hpp")
 #add_library(slidingWindow "slidingWindow.cpp" "slidingWindow.hpp")
 add_library(fastPersistence "fastPersistence.cpp" "fastPersistence.hpp")
 add_library(incrementalPersistence "incrementalPersistence.cpp" "incrementalPersistence.hpp")
-#add_library(naiveWindow "naiveWindow.cpp" "naiveWindow.hpp")
+add_library(naiveWindow "naiveWindow.cpp" "naiveWindow.hpp")
 #add_library(qhullPipe "qhullPipe.cpp" "qhullPipe.hpp")
 
 include_directories(${PROJECT_SOURCE_DIR}/Complex)
@@ -53,7 +53,7 @@ link_directories(${PROJECT_SOURCE_DIR}/Utils)
 include_directories(${PROJECT_SOURCE_DIR}/_deps/qhullext-src/src/)
 
 # target_link_libraries(LHF PipeFunctions)
-target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe incrementalPersistence fastPersistence ripsPipe) # betaSkeletonBasedComplex upscalePipe persistencePairs slidingWindow incrementalPersistence naiveWindow qhullcpp qhullstatic_r qhullPipe)
+target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe incrementalPersistence fastPersistence ripsPipe naiveWindow ) # slidingWindow betaSkeletonBasedComplex upscalePipe persistencePairs   qhullcpp qhullstatic_r qhullPipe)
 
 INSTALL (TARGETS basePipe
 	LIBRARY DESTINATION lib

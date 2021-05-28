@@ -6,7 +6,8 @@
 #include "basePipe.hpp"
 #include "utils.hpp"
 
-class slidingWindow : public basePipe {
+template <typename T>
+class slidingWindow : public basePipe<T> {
 private:
     double epsilon;
     int dim;
@@ -14,38 +15,39 @@ private:
     std::string inputFile;
     void runSubPipeline();
     std::map<std::string, std::string> subConfigMap;
+    
+    
 
 public:
-    struct EvalParams
-    {
-        int windowMaxSize;
-        int key;
-        int targetPartition;  // The partition membership of a new vector, if the new vector is to be added to the window.
-        std::vector<int> windowKeys;
-        std::vector<int> partitionLabels;
-        std::vector<int> nnIndices;  // A container to store the index of each point's nearest neighbor within the window.
-        std::vector<double> nnDists;  // A container to store the nearest neighbor distance of each point within the window.
-        std::unordered_map<int, double> avgNNDistPartitions;
-        std::unordered_map<int, int> numPointsPartn;  // A dictionary to store the number of points in each partition.
-        std::map<int, int> maxKeys;  // A dictionary to store the maxKey of each partition.
-        std::vector<double> distsFromCurrVec;
-        int keyToBeDeleted;
-        int labelToBeDeleted;
-        int indexToBeDeleted;
-        double nnDistToBeDeleted;
-    };
-
-    static EvalParams* defaultVals;
-    static pipePacket* pPack;
+    
+    int windowMaxSize = 100;
+    int key = 0;
+    int targetPartition = 0;  // The partition membership of a new vector, if the new vector is to be added to the window.
+    std::vector<int> windowKeys;
+    std::vector<int> partitionLabels;
+    std::vector<int> nnIndices;  // A container to store the index of each point's nearest neighbor within the window.
+    std::vector<double> nnDists;  // A container to store the nearest neighbor distance of each point within the window.
+    std::unordered_map<int, double> avgNNDistPartitions;
+    std::unordered_map<int, int> numPointsPartn;  // A dictionary to store the number of points in each partition.
+    std::map<int, int> maxKeys;  // A dictionary to store the maxKey of each partition.
+    std::vector<double> distsFromCurrVec;
+    int keyToBeDeleted;
+    int labelToBeDeleted;
+    int indexToBeDeleted;
+    double nnDistToBeDeleted;
+    
+    static pipePacket<T> pPack;
 
     slidingWindow();
-    pipePacket runPipe(pipePacket);
-    void outputData(pipePacket);
+    pipePacket<T> runPipe(pipePacket<T>);
+    void outputData(pipePacket<T>);
     bool configPipe(std::map<std::string, std::string>);
-    void runSubPipeline(pipePacket);
-    void writeComplexStats(pipePacket &);
+    void runSubPipeline(pipePacket<T>);
+    void writeComplexStats(pipePacket<T> &);
     static bool nnBasedEvaluator(std::vector<double>&, std::vector<std::vector<double>>&);
     static void deleteNNstats();
     static void updateStats();
 };
 
+template class slidingWindow<simplexNode>;
+template class slidingWindow<alphaNode>;
