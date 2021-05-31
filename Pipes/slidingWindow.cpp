@@ -863,3 +863,6 @@ void slidingWindow<T>::outputData(pipePacket<T> inData)
     file.close();
     return;
 }
+
+template class slidingWindow<simplexNode>;
+template class slidingWindow<alphaNode>;

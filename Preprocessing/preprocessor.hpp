@@ -24,7 +24,3 @@ class preprocessor {
     virtual void outputData(std::vector<std::vector<double>>);
     virtual bool configPreprocessor(std::map<std::string, std::string> &configMap);
 };
-
-//Explicit Template Class Instantiation
-template class preprocessor<simplexNode>;
-template class preprocessor<alphaNode>;

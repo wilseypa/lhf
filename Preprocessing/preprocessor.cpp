@@ -159,3 +159,7 @@ bool preprocessor<T>::configPreprocessor(std::map<std::string, std::string> &con
 
 template<typename T>
 preprocessor<T>::~preprocessor(){}
+
+//Explicit Template Class Instantiation
+template class preprocessor<simplexNode>;
+template class preprocessor<alphaNode>;

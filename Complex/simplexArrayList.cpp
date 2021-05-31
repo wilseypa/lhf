@@ -433,3 +433,7 @@ template<typename T>
 simplexArrayList<T>::~simplexArrayList(){
 	this->simplexList.clear();
 }
+
+//Explicit Template Class Instantiation
+template class simplexArrayList<simplexNode>;
+template class simplexArrayList<alphaNode>;

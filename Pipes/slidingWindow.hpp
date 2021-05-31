@@ -48,6 +48,3 @@ public:
     static void deleteNNstats();
     static void updateStats();
 };
-
-template class slidingWindow<simplexNode>;
-template class slidingWindow<alphaNode>;

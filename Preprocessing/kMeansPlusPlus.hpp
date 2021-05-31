@@ -16,7 +16,3 @@ class kMeansPlusPlus : public preprocessor<T> {
     bool configPreprocessor(std::map<std::string, std::string>&);
 };
 
-
-//Explicit Template Class Instantiation
-template class kMeansPlusPlus<simplexNode>;
-template class kMeansPlusPlus<alphaNode>;

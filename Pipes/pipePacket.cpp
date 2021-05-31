@@ -81,3 +81,6 @@ double pipePacket<T>::getSize(){
 	return size;
 }
 
+//Explicit Template Class Instantiation
+template class pipePacket<simplexNode>;
+template class pipePacket<alphaNode>;
