@@ -17,6 +17,7 @@ add_library(incrementalPersistence "incrementalPersistence.cpp" "incrementalPers
 add_library(naiveWindow "naiveWindow.cpp" "naiveWindow.hpp")
 add_library(qhullPipe "qhullPipe.cpp" "qhullPipe.hpp")
 
+
 include_directories(${PROJECT_SOURCE_DIR}/Complex)
 link_directories(${PROJECT_SOURCE_DIR}/Complex)
 
@@ -50,9 +51,9 @@ endif()
     
     
 include_directories(${PROJECT_SOURCE_DIR}/_deps/qhullext-src/src/)
-set_target_properties(LHFlib PROPERTIES POSITION_INDEPENDENT_CODE ON)
+link_directories(${PROJECT_SOURCE_DIR}/_deps/qhullext-build/)
 
-target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe incrementalPersistence fastPersistence ripsPipe naiveWindow betaSkeletonBasedComplex upscalePipe qhullcpp qhullstatic_r qhullPipe) # slidingWindow   
+target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe incrementalPersistence fastPersistence ripsPipe naiveWindow betaSkeletonBasedComplex upscalePipe qhullcpp qhull_r qhullPipe) # slidingWindow   
 
 INSTALL (TARGETS basePipe
 	LIBRARY DESTINATION lib
