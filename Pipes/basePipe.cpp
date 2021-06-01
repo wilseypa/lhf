@@ -24,30 +24,30 @@
 #include "slidingWindow.hpp"
 */
 
-template<typename T>
-basePipe<T>* basePipe<T>::newPipe(const std::string &pipeType, const std::string &complexType){
+template<typename nodeType>
+basePipe<nodeType>* basePipe<nodeType>::newPipe(const std::string &pipeType, const std::string &complexType){
 	utils ut;
 	ut.writeDebug("basePipe","Building pipeline: " + pipeType + " for " + complexType);
 
 	if(pipeType == "distMatrix"){
-		return new distMatrixPipe<T>();
+		return new distMatrixPipe<nodeType>();
 	} else if (pipeType == "neighGraph"){
-		return new neighGraphPipe<T>();
+		return new neighGraphPipe<nodeType>();
 	} else if (pipeType == "incrementalPersistence" || pipeType == "inc"){
-		return new incrementalPersistence<T>();
+		return new incrementalPersistence<nodeType>();
 	} else if (pipeType == "fastPersistence" || pipeType == "fast"){
-		return new fastPersistence<T>();
+		return new fastPersistence<nodeType>();
 	} else if (pipeType == "rips"){
-		return new ripsPipe<T>();
+		return new ripsPipe<nodeType>();
 	} else if (pipeType == "naivewindow" || pipeType == "naive"){
-		return new naiveWindow<T>();
+		return new naiveWindow<nodeType>();
 	} else if (pipeType == "upscale"){
 		std::cout << "Building upscale" << std::endl;
-		return new upscalePipe<T>();
+		return new upscalePipe<nodeType>();
 	} else if (pipeType == "betaSkeletonBasedComplex"){
-		return new betaSkeletonBasedComplexPipe<T>();
+		return new betaSkeletonBasedComplexPipe<nodeType>();
 	}  else if (pipeType == "qhullPipe" || pipeType == "qhull" || pipeType == "alpha"){
-		return new qhullPipe<T>();
+		return new qhullPipe<nodeType>();
 	} /*else if (pipeType == "slidingwindow" || pipeType == "sliding"){
 		return new slidingWindow();
 	
@@ -57,8 +57,8 @@ basePipe<T>* basePipe<T>::newPipe(const std::string &pipeType, const std::string
 }
 
 // runPipeWrapper -> wrapper for timing of runPipe and other misc. functions
-template<typename T>
-void basePipe<T>::runPipeWrapper(pipePacket<T> &inData){
+template<typename nodeType>
+void basePipe<nodeType>::runPipeWrapper(pipePacket<nodeType> &inData){
 
 	//Check if the pipe has been configured
 	if(!configured){
@@ -113,8 +113,8 @@ void basePipe<T>::runPipeWrapper(pipePacket<T> &inData){
 }
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-template<typename T>
-void basePipe<T>::outputData(pipePacket<T> &inData){
+template<typename nodeType>
+void basePipe<nodeType>::outputData(pipePacket<nodeType> &inData){
 	ut.writeDebug("basePipe","No output function defined for: " + pipeType);
 
 	std::ofstream file;
@@ -132,16 +132,16 @@ void basePipe<T>::outputData(pipePacket<T> &inData){
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
-template<typename T>
-void basePipe<T>::runPipe(pipePacket<T> &inData){
+template<typename nodeType>
+void basePipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
 	ut.writeError("basePipe","No run function defined for: " + pipeType);
 
 	return;
 }
 
 // configPipe -> configure the function settings of this pipeline segment
-template<typename T>
-bool basePipe<T>::configPipe(std::map<std::string, std::string> &configMap){
+template<typename nodeType>
+bool basePipe<nodeType>::configPipe(std::map<std::string, std::string> &configMap){
 	ut.writeDebug("basePipe","No configure function defined for: " + pipeType);
 
 	auto pipe = configMap.find("debug");

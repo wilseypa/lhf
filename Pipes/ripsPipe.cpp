@@ -19,16 +19,16 @@
 #include "utils.hpp"
 
 // basePipe constructor
-template<typename T>
-ripsPipe<T>::ripsPipe(){
+template<typename nodeType>
+ripsPipe<nodeType>::ripsPipe(){
 	this->pipeType = "ripsPipe";
 	return;
 }
 
 
 // runPipe -> Run the configured functions of this pipeline segment
-template<typename T>
-void ripsPipe<T>::runPipe(pipePacket<T> &inData){
+template<typename nodeType>
+void ripsPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
 	
 	inData.complex->expandDimensions(dim);
 		
@@ -46,8 +46,8 @@ void ripsPipe<T>::runPipe(pipePacket<T> &inData){
 
 
 // configPipe -> configure the function settings of this pipeline segment
-template<typename T>
-bool ripsPipe<T>::configPipe(std::map<std::string, std::string> &configMap){
+template<typename nodeType>
+bool ripsPipe<nodeType>::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
 	
 	auto pipe = configMap.find("debug");
@@ -78,8 +78,8 @@ bool ripsPipe<T>::configPipe(std::map<std::string, std::string> &configMap){
 
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-template<typename T>
-void ripsPipe<T>::outputData(pipePacket<T> &inData){
+template<typename nodeType>
+void ripsPipe<nodeType>::outputData(pipePacket<nodeType> &inData){
 	std::ofstream file;
 	
 	if(inData.complex->simplexType == "simplexArrayList"){

@@ -17,8 +17,8 @@
 #include "utils.hpp"
 
 // basePipe constructor
-template<typename T>
-kMeansPlusPlus<T>::kMeansPlusPlus(){
+template<typename nodeType>
+kMeansPlusPlus<nodeType>::kMeansPlusPlus(){
 	this->procName = "k-means++";
     return;
 }
@@ -26,8 +26,8 @@ kMeansPlusPlus<T>::kMeansPlusPlus(){
 
 
 // runPipe -> Run the configured functions of this pipeline segment
-template<typename T>
-void kMeansPlusPlus<T>::runPreprocessor(pipePacket<T>& inData){
+template<typename nodeType>
+void kMeansPlusPlus<nodeType>::runPreprocessor(pipePacket<nodeType>& inData){
 	if(!this->configured){
 		this->ut.writeLog(this->procName,"Preprocessor not configured");
 		return;
@@ -153,8 +153,8 @@ void kMeansPlusPlus<T>::runPreprocessor(pipePacket<T>& inData){
 }
 
 // configPipe -> configure the function settings of this pipeline segment
-template<typename T>
-bool kMeansPlusPlus<T>::configPreprocessor(std::map<std::string, std::string>& configMap){
+template<typename nodeType>
+bool kMeansPlusPlus<nodeType>::configPreprocessor(std::map<std::string, std::string>& configMap){
 	std::string strDebug;
 	
 	auto pipe = configMap.find("debug");

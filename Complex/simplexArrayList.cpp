@@ -7,8 +7,8 @@
 //#include "../Preprocessing/kdTree.hpp"
 
 // simplexArrayList constructor, currently no needed information for the class constructor
-template<typename T>
-simplexArrayList<T>::simplexArrayList(double maxE, double maxD) : bin(0,0) {
+template<typename nodeType>
+simplexArrayList<nodeType>::simplexArrayList(double maxE, double maxD) : bin(0,0) {
 	this->simplexType = "simplexArrayList";
 	this->maxEpsilon = maxE;
 	this->maxDimension = maxD;
@@ -32,8 +32,8 @@ long long binomialTable::binom(unsigned n, unsigned k){ //Return binomial coeffi
 }
 
 //Hash the set by converting to a remapped index
-template<typename T>
-long long simplexArrayList<T>::simplexHash(const std::set<unsigned>& simplex){
+template<typename nodeType>
+long long simplexArrayList<nodeType>::simplexHash(const std::set<unsigned>& simplex){
 	long long simplexIndex = 0;
 	unsigned i = 0;
 	auto it = simplex.begin();
@@ -45,8 +45,8 @@ long long simplexArrayList<T>::simplexHash(const std::set<unsigned>& simplex){
 	return simplexIndex;
 }
 
-template<typename T>
-unsigned simplexArrayList<T>::maxVertex(long long simplexHash, unsigned high, unsigned low, unsigned k){
+template<typename nodeType>
+unsigned simplexArrayList<nodeType>::maxVertex(long long simplexHash, unsigned high, unsigned low, unsigned k){
 	while(high > low){ //Binary search for the max vertex for this simplex
 		unsigned mid = (high + low)/2;
 		if(bin.binom(mid, k) <= simplexHash) low = mid + 1;
@@ -55,8 +55,8 @@ unsigned simplexArrayList<T>::maxVertex(long long simplexHash, unsigned high, un
 	return high - 1;
 }
 
-template<typename T>
-std::set<unsigned> simplexArrayList<T>::getVertices(long long simplexHash, int dim, unsigned n){
+template<typename nodeType>
+std::set<unsigned> simplexArrayList<nodeType>::getVertices(long long simplexHash, int dim, unsigned n){
 	std::set<unsigned> v;
 	for(unsigned k = dim+1; k>0; k--){ //Get all vertices by repeated binary search for max vertex
 		n = maxVertex(simplexHash, n, k-1, k);
@@ -66,25 +66,25 @@ std::set<unsigned> simplexArrayList<T>::getVertices(long long simplexHash, int d
 	return v;
 }
 
-template<typename T>
-void simplexArrayList<T>::prepareCofacets(int dim){
+template<typename nodeType>
+void simplexArrayList<nodeType>::prepareCofacets(int dim){
 	indexConverter.clear();
 	for(auto simplex : this->simplexList[dim+1]){
 		indexConverter.insert(std::make_pair(simplex->hash, simplex));
 	}
 }
 
-template<typename T>
-void simplexArrayList<T>::prepareFacets(int dim){
+template<typename nodeType>
+void simplexArrayList<nodeType>::prepareFacets(int dim){
 	indexConverter.clear();
 	for(auto simplex : this->simplexList[dim-1]){
 		indexConverter.insert(std::make_pair(simplex->hash, simplex));
 	}
 }
 
-template<typename T>
-std::vector<std::shared_ptr<T>> simplexArrayList<T>::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<std::shared_ptr<T>, std::shared_ptr<T>>& pivotPairs, bool checkEmergent){
-	std::vector<std::shared_ptr<T>> ret;
+template<typename nodeType>
+std::vector<std::shared_ptr<nodeType>> simplexArrayList<nodeType>::getAllCofacets(const std::set<unsigned>& simplex, double simplexWeight, const std::unordered_map<std::shared_ptr<nodeType>, std::shared_ptr<nodeType>>& pivotPairs, bool checkEmergent){
+	std::vector<std::shared_ptr<nodeType>> ret;
 	int nPts = this->simplexList[0].size();
 	unsigned k = simplex.size() + 1;
 	std::set<unsigned>::reverse_iterator it = simplex.rbegin();
@@ -119,11 +119,11 @@ std::vector<std::shared_ptr<T>> simplexArrayList<T>::getAllCofacets(const std::s
 	return ret;
 }
 
-template<typename T> 
-std::vector<T*> simplexArrayList<T>::getAllCofacets(std::shared_ptr<T> simp, const std::unordered_map<long long, std::shared_ptr<T>>& pivotPairs, bool checkEmergent, bool recordVertices, unsigned dim){
+template<typename nodeType> 
+std::vector<nodeType*> simplexArrayList<nodeType>::getAllCofacets(std::shared_ptr<nodeType> simp, const std::unordered_map<long long, std::shared_ptr<nodeType>>& pivotPairs, bool checkEmergent, bool recordVertices, unsigned dim){
 	//Method builds out cofacets for incrementalPersistence
 
-	std::vector<T*> ret;
+	std::vector<nodeType*> ret;
 	std::set<unsigned> vertices;
 
 	if(recordVertices) vertices = simp->simplex;
@@ -148,7 +148,7 @@ std::vector<T*> simplexArrayList<T>::getAllCofacets(std::shared_ptr<T> simp, con
 			}
 
 			if(maxWeight <= this->maxEpsilon){ //Valid simplex
-				T* x = new T();
+				nodeType* x = new nodeType();
 				if(recordVertices){
 					x->simplex = vertices;
 					x->simplex.insert(i);
@@ -168,15 +168,15 @@ std::vector<T*> simplexArrayList<T>::getAllCofacets(std::shared_ptr<T> simp, con
 	return ret;
 }
 
-template<typename T>
-std::vector<T*> simplexArrayList<T>::getAllCofacets(std::shared_ptr<T> simp){
-	return getAllCofacets(simp, std::unordered_map<long long, std::shared_ptr<T>>(), false, true, 0);
+template<typename nodeType>
+std::vector<nodeType*> simplexArrayList<nodeType>::getAllCofacets(std::shared_ptr<nodeType> simp){
+	return getAllCofacets(simp, std::unordered_map<long long, std::shared_ptr<nodeType>>(), false, true, 0);
 }
 
 
-template<typename T>
-std::vector<std::shared_ptr<T>> simplexArrayList<T>::getAllDelaunayCofacets(std::shared_ptr<T> simp){
-	std::vector<std::shared_ptr<T>> ret;
+template<typename nodeType>
+std::vector<std::shared_ptr<nodeType>> simplexArrayList<nodeType>::getAllDelaunayCofacets(std::shared_ptr<nodeType> simp){
+	std::vector<std::shared_ptr<nodeType>> ret;
 	unsigned dimension  = simp->simplex.size();
         for(auto simplex : this->simplexList[dimension]){
                 std::vector<unsigned> :: iterator it;
@@ -190,9 +190,9 @@ std::vector<std::shared_ptr<T>> simplexArrayList<T>::getAllDelaunayCofacets(std:
 
 }
 
-template<typename T>
-std::vector<T*> simplexArrayList<T>::getAllFacets(T* simp, bool recordVertices, unsigned dim){
-	std::vector<T*> ret;
+template<typename nodeType>
+std::vector<nodeType*> simplexArrayList<nodeType>::getAllFacets(nodeType* simp, bool recordVertices, unsigned dim){
+	std::vector<nodeType*> ret;
 	std::set<unsigned> vertices;
 
 	if(recordVertices) vertices = simp->simplex;
@@ -213,7 +213,7 @@ std::vector<T*> simplexArrayList<T>::getAllFacets(T* simp, bool recordVertices, 
 			}
 		}
 
-		T* x = new T();
+		nodeType* x = new nodeType();
 		x->weight = maxWeight;
 
 		if(recordVertices){
@@ -231,14 +231,14 @@ std::vector<T*> simplexArrayList<T>::getAllFacets(T* simp, bool recordVertices, 
 	return ret;
 }
 
-template<typename T>
-std::vector<T*> simplexArrayList<T>::getAllFacets(std::shared_ptr<T> simp, bool recordVertices, unsigned dimension){
+template<typename nodeType>
+std::vector<nodeType*> simplexArrayList<nodeType>::getAllFacets(std::shared_ptr<nodeType> simp, bool recordVertices, unsigned dimension){
 	return getAllFacets(simp.get(), recordVertices, dimension);
 }
 
-template<typename T>
-std::vector<std::shared_ptr<T>> simplexArrayList<T>::getAllFacets_P(std::shared_ptr<T> simp){
-	std::vector<std::shared_ptr<T>> ret;
+template<typename nodeType>
+std::vector<std::shared_ptr<nodeType>> simplexArrayList<nodeType>::getAllFacets_P(std::shared_ptr<nodeType> simp){
+	std::vector<std::shared_ptr<nodeType>> ret;
 
 	long long index = simp->hash;
 	unsigned k = simp->simplex.size();
@@ -259,8 +259,8 @@ std::vector<std::shared_ptr<T>> simplexArrayList<T>::getAllFacets_P(std::shared_
 	return ret;
 }
 
-template<typename T>
-double simplexArrayList<T>::getSize(){
+template<typename nodeType>
+double simplexArrayList<nodeType>::getSize(){
 	//Calculate size of original data
 	size_t size = 0;
 
@@ -278,22 +278,22 @@ double simplexArrayList<T>::getSize(){
 // Insert for simplexArrayList -> O((n+1)(n+2)/2) -> O(n^2)
 //		Sequence: 0 , 1 , 3 , 6 , 10 , 15
 //
-template<typename T>
-void simplexArrayList<T>::insert(){
+template<typename nodeType>
+void simplexArrayList<nodeType>::insert(){
 	//If this is the first point inserted...
 	if(this->simplexList.size() == 0) this->simplexList.push_back({});
 
 	unsigned i = this->simplexList[0].size();
 
-	std::shared_ptr<T> insNode = std::make_shared<T>(T({i}, 0.0));
+	std::shared_ptr<nodeType> insNode = std::make_shared<nodeType>(nodeType({i}, 0.0));
 	insNode->hash = i;
 	this->simplexList[0].insert(insNode);
 }
 
 // Search function to find a specific vector in the simplexArrayList
 // weightedGraph[d][v][p] dimension d stores vectors v of point elements p of simplexes formed
-template<typename T>
-bool simplexArrayList<T>::find(std::set<unsigned> vector){
+template<typename nodeType>
+bool simplexArrayList<nodeType>::find(std::set<unsigned> vector){
 	if (this->simplexList.size() == 0) return false;
 
 	for(auto simplexSetIter = this->simplexList[vector.size() - 1].begin(); simplexSetIter != this->simplexList[vector.size() - 1].end(); simplexSetIter++){
@@ -306,8 +306,8 @@ bool simplexArrayList<T>::find(std::set<unsigned> vector){
 
 // Search function to find a specific vector in the simplexArrayList
 // weightedGraph[d][v][p] dimension d stores vectors v of point elements p of simplexes formed
-template<typename T>
-double simplexArrayList<T>::findWeight(std::set<unsigned> vector){
+template<typename nodeType>
+double simplexArrayList<nodeType>::findWeight(std::set<unsigned> vector){
 	//Search the weighted graph from the size of the vector
 	for(auto simplexSetIter = this->simplexList[vector.size() - 1].begin(); simplexSetIter != this->simplexList[vector.size() - 1].end(); simplexSetIter++){
 		if((*simplexSetIter)->simplex == vector){
@@ -318,8 +318,8 @@ double simplexArrayList<T>::findWeight(std::set<unsigned> vector){
 }
 
 // Output the total simplices stored in the simplical complex
-template<typename T>
-int simplexArrayList<T>::simplexCount(){
+template<typename nodeType>
+int simplexArrayList<nodeType>::simplexCount(){
 	int simplexRet = 0;
 
 	for(auto a : this->simplexList){
@@ -330,15 +330,15 @@ int simplexArrayList<T>::simplexCount(){
 }
 
 // Output the total vertices stored in the simplical complex
-template<typename T>
-int simplexArrayList<T>::vertexCount(){
+template<typename nodeType>
+int simplexArrayList<nodeType>::vertexCount(){
 	if(this->simplexList.size() == 0)
 		return 0;
 	return this->simplexList[0].size();
 }
 
-template<typename T>
-void simplexArrayList<T>::initBinom(){
+template<typename nodeType>
+void simplexArrayList<nodeType>::initBinom(){
 	bin = binomialTable(this->simplexList[0].size(), this->maxDimension+1);
 }
 
@@ -347,8 +347,8 @@ void simplexArrayList<T>::initBinom(){
 //
 //	Do this by comparing each simplex with points to insert
 //
-template<typename T>
-void simplexArrayList<T>::expandDimensions(int dim){
+template<typename nodeType>
+void simplexArrayList<nodeType>::expandDimensions(int dim){
 	initBinom();
 
 	//Iterate up to max dimension of simplex, starting at dim 2 (edges)
@@ -370,7 +370,7 @@ void simplexArrayList<T>::expandDimensions(int dim){
 				for(auto i : (*it)->simplex) maxWeight = std::max(maxWeight, (*this->distMatrix)[i][pt]);
 
 				if(maxWeight <= this->maxEpsilon){ //Valid simplex
-					std::shared_ptr<T> tot = std::make_shared<T>(T((*it)->simplex, maxWeight));
+					std::shared_ptr<nodeType> tot = std::make_shared<nodeType>(nodeType((*it)->simplex, maxWeight));
 					tot->simplex.insert(pt);
 					tot->hash = (*it)->hash + bin.binom(pt, tot->simplex.size());
 					this->simplexList[d].insert(tot);
@@ -380,9 +380,9 @@ void simplexArrayList<T>::expandDimensions(int dim){
 	}
 }
 
-template<typename T>
-std::vector<std::shared_ptr<T>> simplexArrayList<T>::expandDimension(std::vector<std::shared_ptr<T>> edges, bool recordVertices, unsigned dim){
-	std::vector<std::shared_ptr<T>> nextEdges;
+template<typename nodeType>
+std::vector<std::shared_ptr<nodeType>> simplexArrayList<nodeType>::expandDimension(std::vector<std::shared_ptr<nodeType>> edges, bool recordVertices, unsigned dim){
+	std::vector<std::shared_ptr<nodeType>> nextEdges;
 
 	//Iterate through each element in the current dimension's edges
 	for(auto it = edges.begin(); it != edges.end(); it++){
@@ -401,7 +401,7 @@ std::vector<std::shared_ptr<T>> simplexArrayList<T>::expandDimension(std::vector
 			for(auto i : vertices) maxWeight = std::max(maxWeight, (*this->distMatrix)[i][pt]);
 
 			if(maxWeight <= this->maxEpsilon){ //Valid simplex
-				std::shared_ptr<T> tot = std::make_shared<T>(T());
+				std::shared_ptr<nodeType> tot = std::make_shared<nodeType>(nodeType());
 				if(recordVertices){
 					tot->simplex = vertices;
 					tot->simplex.insert(pt);
@@ -413,12 +413,12 @@ std::vector<std::shared_ptr<T>> simplexArrayList<T>::expandDimension(std::vector
 		}
 	}
 
-	if(recordVertices) std::sort(nextEdges.begin(), nextEdges.end(), cmpByWeight<std::shared_ptr<T>>());
+	if(recordVertices) std::sort(nextEdges.begin(), nextEdges.end(), cmpByWeight<std::shared_ptr<nodeType>>());
 	return nextEdges;
 }
 
-template<typename T>
-bool simplexArrayList<T>::deletion(std::set<unsigned> vector){
+template<typename nodeType>
+bool simplexArrayList<nodeType>::deletion(std::set<unsigned> vector){
 	//Search the weighted graph from the size of the vector
 	for(auto simplexSetIter = this->simplexList[vector.size() - 1].begin(); simplexSetIter != this->simplexList[vector.size() - 1].end(); simplexSetIter++){
 		if((*simplexSetIter)->simplex == vector){
@@ -429,8 +429,8 @@ bool simplexArrayList<T>::deletion(std::set<unsigned> vector){
 	return false;
 }
 
-template<typename T>
-simplexArrayList<T>::~simplexArrayList(){
+template<typename nodeType>
+simplexArrayList<nodeType>::~simplexArrayList(){
 	this->simplexList.clear();
 }
 

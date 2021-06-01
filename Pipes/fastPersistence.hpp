@@ -7,9 +7,9 @@
 #include "simplexBase.hpp"
 #include "utils.hpp"
 
-template<typename T>
-class fastPersistence : public basePipe<T> {
-	typedef std::shared_ptr<T> templateNode_P;
+template<typename nodeType>
+class fastPersistence : public basePipe<nodeType> {
+	typedef std::shared_ptr<nodeType> templateNode_P;
 	
 	private:
 		int shift = 0;
@@ -49,12 +49,12 @@ class fastPersistence : public basePipe<T> {
  	public:
 		int dim;
 	    fastPersistence();
-	    void runPipe(pipePacket<T> &inData);
+	    void runPipe(pipePacket<nodeType> &inData);
 	    bool configPipe(std::map<std::string, std::string> &configMap);
-		void outputData(pipePacket<T>&);
+		void outputData(pipePacket<nodeType>&);
 
 		template <class simplexNodePointer, class comp>
-		std::vector<simplexNodePointer> persistenceByDimension(pipePacket<T>&, std::vector<simplexNodePointer>, std::vector<simplexNodePointer> pivots, unsigned, comp, std::string, bool);
+		std::vector<simplexNodePointer> persistenceByDimension(pipePacket<nodeType>&, std::vector<simplexNodePointer>, std::vector<simplexNodePointer> pivots, unsigned, comp, std::string, bool);
 };
 
 template class fastPersistence<simplexNode>;

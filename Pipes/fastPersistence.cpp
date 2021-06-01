@@ -19,15 +19,15 @@
 #include "utils.hpp"
 
 // basePipe constructor
-template<typename T>
-fastPersistence<T>::fastPersistence(){
+template<typename nodeType>
+fastPersistence<nodeType>::fastPersistence(){
 	this->pipeType = "FastPersistence";
 	return;
 }
 
-template <class T>
+template <class nodeType>
 template <class simplexNodePointer, class comp>
-std::vector<simplexNodePointer> fastPersistence<T>::persistenceByDimension(pipePacket<T>& inData, std::vector<simplexNodePointer> edges, std::vector<simplexNodePointer> pivots, unsigned dimension, comp compStruct, std::string mode, bool recordIntervals){
+std::vector<simplexNodePointer> fastPersistence<nodeType>::persistenceByDimension(pipePacket<nodeType>& inData, std::vector<simplexNodePointer> edges, std::vector<simplexNodePointer> pivots, unsigned dimension, comp compStruct, std::string mode, bool recordIntervals){
 	std::sort(edges.begin(), edges.end(), compStruct);
 	std::sort(pivots.begin(), pivots.end(), compStruct);
 
@@ -118,10 +118,10 @@ std::vector<simplexNodePointer> fastPersistence<T>::persistenceByDimension(pipeP
 //
 //	FastPersistence: For computing the persistence pairs from simplicial complex:
 //		1. See Bauer-19 for algorithm/description
-template <class T>
-void fastPersistence<T>::runPipe(pipePacket<T> &inData){
+template <class nodeType>
+void fastPersistence<nodeType>::runPipe(pipePacket<nodeType> &inData){
 	//Get all edges for the simplexArrayList or simplexTree
-	std::vector<std::set<std::shared_ptr<T>, cmpByWeight<std::shared_ptr<T>>>> edges = inData.complex->getAllEdges();
+	std::vector<std::set<std::shared_ptr<nodeType>, cmpByWeight<std::shared_ptr<nodeType>>>> edges = inData.complex->getAllEdges();
 
 	if(edges.size() <= 1) return;
 
@@ -146,7 +146,7 @@ void fastPersistence<T>::runPipe(pipePacket<T> &inData){
 	//	So in streaming, create a hash map to quickly lookup points
 
 	std::unordered_map<unsigned, unsigned> mappedIndices;	//Store a map of the indices for MST
-	std::vector<std::shared_ptr<T>> pivots; //Store identified pivots
+	std::vector<std::shared_ptr<nodeType>> pivots; //Store identified pivots
 	unsigned mstSize = 0;
 	unsigned nPts = inData.workData.size();
 
@@ -205,12 +205,12 @@ void fastPersistence<T>::runPipe(pipePacket<T> &inData){
 	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
 		inData.complex->prepareCofacets(d);
 
-		pivots = persistenceByDimension(inData, std::vector<std::shared_ptr<T>>(edges[d].begin(), edges[d].end()), pivots, d, sortReverseLexicographic(), "cohomology", !involuted);
+		pivots = persistenceByDimension(inData, std::vector<std::shared_ptr<nodeType>>(edges[d].begin(), edges[d].end()), pivots, d, sortReverseLexicographic(), "cohomology", !involuted);
 
 		//To recover the representative cycles from the cocycles, we compute homology on just the pivot columns
 		if(involuted){
 			inData.complex->prepareFacets(d);
-			persistenceByDimension(inData, pivots, std::vector<std::shared_ptr<T>>(), d, sortLexicographic(), "homology", true);
+			persistenceByDimension(inData, pivots, std::vector<std::shared_ptr<nodeType>>(), d, sortLexicographic(), "homology", true);
 		}
 	}
 
@@ -229,8 +229,8 @@ void fastPersistence<T>::runPipe(pipePacket<T> &inData){
 
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-template <class T>
-void fastPersistence<T>::outputData(pipePacket<T> &inData){
+template <class nodeType>
+void fastPersistence<nodeType>::outputData(pipePacket<nodeType> &inData){
 	std::ofstream file;
 	if(this->fnmod.size() > 0)
 		file.open("output/"+this->pipeType+"_bettis_output"+this->fnmod+".csv");
@@ -260,8 +260,8 @@ void fastPersistence<T>::outputData(pipePacket<T> &inData){
 
 
 // configPipe -> configure the function settings of this pipeline segment
-template <class T>
-bool fastPersistence<T>::configPipe(std::map<std::string, std::string> &configMap){
+template <class nodeType>
+bool fastPersistence<nodeType>::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
 
 	auto pipe = configMap.find("debug");

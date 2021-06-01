@@ -15,15 +15,15 @@
 
 
 // basePipe constructor
-template<typename T>
-neighGraphPipe<T>::neighGraphPipe(){
+template<typename nodeType>
+neighGraphPipe<nodeType>::neighGraphPipe(){
 	this->pipeType = "neighGraph";
 	return;
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
-template<typename T>
-void neighGraphPipe<T>::runPipe(pipePacket<T> &inData){	
+template<typename nodeType>
+void neighGraphPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){	
 	
 	//Iterate through each vector, inserting into simplex storage
 	for(unsigned i = 0; i < inData.workData.size(); i++){
@@ -37,8 +37,8 @@ void neighGraphPipe<T>::runPipe(pipePacket<T> &inData){
 }
 
 // configPipe -> configure the function settings of this pipeline segment
-template<typename T>
-bool neighGraphPipe<T>::configPipe(std::map<std::string, std::string> &configMap){
+template<typename nodeType>
+bool neighGraphPipe<nodeType>::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
 	
 	auto pipe = configMap.find("debug");
@@ -71,8 +71,8 @@ bool neighGraphPipe<T>::configPipe(std::map<std::string, std::string> &configMap
 
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-template<typename T>
-void neighGraphPipe<T>::outputData(pipePacket<T> &inData){
+template<typename nodeType>
+void neighGraphPipe<nodeType>::outputData(pipePacket<nodeType> &inData){
 	std::ofstream file ("output/" + this->pipeType + "_output.csv");
 	
 	auto edges = inData.complex->getAllEdges();

@@ -19,15 +19,15 @@
 #include "utils.hpp"
 
 // basePipe constructor
-template<typename T>
-distMatrixPipe<T>::distMatrixPipe(){
+template<typename nodeType>
+distMatrixPipe<nodeType>::distMatrixPipe(){
 	this->pipeType = "DistMatrix";
 	return;
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
-template<typename T>
-void distMatrixPipe<T>::runPipe(pipePacket<T> &inData){
+template<typename nodeType>
+void distMatrixPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
 	//Store our distance matrix
 	if(inData.distMatrix.size() > 0) inData.distMatrix.clear();
 	inData.distMatrix.resize(inData.workData.size(), std::vector<double>(inData.workData.size(),0));
@@ -55,8 +55,8 @@ void distMatrixPipe<T>::runPipe(pipePacket<T> &inData){
 
 
 // configPipe -> configure the function settings of this pipeline segment
-template<typename T>
-bool distMatrixPipe<T>::configPipe(std::map<std::string, std::string> &configMap){
+template<typename nodeType>
+bool distMatrixPipe<nodeType>::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
 	
 	auto pipe = configMap.find("debug");
@@ -82,8 +82,8 @@ bool distMatrixPipe<T>::configPipe(std::map<std::string, std::string> &configMap
 }
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-template<typename T>
-void distMatrixPipe<T>::outputData(pipePacket<T> &inData){
+template<typename nodeType>
+void distMatrixPipe<nodeType>::outputData(pipePacket<nodeType> &inData){
 	std::ofstream file;
 	file.open("output/" + this->pipeType + "_output.csv");
 	

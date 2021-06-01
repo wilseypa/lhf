@@ -13,10 +13,10 @@ class binomialTable{
 		long long binom(unsigned n, unsigned k);
 };
 
-template <typename T>
-class simplexArrayList : public simplexBase<T>{
+template <typename nodeType>
+class simplexArrayList : public simplexBase<nodeType>{
 	
-	typedef std::shared_ptr<T> templateNode_P;
+	typedef std::shared_ptr<nodeType> templateNode_P;
 	
 	private:
 		binomialTable bin;
@@ -32,12 +32,12 @@ class simplexArrayList : public simplexBase<T>{
 		std::set<unsigned> getVertices(long long, int, unsigned);
 
 		void initBinom();
-		std::vector<T*> getAllCofacets(templateNode_P, const std::unordered_map<long long, templateNode_P>&, bool = true, bool = true, unsigned = 0);
-		std::vector<T*> getAllCofacets(templateNode_P);
+		std::vector<nodeType*> getAllCofacets(templateNode_P, const std::unordered_map<long long, templateNode_P>&, bool = true, bool = true, unsigned = 0);
+		std::vector<nodeType*> getAllCofacets(templateNode_P);
 		std::vector<templateNode_P> getAllDelaunayCofacets(templateNode_P);
 
-		std::vector<T*> getAllFacets(T*, bool = true, unsigned = 0);
-		std::vector<T*> getAllFacets(templateNode_P, bool = true, unsigned = 0);
+		std::vector<nodeType*> getAllFacets(nodeType*, bool = true, unsigned = 0);
+		std::vector<nodeType*> getAllFacets(templateNode_P, bool = true, unsigned = 0);
 		std::vector<templateNode_P> getAllFacets_P(templateNode_P);
 
 		std::vector<templateNode_P> expandDimension(std::vector<templateNode_P>, bool = true, unsigned = 0);

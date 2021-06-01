@@ -19,8 +19,8 @@
 
 
 // basePipe constructor
-template <typename T>
-upscalePipe<T>::upscalePipe(){
+template <typename nodeType>
+upscalePipe<nodeType>::upscalePipe(){
 	this->pipeType = "Upscale";
 	
 	return;
@@ -37,8 +37,8 @@ upscalePipe<T>::upscalePipe(){
 //				
 //		
 //
-template <typename T>
-void upscalePipe<T>::runPipe(pipePacket<T> &inData){
+template <typename nodeType>
+void upscalePipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
 
 	std::vector<std::pair<std::set<unsigned>, std::vector<bettiBoundaryTableEntry>>> upscaleBoundaries;
 	
@@ -108,7 +108,7 @@ void upscalePipe<T>::runPipe(pipePacket<T> &inData){
 			}
 		} else {
 			
-			auto curwD = pipePacket<T>(subConfigMap, subConfigMap["complexType"]);
+			auto curwD = pipePacket<nodeType>(subConfigMap, subConfigMap["complexType"]);
 			
 			for(unsigned index = 0; index < inData.centroidLabels.size(); index++){
 				if(bound.first.find(inData.centroidLabels[index]) != bound.first.end()){
@@ -141,8 +141,8 @@ void upscalePipe<T>::runPipe(pipePacket<T> &inData){
 }
 
 
-template <typename T>
-void upscalePipe<T>::runSubPipeline(pipePacket<T>& wrData){
+template <typename nodeType>
+void upscalePipe<nodeType>::runSubPipeline(pipePacket<nodeType>& wrData){
     if(wrData.workData.size() == 0)
         return;
 
@@ -157,7 +157,7 @@ void upscalePipe<T>::runSubPipeline(pipePacket<T>& wrData){
         pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
 
         //Build the pipe component, configure and run
-        auto cp = basePipe<T>::newPipe(curFunct, subConfigMap["complexType"]);
+        auto cp = basePipe<nodeType>::newPipe(curFunct, subConfigMap["complexType"]);
 
         //Check if the pipe was created and configure
         if(cp != 0 && cp->configPipe(subConfigMap)){
@@ -176,8 +176,8 @@ void upscalePipe<T>::runSubPipeline(pipePacket<T>& wrData){
 
 
 // configPipe -> configure the function settings of this pipeline segment
-template <typename T>
-bool upscalePipe<T>::configPipe(std::map<std::string, std::string> &configMap){
+template <typename nodeType>
+bool upscalePipe<nodeType>::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
     subConfigMap = configMap;
 	

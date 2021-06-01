@@ -19,20 +19,20 @@
 
 
 // basePipe constructor
-template<typename T>
-preprocessor<T>::preprocessor(){
+template<typename nodeType>
+preprocessor<nodeType>::preprocessor(){
 	return;
 }
 
-template<typename T>
-preprocessor<T>* preprocessor<T>::newPreprocessor(const std::string &procName){
+template<typename nodeType>
+preprocessor<nodeType>* preprocessor<nodeType>::newPreprocessor(const std::string &procName){
 	utils ut;
 	ut.writeDebug("preprocessor","Building preprocessor: " + procName);
 
 	if(procName == "none"){
-		return new preprocessor<T>();
+		return new preprocessor<nodeType>();
 	} else if (procName == "kmeansplusplus" || procName == "kmeans++" || procName == "kmeans"){
-		return new kMeansPlusPlus<T>();
+		return new kMeansPlusPlus<nodeType>();
 	} 
 	
 	/*else if(procName == "streamingKmeans" || procName == "streamingkmeans" || procName =="streamKM"){
@@ -45,8 +45,8 @@ preprocessor<T>* preprocessor<T>::newPreprocessor(const std::string &procName){
 }
 
 // runPipeWrapper -> wrapper for timing of runPipe and other misc. functions
-template<typename T>
-void preprocessor<T>::runPreprocessorWrapper(pipePacket<T> &inData){
+template<typename nodeType>
+void preprocessor<nodeType>::runPreprocessorWrapper(pipePacket<nodeType> &inData){
 	
 	//Check if the preprocessor has been configured
 	if(!configured){
@@ -99,8 +99,8 @@ void preprocessor<T>::runPreprocessorWrapper(pipePacket<T> &inData){
 	}
 }
 
-template<typename T>
-void preprocessor<T>::outputData(std::vector<unsigned> data){
+template<typename nodeType>
+void preprocessor<nodeType>::outputData(std::vector<unsigned> data){
 	std::ofstream file;
 	file.open("output/" + procName + "_label_output.csv");
 	
@@ -112,8 +112,8 @@ void preprocessor<T>::outputData(std::vector<unsigned> data){
 }
 	
 	
-template<typename T>
-void preprocessor<T>::outputData(pipePacket<T> &data){
+template<typename nodeType>
+void preprocessor<nodeType>::outputData(pipePacket<nodeType> &data){
 	
 	outputData(data.workData);
 	outputData(data.centroidLabels);
@@ -124,8 +124,8 @@ void preprocessor<T>::outputData(pipePacket<T> &data){
 }
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-template<typename T>
-void preprocessor<T>::outputData(std::vector<std::vector<double>> data){
+template<typename nodeType>
+void preprocessor<nodeType>::outputData(std::vector<std::vector<double>> data){
 	std::ofstream file;
 	file.open("output/" + procName + "_centroid_output.csv");
 	
@@ -141,8 +141,8 @@ void preprocessor<T>::outputData(std::vector<std::vector<double>> data){
 }
 	
 // runPipe -> Run the configured functions of this pipeline segment
-template<typename T>
-void preprocessor<T>::runPreprocessor(pipePacket<T> &inData){
+template<typename nodeType>
+void preprocessor<nodeType>::runPreprocessor(pipePacket<nodeType> &inData){
 	
 	std::cout << "No run function defined for: " << procName << std::endl;
 	
@@ -150,15 +150,15 @@ void preprocessor<T>::runPreprocessor(pipePacket<T> &inData){
 }	
 
 // configPipe -> configure the function settings of this pipeline segment
-template<typename T>
-bool preprocessor<T>::configPreprocessor(std::map<std::string, std::string> &configMap){
+template<typename nodeType>
+bool preprocessor<nodeType>::configPreprocessor(std::map<std::string, std::string> &configMap){
 	std::cout << "No configure function defined for: " << procName << std::endl;
 	
 	return false;
 }
 
-template<typename T>
-preprocessor<T>::~preprocessor(){}
+template<typename nodeType>
+preprocessor<nodeType>::~preprocessor(){}
 
 //Explicit Template Class Instantiation
 template class preprocessor<simplexNode>;

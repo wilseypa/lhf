@@ -9,9 +9,9 @@
 
 // Header file for simplexBase class - see simplexTree.cpp for descriptions
 
-template <typename T>
+template <typename nodeType>
 struct cmpByWeight{
-	bool operator()(T a, T b) const{
+	bool operator()(nodeType a, nodeType b) const{
 		if(a->weight == b->weight){ //If the simplices have the same weight, sort by reverse lexicographic order for fastPersistence
 			auto itA = a->simplex.rbegin(), itB = b->simplex.rbegin();
 			while(itA != a->simplex.rend()){
@@ -26,12 +26,12 @@ struct cmpByWeight{
 };
 
 
-template <class T>
+template <class nodeType>
 class simplexBase {
   private:
   
   public:
-	typedef std::shared_ptr<T> templateNode_P;
+	typedef std::shared_ptr<nodeType> templateNode_P;
 	std::vector<std::set<templateNode_P, cmpByWeight<templateNode_P>>> simplexList;		//Holds ordered list of simplices in each dimension
 	unsigned simplexOffset = 0;
 
@@ -91,12 +91,12 @@ class simplexBase {
 	virtual void prepareFacets(int);
 
 	virtual std::vector<templateNode_P> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<templateNode_P, templateNode_P>&, bool);
-	virtual std::vector<T*> getAllCofacets(templateNode_P, const std::unordered_map<long long, templateNode_P>&, bool);
-	virtual std::vector<T*> getAllCofacets(templateNode_P);
+	virtual std::vector<nodeType*> getAllCofacets(templateNode_P, const std::unordered_map<long long, templateNode_P>&, bool);
+	virtual std::vector<nodeType*> getAllCofacets(templateNode_P);
 	virtual std::vector<templateNode_P> getAllDelaunayCofacets(templateNode_P);
 	virtual std::vector<templateNode_P> getAllCofacets(const std::set<unsigned>&);
-	virtual std::vector<T*> getAllFacets(T*);
-	virtual std::vector<T*> getAllFacets(templateNode_P);
+	virtual std::vector<nodeType*> getAllFacets(nodeType*);
+	virtual std::vector<nodeType*> getAllFacets(templateNode_P);
 	virtual std::vector<templateNode_P> getAllFacets_P(templateNode_P);
 
 

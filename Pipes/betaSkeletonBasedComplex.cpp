@@ -19,15 +19,15 @@
 #include "utils.hpp"
 
 // basePipe constructor
-template <typename T>
-betaSkeletonBasedComplexPipe<T>::betaSkeletonBasedComplexPipe(){
+template <typename nodeType>
+betaSkeletonBasedComplexPipe<nodeType>::betaSkeletonBasedComplexPipe(){
 	this->pipeType = "betaSkeletonBasedComplex";
 	return;
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
-template <typename T>
-void betaSkeletonBasedComplexPipe<T>::runPipe(pipePacket<T> &inData){
+template <typename nodeType>
+void betaSkeletonBasedComplexPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
 	// Generate Beta Skeleton Based Complex
 	
 	// Temporarily commenting this out - need to check inData.complex type
@@ -43,8 +43,8 @@ void betaSkeletonBasedComplexPipe<T>::runPipe(pipePacket<T> &inData){
 
 
 // configPipe -> configure the function settings of this pipeline segment
-template <typename T>
-bool betaSkeletonBasedComplexPipe<T>::configPipe(std::map<std::string, std::string> &configMap){
+template <typename nodeType>
+bool betaSkeletonBasedComplexPipe<nodeType>::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
 	
 	auto pipe = configMap.find("debug");
@@ -78,8 +78,8 @@ bool betaSkeletonBasedComplexPipe<T>::configPipe(std::map<std::string, std::stri
 }
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-template <typename T>
-void betaSkeletonBasedComplexPipe<T>::outputData(pipePacket<T> &inData){
+template <typename nodeType>
+void betaSkeletonBasedComplexPipe<nodeType>::outputData(pipePacket<nodeType> &inData){
 	// Output related to betaSkeletonBasedComplex
 	return;
 }

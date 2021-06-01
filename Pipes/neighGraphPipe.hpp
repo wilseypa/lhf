@@ -4,15 +4,15 @@
 #include <map>
 #include "basePipe.hpp"
 
-template<typename T>
-class neighGraphPipe : public basePipe<T> {
+template<typename nodeType>
+class neighGraphPipe : public basePipe<nodeType> {
   private:
 	double epsilon;
 	int dim;
   public:
     neighGraphPipe();
-    void runPipe(pipePacket<T>&);
-	void outputData(pipePacket<T>&);
+    void runPipe(pipePacket<nodeType>&);
+	void outputData(pipePacket<nodeType>&);
     bool configPipe(std::map<std::string, std::string>&);
 };
 

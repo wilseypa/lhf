@@ -5,16 +5,16 @@
 #include "basePipe.hpp"
 
 
-template<typename T>
-class ripsPipe : public basePipe<T> {
+template<typename nodeType>
+class ripsPipe : public basePipe<nodeType> {
   private:
   public:
     std::string collapse;
     int dim;
     ripsPipe();
-    void runPipe(pipePacket<T>&);
+    void runPipe(pipePacket<nodeType>&);
     bool configPipe(std::map<std::string, std::string>&);
-    void outputData(pipePacket<T>&);
+    void outputData(pipePacket<nodeType>&);
 };
 
 template class ripsPipe<simplexNode>;

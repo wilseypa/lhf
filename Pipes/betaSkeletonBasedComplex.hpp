@@ -5,8 +5,8 @@
 #include "basePipe.hpp"
 #include "../Preprocessing/kdTree.hpp"
 
-template <typename T>
-class betaSkeletonBasedComplexPipe : public basePipe<T> {
+template <typename nodeType>
+class betaSkeletonBasedComplexPipe : public basePipe<nodeType> {
   private:
 	double beta;
 	double enclosingRadius;
@@ -14,9 +14,9 @@ class betaSkeletonBasedComplexPipe : public basePipe<T> {
 	double epsilon;
   public:
     betaSkeletonBasedComplexPipe();
-    void runPipe(pipePacket<T>& inData);
+    void runPipe(pipePacket<nodeType>& inData);
     bool configPipe(std::map<std::string, std::string> &configMap);
-	void outputData(pipePacket<T>&);
+	void outputData(pipePacket<nodeType>&);
 };
 
 template class betaSkeletonBasedComplexPipe<simplexNode>;

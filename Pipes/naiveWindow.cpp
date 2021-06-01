@@ -17,21 +17,21 @@
 
 
 // basePipe constructor
-template<typename T>
-naiveWindow<T>::naiveWindow(){
+template<typename nodeType>
+naiveWindow<nodeType>::naiveWindow(){
 	this->pipeType = "NaiveWindow";
 	return;
 }
 
-template<typename T>
-bool naiveWindow<T>::sampleStreamEvaluator(std::vector<double>& vector, std::vector<std::vector<double>>& window){
+template<typename nodeType>
+bool naiveWindow<nodeType>::sampleStreamEvaluator(std::vector<double>& vector, std::vector<std::vector<double>>& window){
 	//Return true to accept all points into the complex
 	return true;
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
-template<typename T>
-void naiveWindow<T>::runPipe(pipePacket<T> &inData){
+template<typename nodeType>
+void naiveWindow<nodeType>::runPipe(pipePacket<nodeType> &inData){
 	readInput rp;
 
 
@@ -109,7 +109,7 @@ void naiveWindow<T>::runPipe(pipePacket<T> &inData){
 				// intervals from the complex being maintained.
 				inData.workData = windowValues;
 				runSubPipeline(inData);
-				inData = pipePacket<T>("simplexArrayList",epsilon,dim);
+				inData = pipePacket<nodeType>("simplexArrayList",epsilon,dim);
 				
 
 			}
@@ -130,8 +130,8 @@ void naiveWindow<T>::runPipe(pipePacket<T> &inData){
 	return;
 }
 
-template<typename T>
-void naiveWindow<T>::writeComplexStats(pipePacket<T> &inData){
+template<typename nodeType>
+void naiveWindow<nodeType>::writeComplexStats(pipePacket<nodeType> &inData){
 	if(inData.complex->stats.size() > 30){
 		std::ofstream file ("output/complexStats.csv");
 
@@ -142,12 +142,12 @@ void naiveWindow<T>::writeComplexStats(pipePacket<T> &inData){
 	}
 }
 
-template<typename T>
-void naiveWindow<T>::runSubPipeline(pipePacket<T> wrData){
+template<typename nodeType>
+void naiveWindow<nodeType>::runSubPipeline(pipePacket<nodeType> wrData){
     if(wrData.workData.size() == 0)
 		return;
 
-	pipePacket<T> inData = wrData;
+	pipePacket<nodeType> inData = wrData;
 	outputData(inData);
 
 	inData.complex->setDistanceMatrix(&distMatrix);
@@ -164,7 +164,7 @@ void naiveWindow<T>::runSubPipeline(pipePacket<T> wrData){
 		pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
 
 		//Build the pipe component, configure and run
-		auto cp = basePipe<T>::newPipe(curFunct, "simplexTree");
+		auto cp = basePipe<nodeType>::newPipe(curFunct, "simplexTree");
 
 		//Check if the pipe was created and configure
 		if(cp != 0 && cp->configPipe(subConfigMap)){
@@ -182,8 +182,8 @@ void naiveWindow<T>::runSubPipeline(pipePacket<T> wrData){
 
 
 // configPipe -> configure the function settings of this pipeline segment
-template<typename T>
-bool naiveWindow<T>::configPipe(std::map<std::string, std::string> &configMap){
+template<typename nodeType>
+bool naiveWindow<nodeType>::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
 	subConfigMap = configMap;
 
@@ -222,8 +222,8 @@ bool naiveWindow<T>::configPipe(std::map<std::string, std::string> &configMap){
 
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-template<typename T>
-void naiveWindow<T>::outputData(pipePacket<T> &inData){
+template<typename nodeType>
+void naiveWindow<nodeType>::outputData(pipePacket<nodeType> &inData){
 	std::ofstream file ("output/" + this->pipeType + "_" + std::to_string(this->repCounter) + "_output.csv");
 
 	for(auto a : inData.workData){

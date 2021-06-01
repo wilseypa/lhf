@@ -6,8 +6,8 @@
 #include "basePipe.hpp"
 #include "utils.hpp"
 
-template <typename T>
-class slidingWindow : public basePipe<T> {
+template <typename nodeType>
+class slidingWindow : public basePipe<nodeType> {
 private:
     double epsilon;
     int dim;
@@ -36,14 +36,14 @@ public:
     int indexToBeDeleted;
     double nnDistToBeDeleted;
     
-    static pipePacket<T> pPack;
+    static pipePacket<nodeType> pPack;
 
     slidingWindow();
-    pipePacket<T> runPipe(pipePacket<T>);
-    void outputData(pipePacket<T>);
+    pipePacket<nodeType> runPipe(pipePacket<nodeType>);
+    void outputData(pipePacket<nodeType>);
     bool configPipe(std::map<std::string, std::string>);
-    void runSubPipeline(pipePacket<T>);
-    void writeComplexStats(pipePacket<T> &);
+    void runSubPipeline(pipePacket<nodeType>);
+    void writeComplexStats(pipePacket<nodeType> &);
     static bool nnBasedEvaluator(std::vector<double>&, std::vector<std::vector<double>>&);
     static void deleteNNstats();
     static void updateStats();

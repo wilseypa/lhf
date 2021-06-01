@@ -14,15 +14,15 @@
 #include "utils.hpp"
 
 // basePipe constructor
-template <typename T>
-qhullPipe<T>::qhullPipe(){
+template <typename nodeType>
+qhullPipe<nodeType>::qhullPipe(){
 	this->pipeType = "qhullPipe";
 	return;
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
-template <typename T>
-void qhullPipe<T>::runPipe(pipePacket<T> &inData){
+template <typename nodeType>
+void qhullPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
     Qhull qh;
     std::vector<double> sdata;
     //serializing all the data
@@ -43,8 +43,8 @@ void qhullPipe<T>::runPipe(pipePacket<T> &inData){
 	return;
 }
 
-template <typename T>
-std::vector<std::vector<int>>  qhullPipe<T>::qdelaunay_o(const Qhull &qhull){
+template <typename nodeType>
+std::vector<std::vector<int>>  qhullPipe<nodeType>::qdelaunay_o(const Qhull &qhull){
 	int hullDimension = qhull.hullDimension();
         std::vector<std::vector<double> > inputSites;
 	QhullPoints points = qhull.points();
@@ -88,8 +88,8 @@ std::vector<std::vector<int>>  qhullPipe<T>::qdelaunay_o(const Qhull &qhull){
 
 
 // configPipe -> configure the function settings of this pipeline segment
-template <typename T>
-bool qhullPipe<T>::configPipe(std::map<std::string, std::string> &configMap){
+template <typename nodeType>
+bool qhullPipe<nodeType>::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
 
 	auto pipe = configMap.find("debug");
@@ -110,8 +110,8 @@ bool qhullPipe<T>::configPipe(std::map<std::string, std::string> &configMap){
 }
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-template <typename T>
-void qhullPipe<T>::outputData(pipePacket<T> &inData){
+template <typename nodeType>
+void qhullPipe<nodeType>::outputData(pipePacket<nodeType> &inData){
 	std::ofstream file;
 	file.open("output/" + this->pipeType + "_output.csv");
 

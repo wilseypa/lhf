@@ -8,8 +8,8 @@
 #include <thread>
 #include <string>
 
-template<typename T>
-void LHF<T>::outputBettis(std::map<std::string, std::string> args, pipePacket<T> &wD){
+template<typename nodeType>
+void LHF<nodeType>::outputBettis(std::map<std::string, std::string> args, pipePacket<nodeType> &wD){
 	//Output the data using writeOutput library
 	auto pipe = args.find("outputFile");
 	if (pipe != args.end()){
@@ -37,8 +37,8 @@ void LHF<T>::outputBettis(std::map<std::string, std::string> args, pipePacket<T>
 	}
 }
 
-template<typename T>
-void LHF<T>::runPipeline(std::map<std::string, std::string> args, pipePacket<T>&wD){
+template<typename nodeType>
+void LHF<nodeType>::runPipeline(std::map<std::string, std::string> args, pipePacket<nodeType>&wD){
 	// Begin processing parts of the pipeline
 	// DataInput -> A -> B -> ... -> DataOutput
 	// Parsed by "." -> i.e. A.B.C.D
@@ -58,7 +58,7 @@ void LHF<T>::runPipeline(std::map<std::string, std::string> args, pipePacket<T>&
 			auto curFunct = pipeFuncts.substr(0, pipeFuncts.find('.'));
 			pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
 			//Build the pipe component, configure and run
-			auto cp = basePipe<T>::newPipe(curFunct, args["complexType"]);
+			auto cp = basePipe<nodeType>::newPipe(curFunct, args["complexType"]);
 
 			//Check if the pipe was created and configure
 			if (cp != 0 && cp->configPipe(args)){
@@ -90,12 +90,12 @@ void LHF<T>::runPipeline(std::map<std::string, std::string> args, pipePacket<T>&
 	outputBettis(args, wD);
 }
 
-template<typename T>
-void LHF<T>::runPreprocessor(std::map<std::string, std::string>& args, pipePacket<T>&wD){
+template<typename nodeType>
+void LHF<nodeType>::runPreprocessor(std::map<std::string, std::string>& args, pipePacket<nodeType>&wD){
 	//Start with the preprocessing function, if enabled
 	auto pre = args["preprocessor"];
 	if (pre != ""){	
-		auto prePipe = preprocessor<T>::newPreprocessor(pre);
+		auto prePipe = preprocessor<nodeType>::newPreprocessor(pre);
 
 		if (prePipe != 0 && prePipe->configPreprocessor(args)){
 			prePipe->runPreprocessorWrapper(wD);
@@ -114,8 +114,8 @@ void LHF<T>::runPreprocessor(std::map<std::string, std::string>& args, pipePacke
 	}
 }
 
-template<typename T>
-std::vector<bettiBoundaryTableEntry> LHF<T>::processParallel(std::map<std::string, std::string> args, std::vector<unsigned> &centroidLabels, std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> &partitionedData, std::vector<std::vector<double>> &inputData, int displacement){
+template<typename nodeType>
+std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processParallel(std::map<std::string, std::string> args, std::vector<unsigned> &centroidLabels, std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> &partitionedData, std::vector<std::vector<double>> &inputData, int displacement){
 	//		Parameters
 	auto threshold = std::atoi(args["threshold"].c_str());
 	auto maxEpsilon = std::atof(args["epsilon"].c_str());
@@ -129,7 +129,7 @@ std::vector<bettiBoundaryTableEntry> LHF<T>::processParallel(std::map<std::strin
 	std::string stats[threads];
 
 	//		Initalize a copy of the pipePacket
-	auto iterwD = pipePacket<T>(args, args["complexType"]);
+	auto iterwD = pipePacket<nodeType>(args, args["complexType"]);
 
 	//		Process fuzzy partitions in order of size
 	std::vector<std::pair<unsigned, unsigned>> sortpartitions;
@@ -212,7 +212,7 @@ std::vector<bettiBoundaryTableEntry> LHF<T>::processParallel(std::map<std::strin
 			} else if (sortpartitions[p].first > 0){ //Nonempty partition
 
 				//		Clone the pipePacket<simplexNode>to prevent shared memory race conditions
-				auto curwD = pipePacket<T>(args, args["complexType"]);
+				auto curwD = pipePacket<nodeType>(args, args["complexType"]);
 				curwD.workData = partitionedData.second[z];
 				curwD.inputData = partitionedData.second[z];
 				curwD.ident = std::to_string(np) + "," + std::to_string(p);
@@ -341,8 +341,8 @@ std::vector<bettiBoundaryTableEntry> LHF<T>::processParallel(std::map<std::strin
 }
 
 
-template<typename T>
-std::vector<bettiBoundaryTableEntry> LHF<T>::processParallelWrapper(std::map<std::string, std::string> args, pipePacket<T>&wD, bool runPartition){
+template<typename nodeType>
+std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processParallelWrapper(std::map<std::string, std::string> args, pipePacket<nodeType>&wD, bool runPartition){
 
 	//This function is called when the number of points in a partition are greater than the point threshold
 	//	If the number of points in the new partitions are under the point threshold, continue
@@ -391,8 +391,8 @@ std::vector<bettiBoundaryTableEntry> LHF<T>::processParallelWrapper(std::map<std
 }
 
 
-template<typename T>
-std::vector<bettiBoundaryTableEntry> LHF<T>::processDistributedWrapper(std::map<std::string, std::string> args, pipePacket<T>&wD){
+template<typename nodeType>
+std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processDistributedWrapper(std::map<std::string, std::string> args, pipePacket<nodeType>&wD){
 	
 	//Local arguments for controlling partitioning and merging
 	auto scalar = std::atof(args["scalar"].c_str());

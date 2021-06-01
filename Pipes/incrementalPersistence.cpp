@@ -20,15 +20,15 @@
 #include "utils.hpp"
 
 // basePipe constructor
-template<typename T>
-incrementalPersistence<T>::incrementalPersistence(){
+template<typename nodeType>
+incrementalPersistence<nodeType>::incrementalPersistence(){
 	this->pipeType = "IncrementalPersistence";
 	return;
 }
 
-template <class T>
+template <class nodeType>
 template <typename simplexNodePointer, typename comp>
-std::vector<simplexNodePointer> incrementalPersistence<T>::incrementalByDimension(pipePacket<T>& inData, std::vector<simplexNodePointer>& edges, std::vector<simplexNodePointer> pivots, unsigned dimension, comp compStruct, std::string mode, bool recordIntervals){
+std::vector<simplexNodePointer> incrementalPersistence<nodeType>::incrementalByDimension(pipePacket<nodeType>& inData, std::vector<simplexNodePointer>& edges, std::vector<simplexNodePointer> pivots, unsigned dimension, comp compStruct, std::string mode, bool recordIntervals){
 	std::sort(edges.begin(), edges.end(), compStruct);
 	std::sort(pivots.begin(), pivots.end(), compStruct);
 
@@ -38,9 +38,9 @@ std::vector<simplexNodePointer> incrementalPersistence<T>::incrementalByDimensio
 	std::unordered_map<simplexNodePointer, std::vector<simplexNodePointer>> v;	//Store only the reduction matrix V and compute R implicity
 	std::unordered_map<long long, simplexNodePointer> pivotPairs;	//For each pivot, which column has that pivot
 
-	simplexArrayList<T>* complex;
+	simplexArrayList<nodeType>* complex;
 	if(inData.complex->simplexType == "simplexArrayList"){
-		complex = (simplexArrayList<T>*) inData.complex;
+		complex = (simplexArrayList<nodeType>*) inData.complex;
 	} else{
 		std::cout<<"IncrementalPersistence does not support complexes other than simplexArrayList\n";
 		return nextPivots;
@@ -55,7 +55,7 @@ std::vector<simplexNodePointer> incrementalPersistence<T>::incrementalByDimensio
 		if(it == pivots.end() || (*it)->hash != simplex->hash){
 
 			//Get all cofacets using emergent pair optimization
-			std::vector<T*> faceList = (mode == "homology" ? complex->getAllFacets(simplex, saveVertices, dimension) : complex->getAllCofacets(simplex, pivotPairs, true, saveVertices, dimension));
+			std::vector<nodeType*> faceList = (mode == "homology" ? complex->getAllFacets(simplex, saveVertices, dimension) : complex->getAllCofacets(simplex, pivotPairs, true, saveVertices, dimension));
 
 			std::vector<simplexNodePointer> columnV;	//Reduction column of matrix V
 			columnV.push_back(simplex); //Initially V=I -> 1's along diagonal
@@ -64,7 +64,7 @@ std::vector<simplexNodePointer> incrementalPersistence<T>::incrementalByDimensio
 			std::make_heap(faceList.begin(), faceList.end(), compStruct);
 
 			while(true){
-				T* pivot;
+				nodeType* pivot;
 
 				while(!faceList.empty()){
 					pivot = faceList.front();
@@ -92,7 +92,7 @@ std::vector<simplexNodePointer> incrementalPersistence<T>::incrementalByDimensio
 					break;
 				} else if(pivotPairs.find(pivot->hash) == pivotPairs.end()){ //Column cannot be reduced
 					pivotPairs.insert({pivot->hash, simplex});
-					nextPivots.push_back(std::shared_ptr<T>(pivot));
+					nextPivots.push_back(std::shared_ptr<nodeType>(pivot));
 
 					std::sort(columnV.begin(), columnV.end(), compStruct);
 					auto it = columnV.begin();
@@ -122,7 +122,7 @@ std::vector<simplexNodePointer> incrementalPersistence<T>::incrementalByDimensio
 					//Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
 					for(simplexNodePointer simp : v[pivotPairs[pivot->hash]]){
 						columnV.push_back(simp);
-						std::vector<T*> faces = (mode == "homology" ? complex->getAllFacets(simp, saveVertices, dimension) : complex->getAllCofacets(simp, pivotPairs, false, saveVertices, dimension));
+						std::vector<nodeType*> faces = (mode == "homology" ? complex->getAllFacets(simp, saveVertices, dimension) : complex->getAllCofacets(simp, pivotPairs, false, saveVertices, dimension));
 						faceList.insert(faceList.end(), faces.begin(), faces.end());
 					}
 					std::make_heap(faceList.begin(), faceList.end(), compStruct);
@@ -139,12 +139,12 @@ std::vector<simplexNodePointer> incrementalPersistence<T>::incrementalByDimensio
 //
 //	IncrementalPersistence: For computing the persistence pairs from simplicial complex:
 //		1. See Bauer-19 for algorithm/description
-template<typename T>
-void incrementalPersistence<T>::runPipe(pipePacket<T> &inData){
-	simplexArrayList<T>* complex;
+template<typename nodeType>
+void incrementalPersistence<nodeType>::runPipe(pipePacket<nodeType> &inData){
+	simplexArrayList<nodeType>* complex;
 
 	if(inData.complex->simplexType == "simplexArrayList"){
-		complex = (simplexArrayList<T>*) inData.complex;
+		complex = (simplexArrayList<nodeType>*) inData.complex;
 	} else{
 		std::cout<<"IncrementalPersistence does not support complexes other than simplexArrayList\n";
 		return;
@@ -153,7 +153,7 @@ void incrementalPersistence<T>::runPipe(pipePacket<T> &inData){
 	//Get the set of all points
 	auto e = complex->getDimEdges(0);
 	//Convert the set to a vector
-	std::vector<std::shared_ptr<T>> edges = std::vector<std::shared_ptr<T>>(e.begin(), e.end());
+	std::vector<std::shared_ptr<nodeType>> edges = std::vector<std::shared_ptr<nodeType>>(e.begin(), e.end());
 	//Initialize the binomial table
 	complex->initBinom();
 	//Get the next dimension (edges)
@@ -180,7 +180,7 @@ void incrementalPersistence<T>::runPipe(pipePacket<T> &inData){
 	//For streaming data, indices will not be 0-N; instead sparse
 	//	So in streaming, create a hash map to quickly lookup points
 	//TODO - POSSIBLY FIX
-	std::vector<std::shared_ptr<T>> pivots; //Store identified pivots
+	std::vector<std::shared_ptr<nodeType>> pivots; //Store identified pivots
 	unsigned mstSize = 0;
 	unsigned nPts = inData.workData.size();
 
@@ -203,7 +203,7 @@ void incrementalPersistence<T>::runPipe(pipePacket<T> &inData){
 			uf.join(c1, c2);
 			mstSize++;
 
-			std::shared_ptr<T> temp = std::make_shared<T>(T((*edgeIter)->simplex, (*edgeIter)->weight));
+			std::shared_ptr<nodeType> temp = std::make_shared<nodeType>(nodeType((*edgeIter)->simplex, (*edgeIter)->weight));
 			temp->hash = v1 + v2*(v2-1)/2;
 			pivots.push_back(temp);
 
@@ -248,7 +248,7 @@ void incrementalPersistence<T>::runPipe(pipePacket<T> &inData){
 
 		//To recover the representative cycles from the cocycles, we compute homology on just the pivot columns
 		if(involuted){
-			incrementalByDimension(inData, pivots, std::vector<std::shared_ptr<T>>(), d, sortLexicographic(), "homology", true);
+			incrementalByDimension(inData, pivots, std::vector<std::shared_ptr<nodeType>>(), d, sortLexicographic(), "homology", true);
 		}
 	}
 
@@ -267,8 +267,8 @@ void incrementalPersistence<T>::runPipe(pipePacket<T> &inData){
 
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-template<typename T>
-void incrementalPersistence<T>::outputData(pipePacket<T> &inData){
+template<typename nodeType>
+void incrementalPersistence<nodeType>::outputData(pipePacket<nodeType> &inData){
 	std::ofstream file;
 	if(this->fnmod.size() > 0)
 		file.open("output/"+this->pipeType+"_bettis_output"+this->fnmod+".csv");
@@ -298,8 +298,8 @@ void incrementalPersistence<T>::outputData(pipePacket<T> &inData){
 
 
 // configPipe -> configure the function settings of this pipeline segment
-template<typename T>
-bool incrementalPersistence<T>::configPipe(std::map<std::string, std::string> &configMap){
+template<typename nodeType>
+bool incrementalPersistence<nodeType>::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
 
 	auto pipe = configMap.find("debug");

@@ -22,8 +22,8 @@ int pointCounter = 1;
 std::vector<std::vector<double>> distMatrix;
 
 // basePipe constructor
-template<typename T>
-slidingWindow<T>::slidingWindow()
+template<typename nodeType>
+slidingWindow<nodeType>::slidingWindow()
 {
     windowMaxSize = 100;
     key = 0;
@@ -32,8 +32,8 @@ slidingWindow<T>::slidingWindow()
     return;
 }
 
-template<typename T>
-void slidingWindow<T>::deleteNNstats()
+template<typename nodeType>
+void slidingWindow<nodeType>::deleteNNstats()
 {
     keyToBeDeleted = windowKeys[indexToBeDeleted];
 
@@ -61,8 +61,8 @@ void slidingWindow<T>::deleteNNstats()
 
 }
 
-template<typename T>
-void slidingWindow<T>::updateStats()
+template<typename nodeType>
+void slidingWindow<nodeType>::updateStats()
 {
     // Delete the corresponding row from the distance matrix.
     // pPack->complex->distMatrix->erase(pPack->complex->distMatrix->begin() + indexToBeDeleted);
@@ -330,8 +330,8 @@ void slidingWindow<T>::updateStats()
     return;
 }
 
-template<typename T>
-bool slidingWindow<T>::nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vector<double>>& windowValues)
+template<typename nodeType>
+bool slidingWindow<nodeType>::nnBasedEvaluator(std::vector<double>& currentVector, std::vector<std::vector<double>>& windowValues)
 {
     utils ut;
     float f1{ 4 };
@@ -606,8 +606,8 @@ bool slidingWindow<T>::nnBasedEvaluator(std::vector<double>& currentVector, std:
 
 
 // runPipe -> Run the configured functions of this pipeline segment
-template<typename T>
-pipePacket<T> slidingWindow<T>::runPipe(pipePacket<T> inData)
+template<typename nodeType>
+pipePacket<nodeType> slidingWindow<nodeType>::runPipe(pipePacket<nodeType> inData)
 {
     readInput rp;
 	pPack = inData;
@@ -749,8 +749,8 @@ pipePacket<T> slidingWindow<T>::runPipe(pipePacket<T> inData)
     return inData;
 }
 
-template<typename T>
-void slidingWindow<T>::writeComplexStats(pipePacket<T> &inData)
+template<typename nodeType>
+void slidingWindow<nodeType>::writeComplexStats(pipePacket<nodeType> &inData)
 {
     if(inData.complex->stats.size() > 30)
     {
@@ -763,13 +763,13 @@ void slidingWindow<T>::writeComplexStats(pipePacket<T> &inData)
     }
 }
 
-template<typename T>
-void slidingWindow<T>::runSubPipeline(pipePacket<T> wrData)
+template<typename nodeType>
+void slidingWindow<nodeType>::runSubPipeline(pipePacket<nodeType> wrData)
 {
     if(wrData.workData.size() == 0)
         return;
 
-    pipePacket<T> inData = wrData;
+    pipePacket<nodeType> inData = wrData;
     outputData(inData);
 
 	std::string pipeFuncts = "rips.fast";
@@ -785,7 +785,7 @@ void slidingWindow<T>::runSubPipeline(pipePacket<T> wrData)
         pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
 
         //Build the pipe component, configure and run
-        auto cp = basePipe<T>::newPipe(curFunct, "simplexTree");
+        auto cp = basePipe<nodeType>::newPipe(curFunct, "simplexTree");
 
         //Check if the pipe was created and configure
         if(cp != 0 && cp->configPipe(subConfigMap))
@@ -804,8 +804,8 @@ void slidingWindow<T>::runSubPipeline(pipePacket<T> wrData)
 }
 
 // configPipe -> configure the function settings of this pipeline segment
-template<typename T>
-bool slidingWindow<T>::configPipe(std::map<std::string, std::string> configMap)
+template<typename nodeType>
+bool slidingWindow<nodeType>::configPipe(std::map<std::string, std::string> configMap)
 {
     std::string strDebug;
     this->subConfigMap = configMap;
@@ -845,8 +845,8 @@ bool slidingWindow<T>::configPipe(std::map<std::string, std::string> configMap)
 }
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-template<typename T>
-void slidingWindow<T>::outputData(pipePacket<T> inData)
+template<typename nodeType>
+void slidingWindow<nodeType>::outputData(pipePacket<nodeType> inData)
 {
     std::ofstream file ("output/" + this->pipeType + "_" + std::to_string(this->repCounter) + "_output.csv");
 
