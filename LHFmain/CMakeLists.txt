@@ -41,7 +41,7 @@ link_directories(${PROJECT_SOURCE_DIR}/Preprocessing)
 include_directories(${PROJECT_SOURCE_DIR}/Utils)
 link_directories(${PROJECT_SOURCE_DIR}/Utils)
 
-include_directories(${PROJECT_SOURCE_DIR}/_deps/qhullext-build/)
+include_directories(${PROJECT_SOURCE_DIR}/_deps/qhullext-src/)
 
 #Add Source to this project's executable
 add_library(LHFlib SHARED "LHF.cpp" "LHF.hpp")

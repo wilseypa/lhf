@@ -4,7 +4,6 @@
 #include <math.h>
 #include <algorithm>
 #include "simplexArrayList.hpp"
-//#include "../Preprocessing/kdTree.hpp"
 
 // simplexArrayList constructor, currently no needed information for the class constructor
 template<typename nodeType>
@@ -171,23 +170,6 @@ std::vector<nodeType*> simplexArrayList<nodeType>::getAllCofacets(std::shared_pt
 template<typename nodeType>
 std::vector<nodeType*> simplexArrayList<nodeType>::getAllCofacets(std::shared_ptr<nodeType> simp){
 	return getAllCofacets(simp, std::unordered_map<long long, std::shared_ptr<nodeType>>(), false, true, 0);
-}
-
-
-template<typename nodeType>
-std::vector<std::shared_ptr<nodeType>> simplexArrayList<nodeType>::getAllDelaunayCofacets(std::shared_ptr<nodeType> simp){
-	std::vector<std::shared_ptr<nodeType>> ret;
-	unsigned dimension  = simp->simplex.size();
-        for(auto simplex : this->simplexList[dimension]){
-                std::vector<unsigned> :: iterator it;
-								std::vector<unsigned> v(simplex->simplex.size());
-								it = std::set_intersection(simp->simplex.begin(),simp->simplex.end(),simplex->simplex.begin(),simplex->simplex.end(),v.begin());
-								v.resize(it-v.begin());
-								if(v.size() == simp->simplex.size())
-									ret.push_back(simplex);
-				}
-	return ret;
-
 }
 
 template<typename nodeType>
@@ -434,6 +416,3 @@ simplexArrayList<nodeType>::~simplexArrayList(){
 	this->simplexList.clear();
 }
 
-//Explicit Template Class Instantiation
-template class simplexArrayList<simplexNode>;
-template class simplexArrayList<alphaNode>;

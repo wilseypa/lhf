@@ -6,6 +6,8 @@
 #include "simplexBase.hpp"
 //#include "simplexTree.hpp"
 #include "simplexArrayList.hpp"
+#include "alphaComplex.hpp"
+#include "witnessComplex.hpp"
 
 template<typename nodeType>
 simplexBase<nodeType>::simplexBase(){return;}
@@ -78,6 +80,14 @@ simplexBase<nodeType>* simplexBase<nodeType>::newSimplex(const std::string &simp
 		return t;
 	} else if (simplexT == "simplexArrayList"){
 		auto t = new simplexArrayList<nodeType>(0, 0);
+		t->setConfig(configMap);
+		return t;
+	} else if (simplexT == "alphaComplex"){
+		auto t = new alphaComplex<nodeType>(0, 0);
+		t->setConfig(configMap);
+		return t;
+	} else if (simplexT == "witnessComplex"){
+		auto t = new witnessComplex<nodeType>(0, 0);
 		t->setConfig(configMap);
 		return t;
 	}
