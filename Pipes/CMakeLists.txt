@@ -51,7 +51,6 @@ endif()
     
 include_directories(${PROJECT_SOURCE_DIR}/_deps/qhullext-src/src/)
 
-# target_link_libraries(LHF PipeFunctions)
 target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe incrementalPersistence fastPersistence ripsPipe naiveWindow betaSkeletonBasedComplex upscalePipe qhullcpp qhullstatic_r qhullPipe) # slidingWindow   
 
 INSTALL (TARGETS basePipe
