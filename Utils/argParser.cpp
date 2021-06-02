@@ -9,8 +9,8 @@
 #include <iostream>
 #include "argParser.hpp"
 
-std::map<std::string, std::string> argMap = {{"beta","b"},{"alphaFilterationValue","afv"},{"simplicialComplex","sc"},{"reductionPercentage","rp"},{"maxSize","ms"},{"threads","t"},{"threshold","th"},{"scalar","s"},{"mpi","a"},{"mode","m"},{"dimensions","d"},{"iterations","r"},{"pipeline","p"},{"inputFile","i"},{"outputFile","o"},{"epsilon","e"},{"lambda","l"},{"debug","x"},{"complexType","c"},{"clusters","k"},{"preprocessor","pre"},{"upscale","u"},{"twist","w"},{"collapse","z"},{"seed","q"},{"involutedUpscale","iu"}, {"involuted","inv"}};
-std::map<std::string, std::string> defaultMap = {{"beta","1"},{"alphaFilterationValue","50000"},{"simplicialComplex","rips"},{"reductionPercentage","10"},{"maxSize","2000"},{"threads","30"},{"threshold","250"},{"scalar","0.5"},{"mpi", "0"},{"mode", "standard"},{"dimensions","1"},{"iterations","250"},{"pipeline",""},{"inputFile","None"},{"outputFile","output"},{"epsilon","5"},{"lambda",".25"},{"debug","0"},{"complexType","simplexArrayList"},{"clusters","20"},{"preprocessor",""},{"upscale","false"},{"seed","-1"},{"twist","false"},{"collapse","false"},{"involutedUpscale","false"},{"involuted","false"}};
+std::map<std::string, std::string> argMap = {{"beta","b"},{"alphaFilterationValue","afv"},{"nodeType","n"},{"reductionPercentage","rp"},{"maxSize","ms"},{"threads","t"},{"threshold","th"},{"scalar","s"},{"mpi","a"},{"mode","m"},{"dimensions","d"},{"iterations","r"},{"pipeline","p"},{"inputFile","i"},{"outputFile","o"},{"epsilon","e"},{"lambda","l"},{"debug","x"},{"complexType","c"},{"clusters","k"},{"preprocessor","pre"},{"upscale","u"},{"twist","w"},{"collapse","z"},{"seed","q"},{"involutedUpscale","iu"}, {"involuted","inv"}};
+std::map<std::string, std::string> defaultMap = {{"beta","1"},{"alphaFilterationValue","50000"},{"nodeType","simplexNode"},{"reductionPercentage","10"},{"maxSize","2000"},{"threads","30"},{"threshold","250"},{"scalar","0.5"},{"mpi", "0"},{"mode", "standard"},{"dimensions","1"},{"iterations","250"},{"pipeline",""},{"inputFile","None"},{"outputFile","output"},{"epsilon","5"},{"lambda",".25"},{"debug","0"},{"complexType","simplexArrayList"},{"clusters","20"},{"preprocessor",""},{"upscale","false"},{"seed","-1"},{"twist","false"},{"collapse","false"},{"involutedUpscale","false"},{"involuted","false"}};
 // argParse constructor, currently no needed information for the class constructor
 argParser::argParser(){
 
@@ -109,13 +109,14 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 	//Configure the base pipeline from the complex storage type
 	std::string basePipeline;
 
+
+	// Handle iterative / involuted and upscaling flags
 	if(args["mode"] == "iterUpscale" || args["involutedUpscale"] == "true"){
 		args["upscale"] = "true";
 	}
 
-	//If using SAL:
-	//I think we should call it Data Structure Type (DSType) rather than calling complex Type
-	// which in this context should be VR, Alpha, witness etc.
+	
+	// Handle complexType and corresponding simplexType	
 	if(args["complexType"] == "simplexArrayList"){
 		if(args["upscale"] == "true")
 			basePipeline = "distMatrix.neighGraph.incrementalPersistence.upscale";
@@ -127,20 +128,29 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 			basePipeline = "distMatrix.neighGraph.rips.fast.upscale";
 		else
 			basePipeline = "distMatrix.neighGraph.rips.fast";
-	}
-
-		//Handle basic modes; set pipeline if not initialized
-	//
-		if(args["simplicialComplex"] == "alpha" || args["simplicialComplex"] == "Alpha" || args["simplicialComplex"] == "ALPHA"){
-			args["pipeline"] = "distMatrix.alpha.fastPersistence";
-		}else if(args["simplicialComplex"] == "gic" || args["simplicialComplex"] == "GIC" || args["simplicialComplex"] == "graphInducedComplex"){
-		       args["complexType"] = "simplexArrayList";
-               args["pipeline"] = "distMatrix.neighGraph.betaSkeletonBasedComplex.fastPersistence";
-        // build kd-Tree for the given point cloud    
-		// generate simplexes dimension wise belonging to beta skeleton. Find a normal to simplex hyperplane at circumcenter of the simplex. Use K-d tree to efficiently validate simplex.
-		// if Valid Insert simplex to simplicial Complex Complex
-		// Compute fast Persistence 
-       }else if(args["mode"] == "mpi"){
+			
+	} else if(args["complexType"] == "alpha" || args["complexType"] == "Alpha" || args["complexType"] == "ALPHA"){
+		basePipeline = "distMatrix.alpha.fastPersistence";
+		args["complexType"] = "alpha";
+		args["nodeType"] = "alpha";
+		    
+	}else if(args["complexType"] == "gic" || args["complexType"] == "GIC" || args["complexType"] == "graphInducedComplex"){
+		args["complexType"] = "alpha";
+		args["nodeType"] = "alpha";
+		basePipeline = "distMatrix.neighGraph.betaSkeletonBasedComplex.fastPersistence";
+    } else if(args["complexType"] == "witness"){
+		args["complexType"] = "witness";
+		args["nodeType"] = "witness";
+		if(args["upscale"] == "true")
+			basePipeline = "distMatrix.neighGraph.incrementalPersistence.upscale";
+		else
+			basePipeline = "distMatrix.neighGraph.incrementalPersistence";
+    }
+        
+        
+        
+        
+    if(args["mode"] == "mpi"){
 		//Set up MPI pipeline ; requires setting pipeline, any complex storage
 		if(args["pipeline"] == "")
 			args["pipeline"] = basePipeline;
