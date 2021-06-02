@@ -101,3 +101,4 @@ void distMatrixPipe<nodeType>::outputData(pipePacket<nodeType> &inData){
 //Explicit Template Class Instantiation
 template class distMatrixPipe<simplexNode>;
 template class distMatrixPipe<alphaNode>;
+template class distMatrixPipe<witnessNode>;

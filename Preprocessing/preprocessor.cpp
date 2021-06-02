@@ -163,3 +163,4 @@ preprocessor<nodeType>::~preprocessor(){}
 //Explicit Template Class Instantiation
 template class preprocessor<simplexNode>;
 template class preprocessor<alphaNode>;
+template class preprocessor<witnessNode>;

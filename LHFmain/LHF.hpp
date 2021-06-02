@@ -38,6 +38,7 @@ class LHF {
 //Explicit Template Class Instantiation
 template class LHF<simplexNode>;
 template class LHF<alphaNode>;
+template class LHF<witnessNode>;
 
 extern "C" {
 	//Handle Betti Return Structure allocation	

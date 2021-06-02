@@ -123,3 +123,4 @@ void qhullPipe<nodeType>::outputData(pipePacket<nodeType> &inData){
 
 template class qhullPipe<simplexNode>;
 template class qhullPipe<alphaNode>;
+template class qhullPipe<witnessNode>;

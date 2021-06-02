@@ -100,3 +100,4 @@ void ripsPipe<nodeType>::outputData(pipePacket<nodeType> &inData){
 
 template class ripsPipe<simplexNode>;
 template class ripsPipe<alphaNode>;
+template class ripsPipe<witnessNode>;

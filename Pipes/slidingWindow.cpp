@@ -866,3 +866,4 @@ void slidingWindow<nodeType>::outputData(pipePacket<nodeType> inData)
 
 template class slidingWindow<simplexNode>;
 template class slidingWindow<alphaNode>;
+template class slidingWindow<witnessNode>;

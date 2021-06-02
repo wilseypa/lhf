@@ -240,3 +240,4 @@ void naiveWindow<nodeType>::outputData(pipePacket<nodeType> &inData){
 
 template class naiveWindow<simplexNode>;
 template class naiveWindow<alphaNode>;
+template class naiveWindow<witnessNode>;

@@ -162,3 +162,4 @@ bool basePipe<nodeType>::configPipe(std::map<std::string, std::string> &configMa
 //Explicit Template Class Instantiation
 template class basePipe<simplexNode>;
 template class basePipe<alphaNode>;
+template class basePipe<witnessNode>;

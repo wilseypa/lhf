@@ -84,3 +84,4 @@ double pipePacket<nodeType>::getSize(){
 //Explicit Template Class Instantiation
 template class pipePacket<simplexNode>;
 template class pipePacket<alphaNode>;
+template class pipePacket<witnessNode>;

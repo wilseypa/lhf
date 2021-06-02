@@ -94,3 +94,4 @@ void neighGraphPipe<nodeType>::outputData(pipePacket<nodeType> &inData){
 //Explicit Template Class Instantiation
 template class neighGraphPipe<simplexNode>;
 template class neighGraphPipe<alphaNode>;
+template class neighGraphPipe<witnessNode>;

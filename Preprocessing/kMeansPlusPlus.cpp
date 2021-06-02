@@ -190,3 +190,4 @@ bool kMeansPlusPlus<nodeType>::configPreprocessor(std::map<std::string, std::str
 //Explicit Template Class Instantiation
 template class kMeansPlusPlus<simplexNode>;
 template class kMeansPlusPlus<alphaNode>;
+template class kMeansPlusPlus<witnessNode>;

@@ -340,3 +340,4 @@ bool incrementalPersistence<nodeType>::configPipe(std::map<std::string, std::str
 
 template class incrementalPersistence<simplexNode>;
 template class incrementalPersistence<alphaNode>;
+template class incrementalPersistence<witnessNode>;

@@ -210,3 +210,4 @@ bool upscalePipe<nodeType>::configPipe(std::map<std::string, std::string> &confi
 
 template class upscalePipe<simplexNode>;
 template class upscalePipe<alphaNode>;
+template class upscalePipe<witnessNode>;

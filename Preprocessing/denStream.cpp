@@ -264,3 +264,7 @@ bool denStream<nodeType>::configPreprocessor(std::map<std::string, std::string> 
 
 	return true;
 }
+
+template class denStream<simplexNode>;
+template class denStream<alphaNode>;
+template class denStream<witnessNode>;

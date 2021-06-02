@@ -309,3 +309,4 @@ bool fastPersistence<nodeType>::configPipe(std::map<std::string, std::string> &c
 
 template class fastPersistence<simplexNode>;
 template class fastPersistence<alphaNode>;
+template class fastPersistence<witnessNode>;
