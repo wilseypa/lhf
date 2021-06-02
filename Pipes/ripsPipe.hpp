@@ -16,6 +16,3 @@ class ripsPipe : public basePipe<nodeType> {
     bool configPipe(std::map<std::string, std::string>&);
     void outputData(pipePacket<nodeType>&);
 };
-
-template class ripsPipe<simplexNode>;
-template class ripsPipe<alphaNode>;

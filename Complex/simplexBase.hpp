@@ -109,6 +109,3 @@ class simplexBase {
 	virtual ~simplexBase();
 	virtual void outputComplex();
 };
-
-template class simplexBase<simplexNode>;
-template class simplexBase<alphaNode>;

@@ -120,3 +120,6 @@ void qhullPipe<nodeType>::outputData(pipePacket<nodeType> &inData){
 	file.close();
 	return;
 }
+
+template class qhullPipe<simplexNode>;
+template class qhullPipe<alphaNode>;

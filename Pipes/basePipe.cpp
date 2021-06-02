@@ -158,3 +158,7 @@ bool basePipe<nodeType>::configPipe(std::map<std::string, std::string> &configMa
 	std::cout<<"Simplicial Complex "<<simplicialComplex;
 	return true;
 }
+
+//Explicit Template Class Instantiation
+template class basePipe<simplexNode>;
+template class basePipe<alphaNode>;

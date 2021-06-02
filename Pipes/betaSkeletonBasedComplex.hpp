@@ -18,6 +18,3 @@ class betaSkeletonBasedComplexPipe : public basePipe<nodeType> {
     bool configPipe(std::map<std::string, std::string> &configMap);
 	void outputData(pipePacket<nodeType>&);
 };
-
-template class betaSkeletonBasedComplexPipe<simplexNode>;
-template class betaSkeletonBasedComplexPipe<alphaNode>;

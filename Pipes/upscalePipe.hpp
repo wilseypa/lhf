@@ -17,7 +17,3 @@ class upscalePipe : public basePipe<nodeType> {
     void runPipe(pipePacket<nodeType>&);
     bool configPipe(std::map<std::string, std::string>&);    
 };
-
-template class upscalePipe<simplexNode>;
-template class upscalePipe<alphaNode>;
-

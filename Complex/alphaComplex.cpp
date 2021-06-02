@@ -16,3 +16,6 @@ template<typename nodeType>
 alphaComplex<nodeType>::~alphaComplex(){
 	this->simplexList.clear();
 }
+
+template class alphaComplex<simplexNode>;
+template class alphaComplex<alphaNode>;

@@ -27,8 +27,3 @@ class basePipe {
     virtual bool configPipe(std::map<std::string, std::string>&);    
     
 };
-
-
-//Explicit Template Class Instantiation
-template class basePipe<simplexNode>;
-template class basePipe<alphaNode>;

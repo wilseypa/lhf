@@ -16,3 +16,7 @@ template<typename nodeType>
 witnessComplex<nodeType>::~witnessComplex(){
 	this->simplexList.clear();
 }
+
+template class witnessComplex<simplexNode>;
+template class witnessComplex<alphaNode>;
+ 

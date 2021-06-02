@@ -52,7 +52,3 @@ class simplexArrayList : public simplexBase<nodeType>{
 
 		~simplexArrayList();
 };
-
-//Explicit Template Class Instantiation
-template class simplexArrayList<simplexNode>;
-template class simplexArrayList<alphaNode>;

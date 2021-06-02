@@ -8,10 +8,10 @@ template<typename nodeType>
 class kMeansPlusPlus : public preprocessor<nodeType> {
   private:
     int seed;
-	int num_clusters;			
-	int num_iterations;			
+	  int num_clusters;			
+	  int num_iterations;			
   public:
-	kMeansPlusPlus();
+	  kMeansPlusPlus();
     void runPreprocessor(pipePacket<nodeType>&);
     bool configPreprocessor(std::map<std::string, std::string>&);
 };

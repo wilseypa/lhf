@@ -14,8 +14,3 @@ class distMatrixPipe : public basePipe<nodeType> {
     bool configPipe(std::map<std::string, std::string> &configMap);
 	void outputData(pipePacket<nodeType>&);
 };
-
-
-//Explicit Template Class Instantiation
-template class distMatrixPipe<simplexNode>;
-template class distMatrixPipe<alphaNode>;

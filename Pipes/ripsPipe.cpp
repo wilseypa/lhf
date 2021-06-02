@@ -98,3 +98,5 @@ void ripsPipe<nodeType>::outputData(pipePacket<nodeType> &inData){
 	return;
 }
 
+template class ripsPipe<simplexNode>;
+template class ripsPipe<alphaNode>;

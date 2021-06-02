@@ -53,6 +53,3 @@ class incrementalPersistence : public basePipe<nodeType> {
 		template <typename simplexNodePointer, typename comp>
 		std::vector<simplexNodePointer> incrementalByDimension(pipePacket<nodeType>&, std::vector<simplexNodePointer>&, std::vector<simplexNodePointer> pivots, unsigned, comp, std::string, bool);
 };
-
-template class incrementalPersistence<simplexNode>;
-template class incrementalPersistence<alphaNode>;

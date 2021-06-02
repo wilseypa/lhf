@@ -416,3 +416,6 @@ simplexArrayList<nodeType>::~simplexArrayList(){
 	this->simplexList.clear();
 }
 
+//Explicit Template Class Instantiation
+template class simplexArrayList<simplexNode>;
+template class simplexArrayList<alphaNode>;

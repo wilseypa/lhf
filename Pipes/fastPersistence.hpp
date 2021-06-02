@@ -56,6 +56,3 @@ class fastPersistence : public basePipe<nodeType> {
 		template <class simplexNodePointer, class comp>
 		std::vector<simplexNodePointer> persistenceByDimension(pipePacket<nodeType>&, std::vector<simplexNodePointer>, std::vector<simplexNodePointer> pivots, unsigned, comp, std::string, bool);
 };
-
-template class fastPersistence<simplexNode>;
-template class fastPersistence<alphaNode>;

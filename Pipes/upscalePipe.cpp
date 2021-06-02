@@ -16,8 +16,6 @@
 #include "upscalePipe.hpp"
 #include "utils.hpp"
 
-
-
 // basePipe constructor
 template <typename nodeType>
 upscalePipe<nodeType>::upscalePipe(){
@@ -25,8 +23,6 @@ upscalePipe<nodeType>::upscalePipe(){
 	
 	return;
 }
-
-
 
 // runPipe -> Run the configured functions of this pipeline segment
 //
@@ -212,3 +208,5 @@ bool upscalePipe<nodeType>::configPipe(std::map<std::string, std::string> &confi
 	return true;
 }
 
+template class upscalePipe<simplexNode>;
+template class upscalePipe<alphaNode>;

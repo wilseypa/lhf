@@ -25,6 +25,3 @@ class naiveWindow : public basePipe<nodeType> {
     void writeComplexStats(pipePacket<nodeType> &);
     static bool sampleStreamEvaluator(std::vector<double>&, std::vector<std::vector<double>>&);
 };
-
-template class naiveWindow<simplexNode>;
-template class naiveWindow<alphaNode>;

@@ -316,3 +316,6 @@ std::vector<std::shared_ptr<nodeType>> simplexBase<nodeType>::expandDimension(st
 	ut.writeLog(simplexType,"No expandDimension function defined");
 	return ret;
 }
+
+template class simplexBase<simplexNode>;
+template class simplexBase<alphaNode>;

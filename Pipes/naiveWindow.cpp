@@ -237,3 +237,6 @@ void naiveWindow<nodeType>::outputData(pipePacket<nodeType> &inData){
 	file.close();
 	return;
 }
+
+template class naiveWindow<simplexNode>;
+template class naiveWindow<alphaNode>;

@@ -30,6 +30,3 @@ class alphaComplex : public simplexArrayList<nodeType>{
 		~alphaComplex();
 		
 };
-
-template class alphaComplex<simplexNode>;
-template class alphaComplex<alphaNode>;

@@ -84,3 +84,5 @@ void betaSkeletonBasedComplexPipe<nodeType>::outputData(pipePacket<nodeType> &in
 	return;
 }
 
+template class betaSkeletonBasedComplexPipe<simplexNode>;
+template class betaSkeletonBasedComplexPipe<alphaNode>;

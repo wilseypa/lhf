@@ -30,7 +30,3 @@ class witnessComplex : public simplexArrayList<nodeType>{
 		~witnessComplex();
 		
 };
-
-template class witnessComplex<simplexNode>;
-template class witnessComplex<alphaNode>;
- 

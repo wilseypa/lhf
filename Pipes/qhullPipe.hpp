@@ -47,6 +47,3 @@ class qhullPipe : public basePipe<nodeType> {
     void outputData(pipePacket<nodeType>&);
     std::vector<std::vector<int>> qdelaunay_o(const Qhull &qhull);
 };
-
-template class qhullPipe<simplexNode>;
-template class qhullPipe<alphaNode>;

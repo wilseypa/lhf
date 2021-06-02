@@ -337,3 +337,6 @@ bool incrementalPersistence<nodeType>::configPipe(std::map<std::string, std::str
 
 	return true;
 }
+
+template class incrementalPersistence<simplexNode>;
+template class incrementalPersistence<alphaNode>;
