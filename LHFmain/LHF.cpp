@@ -748,7 +748,7 @@ std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processDistributedWrapper(st
 
 
 
-/*
+
 extern "C"{
 
 	void pyRunWrapper(const int argc, char *argv, const double *pointCloud){
@@ -1092,4 +1092,4 @@ extern "C"{
 		return b;
 	}
 }
-*/
+
