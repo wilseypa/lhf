@@ -20,18 +20,20 @@
 // overall goal: get weighted representation of streaming data, then perform k means on that .... Shindler 11
 
 // basePipe constructor
-streamingKmeans::streamingKmeans(){
-	procName = "streamingKmeans";
+template<typename nodeType>
+streamingKmeans<nodeType>::streamingKmeans(){
+	this->procName = "streamingKmeans";
 	return;
 }
 //taking in preprocessor type
 
 
 // runPipe -> Run the configured functions of this pipeline segment
-void streamingKmeans::runPreprocessor(pipePacket &inData){
+template<typename nodeType>
+void streamingKmeans<nodeType>::runPreprocessor(pipePacket<nodeType> &inData){
 	
-	if(!configured){
-		ut.writeLog(procName,"Preprocessor not configured");
+	if(!this->configured){
+		this->ut.writeLog(this->procName,"Preprocessor not configured");
 		return;
 	}
 	
@@ -40,9 +42,8 @@ void streamingKmeans::runPreprocessor(pipePacket &inData){
   int numClusters = 20;
 
  // int numClusters = 20;
-	utils ut;
 
-	streamingUtils streamUt;
+	streamingUtils<nodeType> streamUt;
   //int n = 5;
   int size = inData.workData.size();
 	std::cout<< size << "  <-size of data\n";
@@ -105,9 +106,9 @@ std::vector<std::vector<double>> summedCentroidVectors(numClusters, std::vector<
         
 				for(int x = (numClusters/2); x<inData.workData.size()-1; x++) {   //read next point x from the stream
 				if (facilities.size() <= maxFacilities){   //first phase goes immediately to reassigning
-				 		std::vector<double> y = approxNearestNeighbor(facilities, sortedApproxFacils, omega,  x,  approxSize, pipePacket(inData));
+				 		std::vector<double> y = approxNearestNeighbor(facilities, sortedApproxFacils, omega,  x,  approxSize, pipePacket<nodeType>(inData));
 				//		std::cout<< y[0] << "  <-y value \n";
-			      double delta = ut.vectors_distance(inData.workData[x], y); 	//measure delta = min d(x,y)^2 --> using approx nearest neighbor to get y
+			      double delta = this->ut.vectors_distance(inData.workData[x], y); 	//measure delta = min d(x,y)^2 --> using approx nearest neighbor to get y
 			//			std::cout<< inData.originalData[x][0] << inData.originalData[x][1] << " <-current point\n";
 			//			std::cout<< delta << " <-delta value \n";
 			//			std::cout<< f << " <-f value is \n";
@@ -130,7 +131,7 @@ std::vector<std::vector<double>> summedCentroidVectors(numClusters, std::vector<
 										double minDist = std::numeric_limits<double>::max();
 										for(unsigned c = 0; c<numFacilities; c++){
 											// clusterIndex = 0;
-											double curDist = ut.vectors_distance(inData.workData[x], facilities[c]);
+											double curDist = this->ut.vectors_distance(inData.workData[x], facilities[c]);
 												if(curDist < minDist) {
 													minDist = curDist;
 													clustered.push_back(std::make_pair(inData.workData[x], c));
@@ -201,7 +202,7 @@ std::vector<std::vector<double>> summedCentroidVectors(numClusters, std::vector<
 										// 	summedCentroidVectors.clear();
 								//			sortedApproxFacilsHat.clear();
 							//			 std::cout<< yHat[0] << " <-yhat\n";
-							       double deltaHat = ut.vectors_distance(summedCentroidVectors[xHat], yHat); 
+							       double deltaHat = this->ut.vectors_distance(summedCentroidVectors[xHat], yHat); 
                          if(prob((weight[xHat]*deltaHat)/f)){   //add old facility to weighted facility set if weight is high enough
 									          kHat.push_back(summedCentroidVectors[xHat]);
 								 			   }
@@ -210,7 +211,7 @@ std::vector<std::vector<double>> summedCentroidVectors(numClusters, std::vector<
 															double minDist = std::numeric_limits<double>::max();
 														for(unsigned x = 0; x<summedCentroidVectors.size(); x++){
 															for(unsigned k = 0; k<kHat.size(); k++){
-																	double curDist = ut.vectors_distance(summedCentroidVectors[x], kHat[k]);
+																	double curDist = this->ut.vectors_distance(summedCentroidVectors[x], kHat[k]);
 																		if(curDist < minDist) {
 																			minDist = curDist;
 																		}
@@ -299,38 +300,40 @@ std::vector<std::vector<double>> summedCentroidVectors(numClusters, std::vector<
 
 
 // configPipe -> configure the function settings of this pipeline segment
-bool streamingKmeans::configPreprocessor(std::map<std::string, std::string> &configMap){
+template<typename nodeType>
+bool streamingKmeans<nodeType>::configPreprocessor(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
 	
 	auto pipe = configMap.find("debug");
 	if(pipe != configMap.end()){
-		debug = std::atoi(configMap["debug"].c_str());
+		this->debug = std::atoi(configMap["debug"].c_str());
 		strDebug = configMap["debug"];
 	}
 	pipe = configMap.find("outputFile");
 	if(pipe != configMap.end())
-		outputFile = configMap["outputFile"].c_str();
+		this->outputFile = configMap["outputFile"].c_str();
 	
-	ut = utils(strDebug, outputFile);
+	this->ut = utils(strDebug, this->outputFile);
 	
 	pipe = configMap.find("clusters");
     if(pipe !=configMap.end())
-        numClusters = std::atoi(configMap["clusters"].c_str());
+        this->numClusters = std::atoi(configMap["clusters"].c_str());
     else return false;
 
     pipe = configMap.find("iterations");
 	if(pipe != configMap.end())
-		num_iterations = std::atoi(configMap["iterations"].c_str());
+		this->num_iterations = std::atoi(configMap["iterations"].c_str());
 	else return false;	
 	
-	configured = true;
-	ut.writeDebug(procName,"Configured with parameters { clusters: " + configMap["clusters"] + ", iterations: " + configMap["iterations"] + ", debug: " + strDebug + ", outputFile: " + outputFile + " }");
+	this->configured = true;
+	this->ut.writeDebug(this->procName,"Configured with parameters { clusters: " + configMap["clusters"] + ", iterations: " + configMap["iterations"] + ", debug: " + strDebug + ", outputFile: " + this->outputFile + " }");
 	
 	return true;
 }
 
 
-std::vector<double> streamingKmeans::approxNearestNeighbor(std::vector<std::vector<double>>& facilities, std::vector<std::pair <double, int>>& sortedApproxFacils, std::vector<double> omega, int x, int size, pipePacket(inData)){
+template<typename nodeType>
+std::vector<double> streamingKmeans<nodeType>::approxNearestNeighbor(std::vector<std::vector<double>>& facilities, std::vector<std::pair <double, int>>& sortedApproxFacils, std::vector<double> omega, int x, int size, pipePacket<nodeType>(inData)){
   //based on random projection, x is current point being examined, n is number of centroids/facilities
 	utils ut;
 	double squareDist;
@@ -369,7 +372,8 @@ std::vector<double> streamingKmeans::approxNearestNeighbor(std::vector<std::vect
 
 }
 
-std::vector<double> streamingKmeans::approxHat(std::vector<std::vector<double>>& summedCentroidVectors, std::vector<std::pair <double, int>>& sortedApproxFacilsHat, std::vector<double> omega, int xHat, int size){
+template<typename nodeType>
+std::vector<double> streamingKmeans<nodeType>::approxHat(std::vector<std::vector<double>>& summedCentroidVectors, std::vector<std::pair <double, int>>& sortedApproxFacilsHat, std::vector<double> omega, int xHat, int size){
   //based on random projection, x is current point being examined, n is number of centroids/facilities
 	utils ut;
 	double squareDist;
@@ -416,7 +420,8 @@ std::vector<double> streamingKmeans::approxHat(std::vector<std::vector<double>>&
 
 
 
-int streamingKmeans::binarySearch(std::vector<std::pair <double, int>>& sorted, std::vector<double> omega, int n, double projection){ //dotProd is target
+template<typename nodeType>
+int streamingKmeans<nodeType>::binarySearch(std::vector<std::pair <double, int>>& sorted, std::vector<double> omega, int n, double projection){ //dotProd is target
   //performing binary search on approxFacilities to find starting location for approxNearestNeighbor
 //	std::cout <<projection << "projection\n";
 //	std::cout << n << " size of approxFacilHat\n";
@@ -448,7 +453,8 @@ return low;
 
 
 
-double streamingKmeans::dotProd(const std::vector<double>& a, const std::vector<double>& b){
+template<typename nodeType>
+double streamingKmeans<nodeType>::dotProd(const std::vector<double>& a, const std::vector<double>& b){
 	//takes dot product of facilities centroids and omega, where omega is d dimensions large uniformly distributed between 0,1
 	//when new points arrive, dot product calculated, and find 2 centroids x dot omega is between... faster than calc nearest neighbor
 	std::vector<double> temp;
@@ -458,7 +464,8 @@ double streamingKmeans::dotProd(const std::vector<double>& a, const std::vector<
   return std::accumulate(temp.begin(), temp.end(), 0.0);
 }
 
-double streamingKmeans::randDouble(){    // random double between 0 and 1  (stack overflow implementation)
+template<typename nodeType>
+double streamingKmeans<nodeType>::randDouble(){    // random double between 0 and 1  (stack overflow implementation)
 	 std::mt19937_64 rng;
     // initialize the random number generator with time-dependent seed
     uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
@@ -471,12 +478,14 @@ double streamingKmeans::randDouble(){    // random double between 0 and 1  (stac
     return currentRandomNumber;
 } 
 
-bool streamingKmeans::prob(double f){
+template<typename nodeType>
+bool streamingKmeans<nodeType>::prob(double f){
 	// returns true with f's probability.
-	return randDouble() < f;
+	return streamingKmeans<nodeType>::randDouble() < f;
 }
 
-int streamingKmeans::random(int low, int high){
+template<typename nodeType>
+int streamingKmeans<nodeType>::random(int low, int high){
 	return low + ( rand() % (high - low) );
 }
 

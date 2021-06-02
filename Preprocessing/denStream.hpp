@@ -24,7 +24,9 @@ class microCluster{
 		double mergeRadius(std::vector<double> point, int timestamp);
 };
 
-class denStream : public preprocessor {
+
+template <typename nodeType>
+class denStream : public preprocessor<nodeType> {
  	private:
 		int initPoints;
 		int minPoints;
@@ -45,6 +47,6 @@ class denStream : public preprocessor {
   	
 	public:
 		denStream();
-		void runPreprocessor(pipePacket&);
+		void runPreprocessor(pipePacket<nodeType>&);
 		bool configPreprocessor(std::map<std::string, std::string>&);
 }; 
