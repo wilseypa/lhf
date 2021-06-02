@@ -419,3 +419,4 @@ simplexArrayList<nodeType>::~simplexArrayList(){
 //Explicit Template Class Instantiation
 template class simplexArrayList<simplexNode>;
 template class simplexArrayList<alphaNode>;
+template class simplexArrayList<witnessNode>;

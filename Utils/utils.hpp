@@ -6,7 +6,7 @@
 #include <map>
 
 
-// Header file for utils class - see utils.cpp for descriptions
+// Simplex Node Structure
 struct simplexNode{
 	unsigned index;
 	long long hash = -1;
@@ -17,7 +17,7 @@ struct simplexNode{
 	simplexNode(std::set<unsigned> simp, double wt) : simplex(simp), weight(wt) {}
 };
 
-// Header file for utils class - see utils.cpp for descriptions
+// Alpha Node Structure
 struct alphaNode{
 	unsigned index;
 	long long hash = -1;
@@ -33,6 +33,20 @@ struct alphaNode{
 	std::vector<std::vector<double>> betaCenters;
 	alphaNode(){}
 	alphaNode(std::set<unsigned> simp, double wt) : simplex(simp), weight(wt) {}
+};
+
+// Witness Node Structure
+struct witnessNode{
+	unsigned index;
+	long long hash = -1;
+	
+	std::set<unsigned> witnessPts;
+	std::vector<double> landmarkPt;
+	
+	std::set<unsigned> simplex = {};
+	double weight = 0;
+	witnessNode(){}
+	witnessNode(std::set<unsigned> simp, double wt) : simplex(simp), weight(wt) {}
 };
 
 struct bettiBoundaryTableEntry{

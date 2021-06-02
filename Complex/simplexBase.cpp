@@ -319,3 +319,4 @@ std::vector<std::shared_ptr<nodeType>> simplexBase<nodeType>::expandDimension(st
 
 template class simplexBase<simplexNode>;
 template class simplexBase<alphaNode>;
+template class simplexBase<witnessNode>;

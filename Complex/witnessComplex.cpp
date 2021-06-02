@@ -17,6 +17,8 @@ witnessComplex<nodeType>::~witnessComplex(){
 	this->simplexList.clear();
 }
 
+
+//Explicit Template Class Instantiation
 template class witnessComplex<simplexNode>;
 template class witnessComplex<alphaNode>;
- 
+template class witnessComplex<witnessNode>;

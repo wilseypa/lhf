@@ -17,5 +17,8 @@ alphaComplex<nodeType>::~alphaComplex(){
 	this->simplexList.clear();
 }
 
+//Explicit Template Class Instantiation
 template class alphaComplex<simplexNode>;
 template class alphaComplex<alphaNode>;
+template class alphaComplex<witnessNode>;
+
