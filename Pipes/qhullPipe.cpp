@@ -12,6 +12,7 @@
 #include <algorithm>
 #include "qhullPipe.hpp"
 #include "utils.hpp"
+#include "alphaComplex.hpp"
 
 // basePipe constructor
 template <typename nodeType>
@@ -37,7 +38,7 @@ void qhullPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
     //Again, (as stated in betaSkeletonBasedComplex) this should be a function of a different
     //	class instead of a new virtual function (because not every complex implements this).
     //		So cast and run, such as:
-    //    ((graphArrayList*)inData.complex)->buildAlphaComplex(dsimplexes,inData.inputData.size(),inData.inputData);
+    ((alphaComplex<nodeType>*)inData.complex)->buildAlphaComplex(dsimplexes,inData.inputData.size(),inData.inputData);
 
 	this->ut.writeDebug("qhullPipe", "\tSuccessfully Executed pipe");
 	return;

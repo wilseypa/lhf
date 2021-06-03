@@ -19,10 +19,10 @@ class simplexArrayList : public simplexBase<nodeType>{
 	typedef std::shared_ptr<nodeType> templateNode_P;
 	
 	private:
-		binomialTable bin;
 		std::unordered_map<long long, templateNode_P> indexConverter;
 
 	public:
+		binomialTable bin;
 		simplexArrayList(double, double);
 		double findWeight(std::set<unsigned>);
 

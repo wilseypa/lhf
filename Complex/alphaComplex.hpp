@@ -29,4 +29,9 @@ class alphaComplex : public simplexArrayList<nodeType>{
 
 		~alphaComplex();
 		
+		
+		
+		std::vector<templateNode_P> getAllDelaunayCofacets(templateNode_P);
+		void buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, int pts,std::vector<std::vector<double>> inputData);
+		
 };
