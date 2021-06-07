@@ -19,10 +19,7 @@
 #include "betaSkeletonBasedComplex.hpp"
 #include "upscalePipe.hpp"
 #include "qhullPipe.hpp"
-
-/*
 #include "slidingWindow.hpp"
-*/
 
 template<typename nodeType>
 basePipe<nodeType>* basePipe<nodeType>::newPipe(const std::string &pipeType, const std::string &complexType){
@@ -48,10 +45,9 @@ basePipe<nodeType>* basePipe<nodeType>::newPipe(const std::string &pipeType, con
 		return new betaSkeletonBasedComplexPipe<nodeType>();
 	}  else if (pipeType == "qhullPipe" || pipeType == "qhull" || pipeType == "alpha"){
 		return new qhullPipe<nodeType>();
-	} /*else if (pipeType == "slidingwindow" || pipeType == "sliding"){
-		return new slidingWindow();
-	
-	}*/
+	} else if (pipeType == "slidingwindow" || pipeType == "sliding"){
+		return new slidingWindow<nodeType>();
+	}
 
 	return 0;
 }

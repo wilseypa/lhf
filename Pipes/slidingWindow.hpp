@@ -6,6 +6,25 @@
 #include "basePipe.hpp"
 #include "utils.hpp"
 
+struct EvalParams{    
+	int windowMaxSize = 100;
+	int key = 0;
+	int targetPartition = 0;  // The partition membership of a new vector, if the new vector is to be added to the window.
+	std::vector<int> windowKeys;
+	std::vector<int> partitionLabels;
+	std::vector<int> nnIndices;  // A container to store the index of each point's nearest neighbor within the window.
+	std::vector<double> nnDists;  // A container to store the nearest neighbor distance of each point within the window.
+	std::unordered_map<int, double> avgNNDistPartitions;
+	std::unordered_map<int, int> numPointsPartn;  // A dictionary to store the number of points in each partition.
+	std::map<int, int> maxKeys;  // A dictionary to store the maxKey of each partition.
+	std::vector<double> distsFromCurrVec;
+	int keyToBeDeleted;
+	int labelToBeDeleted;
+	int indexToBeDeleted;
+	double nnDistToBeDeleted;
+};
+
+
 template <typename nodeType>
 class slidingWindow : public basePipe<nodeType> {
 private:
@@ -15,29 +34,15 @@ private:
     std::string inputFile;
     void runSubPipeline();
     std::map<std::string, std::string> subConfigMap;
+	
+	static EvalParams defaultVals;
     
     
 
 public:
     
-    int windowMaxSize = 100;
-    int key = 0;
-    int targetPartition = 0;  // The partition membership of a new vector, if the new vector is to be added to the window.
-    std::vector<int> windowKeys;
-    std::vector<int> partitionLabels;
-    std::vector<int> nnIndices;  // A container to store the index of each point's nearest neighbor within the window.
-    std::vector<double> nnDists;  // A container to store the nearest neighbor distance of each point within the window.
-    std::unordered_map<int, double> avgNNDistPartitions;
-    std::unordered_map<int, int> numPointsPartn;  // A dictionary to store the number of points in each partition.
-    std::map<int, int> maxKeys;  // A dictionary to store the maxKey of each partition.
-    std::vector<double> distsFromCurrVec;
-    int keyToBeDeleted;
-    int labelToBeDeleted;
-    int indexToBeDeleted;
-    double nnDistToBeDeleted;
     
-    static pipePacket<nodeType> pPack;
-
+    
     slidingWindow();
     pipePacket<nodeType> runPipe(pipePacket<nodeType>);
     void outputData(pipePacket<nodeType>);
