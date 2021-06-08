@@ -14,6 +14,7 @@ Additional pipelines have been created for preprocessing, approximations of the 
 
 - OpenMPI (if build / run for distributed)
 
+- OpenMP
 ---
 			  
 ### COMPILING 
