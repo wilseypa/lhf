@@ -4,6 +4,7 @@ import re
 import sys
 import sysconfig
 import platform
+import glob
 import subprocess
 
 from distutils.version import LooseVersion
@@ -16,7 +17,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name='lhf',
-    version='1.0.7',    
+    version='1.0.8',    
     description='Light Weight Homology Framework',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -29,6 +30,6 @@ setup(
         "Operating System :: OS Independent",
     ],
     packages=setuptools.find_packages(),
-    data_files=[('/LHF', ['libLHFlib.so'])],
+    data_files=[('/LHF', glob.glob('../../**/*.so', recursive=True))],
     include_package_data=True,
 )
