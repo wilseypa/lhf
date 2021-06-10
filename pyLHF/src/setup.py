@@ -16,8 +16,8 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name='lhf',
-    version='1.0.5',    
-    description='Light Weight Homology Framework',
+    version='1.0.6',    
+    description='Lightweight Homology Framework',
     long_description=long_description,
     long_description_content_type="text/markdown",
     project_urls={
@@ -29,8 +29,6 @@ setup(
         "Operating System :: OS Independent",
     ],
     packages=setuptools.find_packages(),
-    package_data={'libLHF': ['libLHFlib.so',
-                          'libLHFlib.so.1',
-                          'libLHFlib.so.1.0.0']},
+    package_data={'LHF':['libLHFlib.so']},
     include_package_data=True,
 )

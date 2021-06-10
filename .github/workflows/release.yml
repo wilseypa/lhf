@@ -83,7 +83,7 @@ jobs:
       run: pip install --upgrade pip && pip install numpy twine
 
     - name: Copy shared object to python source
-      run: cp LHFmain/libLHFlib.so pyLHF/src/LHF/
+      run: cp LHFmain/libLHFlib.so pyLHF/src/
         
     - name: Build manylinux Python wheels
       if:   runner.os == 'Linux'
