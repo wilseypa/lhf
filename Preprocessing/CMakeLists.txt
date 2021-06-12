@@ -12,7 +12,6 @@ add_library(denStream "denStream.cpp" "denStream.hpp")
 add_library(dbscan "dbscan.cpp" "dbscan.hpp")
 add_library(kdTree "kdTree.cpp" "kdTree.hpp")
 
-
 include_directories(../Complex)
 link_directories(../Complex)
 

@@ -6,8 +6,19 @@
 #include <map>
 
 
-// Header file for utils class - see utils.cpp for descriptions
+// Simplex Node Structure
 struct simplexNode{
+	unsigned index;
+	long long hash = -1;
+	
+	std::set<unsigned> simplex = {};
+	double weight = 0;
+	simplexNode(){}
+	simplexNode(std::set<unsigned> simp, double wt) : simplex(simp), weight(wt) {}
+};
+
+// Alpha Node Structure
+struct alphaNode{
 	unsigned index;
 	long long hash = -1;
 	
@@ -20,27 +31,23 @@ struct simplexNode{
     std::vector<double> hpcoff; // cofficient of simplex hyperplane
 	std::vector<double> circumCenter;
 	std::vector<std::vector<double>> betaCenters;
-	simplexNode(){}
-	simplexNode(std::set<unsigned> simp, double wt) : simplex(simp), weight(wt) {}
+	alphaNode(){}
+	alphaNode(std::set<unsigned> simp, double wt) : simplex(simp), weight(wt) {}
 };
 
-typedef std::shared_ptr<simplexNode> simplexNode_P;
-
-struct cmpByWeight{
-	bool operator()(simplexNode_P a, simplexNode_P b) const{
-		if(a->weight == b->weight){ //If the simplices have the same weight, sort by reverse lexicographic order for fastPersistence
-			auto itA = a->simplex.rbegin(), itB = b->simplex.rbegin();
-			while(itA != a->simplex.rend()){
-				if(*itA != *itB) return *itA > *itB;
-				++itA; ++itB;
-			}
-			return false;
-		} else{
-			return a->weight < b->weight;
-		}
-	}
+// Witness Node Structure
+struct witnessNode{
+	unsigned index;
+	long long hash = -1;
+	
+	std::set<unsigned> witnessPts;
+	std::vector<double> landmarkPt;
+	
+	std::set<unsigned> simplex = {};
+	double weight = 0;
+	witnessNode(){}
+	witnessNode(std::set<unsigned> simp, double wt) : simplex(simp), weight(wt) {}
 };
-
 
 struct bettiBoundaryTableEntry{
 	unsigned bettiDim;
@@ -79,8 +86,13 @@ class utils {
 	static std::vector<std::vector<std::vector<double>>> separateBoundaryPartitions(std::vector<std::set<unsigned>>, std::vector<std::vector<double>>, std::vector<unsigned>);
 	static std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> separatePartitions(double, std::vector<std::vector<double>>, std::vector<std::vector<double>>, std::vector<unsigned>);
 	// void extractBoundaryPoints(std::vector<bettiBoundaryTableEntry>&);
-	static std::set<unsigned> extractBoundaryPoints(std::vector<simplexNode_P>);
-	static std::set<unsigned> extractBoundaryPoints(std::vector<simplexNode*>);
+	
+	template <typename T>
+	std::set<unsigned> extractBoundaryPoints(std::vector<std::shared_ptr<T>>);
+	
+	template <typename T>
+	std::set<unsigned> extractBoundaryPoints(std::vector<T*>);
+	
 	static std::vector<bettiBoundaryTableEntry> mapPartitionIndexing(std::vector<unsigned>, std::vector<bettiBoundaryTableEntry>);
 	static void print2DVector(const std::vector<std::vector<unsigned>>&);
 	static void print1DVector(const std::vector<unsigned>&);

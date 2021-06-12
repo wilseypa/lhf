@@ -81,15 +81,17 @@ double microCluster::mergeRadius(std::vector<double> point, int timestamp){ //Ra
 }
 
 // basePipe constructor
-denStream::denStream(){
-	procName = "DenStream";
+template <typename nodeType>
+denStream<nodeType>::denStream(){
+	this->procName = "DenStream";
     return;
 }
 //taking in preprocessor type
 
 
 // runPipe -> Run the configured functions of this pipeline segment
-void denStream::runPreprocessor(pipePacket& inData){
+template <typename nodeType>
+void denStream<nodeType>::runPreprocessor(pipePacket<nodeType>& inData){
   /////////constants//////////
   initPoints = 1000; // points to generate p clusters (large data sets, use 1000) 
   minPoints = 20; //For DBSCAN 
@@ -164,7 +166,8 @@ void denStream::runPreprocessor(pipePacket& inData){
 }
 
 //Index of nearest p-micro-cluster
-int denStream::nearestPCluster(std::vector<double> point){
+template <typename nodeType>
+int denStream<nodeType>::nearestPCluster(std::vector<double> point){
   utils ut;
 
   int min = 0;
@@ -182,7 +185,8 @@ int denStream::nearestPCluster(std::vector<double> point){
 }
 
 //Index of nearest o-micro-cluster
-int denStream::nearestOCluster(std::vector<double> point){
+template <typename nodeType>
+int denStream<nodeType>::nearestOCluster(std::vector<double> point){
   utils ut;
 
   int min = 0;
@@ -200,7 +204,8 @@ int denStream::nearestOCluster(std::vector<double> point){
 }
 
 //function merging (takes in point p, p micro clusters, o micro clusters )
-void denStream::merging(std::vector<std::vector<double>> &data, int p, int timestamp){
+template <typename nodeType>
+void denStream<nodeType>::merging(std::vector<std::vector<double>> &data, int p, int timestamp){
   if(pMicroClusters.size() > 0){
     int nearestP = nearestPCluster(data[p]);
     if(pMicroClusters[nearestP].mergeRadius(data[p], timestamp) <= epsilon){ //Successfully add point to nearest p-micro-cluster
@@ -228,33 +233,38 @@ void denStream::merging(std::vector<std::vector<double>> &data, int p, int times
   
 
 // configPipe -> configure the function settings of this pipeline segment
-bool denStream::configPreprocessor(std::map<std::string, std::string> &configMap){
+template <typename nodeType>
+bool denStream<nodeType>::configPreprocessor(std::map<std::string, std::string> &configMap){
   std::string strDebug;
   
   auto pipe = configMap.find("debug");
   if(pipe != configMap.end()){
-    debug = std::atoi(configMap["debug"].c_str());
+    this->debug = std::atoi(configMap["debug"].c_str());
     strDebug = configMap["debug"];
   }
 
   pipe = configMap.find("outputFile");
   if(pipe != configMap.end())
-    outputFile = configMap["outputFile"].c_str();
+    this->outputFile = configMap["outputFile"].c_str();
   
-  ut = utils(strDebug, outputFile);
+  this->ut = utils(strDebug, this->outputFile);
   
   pipe = configMap.find("epsilon"); //Maximum radius of micro clusters
   if(pipe !=configMap.end())
-    epsilon = std::stod(configMap["epsilon"].c_str());
+    this->epsilon = std::stod(configMap["epsilon"].c_str());
   else return false;
 
   pipe = configMap.find("lambda"); //Decay factor
   if(pipe !=configMap.end())
-    lambda = std::stod(configMap["lambda"].c_str());
+    this->lambda = std::stod(configMap["lambda"].c_str());
   else return false;
 
-  configured = true;
-  ut.writeDebug("DenStream","Configured with parameters { epsilon: " + std::to_string(epsilon) + ", debug: " + strDebug + ", outputFile: " + outputFile + " }");
+  this->configured = true;
+  this->ut.writeDebug("DenStream","Configured with parameters { epsilon: " + std::to_string(this->epsilon) + ", debug: " + strDebug + ", outputFile: " + this->outputFile + " }");
 
 	return true;
 }
+
+template class denStream<simplexNode>;
+template class denStream<alphaNode>;
+template class denStream<witnessNode>;

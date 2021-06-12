@@ -4,6 +4,7 @@
 #include <map>
 #include "pipePacket.hpp"
 
+template<typename nodeType>
 class preprocessor {
   private:
   public:
@@ -16,11 +17,10 @@ class preprocessor {
     preprocessor();
     virtual ~preprocessor();
     static preprocessor* newPreprocessor(const std::string&);
-    void runPreprocessorWrapper(pipePacket &inData);
-    virtual void runPreprocessor(pipePacket &inData);
-    virtual void outputData(pipePacket&);
+    void runPreprocessorWrapper(pipePacket<nodeType> &inData);
+    virtual void runPreprocessor(pipePacket<nodeType> &inData);
+    virtual void outputData(pipePacket<nodeType>&);
     virtual void outputData(std::vector<unsigned>);
     virtual void outputData(std::vector<std::vector<double>>);
     virtual bool configPreprocessor(std::map<std::string, std::string> &configMap);
 };
-

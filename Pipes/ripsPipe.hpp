@@ -4,14 +4,15 @@
 #include <map>
 #include "basePipe.hpp"
 
-class ripsPipe : public basePipe {
+
+template<typename nodeType>
+class ripsPipe : public basePipe<nodeType> {
   private:
   public:
-	std::string collapse;
-	int dim;
+    std::string collapse;
+    int dim;
     ripsPipe();
-    void runPipe(pipePacket&);
+    void runPipe(pipePacket<nodeType>&);
     bool configPipe(std::map<std::string, std::string>&);
-	void outputData(pipePacket&);
+    void outputData(pipePacket<nodeType>&);
 };
-

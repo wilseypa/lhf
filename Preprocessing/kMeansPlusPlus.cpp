@@ -17,17 +17,19 @@
 #include "utils.hpp"
 
 // basePipe constructor
-kMeansPlusPlus::kMeansPlusPlus(){
-	procName = "k-means++";
+template<typename nodeType>
+kMeansPlusPlus<nodeType>::kMeansPlusPlus(){
+	this->procName = "k-means++";
     return;
 }
 //taking in preprocessor type
 
 
 // runPipe -> Run the configured functions of this pipeline segment
-void kMeansPlusPlus::runPreprocessor(pipePacket& inData){
-	if(!configured){
-		ut.writeLog(procName,"Preprocessor not configured");
+template<typename nodeType>
+void kMeansPlusPlus<nodeType>::runPreprocessor(pipePacket<nodeType>& inData){
+	if(!this->configured){
+		this->ut.writeLog(this->procName,"Preprocessor not configured");
 		return;
 	}
 	
@@ -43,10 +45,10 @@ void kMeansPlusPlus::runPreprocessor(pipePacket& inData){
     //  This seed should be recorded to reproduce after a run
     //  There may be multiple seeds in a run depending on how many times k-means is used
     //static std::random_device seed;
-    if(seed < 0){
-		seed = time(NULL);
+    if(this->seed < 0){
+		this->seed = time(NULL);
     }
-    static std::mt19937 gen(seed); 
+    static std::mt19937 gen(this->seed); 
     
     std::uniform_int_distribution<size_t> distribution(0, inData.workData.size()-1);
     int index = distribution(gen); //Randomly choose the first centroid
@@ -65,7 +67,7 @@ void kMeansPlusPlus::runPreprocessor(pipePacket& inData){
 
         for(unsigned j=0; j<inData.workData.size(); j++) {
 
-			double curDist = ut.vectors_distance(inData.workData[j], centroids[k-1]);	
+			double curDist = this->ut.vectors_distance(inData.workData[j], centroids[k-1]);	
 			if(curDist < dist[j]) dist[j] = curDist;
 
 			if(dist[j] > maxDist){
@@ -105,7 +107,7 @@ void kMeansPlusPlus::runPreprocessor(pipePacket& inData){
 			
 			//Check each centroid for the minimum distance
 			for (unsigned c = 0; c < centroids.size(); c++){
-				auto curDist = ut.vectors_distance(inData.workData[j], centroids[c]);
+				auto curDist = this->ut.vectors_distance(inData.workData[j], centroids[c]);
 				
 				if(curDist < minDist){
 					clusterIndex = c;
@@ -151,35 +153,41 @@ void kMeansPlusPlus::runPreprocessor(pipePacket& inData){
 }
 
 // configPipe -> configure the function settings of this pipeline segment
-bool kMeansPlusPlus::configPreprocessor(std::map<std::string, std::string>& configMap){
+template<typename nodeType>
+bool kMeansPlusPlus<nodeType>::configPreprocessor(std::map<std::string, std::string>& configMap){
 	std::string strDebug;
 	
 	auto pipe = configMap.find("debug");
 	if(pipe != configMap.end()){
-		debug = (std::atoi(configMap["debug"].c_str()) > 0 ? true : false);
+		this->debug = (std::atoi(configMap["debug"].c_str()) > 0 ? true : false);
 		strDebug = configMap["debug"];
 	}
 	pipe = configMap.find("outputFile");
 	if(pipe != configMap.end())
-		outputFile = configMap["outputFile"].c_str();
+		this->outputFile = configMap["outputFile"].c_str();
 	
-	ut = utils(strDebug, outputFile);
+	this->ut = utils(strDebug, this->outputFile);
     pipe = configMap.find("clusters");
     if(pipe !=configMap.end())
-        num_clusters = std::atoi(configMap["clusters"].c_str());
+        this->num_clusters = std::atoi(configMap["clusters"].c_str());
     else return false;
     
     pipe = configMap.find("seed");
     if(pipe != configMap.end())
-		seed = std::atoi(configMap["seed"].c_str());
+		this->seed = std::atoi(configMap["seed"].c_str());
 
     pipe = configMap.find("iterations");
 	if(pipe != configMap.end())
-		num_iterations = std::atoi(configMap["iterations"].c_str());
+		this->num_iterations = std::atoi(configMap["iterations"].c_str());
 	else return false;
 	
-	configured = true;
-	ut.writeDebug(procName,"Configured with parameters { clusters: " + configMap["clusters"] + ", iterations: " + configMap["iterations"] + ", debug: " + strDebug + ", outputFile: " + outputFile + " }");
+	this->configured = true;
+	this->ut.writeDebug(this->procName,"Configured with parameters { clusters: " + configMap["clusters"] + ", iterations: " + configMap["iterations"] + ", debug: " + strDebug + ", outputFile: " + this->outputFile + " }");
 
 	return true;
 }
+
+//Explicit Template Class Instantiation
+template class kMeansPlusPlus<simplexNode>;
+template class kMeansPlusPlus<alphaNode>;
+template class kMeansPlusPlus<witnessNode>;

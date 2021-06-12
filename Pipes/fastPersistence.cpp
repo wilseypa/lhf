@@ -19,14 +19,15 @@
 #include "utils.hpp"
 
 // basePipe constructor
-fastPersistence::fastPersistence(){
-	pipeType = "FastPersistence";
+template<typename nodeType>
+fastPersistence<nodeType>::fastPersistence(){
+	this->pipeType = "FastPersistence";
 	return;
 }
 
-
+template <class nodeType>
 template <class simplexNodePointer, class comp>
-std::vector<simplexNodePointer> fastPersistence::persistenceByDimension(pipePacket& inData, std::vector<simplexNodePointer> edges, std::vector<simplexNodePointer> pivots, unsigned dimension, comp compStruct, std::string mode, bool recordIntervals){
+std::vector<simplexNodePointer> fastPersistence<nodeType>::persistenceByDimension(pipePacket<nodeType>& inData, std::vector<simplexNodePointer> edges, std::vector<simplexNodePointer> pivots, unsigned dimension, comp compStruct, std::string mode, bool recordIntervals){
 	std::sort(edges.begin(), edges.end(), compStruct);
 	std::sort(pivots.begin(), pivots.end(), compStruct);
 
@@ -44,7 +45,7 @@ std::vector<simplexNodePointer> fastPersistence::persistenceByDimension(pipePack
 		if(it == pivots.end() || (*it)->weight != simplex->weight || (*it)->simplex != simplex->simplex){
 		//	std::cout<<mode<<" "<<simplicialComplex<<" "<<complexType<<std::endl;
 			//Get all cofacets using emergent pair optimization
-			std::vector<simplexNodePointer> faceList = (mode == "homology" ? inData.complex->getAllFacets_P(simplex) : ((simplicialComplex == "alpha" && complexType == "simplexArrayList")? inData.complex->getAllDelaunayCofacets(simplex):inData.complex->getAllCofacets(simplex->simplex, simplex->weight, pivotPairs, true)));
+			std::vector<simplexNodePointer> faceList = (mode == "homology" ? inData.complex->getAllFacets_P(simplex) : ((this->simplicialComplex == "alpha" && this->complexType == "simplexArrayList")? inData.complex->getAllDelaunayCofacets(simplex):inData.complex->getAllCofacets(simplex->simplex, simplex->weight, pivotPairs, true)));
 		
 			std::vector<simplexNodePointer> columnV;	//Reduction column of matrix V
 			columnV.push_back(simplex); //Initially V=I -> 1's along diagonal
@@ -90,7 +91,7 @@ std::vector<simplexNodePointer> fastPersistence::persistenceByDimension(pipePack
 					}
 
 					if(recordIntervals && simplex->weight != pivot->weight){
-						bettiBoundaryTableEntry des = { dimension, std::min(pivot->weight, simplex->weight), std::max(pivot->weight, simplex->weight), ut.extractBoundaryPoints(v[simplex]) };
+						bettiBoundaryTableEntry des = { dimension, std::min(pivot->weight, simplex->weight), std::max(pivot->weight, simplex->weight), this->ut.extractBoundaryPoints(v[simplex]) };
 						inData.bettiTable.push_back(des);
 					}
 
@@ -99,7 +100,7 @@ std::vector<simplexNodePointer> fastPersistence::persistenceByDimension(pipePack
 					//Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
 					for(simplexNodePointer simp : v[pivotPairs[pivot]]){
 						columnV.push_back(simp);
-						std::vector<simplexNodePointer> faces = (mode == "homology" ? inData.complex->getAllFacets_P(simp) : ((simplicialComplex == "alpha" && complexType =="simplexArrayList")? inData.complex->getAllDelaunayCofacets(simp):inData.complex->getAllCofacets(simp->simplex)));
+						std::vector<simplexNodePointer> faces = (mode == "homology" ? inData.complex->getAllFacets_P(simp) : ((this->simplicialComplex == "alpha" && this->complexType =="simplexArrayList")? inData.complex->getAllDelaunayCofacets(simp):inData.complex->getAllCofacets(simp->simplex)));
 					
 						faceList.insert(faceList.end(), faces.begin(), faces.end());
 					}
@@ -117,9 +118,10 @@ std::vector<simplexNodePointer> fastPersistence::persistenceByDimension(pipePack
 //
 //	FastPersistence: For computing the persistence pairs from simplicial complex:
 //		1. See Bauer-19 for algorithm/description
-void fastPersistence::runPipe(pipePacket &inData){
+template <class nodeType>
+void fastPersistence<nodeType>::runPipe(pipePacket<nodeType> &inData){
 	//Get all edges for the simplexArrayList or simplexTree
-	std::vector<std::set<simplexNode_P, cmpByWeight>> edges = inData.complex->getAllEdges();
+	std::vector<std::set<std::shared_ptr<nodeType>, cmpByWeight<std::shared_ptr<nodeType>>>> edges = inData.complex->getAllEdges();
 
 	if(edges.size() <= 1) return;
 
@@ -144,7 +146,7 @@ void fastPersistence::runPipe(pipePacket &inData){
 	//	So in streaming, create a hash map to quickly lookup points
 
 	std::unordered_map<unsigned, unsigned> mappedIndices;	//Store a map of the indices for MST
-	std::vector<simplexNode_P> pivots; //Store identified pivots
+	std::vector<std::shared_ptr<nodeType>> pivots; //Store identified pivots
 	unsigned mstSize = 0;
 	unsigned nPts = inData.workData.size();
 
@@ -203,12 +205,12 @@ void fastPersistence::runPipe(pipePacket &inData){
 	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
 		inData.complex->prepareCofacets(d);
 
-		pivots = persistenceByDimension(inData, std::vector<simplexNode_P>(edges[d].begin(), edges[d].end()), pivots, d, sortReverseLexicographic(), "cohomology", !involuted);
+		pivots = persistenceByDimension(inData, std::vector<std::shared_ptr<nodeType>>(edges[d].begin(), edges[d].end()), pivots, d, sortReverseLexicographic(), "cohomology", !involuted);
 
 		//To recover the representative cycles from the cocycles, we compute homology on just the pivot columns
 		if(involuted){
 			inData.complex->prepareFacets(d);
-			persistenceByDimension(inData, pivots, std::vector<simplexNode_P>(), d, sortLexicographic(), "homology", true);
+			persistenceByDimension(inData, pivots, std::vector<std::shared_ptr<nodeType>>(), d, sortLexicographic(), "homology", true);
 		}
 	}
 
@@ -219,7 +221,7 @@ void fastPersistence::runPipe(pipePacket &inData){
 	std::chrono::duration<double, std::milli> elapsed = endTime - startTime;
 
 	//Output the time and memory used for this pipeline segment
-	ut.writeDebug("persistence","Bettis executed in " + std::to_string(elapsed.count()/1000.0) + " seconds (physical time)");;
+	this->ut.writeDebug("persistence","Bettis executed in " + std::to_string(elapsed.count()/1000.0) + " seconds (physical time)");;
 
 	return;
 }
@@ -227,12 +229,13 @@ void fastPersistence::runPipe(pipePacket &inData){
 
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-void fastPersistence::outputData(pipePacket &inData){
+template <class nodeType>
+void fastPersistence<nodeType>::outputData(pipePacket<nodeType> &inData){
 	std::ofstream file;
-	if(fnmod.size() > 0)
-		file.open("output/"+pipeType+"_bettis_output"+fnmod+".csv");
+	if(this->fnmod.size() > 0)
+		file.open("output/"+this->pipeType+"_bettis_output"+this->fnmod+".csv");
 	else
-		file.open("output/" + pipeType + "_bettis_output.csv");
+		file.open("output/" + this->pipeType + "_bettis_output.csv");
 
 	for(auto row : inData.bettiTable)
 		file << std::to_string(row.bettiDim) << "," << std::to_string(row.birth) << "," << std::to_string(row.death) << std::endl;
@@ -257,48 +260,53 @@ void fastPersistence::outputData(pipePacket &inData){
 
 
 // configPipe -> configure the function settings of this pipeline segment
-bool fastPersistence::configPipe(std::map<std::string, std::string> &configMap){
+template <class nodeType>
+bool fastPersistence<nodeType>::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
 
 	auto pipe = configMap.find("debug");
 	if(pipe != configMap.end()){
-		debug = std::atoi(configMap["debug"].c_str());
+		this->debug = std::atoi(configMap["debug"].c_str());
 		strDebug = configMap["debug"];
 	}
 	pipe = configMap.find("outputFile");
 	if(pipe != configMap.end())
-		outputFile = configMap["outputFile"].c_str();
+		this->outputFile = configMap["outputFile"].c_str();
 
-	ut = utils(strDebug, outputFile);
+	this->ut = utils(strDebug, this->outputFile);
 
 	pipe = configMap.find("involuted");
 	if(pipe != configMap.end())
-		inv = configMap["involuted"];
+		this->inv = configMap["involuted"];
 
 	pipe = configMap.find("dimensions");
 	if(pipe != configMap.end())
-		dim = std::atoi(configMap["dimensions"].c_str());
+		this->dim = std::atoi(configMap["dimensions"].c_str());
 	else return false;
 
 	pipe = configMap.find("epsilon");
 	if(pipe != configMap.end())
-		maxEpsilon = std::atof(configMap["epsilon"].c_str());
+		this->maxEpsilon = std::atof(configMap["epsilon"].c_str());
 	else return false;
 
 	pipe = configMap.find("fn");
 	if(pipe != configMap.end())
-		fnmod = configMap["fn"];
+		this->fnmod = configMap["fn"];
 
 	pipe = configMap.find("simplicialComplex");
 	if(pipe != configMap.end())
-		simplicialComplex = configMap["simplicialComplex"];
+		this->simplicialComplex = configMap["simplicialComplex"];
 
 	pipe = configMap.find("complexType");
 	if(pipe != configMap.end())
-		complexType = configMap["complexType"];
-	configured = true;
-	ut.writeDebug("fastPersistence","Configured with parameters { dim: " + configMap["dimensions"] + ", complexType: " + configMap["complexType"] + ", eps: " + configMap["epsilon"]);
-	ut.writeDebug("fastPersistence","\t\t\t\tdebug: " + strDebug + ", outputFile: " + outputFile + " }");
+		this->complexType = configMap["complexType"];
+	this->configured = true;
+	this->ut.writeDebug("fastPersistence","Configured with parameters { dim: " + configMap["dimensions"] + ", complexType: " + configMap["complexType"] + ", eps: " + configMap["epsilon"]);
+	this->ut.writeDebug("fastPersistence","\t\t\t\tdebug: " + strDebug + ", outputFile: " + this->outputFile + " }");
 
 	return true;
 }
+
+template class fastPersistence<simplexNode>;
+template class fastPersistence<alphaNode>;
+template class fastPersistence<witnessNode>;

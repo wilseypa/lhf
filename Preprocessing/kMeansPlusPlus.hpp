@@ -4,14 +4,15 @@
 #include <map>
 #include "preprocessor.hpp"
 
-class kMeansPlusPlus : public preprocessor {
+template<typename nodeType>
+class kMeansPlusPlus : public preprocessor<nodeType> {
   private:
     int seed;
-	int num_clusters;			
-	int num_iterations;			
+	  int num_clusters;			
+	  int num_iterations;			
   public:
-	kMeansPlusPlus();
-    void runPreprocessor(pipePacket&);
+	  kMeansPlusPlus();
+    void runPreprocessor(pipePacket<nodeType>&);
     bool configPreprocessor(std::map<std::string, std::string>&);
 };
 

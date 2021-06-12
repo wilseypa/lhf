@@ -37,12 +37,13 @@ using orgQhull::RboxPoints;
 using orgQhull::PointCoordinates;
 using orgQhull::Coordinates;
 
-class qhullPipe : public basePipe {
+template <typename nodeType>
+class qhullPipe : public basePipe<nodeType> {
   private:
   public:
     qhullPipe();
-    void runPipe(pipePacket& inData);
+    void runPipe(pipePacket<nodeType>& inData);
     bool configPipe(std::map<std::string, std::string> &configMap);
-    void outputData(pipePacket&);
+    void outputData(pipePacket<nodeType>&);
     std::vector<std::vector<int>> qdelaunay_o(const Qhull &qhull);
 };

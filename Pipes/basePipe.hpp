@@ -5,6 +5,7 @@
 #include "pipePacket.hpp"
 #include "utils.hpp"
 
+template<typename nodeType>
 class basePipe {
   private:
   public:
@@ -20,10 +21,9 @@ class basePipe {
     basePipe(){};
     virtual ~basePipe(){};
     static basePipe* newPipe(const std::string&, const std::string&);
-    void runPipeWrapper(pipePacket&);
-    virtual void outputData(pipePacket&);
-    virtual void runPipe(pipePacket&);
+    void runPipeWrapper(pipePacket<nodeType>&);
+    virtual void outputData(pipePacket<nodeType>&);
+    virtual void runPipe(pipePacket<nodeType>&);
     virtual bool configPipe(std::map<std::string, std::string>&);    
     
 };
-

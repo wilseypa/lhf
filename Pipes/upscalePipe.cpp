@@ -16,16 +16,13 @@
 #include "upscalePipe.hpp"
 #include "utils.hpp"
 
-
-
 // basePipe constructor
-upscalePipe::upscalePipe(){
-	pipeType = "Upscale";
+template <typename nodeType>
+upscalePipe<nodeType>::upscalePipe(){
+	this->pipeType = "Upscale";
 	
 	return;
 }
-
-
 
 // runPipe -> Run the configured functions of this pipeline segment
 //
@@ -36,7 +33,8 @@ upscalePipe::upscalePipe(){
 //				
 //		
 //
-void upscalePipe::runPipe(pipePacket &inData){
+template <typename nodeType>
+void upscalePipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
 
 	std::vector<std::pair<std::set<unsigned>, std::vector<bettiBoundaryTableEntry>>> upscaleBoundaries;
 	
@@ -50,7 +48,7 @@ void upscalePipe::runPipe(pipePacket &inData){
 	
 	for(auto pi = inData.bettiTable.begin(); pi != inData.bettiTable.end(); pi++){
 		std::cout << pi->bettiDim << ",\t" << pi->birth << ",\t" << pi->death << ",\t";
-		ut.print1DVector(pi->boundaryPoints);
+		this->ut.print1DVector(pi->boundaryPoints);
 		
 		//Check if this interval lives for longer than scalarV
 		if((pi->death - pi->birth) > scalarV && pi->bettiDim > 0){
@@ -60,16 +58,16 @@ void upscalePipe::runPipe(pipePacket &inData){
 			auto firstIntersect = upscaleBoundaries.begin();
 			
 			for(auto bp = upscaleBoundaries.begin(); bp != upscaleBoundaries.end(); bp++){
-				if(ut.setIntersect(bp->first, pi->boundaryPoints, true).size() > 0){
+				if(this->ut.setIntersect(bp->first, pi->boundaryPoints, true).size() > 0){
 					
 					if(!isFound){
-						bp->first = ut.setUnion(bp->first, pi->boundaryPoints);
+						bp->first = this->ut.setUnion(bp->first, pi->boundaryPoints);
 						bp->second.push_back(*pi);
 
 						isFound = true;
 						firstIntersect = bp;
 					} else {
-						firstIntersect->first = ut.setUnion(bp->first, firstIntersect->first);
+						firstIntersect->first = this->ut.setUnion(bp->first, firstIntersect->first);
 						firstIntersect->second.insert(firstIntersect->second.end(), bp->second.begin(), bp->second.end());
 						
 						upscaleBoundaries.erase(bp--);
@@ -92,7 +90,7 @@ void upscalePipe::runPipe(pipePacket &inData){
 	std::cout << "Found " << upscaleBoundaries.size() << " independent features to upscale" << std::endl;
 	for(auto bound : upscaleBoundaries){
 		std::cout <<"\t";
-		ut.print1DVector(bound.first);
+		this->ut.print1DVector(bound.first);
 	}
 	
 	//Upscale each independent boundary
@@ -106,7 +104,7 @@ void upscalePipe::runPipe(pipePacket &inData){
 			}
 		} else {
 			
-			auto curwD = pipePacket(subConfigMap, subConfigMap["complexType"]);
+			auto curwD = pipePacket<nodeType>(subConfigMap, subConfigMap["complexType"]);
 			
 			for(unsigned index = 0; index < inData.centroidLabels.size(); index++){
 				if(bound.first.find(inData.centroidLabels[index]) != bound.first.end()){
@@ -122,7 +120,7 @@ void upscalePipe::runPipe(pipePacket &inData){
 
 			for(auto a : curwD.bettiTable){
 				std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
-				ut.print1DVector(a.boundaryPoints);
+				this->ut.print1DVector(a.boundaryPoints);
 				
 				//Check if this interval lives for longer than scalarV
 				if((a.death - a.birth) > scalarV && a.bettiDim > 0)
@@ -139,11 +137,12 @@ void upscalePipe::runPipe(pipePacket &inData){
 }
 
 
-void upscalePipe::runSubPipeline(pipePacket& wrData){
+template <typename nodeType>
+void upscalePipe<nodeType>::runSubPipeline(pipePacket<nodeType>& wrData){
     if(wrData.workData.size() == 0)
         return;
 
-    outputData(wrData);
+    this->outputData(wrData);
 
 	std::string pipeFuncts = "distMatrix.neighGraph.incrementalPersistence";
     auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
@@ -154,7 +153,7 @@ void upscalePipe::runSubPipeline(pipePacket& wrData){
         pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
 
         //Build the pipe component, configure and run
-        auto cp = basePipe::newPipe(curFunct, subConfigMap["complexType"]);
+        auto cp = basePipe<nodeType>::newPipe(curFunct, subConfigMap["complexType"]);
 
         //Check if the pipe was created and configure
         if(cp != 0 && cp->configPipe(subConfigMap)){
@@ -173,38 +172,42 @@ void upscalePipe::runSubPipeline(pipePacket& wrData){
 
 
 // configPipe -> configure the function settings of this pipeline segment
-bool upscalePipe::configPipe(std::map<std::string, std::string> &configMap){
+template <typename nodeType>
+bool upscalePipe<nodeType>::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
     subConfigMap = configMap;
 	
 	auto pipe = configMap.find("debug");
 	if(pipe != configMap.end()){
-		debug = std::atoi(configMap["debug"].c_str());
+		this->debug = std::atoi(configMap["debug"].c_str());
 		strDebug = configMap["debug"];
 	}
 	pipe = configMap.find("outputFile");
 	if(pipe != configMap.end())
-		outputFile = configMap["outputFile"].c_str();
+		this->outputFile = configMap["outputFile"].c_str();
 	
 	pipe = configMap.find("dimensions");
 	if(pipe != configMap.end()){
-		dim = std::atoi(configMap["dimensions"].c_str());
+		this->dim = std::atoi(configMap["dimensions"].c_str());
 	}
 	std::cout << "UPSCALE DIM: " << dim << std::endl;
 	
 	
-	ut = utils(strDebug, outputFile);
+	this->ut = utils(strDebug, this->outputFile);
 	
 	pipe = configMap.find("scalarV");
 	if(pipe != configMap.end())
-		scalarV = std::atof(configMap["scalarV"].c_str());
+		this->scalarV = std::atof(configMap["scalarV"].c_str());
 	else{
-		ut.writeDebug("upscale","No scalarV set; this indicates no partitioning was done and upscaling is not required");
+		this->ut.writeDebug("upscale","No scalarV set; this indicates no partitioning was done and upscaling is not required");
 		return false;
 	}
-	configured = true;
-	ut.writeDebug("upscale","Configured with parameters { debug: " + strDebug + ", outputFile: " + outputFile + " }");
+	this->configured = true;
+	this->ut.writeDebug("upscale","Configured with parameters { debug: " + strDebug + ", outputFile: " + this->outputFile + " }");
 	
 	return true;
 }
 
+template class upscalePipe<simplexNode>;
+template class upscalePipe<alphaNode>;
+template class upscalePipe<witnessNode>;

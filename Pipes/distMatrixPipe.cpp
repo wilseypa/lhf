@@ -19,13 +19,15 @@
 #include "utils.hpp"
 
 // basePipe constructor
-distMatrixPipe::distMatrixPipe(){
-	pipeType = "DistMatrix";
+template<typename nodeType>
+distMatrixPipe<nodeType>::distMatrixPipe(){
+	this->pipeType = "DistMatrix";
 	return;
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
-void distMatrixPipe::runPipe(pipePacket &inData){
+template<typename nodeType>
+void distMatrixPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
 	//Store our distance matrix
 	if(inData.distMatrix.size() > 0) inData.distMatrix.clear();
 	inData.distMatrix.resize(inData.workData.size(), std::vector<double>(inData.workData.size(),0));
@@ -34,7 +36,7 @@ void distMatrixPipe::runPipe(pipePacket &inData){
 		//Grab a second vector to compare to 
 		for(unsigned j = i+1; j < inData.workData.size(); j++){
 			//Calculate vector distance 
-			inData.distMatrix[i][j] = ut.vectors_distance(inData.workData[i],inData.workData[j]);
+			inData.distMatrix[i][j] = this->ut.vectors_distance(inData.workData[i],inData.workData[j]);
 		}
 	}
 
@@ -47,41 +49,43 @@ void distMatrixPipe::runPipe(pipePacket &inData){
 	inData.complex->setDistanceMatrix(&inData.distMatrix);
 	inData.complex->setEnclosingRadius(enclosingRadius);
 
-	ut.writeDebug("distMatrix", "\tDist Matrix Size: " + std::to_string(inData.distMatrix.size()) + " x " + std::to_string(inData.distMatrix.size()));
+	this->ut.writeDebug("distMatrix", "\tDist Matrix Size: " + std::to_string(inData.distMatrix.size()) + " x " + std::to_string(inData.distMatrix.size()));
 	return;
 }
 
 
 // configPipe -> configure the function settings of this pipeline segment
-bool distMatrixPipe::configPipe(std::map<std::string, std::string> &configMap){
+template<typename nodeType>
+bool distMatrixPipe<nodeType>::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
 	
 	auto pipe = configMap.find("debug");
 	if(pipe != configMap.end()){
-		debug = std::atoi(configMap["debug"].c_str());
+		this->debug = std::atoi(configMap["debug"].c_str());
 		strDebug = configMap["debug"];
 	}
 	pipe = configMap.find("outputFile");
 	if(pipe != configMap.end())
-		outputFile = configMap["outputFile"].c_str();
+		this->outputFile = configMap["outputFile"].c_str();
 	
-	ut = utils(strDebug, outputFile);
+	this->ut = utils(strDebug, this->outputFile);
 	
 	pipe = configMap.find("epsilon");
 	if(pipe != configMap.end())
-		enclosingRadius = std::atof(configMap["epsilon"].c_str());
+		this->enclosingRadius = std::atof(configMap["epsilon"].c_str());
 	else return false;
 
-	configured = true;
-	ut.writeDebug("distMatrixPipe","Configured with parameters { eps: " + configMap["epsilon"] + " , debug: " + strDebug + ", outputFile: " + outputFile + " }");
+	this->configured = true;
+	this->ut.writeDebug("distMatrixPipe","Configured with parameters { eps: " + configMap["epsilon"] + " , debug: " + strDebug + ", outputFile: " + this->outputFile + " }");
 	
 	return true;
 }
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-void distMatrixPipe::outputData(pipePacket &inData){
+template<typename nodeType>
+void distMatrixPipe<nodeType>::outputData(pipePacket<nodeType> &inData){
 	std::ofstream file;
-	file.open("output/" + pipeType + "_output.csv");
+	file.open("output/" + this->pipeType + "_output.csv");
 	
 	for(std::vector<double> a : inData.distMatrix){
 		for(auto d : a){
@@ -94,3 +98,7 @@ void distMatrixPipe::outputData(pipePacket &inData){
 	return;
 }
 
+//Explicit Template Class Instantiation
+template class distMatrixPipe<simplexNode>;
+template class distMatrixPipe<alphaNode>;
+template class distMatrixPipe<witnessNode>;
