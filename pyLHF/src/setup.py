@@ -12,7 +12,7 @@ from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
 
 # class build_ext(_build_ext):
-with open("README.md", "r", encoding="utf-8") as fh:
+with open("../../README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
@@ -29,7 +29,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    packages=setuptools.find_packages(),
-    data_files=[('/LHF', glob.glob('../../**/*.so', recursive=True))],
-    include_package_data=True,
+    packages=setuptools.find_packages(exclude = ["pyLHF"]),
+    data_files=[('/LHF', ['LHF/libLHFlib.so'])]
 )
