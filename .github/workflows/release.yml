@@ -94,7 +94,7 @@ jobs:
         system-packages: 'lrzip-devel zlib-devel'
         pre-build-command: ''
         package-path: 'pyLHF/src'
-        pip-wheel-args: '-w ./dist --no-deps'
+        pip-wheel-args: '-w ./dist --no-deps --use-feature=in-tree-build'
 
     - name: Check source files
       if:   runner.os == 'Linux'
