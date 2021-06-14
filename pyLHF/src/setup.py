@@ -11,6 +11,12 @@ from distutils.version import LooseVersion
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
 
+from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
+class bdist_wheel(_bdist_wheel):
+    def finalize_options(self):
+        _bdist_wheel.finalize_options(self)
+        self.root_is_pure = False
+
 # class build_ext(_build_ext):
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
@@ -30,5 +36,6 @@ setup(
         "Operating System :: OS Independent",
     ],
     packages=setuptools.find_packages(exclude = ["pyLHF"]),
-    data_files=[('/LHF', ['LHF/libLHFlib.so'])]
+    data_files=[('/LHF', ['LHF/libLHFlib.so'])],
+    cmdclass={'bdist_wheel': bdist_wheel}
 )
