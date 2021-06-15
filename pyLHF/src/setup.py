@@ -20,6 +20,8 @@ class bdist_wheel(_bdist_wheel):
     def get_tag(self):
         python, abi, plat = _bdist_wheel.get_tag(self)
         python, abi = 'py3', 'none'
+        if plat == 'linux_x86_64':
+            plat = 'manylinux_x86_64'
         return python, abi, plat
 
 # class build_ext(_build_ext):
@@ -28,7 +30,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name='lhf',
-    version='1.0.9',
+    version='1.0.10',
     description='Light Weight Homology Framework',
     long_description=long_description,
     long_description_content_type="text/markdown",
