@@ -82,7 +82,16 @@ jobs:
       run: pip install --upgrade pip && pip install numpy twine
 
     - name: Copy shared object to python source
+      if: contains(matrix.os,'ubuntu')
       run: cp LHFmain/libLHFlib.so pyLHF/src/LHF
+  
+    - name: Copy shared object to python source
+      if: contains(matrix.os,'macos')
+      run: cp LHFmain/libLHFlib.dylib pyLHF/src/LHF/libLHFlib.so
+  
+    - name: Copy shared object to python source
+      if: contains(matrix.os,'windows')
+      run: copy LHFmain/libLHFlib.dll pyLHF/src/LHF/libLHFlib.so
   
     - name: Copy README.md
       run: cp README.md pyLHF/src/
