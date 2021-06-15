@@ -21,7 +21,6 @@ jobs:
           - windows-latest
         exclude:
           - os: windows-latest
-            ##TODO: Test with windows-latest and msmpi
     
     steps:
     # Get dependencies
@@ -103,7 +102,9 @@ jobs:
       env:
         CIBW_PROJECT_REQUIRES_PYTHON: ">=3.6"
         CIBW_REPAIR_WHEEL_COMMAND: ""
+        CIBW_ARCHS_LINUX: x86_64
         CIBW_ARCHS_MACOS: x86_64 arm64
+        CIBW_BUILD: cp39-*
 #     - name: Build manylinux Python wheels
 #       if:   runner.os == 'Linux'
 #       uses: RalfG/python-wheels-manylinux-build@v0.3.3-manylinux2010_x86_64

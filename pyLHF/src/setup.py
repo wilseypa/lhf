@@ -17,10 +17,10 @@ class bdist_wheel(_bdist_wheel):
     def finalize_options(self):
         _bdist_wheel.finalize_options(self)
         self.root_is_pure = False
-#     def get_tag(self):
-#         python, abi, plat = _bdist_wheel.get_tag(self)
-#         python, abi = 'py3', 'none'
-#         return python, abi, plat
+    def get_tag(self):
+        python, abi, plat = _bdist_wheel.get_tag(self)
+        python, abi = 'py3', 'none'
+        return python, abi, plat
 
 # class build_ext(_build_ext):
 with open("README.md", "r", encoding="utf-8") as fh:
@@ -28,7 +28,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name='lhf',
-    version='1.0.8',    
+    version='1.0.9',
     description='Light Weight Homology Framework',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -41,6 +41,6 @@ setup(
         "Operating System :: OS Independent",
     ],
     packages=setuptools.find_packages(exclude = ["pyLHF"]),
-    data_files=[('/LHF', ['LHF/libLHFlib.so'])],
+    package_data={'LHF': ['libLHFlib.so']},
     cmdclass={'bdist_wheel': bdist_wheel}
 )
