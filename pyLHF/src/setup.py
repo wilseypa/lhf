@@ -17,10 +17,10 @@ class bdist_wheel(_bdist_wheel):
     def finalize_options(self):
         _bdist_wheel.finalize_options(self)
         self.root_is_pure = False
-    def get_tag(self):
-        python, abi, plat = _bdist_wheel.get_tag(self)
-        python, abi = 'py3', 'none'
-        return python, abi, plat
+#     def get_tag(self):
+#         python, abi, plat = _bdist_wheel.get_tag(self)
+#         python, abi = 'py3', 'none'
+#         return python, abi, plat
 
 # class build_ext(_build_ext):
 with open("README.md", "r", encoding="utf-8") as fh:
