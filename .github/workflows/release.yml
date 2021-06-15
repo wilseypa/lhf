@@ -20,7 +20,6 @@ jobs:
           - macos-latest
           - windows-latest
         exclude:
-          - os: ubuntu-latest
           - os: windows-latest
             ##TODO: Test with windows-latest and msmpi
     
@@ -119,10 +118,9 @@ jobs:
     - name: Check source files
       run:  ls pyLHF/src/wheelhouse/
         
-#     - name: Publish wheels to PyPI
-#       if:   runner.os == 'Linux'
-#       env:
-#         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-#         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-#       run: | 
-#         twine upload pyLHF/src/dist/lhf-*-py3-none-any.whl
+    - name: Publish wheels to PyPI
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: | 
+        twine upload pyLHF/src/wheelhouse/*
