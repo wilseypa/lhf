@@ -21,21 +21,21 @@ void simplexTree::outputComplex(){
 }
 
 
-void simplexTree::recurseInsertDsimplex(simplexTreeNode* node, std::vector<int> simp,std::vector<std::vector<double>> inputData){
+void simplexTree::recurseInsertDsimplex(simplexTreeNode* node, std::vector<unsigned> simp,std::vector<std::vector<double>> inputData){
 	
 	//This algorithm insert a simplex and all its subfaces in the simplex tree. Let σ be a simplex we want to insert with all its subfaces.
 	// Let [l0, · · · , lj ] be its word representation. For i from 0 to j we insert, if not already present, a node Nli , storing label li, as a child of the root.
 	// We recursively call the algorithm on the subtree rooted at Nli for the insertion of the suffix [li+1,··· ,lj]. 
 	// Since the number of subfaces ofr
 	//  a simplex of dimension j is 􏰆 􏰁j+1􏰂 = 2j+1, this algorithm takes time O(2jDm).
-	sort(simp.begin(),simp.end());
+//	sort(simp.begin(),simp.end());
 	int firstind =0;
 	int lastind = simp.size();
 	for(auto x : simp){
         	firstind++;
-		std::vector<int> :: const_iterator first = simp.begin() + firstind;
-		std::vector<int> :: const_iterator last = simp.begin() + lastind;
-		std::vector<int> subsimplex(first,last);
+		std::vector<unsigned> :: const_iterator first = simp.begin() + firstind;
+		std::vector<unsigned> :: const_iterator last = simp.begin() + lastind;
+		std::vector<unsigned> subsimplex(first,last);
 		std::set<unsigned> simplex;
 		if(node==nullptr)
 	             simplex = {};
@@ -54,7 +54,7 @@ void simplexTree::recurseInsertDsimplex(simplexTreeNode* node, std::vector<int> 
 			circumRadius = weight/2;
 			volume = weight;
 		}
-		std::cout<<simplex.size()<<std::endl;
+	//	std::cout<<simplex.size()<<std::endl;
 		if(simplex.size()>2)
 			circumCenter = utils::circumCenter(simplex,inputData);
 			
@@ -769,9 +769,8 @@ void simplexTree::reduceComplex(){
 
 	return;
 }
-
-
-void simplexTree::graphInducedComplex(std::vector<std::vector<double>> inputData,double beta){
+void simplexTree::checkInsertDsimplex(std::vector<unsigned> dsimplex,std::vector<std::vector<double>> inputData,double beta){
+	
 	bool intersection;
 	kdTree tree(inputData, inputData.size()); //KDTree for efficient nearest neighbor search
     if(beta < 1){
@@ -780,25 +779,9 @@ void simplexTree::graphInducedComplex(std::vector<std::vector<double>> inputData
 	}
 	else
 		intersection = false;
+    
+    std::set<unsigned> simplex(dsimplex.begin(),dsimplex.end());
 
-
-
-	//Iterate up to max dimension of simplex, starting at dim 2 (edges)
-	for(unsigned d = 1; d <= dim; d++){
-
-		//Check if we need to break from expanding dimensions (no more edges)
-		if(simplexList.size() < d) break;
-		if(simplexList.size() == d) simplexList.push_back({});
-
-		//Iterate through each element in the current dimension's edges
-		for(auto it = simplexList[d-1].begin(); it != simplexList[d-1].end(); it++){
-			//Iterate over points to possibly add to the simplex
-			//Use points larger than the maximal vertex in the simplex to prevent double counting
-			unsigned minPt = *(*it)->simplex.rbegin() + 1;
-
-			for(unsigned pt = minPt; pt < simplexList[0].size(); pt++){
-		    std::set<unsigned> simplex = (*it)->simplex;
-            simplex.insert(pt);
             std::vector<double> circumCenter;
 
             if(simplex.size()>2)
@@ -818,8 +801,8 @@ void simplexTree::graphInducedComplex(std::vector<std::vector<double>> inputData
 			double betaRadius = beta*sqrt(circumRadius);
 			double volume = utils::simplexVolume(simplex,distMatrix,inputData[0].size());
 
-		    std::vector<size_t> neighbors1 = tree.neighborhoodIndices(betaCenters[0], betaRadius + .05); //All neighbors in epsilon-ball
-    		std::vector<size_t> neighbors2 = tree.neighborhoodIndices(betaCenters[1], betaRadius + .05); //All neighbors in epsilon-ball
+		    std::vector<size_t> neighbors1 = tree.neighborhoodIndices(betaCenters[0], betaRadius); //All neighbors in epsilon-ball
+    		std::vector<size_t> neighbors2 = tree.neighborhoodIndices(betaCenters[1], betaRadius); //All neighbors in epsilon-ball
             std::vector<size_t> neighbors;
             if(intersection == true){
 				std::vector<size_t> v(std::min(neighbors1.size(),neighbors2.size()));
@@ -839,8 +822,13 @@ void simplexTree::graphInducedComplex(std::vector<std::vector<double>> inputData
 				v.resize(it-v.begin()); 
 				neighbors = v;
 			}
-			if(neighbors.size() > simplex.size()){
-					simplexNode_P tot = std::make_shared<simplexNode>(simplexNode((*it)->simplex, betaRadius));
+		//	if(neighbors.size() <= simplex.size()){
+				  //  recurseInsertDsimplex(root, dsimplex,inputData);
+        //             std::cout<<"Validated ";
+                    for(auto x : dsimplex)
+						std::cout<<x<<" ";
+					std::cout<<std::endl;						
+/*				simplexNode_P tot = std::make_shared<simplexNode>(simplexNode((*it)->simplex, betaRadius));
 					tot->simplex.insert(pt);
 					tot->hash = (*it)->hash + bin.binom(pt, tot->simplex.size());
 					tot->circumCenter = circumCenter;	
@@ -850,20 +838,44 @@ void simplexTree::graphInducedComplex(std::vector<std::vector<double>> inputData
 					tot->hpcoff = hpcoff;
 					tot->volume = volume;
 					simplexList[d].insert(tot);   //insert simplex into complex
-				}
-			}
+*/
+		//		}
+}
+
+void simplexTree::graphInducedComplex(std::vector<std::vector<double>> inputData,double beta){
+	int dim = inputData[0].size()+1;
+    int n = inputData.size();
+    std::vector<unsigned> dsimplex(dim);
+    std::vector<unsigned> dsimplexIndexed(dim);
+
+    std::vector<unsigned>::iterator first = dsimplex.begin(), last = dsimplex.end();
+
+    std::generate(first, last, UniqueNumber);
+    for(int i=0;i<dim;i++)
+           dsimplexIndexed[i] = dsimplex[i]-1;
+    checkInsertDsimplex(dsimplexIndexed,inputData,beta);
+
+  while((*first) != n-dim+1){  	
+
+  	    std::vector<unsigned>::iterator mt = last;
+        while (*(--mt) == n-(last-mt)+1);
+        (*mt)++;
+        while (++mt != last) *mt = *(mt-1)+1;
+        
+        for(int i=0;i<dim;i++)
+           dsimplexIndexed[i] = dsimplex[i]-1;
+
+        checkInsertDsimplex(dsimplexIndexed,inputData,beta);
+				
 		}
-	}
 }
 
 void simplexTree:: buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, int npts,std::vector<std::vector<double>> inputData){
 	std::set<simplexNode_P,cmpByWeight> dsimplexes;
 for(auto simplex : dsimplexmesh){
 	std::set<unsigned> simplexset(simplex.begin(),simplex.end());
-       	recurseInsertDsimplex(root, simplex,inputData);
-	simplexNode_P simp = std::make_shared<simplexNode>(simplexNode(simplexset,0));
-		dsimplexes.insert(simp);
-
+	std::vector<unsigned> nsimplex(simplex.begin(),simplex.end());
+       	recurseInsertDsimplex(root, nsimplex,inputData);
 }
 
 

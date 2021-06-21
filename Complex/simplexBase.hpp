@@ -91,7 +91,7 @@ class simplexBase {
 	virtual std::vector<std::set<simplexNode_P, cmpByWeight>> getAllEdges();
 	virtual std::vector<simplexNode_P> expandDimension(std::vector<simplexNode_P> edges);
 	virtual void buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, int npts,std::vector<std::vector<double>> inputData);
-	virtual void graphInducedComplex(int dim,std::vector<std::vector<double>> inputData,double beta);
+	virtual void graphInducedComplex(std::vector<std::vector<double>> inputData,double beta);
 
 	virtual void expandDimensions(int);
 	virtual void reduceComplex();

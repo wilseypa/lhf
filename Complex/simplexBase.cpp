@@ -203,7 +203,7 @@ void simplexBase::buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, 
 	ut.writeLog(simplexType,"No build Alpha Complex function defined");
 	return;
 }
-void simplexBase :: graphInducedComplex(int dim,std::vector<std::vector<double>> inputData,double beta){
+void simplexBase :: graphInducedComplex(std::vector<std::vector<double>> inputData,double beta){
 	ut.writeLog(simplexType,"No graph Induced Complex function defined");
 	return;
 }

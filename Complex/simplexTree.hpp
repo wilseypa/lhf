@@ -8,7 +8,14 @@
 
 class simplexTree : public simplexBase {
   private:
-	
+	// For generation of combinations n choose r
+	struct c_unique {
+	unsigned current;
+	c_unique() {current=0;}
+	unsigned operator()() {return ++current;}
+	} UniqueNumber;
+
+
 	//SimplexTreeNode wraps a simplexNode and tree pointers
 	struct simplexTreeNode{
 		struct cmpByIndex{
@@ -68,7 +75,7 @@ class simplexTree : public simplexBase {
 	std::vector<simplexNode*> getAllCofacets(simplexNode_P);
 	std::vector<simplexNode_P> getAllDelaunayCofacets(simplexNode_P){return std::vector<simplexNode_P>();};
 	std::vector<std::set<simplexNode_P, cmpByWeight>> getAllEdges();
-	void recurseInsertDsimplex(simplexTreeNode* node, std::vector<int> simp,std::vector<std::vector<double>> inputData);
+	void recurseInsertDsimplex(simplexTreeNode* node, std::vector<unsigned> simp,std::vector<std::vector<double>> inputData);
     void buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, int npts,std::vector<std::vector<double>> inputData);
 	std::vector<simplexNode*> getAllFacets(simplexNode*);
 	std::vector<simplexNode_P> getAllFacets_P(simplexNode_P);
@@ -76,6 +83,7 @@ class simplexTree : public simplexBase {
 	bool deletion(std::set<unsigned>);
 	bool deletion(simplexTreeNode*);
 	void expandDimensions(int){return;};
+	void checkInsertDsimplex(std::vector<unsigned> dsimplex,std::vector<std::vector<double>> inputData,double beta);
 	void graphInducedComplex(std::vector<std::vector<double>> inputData,double beta);
 
 	void reduceComplex();
