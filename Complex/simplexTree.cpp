@@ -43,6 +43,10 @@ void simplexTree::recurseInsertDsimplex(simplexTreeNode* node, std::vector<unsig
 		     simplex = node->simpNode->simplex;
 		simplex.insert(x);
 	    double weight = 0;
+	    for(auto x : simplex)
+		   for(auto y : simplex)
+			  if(weight < (*distMatrix)[x][y])
+			  	weight = (*distMatrix)[x][y];
 		double circumRadius;
 		double volume;
 		std::vector<double> circumCenter;
@@ -68,7 +72,7 @@ void simplexTree::recurseInsertDsimplex(simplexTreeNode* node, std::vector<unsig
 		        circumCenter = R;
        }else
    	   circumCenter = inputData[*(simplex.begin())];
- 		simplexTreeNode* insNode = new simplexTreeNode(simplex, circumRadius);
+ 		simplexTreeNode* insNode = new simplexTreeNode(simplex, weight);
     		insNode->simpNode->circumCenter = circumCenter;	
     		insNode->simpNode->circumRadius = circumRadius;	
        		insNode->simpNode->index = x;
@@ -923,7 +927,7 @@ make_filtration_non_decreasing()
 prune_above_filtration()
 
   */
-
+/*
 std::vector<std::set<simplexNode_P, cmpByWeight>>  edges = getAllEdges();
 for(auto dim = edges.size()-1;dim >0;dim--){
 	for(auto simp : edges[dim]){
@@ -976,6 +980,7 @@ for(auto dim = edges.size()-1;dim >0;dim--){
 }
 //Reinserting to sort by filterationvalue and remove simplexes with weight greater than alphafilteration value
 validateNodes(root);
+*/
 return;
 }
 

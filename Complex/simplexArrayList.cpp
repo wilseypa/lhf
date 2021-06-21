@@ -551,7 +551,7 @@ void simplexArrayList:: buildAlphaComplex(std::vector<std::vector<int>> dsimplex
    			else
 		        	weight1 = weight/2;
 
-			simplexNode_P tot = std::make_shared<simplexNode>(simplexNode(gensimp,weight1));
+			simplexNode_P tot = std::make_shared<simplexNode>(simplexNode(gensimp,weight));
 		
 			if(gensimp.size()>1)
 				tot->circumRadius = utils::circumRadius(gensimp,distMatrix);
@@ -606,7 +606,7 @@ void simplexArrayList:: buildAlphaComplex(std::vector<std::vector<int>> dsimplex
 
         */
 
-	for(int dim = simplexList.size()-1;dim>=0;dim--){
+	/*for(int dim = simplexList.size()-1;dim>=0;dim--){
 	   for(auto simplexiter = simplexList[dim].rbegin();simplexiter != simplexList[dim].rend();simplexiter++){
        		   simplexNode_P simplex = (*simplexiter);
   	           if(simplex->filterationvalue ==-1)
@@ -666,7 +666,9 @@ void simplexArrayList:: buildAlphaComplex(std::vector<std::vector<int>> dsimplex
 			 }
 		}
 	}
+	
 	simplexList = simplexList1;
+	*/
 	return;
 }
 
