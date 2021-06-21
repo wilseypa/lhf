@@ -133,9 +133,9 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 	//
 		if(args["simplicialComplex"] == "alpha" || args["simplicialComplex"] == "Alpha" || args["simplicialComplex"] == "ALPHA"){
 			args["pipeline"] = "distMatrix.alpha.fastPersistence";
-		}else if(args["simplicialComplex"] == "gic" || args["simplicialComplex"] == "GIC" || args["simplicialComplex"] == "graphInducedComplex"){
-		       args["complexType"] = "simplexArrayList";
-               args["pipeline"] = "distMatrix.neighGraph.betaSkeletonBasedComplex.fastPersistence";
+		}else if(args["simplicialComplex"] == "beta"){
+		       args["complexType"] = "simplexTree";
+               args["pipeline"] = "distMatrix.betaSkeletonBasedComplex.fastPersistence";
         // build kd-Tree for the given point cloud    
 		// generate simplexes dimension wise belonging to beta skeleton. Find a normal to simplex hyperplane at circumcenter of the simplex. Use K-d tree to efficiently validate simplex.
 		// if Valid Insert simplex to simplicial Complex Complex

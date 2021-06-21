@@ -28,7 +28,7 @@ betaSkeletonBasedComplexPipe::betaSkeletonBasedComplexPipe(){
 void betaSkeletonBasedComplexPipe::runPipe(pipePacket &inData){
 	// Generate Beta Skeleton Based Complex
 	
-	inData.complex->graphInducedComplex(dim,inData.inputData,beta);
+	inData.complex->graphInducedComplex(inData.inputData,beta);
 		
 	
 	ut.writeDebug("betaSkeletonBasedComplex Pipe", "\tbetaSkeletonBasedComplex Size: ");
