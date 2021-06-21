@@ -769,7 +769,15 @@ void simplexTree::reduceComplex(){
 
 	return;
 }
-void simplexTree::checkInsertDsimplex(std::vector<unsigned> dsimplex,std::vector<std::vector<double>> inputData,double beta){
+void simplexTree::checkInsertDsimplex(std::vector<unsigned> dsimplex,std::vector<std::vector<double>> inputData,double beta,double averageDistance){
+	double maxEdge = 0;
+	for(auto x : dsimplex)
+		for(auto y : dsimplex)
+			if(maxEdge < (*distMatrix)[x][y])
+				maxEdge = (*distMatrix)[x][y];
+				
+	if(maxEdge > averageDistance)
+	    return;
 	
 	bool intersection;
 	kdTree tree(inputData, inputData.size()); //KDTree for efficient nearest neighbor search
@@ -822,9 +830,9 @@ void simplexTree::checkInsertDsimplex(std::vector<unsigned> dsimplex,std::vector
 				v.resize(it-v.begin()); 
 				neighbors = v;
 			}
-		//	if(neighbors.size() <= simplex.size()){
-				  //  recurseInsertDsimplex(root, dsimplex,inputData);
-        //             std::cout<<"Validated ";
+			if(neighbors.size() <= simplex.size()){
+				    recurseInsertDsimplex(root, dsimplex,inputData);
+                    std::cout<<"Validated ";
                     for(auto x : dsimplex)
 						std::cout<<x<<" ";
 					std::cout<<std::endl;						
@@ -839,7 +847,7 @@ void simplexTree::checkInsertDsimplex(std::vector<unsigned> dsimplex,std::vector
 					tot->volume = volume;
 					simplexList[d].insert(tot);   //insert simplex into complex
 */
-		//		}
+				}
 }
 
 void simplexTree::graphInducedComplex(std::vector<std::vector<double>> inputData,double beta){
@@ -847,13 +855,22 @@ void simplexTree::graphInducedComplex(std::vector<std::vector<double>> inputData
     int n = inputData.size();
     std::vector<unsigned> dsimplex(dim);
     std::vector<unsigned> dsimplexIndexed(dim);
-
+	double distanceSum = 0;
+	int count = 0;
+	//Computing the average point cloud distance
+	for(int x =0;x < inputData.size();x++)
+		for(int y = x+1; y < inputData.size();y++){
+			distanceSum += (*distMatrix)[x][y];
+			count= count+1;
+		}
+	double averageDistance = distanceSum/count;
+    std::cout<<averageDistance<<" ";
     std::vector<unsigned>::iterator first = dsimplex.begin(), last = dsimplex.end();
 
     std::generate(first, last, UniqueNumber);
     for(int i=0;i<dim;i++)
            dsimplexIndexed[i] = dsimplex[i]-1;
-    checkInsertDsimplex(dsimplexIndexed,inputData,beta);
+    checkInsertDsimplex(dsimplexIndexed,inputData,beta,averageDistance);
 
   while((*first) != n-dim+1){  	
 
@@ -865,7 +882,7 @@ void simplexTree::graphInducedComplex(std::vector<std::vector<double>> inputData
         for(int i=0;i<dim;i++)
            dsimplexIndexed[i] = dsimplex[i]-1;
 
-        checkInsertDsimplex(dsimplexIndexed,inputData,beta);
+        checkInsertDsimplex(dsimplexIndexed,inputData,beta,averageDistance);
 				
 		}
 }

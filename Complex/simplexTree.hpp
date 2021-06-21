@@ -83,7 +83,7 @@ class simplexTree : public simplexBase {
 	bool deletion(std::set<unsigned>);
 	bool deletion(simplexTreeNode*);
 	void expandDimensions(int){return;};
-	void checkInsertDsimplex(std::vector<unsigned> dsimplex,std::vector<std::vector<double>> inputData,double beta);
+	void checkInsertDsimplex(std::vector<unsigned> dsimplex,std::vector<std::vector<double>> inputData,double beta,double averageDistance);
 	void graphInducedComplex(std::vector<std::vector<double>> inputData,double beta);
 
 	void reduceComplex();
