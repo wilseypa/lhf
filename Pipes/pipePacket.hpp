@@ -13,7 +13,6 @@ class pipePacket {
   public:
 	std::vector<bettiBoundaryTableEntry> bettiTable;
 	std::string ident;
-  
 	pipePacket<nodeType>(const std::string &, const double, const int);
 	pipePacket<nodeType>(std::map<std::string, std::string>, const std::string&);
 	std::string stats;
@@ -23,6 +22,7 @@ class pipePacket {
 	std::vector<unsigned> centroidLabels;
 	std::vector<std::vector<double>> inputData;
 	std::vector<std::vector<double>> distMatrix;
+	std::vector<std::vector<bool>> incidenceMatrix;
 	simplexBase<nodeType>* complex = nullptr;
 	
 	std::vector<std::set<unsigned>> boundaries;

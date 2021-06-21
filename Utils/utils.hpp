@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include "../Preprocessing/kdTree.hpp"
 
 
 // Simplex Node Structure
@@ -130,6 +131,8 @@ class utils {
     static std::vector<std::vector<double>> betaCentersCalculation(std::vector<double> hpcoff, double beta, double circumRadius,std::vector<double> circumCenter);
 	static double simplexVolume(std::set<unsigned> simplex,std::vector<std::vector<double>>* distMatrix,int dd);
 	static double simplexVolume(std::vector<std::vector<double>>mat);
+    
+    static std::vector<std::vector<bool>> betaNeighbors(std::vector<std::vector<double>> &,double beta,std::string betaMode);
 
 	static std::vector<double> serialize(std::vector<std::vector<double>>& );
 	static std::vector<std::vector<double>> deserialize(std::vector<double> , unsigned);

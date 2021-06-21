@@ -438,6 +438,146 @@ double utils::computeAvgRadius(int k, std::vector<std::vector<double>> &centroid
 	return totalRadius / originalData.size();
 }
 
+std::vector<std::vector<bool>> utils :: betaNeighbors(std::vector<std::vector<double>>& inData,double beta,std::string betaMode){
+	std::vector<std::vector<bool>> incidenceMatrix(inData.size(),std::vector<bool>(inData.size(),0));
+	kdTree tree(inData, inData.size()); //KDTree for efficient nearest neighbor search
+    double betafactor;
+    std::vector<std::vector<double>> rotationMatrix(inData[0].size(),std::vector<double>(inData[0].size(),0));
+    for(unsigned i =0;i<inData[0].size();i++){
+		for(unsigned j = 0;j<inData[0].size();j++){
+			if(i==1 && j==0)
+				rotationMatrix[i][j] = 1;
+			else if(i==0 && j==1)
+			    rotationMatrix[i][j] = -1;
+			else if(i==0 && j==0)
+			     rotationMatrix[i][j] =0;
+			else if(i==1 && j==1)
+			     rotationMatrix[i][j] =0;
+			else if(i==j)
+				 rotationMatrix[i][j] = 1;
+			else
+				 rotationMatrix[i][j] = 0;
+		}
+	}
+
+	if(beta < 0){
+		std::cout<<"Invalid Beta Value :: Value set to 1"<<std::endl;
+		beta = 1;  // Changing to Default 
+	}	
+	for(unsigned i = 0; i < inData.size(); i++){
+		for(unsigned j = i+1; j < inData.size(); j++){
+			double radius;	
+			std::vector<double> temp;
+			std::vector<double> center1;
+			std::vector<double> center2;
+			std::vector<double> temp1;
+			std::vector<double> tempfinal;
+			std::vector<std::vector<double>> colvector;
+			if(beta <=1){   // Common Definition for lune and circle based beta-Skeleton
+		              radius = vectors_distance(inData[i],inData[j])/(2*beta);
+		              std::transform(inData[i].begin(), inData[i].end(), inData[j].begin(), std::back_inserter(temp),[](double e1, double e2) {return ((e1+e2)/2);});
+		              betafactor = sqrt((1-pow(beta,2)))/(2*beta);
+		              std::transform(inData[i].begin(), inData[i].end(), inData[j].begin(), std::back_inserter(temp1),[](double e1, double e2) {return ((e2-e1));});
+                      for(auto x : temp1){
+						  std::vector<double> singlevector;
+						  singlevector.push_back(x);
+						  colvector.push_back(singlevector);
+					  }
+					  std::vector<std::vector<double>> matmul = matrixMultiplication(rotationMatrix,colvector);
+					  for(auto x: matmul)
+						for(auto y : x)
+							tempfinal.push_back(y*betafactor);	
+					   std::transform(temp.begin(), temp.end(), tempfinal.begin(), std::back_inserter(center1),[](double e1, double e2) {return ((e1+e2));});
+                       std::transform(temp.begin(), temp.end(), tempfinal.begin(), std::back_inserter(center2),[](double e1, double e2) {return ((e1-e2));});
+                       
+                       
+					   std::vector<size_t> neighbors1 = tree.neighborhoodIndices(center1, radius); //All neighbors in radius-ball
+					   std::vector<size_t> neighbors2 = tree.neighborhoodIndices(center2, radius); //All neighbors in radius-ball
+					   std::vector<size_t> neighbors;
+          
+					   std::vector<size_t> v(std::min(neighbors1.size(),neighbors2.size()));
+					   std::vector<size_t>::iterator it;
+					   std::sort (neighbors1.begin(),neighbors1.end());
+					   std::sort (neighbors2.begin(),neighbors2.end()); 
+					   it=std::set_intersection (neighbors1.begin(), neighbors1.end(), neighbors2.begin(), neighbors2.end(), v.begin());
+					   v.resize(it-v.begin()); 
+					   neighbors = v;				
+		
+					   if(neighbors.size() <= 2)
+						 incidenceMatrix[i][j] = true;
+					   else
+						 incidenceMatrix[i][j] = false;
+				
+			}
+			else if(betaMode == "lune"){ // Lune Based Beta Skeleton for beta > 1
+			          radius = (vectors_distance(inData[i],inData[j])*beta)/2;
+                      double bf = beta/2;
+                      double bf1 = 1-beta/2;
+
+                      std::transform(inData[i].begin(), inData[i].end(), inData[j].begin(), std::back_inserter(center1),[bf,bf1](double e1, double e2) {return ((e1*bf+e2*bf1));});
+					  std::transform(inData[j].begin(), inData[j].end(), inData[i].begin(), std::back_inserter(center2),[bf,bf1](double e1, double e2) {return ((e1*bf+e2*bf1));});
+					   
+					   std::vector<size_t> neighbors1 = tree.neighborhoodIndices(center1, radius); //All neighbors in radius-ball
+					   std::vector<size_t> neighbors2 = tree.neighborhoodIndices(center2, radius); //All neighbors in radius-ball
+					   std::vector<size_t> neighbors;
+          
+					   std::vector<size_t> v(std::min(neighbors1.size(),neighbors2.size()));
+					   std::vector<size_t>::iterator it;
+					   std::sort (neighbors1.begin(),neighbors1.end());
+					   std::sort (neighbors2.begin(),neighbors2.end()); 
+					   it=std::set_intersection (neighbors1.begin(), neighbors1.end(), neighbors2.begin(), neighbors2.end(), v.begin());
+					   v.resize(it-v.begin()); 
+					   neighbors = v;				
+		
+					   if(neighbors.size() <= 2)
+						 incidenceMatrix[i][j] = true;
+					   else
+						 incidenceMatrix[i][j] = false;
+					  	 
+			}
+			else if(betaMode == "circle"){			// Circle Based Beta Skeleton for beta >1
+					  radius = (vectors_distance(inData[i],inData[j])*beta)/(2);
+		              std::transform(inData[i].begin(), inData[i].end(), inData[j].begin(), std::back_inserter(temp),[](double e1, double e2) {return ((e1+e2)/2);});
+		              betafactor = sqrt((pow(beta,2)-1))/2;
+		              std::transform(inData[i].begin(), inData[i].end(), inData[j].begin(), std::back_inserter(temp1),[](double e1, double e2) {return ((e2-e1));});
+		              for(auto x : temp1){
+						  std::vector<double> singlevector;
+						  singlevector.push_back(x);
+						  colvector.push_back(singlevector);
+					  }
+					  std::vector<std::vector<double>> matmul = matrixMultiplication(rotationMatrix,colvector);
+					  for(auto x: matmul)
+						for(auto y : x)
+							tempfinal.push_back(y*betafactor);	
+                      std::transform(temp.begin(), temp.end(), tempfinal.begin(), std::back_inserter(center1),[](double e1, double e2) {return ((e1+e2));});
+                      std::transform(temp.begin(), temp.end(), tempfinal.begin(), std::back_inserter(center2),[](double e1, double e2) {return ((e1-e2));});
+                       
+					  std::vector<size_t> neighbors1 = tree.neighborhoodIndices(center1, radius); //All neighbors in radius-ball
+					  std::vector<size_t> neighbors2 = tree.neighborhoodIndices(center2, radius); //All neighbors in radius-ball
+					  std::vector<size_t> neighbors;
+	            
+					  std::vector<size_t> v(neighbors1.size() + neighbors2.size());
+					  std::vector<size_t>::iterator it;	
+					  std::sort (neighbors1.begin(),neighbors1.end());
+					  std::sort (neighbors2.begin(),neighbors2.end()); 
+					  it=std::set_union (neighbors1.begin(), neighbors1.end(), neighbors2.begin(), neighbors2.end(), v.begin());
+					  v.resize(it-v.begin()); 
+					  neighbors = v;
+			          if(neighbors.size() <= 2)
+						 incidenceMatrix[i][j] = true;
+					   else
+						 incidenceMatrix[i][j] = false;
+						 
+       			}
+		}
+	}
+	return incidenceMatrix;
+}
+
+
+
+
+
 std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> utils::separatePartitions(int k, std::vector<std::vector<double>> originalData, std::vector<unsigned> labels){
 	std::vector<std::vector<double>> a;
 	std::vector<unsigned> b;

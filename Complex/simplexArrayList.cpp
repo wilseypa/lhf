@@ -365,7 +365,6 @@ void simplexArrayList<nodeType>::expandDimensions(int dim){
 template<typename nodeType>
 std::vector<std::shared_ptr<nodeType>> simplexArrayList<nodeType>::expandDimension(std::vector<std::shared_ptr<nodeType>> edges, bool recordVertices, unsigned dim){
 	std::vector<std::shared_ptr<nodeType>> nextEdges;
-
 	//Iterate through each element in the current dimension's edges
 	for(auto it = edges.begin(); it != edges.end(); it++){
 		std::set<unsigned> vertices;
@@ -381,8 +380,30 @@ std::vector<std::shared_ptr<nodeType>> simplexArrayList<nodeType>::expandDimensi
 			//Compute the weight using all edges
 			double maxWeight = (*it)->weight;
 			for(auto i : vertices) maxWeight = std::max(maxWeight, (*this->distMatrix)[i][pt]);
-
-			if(maxWeight <= this->maxEpsilon){ //Valid simplex
+			
+//***************************For beta complex valid simplex Condition ****************************			
+            bool valid = true;
+            if(this->complexType == "alphaComplex"){
+                  for(auto i : vertices) 
+						if(!(*this->incidenceMatrix)[i][pt]){
+						   valid = false;
+						   break;
+					   }
+            if(valid){
+				std::shared_ptr<nodeType> tot = std::make_shared<nodeType>(nodeType());
+				if(recordVertices){
+					tot->simplex = vertices;
+					tot->simplex.insert(pt);
+				}
+				tot->weight = maxWeight;
+				tot->hash = (*it)->hash + bin.binom(pt, (recordVertices ? tot->simplex.size() : dim + 1));
+				nextEdges.push_back(tot);
+				std::cout<<valid<<" ";
+				}
+				else
+				   std::cout<<valid<<" ";
+//************************************************************************************************
+			}else if(maxWeight <= this->maxEpsilon){ //Valid simplex
 				std::shared_ptr<nodeType> tot = std::make_shared<nodeType>(nodeType());
 				if(recordVertices){
 					tot->simplex = vertices;

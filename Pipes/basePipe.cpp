@@ -151,7 +151,7 @@ bool basePipe<nodeType>::configPipe(std::map<std::string, std::string> &configMa
 	pipe = configMap.find("simplicialComplex");
 	if(pipe != configMap.end())
 		simplicialComplex = configMap["simplicialComplex"].c_str();
-	std::cout<<"Simplicial Complex "<<simplicialComplex;
+		
 	return true;
 }
 

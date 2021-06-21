@@ -41,6 +41,7 @@ class simplexBase {
 
 	utils ut;									//Utilities functions
 	std::string simplexType = "simplexBase";	//Complex Type Identifier
+	std::string complexType = "";
 	std::string simplicialComplex = "";
 	templateNode_P root;							//Root of the simplexNode tree (if applicable)
 	templateNode_P head;							//Root of the simplexNode tree (if applicable)
@@ -49,7 +50,7 @@ class simplexBase {
 	int maxDimension;							//Maximum dimension, loaded from configuration
 	double alphaFilterationValue;						//alpha FilterationValue for alpha Complex
 	std::vector<std::vector<double>>* distMatrix;	//Pointer to distance matrix for current complex
-
+    std::vector<std::vector<bool>>* incidenceMatrix;
 
 	//For sliding window implementation, tracks the current vectors inserted into the window
 	//		Note - these point to the d0 simplexNodes; index, weight, etc. can be obtained
@@ -68,6 +69,8 @@ class simplexBase {
 	//Configurations of the complex
 	void setConfig(std::map<std::string, std::string>&);
 	void setDistanceMatrix(std::vector<std::vector<double>>* _distMatrix);
+	void setIncidenceMatrix(std::vector<std::vector<bool>>* _incidenceMatrix);
+
 	void setEnclosingRadius(double);
 	static simplexBase* newSimplex(const std::string &, std::map<std::string, std::string>&);
 

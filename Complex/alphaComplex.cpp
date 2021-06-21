@@ -196,7 +196,6 @@ void alphaComplex<nodeType>::buildAlphaComplex(std::vector<std::vector<int>> dsi
 	this->ut.writeLog(this->simplexType,"No build alpha complex function defined");
 	return;
 }
-	
 
 
 
