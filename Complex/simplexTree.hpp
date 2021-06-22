@@ -3,6 +3,7 @@
 #include "simplexBase.hpp"
 #include <set>
 #include <unordered_map>
+#include "../Preprocessing/kdTree.hpp"
 
 // Header file for simplexTree class - see simplexTree.cpp for descriptions
 
@@ -83,7 +84,7 @@ class simplexTree : public simplexBase {
 	bool deletion(std::set<unsigned>);
 	bool deletion(simplexTreeNode*);
 	void expandDimensions(int){return;};
-	void checkInsertDsimplex(std::vector<unsigned> dsimplex,std::vector<std::vector<double>> inputData,double beta,double averageDistance);
+	bool checkInsertDsimplex(std::vector<unsigned> dsimplex,std::vector<std::vector<double>> inputData,double beta,double averageDistance,kdTree tree);
 	void graphInducedComplex(std::vector<std::vector<double>> inputData,double beta);
 
 	void reduceComplex();

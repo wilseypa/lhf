@@ -6,7 +6,6 @@
 // #include <typeinfo>
 #include "simplexTree.hpp"
 #include <math.h>
-#include "../Preprocessing/kdTree.hpp"
 
 simplexTree::simplexTree(double _maxEpsilon, int _maxDim){
 	indexCounter = 0;
@@ -28,7 +27,7 @@ void simplexTree::recurseInsertDsimplex(simplexTreeNode* node, std::vector<unsig
 	// We recursively call the algorithm on the subtree rooted at Nli for the insertion of the suffix [li+1,··· ,lj]. 
 	// Since the number of subfaces ofr
 	//  a simplex of dimension j is 􏰆 􏰁j+1􏰂 = 2j+1, this algorithm takes time O(2jDm).
-//	sort(simp.begin(),simp.end());
+	sort(simp.begin(),simp.end());
 	int firstind =0;
 	int lastind = simp.size();
 	for(auto x : simp){
@@ -613,6 +612,10 @@ void simplexTree::recurseGetEdges(std::vector<std::set<simplexNode_P, cmpByWeigh
 }
 
 std::vector<simplexNode*> simplexTree::getAllCofacets(simplexNode_P simp){
+	 std::cout<<"here";
+        std::cout<<"cofacet"<<std::endl;
+            int k;
+            std::cin>>k;
 	return getAllCofacets(simp, std::unordered_map<long long, simplexNode_P>(), false);
 
 }
@@ -624,7 +627,10 @@ std::vector<simplexNode*> simplexTree::getAllCofacets(simplexNode_P simp, const 
 
 	simplexTreeNode* tempNode;
 	auto it = simp->simplex.end();
-
+    std::cout<<"here";
+        std::cout<<"cofacet"<<std::endl;
+            int k;
+            std::cin>>k;
 	while(true){
 		//Insert all of the children in reverse lexicographic order
 		for(auto ptr = parentNode->child; ptr != nullptr; ptr = ptr->sibling){
@@ -638,7 +644,7 @@ std::vector<simplexNode*> simplexTree::getAllCofacets(simplexNode_P simp, const 
 					//If we haven't found an emergent candidate and the weight of the maximal cofacet is equal to the simplex's weight
 					//		we have identified an emergent pair; at this point we can break because the interval is born and dies at the
 					//		same epsilon
-					if(checkEmergent && tempNode->simpNode->weight == simp->weight&&simplicialComplex != "alpha"){
+					if(checkEmergent && tempNode->simpNode->weight == simp->weight){
 						if(pivotPairs.find(tempNode->simpNode->hash) == pivotPairs.end()) return ret; //Check to make sure the identified cofacet isn't a pivot
 						checkEmergent = false;
 					}
@@ -719,7 +725,7 @@ std::vector<simplexNode_P> simplexTree::getAllCofacets(const std::set<unsigned>&
 					//If we haven't found an emergent candidate and the weight of the maximal cofacet is equal to the simplex's weight
 					//		we have identified an emergent pair; at this point we can break because the interval is born and dies at the
 					//		same epsilon
-					if(checkEmergent && tempNode->simpNode->weight == simplexWeight && simplicialComplex!="alpha"){
+					if(checkEmergent && tempNode->simpNode->weight == simplexWeight){
 						if(pivotPairs.find(tempNode->simpNode) == pivotPairs.end()) return ret; //Check to make sure the identified cofacet isn't a pivot
 						checkEmergent = false;
 					}
@@ -773,18 +779,17 @@ void simplexTree::reduceComplex(){
 
 	return;
 }
-void simplexTree::checkInsertDsimplex(std::vector<unsigned> dsimplex,std::vector<std::vector<double>> inputData,double beta,double averageDistance){
+bool simplexTree::checkInsertDsimplex(std::vector<unsigned> dsimplex,std::vector<std::vector<double>> inputData,double beta,double averageDistance,kdTree tree){
 	double maxEdge = 0;
 	for(auto x : dsimplex)
 		for(auto y : dsimplex)
 			if(maxEdge < (*distMatrix)[x][y])
 				maxEdge = (*distMatrix)[x][y];
 				
-	if(maxEdge > averageDistance)
-	    return;
+	if(maxEdge > maxEpsilon)
+	    return false;
 	
 	bool intersection;
-	kdTree tree(inputData, inputData.size()); //KDTree for efficient nearest neighbor search
     if(beta < 1){
 		intersection = true;
 		beta = 1/beta;
@@ -836,11 +841,8 @@ void simplexTree::checkInsertDsimplex(std::vector<unsigned> dsimplex,std::vector
 			}
 			if(neighbors.size() <= simplex.size()){
 				    recurseInsertDsimplex(root, dsimplex,inputData);
-                    std::cout<<"Validated ";
-                    for(auto x : dsimplex)
-						std::cout<<x<<" ";
-					std::cout<<std::endl;						
-/*				simplexNode_P tot = std::make_shared<simplexNode>(simplexNode((*it)->simplex, betaRadius));
+					return true;
+/*			    	simplexNode_P tot = std::make_shared<simplexNode>(simplexNode((*it)->simplex, betaRadius));
 					tot->simplex.insert(pt);
 					tot->hash = (*it)->hash + bin.binom(pt, tot->simplex.size());
 					tot->circumCenter = circumCenter;	
@@ -852,14 +854,14 @@ void simplexTree::checkInsertDsimplex(std::vector<unsigned> dsimplex,std::vector
 					simplexList[d].insert(tot);   //insert simplex into complex
 */
 				}
+return false;
 }
 
 void simplexTree::graphInducedComplex(std::vector<std::vector<double>> inputData,double beta){
-	int dim = inputData[0].size()+1;
-    int n = inputData.size();
-    std::vector<unsigned> dsimplex(dim);
-    std::vector<unsigned> dsimplexIndexed(dim);
-	double distanceSum = 0;
+	
+	kdTree tree(inputData, inputData.size()); //KDTree for efficient nearest neighbor search
+	int dim = inputData[0].size();
+    double distanceSum = 0;
 	int count = 0;
 	//Computing the average point cloud distance
 	for(int x =0;x < inputData.size();x++)
@@ -869,32 +871,47 @@ void simplexTree::graphInducedComplex(std::vector<std::vector<double>> inputData
 		}
 	double averageDistance = distanceSum/count;
     std::cout<<averageDistance<<" ";
-    std::vector<unsigned>::iterator first = dsimplex.begin(), last = dsimplex.end();
+    count =0;
+	for(unsigned index = 0; index < inputData.size(); index++){
+		    std::vector<size_t> neighbors = tree.neighborhoodIndices(inputData[index], maxEpsilon); //All neighbors in epsilon-ball
+		    neighbors.erase(std::remove(neighbors.begin(),neighbors.end(),index),neighbors.end());
+			int n = neighbors.size();
+			std::vector<unsigned> dsimplex(dim);
+			std::vector<unsigned> dsimplexIndexed;
+			
+			std::vector<unsigned>::iterator first = dsimplex.begin(), last = dsimplex.end();
 
-    std::generate(first, last, UniqueNumber);
-    for(int i=0;i<dim;i++)
-           dsimplexIndexed[i] = dsimplex[i]-1;
-    checkInsertDsimplex(dsimplexIndexed,inputData,beta,averageDistance);
-
+			std::generate(first, last, UniqueNumber);
+			
+			dsimplexIndexed.push_back(index);
+			for(int i=0;i<dim;i++)
+				dsimplexIndexed.push_back(neighbors[dsimplex[i]-1]);
+			if(checkInsertDsimplex(dsimplexIndexed,inputData,beta,averageDistance,tree))
+			   count++;
+            
   while((*first) != n-dim+1){  	
 
   	    std::vector<unsigned>::iterator mt = last;
         while (*(--mt) == n-(last-mt)+1);
         (*mt)++;
         while (++mt != last) *mt = *(mt-1)+1;
-        
-        for(int i=0;i<dim;i++)
-           dsimplexIndexed[i] = dsimplex[i]-1;
 
-        checkInsertDsimplex(dsimplexIndexed,inputData,beta,averageDistance);
-				
+        std::vector<unsigned> dsimplexIndexed1;
+
+       dsimplexIndexed1.push_back(index);
+       for(int i=0;i<dim;i++)
+			dsimplexIndexed1.push_back(neighbors[dsimplex[i]-1]);
+
+        if(checkInsertDsimplex(dsimplexIndexed1,inputData,beta,averageDistance,tree));
+			count++;	
 		}
+		std::cout<<count<<std::endl;
+	}
+	
 }
 
 void simplexTree:: buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, int npts,std::vector<std::vector<double>> inputData){
-	std::set<simplexNode_P,cmpByWeight> dsimplexes;
 for(auto simplex : dsimplexmesh){
-	std::set<unsigned> simplexset(simplex.begin(),simplex.end());
 	std::vector<unsigned> nsimplex(simplex.begin(),simplex.end());
        	recurseInsertDsimplex(root, nsimplex,inputData);
 }

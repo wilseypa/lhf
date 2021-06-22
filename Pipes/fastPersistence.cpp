@@ -20,7 +20,7 @@
 
 // basePipe constructor
 fastPersistence::fastPersistence(){
-	pipeType = "FastPersistence";
+	pipeType = "fastPersistence";
 	return;
 }
 
@@ -45,7 +45,9 @@ std::vector<simplexNodePointer> fastPersistence::persistenceByDimension(pipePack
 		//	std::cout<<mode<<" "<<simplicialComplex<<" "<<complexType<<std::endl;
 			//Get all cofacets using emergent pair optimization
 			std::vector<simplexNodePointer> faceList = (mode == "homology" ? inData.complex->getAllFacets_P(simplex) : ((simplicialComplex == "alpha" && complexType == "simplexArrayList")? inData.complex->getAllDelaunayCofacets(simplex):inData.complex->getAllCofacets(simplex->simplex, simplex->weight, pivotPairs, true)));
-		
+		     std::cout<<mode<<" "<<simplicialComplex<<" "<<complexType<<std::endl;
+            std::cout<<"cofacet"<<std::endl;
+         
 			std::vector<simplexNodePointer> columnV;	//Reduction column of matrix V
 			columnV.push_back(simplex); //Initially V=I -> 1's along diagonal
 
@@ -100,9 +102,11 @@ std::vector<simplexNodePointer> fastPersistence::persistenceByDimension(pipePack
 					for(simplexNodePointer simp : v[pivotPairs[pivot]]){
 						columnV.push_back(simp);
 						std::vector<simplexNodePointer> faces = (mode == "homology" ? inData.complex->getAllFacets_P(simp) : ((simplicialComplex == "alpha" && complexType =="simplexArrayList")? inData.complex->getAllDelaunayCofacets(simp):inData.complex->getAllCofacets(simp->simplex)));
-					
+					   
+					   
 						faceList.insert(faceList.end(), faces.begin(), faces.end());
 					}
+					  std::cout<<"Reduction"<<std::endl;
 					std::make_heap(faceList.begin(), faceList.end(), compStruct);
 				}
 			}
@@ -119,6 +123,7 @@ std::vector<simplexNodePointer> fastPersistence::persistenceByDimension(pipePack
 //		1. See Bauer-19 for algorithm/description
 void fastPersistence::runPipe(pipePacket &inData){
 	//Get all edges for the simplexArrayList or simplexTree
+
 	std::vector<std::set<simplexNode_P, cmpByWeight>> edges = inData.complex->getAllEdges();
 
 	if(edges.size() <= 1) return;
@@ -185,7 +190,6 @@ void fastPersistence::runPipe(pipePacket &inData){
 			inData.bettiTable.push_back(des);
 		}
 	}
-
 	//For higher dimensional persistence intervals
 	//
 		//Build next dimension of ordered simplices, ignoring previous dimension pivots
@@ -202,13 +206,16 @@ void fastPersistence::runPipe(pipePacket &inData){
 
 	for(unsigned d = 1; d < dim && d < edges.size()-1; d++){
 		inData.complex->prepareCofacets(d);
-
+       
 		pivots = persistenceByDimension(inData, std::vector<simplexNode_P>(edges[d].begin(), edges[d].end()), pivots, d, sortReverseLexicographic(), "cohomology", !involuted);
 
 		//To recover the representative cycles from the cocycles, we compute homology on just the pivot columns
 		if(involuted){
 			inData.complex->prepareFacets(d);
 			persistenceByDimension(inData, pivots, std::vector<simplexNode_P>(), d, sortLexicographic(), "homology", true);
+			int k;
+			std::cout<<d;
+			std::cin>>k;
 		}
 	}
 

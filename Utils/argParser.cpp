@@ -132,6 +132,8 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 		//Handle basic modes; set pipeline if not initialized
 	//
 		if(args["simplicialComplex"] == "alpha" || args["simplicialComplex"] == "Alpha" || args["simplicialComplex"] == "ALPHA"){
+	          args["complexType"] = "simplexTree";
+	          args["mode"] = "alpha";
 			args["pipeline"] = "distMatrix.alpha.fastPersistence";
 		}else if(args["simplicialComplex"] == "beta"){
 		       args["complexType"] = "simplexTree";

@@ -23,6 +23,7 @@ qhullPipe::qhullPipe(){
 void qhullPipe::runPipe(pipePacket &inData){
     Qhull qh;
     std::vector<double> sdata;
+    std::cout<<"Here Qhull";
     //serializing all the data
     for(auto a : inData.inputData)
  			for(auto b : a)

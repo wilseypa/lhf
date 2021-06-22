@@ -56,7 +56,6 @@ int main(int argc, char* argv[]){
 
 	//Create a pipePacket (datatype) to store the complex and pass between engines
 	auto wD = pipePacket(args, args["complexType"]);	//wD (workingData)
-
 	if(args["pipeline"] != "slidingwindow" && args["pipeline"] != "naivewindow" && args["mode"] != "mpi"){
 		//Read data from inputFile CSV
 		wD.inputData = rs.readCSV(args["inputFile"]);
@@ -79,10 +78,11 @@ int main(int argc, char* argv[]){
 			wD.bettiTable = lhflib.processParallelWrapper(args,wD);
 			sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
 
-		} else if(args["mode"] == "dcomplex"){
+		} else if(args["mode"] == "alpha"){
 			lhflib.runPipeline(args, wD);
 			sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
 		} else {
+		
 			lhflib.runPreprocessor(args, wD);
 			lhflib.runPipeline(args, wD);
 		}

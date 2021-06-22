@@ -68,7 +68,7 @@ void basePipe::runPipeWrapper(pipePacket &inData){
 	if(debug){
 		//Start a timer for physical time passed during the pipe's function
 		auto startTime = std::chrono::high_resolution_clock::now();
-
+        std::cout<<"Here234324";
 		runPipe(inData);
 
 		//Stop the timer for time passed during the pipe's function
