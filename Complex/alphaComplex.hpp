@@ -4,7 +4,7 @@
 #include <set>
 #include <unordered_map>
 #include "simplexArrayList.hpp" 
-
+#include "utils.hpp"
 
 template <typename nodeType>
 class alphaComplex : public simplexArrayList<nodeType>{
@@ -29,5 +29,6 @@ class alphaComplex : public simplexArrayList<nodeType>{
 		
 		std::vector<templateNode_P> getAllDelaunayCofacets(templateNode_P);
 		void buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, int pts,std::vector<std::vector<double>> inputData);
-		
+		void buildBetaComplex(std::vector<std::vector<unsigned>>dsimplexmesh,int pts, std::vector<std::vector<double>> inData);
+
 };

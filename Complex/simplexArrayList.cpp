@@ -398,10 +398,7 @@ std::vector<std::shared_ptr<nodeType>> simplexArrayList<nodeType>::expandDimensi
 				tot->weight = maxWeight;
 				tot->hash = (*it)->hash + bin.binom(pt, (recordVertices ? tot->simplex.size() : dim + 1));
 				nextEdges.push_back(tot);
-				std::cout<<valid<<" ";
-				}
-				else
-				   std::cout<<valid<<" ";
+			}
 //************************************************************************************************
 			}else if(maxWeight <= this->maxEpsilon){ //Valid simplex
 				std::shared_ptr<nodeType> tot = std::make_shared<nodeType>(nodeType());

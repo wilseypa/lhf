@@ -38,6 +38,46 @@ std::vector<std::shared_ptr<nodeType>> alphaComplex<nodeType>::getAllDelaunayCof
 	return ret;
 }
 
+template<>
+void alphaComplex<alphaNode>::buildBetaComplex(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData){
+	unsigned maxDimension = dsimplexmesh[0].size()-1;
+	this->bin = binomialTable(npts, this->maxDimension+1);
+	for(int i=0; i <= this->maxDimension; i++)
+		this->simplexList.push_back({});
+
+	for(auto simplex : dsimplexmesh){
+		unsigned int pow_set_size = pow(2, simplex.size());
+		for(int counter =1;counter<pow_set_size;counter++){
+			double weight =0;
+			std::set<unsigned> gensimp;
+			for(int j=0;j<simplex.size();j++){
+				if(counter & (1<<j)){
+					unsigned indnew;
+					indnew = *(std::next(simplex.begin(),j));
+					for(auto x:gensimp){
+						if(x<indnew){
+							if(weight<(*(this->distMatrix))[x][indnew])
+								weight = (*(this->distMatrix))[x][indnew];
+						}
+						else if(weight<(*(this->distMatrix))[indnew][x])
+							weight = (*(this->distMatrix))[indnew][x];
+					}
+					gensimp.insert(indnew);
+				}
+			}
+
+			std::shared_ptr<alphaNode> tot = std::make_shared<alphaNode>(alphaNode(gensimp,weight));
+		
+			if(gensimp.size()==1)
+				tot->hash = *(gensimp.begin());
+			else
+				tot->hash = this->simplexHash(gensimp);
+			this->simplexList[gensimp.size()-1].insert(tot);
+			gensimp.clear();
+		}
+	}
+
+}
 
 template<>
 void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData){

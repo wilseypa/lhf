@@ -131,15 +131,18 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 			
 	} else if(args["complexType"] == "alpha"){
 		basePipeline = "distMatrix.alpha.fastPersistence";
-		args["complexType"] = "alpha";
-		args["nodeType"] = "alpha";
-		    
-	}else if(args["complexType"] == "graphInducedComplex" || args["complexType"] == "beta" ){
 		args["complexType"] = "alphaComplex";
 		args["nodeType"] = "alphaNode";
-		basePipeline = "distMatrix.neighGraph.incrementalPersistence";
+		    
+	}else if(args["complexType"] == "graphInducedComplex" || args["complexType"] == "beta" || args["complexType"] == "betaGeneral"){
+		args["nodeType"] = "alphaNode";
 		args["mode"] = "alpha";
+		if(args["complexType"] == "beta")
+			basePipeline = "distMatrix.neighGraph.incrementalPersistence";
+		else if(args["complexType"] == "betaGeneral")
+			basePipeline = "distMatrix.betaSkeletonBasedComplex.fastPersistence";
 		args["pipeline"] = basePipeline;
+		args["complexType"] = "alphaComplex";
 		return;
     } else if(args["complexType"] == "witness"){
 		
