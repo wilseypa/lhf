@@ -239,6 +239,13 @@ void alphaComplex<nodeType>::buildAlphaComplex(std::vector<std::vector<int>> dsi
 
 
 
+template<typename nodeType>
+void alphaComplex<nodeType>::buildBetaComplex(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData){
+	this->ut.writeLog(this->simplexType,"No build beta complex function defined");
+	return;
+}
+
+
 //Explicit Template Class Instantiation
 template class alphaComplex<simplexNode>;
 template class alphaComplex<alphaNode>;

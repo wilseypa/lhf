@@ -22,14 +22,14 @@
 
 // basePipe constructor
 template <typename nodeType>
-betaSkeletonBasedComplexPipe<nodeType>::betaSkeletonBasedComplexPipe(){
+betaSkeletonBasedComplex<nodeType>::betaSkeletonBasedComplex(){
 	this->pipeType = "betaSkeletonBasedComplex";
 	return;
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
 template <typename nodeType>
-void betaSkeletonBasedComplexPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
+void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
 	// Generate Beta Skeleton Based Complex
 	
 	// Temporarily commenting this out - need to check inData.complex type
@@ -51,13 +51,29 @@ void betaSkeletonBasedComplexPipe<nodeType>::runPipe(pipePacket<nodeType> &inDat
 	double averageDistance = distanceSum/count;
     std::cout<<averageDistance<<" ";
     count =0;
-	for(unsigned index = 0; index < inData.inputData.size(); index++){
+    std::vector<std::pair<int,int>> neighborsepsilon;
+    
+    for(unsigned index = 0; index < inData.inputData.size(); index++){
 		    std::vector<size_t> neighbors = tree.neighborhoodIndices(inData.inputData[index], this->enclosingRadius); //All neighbors in epsilon-ball
 		    int n = neighbors.size();
-		    neighbors.erase(std::remove_if(neighbors.begin(),neighbors.end(),[&index](size_t x){return x<=index;}),neighbors.end());
-
-			n = neighbors.size();
-		
+		   // neighbors.erase(std::remove_if(neighbors.begin(),neighbors.end(),[&index](size_t x){return x<=index;}),neighbors.end());
+            neighborsepsilon.push_back(std::make_pair(n,index));
+			
+    }
+    sort(neighborsepsilon.begin(),neighborsepsilon.end());
+    std::vector<int> toremove;
+	for(unsigned indexold = 0; indexold < inData.inputData.size(); indexold++){
+		    toremove.push_back(neighborsepsilon[indexold].second);
+		    unsigned index = neighborsepsilon[indexold].second;
+		    std::vector<size_t> neighbors = tree.neighborhoodIndices(inData.inputData[index], this->enclosingRadius); //All neighbors in epsilon-ball
+		    int n = neighbors.size();
+//		    neighbors.erase(std::remove_if(neighbors.begin(),neighbors.end(),[&index](size_t x){return x<=index;}),neighbors.end());
+            std::sort(toremove.begin(),toremove.end());
+            std::sort(neighbors.begin(), neighbors.end());
+            std::vector<int> difference;
+            std::set_difference(neighbors.begin(),neighbors.end(),toremove.begin(),toremove.end(), std::back_inserter(difference));
+			n = difference.size();
+		    
 			if(n>=dim){
 			std::vector<unsigned> dsimplex(dim);
 			std::vector<unsigned> dsimplexIndexed;
@@ -91,6 +107,7 @@ void betaSkeletonBasedComplexPipe<nodeType>::runPipe(pipePacket<nodeType> &inDat
             if(checkInsertDsimplex(dsimplexIndexed1,inData,this->beta,averageDistance,tree)){
                 dsimplexmesh.push_back(dsimplexIndexed1);
 		    	count++;	
+		    	
 	    	}
      	}
 		std::cout<<count<<std::endl;
@@ -101,14 +118,14 @@ void betaSkeletonBasedComplexPipe<nodeType>::runPipe(pipePacket<nodeType> &inDat
 	this->ut.writeDebug("betaSkeletonBasedComplex Pipe", "\tbetaSkeletonBasedComplex Size: ");
 	return;
 }
-template <typename nodeType>
+template <>
 
-bool betaSkeletonBasedComplexPipe<nodeType>:: checkInsertDsimplex(std::vector<unsigned> dsimplex,pipePacket<nodeType> &inData,double beta,double averageDistance,kdTree tree){
+bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsigned> dsimplex,pipePacket<alphaNode> &inData,double beta,double averageDistance,kdTree tree){
 	double maxEdge = 0;
 	for(auto x : dsimplex)
 		for(auto y : dsimplex)
-			if(maxEdge < (*((alphaComplex<nodeType>*)inData.complex)->distMatrix)[x][y])
-				maxEdge = (*((alphaComplex<nodeType>*)inData.complex)->distMatrix)[x][y];
+			if(maxEdge < (*((alphaComplex<alphaNode>*)inData.complex)->distMatrix)[x][y])
+				maxEdge = (*((alphaComplex<alphaNode>*)inData.complex)->distMatrix)[x][y];
 				
 	if(maxEdge > this->enclosingRadius)
 	    return false;
@@ -137,11 +154,11 @@ bool betaSkeletonBasedComplexPipe<nodeType>:: checkInsertDsimplex(std::vector<un
 	   			std::transform(A.begin(), A.end(), B.begin(), std::back_inserter(R),[](double e1,double e2){return ((e1+e2)/2);});
 				circumCenter = R;
    			 }
-			double circumRadius = utils::circumRadius(simplex,((alphaComplex<nodeType>*)inData.complex)->distMatrix);
+			double circumRadius = utils::circumRadius(simplex,((alphaComplex<alphaNode>*)inData.complex)->distMatrix);
 			std::vector<double> hpcoff = utils::nullSpaceOfMatrix(simplex,inData.inputData,circumCenter,sqrt(circumRadius));
 			std::vector<std::vector<double>> betaCenters = utils::betaCentersCalculation(hpcoff, beta, sqrt(circumRadius),circumCenter);
 			double betaRadius = beta*sqrt(circumRadius);
-			double volume = utils::simplexVolume(simplex,((alphaComplex<nodeType>*)inData.complex)->distMatrix,inData.inputData[0].size());
+			double volume = utils::simplexVolume(simplex,((alphaComplex<alphaNode>*)inData.complex)->distMatrix,inData.inputData[0].size());
 
 		    std::vector<size_t> neighbors1 = tree.neighborhoodIndices(betaCenters[0], betaRadius); //All neighbors in epsilon-ball
     		std::vector<size_t> neighbors2 = tree.neighborhoodIndices(betaCenters[1], betaRadius); //All neighbors in epsilon-ball
@@ -184,7 +201,7 @@ return false;
 
 // configPipe -> configure the function settings of this pipeline segment
 template <typename nodeType>
-bool betaSkeletonBasedComplexPipe<nodeType>::configPipe(std::map<std::string, std::string> &configMap){
+bool betaSkeletonBasedComplex<nodeType>::configPipe(std::map<std::string, std::string> &configMap){
 	std::string strDebug;
 	
 	auto pipe = configMap.find("debug");
@@ -219,11 +236,16 @@ bool betaSkeletonBasedComplexPipe<nodeType>::configPipe(std::map<std::string, st
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
 template <typename nodeType>
-void betaSkeletonBasedComplexPipe<nodeType>::outputData(pipePacket<nodeType> &inData){
+void betaSkeletonBasedComplex<nodeType>::outputData(pipePacket<nodeType> &inData){
 	// Output related to betaSkeletonBasedComplex
 	return;
 }
+template <typename nodeType>
+bool betaSkeletonBasedComplex<nodeType>:: checkInsertDsimplex(std::vector<unsigned> dsimplex,pipePacket<nodeType> &inData,double beta,double averageDistance,kdTree tree){
+	std::cout<<"No function Defined";
+	return false;
+}
 
-template class betaSkeletonBasedComplexPipe<simplexNode>;
-template class betaSkeletonBasedComplexPipe<alphaNode>;
-template class betaSkeletonBasedComplexPipe<witnessNode>;
+template class betaSkeletonBasedComplex<simplexNode>;
+template class betaSkeletonBasedComplex<alphaNode>;
+template class betaSkeletonBasedComplex<witnessNode>;

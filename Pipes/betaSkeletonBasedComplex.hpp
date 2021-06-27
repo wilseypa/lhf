@@ -6,7 +6,7 @@
 #include "../Preprocessing/kdTree.hpp"
 
 template <typename nodeType>
-class betaSkeletonBasedComplexPipe : public basePipe<nodeType> {
+class betaSkeletonBasedComplex : public basePipe<nodeType> {
   private:
 	double beta;
 	double enclosingRadius;
@@ -19,7 +19,7 @@ class betaSkeletonBasedComplexPipe : public basePipe<nodeType> {
 	unsigned operator()() {return ++current;}
 	} UniqueNumber;
   public:
-    betaSkeletonBasedComplexPipe();
+    betaSkeletonBasedComplex();
     void runPipe(pipePacket<nodeType>& inData);
     bool checkInsertDsimplex(std::vector<unsigned> dsimplex,pipePacket<nodeType> &inData,double beta,double averageDistance,kdTree tree);
     bool configPipe(std::map<std::string, std::string> &configMap);
