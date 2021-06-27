@@ -796,7 +796,8 @@ bool simplexTree::checkInsertDsimplex(std::vector<unsigned> dsimplex,std::vector
 	}
 	else
 		intersection = false;
-    
+
+   
     std::set<unsigned> simplex(dsimplex.begin(),dsimplex.end());
 
             std::vector<double> circumCenter;
@@ -874,11 +875,15 @@ void simplexTree::graphInducedComplex(std::vector<std::vector<double>> inputData
     count =0;
 	for(unsigned index = 0; index < inputData.size(); index++){
 		    std::vector<size_t> neighbors = tree.neighborhoodIndices(inputData[index], maxEpsilon); //All neighbors in epsilon-ball
-		    neighbors.erase(std::remove(neighbors.begin(),neighbors.end(),index),neighbors.end());
-			int n = neighbors.size();
+		    int n = neighbors.size();
+		    neighbors.erase(std::remove_if(neighbors.begin(),neighbors.end(),[&index](size_t x){return x<=index;}),neighbors.end());
+
+			n = neighbors.size();
+		
+			if(n>=dim){
 			std::vector<unsigned> dsimplex(dim);
 			std::vector<unsigned> dsimplexIndexed;
-			
+
 			std::vector<unsigned>::iterator first = dsimplex.begin(), last = dsimplex.end();
 
 			std::generate(first, last, UniqueNumber);
@@ -886,10 +891,11 @@ void simplexTree::graphInducedComplex(std::vector<std::vector<double>> inputData
 			dsimplexIndexed.push_back(index);
 			for(int i=0;i<dim;i++)
 				dsimplexIndexed.push_back(neighbors[dsimplex[i]-1]);
+
 			if(checkInsertDsimplex(dsimplexIndexed,inputData,beta,averageDistance,tree))
 			   count++;
             
-  while((*first) != n-dim+1){  	
+	while((*first) != n-dim+1){  	
 
   	    std::vector<unsigned>::iterator mt = last;
         while (*(--mt) == n-(last-mt)+1);
@@ -901,11 +907,12 @@ void simplexTree::graphInducedComplex(std::vector<std::vector<double>> inputData
        dsimplexIndexed1.push_back(index);
        for(int i=0;i<dim;i++)
 			dsimplexIndexed1.push_back(neighbors[dsimplex[i]-1]);
-
+		
         if(checkInsertDsimplex(dsimplexIndexed1,inputData,beta,averageDistance,tree));
 			count++;	
 		}
 		std::cout<<count<<std::endl;
+	  }
 	}
 	
 }

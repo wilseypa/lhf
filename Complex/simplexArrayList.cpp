@@ -405,8 +405,8 @@ void simplexArrayList::graphInducedComplex(int dim,std::vector<std::vector<doubl
 			double betaRadius = beta*sqrt(circumRadius);
 			double volume = utils::simplexVolume(simplex,distMatrix,inputData[0].size());
 
-		    std::vector<size_t> neighbors1 = tree.neighborhoodIndices(betaCenters[0], betaRadius + .05); //All neighbors in epsilon-ball
-    		std::vector<size_t> neighbors2 = tree.neighborhoodIndices(betaCenters[1], betaRadius + .05); //All neighbors in epsilon-ball
+		    std::vector<size_t> neighbors1 = tree.neighborhoodIndices(betaCenters[0], betaRadius); //All neighbors in epsilon-ball
+    		std::vector<size_t> neighbors2 = tree.neighborhoodIndices(betaCenters[1], betaRadius); //All neighbors in epsilon-ball
             std::vector<size_t> neighbors;
             if(intersection == true){
 				std::vector<size_t> v(std::min(neighbors1.size(),neighbors2.size()));
