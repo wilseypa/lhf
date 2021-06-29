@@ -48,6 +48,7 @@ void distMatrixPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
 	}
 	if(inData.complex->complexType == "alphaComplex" && (this->betaMode == "lune" || this->betaMode == "circle"))
 				inData.incidenceMatrix = this->ut.betaNeighbors(inData.inputData,beta,betaMode);
+
 	inData.complex->setDistanceMatrix(&inData.distMatrix);
 	inData.complex->setEnclosingRadius(enclosingRadius);
 	inData.complex->setIncidenceMatrix(&inData.incidenceMatrix);

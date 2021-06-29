@@ -138,7 +138,7 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 		args["nodeType"] = "alphaNode";
 		args["mode"] = "alpha";
 		if(args["complexType"] == "beta")
-			basePipeline = "distMatrix.neighGraph.incrementalPersistence";
+			basePipeline = "distMatrix.neighGraph.rips.fastPersistence";
 		else if(args["complexType"] == "betaGeneral")
 			basePipeline = "distMatrix.betaSkeletonBasedComplex.fastPersistence";
 		

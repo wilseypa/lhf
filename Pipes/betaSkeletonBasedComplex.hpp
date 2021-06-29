@@ -9,6 +9,7 @@ template <typename nodeType>
 class betaSkeletonBasedComplex : public basePipe<nodeType> {
   private:
 	double beta;
+	std::string betaMode;
 	double enclosingRadius;
 	int dim;
 	double epsilon;
@@ -22,6 +23,7 @@ class betaSkeletonBasedComplex : public basePipe<nodeType> {
     betaSkeletonBasedComplex();
     void runPipe(pipePacket<nodeType>& inData);
     bool checkInsertDsimplex(std::vector<unsigned> dsimplex,pipePacket<nodeType> &inData,double beta,double averageDistance,kdTree tree);
+    unsigned selectCenter(std::vector<double> hpcofffaces, std::vector<std::vector<double>> betaCenters,std::vector<double> otherPoint);
     bool configPipe(std::map<std::string, std::string> &configMap);
 	void outputData(pipePacket<nodeType>&);
 };

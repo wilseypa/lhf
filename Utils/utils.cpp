@@ -492,18 +492,33 @@ std::vector<std::vector<bool>> utils :: betaNeighbors(std::vector<std::vector<do
                        
                        
 					   std::vector<size_t> neighbors1 = tree.neighborhoodIndices(center1, radius); //All neighbors in radius-ball
+					   std::vector<unsigned> toremove;
+					   toremove.push_back(i);
+					   toremove.push_back(j); 
+					   std::sort(toremove.begin(),toremove.end());
+					   std::sort(neighbors1.begin(), neighbors1.end());
+					   std::vector<int> neg1;
+					   std::set_difference(neighbors1.begin(),neighbors1.end(),toremove.begin(),toremove.end(), std::back_inserter(neg1));
+		    
+    		
 					   std::vector<size_t> neighbors2 = tree.neighborhoodIndices(center2, radius); //All neighbors in radius-ball
+					   std::sort(neighbors2.begin(), neighbors2.end());
+					   std::vector<int> neg2;
+					   std::set_difference(neighbors2.begin(),neighbors2.end(),toremove.begin(),toremove.end(), std::back_inserter(neg2));
+		    
+    		
+    		
 					   std::vector<size_t> neighbors;
           
-					   std::vector<size_t> v(std::min(neighbors1.size(),neighbors2.size()));
+					   std::vector<size_t> v(std::min(neg1.size(),neg2.size()));
 					   std::vector<size_t>::iterator it;
-					   std::sort (neighbors1.begin(),neighbors1.end());
-					   std::sort (neighbors2.begin(),neighbors2.end()); 
-					   it=std::set_intersection (neighbors1.begin(), neighbors1.end(), neighbors2.begin(), neighbors2.end(), v.begin());
+					   std::sort (neg1.begin(),neg1.end());
+					   std::sort (neg2.begin(),neg2.end()); 
+					   it=std::set_intersection (neg1.begin(), neg1.end(), neg2.begin(), neg2.end(), v.begin());
 					   v.resize(it-v.begin()); 
 					   neighbors = v;				
 		
-					   if(neighbors.size() <= 2)
+					   if(neighbors.size() == 0)
 						 incidenceMatrix[i][j] = true;
 					   else
 						 incidenceMatrix[i][j] = false;
@@ -518,18 +533,31 @@ std::vector<std::vector<bool>> utils :: betaNeighbors(std::vector<std::vector<do
 					  std::transform(inData[j].begin(), inData[j].end(), inData[i].begin(), std::back_inserter(center2),[bf,bf1](double e1, double e2) {return ((e1*bf+e2*bf1));});
 					   
 					   std::vector<size_t> neighbors1 = tree.neighborhoodIndices(center1, radius); //All neighbors in radius-ball
+					   std::vector<unsigned> toremove;
+					   toremove.push_back(i);
+					   toremove.push_back(j); 
+					   std::sort(toremove.begin(),toremove.end());
+					   std::sort(neighbors1.begin(), neighbors1.end());
+					   std::vector<int> neg1;
+					   std::set_difference(neighbors1.begin(),neighbors1.end(),toremove.begin(),toremove.end(), std::back_inserter(neg1));
+		    
 					   std::vector<size_t> neighbors2 = tree.neighborhoodIndices(center2, radius); //All neighbors in radius-ball
+					    std::sort(neighbors2.begin(), neighbors2.end());
+					   std::vector<int> neg2;
+					   std::set_difference(neighbors2.begin(),neighbors2.end(),toremove.begin(),toremove.end(), std::back_inserter(neg2));
+		    
+		    
 					   std::vector<size_t> neighbors;
           
-					   std::vector<size_t> v(std::min(neighbors1.size(),neighbors2.size()));
+					   std::vector<size_t> v(std::min(neg1.size(),neg2.size()));
 					   std::vector<size_t>::iterator it;
-					   std::sort (neighbors1.begin(),neighbors1.end());
-					   std::sort (neighbors2.begin(),neighbors2.end()); 
-					   it=std::set_intersection (neighbors1.begin(), neighbors1.end(), neighbors2.begin(), neighbors2.end(), v.begin());
+					   std::sort (neg1.begin(),neg1.end());
+					   std::sort (neg2.begin(),neg2.end()); 
+					   it=std::set_intersection (neg1.begin(), neg1.end(), neg2.begin(), neg2.end(), v.begin());
 					   v.resize(it-v.begin()); 
 					   neighbors = v;				
 		
-					   if(neighbors.size() <= 2)
+					   if(neighbors.size() == 0)
 						 incidenceMatrix[i][j] = true;
 					   else
 						 incidenceMatrix[i][j] = false;
@@ -553,17 +581,29 @@ std::vector<std::vector<bool>> utils :: betaNeighbors(std::vector<std::vector<do
                       std::transform(temp.begin(), temp.end(), tempfinal.begin(), std::back_inserter(center2),[](double e1, double e2) {return ((e1-e2));});
                        
 					  std::vector<size_t> neighbors1 = tree.neighborhoodIndices(center1, radius); //All neighbors in radius-ball
+					   std::vector<unsigned> toremove;
+					   toremove.push_back(i);
+					   toremove.push_back(j); 
+					   std::sort(toremove.begin(),toremove.end());
+					   std::sort(neighbors1.begin(), neighbors1.end());
+					   std::vector<int> neg1;
+					   std::set_difference(neighbors1.begin(),neighbors1.end(),toremove.begin(),toremove.end(), std::back_inserter(neg1));
+		    
 					  std::vector<size_t> neighbors2 = tree.neighborhoodIndices(center2, radius); //All neighbors in radius-ball
+					   std::sort(neighbors2.begin(), neighbors2.end());
+					   std::vector<int> neg2;
+					   std::set_difference(neighbors2.begin(),neighbors2.end(),toremove.begin(),toremove.end(), std::back_inserter(neg2));
+		    
 					  std::vector<size_t> neighbors;
 	            
 					  std::vector<size_t> v(neighbors1.size() + neighbors2.size());
 					  std::vector<size_t>::iterator it;	
-					  std::sort (neighbors1.begin(),neighbors1.end());
-					  std::sort (neighbors2.begin(),neighbors2.end()); 
-					  it=std::set_union (neighbors1.begin(), neighbors1.end(), neighbors2.begin(), neighbors2.end(), v.begin());
+					  std::sort (neg1.begin(),neg1.end());
+					  std::sort (neg2.begin(),neg2.end()); 
+					  it=std::set_union (neg1.begin(), neg1.end(), neg2.begin(), neg2.end(), v.begin());
 					  v.resize(it-v.begin()); 
 					  neighbors = v;
-			          if(neighbors.size() <= 2)
+			          if(neighbors.size() == 0)
 						 incidenceMatrix[i][j] = true;
 					   else
 						 incidenceMatrix[i][j] = false;
