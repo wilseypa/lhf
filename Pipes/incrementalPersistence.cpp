@@ -39,10 +39,10 @@ std::vector<simplexNodePointer> incrementalPersistence<nodeType>::incrementalByD
 	std::unordered_map<long long, simplexNodePointer> pivotPairs;	//For each pivot, which column has that pivot
 
 	simplexArrayList<nodeType>* complex;
-	if(inData.complex->simplexType == "simplexArrayList" || inData.complex->simplexType == "alphaComplex" ){
+	if(inData.complex->simplexType == "simplexArrayList"){
 		complex = (simplexArrayList<nodeType>*) inData.complex;
 	} else{
-		std::cout<<"IncrementalPersistence does not support complexes other than simplexArrayList\n";
+		std::cout<<"IncrementalPersistence does not support complexes\n";
 		return nextPivots;
 	}
 

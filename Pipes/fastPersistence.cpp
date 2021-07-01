@@ -30,7 +30,6 @@ template <class simplexNodePointer, class comp>
 std::vector<simplexNodePointer> fastPersistence<nodeType>::persistenceByDimension(pipePacket<nodeType>& inData, std::vector<simplexNodePointer> edges, std::vector<simplexNodePointer> pivots, unsigned dimension, comp compStruct, std::string mode, bool recordIntervals){
 	std::sort(edges.begin(), edges.end(), compStruct);
 	std::sort(pivots.begin(), pivots.end(), compStruct);
-    std::cout<<"Here at dim "<<dimension<<" "<<inData.complex->simplexType<<"\n";
 	typename std::vector<simplexNodePointer>::iterator it = pivots.begin();
 
 	std::vector<simplexNodePointer> nextPivots;	 	//Pivots for the next dimension
