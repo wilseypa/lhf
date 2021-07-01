@@ -28,6 +28,7 @@ distMatrixPipe<nodeType>::distMatrixPipe(){
 // runPipe -> Run the configured functions of this pipeline segment
 template<typename nodeType>
 void distMatrixPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
+
 	//Store our distance matrix
 	if(inData.distMatrix.size() > 0) inData.distMatrix.clear();
 	inData.distMatrix.resize(inData.workData.size(), std::vector<double>(inData.workData.size(),0));
@@ -45,9 +46,12 @@ void distMatrixPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
 		for(unsigned j = 0; j < inData.workData.size(); j++) r_i = std::max(r_i, inData.distMatrix[std::min(i, j)][std::max(i, j)]);
 		enclosingRadius = std::min(enclosingRadius, r_i);
 	}
+	if(inData.complex->complexType == "alphaComplex" && (this->betaMode == "lune" || this->betaMode == "circle"))
+				inData.incidenceMatrix = this->ut.betaNeighbors(inData.inputData,beta,betaMode);
 
 	inData.complex->setDistanceMatrix(&inData.distMatrix);
 	inData.complex->setEnclosingRadius(enclosingRadius);
+	inData.complex->setIncidenceMatrix(&inData.incidenceMatrix);
 
 	this->ut.writeDebug("distMatrix", "\tDist Matrix Size: " + std::to_string(inData.distMatrix.size()) + " x " + std::to_string(inData.distMatrix.size()));
 	return;
@@ -67,7 +71,15 @@ bool distMatrixPipe<nodeType>::configPipe(std::map<std::string, std::string> &co
 	pipe = configMap.find("outputFile");
 	if(pipe != configMap.end())
 		this->outputFile = configMap["outputFile"].c_str();
+		
+	pipe = configMap.find("beta");
+	if(pipe != configMap.end())
+		this->beta = std::atof(configMap["beta"].c_str());
 	
+	pipe = configMap.find("betaMode");
+	if(pipe != configMap.end())
+		this->betaMode = configMap["betaMode"].c_str();
+		
 	this->ut = utils(strDebug, this->outputFile);
 	
 	pipe = configMap.find("epsilon");

@@ -8,6 +8,8 @@ template<typename nodeType>
 class distMatrixPipe : public basePipe<nodeType> {
   private:
 	double enclosingRadius;
+	double beta;
+	std::string betaMode = "lune";
   public:
     distMatrixPipe();
     void runPipe(pipePacket<nodeType>& inData);

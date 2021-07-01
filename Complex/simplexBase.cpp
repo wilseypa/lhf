@@ -45,7 +45,7 @@ void simplexBase<nodeType>::setConfig(std::map<std::string, std::string> &config
 	else return;
 	pipe = configMap.find("complexType");
 	if(pipe != configMap.end())
-		simplexType = configMap["complexType"];
+		complexType = configMap["complexType"];
 	
 	pipe = configMap.find("simplicialComplex");
 	if(pipe != configMap.end())
@@ -68,6 +68,11 @@ void simplexBase<nodeType>::setDistanceMatrix(std::vector<std::vector<double>>* 
 	return;
 }
 
+template<typename nodeType>
+void simplexBase<nodeType>::setIncidenceMatrix(std::vector<std::vector<bool>>* _incidenceMatrix){
+	incidenceMatrix = _incidenceMatrix;
+	return;
+}
 // simplexTree constructor, currently no needed information for the class constructor
 template<typename nodeType>
 simplexBase<nodeType>* simplexBase<nodeType>::newSimplex(const std::string &simplexT, std::map<std::string, std::string> &configMap){

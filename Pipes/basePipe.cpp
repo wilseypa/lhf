@@ -42,7 +42,7 @@ basePipe<nodeType>* basePipe<nodeType>::newPipe(const std::string &pipeType, con
 		std::cout << "Building upscale" << std::endl;
 		return new upscalePipe<nodeType>();
 	} else if (pipeType == "betaSkeletonBasedComplex"){
-		return new betaSkeletonBasedComplexPipe<nodeType>();
+		return new betaSkeletonBasedComplex<nodeType>();
 	}  else if (pipeType == "qhullPipe" || pipeType == "qhull" || pipeType == "alpha"){
 		return new qhullPipe<nodeType>();
 	} else if (pipeType == "slidingwindow" || pipeType == "sliding"){
@@ -151,7 +151,7 @@ bool basePipe<nodeType>::configPipe(std::map<std::string, std::string> &configMa
 	pipe = configMap.find("simplicialComplex");
 	if(pipe != configMap.end())
 		simplicialComplex = configMap["simplicialComplex"].c_str();
-	std::cout<<"Simplicial Complex "<<simplicialComplex;
+		
 	return true;
 }
 

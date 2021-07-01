@@ -4,6 +4,7 @@
 #include <math.h>
 #include <algorithm>
 #include "simplexArrayList.hpp"
+#include <fstream>
 
 // simplexArrayList constructor, currently no needed information for the class constructor
 template<typename nodeType>
@@ -350,8 +351,23 @@ void simplexArrayList<nodeType>::expandDimensions(int dim){
 				//Compute the weight using all edges
 				double maxWeight = (*it)->weight;
 				for(auto i : (*it)->simplex) maxWeight = std::max(maxWeight, (*this->distMatrix)[i][pt]);
-
-				if(maxWeight <= this->maxEpsilon){ //Valid simplex
+			
+//***************************For beta complex valid simplex Condition ****************************			
+            bool valid = true;
+            if(this->complexType == "alphaComplex"){
+                  for(auto i : (*it)->simplex) 
+						if(!(*this->incidenceMatrix)[i][pt]){
+						   valid = false;
+						   break;
+					   }
+            if(valid){
+					std::shared_ptr<nodeType> tot = std::make_shared<nodeType>(nodeType((*it)->simplex, maxWeight));
+					tot->simplex.insert(pt);
+					tot->hash = (*it)->hash + bin.binom(pt, tot->simplex.size());
+					this->simplexList[d].insert(tot);
+			}
+//************************************************************************************************
+			}else if(maxWeight <= this->maxEpsilon){ //Valid simplex
 					std::shared_ptr<nodeType> tot = std::make_shared<nodeType>(nodeType((*it)->simplex, maxWeight));
 					tot->simplex.insert(pt);
 					tot->hash = (*it)->hash + bin.binom(pt, tot->simplex.size());
@@ -360,12 +376,30 @@ void simplexArrayList<nodeType>::expandDimensions(int dim){
 			}
 		}
 	}
+std::ofstream out("incedenceMatrix2DBeta.csv");
+int di=0;
+for( auto x : this->simplexList)
+	out<<"Count of "<<di++<<"-simplex ::"<<x.size()<<"\n";
+
+std::vector<std::vector<unsigned>> edges(this->simplexList[0].size(),std::vector<unsigned>(this->simplexList[0].size(),0));
+for(auto x : this->simplexList[1]){
+	std::vector<unsigned> edge;
+	for(auto y : x->simplex)
+		edge.push_back(y);
+    edges[edge[0]][edge[1]] = 1;
+	}
+
+
+for (auto row : edges) {
+  for (auto col : row)
+    out << col <<' ';
+  out << '\n';
+}
 }
 
 template<typename nodeType>
 std::vector<std::shared_ptr<nodeType>> simplexArrayList<nodeType>::expandDimension(std::vector<std::shared_ptr<nodeType>> edges, bool recordVertices, unsigned dim){
 	std::vector<std::shared_ptr<nodeType>> nextEdges;
-
 	//Iterate through each element in the current dimension's edges
 	for(auto it = edges.begin(); it != edges.end(); it++){
 		std::set<unsigned> vertices;
@@ -381,8 +415,27 @@ std::vector<std::shared_ptr<nodeType>> simplexArrayList<nodeType>::expandDimensi
 			//Compute the weight using all edges
 			double maxWeight = (*it)->weight;
 			for(auto i : vertices) maxWeight = std::max(maxWeight, (*this->distMatrix)[i][pt]);
-
-			if(maxWeight <= this->maxEpsilon){ //Valid simplex
+			
+//***************************For beta complex valid simplex Condition ****************************			
+            bool valid = true;
+            if(this->complexType == "alphaComplex"){
+                  for(auto i : vertices) 
+						if(!(*this->incidenceMatrix)[i][pt]){
+						   valid = false;
+						   break;
+					   }
+            if(valid){
+				std::shared_ptr<nodeType> tot = std::make_shared<nodeType>(nodeType());
+				if(recordVertices){
+					tot->simplex = vertices;
+					tot->simplex.insert(pt);
+				}
+				tot->weight = maxWeight;
+				tot->hash = (*it)->hash + bin.binom(pt, (recordVertices ? tot->simplex.size() : dim + 1));
+				nextEdges.push_back(tot);
+			}
+//************************************************************************************************
+			}else if(maxWeight <= this->maxEpsilon){ //Valid simplex
 				std::shared_ptr<nodeType> tot = std::make_shared<nodeType>(nodeType());
 				if(recordVertices){
 					tot->simplex = vertices;

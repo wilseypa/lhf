@@ -42,7 +42,7 @@ std::vector<simplexNodePointer> incrementalPersistence<nodeType>::incrementalByD
 	if(inData.complex->simplexType == "simplexArrayList"){
 		complex = (simplexArrayList<nodeType>*) inData.complex;
 	} else{
-		std::cout<<"IncrementalPersistence does not support complexes other than simplexArrayList\n";
+		std::cout<<"IncrementalPersistence does not support complexes\n";
 		return nextPivots;
 	}
 
@@ -141,12 +141,12 @@ std::vector<simplexNodePointer> incrementalPersistence<nodeType>::incrementalByD
 //		1. See Bauer-19 for algorithm/description
 template<typename nodeType>
 void incrementalPersistence<nodeType>::runPipe(pipePacket<nodeType> &inData){
-	simplexArrayList<nodeType>* complex;
-
-	if(inData.complex->simplexType == "simplexArrayList"){
+	simplexArrayList<nodeType>* complex;	
+	
+	if(inData.complex->simplexType == "simplexArrayList" || inData.complex->simplexType == "alphaComplex" ){
 		complex = (simplexArrayList<nodeType>*) inData.complex;
 	} else{
-		std::cout<<"IncrementalPersistence does not support complexes other than simplexArrayList\n";
+		std::cout<<"IncrementalPersistence does not support complexes other than simplexArrayList and alphaComplex\n";
 		return;
 	}
 

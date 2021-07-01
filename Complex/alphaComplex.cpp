@@ -4,7 +4,7 @@
 #include <math.h>
 #include <algorithm>
 #include "alphaComplex.hpp"
-
+#include <fstream>
 template<typename nodeType>
 alphaComplex<nodeType>::alphaComplex(double maxE, double maxD) : simplexArrayList<nodeType>::simplexArrayList(0,0) {
 	this->simplexType = "alphaComplex";
@@ -38,6 +38,102 @@ std::vector<std::shared_ptr<nodeType>> alphaComplex<nodeType>::getAllDelaunayCof
 	return ret;
 }
 
+template<>
+void alphaComplex<alphaNode>::buildBetaComplex(std::set<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData){
+	unsigned maxDimension = (*dsimplexmesh.begin()).size()-1;
+	this->bin = binomialTable(npts, this->maxDimension+1);
+	for(int i=0; i <= this->maxDimension; i++)
+		this->simplexList.push_back({});
+   
+	for(auto simplex : dsimplexmesh){
+		unsigned int pow_set_size = pow(2, simplex.size());
+		for(int counter =1;counter<pow_set_size;counter++){
+			double weight =0;
+			std::set<unsigned> gensimp;
+			for(int j=0;j<simplex.size();j++){
+				if(counter & (1<<j)){
+					unsigned indnew;
+					indnew = *(std::next(simplex.begin(),j));
+					for(auto x:gensimp){
+						if(x<indnew){
+							if(weight<(*(this->distMatrix))[x][indnew])
+								weight = (*(this->distMatrix))[x][indnew];
+						}
+						else if(weight<(*(this->distMatrix))[indnew][x])
+							weight = (*(this->distMatrix))[indnew][x];
+					}
+					gensimp.insert(indnew);
+				}
+			}
+
+			std::shared_ptr<alphaNode> tot = std::make_shared<alphaNode>(alphaNode(gensimp,weight));
+			if(gensimp.size()==1)
+				tot->hash = *(gensimp.begin());
+			else
+				tot->hash = this->simplexHash(gensimp);
+			this->simplexList[gensimp.size()-1].insert(tot);
+			gensimp.clear();
+		}
+	}
+	
+std::vector<std::vector<unsigned>> edges(inputData.size(),std::vector<unsigned>(inputData.size(),0));
+for(auto x : this->simplexList[1]){
+	std::vector<unsigned> edge;
+	for(auto y : x->simplex)
+		edge.push_back(y);
+    edges[edge[0]][edge[1]] = 1;
+	}
+
+this->simplexList.push_back({});
+
+for(auto it = simplexList[maxDimension].begin(); it != simplexList[maxDimension].end(); it++){
+		std::set<unsigned> vertices;
+
+		vertices = (*it)->simplex;
+
+		//Iterate over points to possibly add to the simplex
+		//Use points larger than the maximal vertex in the simplex to prevent double counting
+		unsigned minPt = *vertices.rbegin() + 1;
+
+		for(unsigned pt = minPt; pt < this->simplexList[0].size(); pt++){
+			//Compute the weight using all edges
+			double maxWeight = (*it)->weight;
+			for(auto i : vertices) maxWeight = std::max(maxWeight, (*this->distMatrix)[i][pt]);
+			
+//***************************For beta complex valid simplex Condition ****************************			
+            bool valid = true;
+            if(this->complexType == "alphaComplex"){
+                  for(auto i : vertices) 
+						if(edges[i][pt]==0){
+						   valid = false;
+						   break;
+					   }
+            if(valid){
+				std::shared_ptr<alphaNode> tot = std::make_shared<alphaNode>(alphaNode());
+				tot->simplex = vertices;
+				tot->simplex.insert(pt);
+				tot->weight = maxWeight;
+				tot->hash = this->simplexHash(tot->simplex);
+				simplexList[tot->simplex.size()-1].insert(tot);
+				}
+//************************************************************************************************
+			}
+		}
+	}
+
+int di=0;
+std::ofstream out("incedenceMatrixGeneral.csv");
+for( auto x : this->simplexList)
+	out<<"Count of "<<di++<<"-simplex ::"<<x.size()<<"\n";
+
+
+for (auto row : edges) {
+  for (auto col : row)
+    out << col <<' ';
+  out << '\n';
+}
+
+}
 
 template<>
 void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData){
@@ -46,6 +142,7 @@ void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<int>> ds
 	for(int i=0; i <= this->maxDimension; i++)
 		this->simplexList.push_back({});
 
+     std::cout<<dsimplexmesh.size()<<"\n\nHoorey";
 	for(auto simplex : dsimplexmesh){
 		unsigned int pow_set_size = pow(2, simplex.size());
 		for(int counter =1;counter<pow_set_size;counter++){
@@ -196,8 +293,14 @@ void alphaComplex<nodeType>::buildAlphaComplex(std::vector<std::vector<int>> dsi
 	this->ut.writeLog(this->simplexType,"No build alpha complex function defined");
 	return;
 }
-	
 
+
+
+template<typename nodeType>
+void alphaComplex<nodeType>::buildBetaComplex(std::set<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData){
+	this->ut.writeLog(this->simplexType,"No build beta complex function defined");
+	return;
+}
 
 
 //Explicit Template Class Instantiation

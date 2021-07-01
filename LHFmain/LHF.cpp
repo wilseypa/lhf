@@ -63,7 +63,7 @@ void LHF<nodeType>::runPipeline(std::map<std::string, std::string> args, pipePac
 			//Check if the pipe was created and configure
 			if (cp != 0 && cp->configPipe(args)){
 				//Run the pipe function (wrapper)
-				cp->runPipeWrapper(wD);
+             	cp->runPipeWrapper(wD);
 			}
 			else{
 				std::cout << "LHF runPipeline: Failed to configure pipeline: " << args["pipeline"] << std::endl;
