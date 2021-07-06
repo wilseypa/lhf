@@ -28,7 +28,6 @@ distMatrixPipe<nodeType>::distMatrixPipe(){
 // runPipe -> Run the configured functions of this pipeline segment
 template<typename nodeType>
 void distMatrixPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
-
 	//Store our distance matrix
 	if(inData.distMatrix.size() > 0) inData.distMatrix.clear();
 	inData.distMatrix.resize(inData.workData.size(), std::vector<double>(inData.workData.size(),0));

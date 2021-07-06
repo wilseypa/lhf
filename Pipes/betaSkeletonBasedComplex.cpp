@@ -301,7 +301,11 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 					circumRadiusfaces = pow((*((alphaComplex<alphaNode>*)inData.complex)->distMatrix)[dsimplexIndexed[0]][dsimplexIndexed[1]]/2,2);
 				std::vector<double> hpcofffaces = utils::nullSpaceOfMatrix(dsimplexIndexedset,inData.inputData,circumCenterfaces,sqrt(circumRadiusfaces));
 				std::vector<std::vector<double>> betaCentersfaces = utils::betaCentersCalculation(hpcofffaces, beta, sqrt(circumRadiusfaces),circumCenterfaces);
-				double betaRadiusfaces = beta*sqrt(circumRadiusfaces);
+				double betaRadiusfaces;
+				if(circumRadiusfaces > circumRadius)
+					betaRadiusfaces = beta*sqrt(circumRadiusfaces);
+				else
+					betaRadiusfaces = beta*sqrt(circumRadius);
 
 				//Decide on beta center
 				// extract the other points
