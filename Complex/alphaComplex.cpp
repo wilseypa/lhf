@@ -123,8 +123,9 @@ for(auto it = simplexList[maxDimension].begin(); it != simplexList[maxDimension]
 
 int di=0;
 std::ofstream out("incedenceMatrixGeneral.csv");
+
 for( auto x : this->simplexList)
-	out<<"Count of "<<di++<<"-simplex ::"<<x.size()<<"\n";
+	std::cout<<"Count of "<<di++<<"-simplex ::"<<x.size()<<"\n";
 
 
 for (auto row : edges) {
