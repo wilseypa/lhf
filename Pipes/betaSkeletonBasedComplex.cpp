@@ -166,7 +166,7 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 	else
 		intersection = false;
 
-			if(this->betaMode == "highDimCircle" || beta <= 1){
+			if(this->betaMode == "highDimCircle"){
             std::set<unsigned> simplex(dsimplex.begin(),dsimplex.end());
 
             std::vector<double> circumCenter;
@@ -226,7 +226,7 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 				v.resize(it-v.begin()); 
 				neighbors = v;
 			}
-
+		
 			if(neighbors.size() == 0){
 				    //recurseInsertDsimplex(root, dsimplex,inputData);
 					return true;
@@ -267,7 +267,35 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 					circumRadius = utils::circumRadius(simplex,((alphaComplex<alphaNode>*)inData.complex)->distMatrix);
 				else
 					circumRadius = pow((*((alphaComplex<alphaNode>*)inData.complex)->distMatrix)[dsimplex[0]][dsimplex[1]]/2,2);
-				std::vector<double> hpcoff = utils::nullSpaceOfMatrix(simplex,inData.inputData,circumCenter,sqrt(circumRadius));
+				bool first = true;
+				for (auto x : simplex){
+					std::vector<double> betaCenter;
+					for(unsigned y =0 ;y< inData.inputData[0].size();y++)
+						betaCenter.push_back(beta*circumCenter[y] + (1-beta)*inData.inputData[x][y]);
+					
+		           double betaRadius = beta*sqrt(circumRadius);
+
+		    
+					std::vector<size_t> neighbors1faces1 = tree.neighborhoodIndices(betaCenter, betaRadius); //All neighbors in epsilon-ball
+					neighbors1faces1.erase(std::remove(neighbors1faces1.begin(),neighbors1faces1.end(),x),neighbors1faces1.end());
+					if(!first){
+						std::sort (neighborsfinalLune.begin(),neighborsfinalLune.end());
+						std::sort (neighbors1faces1.begin(),neighbors1faces1.end()); 
+			
+						std::vector<size_t> v1(std::min(neighborsfinalLune.size(),neighbors1faces1.size()));
+						std::vector<size_t>::iterator it1;
+				
+						it1=std::set_intersection (neighbors1faces1.begin(), neighbors1faces1.end(), neighborsfinalLune.begin(), neighborsfinalLune.end(), v1.begin());
+						v1.resize(it1-v1.begin()); 
+						neighborsfinalLune = v1;
+					}	
+					else
+						neighborsfinalLune = neighbors1faces1;
+                    first= false;
+           
+				}
+				
+	/*			std::vector<double> hpcoff = utils::nullSpaceOfMatrix(simplex,inData.inputData,circumCenter,sqrt(circumRadius));
 		
 			     int dim = dsimplex.size()-1;
 			     int n = dim+1;
@@ -384,6 +412,7 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 			v1.resize(it1-v1.begin()); 
 			neighborsfinalLune = v1;				
      	}
+     	* */
 	//	std::cout<<count<<" "<<dsimplexmesh.size()<<std::endl;
 		}
 	//	std::cout<<"neighborsfinalLune.size() :: "<<neighborsfinalLune.size()<<"\n";
