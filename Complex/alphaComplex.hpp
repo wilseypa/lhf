@@ -11,6 +11,7 @@ class alphaComplex : public simplexArrayList<nodeType>{
 	typedef std::shared_ptr<nodeType> templateNode_P;
 	
 	private:
+	      
 	public:
 		alphaComplex(double, double);
 
@@ -29,6 +30,6 @@ class alphaComplex : public simplexArrayList<nodeType>{
 		
 		std::vector<templateNode_P> getAllDelaunayCofacets(templateNode_P);
 		void buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, int pts,std::vector<std::vector<double>> inputData);
-		void buildBetaComplex(std::set<std::vector<unsigned>>dsimplexmesh,int pts, std::vector<std::vector<double>> inData);
+		void buildBetaComplex(std::set<std::vector<unsigned>>dsimplexmesh,int pts, std::vector<std::vector<double>> inData,double beta,std::string betaMode);
 
 };

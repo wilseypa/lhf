@@ -31,7 +31,6 @@ betaSkeletonBasedComplex<nodeType>::betaSkeletonBasedComplex(){
 template <typename nodeType>
 void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
 	// Generate Beta Skeleton Based Complex
-	
 	// Temporarily commenting this out - need to check inData.complex type
 	//		If type is the graph-based simplexArrayList (inherited) then
 	//			cast to gAL and run non-virtual function:
@@ -39,7 +38,7 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
 	//	((graphArrayList*)inData.complex)->graphInducedComplex(dim,inData.inputData,beta);
 	std::set<std::vector<unsigned>> dsimplexmesh;
 	kdTree tree(inData.inputData, inData.inputData.size()); //KDTree for efficient nearest neighbor search
-	int dim = inData.inputData[0].size()-1;
+	int dim = inData.inputData[0].size();
     double distanceSum = 0;
 	int count = 0;
 	//Computing the average point cloud distance
@@ -53,6 +52,7 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
     count =0;
     std::vector<std::pair<int,int>> neighborsepsilon;
     
+   
     for(unsigned index = 0; index < inData.inputData.size(); index++){
 		    std::vector<size_t> neighbors = tree.neighborhoodIndices(inData.inputData[index], this->epsilon); //All neighbors in epsilon-ball
 		    int n = neighbors.size();
@@ -60,6 +60,8 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
             neighborsepsilon.push_back(std::make_pair(n,index));
 			
     }
+
+   
     sort(neighborsepsilon.begin(),neighborsepsilon.end());
     std::vector<int> toremove;
 	for(unsigned indexold = 0; indexold < inData.inputData.size(); indexold++){
@@ -73,6 +75,8 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
             std::vector<int> difference;
             std::set_difference(neighbors.begin(),neighbors.end(),toremove.begin(),toremove.end(), std::back_inserter(difference));
 			n = difference.size();
+			
+    
 			if(n>=dim){
 			std::vector<unsigned> dsimplex(dim);
 			std::vector<unsigned> dsimplexIndexed;
@@ -91,6 +95,7 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
 					 count++;
 		   }
             
+	
 	while((*first) != n-dim+1){  	
 
   	    std::vector<unsigned>::iterator mt = last;
@@ -111,12 +116,16 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
 		    	count++;	    	
 	    	}
      	}
-	//	std::cout<<count<<" "<<dsimplexmesh.size()<<std::endl;
+	        if(count%10==0){
+		std::cout<<count<<" "<<dsimplexmesh.size()<<std::endl;
 
+		}
 	  }
 	}
-	((alphaComplex<nodeType>*)inData.complex)->buildBetaComplex(dsimplexmesh,inData.inputData.size(),inData.inputData);
-	
+	((alphaComplex<nodeType>*)inData.complex)->buildBetaComplex(dsimplexmesh,inData.inputData.size(),inData.inputData,this->beta,this->betaMode);
+	//std::ofstream file("PHdSphereDimensionWiseMeshSize.txt",std::ios_base::app);
+        //file<<this->betaMode<<","<<inData.inputData.size()<<","<<inData.inputData[0].size()<<","<<this->beta<<","<<dsimplexmesh.size()<<std::endl;	
+	//file.close();
 	this->ut.writeDebug("betaSkeletonBasedComplex Pipe", "\tbetaSkeletonBasedComplex Size: ");
 	return;
 }
@@ -157,9 +166,15 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 	    return false;
 	            
 	std::vector<size_t> neighborsfinalLune;
-
+        for(auto x:dsimplex)
+		std::cout<<x<<" ";
+	std::cout<<"\n";
 	bool intersection;
-    if(beta <= 1){
+	if(beta <0)
+		exit(0);
+	else if(beta==0)
+		return true;
+    	else if(beta <= 1){
 		intersection = true;
 		beta = 1/beta;
 	}
