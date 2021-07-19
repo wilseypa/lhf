@@ -40,7 +40,7 @@ std::vector<std::shared_ptr<nodeType>> alphaComplex<nodeType>::getAllDelaunayCof
 
 template<>
 void alphaComplex<alphaNode>::buildBetaComplex(std::set<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData,double beta,std::string betaMode){
-	unsigned maxDimension = (*dsimplexmesh.begin()).size()-1;
+	unsigned maxDimension = (*dsimplexmesh.begin()).size();
 	this->bin = binomialTable(npts, this->maxDimension+1);
 	for(int i=0; i <= this->maxDimension; i++)
 		this->simplexList.push_back({});
@@ -69,8 +69,10 @@ void alphaComplex<alphaNode>::buildBetaComplex(std::set<std::vector<unsigned>> d
 			std::shared_ptr<alphaNode> tot = std::make_shared<alphaNode>(alphaNode(gensimp,weight));
 			if(gensimp.size()==1)
 				tot->hash = *(gensimp.begin());
+			        
 			else
 				tot->hash = this->simplexHash(gensimp);
+
 			this->simplexList[gensimp.size()-1].insert(tot);
 			gensimp.clear();
 		}
@@ -170,6 +172,7 @@ out.close();
 		}
 	}
 */
+return;
 }
 
 template<>
@@ -223,7 +226,7 @@ void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<int>> ds
       				std::advance(first, 1);
 				std::vector<double> B = inputData[*first];
 	   			std::transform(A.begin(), A.end(), B.begin(), std::back_inserter(R),[](double e1,double e2){return ((e1+e2)/2);});
-				  tot->circumCenter = R;
+				tot->circumCenter = R;
    			 }
 			else
    				tot->circumCenter = inputData[*(gensimp.begin())];

@@ -111,21 +111,20 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
 			//std::cout<<dsimplexIndexed1[i]<<" \n";
 		}
             if(checkInsertDsimplex(dsimplexIndexed1,inData,this->beta,averageDistance,tree)){
-				std::sort(dsimplexIndexed1.begin(), dsimplexIndexed1.end());
-                dsimplexmesh.insert(dsimplexIndexed1);
+			std::sort(dsimplexIndexed1.begin(), dsimplexIndexed1.end());
+           	     	dsimplexmesh.insert(dsimplexIndexed1);
 		    	count++;	    	
-	    	}
-     	}
-	        if(count%10==0){
-		std::cout<<count<<" "<<dsimplexmesh.size()<<std::endl;
-
-		}
+	       
+	    		}
+    	 	}      
+	       
 	  }
 	}
+	
 	((alphaComplex<nodeType>*)inData.complex)->buildBetaComplex(dsimplexmesh,inData.inputData.size(),inData.inputData,this->beta,this->betaMode);
-	//std::ofstream file("PHdSphereDimensionWiseMeshSize.txt",std::ios_base::app);
-        //file<<this->betaMode<<","<<inData.inputData.size()<<","<<inData.inputData[0].size()<<","<<this->beta<<","<<dsimplexmesh.size()<<std::endl;	
-	//file.close();
+	std::ofstream file("PHdSphereDimensionWiseMeshSize.txt",std::ios_base::app);
+        file<<this->betaMode<<","<<inData.inputData.size()<<","<<inData.inputData[0].size()<<","<<this->beta<<","<<dsimplexmesh.size()<<std::endl;	
+	file.close();
 	this->ut.writeDebug("betaSkeletonBasedComplex Pipe", "\tbetaSkeletonBasedComplex Size: ");
 	return;
 }
@@ -166,9 +165,7 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 	    return false;
 	            
 	std::vector<size_t> neighborsfinalLune;
-        for(auto x:dsimplex)
-		std::cout<<x<<" ";
-	std::cout<<"\n";
+        
 	bool intersection;
 	if(beta <0)
 		exit(0);
@@ -259,7 +256,9 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 				}
 			}
 			else if(this->betaMode == "highDimLune"){
-			     std::set<unsigned> simplex(dsimplex.begin(),dsimplex.end());
+
+			       
+				std::set<unsigned> simplex(dsimplex.begin(),dsimplex.end());
 			     
 			     
 				 std::vector<double> circumCenter;
