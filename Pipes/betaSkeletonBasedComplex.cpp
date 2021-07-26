@@ -36,7 +36,7 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
 	//			cast to gAL and run non-virtual function:
 	
 	//	((graphArrayList*)inData.complex)->graphInducedComplex(dim,inData.inputData,beta);
-	std::set<std::vector<unsigned>> dsimplexmesh;
+	std::vector<std::vector<unsigned>> dsimplexmesh;
 	kdTree tree(inData.inputData, inData.inputData.size()); //KDTree for efficient nearest neighbor search
 	int dim = inData.inputData[0].size();
     double distanceSum = 0;
@@ -91,7 +91,7 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
 
 			if(checkInsertDsimplex(dsimplexIndexed,inData,this->beta,averageDistance,tree)){	
 					 std::sort(dsimplexIndexed.begin(), dsimplexIndexed.end());		  
-				     dsimplexmesh.insert(dsimplexIndexed);
+				     dsimplexmesh.push_back(dsimplexIndexed);
 					 count++;
 		   }
             
@@ -112,7 +112,7 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
 		}
             if(checkInsertDsimplex(dsimplexIndexed1,inData,this->beta,averageDistance,tree)){
 			std::sort(dsimplexIndexed1.begin(), dsimplexIndexed1.end());
-           	     	dsimplexmesh.insert(dsimplexIndexed1);
+           	     	dsimplexmesh.push_back(dsimplexIndexed1);
 		    	count++;	    	
 	       
 	    		}
@@ -163,22 +163,25 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 				
 	if(maxEdge > this->epsilon)
 	    return false;
-	            
+
 	std::vector<size_t> neighborsfinalLune;
         
-	bool intersection;
+	bool intersectionCircle= false;
+	bool intersectionLune = false;
 	if(beta <0)
 		exit(0);
 	else if(beta==0)
 		return true;
-    	else if(beta <= 1){
-		intersection = true;
-		beta = 1/beta;
+    	else if(beta <1){
+		intersectionCircle = true;
+		
 	}
 	else
-		intersection = false;
+		intersectionLune = true;
 
 			if(this->betaMode == "highDimCircle"){
+				if(beta<1)
+					beta=1/beta;
             std::set<unsigned> simplex(dsimplex.begin(),dsimplex.end());
 
             std::vector<double> circumCenter;
@@ -199,6 +202,164 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
    				circumRadius = utils::circumRadius(simplex,((alphaComplex<alphaNode>*)inData.complex)->distMatrix);
    			else
 				circumRadius = pow((*((alphaComplex<alphaNode>*)inData.complex)->distMatrix)[dsimplex[0]][dsimplex[1]]/2,2);
+                        bool first = true;
+                       
+                        std::vector<size_t> neighbors;
+                        
+			for (auto x : simplex){
+
+			        double expr1,expr2;
+			
+			
+                                std::vector<unsigned> face1;
+				face1 = dsimplex;
+				face1.erase(std::remove(face1.begin(),face1.end(),x),face1.end());
+                                std::set<unsigned> face(face1.begin(),face1.end());
+				std::vector<double> faceCC ;
+                        
+                         if(face.size()>2)
+				faceCC = utils::circumCenter(face,inData.inputData);
+			else if(face.size()==2){
+ 				auto first = face.begin();
+				std::vector<double> fR;
+				std::vector<double> fA = inData.inputData[*first];
+      		        	std::advance(first, 1);
+				std::vector<double> fB = inData.inputData[*first];
+	   			std::transform(fA.begin(), fA.end(), fB.begin(), std::back_inserter(fR),[](double e1,double e2){return ((e1+e2)/2);});
+				faceCC = fR;
+   			 }
+	
+   			double faceRadius;
+   			if(face.size()>2)
+   				faceRadius = utils::circumRadius(face,((alphaComplex<alphaNode>*)inData.complex)->distMatrix);
+   			else
+				faceRadius = pow((*((alphaComplex<alphaNode>*)inData.complex)->distMatrix)[face1[0]][face1[1]]/2,2);
+                        
+			std::vector<double> betaCenter;
+			bool sameside = false;
+			if(face.size()>2){
+				std::vector<double> hpcoff = utils::nullSpaceOfMatrix(face,inData.inputData,faceCC,sqrt(faceRadius));
+                       
+		//	std::vector<std::vector<double>> betaCenters = utils::betaCentersCalculation(hpcoff, beta, sqrt(circumRadius),faceCC);
+                  expr1=0;
+		  expr2=0;
+		 
+ 		  for(unsigned i =0;i<hpcoff.size();i++){
+	 	 	  expr1 += hpcoff[i]*circumCenter[i];
+	 		  expr2 += hpcoff[i]*inData.inputData[x][i];
+		  }
+			      expr1--;
+			      expr2--;		
+				if(expr1 > 0){
+
+					if(expr2 > 0)
+						sameside = true;
+					else
+						sameside = false;
+				}
+				else{
+					if(expr2<0)
+						sameside = true;
+					else
+						sameside = false;
+				}
+	               
+			for(unsigned y =0 ;y< inData.inputData[0].size();y++)
+					if(sameside){
+						if(intersectionCircle)
+							betaCenter.push_back((2-beta)*circumCenter[y] + (beta-1)*faceCC[y]);
+						else
+							betaCenter.push_back(beta*circumCenter[y] - (beta-1)*faceCC[y]);
+					}else{
+						if(intersectionCircle)
+							betaCenter.push_back(beta*circumCenter[y] - (beta-1)*faceCC[y]);
+						else
+							betaCenter.push_back((2-beta)*circumCenter[y] + (beta-1)*faceCC[y]);
+           				}
+			}
+			else{
+				double slope,intercept;
+				if(inData.inputData[face1[1]][0]==inData.inputData[face1[0]][0]){
+				  if(circumCenter[0]<inData.inputData[face1[1]][0]&&inData.inputData[x][0]<inData.inputData[face1[1]][0])
+					sameside = true;
+				  else if(circumCenter[0]>inData.inputData[face1[1]][0]&&inData.inputData[x][0]>inData.inputData[face1[1]][0])
+					  sameside = true;
+				  else
+					  sameside=false;
+				}
+				else
+				{
+				slope = (inData.inputData[face1[1]][1] - inData.inputData[face1[0]][1])/(inData.inputData[face1[1]][0]-inData.inputData[face1[0]][0]);
+
+				intercept = (inData.inputData[face1[0]][1]-slope*inData.inputData[face1[0]][0]);
+
+				expr1 = circumCenter[1]-slope*circumCenter[0]-intercept;
+			        expr2 = inData.inputData[x][1]-slope*inData.inputData[x][0]-intercept;
+			
+				if(expr1 < 0){
+					if(expr2 <0)
+						sameside = true;
+					else
+						sameside = false;
+				}
+				else{
+					if(expr2>0)
+						sameside = true;
+					else
+						sameside = false;
+				}
+				}
+                             
+
+				for(unsigned y =0 ;y< inData.inputData[0].size();y++)
+					if(sameside){
+						if(intersectionCircle)
+							betaCenter.push_back((2-beta)*circumCenter[y] + (beta-1)*faceCC[y]);
+						else
+							betaCenter.push_back(beta*circumCenter[y] - (beta-1)*faceCC[y]);
+					}else{
+						if(intersectionCircle)
+							betaCenter.push_back(beta*circumCenter[y] - (beta-1)*faceCC[y]);
+						else
+							betaCenter.push_back((2-beta)*circumCenter[y] + (beta-1)*faceCC[y]);
+           				}
+/*
+
+                                double dist = sqrt(pow(beta*(sqrt(circumRadius)),2)-pow((*((alphaComplex<alphaNode>*)inData.complex)->distMatrix)[face1[0]][face1[1]]/2,2));
+				std::cout<<"distance "<<dist<<" ";
+				double parallelintercept,xcoord,ycoord;
+				if(dist==0){
+					xcoord = faceCC[0];
+					ycoord = faceCC[1];
+				}
+				else if(slpundef || slope == 0)
+				{
+                                  parallelintercept = -dist + intercept;
+				  std::cout<<parallelintercept<<" "; 
+				  xcoord = (parallelintercept-intercept);
+                                 
+				  ycoord =  parallelintercept;
+				  std::cout<<xcoord<<" "<<ycoord<<" ";
+				}
+				else{
+				 parallelintercept = (-1)*dist*sqrt(1+pow(slope,2)) + intercept;
+                                 xcoord = faceCC[0]+(parallelintercept-intercept)/(((-1)/slope)-slope);
+				 std::cout<<parallelintercept<<" "<<xcoord<<" ";
+				 ycoord = faceCC[1]+slope*xcoord+parallelintercept;
+				}
+				std::cout<<dist<<"  "<<parallelintercept<<" ";;
+				betaCenter.push_back(xcoord);
+				betaCenter.push_back(ycoord);
+                               */
+			}
+	
+			
+		     	double betaRadius = utils::vectors_distance(betaCenter,inData.inputData[face1[0]]);
+		
+			std::vector<size_t> neighborsface = tree.neighborhoodIndices(betaCenter, betaRadius); //All neighbors in epsilon-ball
+			for(auto x :dsimplex)
+		        	neighborsface.erase(std::remove(neighborsface.begin(),neighborsface.end(),x),neighborsface.end());
+/*			
 			std::vector<double> hpcoff = utils::nullSpaceOfMatrix(simplex,inData.inputData,circumCenter,sqrt(circumRadius));
 			std::vector<std::vector<double>> betaCenters = utils::betaCentersCalculation(hpcoff, beta, sqrt(circumRadius),circumCenter);
 			double betaRadius = beta*sqrt(circumRadius);
@@ -219,26 +380,35 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
     		
     		
             std::vector<size_t> neighbors;
-            std::sort (neg1.begin(),neg1.end());
-			std::sort (neg2.begin(),neg2.end()); 
-			
-            if(intersection == true){
-				std::vector<size_t> v(std::min(neg1.size(),neg2.size()));
+*/            std::sort (neighborsface.begin(),neighborsface.end());
+	      std::sort (neighbors.begin(),neighbors.end()); 
+	      
+	    
+	    if(!first){
+            if(intersectionCircle == true){
+				std::vector<size_t> v(std::min(neighbors.size(),neighborsface.size()));
 				std::vector<size_t>::iterator it;
 				
-				it=std::set_intersection (neg1.begin(), neg1.end(), neg2.begin(), neg2.end(), v.begin());
+				it=std::set_intersection (neighbors.begin(), neighbors.end(), neighborsface.begin(), neighborsface.end(), v.begin());
 				v.resize(it-v.begin()); 
 				neighbors = v;				
 			}
 			else{
-				std::vector<size_t> v(neg1.size() + neg2.size());
+				std::vector<size_t> v(neighbors.size() + neighborsface.size());
 				std::vector<size_t>::iterator it;	
-		
-				it=std::set_union (neg1.begin(), neg1.end(), neg2.begin(), neg2.end(), v.begin());
+				it=std::set_union (neighbors.begin(), neighbors.end(), neighborsface.begin(), neighborsface.end(), v.begin());
 				v.resize(it-v.begin()); 
 				neighbors = v;
 			}
-		
+	    }
+	    else{
+		    neighbors = neighborsface;
+		    first = false;
+	    }
+	    
+			}
+			
+	
 			if(neighbors.size() == 0){
 				    //recurseInsertDsimplex(root, dsimplex,inputData);
 					return true;
@@ -271,7 +441,7 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
  				auto first = simplex.begin();
 				std::vector<double> R;
 				std::vector<double> A = inData.inputData[*first];
-      			std::advance(first, 1);
+      		        	std::advance(first, 1);
 				std::vector<double> B = inData.inputData[*first];
 	   			std::transform(A.begin(), A.end(), B.begin(), std::back_inserter(R),[](double e1,double e2){return ((e1+e2)/2);});
 				circumCenter = R;
@@ -283,29 +453,40 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 					circumRadius = pow((*((alphaComplex<alphaNode>*)inData.complex)->distMatrix)[dsimplex[0]][dsimplex[1]]/2,2);
 				bool first = true;
 				for (auto x : simplex){
+
 					std::vector<double> betaCenter;
 					for(unsigned y =0 ;y< inData.inputData[0].size();y++)
 						betaCenter.push_back(beta*circumCenter[y] + (1-beta)*inData.inputData[x][y]);
 					
-		           double betaRadius = beta*sqrt(circumRadius);
+		     		       double betaRadius = beta*sqrt(circumRadius);
+                                
 
-		    
 					std::vector<size_t> neighbors1faces1 = tree.neighborhoodIndices(betaCenter, betaRadius); //All neighbors in epsilon-ball
 					neighbors1faces1.erase(std::remove(neighbors1faces1.begin(),neighbors1faces1.end(),x),neighbors1faces1.end());
 					if(!first){
 						std::sort (neighborsfinalLune.begin(),neighborsfinalLune.end());
 						std::sort (neighbors1faces1.begin(),neighbors1faces1.end()); 
-			
+			                        if(intersectionLune==true){
 						std::vector<size_t> v1(std::min(neighborsfinalLune.size(),neighbors1faces1.size()));
 						std::vector<size_t>::iterator it1;
 				
 						it1=std::set_intersection (neighbors1faces1.begin(), neighbors1faces1.end(), neighborsfinalLune.begin(), neighborsfinalLune.end(), v1.begin());
 						v1.resize(it1-v1.begin()); 
 						neighborsfinalLune = v1;
+						}
+						else
+						{
+						std::vector<size_t> v1(std::max(neighborsfinalLune.size(),neighbors1faces1.size()));
+						std::vector<size_t>::iterator it1;
+				
+						it1=std::set_union(neighbors1faces1.begin(), neighbors1faces1.end(), neighborsfinalLune.begin(), neighborsfinalLune.end(), v1.begin());
+						v1.resize(it1-v1.begin()); 
+						neighborsfinalLune=v1;
+						}
 					}	
 					else
 						neighborsfinalLune = neighbors1faces1;
-                    first= false;
+                                first= false;
            
 				}
 				

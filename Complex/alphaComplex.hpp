@@ -12,6 +12,11 @@ class alphaComplex : public simplexArrayList<nodeType>{
 	
 	private:
 	      
+	struct c_unique {
+	unsigned current;
+	c_unique() {current=0;}
+	unsigned operator()() {return ++current;}
+	} UniqueNumber;
 	public:
 		alphaComplex(double, double);
 
@@ -29,7 +34,9 @@ class alphaComplex : public simplexArrayList<nodeType>{
 		~alphaComplex();
 		
 		std::vector<templateNode_P> getAllDelaunayCofacets(templateNode_P);
-		void buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, int pts,std::vector<std::vector<double>> inputData);
-		void buildBetaComplex(std::set<std::vector<unsigned>>dsimplexmesh,int pts, std::vector<std::vector<double>> inData,double beta,std::string betaMode);
+		void buildAlphaComplex(std::vector<std::vector<unsigned>> dsimplexmesh, int pts,std::vector<std::vector<double>> inputData);
+		void buildBetaComplex(std::vector<std::vector<unsigned>>dsimplexmesh,int pts, std::vector<std::vector<double>> inData,double beta,std::string betaMode);
+		void buildBetaComplexFilteration(std::vector<std::vector<unsigned>>dsimplexmesh,int pts, std::vector<std::vector<double>> inData,kdTree tree);
+		
 
 };

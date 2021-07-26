@@ -206,7 +206,12 @@ std::vector<double> utils :: nullSpaceOfMatrix(std::set<unsigned> simplex,std::v
     int n = inputData[0].size();
     std::vector<double> matns(n,1);
     std::vector<std::vector<double>> mat;
-    do{	
+    
+    for(auto x : simplex)
+	    mat.push_back(inputData[x]);
+
+   
+  /*  do{	
 		std::vector<std::vector<double>> mat1;
 		mat = mat1;
 		if(simplex.size()==n){
@@ -244,7 +249,8 @@ std::vector<double> utils :: nullSpaceOfMatrix(std::set<unsigned> simplex,std::v
 
 				}
 		}
-	}while(simplexVolume(mat) == 0);
+	}while(simplexVolume(mat) == 0 && n >2);
+ */
 	
 
     for (unsigned i = 0; i < n; i++)

@@ -44,7 +44,7 @@ std::vector<simplexNodePointer> fastPersistence<nodeType>::persistenceByDimensio
 		if(it == pivots.end() || (*it)->weight != simplex->weight || (*it)->simplex != simplex->simplex){
 		//	std::cout<<mode<<" "<<simplicialComplex<<" "<<complexType<<std::endl;
 			//Get all cofacets using emergent pair optimization
-			std::vector<simplexNodePointer> faceList = (mode == "homology" ? inData.complex->getAllFacets_P(simplex) :inData.complex->getAllCofacets(simplex->simplex, simplex->weight, pivotPairs, true));
+			std::vector<simplexNodePointer> faceList = (mode == "homology" ? inData.complex->getAllFacets_P(simplex) : (inData.complex->simplexType == "AlphaComplex"? inData.complex->getAllDelaunayCofacets(simplex): inData.complex->getAllCofacets(simplex->simplex,simplex->weight,pivotPairs,true)));
 			
 				
 			std::vector<simplexNodePointer> columnV;	//Reduction column of matrix V
@@ -54,7 +54,6 @@ std::vector<simplexNodePointer> fastPersistence<nodeType>::persistenceByDimensio
 			std::make_heap(faceList.begin(), faceList.end(), compStruct);
 
 			while(true){
-			       
 				simplexNodePointer pivot;
 
 				while(!faceList.empty()){
@@ -95,6 +94,25 @@ std::vector<simplexNodePointer> fastPersistence<nodeType>::persistenceByDimensio
 
 					if(recordIntervals && simplex->weight != pivot->weight){
 						bettiBoundaryTableEntry des = { dimension, std::min(pivot->weight, simplex->weight), std::max(pivot->weight, simplex->weight), this->ut.extractBoundaryPoints(v[simplex]) };
+
+						if(inData.complex->simplexType=="alphaComplex"){	
+						std::vector<double> centroid(inData.inputData[0].size());
+						int pts=0;
+						for(auto x:pivot->simplex){
+							int i=0;
+							for(auto y :inData.inputData[x])
+								centroid[i++]+=y;
+							pts++;
+						}
+						for(int i=0;i< inData.inputData[0].size();i++)
+							centroid[i] /=pts;
+					
+						std::ofstream file("centroidsBetties.csv",std::ios_base::app);
+						for(auto x:centroid)
+    					             file<<x<<",";
+						file<<"\n";
+				    	        file.close();
+						}
 						inData.bettiTable.push_back(des);
 					}
 
@@ -104,7 +122,7 @@ std::vector<simplexNodePointer> fastPersistence<nodeType>::persistenceByDimensio
 					//Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
 					for(simplexNodePointer simp : v[pivotPairs[pivot]]){
 						columnV.push_back(simp);
-						std::vector<simplexNodePointer> faces = (mode == "homology" ? inData.complex->getAllFacets_P(simp) :  inData.complex->getAllCofacets(simp->simplex));
+						std::vector<simplexNodePointer> faces = (mode == "homology" ? inData.complex->getAllFacets_P(simp) : (inData.complex->simplexType == "AlphaComplex"? inData.complex->getAllDelaunayCofacets(simp):  inData.complex->getAllCofacets(simp->simplex)));
 					
 						faceList.insert(faceList.end(), faces.begin(), faces.end());
 					}

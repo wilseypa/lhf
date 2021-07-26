@@ -33,7 +33,15 @@ void qhullPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
     PointCoordinates *pts = new PointCoordinates(qh,inData.inputData[0].size(),"UCI Data Sets");
     pts->append(sdata);
     qh.runQhull(pts->comment().c_str(),pts->dimension(),pts->count(),&*pts->coordinates(),"d o");
-    auto dsimplexes = qdelaunay_o(qh);
+    std::vector<std::vector<int>> dsimplexes1 = qdelaunay_o(qh);
+    
+    std::vector<std::vector<unsigned>> dsimplexes;
+    for(auto x: dsimplexes1){
+	    std::vector<unsigned> temp;
+	    for(auto y :x)
+		    temp.push_back(y);
+	   dsimplexes.push_back(temp);
+    }
     
     //Again, (as stated in betaSkeletonBasedComplex) this should be a function of a different
     //	class instead of a new virtual function (because not every complex implements this).
