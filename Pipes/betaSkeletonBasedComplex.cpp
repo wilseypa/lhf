@@ -203,8 +203,8 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
    			else
 				circumRadius = pow((*((alphaComplex<alphaNode>*)inData.complex)->distMatrix)[dsimplex[0]][dsimplex[1]]/2,2);
                         bool first = true;
-                       
                         std::vector<size_t> neighbors;
+			std::vector<std::vector<size_t>> neighborsCircleIntersection;
                         
 			for (auto x : simplex){
 
@@ -235,12 +235,46 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
    			else
 				faceRadius = pow((*((alphaComplex<alphaNode>*)inData.complex)->distMatrix)[face1[0]][face1[1]]/2,2);
                         
+			std::vector<double> hpcoff = utils::nullSpaceOfMatrix(face,inData.inputData,faceCC,sqrt(faceRadius));
 			std::vector<double> betaCenter;
+			double betaRadius = sqrt(faceRadius)*(beta-1);
+             		std::vector<std::vector<double>> betaCenters ;
 			bool sameside = false;
+			if(intersectionCircle && beta >2)
+			{
+                      		betaCenters = utils::betaCentersCalculation(hpcoff, beta-1, sqrt(faceRadius),faceCC);
+                  expr1=0;
+		  expr2=0;
+		 
+ 		  for(unsigned i =0;i<hpcoff.size();i++){
+	 	 	  expr1 += hpcoff[i]*circumCenter[i];
+	 		  expr2 += hpcoff[i]*betaCenters[0][i];
+		  }
+			      expr1--;
+			      expr2--;		
+				if(expr1 < 0){
+
+					if(expr2 < 0)
+						sameside = true;
+					else
+						sameside = false;
+				}
+				else{
+					if(expr2 > 0)
+						sameside = true;
+					else
+						sameside = false;
+				}
+
+			 if(sameside)
+				 betaCenter = betaCenters[1];
+			 else
+				 betaCenter = betaCenters[0];
+                        }
+			else
+			{
 			if(face.size()>2){
-				std::vector<double> hpcoff = utils::nullSpaceOfMatrix(face,inData.inputData,faceCC,sqrt(faceRadius));
-                       
-		//	std::vector<std::vector<double>> betaCenters = utils::betaCentersCalculation(hpcoff, beta, sqrt(circumRadius),faceCC);
+				
                   expr1=0;
 		  expr2=0;
 		 
@@ -250,15 +284,15 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 		  }
 			      expr1--;
 			      expr2--;		
-				if(expr1 > 0){
+				if(expr1 < 0){
 
-					if(expr2 > 0)
+					if(expr2 < 0)
 						sameside = true;
 					else
 						sameside = false;
 				}
 				else{
-					if(expr2<0)
+					if(expr2 > 0)
 						sameside = true;
 					else
 						sameside = false;
@@ -314,7 +348,7 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 				for(unsigned y =0 ;y< inData.inputData[0].size();y++)
 					if(sameside){
 						if(intersectionCircle)
-							betaCenter.push_back((2-beta)*circumCenter[y] + (beta-1)*faceCC[y]);
+							betaCenter.push_back((2-beta)*circumCenter[y] + (beta-1)*faceCC[y]);          		
 						else
 							betaCenter.push_back(beta*circumCenter[y] - (beta-1)*faceCC[y]);
 					}else{
@@ -323,7 +357,13 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 						else
 							betaCenter.push_back((2-beta)*circumCenter[y] + (beta-1)*faceCC[y]);
            				}
-/*
+
+		     	   
+		/*		for(auto y : betaCenter)
+					for(auto x : circumCenter)
+							if(x==y)
+								std::cout<<y<<" ,Cc, ";
+
 
                                 double dist = sqrt(pow(beta*(sqrt(circumRadius)),2)-pow((*((alphaComplex<alphaNode>*)inData.complex)->distMatrix)[face1[0]][face1[1]]/2,2));
 				std::cout<<"distance "<<dist<<" ";
@@ -352,10 +392,20 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 				betaCenter.push_back(ycoord);
                                */
 			}
-	
+			}
+	                     if(!intersectionCircle || beta<=2)
+		     	        betaRadius = utils::vectors_distance(betaCenter,inData.inputData[face1[0]]);
+		/*	for(auto y : betaCenter)
+				for(auto x : circumCenter)
+					if(x==y)
+						std::cout<<y<<" ,Cc, ";
+			for(auto y : circumCenter)
+					std::cout<<y<<" ,Cc, ";
+				for(auto y : betaCenter)
+					std::cout<<y<<" ,bc, ";
 			
-		     	double betaRadius = utils::vectors_distance(betaCenter,inData.inputData[face1[0]]);
-		
+		     
+		*/
 			std::vector<size_t> neighborsface = tree.neighborhoodIndices(betaCenter, betaRadius); //All neighbors in epsilon-ball
 			for(auto x :dsimplex)
 		        	neighborsface.erase(std::remove(neighborsface.begin(),neighborsface.end(),x),neighborsface.end());
@@ -382,7 +432,7 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
             std::vector<size_t> neighbors;
 */            std::sort (neighborsface.begin(),neighborsface.end());
 	      std::sort (neighbors.begin(),neighbors.end()); 
-	      
+	      neighborsCircleIntersection.push_back(neighborsface);
 	    
 	    if(!first){
             if(intersectionCircle == true){
@@ -391,7 +441,9 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 				
 				it=std::set_intersection (neighbors.begin(), neighbors.end(), neighborsface.begin(), neighborsface.end(), v.begin());
 				v.resize(it-v.begin()); 
-				neighbors = v;				
+
+				neighbors = v;	
+	                        			
 			}
 			else{
 				std::vector<size_t> v(neighbors.size() + neighborsface.size());
@@ -407,9 +459,59 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 	    }
 	    
 			}
-			
 	
-			if(neighbors.size() == 0){
+			std::vector<size_t> circumneighbors = tree.neighborhoodIndices(circumCenter, sqrt(circumRadius)); //All neighbors in epsilon-ball
+			for(auto y :dsimplex){
+		        	 circumneighbors.erase(std::remove(circumneighbors.begin(),circumneighbors.end(),y),circumneighbors.end());
+			}
+//			std::cout<<"\n";
+		        std::sort (circumneighbors.begin(),circumneighbors.end());
+/*			for(auto p:neighborsCircleIntersection){
+				for (auto j:p)
+					std::cout<<j<<",";
+				std::cout<<"\n";
+			}
+			for(auto i : circumneighbors) 
+				std::cout<<i<<" ";
+			int pk;
+			std::cin>>pk;
+*/			bool circleintersect = false;
+			bool brloop = false;
+			for(int i=0;i<dsimplex.size()&&!brloop;i++)
+				for(int j=i+1;j<dsimplex.size()&&!brloop;j++){
+			            
+				std::vector<size_t> v(std::min(neighborsCircleIntersection[i].size(),neighborsCircleIntersection[j].size()));
+				std::vector<size_t>::iterator it;
+			        	
+				it=std::set_intersection (neighborsCircleIntersection[i].begin(), neighborsCircleIntersection[i].end(), neighborsCircleIntersection[j].begin(), neighborsCircleIntersection[j].end(), v.begin());
+				v.resize(it-v.begin()); 
+  //                              std::cout<<v.size()<<" vsize\n";
+				std::vector<size_t> newv(std::min(circumneighbors.size(),v.size()));
+				std::vector<size_t>::iterator it2;
+				
+				it2=std::set_intersection (circumneighbors.begin(), circumneighbors.end(), v.begin(), v.end(), newv.begin());
+				newv.resize(it2-newv.begin()); 
+   /*               	          for(auto t :newv)
+					std::cout<<t<<" ";
+				std::cout<<newv.size()<<"  newv\n";
+*///			if(newv.size()==0)
+//			 std::cout<<"should break";	
+			         if(newv.size()>0){
+					circleintersect = true;
+//		          		std::cout<<"outthere";
+					brloop = true;
+				}
+
+				}
+                     //   std::cout<<intersectionCircle<<circleintersect;
+					
+                        if(intersectionCircle)
+				if(!circleintersect)
+					return true;
+				else
+					return false;
+	
+			if(neighbors.size()==0){
 				    //recurseInsertDsimplex(root, dsimplex,inputData);
 					return true;
 /*			    	simplexNode_P tot = std::make_shared<simplexNode>(simplexNode((*it)->simplex, betaRadius));
