@@ -111,7 +111,7 @@ class utils {
 	static std::vector<unsigned> setUnion(std::vector<unsigned>, std::vector<unsigned>, bool);
 	static std::set<unsigned> setUnion(std::set<unsigned>, std::set<unsigned>);
 	static std::pair<std::vector<unsigned>, std::vector<unsigned>> intersect(std::vector<unsigned>, std::vector<unsigned>, bool);
-
+	static bool isSubset(std::vector<unsigned>,std::vector<unsigned>);
 	//Utility functions for writing to console/debug file
 	void writeLog(std::string module, std::string message);
 	void writeDebug(std::string module, std::string message);

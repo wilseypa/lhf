@@ -143,6 +143,11 @@ std::vector<std::shared_ptr<nodeType>> simplexBase<nodeType>::getAllDelaunayCofa
 }
 
 template<typename nodeType>
+std::vector<std::shared_ptr<nodeType>> simplexBase<nodeType>:: getAllDelaunayCofacets(std::shared_ptr<nodeType> simp, std::unordered_map<std::shared_ptr<nodeType>,std::shared_ptr<nodeType>> pivotPairs,bool emergent){
+	ut.writeLog(simplexType,"No getdelaunay cofacets function defined");
+	return std::vector<std::shared_ptr<nodeType>>();
+}
+template<typename nodeType>
 std::vector<nodeType*> simplexBase<nodeType>::getAllCofacets(std::shared_ptr<nodeType>){
 	ut.writeLog(simplexType,"No get cofacets function defined");
 	return std::vector<nodeType*>();

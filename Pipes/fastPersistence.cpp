@@ -44,7 +44,7 @@ std::vector<simplexNodePointer> fastPersistence<nodeType>::persistenceByDimensio
 		if(it == pivots.end() || (*it)->weight != simplex->weight || (*it)->simplex != simplex->simplex){
 		//	std::cout<<mode<<" "<<simplicialComplex<<" "<<complexType<<std::endl;
 			//Get all cofacets using emergent pair optimization
-			std::vector<simplexNodePointer> faceList = (mode == "homology" ? inData.complex->getAllFacets_P(simplex) : (inData.complex->simplexType == "AlphaComplex"? inData.complex->getAllDelaunayCofacets(simplex): inData.complex->getAllCofacets(simplex->simplex,simplex->weight,pivotPairs,true)));
+			std::vector<simplexNodePointer> faceList = (mode == "homology" ? inData.complex->getAllFacets_P(simplex) : (inData.complex->simplexType == "alphaComplex"? inData.complex->getAllDelaunayCofacets(simplex,pivotPairs,true): inData.complex->getAllCofacets(simplex->simplex,simplex->weight,pivotPairs,true)));
 			
 				
 			std::vector<simplexNodePointer> columnV;	//Reduction column of matrix V
@@ -122,7 +122,7 @@ std::vector<simplexNodePointer> fastPersistence<nodeType>::persistenceByDimensio
 					//Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
 					for(simplexNodePointer simp : v[pivotPairs[pivot]]){
 						columnV.push_back(simp);
-						std::vector<simplexNodePointer> faces = (mode == "homology" ? inData.complex->getAllFacets_P(simp) : (inData.complex->simplexType == "AlphaComplex"? inData.complex->getAllDelaunayCofacets(simp):  inData.complex->getAllCofacets(simp->simplex)));
+						std::vector<simplexNodePointer> faces = (mode == "homology" ? inData.complex->getAllFacets_P(simp) : (inData.complex->simplexType == "alphaComplex"? inData.complex->getAllDelaunayCofacets(simp):  inData.complex->getAllCofacets(simp->simplex)));
 					
 						faceList.insert(faceList.end(), faces.begin(), faces.end());
 					}

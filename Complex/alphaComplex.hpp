@@ -34,6 +34,7 @@ class alphaComplex : public simplexArrayList<nodeType>{
 		~alphaComplex();
 		
 		std::vector<templateNode_P> getAllDelaunayCofacets(templateNode_P);
+		std::vector<templateNode_P> getAllDelaunayCofacets(templateNode_P simp, std::unordered_map<templateNode_P,templateNode_P> pivotPairs,bool emergent);
 		void buildAlphaComplex(std::vector<std::vector<unsigned>> dsimplexmesh, int pts,std::vector<std::vector<double>> inputData);
 		void buildBetaComplex(std::vector<std::vector<unsigned>>dsimplexmesh,int pts, std::vector<std::vector<double>> inData,double beta,std::string betaMode);
 		void buildBetaComplexFilteration(std::vector<std::vector<unsigned>>dsimplexmesh,int pts, std::vector<std::vector<double>> inData,kdTree tree);

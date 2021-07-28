@@ -99,7 +99,9 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
 		    }
 	}
 	
-	((alphaComplex<nodeType>*)inData.complex)->buildBetaComplex(dsimplexmesh,inData.inputData.size(),inData.inputData,this->beta,this->betaMode);
+//	((alphaComplex<nodeType>*)inData.complex)->buildBetaComplex(dsimplexmesh,inData.inputData.size(),inData.inputData,this->beta,this->betaMode);
+//	((alphaComplex<nodeType>*)inData.complex)->buildAlphaComplex(dsimplexmesh,inData.inputData.size(),inData.inputData);
+        ((alphaComplex<nodeType>*)inData.complex)->buildBetaComplexFilteration(dsimplexmesh, inData.inputData.size(),inData.inputData, tree);
 	std::ofstream file("PHdSphereDimensionWiseMeshSize.txt",std::ios_base::app);
         file<<this->betaMode<<","<<inData.inputData.size()<<","<<inData.inputData[0].size()<<","<<this->beta<<","<<dsimplexmesh.size()<<std::endl;	
 	file.close();
@@ -177,9 +179,6 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 			circumRadius = utils::circumRadius(simplex,((alphaComplex<alphaNode>*)inData.complex)->distMatrix);
 		else
 			circumRadius = pow((*((alphaComplex<alphaNode>*)inData.complex)->distMatrix)[dsimplex[0]][dsimplex[1]]/2,2);
-		
-		
-             ;
 		bool first = true;
 		
 		std::vector<size_t> neighbors;
@@ -218,14 +217,10 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 					double ratio = sqrt(circumRadius)/sqrt(faceRadius);
 		                        betaRadius = sqrt(faceRadius) + (beta-2)*(sqrt(circumRadius)-sqrt(faceRadius));
 					betaCenters = utils::betaCentersCalculation(hpcoff, 1+(beta-2)*(ratio-1), sqrt(faceRadius),faceCC);
-					
-	
 				}
 				else{
-
 					betaCenters = utils::betaCentersCalculation(hpcoff, beta-1, sqrt(faceRadius),faceCC);
 		                 	betaRadius = sqrt(faceRadius)*(beta-1);
-
                                 }
                   		expr1=0;
 		  		expr2=0;
@@ -245,43 +240,31 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 				}
 				else if((expr1>0&&expr3>0)||(expr1<0&&expr3<0)){
 					sameside=true;
-					if(expr2>0&&expr1>0){
+					if(expr2>0&&expr1>0)
 						betaCenter = betaCenters[1];
-					}
-					else{
+					else
 						betaCenter = betaCenters[0];
-					}
 				}else{
 					sameside=false;
-					if(expr2>0&&expr1>0){
+					if(expr2>0&&expr1>0)
 						betaCenter = betaCenters[0];
-					}
-					else{
+					else
 						betaCenter = betaCenters[1];
-					}
 				}
                         }
 			else{
-				if(face.size()>2){
                   		expr1=0;
-		  		expr2=0;
-                                expr3 =0;
+		  		expr3=0;
 			      	for(unsigned i =0;i<hpcoff.size();i++){
 				      	expr1 += hpcoff[i]*circumCenter[i];
-					expr2 += hpcoff[i]*betaCenters[0][i];
 					expr3 += hpcoff[i]*inData.inputData[x][i];
 		      		}
 		  		expr1--;
-		  		expr2--;
 				expr3--;		
-				if((expr1> 0 && expr3>0)&&expr2>0||(expr1<0&&expr3<0)&&expr2<0){
+				if((expr1>0&&expr3>0)||(expr1<0&&expr3<0))
 					sameside=true;
-				}
-				else if((expr1>0&&expr3>0)||(expr1<0&&expr3<0)){
-					sameside=true;
-				}else{
+				else
 					sameside=false;
-				}
 					for(unsigned y =0 ;y< inData.inputData[0].size();y++)
 					if(sameside){
 						if(intersectionCircle)
@@ -294,70 +277,9 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 						else
 							betaCenter.push_back((2-beta)*circumCenter[y] + (beta-1)*faceCC[y]);
            				}
-				}
-				else{
-                  		expr1=0;
-		  		expr3=0;
-			      	for(unsigned i =0;i<hpcoff.size();i++){
-				      	expr1 += hpcoff[i]*circumCenter[i];
-					expr3 += hpcoff[i]*inData.inputData[x][i];
-		      		}
-		  		expr1--;
-				expr3--;		
-				if((expr1>0&&expr3>0)||(expr1<0&&expr3<0)){
-					sameside=true;
-				}else{
-					sameside=false;
-				}
-				/*	for(unsigned y =0 ;y< inData.inputData[0].size();y++)
-					double slope,intercept;
-					if(inData.inputData[face1[1]][0]==inData.inputData[face1[0]][0]){
-						if(circumCenter[0]<inData.inputData[face1[1]][0]&&inData.inputData[x][0]<inData.inputData[face1[1]][0])
-							sameside = true;
-	      					else if(circumCenter[0]>inData.inputData[face1[1]][0]&&inData.inputData[x][0]>inData.inputData[face1[1]][0])
-		      					sameside = true;
-		      				else
-	      						sameside=false;
-					}
-					else{
-						slope = (inData.inputData[face1[1]][1] - inData.inputData[face1[0]][1])/(inData.inputData[face1[1]][0]-inData.inputData[face1[0]][0]);
-						intercept = (inData.inputData[face1[0]][1]-slope*inData.inputData[face1[0]][0]);
-						expr1 = circumCenter[1]-slope*circumCenter[0]-intercept;
-			       	  	        expr2 = inData.inputData[x][1]-slope*inData.inputData[x][0]-intercept;
-						if(expr1 < 0){
-							if(expr2 <0)
-								sameside = true;
-							else
-								sameside = false;
-						}
-						else{
-							if(expr2>0)
-								sameside = true;
-							else
-								sameside = false;
-						}
-					}
-					*/
-			
-					for(unsigned y =0 ;y< inData.inputData[0].size();y++)
-						if(sameside){
-							if(intersectionCircle)
-								betaCenter.push_back((2-beta)*circumCenter[y] + (beta-1)*faceCC[y]);          		
-							else
-								betaCenter.push_back(beta*circumCenter[y] - (beta-1)*faceCC[y]);
-						}else{
-							if(intersectionCircle)
-								betaCenter.push_back(beta*circumCenter[y] - (beta-1)*faceCC[y]);
-							else
-								betaCenter.push_back((2-beta)*circumCenter[y] + (beta-1)*faceCC[y]);
-           					}
-				}
 			}
-	   		if(!intersectionCircle || beta<=2){
-		     	        betaRadius = utils::vectors_distance(betaCenter,inData.inputData[face1[0]]);
-			}
-		
-		
+	   		if(!intersectionCircle || beta<=2)
+		     	        betaRadius = utils::vectors_distance(betaCenter,inData.inputData[face1[0]]);		
 			std::vector<size_t> neighborsface = tree.neighborhoodIndices(betaCenter, betaRadius); //All neighbors in epsilon-ball
 			for(auto x :dsimplex)
 		        	neighborsface.erase(std::remove(neighborsface.begin(),neighborsface.end(),x),neighborsface.end());
@@ -384,12 +306,11 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 	    		else{
 		    		neighbors = neighborsface;
 		    		first = false;
-	    		}
-		}	
-		std::vector<size_t> circumneighbors = tree.neighborhoodIndices(circumCenter, sqrt(circumRadius)); //All neighbors in epsilon-ball
-		for(auto y :dsimplex){
-			circumneighbors.erase(std::remove(circumneighbors.begin(),circumneighbors.end(),y),circumneighbors.end());
+	    		}	
 		}
+		std::vector<size_t> circumneighbors = tree.neighborhoodIndices(circumCenter, sqrt(circumRadius)); //All neighbors in epsilon-ball
+		for(auto y :dsimplex)
+			circumneighbors.erase(std::remove(circumneighbors.begin(),circumneighbors.end(),y),circumneighbors.end());
 		std::sort (circumneighbors.begin(),circumneighbors.end());
 		bool circleintersect = false;
 		bool brloop = false;

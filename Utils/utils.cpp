@@ -37,6 +37,11 @@ bool unionFind::join(int x, int y){ //Union by rank
 	return true;
 }
 
+bool utils:: isSubset(std::vector<unsigned> A,std::vector<unsigned> B){
+	std::sort(A.begin(),A.end());
+	std::sort(B.begin(),B.end());
+	return std::includes(A.begin(),A.end(),B.begin(),B.end());
+}
 
 // utils constructor, currently no needed information for the class constructor
 utils::utils(){}

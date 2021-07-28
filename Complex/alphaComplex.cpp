@@ -18,8 +18,9 @@ alphaComplex<nodeType>::~alphaComplex(){
 }
 
 
+
 template<typename nodeType>
-std::vector<std::shared_ptr<nodeType>> alphaComplex<nodeType>::getAllDelaunayCofacets(std::shared_ptr<nodeType> simp){
+std::vector<std::shared_ptr<nodeType>> alphaComplex<nodeType>::getAllDelaunayCofacets(std::shared_ptr<nodeType> simp, std::unordered_map<std::shared_ptr<nodeType>,std::shared_ptr<nodeType>> pivotPairs,bool emergent){	//For each pivot, which column has that pivot
 	
 	std::vector<std::shared_ptr<nodeType>> ret;
 	unsigned dimension  = simp->simplex.size();
@@ -36,9 +37,34 @@ std::vector<std::shared_ptr<nodeType>> alphaComplex<nodeType>::getAllDelaunayCof
 		
 		if(v.size() == simp->simplex.size()){
 			ret.push_back(simplex);
-			if(simplex->weight==simp->weight)
-				return ret;
+			if(emergent&&simplex->weight==simp->weight){
+				if(pivotPairs.find(simplex) == pivotPairs.end()) return ret;
+					emergent = false;
+			}
 		}
+	}
+
+	return ret;
+}
+
+template<typename nodeType>
+std::vector<std::shared_ptr<nodeType>> alphaComplex<nodeType>::getAllDelaunayCofacets(std::shared_ptr<nodeType> simp){
+	
+	std::vector<std::shared_ptr<nodeType>> ret;
+	unsigned dimension  = simp->simplex.size();
+	for(auto iter = this->simplexList[dimension].rbegin();iter!=this->simplexList[dimension].rend();++iter){
+
+/*	
+	for(auto simplex : this->simplexList[dimension]){
+*/		auto simplex = *iter;
+		std::vector<unsigned> :: iterator it;
+		std::vector<unsigned> v(simplex->simplex.size());
+		
+		it = std::set_intersection(simp->simplex.begin(),simp->simplex.end(),simplex->simplex.begin(),simplex->simplex.end(),v.begin());
+		v.resize(it-v.begin());
+		
+		if(v.size() == simp->simplex.size())
+			ret.push_back(simplex);
 	}
 
 	return ret;
@@ -280,10 +306,10 @@ void alphaComplex<alphaNode>::buildBetaComplexFilteration(std::vector<std::vecto
 			if(dim>0){
 				for(auto face : this->simplexList[dim-1]){
 					bool gabriel = true;
-   			                std::vector<int> neg1;
 					std::vector<unsigned> points_check(simplex->simplex.size());
 					std::vector<unsigned> guilty_points_check;
 					std::vector<unsigned> :: iterator it;
+			                std::vector<size_t> neighborsface;
 					std::vector<unsigned> v(face->simplex.size());
 					it = std::set_intersection(simplex->simplex.begin(),simplex->simplex.end(),face->simplex.begin(),face->simplex.end(),v.begin());
 					v.resize(it-v.begin());
@@ -292,11 +318,7 @@ void alphaComplex<alphaNode>::buildBetaComplexFilteration(std::vector<std::vecto
 							face->filterationvalue = std::min(face->filterationvalue, simplex->filterationvalue);				
 						else {
 
-			                                std::vector<size_t> neighborsface = tree.neighborhoodIndices(face->circumCenter, face->circumRadius); //All neighbors in epsilon-ball
- 					   	        std::vector<unsigned> toremove(face->simplex.begin(),face->simplex.end()); 
-					   	        std::sort(toremove.begin(),toremove.end());
-    						        std::sort(neighborsface.begin(), neighborsface.end());
-   						        std::set_difference(neighborsface.begin(),neighborsface.end(),toremove.begin(),toremove.end(), std::back_inserter(neg1));
+			                                neighborsface = tree.neighborhoodIndices(face->circumCenter, face->circumRadius); //All neighbors in epsilon-ball
 							/*
 							std::vector<unsigned>::iterator it;											
 							it=std::set_difference (simplex->simplex.begin(), simplex->simplex.end(), face->simplex.begin(), face->simplex.end(), points_check.begin());
@@ -311,69 +333,41 @@ void alphaComplex<alphaNode>::buildBetaComplexFilteration(std::vector<std::vecto
 								guilty_points_check.push_back((*it));
 							}
 							*/
-							if(neg1.size()!=0)
-								gabriel = false;
+							std::vector<unsigned> neg1(neighborsface.begin(),neighborsface.end());
+							for( auto x : face->simplex)
+						         	neg1.erase(std::remove(neg1.begin(), neg1.end(), x), neg1.end());
+
+							if(neg1.size()>0){
+					/*			for(auto x:neighborsface)
+									std::cout<<x<<" ";
+					//			std::cout<<"contains simplex ";;
+								for(auto x: face->simplex)
+									std::cout<<x<<" ";
+									std::cout<<"Not Gabriel\n";
+					*/			gabriel = false;
+							}
 						}   
 					}
 					if(!gabriel){
-						std::vector<unsigned> v(neg1.size()+face->simplex.size());
-						std::vector<unsigned>::iterator it;
-						it=std::set_union (face->simplex.begin(), face->simplex.end(), neg1.begin(), neg1.end(), v.begin());
-						v.resize(it-v.begin());
-						std::sort(v.begin(),v.end());
-					/*	for(auto face1 : this->simplexList[v.size()-1]){
-							std::vector<unsigned> v1(simplex->simplex.size());
-							it = std::set_intersection(v.begin(), v.end(), face1->simplex.begin(), face1->simplex.end(), v1.begin());
-							v1.resize(it-v1.begin());
-							if(v1.size() == face1->simplex.size())
-							*/
-                                                std::set<unsigned> simpnode(v.begin(),v.end());
-						if(simpnode.size() <= this->simplexList.size()){
-						if(simpnode.size()>1)
-							face->filterationvalue = utils::circumRadius(simpnode,this->distMatrix);
-						else
-					        	face->filterationvalue = 0;
+						double weightassigned=face->weight;
+					//	std::cout<<"Previous Weight "<<dim-1<<" "<<weightassigned<<"\n";
+						for(unsigned i :neighborsface){
+						std::vector<unsigned> face1(face->simplex.begin(),face->simplex.end());
+						face1.push_back(i);
+						std::sort(face1.begin(),face1.end());
+							for(auto iter =this->simplexList[face1.size()-1].rbegin();iter != this->simplexList[face1.size()-1].rend();++iter){
+                                        	       	        auto cursimplex = (*iter);
+								std::vector<unsigned> simplexvertex(cursimplex->simplex.begin(),cursimplex->simplex.end());
+								if(simplexvertex == face1){
+									 if(weightassigned < cursimplex->filterationvalue)
+										 weightassigned = cursimplex->filterationvalue;
+								break;
+								 }
+							}
 						}
-						else
-						{
-								
-		        int n = simpnode.size();
-			int dim = this->simplexList.size();
-			std::vector<unsigned> dsimplex(dim);
-			std::set<unsigned> dsimplexIndexed;
-			double radius;
-                        double maxradius = 0;
-			std::vector<unsigned>::iterator first = dsimplex.begin(), last = dsimplex.end();
 
-			std::generate(first, last, UniqueNumber);
-			
-			
-			for(int i=0;i<dim;i++)
-				dsimplexIndexed.insert(v[dsimplex[i]-1]);
-                       
-			radius = utils::circumRadius(dsimplexIndexed,this->distMatrix);
-			if(radius>maxradius)
-			       maxradius=radius;	
-            
-	
-	while((*first) != n-dim+1){  	
-
-  	    std::vector<unsigned>::iterator mt = last;
-        while (*(--mt) == n-(last-mt)+1);
-        (*mt)++;
-        while (++mt != last) *mt = *(mt-1)+1;
-
-        std::set<unsigned> dsimplexIndexed1;
-       for(int i=0;i<dim;i++)
-			dsimplexIndexed1.insert(v[dsimplex[i]-1]);
-            
-			radius = utils::circumRadius(dsimplexIndexed1,this->distMatrix);
-			if(radius>maxradius)
-			       maxradius=radius;	
-    	 	}      
-	       face->filterationvalue = maxradius;
-	  
-						}
+					//	std::cout<<"new weight  "<<weightassigned<<"\n";
+						face->filterationvalue = weightassigned;
 					}
 				}
 			}
@@ -388,11 +382,16 @@ void alphaComplex<alphaNode>::buildBetaComplexFilteration(std::vector<std::vecto
 			 if(simplex->filterationvalue <= this->alphaFilterationValue){ //Valid Simplex after filteration
 				 simplex->weight = simplex->filterationvalue;
 				 simplexList1[dim].insert(simplex);
+			//	 std::cout<<simplex->weight<<" ";
 			 }
 		}
 	}
 	this->simplexList = simplexList1;
+int di=0;
+for( auto x : this->simplexList)
+	std::cout<<"Count of "<<di++<<"-simplex ::"<<x.size()<<"\n";
 	return;
+
 }
 
 
@@ -520,12 +519,16 @@ void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<unsigned
 						std::vector<unsigned>::iterator it;
 						it=std::set_union (face->simplex.begin(), face->simplex.end(), guilty_points_check.begin(), guilty_points_check.end(), v.begin());
 						v.resize(it-v.begin());
-						for(auto face1 : this->simplexList[v.size()-1]){
+				//		for(auto face1 : this->simplexList[v.size()-1]){
+						for(auto iter =this->simplexList[v.size()-1].rbegin();iter != this->simplexList[v.size()-1].rend();++iter){
+							auto face1 = (*iter);
 							std::vector<unsigned> v1(simplex->simplex.size());
 							it = std::set_intersection(v.begin(), v.end(), face1->simplex.begin(), face1->simplex.end(), v1.begin());
 							v1.resize(it-v1.begin());
-							if(v1.size() == face1->simplex.size())
+							if(v1.size() == face1->simplex.size()){
 								face->filterationvalue = face1->filterationvalue;
+								break;
+							}
 						}
 					}
 				}
@@ -541,10 +544,14 @@ void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<unsigned
 			 if(simplex->filterationvalue <= this->alphaFilterationValue){ //Valid Simplex after filteration
 				 simplex->weight = simplex->filterationvalue;
 				 simplexList1[dim].insert(simplex);
+			//	 std::cout<<simplex->weight<<" ";
 			 }
 		}
 	}
 	this->simplexList = simplexList1;
+int di=0;
+for( auto x : this->simplexList)
+	std::cout<<"Count of "<<di++<<"-simplex ::"<<x.size()<<"\n";
 	return;
 }
 
