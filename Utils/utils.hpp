@@ -28,6 +28,7 @@ struct alphaNode{
 	double filterationvalue = 0;
     double circumRadius = 0;
     double betaRadius = 0;
+    std::vector<double> betaradii;
     double volume;
     std::vector<double> hpcoff; // cofficient of simplex hyperplane
 	std::vector<double> circumCenter;
@@ -132,7 +133,8 @@ class utils {
 	static double simplexVolume(std::set<unsigned> simplex,std::vector<std::vector<double>>* distMatrix,int dd);
 	static double simplexVolume(std::vector<std::vector<double>>mat);
     
-    static std::vector<std::vector<bool>> betaNeighbors(std::vector<std::vector<double>> &,double beta,std::string betaMode);
+        static std::vector<std::vector<bool>> betaNeighbors(std::vector<std::vector<double>> &,double beta,std::string betaMode);
+	static std::pair<std::vector<std::vector<double>>,std::vector<double>> calculateBetaCentersandRadius(std::vector<unsigned> simplex ,std::vector<std::vector<double>> &inputData,std::vector<std::vector<double>>* distMatrix, double beta);
 
 	static std::vector<double> serialize(std::vector<std::vector<double>>& );
 	static std::vector<std::vector<double>> deserialize(std::vector<double> , unsigned);

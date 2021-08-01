@@ -1205,3 +1205,145 @@ std::vector<double> utils::serialize(std::vector<std::vector<double>> &origData)
 
 	return ret;
 }
+
+
+std::pair<std::vector<std::vector<double>>,std::vector<double>> utils::calculateBetaCentersandRadius(std::vector<unsigned> dsimplex ,std::vector<std::vector<double>> &inputData,std::vector<std::vector<double>>* distMatrix, double beta)
+{
+	std::vector<std::vector<double>> betacenters;
+	std::vector<double> betaradii;
+	bool intersectionCircle= false;
+	bool intersectionLune = false;
+	if(beta <0)
+		exit(0);
+	else if(beta==0)
+		return std::make_pair(betacenters,betaradii);
+    	else if(beta <1)
+		intersectionCircle = true;
+	else
+		intersectionLune = true;
+
+		if(beta<1)
+			beta=1/beta;
+    		std::set<unsigned> simplex(dsimplex.begin(),dsimplex.end());
+	     	std::vector<double> circumCenter;
+	   	if(simplex.size()>2)
+			circumCenter = utils::circumCenter(simplex,inputData);
+		else if(simplex.size()==2){
+ 			auto first = simplex.begin();
+			std::vector<double> R;
+			std::vector<double> A = inputData[*first];
+			std::advance(first, 1);
+			std::vector<double> B = inputData[*first];
+			std::transform(A.begin(), A.end(), B.begin(), std::back_inserter(R),[](double e1,double e2){return ((e1+e2)/2);});
+			circumCenter = R;
+   		}
+                
+		double circumRadius;
+		if(simplex.size()>2)
+			circumRadius = utils::circumRadius(simplex,distMatrix);
+		else
+			circumRadius = pow((*distMatrix)[dsimplex[0]][dsimplex[1]]/2,2);
+		bool first = true;
+		
+		std::vector<size_t> neighbors;
+		std::vector<std::vector<size_t>> neighborsCircleIntersection;
+		for (auto x : simplex){
+			double expr1,expr2,expr3;
+			std::vector<unsigned> face1;
+			face1 = dsimplex;
+			face1.erase(std::remove(face1.begin(),face1.end(),x),face1.end());
+			std::set<unsigned> face(face1.begin(),face1.end());
+			std::vector<double> faceCC ;
+			if(face.size()>2)
+				faceCC = utils::circumCenter(face,inputData);
+			else if(face.size()==2){
+				auto first = face.begin();
+				std::vector<double> fR;
+			}	
+			double faceRadius;
+   			if(face.size()>2)
+   				faceRadius = utils::circumRadius(face,distMatrix);
+   			else
+				faceRadius = pow((*distMatrix)[face1[0]][face1[1]]/2,2);
+                        
+			std::vector<double> hpcoff = utils::nullSpaceOfMatrix(face,inputData,faceCC,sqrt(faceRadius));
+			std::vector<double> betaCenter;
+			double betaRadius;
+             		std::vector<std::vector<double>> betaCenters ;
+			bool sameside = false;
+			if(intersectionCircle && beta >2){
+				if(beta < 3){
+					double ratio = sqrt(circumRadius)/sqrt(faceRadius);
+		                        betaRadius = sqrt(faceRadius) + (beta-2)*(sqrt(circumRadius)-sqrt(faceRadius));
+					betaCenters = utils::betaCentersCalculation(hpcoff, 1+(beta-2)*(ratio-1), sqrt(faceRadius),faceCC);
+				}
+				else{
+					betaCenters = utils::betaCentersCalculation(hpcoff, beta-1, sqrt(faceRadius),faceCC);
+		                 	betaRadius = sqrt(faceRadius)*(beta-1);
+                                }
+                  		expr1=0;
+		  		expr2=0;
+                                expr3 =0;
+			      	for(unsigned i =0;i<hpcoff.size();i++){
+				      	expr1 += hpcoff[i]*circumCenter[i];
+					expr2 += hpcoff[i]*betaCenters[0][i];
+					expr3 += hpcoff[i]*inputData[x][i];
+		      		}
+		  		expr1--;
+		  		expr2--;
+				expr3--;		
+				if((expr1> 0 && expr3>0)&&expr2>0||(expr1<0&&expr3<0)&&expr2<0){
+					sameside=true;
+					betaCenter = betaCenters[1];
+					
+				}
+				else if((expr1>0&&expr3>0)||(expr1<0&&expr3<0)){
+					sameside=true;
+					if(expr2>0&&expr1>0)
+						betaCenter = betaCenters[1];
+					else
+						betaCenter = betaCenters[0];
+				}else{
+					sameside=false;
+					if(expr2>0&&expr1>0)
+						betaCenter = betaCenters[0];
+					else
+						betaCenter = betaCenters[1];
+				}
+                        }
+			else{
+                  		expr1=0;
+		  		expr3=0;
+			      	for(unsigned i =0;i<hpcoff.size();i++){
+				      	expr1 += hpcoff[i]*circumCenter[i];
+					expr3 += hpcoff[i]*inputData[x][i];
+		      		}
+		  		expr1--;
+				expr3--;		
+				if((expr1>0&&expr3>0)||(expr1<0&&expr3<0))
+					sameside=true;
+				else
+					sameside=false;
+					for(unsigned y =0 ;y< inputData[0].size();y++)
+					if(sameside){
+						if(intersectionCircle)
+							betaCenter.push_back((2-beta)*circumCenter[y] + (beta-1)*faceCC[y]);
+						else
+							betaCenter.push_back(beta*circumCenter[y] - (beta-1)*faceCC[y]);
+					}else{
+						if(intersectionCircle)
+						{
+							betaCenter.push_back(beta*circumCenter[y] - (beta-1)*faceCC[y]);
+						}
+						else
+							betaCenter.push_back((2-beta)*circumCenter[y] + (beta-1)*faceCC[y]);
+           				}
+			}
+	   		if(!intersectionCircle || beta<=2)
+		     	        betaRadius = utils::vectors_distance(betaCenter,inputData[face1[0]]);		
+			
+			betacenters.push_back(betaCenter);
+			betaradii.push_back(betaRadius);
+		}
+		return std::make_pair(betacenters,betaradii);
+}
