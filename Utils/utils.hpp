@@ -25,7 +25,7 @@ struct alphaNode{
 	
 	std::set<unsigned> simplex = {};
 	double weight = 0;
-	double filterationvalue = -1;
+	double filterationvalue = 0;
     double circumRadius = 0;
     double betaRadius = 0;
     double volume;

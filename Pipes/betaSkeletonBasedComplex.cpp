@@ -99,9 +99,10 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
 		    }
 	}
 	
-//	((alphaComplex<nodeType>*)inData.complex)->buildBetaComplex(dsimplexmesh,inData.inputData.size(),inData.inputData,this->beta,this->betaMode);
+//	((alphaComplex<nodeType>*)inData.complex)->buildBetaComplex(dsimplexmesh,inData.inputData.size(),inData.inputData,this->beta,this->betaMode);//
 //	((alphaComplex<nodeType>*)inData.complex)->buildAlphaComplex(dsimplexmesh,inData.inputData.size(),inData.inputData);
-        ((alphaComplex<nodeType>*)inData.complex)->buildBetaComplexFilteration(dsimplexmesh, inData.inputData.size(),inData.inputData, tree);
+	((alphaComplex<nodeType>*)inData.complex)->buildFilteration(dsimplexmesh,inData.inputData.size(),inData.inputData,this->beta,tree);
+//        ((alphaComplex<nodeType>*)inData.complex)->buildBetaComplexFilteration(dsimplexmesh, inData.inputData.size(),inData.inputData, tree);
 	std::ofstream file("PHdSphereDimensionWiseMeshSize.txt",std::ios_base::app);
         file<<this->betaMode<<","<<inData.inputData.size()<<","<<inData.inputData[0].size()<<","<<this->beta<<","<<dsimplexmesh.size()<<std::endl;	
 	file.close();
@@ -338,13 +339,14 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 					}
 				}
 			}
-                        if(intersectionCircle){
-				if(!circleintersect || neighbors.size()==0)
-					return true;
-				else
-					return false;
-			}
-			else if(!circleintersect)
+                     //   if(intersectionCircle){
+	//			if(!circleintersect && neighbors.size()==0)
+	//				return true;
+	//			else
+	//				return false;
+	//		}
+	//		else if(!circleintersect&&neighbors.size()==0)
+			if(neighbors.size()==0)
 				return true;
 			else
 				return false;

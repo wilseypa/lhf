@@ -25,6 +25,7 @@ qhullPipe<nodeType>::qhullPipe(){
 template <typename nodeType>
 void qhullPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
     Qhull qh;
+    kdTree tree(inData.inputData, inData.inputData.size()); //KDTree for efficient nearest neighbor search
     std::vector<double> sdata;
     //serializing all the data
     for(auto a : inData.inputData)
@@ -46,6 +47,9 @@ void qhullPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
     //Again, (as stated in betaSkeletonBasedComplex) this should be a function of a different
     //	class instead of a new virtual function (because not every complex implements this).
     //		So cast and run, such as:
+    //
+ //   ((alphaComplex<nodeType>*)inData.complex)->buildBetaComplexFilteration(dsimplexes, inData.inputData.size(),inData.inputData, tree);
+//    ((alphaComplex<nodeType>*)inData.complex)->buildBetaComplex(dsimplexes, inData.inputData.size(),inData.inputData,1,"highDim");
     ((alphaComplex<nodeType>*)inData.complex)->buildAlphaComplex(dsimplexes,inData.inputData.size(),inData.inputData);
 
 	this->ut.writeDebug("qhullPipe", "\tSuccessfully Executed pipe");
