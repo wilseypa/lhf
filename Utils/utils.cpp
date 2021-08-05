@@ -456,11 +456,12 @@ std::vector<std::vector<bool>> utils :: betaNeighbors(std::vector<std::vector<do
     std::vector<std::vector<double>> rotationMatrix(inData[0].size(),std::vector<double>(inData[0].size(),0));
 
 //[
-//cos(90) -sin(90)  ........ 1
-//sin(90) cos(90)  .........1
-//1	1	1 ....	....1
-//...........................
-//1	1	1	1    1
+//cos(90) -sin(90)  ................... 0
+//sin(90) cos(90)  .....................0
+//0		0	0 ......0.......0
+//......................1......	0	0
+//0		0	0	1	0
+//0		0	0	0    	1
 //]
 
 
@@ -477,7 +478,7 @@ std::vector<std::vector<bool>> utils :: betaNeighbors(std::vector<std::vector<do
 			else if(i==j)
 				 rotationMatrix[i][j] = 1;
 			else
-				 rotationMatrix[i][j] = 1;
+				 rotationMatrix[i][j] = 0;
 		}
 	}
 
