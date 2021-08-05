@@ -220,8 +220,8 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 					betaCenters = utils::betaCentersCalculation(hpcoff, 1+(beta-2)*(ratio-1), sqrt(faceRadius),faceCC);
 				}
 				else{
-					betaCenters = utils::betaCentersCalculation(hpcoff, beta-1, sqrt(faceRadius),faceCC);
-		                 	betaRadius = sqrt(faceRadius)*(beta-1);
+					betaCenters = utils::betaCentersCalculation(hpcoff, beta-1, sqrt(circumRadius),faceCC);
+		                 	betaRadius = sqrt(circumRadius)*(beta-1);
                                 }
                   		expr1=0;
 		  		expr2=0;
@@ -280,7 +280,13 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
            				}
 			}
 	   		if(!intersectionCircle || beta<=2)
-		     	        betaRadius = utils::vectors_distance(betaCenter,inData.inputData[face1[0]]);		
+		     	        betaRadius = utils::vectors_distance(betaCenter,inData.inputData[face1[0]]);
+
+			std::cout<<betaRadius<<" ";
+			for(auto x:betaCenter)
+				std::cout<<x<<" ";
+	                int pk;
+			std::cin>>pk;		
 			std::vector<size_t> neighborsface = tree.neighborhoodIndices(betaCenter, betaRadius); //All neighbors in epsilon-ball
 			for(auto x :dsimplex)
 		        	neighborsface.erase(std::remove(neighborsface.begin(),neighborsface.end(),x),neighborsface.end());

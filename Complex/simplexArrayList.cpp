@@ -360,7 +360,7 @@ void simplexArrayList<nodeType>::expandDimensions(int dim){
 						   valid = false;
 						   break;
 					   }
-            if(valid){
+            if(valid && maxWeight <= this->maxEpsilon){
 					std::shared_ptr<nodeType> tot = std::make_shared<nodeType>(nodeType((*it)->simplex, maxWeight));
 					tot->simplex.insert(pt);
 					tot->hash = (*it)->hash + bin.binom(pt, tot->simplex.size());

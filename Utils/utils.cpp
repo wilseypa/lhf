@@ -454,6 +454,16 @@ std::vector<std::vector<bool>> utils :: betaNeighbors(std::vector<std::vector<do
 	kdTree tree(inData, inData.size()); //KDTree for efficient nearest neighbor search
     double betafactor;
     std::vector<std::vector<double>> rotationMatrix(inData[0].size(),std::vector<double>(inData[0].size(),0));
+
+//[
+//cos(90) -sin(90)  ........ 1
+//sin(90) cos(90)  .........1
+//1	1	1 ....	....1
+//...........................
+//1	1	1	1    1
+//]
+
+
     for(unsigned i =0;i<inData[0].size();i++){
 		for(unsigned j = 0;j<inData[0].size();j++){
 			if(i==1 && j==0)
@@ -467,7 +477,7 @@ std::vector<std::vector<bool>> utils :: betaNeighbors(std::vector<std::vector<do
 			else if(i==j)
 				 rotationMatrix[i][j] = 1;
 			else
-				 rotationMatrix[i][j] = 0;
+				 rotationMatrix[i][j] = 1;
 		}
 	}
 
