@@ -271,7 +271,11 @@ void alphaComplex<alphaNode>::buildBetaComplex(std::vector<std::vector<unsigned>
 	for(int i=0; i <= this->maxDimension; i++)
 		this->simplexList.push_back({});
    
+        std::ofstream out("dsimplexmesh"+std::to_string(beta)+".csv");
 	for(auto simplex : dsimplexmesh){
+		for(auto x: simplex)
+			out<<x<<",";
+		out<<"\n";
 		unsigned int pow_set_size = pow(2, simplex.size());
 		for(int counter =1;counter<pow_set_size;counter++){
 			double weight =0;
@@ -292,12 +296,12 @@ void alphaComplex<alphaNode>::buildBetaComplex(std::vector<std::vector<unsigned>
 				}
 			}
                          
-		
+	                double weight1 = weight;	
 			if(gensimp.size()>1)
 	      			weight = utils::circumRadius(gensimp,this->distMatrix);
    			else
 		        	weight = weight/2;
-			std::shared_ptr<alphaNode> tot = std::make_shared<alphaNode>(alphaNode(gensimp,weight));
+			std::shared_ptr<alphaNode> tot = std::make_shared<alphaNode>(alphaNode(gensimp,weight1));
 			if(gensimp.size()==1)
 				tot->hash = *(gensimp.begin());
 			        
@@ -308,7 +312,7 @@ void alphaComplex<alphaNode>::buildBetaComplex(std::vector<std::vector<unsigned>
 			gensimp.clear();
 		}
 	}
-	
+	out.close();
 /*
 std::vector<std::vector<unsigned>> edges(inputData.size(),std::vector<unsigned>(inputData.size(),0));
 for(auto x : this->simplexList[1]){

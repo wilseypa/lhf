@@ -488,6 +488,13 @@ std::vector<std::vector<bool>> utils :: betaNeighbors(std::vector<std::vector<do
 	}	
 	for(unsigned i = 0; i < inData.size(); i++){
 		for(unsigned j = i+1; j < inData.size(); j++){
+			std::cout<<" First Point \n";
+			for(auto x:inData[i])
+				std::cout<<x<<" ";
+
+			std::cout<<" Second Point \n";
+			for(auto x:inData[j])
+				std::cout<<x<<" ";
 			double radius;	
 			std::vector<double> temp;
 			std::vector<double> center1;
@@ -510,9 +517,15 @@ std::vector<std::vector<bool>> utils :: betaNeighbors(std::vector<std::vector<do
 						for(auto y : x)
 							tempfinal.push_back(y*betafactor);	
 					   std::transform(temp.begin(), temp.end(), tempfinal.begin(), std::back_inserter(center1),[](double e1, double e2) {return ((e1+e2));});
-                       std::transform(temp.begin(), temp.end(), tempfinal.begin(), std::back_inserter(center2),[](double e1, double e2) {return ((e1-e2));});
+                      			   std::transform(temp.begin(), temp.end(), tempfinal.begin(), std::back_inserter(center2),[](double e1, double e2) {return ((e1-e2));});
                        
-                       
+                       			   
+				     	   std::cout<<" First Center and radius:: "<<radius<<"\n";
+				  	   for(auto x:center1)
+						std::cout<<x<<" ";
+				     	   std::cout<<" Second Center \n";
+				  	   for(auto x:center2)
+						std::cout<<x<<" ";
 					   std::vector<size_t> neighbors1 = tree.neighborhoodIndices(center1, radius); //All neighbors in radius-ball
 					   std::vector<unsigned> toremove;
 					   toremove.push_back(i);
