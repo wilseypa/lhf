@@ -17,6 +17,7 @@
 #include <algorithm>
 #include "betaSkeletonBasedComplex.hpp"
 #include "alphaComplex.hpp"
+#include "qhullPipe.hpp"
 
 #include "utils.hpp"
 
@@ -51,6 +52,8 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
      	count =0;
     	std::vector<std::pair<int,int>> neighborsepsilon;
 
+	if(this->beta < 1)
+	{
    	for(unsigned index = 0; index < inData.inputData.size(); index++){
     		std::vector<size_t> neighbors = tree.neighborhoodIndices(inData.inputData[index], this->epsilon); //All neighbors in epsilon-ball
 		int n = neighbors.size();
@@ -98,7 +101,33 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
 		    	    }      
 		    }
 	}
-	
+	}	
+	else{
+    Qhull qh;
+    kdTree tree(inData.inputData, inData.inputData.size()); //KDTree for efficient nearest neighbor search
+    std::vector<double> sdata;
+    //serializing all the data
+    for(auto a : inData.inputData)
+ 			for(auto b : a)
+ 				sdata.push_back(b);
+    PointCoordinates *pts = new PointCoordinates(qh,inData.inputData[0].size(),"UCI Data Sets");
+    pts->append(sdata);
+    qh.runQhull(pts->comment().c_str(),pts->dimension(),pts->count(),&*pts->coordinates(),"d o");
+    std::vector<std::vector<int>> dsimplexes1 = qdelaunay_o(qh);
+    
+    std::vector<std::vector<unsigned>> dsimplexes;
+    for(auto x: dsimplexes1){
+	    std::vector<unsigned> temp;
+	    for(auto y :x)
+		    temp.push_back(y);
+	   dsimplexes.push_back(temp);
+    }
+    for(auto x:dsimplexes)
+	    if(checkInsertDsimplex(x,inData,this->beta,averageDistance,tree)){
+		    std::sort(x.begin(),x.end());
+		    dsimplexmesh.push_back(x);
+
+	}
 	((alphaComplex<nodeType>*)inData.complex)->buildBetaComplex(dsimplexmesh,inData.inputData.size(),inData.inputData,this->beta,this->betaMode);
 //	((alphaComplex<nodeType>*)inData.complex)->buildAlphaComplex(dsimplexmesh,inData.inputData.size(),inData.inputData);
 //	((alphaComplex<nodeType>*)inData.complex)->buildFilteration(dsimplexmesh,inData.inputData.size(),inData.inputData,this->beta);
@@ -109,9 +138,53 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
 	this->ut.writeDebug("betaSkeletonBasedComplex Pipe", "\tbetaSkeletonBasedComplex Size: ");
 	return;
 }
+}
+template <typename nodeType>
+std::vector<std::vector<int>>  betaSkeletonBasedComplex<nodeType>::qdelaunay_o(const Qhull &qhull){
+	int hullDimension = qhull.hullDimension();
+        std::vector<std::vector<double> > inputSites;
+	QhullPoints points = qhull.points();
 
+	QhullPointsIterator j(points);
+	while(j.hasNext()){
+		QhullPoint point = j.next();
+		inputSites.push_back(point.toStdVector());
+	}
+	QhullFacetList facets = qhull.facetList();
+	int numFacets = facets.count();
+	size_t numRidges = numFacets*hullDimension/2;
+
+	std::vector<std::vector<int>> regions;
+	QhullFacetListIterator k(facets);
+	while(k.hasNext()){
+		QhullFacet f = k.next();
+		std::vector<int> vertices;
+		if(!f.isUpperDelaunay()){
+			if(!f.isTopOrient() && f.isSimplicial()){
+				QhullVertexSet vs = f.vertices();
+				vertices.push_back(vs[1].point().id());
+				vertices.push_back(vs[0].point().id());
+				for(int i=2;i<(int)vs.size();++i){
+					vertices.push_back(vs[i].point().id());
+				}
+			}
+			else{
+				QhullVertexSetIterator i(f.vertices());
+				while(i.hasNext()){
+					QhullVertex vertex = i.next();
+					QhullPoint p = vertex.point();
+					vertices.push_back(p.id());
+				}
+			}
+			regions.push_back(vertices);
+		}
+	}
+      return regions;
+}
+
+
+// configPipe -> configure the function settings of this pipeline segment
 template <>
-
 unsigned betaSkeletonBasedComplex<alphaNode>:: selectCenter(std::vector<double> hpcofffaces, std::vector<std::vector<double>> betaCenters,std::vector<double> otherPoint){
    double valuebetaCenter1 =0, valuebetaCenter2=0, valueotherPoint=0;
    for(unsigned i =0;i<hpcofffaces.size();i++){
@@ -134,7 +207,6 @@ unsigned betaSkeletonBasedComplex<alphaNode>:: selectCenter(std::vector<double> 
 return 1;
 }
 template <>
-
 bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsigned> dsimplex,pipePacket<alphaNode> &inData,double beta,double averageDistance,kdTree tree){
 	double maxEdge = 0;
 	for(auto x : dsimplex)
@@ -617,6 +689,7 @@ bool betaSkeletonBasedComplex<nodeType>:: checkInsertDsimplex(std::vector<unsign
 	std::cout<<"No function Defined";
 	return false;
 }
+
 
 template class betaSkeletonBasedComplex<simplexNode>;
 template class betaSkeletonBasedComplex<alphaNode>;
