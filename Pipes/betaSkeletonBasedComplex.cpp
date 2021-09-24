@@ -52,6 +52,7 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
      	count =0;
     	std::vector<std::pair<int,int>> neighborsepsilon;
 
+    //Enumeration within epsilon ball for beta <1.
 	if(this->beta < 1)
 	{
    	for(unsigned index = 0; index < inData.inputData.size(); index++){
@@ -79,6 +80,7 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
     			    dsimplexIndexed.push_back(index);
     			    for(int i=0;i<dim;i++)
     				    dsimplexIndexed.push_back(difference[dsimplex[i]-1]);
+    			//for each enumerated simplex evaluate for beta selecton criterea
 			    if(checkInsertDsimplex(dsimplexIndexed,inData,this->beta,averageDistance,tree)){	
 		   		    std::sort(dsimplexIndexed.begin(), dsimplexIndexed.end());		  
 	       			    dsimplexmesh.push_back(dsimplexIndexed);
@@ -93,6 +95,7 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
 			     	    dsimplexIndexed1.push_back(index);
 				    for(int i=0;i<dim;i++)
 				    	    dsimplexIndexed1.push_back(difference[dsimplex[i]-1]);
+				   	//for each enumerated simplex evaluate for beta selecton criterea
 				    if(checkInsertDsimplex(dsimplexIndexed1,inData,this->beta,averageDistance,tree)){
 					    std::sort(dsimplexIndexed1.begin(), dsimplexIndexed1.end());
            	     			    dsimplexmesh.push_back(dsimplexIndexed1);
@@ -102,6 +105,7 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
 		    }
 	}
 	}	
+	//Compute Delaunay Triangulation for beta >=1.
 	else{
     Qhull qh;
     kdTree tree(inData.inputData, inData.inputData.size()); //KDTree for efficient nearest neighbor search
@@ -123,6 +127,7 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
 	   dsimplexes.push_back(temp);
     }
     for(auto x:dsimplexes)
+        //for each enumerated simplex evaluate for beta selecton criterea
 	    if(checkInsertDsimplex(x,inData,this->beta,averageDistance,tree)){
 		    std::sort(x.begin(),x.end());
 		    dsimplexmesh.push_back(x);
@@ -234,7 +239,7 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 		intersectionLune=true;
 		intersectionCircle=true;
 	}
-
+/*
 	if(this->betaMode == "highDimCirclePrevious"){
 		if(beta<1)
 			beta=1/beta;
@@ -396,7 +401,7 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 		    		first = false;
 	    		}	
 		}
-	/*	std::vector<size_t> circumneighbors = tree.neighborhoodIndices(circumCenter, sqrt(circumRadius)); //All neighbors in epsilon-ball
+		std::vector<size_t> circumneighbors = tree.neighborhoodIndices(circumCenter, sqrt(circumRadius)); //All neighbors in epsilon-ball
 		for(auto y :dsimplex)
 			circumneighbors.erase(std::remove(circumneighbors.begin(),circumneighbors.end(),y),circumneighbors.end());
 		std::sort (circumneighbors.begin(),circumneighbors.end());
@@ -426,7 +431,7 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 					}
 				}
 			}
-			*/
+			
                      //   if(intersectionCircle){
 	//			if(!circleintersect && neighbors.size()==0)
 	//				return true;
@@ -439,6 +444,9 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 			else
 				return false;
 	}
+	*/
+	
+	//Checking the beta celtic knot check for given beta value  Circle mode is generally for beta <1
 	else if(this->betaMode == "highDimCircle"){
 		if(beta<1)
 			beta=1/beta;
@@ -563,6 +571,7 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 			first= false;
 		}
 	}
+	//Checking the beta celtic knot check for given beta value  lune mode is generally for beta >=1
 	else if(this->betaMode == "highDimLune"){
 		std::set<unsigned> simplex(dsimplex.begin(),dsimplex.end());
        		std::vector<double> circumCenter;

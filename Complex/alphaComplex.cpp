@@ -99,6 +99,8 @@ bool  alphaComplex<nodeType>::checkGabriel(std::vector<double> point, std::vecto
 	else
 		return false;
 }
+
+/*
 template<>
 void alphaComplex<alphaNode>::buildFilteration(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData,double beta,kdTree tree){
 	unsigned maxDimension = dsimplexmesh[0].size()-1;
@@ -262,7 +264,7 @@ for( auto x : this->simplexList)
 	std::cout<<"Count of "<<di++<<"-simplex ::"<<x.size()<<"\n";
 return;
 }
-
+*/
 
 template<>
 void alphaComplex<alphaNode>::buildBetaComplex(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData,double beta,std::string betaMode){
@@ -413,7 +415,7 @@ for( auto x : this->simplexList)
 return;
 }
 
-
+/*
 
 template<>
 void alphaComplex<alphaNode>::buildBetaComplexFilteration(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData,kdTree tree){
@@ -485,7 +487,7 @@ void alphaComplex<alphaNode>::buildBetaComplexFilteration(std::vector<std::vecto
 	}
 
 	//ALPHA COMPLEX FILTERTION BASED on FOLLOWING algorithm
-	/*Filtration value computation algorithm
+	Filtration value computation algorithm
 	for i : dimension →0 do
 	   for all σ of dimension i
 	        if filtration(σ) is NaN then
@@ -504,7 +506,7 @@ void alphaComplex<alphaNode>::buildBetaComplexFilteration(std::vector<std::vecto
 	end for
 	make_filtration_non_decreasing()
 	prune_above_filtration()
-        */
+        
 int cnt=0;
 	for(int dim = this->simplexList.size()-1; dim >= 0; dim--){
 		for(auto simplexiter = this->simplexList[dim].rbegin(); simplexiter != this->simplexList[dim].rend(); ++simplexiter){
@@ -525,7 +527,7 @@ int cnt=0;
 						else {
 							neighborsface.clear();
 			                                neighborsface = tree.neighborhoodIndices(face->circumCenter, face->circumRadius); //All neighbors in epsilon-ball
-							/*
+							
 							std::vector<unsigned>::iterator it;											
 							it=std::set_difference (simplex->simplex.begin(), simplex->simplex.end(), face->simplex.begin(), face->simplex.end(), points_check.begin());
 							points_check.resize(it-points_check.begin());
@@ -538,7 +540,7 @@ int cnt=0;
 									gabriel = false;
 								guilty_points_check.push_back((*it));
 							}
-							*/
+							
 							std::vector<size_t> neg1(neighborsface.begin(),neighborsface.end());
 							for( auto x : face->simplex)
 						         	neg1.erase(std::remove(neg1.begin(), neg1.end(), x),neg1.end());
@@ -582,7 +584,7 @@ int cnt=0;
 							}
 							}
 						}
-					/*	for(unsigned i :neighborsface){
+						for(unsigned i :neighborsface){
 						std::vector<unsigned> face1(face->simplex.begin(),face->simplex.end());
 						face1.push_back(i);
 						std::sort(face1.begin(),face1.end());
@@ -598,14 +600,14 @@ int cnt=0;
 								}
 							}
 						}
-                                       */
+                                       
 						face->filterationvalue = weightassigned;
-					/*	auto minmax = std::minmax_element(weighttoselect.begin(),weighttoselect.end()); 
+						auto minmax = std::minmax_element(weighttoselect.begin(),weighttoselect.end()); 
 						if(*minmax.first > face->circumRadius)
 							face->filterationvalue  =*minmax.first;
 						else
 							face->filterationvalue =  face->circumRadius;
-							*/
+							
 					//	face->filterationvalue = minmax.first;
 						std::cout<<"\nNOT Gabriel Assigned  weight "<<dim-1<<" "<<face->filterationvalue;
 					}
@@ -614,7 +616,7 @@ int cnt=0;
 			}
 		}
 	}
-/*
+
 bool done = false;
 for(auto x:simplexList){
 	for(auto y :x){
@@ -639,7 +641,7 @@ for(auto x:simplexList){
 		if(done)
 			break;
 	}
-	*/
+	
 	
 	//Reinserting to sort by filterationvalue and remove simplexes with weight greater than alphafilteration value (maxEpsilon)
 	std::vector<std::set<std::shared_ptr<alphaNode>, cmpByWeight<std::shared_ptr<alphaNode>>>> simplexList1;		//Holds ordered list of simplices in each dimension
@@ -662,7 +664,7 @@ for( auto x : this->simplexList)
 
 }
 
-
+*/
 
 template<>
 void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData){
