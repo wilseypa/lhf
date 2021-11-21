@@ -93,13 +93,15 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
 				    while (++mt != last) *mt = *(mt-1)+1;
 				    std::vector<unsigned> dsimplexIndexed1;
 			     	    dsimplexIndexed1.push_back(index);
-				    for(int i=0;i<dim;i++)
+				    for(int i=0;i<dim;i++){
 				    	    dsimplexIndexed1.push_back(difference[dsimplex[i]-1]);
+				    	 //   std::cout<<difference[dsimplex[i]-1]<<" ";
+						}
 				   	//for each enumerated simplex evaluate for beta selecton criterea
 				    if(checkInsertDsimplex(dsimplexIndexed1,inData,this->beta,averageDistance,tree)){
-					    std::sort(dsimplexIndexed1.begin(), dsimplexIndexed1.end());
-           	     			    dsimplexmesh.push_back(dsimplexIndexed1);
-		    			    count++;	    	
+					        std::sort(dsimplexIndexed1.begin(), dsimplexIndexed1.end());
+           	     			dsimplexmesh.push_back(dsimplexIndexed1);
+		    			    count++;	
 		    		    }
 		    	    }      
 		    }
@@ -133,16 +135,31 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
 		    dsimplexmesh.push_back(x);
 
 	}
-	((alphaComplex<nodeType>*)inData.complex)->buildBetaComplex(dsimplexmesh,inData.inputData.size(),inData.inputData,this->beta,this->betaMode);
+  }
+//	((alphaComplex<nodeType>*)inData.complex)->buildBetaComplex(dsimplexmesh,inData.inputData.size(),inData.inputData,this->beta,this->betaMode);
 //	((alphaComplex<nodeType>*)inData.complex)->buildAlphaComplex(dsimplexmesh,inData.inputData.size(),inData.inputData);
 //	((alphaComplex<nodeType>*)inData.complex)->buildFilteration(dsimplexmesh,inData.inputData.size(),inData.inputData,this->beta);
 //        ((alphaComplex<nodeType>*)inData.complex)->buildBetaComplexFilteration(dsimplexmesh, inData.inputData.size(),inData.inputData, tree);
+	std::vector<std::vector<bool>> incidenceMatrix(inData.inputData.size(),std::vector<bool>(inData.inputData.size(),0));
+	int countd1=0;
+	for(auto x : dsimplexmesh){
+				for(int i=0;i<x.size();i++)
+					for(int j=i+1;j<x.size();j++){
+					   int origin = x[i];
+					   int destination = x[j];
+					   if(incidenceMatrix[origin][destination]!=true)
+							countd1++;
+					   incidenceMatrix[origin][destination] = true;
+				}
+	}
+	
+	std::cout<<"Edges ="<<countd1<<" ";
+	inData.incidenceMatrix = incidenceMatrix;
 	std::ofstream file("PHdSphereDimensionWiseMeshSize.txt",std::ios_base::app);
-        file<<this->betaMode<<","<<inData.inputData.size()<<","<<inData.inputData[0].size()<<","<<this->beta<<","<<dsimplexmesh.size()<<std::endl;	
+    file<<this->betaMode<<","<<inData.inputData.size()<<","<<inData.inputData[0].size()<<","<<this->beta<<","<<dsimplexmesh.size()<<std::endl;	
 	file.close();
 	this->ut.writeDebug("betaSkeletonBasedComplex Pipe", "\tbetaSkeletonBasedComplex Size: ");
 	return;
-}
 }
 template <typename nodeType>
 std::vector<std::vector<int>>  betaSkeletonBasedComplex<nodeType>::qdelaunay_o(const Qhull &qhull){
@@ -231,7 +248,7 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 		exit(0);
 	else if(beta==0)
 		return true;
-    	else if(beta <1)
+    else if(beta <1)
 		intersectionCircle = true;
 	else if(beta >1)
 		intersectionLune = true;
@@ -445,9 +462,10 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 				return false;
 	}
 	*/
+		
 	
 	//Checking the beta celtic knot check for given beta value  Circle mode is generally for beta <1
-	else if(this->betaMode == "highDimCircle"){
+	if(this->betaMode == "highDimCircle"){
 		if(beta<1)
 			beta=1/beta;
     		std::set<unsigned> simplex(dsimplex.begin(),dsimplex.end());
@@ -485,11 +503,11 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 				auto first = face.begin();
 				std::vector<double> fR;
 				std::vector<double> fA = inData.inputData[*first];
-      		        	std::advance(first, 1);
+      		    std::advance(first, 1);
 				std::vector<double> fB = inData.inputData[*first];
 	   			std::transform(fA.begin(), fA.end(), fB.begin(), std::back_inserter(fR),[](double e1,double e2){return ((e1+e2)/2);});
 				faceCC = fR;
-			}	
+			}
 			double faceRadius;
    			if(face.size()>2)
    				faceRadius = utils::circumRadius(face,((alphaComplex<alphaNode>*)inData.complex)->distMatrix);
@@ -497,7 +515,7 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 				faceRadius = pow(((*((alphaComplex<alphaNode>*)inData.complex)->distMatrix)[face1[0]][face1[1]]/2),2);
                         
 			std::vector<double> hpcoff = utils::nullSpaceOfMatrix(face,inData.inputData,faceCC,sqrt(faceRadius));
-             		std::vector<std::vector<double>> refbetaCenters ;
+            std::vector<std::vector<double>> refbetaCenters ;
 			bool sameside = false;
 			double fixdistance = utils::vectors_distance(faceCC,circumCenter) + sqrt(circumRadius);
 		//	std::cout<<fixdistance<<" "<<sqrt(faceRadius)<<"  "<<sqrt(circumRadius)<<"\n";
@@ -506,11 +524,11 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 			std::vector<double> refpoint;
 			refbetaCenters = utils::betaCentersCalculation(hpcoff, refbeta, sqrt(faceRadius),faceCC);
                         
-                  	double expr1=0;
+            double expr1=0;
 		  	double expr3=0;
 		      	for(unsigned i =0;i<hpcoff.size();i++){
 			      	expr1 += hpcoff[i]*refbetaCenters[0][i];
-				expr3 += hpcoff[i]*inData.inputData[x][i];
+				    expr3 += hpcoff[i]*inData.inputData[x][i];
 			}
 			expr1--;
 			expr3--;		
@@ -533,21 +551,21 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 				betaCenter.push_back(beta*circumCenter[y] + (1-beta)*refpoint[y]);
 			double betaRadius = utils::vectors_distance(betaCenter, inData.inputData[face1[0]]);
 
-			std::cout<<"\n"<<betaRadius<<" ";
-			for(auto x:betaCenter)
-				std::cout<<x<<" ";
+	//		std::cout<<"\n"<<betaRadius<<" ";
+	//		for(auto x:betaCenter)
+	//			std::cout<<x<<" ";
 	//		std::cout<<"\nVertex "<<x<<"\n Dsimplex";
-	//	          std::cout<<beta<<" ";
+    //         std::cout<<beta<<" ";
 	//		for(auto x:dsimplex)
 	//			std::cout<<x<<" ";
-	 // 	           int pk;
-	   //     	std::cin>>pk;		
+    // 	           int pk;
+    //     	std::cin>>pk;		
 			std::vector<size_t> neighbors1faces1 = tree.neighborhoodIndices(betaCenter, betaRadius); //All neighbors in epsilon-ball
 			for(auto t :dsimplex)
 				neighbors1faces1.erase(std::remove(neighbors1faces1.begin(),neighbors1faces1.end(),t),neighbors1faces1.end());
-			for(auto x: neighbors1faces1)
-			std::cout<<x<<" ";
-			std::cout<<"\n";	
+		//	for(auto x: neighbors1faces1)
+		//	std::cout<<x<<" ";
+		//	std::cout<<"\n";	
 			if(!first){
 				std::sort (neighborsfinalCircle.begin(),neighborsfinalCircle.end());
 				std::sort (neighbors1faces1.begin(),neighbors1faces1.end()); 
@@ -637,10 +655,13 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 			first= false;
 		}
 	}
+	//std::cout<<this->betaMode ;
 	if(this->betaMode == "highDimLune" && neighborsfinalLune.size() == 0)
 		return true;
-	if(this->betaMode == "highDimCircle" && neighborsfinalCircle.size() == 0)
+	if(this->betaMode == "highDimCircle" && neighborsfinalCircle.size() == 0){
 		return true;
+		
+	}
 return false;
 }
 
