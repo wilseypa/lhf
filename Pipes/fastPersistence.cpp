@@ -94,7 +94,7 @@ std::vector<simplexNodePointer> fastPersistence<nodeType>::persistenceByDimensio
 
 					if(recordIntervals && simplex->weight != pivot->weight){
 						bettiBoundaryTableEntry des = { dimension, std::min(pivot->weight, simplex->weight), std::max(pivot->weight, simplex->weight), this->ut.extractBoundaryPoints(v[simplex]) };
-
+						/*
 						if(inData.complex->simplexType=="alphaComplex"){	
 						std::vector<double> centroid(inData.inputData[0].size());
 						int pts=0;
@@ -112,7 +112,7 @@ std::vector<simplexNodePointer> fastPersistence<nodeType>::persistenceByDimensio
     					             file<<x<<",";
 						file<<"\n";
 				    	        file.close();
-						}
+						}*/
 						inData.bettiTable.push_back(des);
 					}
 

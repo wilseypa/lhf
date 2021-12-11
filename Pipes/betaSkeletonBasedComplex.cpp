@@ -135,7 +135,7 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
 		    dsimplexmesh.push_back(x);
 
 	}
-  }
+  }	
 //	((alphaComplex<nodeType>*)inData.complex)->buildBetaComplex(dsimplexmesh,inData.inputData.size(),inData.inputData,this->beta,this->betaMode);
 //	((alphaComplex<nodeType>*)inData.complex)->buildAlphaComplex(dsimplexmesh,inData.inputData.size(),inData.inputData);
 //	((alphaComplex<nodeType>*)inData.complex)->buildFilteration(dsimplexmesh,inData.inputData.size(),inData.inputData,this->beta);
@@ -153,7 +153,7 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
 				}
 	}
 	
-	std::cout<<"Edges ="<<countd1<<" ";
+	//std::cout<<"Edges ="<<countd1<<" ";
 	inData.incidenceMatrix = incidenceMatrix;
 	std::ofstream file("PHdSphereDimensionWiseMeshSize.txt",std::ios_base::app);
     file<<this->betaMode<<","<<inData.inputData.size()<<","<<inData.inputData[0].size()<<","<<this->beta<<","<<dsimplexmesh.size()<<std::endl;	
@@ -618,7 +618,7 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 				betaCenter.push_back(beta*circumCenter[y] + (1-beta)*inData.inputData[x][y]);
 			double betaRadius = beta*sqrt(circumRadius);     
 
-			std::cout<<betaRadius<<" ";
+		/*	std::cout<<betaRadius<<" ";
 			for(auto x:betaCenter)
 				std::cout<<x<<" ";
 			std::cout<<"\n";
@@ -627,12 +627,13 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 	//			std::cout<<x<<" ";
 	  //              int pk;
 	//		std::cin>>pk;		
+	* */
 			std::vector<size_t> neighbors1faces1 = tree.neighborhoodIndices(betaCenter, betaRadius); //All neighbors in epsilon-ball
 			neighbors1faces1.erase(std::remove(neighbors1faces1.begin(),neighbors1faces1.end(),x),neighbors1faces1.end());
-			for(auto x: neighbors1faces1)
+	/*		for(auto x: neighbors1faces1)
 			std::cout<<x<<" ";
 			std::cout<<"\n";	
-			if(!first){
+		*/	if(!first){
 				std::sort (neighborsfinalLune.begin(),neighborsfinalLune.end());
 				std::sort (neighbors1faces1.begin(),neighbors1faces1.end()); 
 				if(intersectionLune==true){

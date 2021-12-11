@@ -699,7 +699,7 @@ void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<unsigned
 	      			weight1 = utils::circumRadius(gensimp,this->distMatrix);
    			else
 		        	weight1 = weight/2;
-
+		    weight1=weight;
 			std::shared_ptr<alphaNode> tot = std::make_shared<alphaNode>(alphaNode(gensimp,weight1));
 		
 			if(gensimp.size()>1)
@@ -750,6 +750,7 @@ void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<unsigned
 	make_filtration_non_decreasing()
 	prune_above_filtration()
         */
+        /*
        	for(int dim = this->simplexList.size()-1; dim >= 0; dim--){
 		for(auto simplexiter = this->simplexList[dim].rbegin(); simplexiter != this->simplexList[dim].rend(); ++simplexiter){
 			std::shared_ptr<alphaNode> simplex = (*simplexiter);
@@ -835,6 +836,7 @@ void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<unsigned
 		}
 	}
 	this->simplexList = simplexList1;
+	* */
 int di=0;
 for( auto x : this->simplexList)
 	std::cout<<"Count of "<<di++<<"-simplex ::"<<x.size()<<"\n";

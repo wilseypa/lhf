@@ -376,10 +376,10 @@ void simplexArrayList<nodeType>::expandDimensions(int dim){
 			}
 		}
 	}
-std::ofstream out("incedenceMatrix2DBeta.csv");
+std::ofstream out("incedenceMatrix2DBeta0.9.csv");
 int di=0;
 for( auto x : this->simplexList)
-	out<<"Count of "<<di++<<"-simplex ::"<<x.size()<<"\n";
+	std::cout<<"Count of "<<di++<<"-simplex ::"<<x.size()<<"\n";
 
 std::vector<std::vector<unsigned>> edges(this->simplexList[0].size(),std::vector<unsigned>(this->simplexList[0].size(),0));
 for(auto x : this->simplexList[1]){

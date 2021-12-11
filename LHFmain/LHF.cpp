@@ -63,7 +63,12 @@ void LHF<nodeType>::runPipeline(std::map<std::string, std::string> args, pipePac
 			//Check if the pipe was created and configure
 			if (cp != 0 && cp->configPipe(args)){
 				//Run the pipe function (wrapper)
+				auto startTimeEach = std::chrono::high_resolution_clock::now();
+
              	cp->runPipeWrapper(wD);
+             	auto endTimeEach = std::chrono::high_resolution_clock::now();
+				std::chrono::duration<double, std::milli> elapsedEach = endTimeEach - startTimeEach;
+                std::cout<<" Pipe "<<curFunct<<"  Time Elapsed ::"<<std::to_string(elapsedEach.count() / 1000.0)<<std::endl;
 			}
 			else{
 				std::cout << "LHF runPipeline: Failed to configure pipeline: " << args["pipeline"] << std::endl;
