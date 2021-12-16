@@ -18,8 +18,8 @@
 #include "betaSkeletonBasedComplex.hpp"
 #include "alphaComplex.hpp"
 #include "qhullPipe.hpp"
-
 #include "utils.hpp"
+#include "readInput.hpp"
 
 // basePipe constructor
 template <typename nodeType>
@@ -53,8 +53,8 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
     	std::vector<std::pair<int,int>> neighborsepsilon;
 
     //Enumeration within epsilon ball for beta <1.
-	if(this->beta < 1)
-	{
+	if(this->beta < 1){
+	 if(this->betaMesh=="null.csv"){
    	for(unsigned index = 0; index < inData.inputData.size(); index++){
     		std::vector<size_t> neighbors = tree.neighborhoodIndices(inData.inputData[index], this->epsilon); //All neighbors in epsilon-ball
 		int n = neighbors.size();
@@ -106,7 +106,48 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
 		    	    }      
 		    }
 	}
-	}	
+		std::ofstream out("latestbetamesh.csv");
+		for(auto x: dsimplexmesh){
+			int i=0;
+			for(auto y :x){
+				i++;
+				out << y;
+				if(i!=x.size())
+					out<<",";
+			}
+			out << '\n';
+		}
+	}
+	else if(betaMesh!="null.csv"){
+		auto rs = readInput();
+		std::vector<std::vector<double>> betaMesh1 = rs.readCSV(this->betaMesh);
+		std::vector<std::vector<unsigned>> betaMesh;
+		for(auto x: betaMesh1){
+			std::vector<unsigned> temp;
+			for(auto y :x)
+				temp.push_back(y);
+			betaMesh.push_back(temp);
+		}
+		for(auto x:betaMesh)
+        //for each enumerated simplex evaluate for beta selecton criterea
+	    if(checkInsertDsimplex(x,inData,this->beta,averageDistance,tree)){
+		    std::sort(x.begin(),x.end());
+		    dsimplexmesh.push_back(x);
+
+	}
+		std::ofstream out("latestbetamesh.csv");
+		for(auto x: dsimplexmesh){
+			int i=0;
+			for(auto y :x){
+				i++;
+				out << y;
+				if(i!=x.size())
+					out<<",";
+			}
+			out << '\n';
+		}
+	}
+	}
 	//Compute Delaunay Triangulation for beta >=1.
 	else{
     Qhull qh;
@@ -697,6 +738,9 @@ bool betaSkeletonBasedComplex<nodeType>::configPipe(std::map<std::string, std::s
 	if(pipe != configMap.end()){
 		this->dim = std::atoi(configMap["dimensions"].c_str());
 	}
+	pipe = configMap.find("betaMesh");
+	if(pipe != configMap.end())
+		this->betaMesh = configMap["betaMesh"].c_str();
 	
 	pipe = configMap.find("epsilon");
 	if(pipe != configMap.end())

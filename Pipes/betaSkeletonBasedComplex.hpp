@@ -47,6 +47,7 @@ class betaSkeletonBasedComplex : public basePipe<nodeType> {
 	std::string betaMode;
 	double enclosingRadius;
 	int dim;
+	std::string betaMesh;
 	double epsilon;
 	// For generation of combinations n choose r
 	struct c_unique {
