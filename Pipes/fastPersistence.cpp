@@ -44,7 +44,7 @@ std::vector<simplexNodePointer> fastPersistence<nodeType>::persistenceByDimensio
 		if(it == pivots.end() || (*it)->weight != simplex->weight || (*it)->simplex != simplex->simplex){
 		//	std::cout<<mode<<" "<<simplicialComplex<<" "<<complexType<<std::endl;
 			//Get all cofacets using emergent pair optimization
-			std::vector<simplexNodePointer> faceList = (mode == "homology" ? inData.complex->getAllFacets_P(simplex) : (inData.complex->simplexType == "alphaComplex"? inData.complex->getAllDelaunayCofacets(simplex,pivotPairs,true): inData.complex->getAllCofacets(simplex->simplex,simplex->weight,pivotPairs,true)));
+			std::vector<simplexNodePointer> faceList = (mode == "homology" ? inData.complex->getAllFacets_P(simplex) : (inData.complex->simplexType == "alphaComplex"? inData.complex->getAllDelaunayCofacets(simplex): inData.complex->getAllCofacets(simplex->simplex,simplex->weight,pivotPairs,true)));
 			
 				
 			std::vector<simplexNodePointer> columnV;	//Reduction column of matrix V

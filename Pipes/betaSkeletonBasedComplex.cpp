@@ -53,8 +53,8 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
     	std::vector<std::pair<int,int>> neighborsepsilon;
 
     //Enumeration within epsilon ball for beta <1.
+    if(this->betaMesh=="null.csv"){
 	if(this->beta < 1){
-	 if(this->betaMesh=="null.csv"){
    	for(unsigned index = 0; index < inData.inputData.size(); index++){
     		std::vector<size_t> neighbors = tree.neighborhoodIndices(inData.inputData[index], this->epsilon); //All neighbors in epsilon-ball
 		int n = neighbors.size();
@@ -105,8 +105,38 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
 		    		    }
 		    	    }      
 		    }
+		}
 	}
-		std::ofstream out("latestbetamesh.csv");
+	//Compute Delaunay Triangulation for beta >=1.
+	else{
+    Qhull qh;
+    kdTree tree(inData.inputData, inData.inputData.size()); //KDTree for efficient nearest neighbor search
+    std::vector<double> sdata;
+    //serializing all the data
+    for(auto a : inData.inputData)
+ 			for(auto b : a)
+ 				sdata.push_back(b);
+    PointCoordinates *pts = new PointCoordinates(qh,inData.inputData[0].size(),"UCI Data Sets");
+    pts->append(sdata);
+    qh.runQhull(pts->comment().c_str(),pts->dimension(),pts->count(),&*pts->coordinates(),"d o");
+    std::vector<std::vector<int>> dsimplexes1 = qdelaunay_o(qh);
+    
+    std::vector<std::vector<unsigned>> dsimplexes;
+    for(auto x: dsimplexes1){
+	    std::vector<unsigned> temp;
+	    for(auto y :x)
+		    temp.push_back(y);
+	   dsimplexes.push_back(temp);
+    }
+    for(auto x:dsimplexes)
+        //for each enumerated simplex evaluate for beta selecton criterea
+	    if(checkInsertDsimplex(x,inData,this->beta,averageDistance,tree)){
+		    std::sort(x.begin(),x.end());
+		    dsimplexmesh.push_back(x);
+
+	}
+  }	
+    std::ofstream out("latestbetamesh.csv");
 		for(auto x: dsimplexmesh){
 			int i=0;
 			for(auto y :x){
@@ -147,36 +177,7 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
 			out << '\n';
 		}
 	}
-	}
-	//Compute Delaunay Triangulation for beta >=1.
-	else{
-    Qhull qh;
-    kdTree tree(inData.inputData, inData.inputData.size()); //KDTree for efficient nearest neighbor search
-    std::vector<double> sdata;
-    //serializing all the data
-    for(auto a : inData.inputData)
- 			for(auto b : a)
- 				sdata.push_back(b);
-    PointCoordinates *pts = new PointCoordinates(qh,inData.inputData[0].size(),"UCI Data Sets");
-    pts->append(sdata);
-    qh.runQhull(pts->comment().c_str(),pts->dimension(),pts->count(),&*pts->coordinates(),"d o");
-    std::vector<std::vector<int>> dsimplexes1 = qdelaunay_o(qh);
-    
-    std::vector<std::vector<unsigned>> dsimplexes;
-    for(auto x: dsimplexes1){
-	    std::vector<unsigned> temp;
-	    for(auto y :x)
-		    temp.push_back(y);
-	   dsimplexes.push_back(temp);
-    }
-    for(auto x:dsimplexes)
-        //for each enumerated simplex evaluate for beta selecton criterea
-	    if(checkInsertDsimplex(x,inData,this->beta,averageDistance,tree)){
-		    std::sort(x.begin(),x.end());
-		    dsimplexmesh.push_back(x);
 
-	}
-  }	
 //	((alphaComplex<nodeType>*)inData.complex)->buildBetaComplex(dsimplexmesh,inData.inputData.size(),inData.inputData,this->beta,this->betaMode);
 //	((alphaComplex<nodeType>*)inData.complex)->buildAlphaComplex(dsimplexmesh,inData.inputData.size(),inData.inputData);
 //	((alphaComplex<nodeType>*)inData.complex)->buildFilteration(dsimplexmesh,inData.inputData.size(),inData.inputData,this->beta);
