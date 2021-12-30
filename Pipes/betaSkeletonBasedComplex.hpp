@@ -61,6 +61,7 @@ class betaSkeletonBasedComplex : public basePipe<nodeType> {
     bool checkInsertDsimplex(std::vector<unsigned> dsimplex,pipePacket<nodeType> &inData,double beta,double averageDistance,kdTree tree);
     unsigned selectCenter(std::vector<double> hpcofffaces, std::vector<std::vector<double>> betaCenters,std::vector<double> otherPoint);
     std::vector<std::vector<int>> qdelaunay_o(const Qhull &qhull);
+    std::vector<std::vector<int>> qconvex_o(const Qhull &qhull);
     bool configPipe(std::map<std::string, std::string> &configMap);
 	void outputData(pipePacket<nodeType>&);
 };

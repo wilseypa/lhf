@@ -120,7 +120,12 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
     pts->append(sdata);
     qh.runQhull(pts->comment().c_str(),pts->dimension(),pts->count(),&*pts->coordinates(),"d o");
     std::vector<std::vector<int>> dsimplexes1 = qdelaunay_o(qh);
-    
+    std::vector<std::vector<int>> surfacefacets = qconvex_o(qh); 
+    for(auto x : surfacefacets){
+	  for(auto y : x)
+			std::cout<<y<<" ";
+	  std::cout<<"\n";
+	}
     std::vector<std::vector<unsigned>> dsimplexes;
     for(auto x: dsimplexes1){
 	    std::vector<unsigned> temp;
@@ -203,6 +208,59 @@ void betaSkeletonBasedComplex<nodeType>::runPipe(pipePacket<nodeType> &inData){
 	this->ut.writeDebug("betaSkeletonBasedComplex Pipe", "\tbetaSkeletonBasedComplex Size: ");
 	return;
 }
+template <typename nodeType>
+
+std::vector<std::vector<int>>  betaSkeletonBasedComplex<nodeType>:: qconvex_o(const Qhull &qhull)
+{
+    int dim= qhull.hullDimension();
+    int numfacets= qhull.facetList().count();
+    int totneighbors= numfacets * dim;  /* incorrect for non-simplicial facets, see qh_countfacets */
+    std::cout << "dim "<<dim << "\n" <<"qhull size" << qhull.points().size() << " number of facets " << numfacets << "totalneighbors/2 " << totneighbors/2 << "\n";
+    std::vector<std::vector<double> > points;
+    // for(QhullPoint point : qhull.points())
+    for(QhullPoints::ConstIterator i= qhull.points().begin(); i != qhull.points().end(); ++i){
+        QhullPoint point= *i;
+        points.push_back(point.toStdVector());
+    }
+    for (auto x:points){
+     for (auto y:x)
+       std::cout<<y<<" ";
+       std::cout<<"\n";
+   }
+    QhullFacetList facets= qhull.facetList();
+    std::vector<std::vector<int> > facetVertices;
+    // for(QhullFacet f : facets)
+    QhullFacetListIterator j(facets);
+
+    while(j.hasNext()){
+        QhullFacet f= j.next();
+        std::vector<int> vertices;
+        if(!f.isGood()){
+            // ignore facet
+        }else if(!f.isTopOrient() && f.isSimplicial()){ /* orient the vertices like option 'o' */
+            QhullVertexSet vs= f.vertices();
+            vertices.push_back(vs[1].point().id());
+            vertices.push_back(vs[0].point().id());
+            for(int i= 2; i<(int)vs.size(); ++i){
+                vertices.push_back(vs[i].point().id());
+            }
+            facetVertices.push_back(vertices);
+        }else{  /* note: for non-simplicial facets, this code does not duplicate option 'o', see qh_facet3vertex and qh_printfacetNvertex_nonsimplicial */
+            // for(QhullVertex vertex : f.vertices()){
+            QhullVertexSetIterator k(f.vertices());
+            while(k.hasNext()){
+                QhullVertex vertex= k.next();
+                QhullPoint p= vertex.point();
+                vertices.push_back(p.id());
+            }
+            facetVertices.push_back(vertices);
+        }
+    }
+    return facetVertices;
+}//qconvex_o
+
+
+
 template <typename nodeType>
 std::vector<std::vector<int>>  betaSkeletonBasedComplex<nodeType>::qdelaunay_o(const Qhull &qhull){
 	int hullDimension = qhull.hullDimension();
