@@ -6,13 +6,15 @@ import math
 import numpy as np
 import pandas as pd
 import tadasets
-points = tadasets.dsphere(n=1000, d=1, r=1, noise=0.14)
-print(np.array(points))
+from mpl_toolkits.mplot3d import Axes3D
 
-points1 = np.array([[0, 0], [0, 1.1], [1, 0], [1, 1], [0.5,1.5],[0.5,-0.5],[2,2],[2.5,1],[3,-1],[1.5,-0.5],[1.7,-0.3],[1.9,0.2],[2.3,0.3],[2.4,-1.5],[2.3,1.2],[0.5,0.5],[2.2,5.6],[3.7,1.3]])
-print(points1)
-plt.scatter(points[:,0],points[:,1])
-plt.show()
+dimension = 3
+points = tadasets.dsphere(n=200, d=dimension-1, r=1, noise=0)
+
+#print(np.array(points))
+#points1 = np.array([[0, 0], [0, 1.1], [1, 0], [1, 1], [0.5,1.5],[0.5,-0.5],[2,2],[2.5,1],[3,-1],[1.5,-0.5],[1.7,-0.3],[1.9,0.2],[2.3,0.3],[2.4,-1.5],[2.3,1.2],[0.5,0.5],[2.2,5.6],[3.7,1.3]])
+#plt.scatter(points[:,0],points[:,1])
+#plt.show()
 tri = Delaunay(points)
 print(len(tri.simplices))
 def intersection(lst1, lst2):
@@ -21,20 +23,20 @@ def intersection(lst1, lst2):
 def union(lst1,lst2):
 	return list(set().union(lst1 , lst2))
 
-def neighbours(polytop):
+def neighbours(polytop,simplices):
 	polytop = list(polytop)
 	adjacency = []
-	for y in tri.simplices:
+	for y in simplices:
 		y = list(y)
 		if(polytop != y):
-			if(len(intersection(polytop,y))==2):
+			if(len(intersection(polytop,y))==dimension):
 				adjacency.append(y)
 	return adjacency
-xt = int(math.sqrt(len(tri.simplices)))+1
+#xt = int(math.sqrt(len(simplices)))+1
 #fig, axs = plt.subplots(xt,xt)
 
-def mergeneighbors(polytop):
-	neighbors = neighbours(polytop)
+def mergeneighbors(polytop,simplices):
+	neighbors = neighbours(polytop,simplices)
 	for x in neighbors:
 		y = union(x,polytop)
 		hull = ConvexHull([points[i] for i in y])
@@ -49,69 +51,86 @@ def mergeneighbors(polytop):
 			polytop = union(polytop,x)
 	return polytop
 
-convexparts = []
-maxdist = []
-averagedist = []
-sizecd = []
-#for in adjacency
-for i in range(0,len(tri.simplices)):
-	#axs[int(i/xt)][i%xt].scatter(points[:,0],points[:,1])
-	x= list(tri.simplices[i])
-	distance =0
-	maxval = 0
-	while True:
-		x1 = list(mergeneighbors(x))
-		if(x1==x):
-			break
-		x = x1
-	if x not in convexparts:
-		maxval=0
-		distance = 0
-		convexparts.append(x)
-		hull = ConvexHull([points[i] for i in x])
-		for p in hull.simplices:
-			distance = distance + math.dist(points[x[p[0]]],points[x[p[1]]])
-			if(maxval < math.dist(points[x[p[0]]],points[x[p[1]]])):
-				maxval = math.dist(points[x[p[0]]],points[x[p[1]]])
-		maxdist.append(maxval)
-		averagedist.append(distance)
-		sizecd.append(len(x))
-print(sizecd)
-print(maxdist)
-df = pd.DataFrame(list(zip(convexparts,maxdist,averagedist,sizecd)),columns =['convexpart', 'maxdist','averagedist','sizecd'])
-df = df.sort_values(by = 'sizecd',ascending = False)
-df = df.sort_values(by = 'maxdist',ascending = True)
-print(df)
-i=0
-pointsaddressed = []
-convexpartsunion = []
-valid = []
-for x in df['convexpart'].tolist():
-	check = 1
-	for t in convexpartsunion:
-		if(len(intersection(t,x)) > 2):
-			check = 0
-	if(check==1):
-		valid.append(i)
-		hull = ConvexHull([points[i] for i in x])
-		#for p in hull.simplices:
-		#	axs[int(i/xt)][i%xt].plot([points[x[p[0]]][0],points[x[p[1]]][0]],[points[x[p[0]]][1],points[x[p[1]]][1]])
-		pointsaddressed = union(pointsaddressed,x)
-		convexpartsunion.append(x)
-	i = i+1
-remaining = 0
-for i in tri.simplices:
-	present =0
-	for x in convexpartsunion:
-		if (len(intersection(x,i))>=len(i)):
-			present = 1
-			break
-	if(present!=1):
-		remaining = remaining+1
-		convexpartsunion.append(i)
 
-print(remaining)
-			
+#for in adjacency
+def optimalconvexization(simplices):
+	convexparts = []
+	maxdist = []
+	averagedist = []
+	sizecd = []
+	for i in range(0,len(simplices)):
+		#axs[int(i/xt)][i%xt].scatter(points[:,0],points[:,1])
+		x= list(simplices[i])
+		distance =0
+		maxval = 0
+		while True:
+			x1 = list(mergeneighbors(x,simplices))
+			if(x1==x):
+				break
+			x = x1
+		if x not in convexparts:
+			maxval=0
+			distance = 0
+			convexparts.append(x)
+			hull = ConvexHull([points[i] for i in x])
+			for p in hull.simplices:
+				distance = distance + math.dist(points[x[p[0]]],points[x[p[1]]])
+				if(maxval < math.dist(points[x[p[0]]],points[x[p[1]]])):
+					maxval = math.dist(points[x[p[0]]],points[x[p[1]]])
+			maxdist.append(maxval)
+			averagedist.append(distance)
+			sizecd.append(len(x))
+	df = pd.DataFrame(list(zip(convexparts,maxdist,averagedist,sizecd)),columns =['convexpart', 'maxdist','averagedist','sizecd'])
+	df = df.sort_values(by = 'sizecd',ascending = False)
+	df = df.sort_values(by = 'maxdist',ascending = True)
+	return df
+
+
+valid = []
+def iterativeconvexization(simplices):
+	convexpartsunion = []
+	simplices = list(simplices)
+	remainingsimplices = simplices
+	premaining = 0
+	while(True):
+		df = optimalconvexization(remainingsimplices)
+		i=0
+		pointsaddressed = []
+		for x in df['convexpart'].tolist():
+			check = 1
+			for t in convexpartsunion:
+				if(len(intersection(t,x)) > dimension):
+					check = 0
+			if(check==1):
+				valid.append(i)
+				hull = ConvexHull([points[i] for i in x])
+				#for p in hull.simplices:
+				#	axs[int(i/xt)][i%xt].plot([points[x[p[0]]][0],points[x[p[1]]][0]],[points[x[p[0]]][1],points[x[p[1]]][1]])
+				pointsaddressed = union(pointsaddressed,x)
+				convexpartsunion.append(x)
+			i = i+1
+		remainingsimplices = []
+		remaining = 0
+		for i in simplices:
+			present =0
+			for x in convexpartsunion:
+				if (len(intersection(x,i))>=len(i)):
+					present = 1
+					break
+			if(present!=1):
+				remaining = remaining+1
+				remainingsimplices.append(i)	
+		print(remaining)
+		if(remaining==premaining):
+			if(remaining !=0):
+				for r in remainingsimplices:
+					convexpartsunion.append(r)
+			break
+		premaining = remaining
+	return convexpartsunion
+
+convexpartsunion = iterativeconvexization(tri.simplices)
+
 '''
 i=0
 remaining_edges = []
@@ -185,12 +204,30 @@ for t in reminingconvexparts:
 	for y in convexpartsunion:
 		if(len(intersection(t,y))<3):
 			convexpartsunion.append(t)
-'''			
+	
+'''
+X=np.array(points)
+fig = plt.figure(figsize=(10,7))
+ax=Axes3D(fig)
+#ax.plot([i,i],[j,j],[k,h],color = 'g')
+#plt.show()
+X1 = np.transpose(X)[0]
+Y1 = np.transpose(X)[1]
+Z1 = np.transpose(X)[2]
+
 
 for x in convexpartsunion:
+	print(len(x))
 	hull = ConvexHull([points[i] for i in x])
 	for p in hull.simplices:
-		plt.plot([points[x[p[0]]][0],points[x[p[1]]][0]],[points[x[p[0]]][1],points[x[p[1]]][1]])
+		for t in range(0,len(p)):
+			for e in range(t+1,len(p)): 
+				#plt.plot([points[x[p[0]]][0],points[x[p[1]]][0]],[points[x[p[0]]][1],points[x[p[1]]][1]])
+				ax.plot([X1[x[p[t]]],X1[x[p[e]]]], [Y1[x[p[t]]],Y1[x[p[e]]]], [Z1[x[p[t]]],Z1[x[p[e]]]])
+				 
+#plt.scatter(points[:,0],points[:,1],s=10,color='black')
+ax.scatter(np.transpose(X)[0], np.transpose(X)[1], np.transpose(X)[2])
+
 plt.show()
 
 
