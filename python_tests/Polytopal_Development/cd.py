@@ -5,7 +5,12 @@ import matplotlib.pyplot as plt
 import math
 import numpy as np
 import pandas as pd
-points = np.array([[0, 0], [0, 1.1], [1, 0], [1, 1], [0.5,1.5],[0.5,-0.5],[2,2],[2.5,1],[3,-1],[1.5,-0.5],[1.7,-0.3],[1.9,0.2],[2.3,0.3],[2.4,-1.5],[2.3,1.2],[6.3,5.5]])
+import tadasets
+points = tadasets.dsphere(n=1000, d=1, r=1, noise=0.14)
+print(np.array(points))
+
+points1 = np.array([[0, 0], [0, 1.1], [1, 0], [1, 1], [0.5,1.5],[0.5,-0.5],[2,2],[2.5,1],[3,-1],[1.5,-0.5],[1.7,-0.3],[1.9,0.2],[2.3,0.3],[2.4,-1.5],[2.3,1.2],[0.5,0.5],[2.2,5.6],[3.7,1.3]])
+print(points1)
 plt.scatter(points[:,0],points[:,1])
 plt.show()
 tri = Delaunay(points)
@@ -25,7 +30,8 @@ def neighbours(polytop):
 			if(len(intersection(polytop,y))==2):
 				adjacency.append(y)
 	return adjacency
-fig, axs = plt.subplots(5,5)
+xt = int(math.sqrt(len(tri.simplices)))+1
+#fig, axs = plt.subplots(xt,xt)
 
 def mergeneighbors(polytop):
 	neighbors = neighbours(polytop)
@@ -49,7 +55,7 @@ averagedist = []
 sizecd = []
 #for in adjacency
 for i in range(0,len(tri.simplices)):
-	axs[int(i/5)][i%5].scatter(points[:,0],points[:,1])
+	#axs[int(i/xt)][i%xt].scatter(points[:,0],points[:,1])
 	x= list(tri.simplices[i])
 	distance =0
 	maxval = 0
@@ -73,8 +79,8 @@ for i in range(0,len(tri.simplices)):
 print(sizecd)
 print(maxdist)
 df = pd.DataFrame(list(zip(convexparts,maxdist,averagedist,sizecd)),columns =['convexpart', 'maxdist','averagedist','sizecd'])
-df = df.sort_values(by = 'maxdist',ascending = True)
 df = df.sort_values(by = 'sizecd',ascending = False)
+df = df.sort_values(by = 'maxdist',ascending = True)
 print(df)
 i=0
 pointsaddressed = []
@@ -88,11 +94,25 @@ for x in df['convexpart'].tolist():
 	if(check==1):
 		valid.append(i)
 		hull = ConvexHull([points[i] for i in x])
-		for p in hull.simplices:
-			axs[int(i/5)][i%5].plot([points[x[p[0]]][0],points[x[p[1]]][0]],[points[x[p[0]]][1],points[x[p[1]]][1]])
+		#for p in hull.simplices:
+		#	axs[int(i/xt)][i%xt].plot([points[x[p[0]]][0],points[x[p[1]]][0]],[points[x[p[0]]][1],points[x[p[1]]][1]])
 		pointsaddressed = union(pointsaddressed,x)
 		convexpartsunion.append(x)
 	i = i+1
+remaining = 0
+for i in tri.simplices:
+	present =0
+	for x in convexpartsunion:
+		if (len(intersection(x,i))>=len(i)):
+			present = 1
+			break
+	if(present!=1):
+		remaining = remaining+1
+		convexpartsunion.append(i)
+
+print(remaining)
+			
+'''
 i=0
 remaining_edges = []
 for x in df['convexpart'].tolist():
@@ -159,17 +179,18 @@ for x in L:
 			if(len(intersection(x,tr))>0):
 				reminingconvexparts.append(union(x,tr))
 
-print(reminingconvexparts)
-print(convexpartsunion)
+#print(reminingconvexparts)
+#print(convexpartsunion)
 for t in reminingconvexparts:
 	for y in convexpartsunion:
 		if(len(intersection(t,y))<3):
 			convexpartsunion.append(t)
-	
+'''			
+
 for x in convexpartsunion:
 	hull = ConvexHull([points[i] for i in x])
 	for p in hull.simplices:
-		axs[int(j/5)][j%5].plot([points[x[p[0]]][0],points[x[p[1]]][0]],[points[x[p[0]]][1],points[x[p[1]]][1]])
+		plt.plot([points[x[p[0]]][0],points[x[p[1]]][0]],[points[x[p[0]]][1],points[x[p[1]]][1]])
 plt.show()
 
 
