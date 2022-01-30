@@ -8,8 +8,8 @@ import pandas as pd
 import tadasets
 from mpl_toolkits.mplot3d import Axes3D
 
-dimension = 3
-points = tadasets.dsphere(n=200, d=dimension-1, r=1, noise=0)
+dimension = 2
+points = tadasets.dsphere(n=1000, d=dimension-1, r=1, noise=0.15)
 
 #print(np.array(points))
 #points1 = np.array([[0, 0], [0, 1.1], [1, 0], [1, 1], [0.5,1.5],[0.5,-0.5],[2,2],[2.5,1],[3,-1],[1.5,-0.5],[1.7,-0.3],[1.9,0.2],[2.3,0.3],[2.4,-1.5],[2.3,1.2],[0.5,0.5],[2.2,5.6],[3.7,1.3]])
@@ -80,6 +80,12 @@ def optimalconvexization(simplices):
 			maxdist.append(maxval)
 			averagedist.append(distance)
 			sizecd.append(len(x))
+		k=set()
+		for tp in convexparts:
+			for lm in tp:
+				k.add(lm)
+		if(len(k)==len(points)):
+			break;
 	df = pd.DataFrame(list(zip(convexparts,maxdist,averagedist,sizecd)),columns =['convexpart', 'maxdist','averagedist','sizecd'])
 	df = df.sort_values(by = 'sizecd',ascending = False)
 	df = df.sort_values(by = 'maxdist',ascending = True)
@@ -204,16 +210,17 @@ for t in reminingconvexparts:
 	for y in convexpartsunion:
 		if(len(intersection(t,y))<3):
 			convexpartsunion.append(t)
-	
 '''
-X=np.array(points)
-fig = plt.figure(figsize=(10,7))
-ax=Axes3D(fig)
+	
+
+#X=np.array(points)
+#fig = plt.figure(figsize=(10,7))
+#ax=Axes3D(fig)
 #ax.plot([i,i],[j,j],[k,h],color = 'g')
 #plt.show()
-X1 = np.transpose(X)[0]
-Y1 = np.transpose(X)[1]
-Z1 = np.transpose(X)[2]
+#X1 = np.transpose(X)[0]
+#Y1 = np.transpose(X)[1]
+#Z1 = np.transpose(X)[2]
 
 
 for x in convexpartsunion:
@@ -222,11 +229,11 @@ for x in convexpartsunion:
 	for p in hull.simplices:
 		for t in range(0,len(p)):
 			for e in range(t+1,len(p)): 
-				#plt.plot([points[x[p[0]]][0],points[x[p[1]]][0]],[points[x[p[0]]][1],points[x[p[1]]][1]])
-				ax.plot([X1[x[p[t]]],X1[x[p[e]]]], [Y1[x[p[t]]],Y1[x[p[e]]]], [Z1[x[p[t]]],Z1[x[p[e]]]])
+				plt.plot([points[x[p[0]]][0],points[x[p[1]]][0]],[points[x[p[0]]][1],points[x[p[1]]][1]])
+				#ax.plot([X1[x[p[t]]],X1[x[p[e]]]], [Y1[x[p[t]]],Y1[x[p[e]]]], [Z1[x[p[t]]],Z1[x[p[e]]]])
 				 
-#plt.scatter(points[:,0],points[:,1],s=10,color='black')
-ax.scatter(np.transpose(X)[0], np.transpose(X)[1], np.transpose(X)[2])
+plt.scatter(points[:,0],points[:,1],s=10,color='black')
+#ax.scatter(np.transpose(X)[0], np.transpose(X)[1], np.transpose(X)[2])
 
 plt.show()
 
