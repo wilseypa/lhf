@@ -1,3 +1,12 @@
+from scipy.spatial import Delaunay
+from scipy.spatial import ConvexHull, convex_hull_plot_2d
+import matplotlib.pyplot as plt
+import math
+import numpy as np
+import pandas as pd
+import tadasets
+from mpl_toolkits.mplot3d import Axes3D
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -5,7 +14,21 @@ import pypoman.duality as poly
 import polytope as pc
 
 from sklearn.decomposition import PCA
+import seaborn as sns; sns.set()
 
+dimension = 2
+points = tadasets.dsphere(n=5, d=dimension-1, r=1, noise=0)
+plt.scatter(points[:,0],points[:,1])
+pca = PCA(n_components=1).fit(points)
+print(pca.components_)
+coffX = pca.components_[0][0]
+coffY = pca.components_[0][1]
+v = pca.components_[:][0]* np.sqrt(pca.explained_variance_)
+print(pca.mean_)
+print(pca.mean_+v)
+plt.plot(pca.mean_-v, pca.mean_ + v)
+plt.show()
+'''
 fig, ax = plt.subplots()
 # creating the dataset
 x=np.array([[1,3,0],[2,2,0],[4,2,0],[5,9,0],[2.5,7,0]])
@@ -18,6 +41,11 @@ print(pca.components_)
 pca = PCA(n_components=2).fit(x)
 pca_x = pca.transform(x)
 print(pca.components_)
+pca = PCA(n_components=1).fit(x)
+pca_x = pca.transform(x)
+print(pca.components_)
+
+
 plt.scatter(pca_x[:,0], pca_x[:,1], alpha=0.3)
 #cxfh
 
@@ -46,3 +74,4 @@ plt.ylim(-3, 3)
 plt.axis('equal')
 plt.show()
 print(pca_x)
+'''
