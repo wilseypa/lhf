@@ -8,8 +8,12 @@ import pandas as pd
 import tadasets
 from mpl_toolkits.mplot3d import Axes3D
 
+
+#Schlegel diagram and Steriographic Projections for curvature removal as we move to lower dimensions
 dimension = 3
 points = tadasets.dsphere(n=100, d=dimension-1, r=1, noise=0)
+points=np.array([[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,0,1],[0,1,1],[1,1,1],[0,0,0])
+
 #Grid Precision as percentage of maximum diagonal/distance.
 precision = .5
 maximumdistance = 0;
@@ -188,11 +192,16 @@ for x in convexpartsunion:
 #plt.scatter(points[:,0],points[:,1],s=10,color='black')
 ax.scatter(np.transpose(X)[0], np.transpose(X)[1], np.transpose(X)[2])
 
-plt.show()
 
+
+convexp = iterativeconvexization(hull.simplices)
+
+plt.show()
+'''
 for x in convexpartsunion:
 	print(x)
 	hull = ConvexHull([points[i] for i in x])
 	for p in hull.simplices:
 		print(p)
 
+'''
