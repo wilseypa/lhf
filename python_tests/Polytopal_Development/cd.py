@@ -9,13 +9,13 @@ import tadasets
 from mpl_toolkits.mplot3d import Axes3D
 import polytope as pc
 import pypoman.duality as poly
+from sklearn.decomposition import PCA
 
 
 
-#Schlegel diagram and Steriographic Projections for curvature removal as we move to lower dimensions
-dimension = 2
+#Schlegel diagram and Steriographic Projections for curvature removal as we move to lower dims
 dim=2
-points = tadasets.dsphere(n=50, d=dimension-1, r=1, noise=0.15)
+points = tadasets.dsphere(n=100, d=dim-1, r=1, noise=0.1)
 #points=np.array([[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,0,1],[0,1,1],[1,1,1],[0,0,0])
 
 #Grid Precision as percentage of maximum diagonal/distance.
@@ -70,13 +70,13 @@ def neighbours(polytop,simplices):
 	for y in simplices:
 		y = list(y)
 		if(polytop != y):
-			if(len(intersection(polytop,y))==dimension):
+			if(len(intersection(polytop,y))==dim):
 				adjacency.append(y)
 	return adjacency
 #xt = int(math.sqrt(len(simplices)))+1
 #fig, axs = plt.subplots(xt,xt)
 
-def mergeneighbors(polytop,simplices):
+def mergeneighbors(polytop,simplices,points):
 	neighbors = neighbours(polytop,simplices)
 	for x in neighbors:
 		y = union(x,polytop)
@@ -94,7 +94,7 @@ def mergeneighbors(polytop,simplices):
 
 
 #for in adjacency
-def optimalconvexization(simplices):
+def optimalconvexization(simplices,points):
 	convexparts = []
 	maxdist = []
 	averagedist = []
@@ -105,7 +105,7 @@ def optimalconvexization(simplices):
 		distance =0
 		maxval = 0
 		while True:
-			x1 = list(mergeneighbors(x,simplices))
+			x1 = list(mergeneighbors(x,simplices,points))
 			if(x1==x):
 				break
 			x = x1
@@ -134,19 +134,19 @@ def optimalconvexization(simplices):
 
 
 valid = []
-def iterativeconvexization(simplices):
+def iterativeconvexization(simplices,dim,points):
 	convexpartsunion = []
 	simplices = list(simplices)
 	remainingsimplices = simplices
 	premaining = 0
 	while(True):
-		df = optimalconvexization(remainingsimplices)
+		df = optimalconvexization(remainingsimplices,points)
 		i=0
 		pointsaddressed = []
 		for x in df['convexpart'].tolist():
 			check = 1
 			for t in convexpartsunion:
-				if(len(intersection(t,x)) > dimension):
+				if(len(intersection(t,x)) > dim):
 					check = 0
 			if(check==1):
 				valid.append(i)
@@ -175,8 +175,7 @@ def iterativeconvexization(simplices):
 			break
 		premaining = remaining
 	return convexpartsunion
-
-convexpartsunion = iterativeconvexization(tri.simplices)
+convexpartsunion = iterativeconvexization(tri.simplices,dim,points)
 
 if(dim!=2):
 	X=np.array(points)
@@ -204,9 +203,8 @@ if(dim==2):
 	ax.scatter(points[:,0],points[:,1],s=10,color='black')
 else:
 	ax.scatter(np.transpose(X)[0], np.transpose(X)[1], np.transpose(X)[2])
-plt.show()
-'''
 
+'''
 #convexp = iterativeconvexization(hull.simplices)
 
 
@@ -214,24 +212,31 @@ x = poly.compute_polytope_halfspaces(points)
 
 p1 = pc.Polytope(x[0],x[1])
 
-farthestpoint = 0;
+farthestpoint = 0
 dist =0
 for i in range(0,len(points)):
 	if(math.dist(points[i],p1.chebXc)>dist):
 		dist = math.dist(points[i],p1.chebXc);
 		farthestpoint = i
+nearesttofarthest = 0
+secdist =99999
 
-
+for i in range(0,len(points)):
+	if(i!=farthestpoint):
+			if(math.dist(points[i],points[farthestpoint])<secdist):
+				secdist = math.dist(points[i],points[farthestpoint]);
+				nearesttofarthest = i
+		
 # Equation of the plane orthogonal to farthest points and passes through ChebXc
 
-def hyperplaneequation(chebXc,fpoint):
+def hyperplaneequation(chebXc,fpoint,ntofpoint):
 	normal_vector = fpoint-chebXc
 	constant=0
 	for i in range(0,len(chebXc)):
-		constant -= (normal_vector[i]*chebXc[i])
+		constant -= (normal_vector[i]*ntofpoint[i])
 	return normal_vector,constant
 	
-cofficient,constant = hyperplaneequation(p1.chebXc,points[farthestpoint])
+cofficient,constant = hyperplaneequation(p1.chebXc,points[farthestpoint],points[nearesttofarthest])
 
 print(cofficient)
 print(constant)
@@ -247,13 +252,13 @@ def plt_sphere(c, r,ax):
 
     ax.plot_surface(x-c[0], y-c[1], z-c[2], color=np.random.choice(['g','b']), alpha=0.15*np.random.random())
 
-if(dim!=2):
+if(dim>2):
 	plt_sphere(p1.chebXc, p1.chebR,ax) 
 else:
 	circle1 = plt.Circle(p1.chebXc, p1.chebR, color='r')
 	ax.add_patch(circle1)
 
-if(dim!=2):
+if(dim>2):
 	xx, yy = np.meshgrid(range(-2,2), range(-2,2))
 	# calculate corresponding z
 	z = (-cofficient[0] * xx - cofficient[1] * yy - constant) * 1. /cofficient[2]
@@ -277,13 +282,54 @@ for i in range(0,len(points)):
 		print(pnt)
 		pts.append(pnt)
 
-if(dim!=2):
-	X=np.array(pts)
-	ax.scatter(np.transpose(X)[0], np.transpose(X)[1], np.transpose(X)[2])
+print(pts)
+ax.scatter(np.transpose(pts)[0], np.transpose(pts)[1], alpha=0.3)
 
+
+pca = PCA(n_components=2).fit(pts)
+pca_x = pca.transform(pts)
+print(pca.components_)
 plt.show()
+fig, ax = plt.subplots() # note we must use plt.subplots, not plt.subplot
 
-'''
+print(len(pts))
+plt.show()
+pts = pca_x
+print(pts)
+dim = 1
+facettri = Delaunay(pts)
+convexpartsunion = iterativeconvexization(facettri.simplices,dim,pts)
+
+
+
+if(dim>2):
+	X=np.array(pts)
+	fig = plt.figure(figsize=(10,7))
+	ax=Axes3D(fig)
+	X1 = np.transpose(X)[0]
+	Y1 = np.transpose(X)[1]
+	Z1 = np.transpose(X)[2]
+else:
+	fig, ax = plt.subplots() # note we must use plt.subplots, not plt.subplot
+
+
+for x in convexpartsunion:
+	print(len(x))
+	hull = ConvexHull([pts[i] for i in x])
+	for p in hull.simplices:
+		for t in range(0,len(p)):
+			for e in range(t+1,len(p)): 
+				if(dim==2):
+					ax.plot([pts[x[p[0]]][0],pts[x[p[1]]][0]],[pts[x[p[0]]][1],pts[x[p[1]]][1]])
+				else:
+					ax.plot([X1[x[p[t]]],X1[x[p[e]]]], [Y1[x[p[t]]],Y1[x[p[e]]]], [Z1[x[p[t]]],Z1[x[p[e]]]])
+
+if(dim<=2):
+	ax.scatter(pts[:,0],pts[:,1],s=10,color='black')
+else:
+	ax.scatter(np.transpose(X)[0], np.transpose(X)[1], np.transpose(X)[2])
+	'''
+plt.show()
 
 '''
 for x in convexpartsunion:
