@@ -29,10 +29,26 @@ p = pc.Polytope(A, b)
 
 p.dim # number of dimensions of ambient Euclidean space
 p.volume # measure in ambient space
+print(A)
+print("Rohit")
+print(b)
+print("Rohit")
+
 print(p.chebR) # Chebyshev ball radius
+print("Rohit")
+
 print(p.chebXc) # Chebyshev ball center
+print("Rohit")
+
 p.cheby
 p.bounding_box
 
 x = poly.compute_polytope_halfspaces([[7.556,6.889],[6.667,6.667],[1.2,1.2],[2.615,-0.923],[9.25,3.5]])
 print(x)
+print("Rohit")
+
+p1 = pc.Polytope(x[0],x[1])
+print(p1.chebR)
+print("Rohit")
+
+print(p1.chebXc)
