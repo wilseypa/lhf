@@ -10,9 +10,9 @@ import polytope as pc
 import pypoman.duality as poly
 from sklearn.decomposition import PCA
 
-def computedistancematrix():    #compute Distance Matrix
-	global minimumdistance
-	global maximumdistance
+def computedistancematrix(points):    #compute Distance Matrix
+	minimumdistance = 99999
+	maximumdistance = 0
 	global distancematrix
 	for x in range(0,len(points)):
 		distance = []
@@ -204,43 +204,87 @@ def PCAbasedconvexdecomposition(datadimension,pts):
 	pca = PCA(n_components=datadimension-1).fit(pts)
 	pca_x = pca.transform(pts)
 	facettri = Delaunay(pca_x)
-    convexpartsunion = iterativeconvexization(facettri.simplices,datadimension,pca_x)
+	convexpartsunion = iterativeconvexization(facettri.simplices,datadimension,pca_x)
+	return convexpartsunion
     # will need to add farthest point simplice
-    return convexpartsunion
+
 
 
 class polytope:
-	def __init__(self,polytope1,weight1,chebR1,chebXc1,farthestpoint1,steriographic_projection1):
+	def __init__(self,polytope1,weight1,polytophalyspaces,polyhalfspace,chebR1,chebXc1,farthestpoint1,steriographic_projection1,faces,convexdecomposedfaces,dimension):
 		self.polytopevertices = polytope1  # list of coordinates of polytope vertices
 		self.weight = weight1  #weight of polytope
+		self.polytophalyspaces = polytophalyspaces  #Hyperplane System of Equations
+		self.polyhalfspace = polyhalfspace  # Create polytope object
 		self.chebR = chebR1  #polytope incenter
 		self.chebXc = chebXc1   #polytope inradius
 		self.farthestpoint = farthestpoint1 #polytope fathest point from incenter coordinates
 		self.steriographic_projection = steriographic_projection1 # list of corrdinates one dimensional less (Conformal Projection)
-		self.faces = None #list of polytopes
-		self.convexdecomposedfaces = None  #PCA Dimensionality Reduction for lower faces
-
+		self.faces = faces #list of polytopal faces
+		self.convexdecomposedfaces =  convexdecomposedfaces  #PCA Dimensionality Reduction for lower order faces
+		self.dimension = dimension # vertices in highest simplex
 
 
 class tree:
-	def createpolytope(self,polytope1,weight1,chebR1,chebXc1,farthestpoint1,steriographic_projection1):
-		return polytope(polytope1,weight1,chebR1,chebXc1,farthestpoint1,steriographic_projection1)
+	def createheadpolytope(self,points):
+		poly = points
+		weight = 0
+		polytophalyspaces = []
+		polyhalfspace = []
+		chebR = []
+		chebXc = []
+		farthestpoint = []
+		steriographic_projection = []
+		faces =  Delaunay(points).simplices
+		convexdecomposedfaces = iterativeconvexization(faces,len(points[0]),points)
+		dimension = len(points[0])+1
+		return polytope(poly,weight,polytophalyspaces,polyhalfspace,chebR,chebXc,farthestpoint,steriographic_projection,faces,convexdecomposedfaces,dimension)
+
+	def createpolytope(self,points):
+		poly = points
+		weight = 0 #delauney retension
+		polytophalyspaces = poly.compute_polytope_halfspaces(points)
+		polyhalfspace = pc.Polytope(polytophalyspaces[0],polytophalyspaces[1])
+		chebR = polyhalfspace.chebR
+		chebXc = polyhalfspace.chebXc
+		farthestpoint = []
+		steriographic_projection = []
+		dimension = len(polytope[0])+1
+		return polytope(poly,weight,chebR,chebXc,farthestpoint,steriographic_projection,dimension)
+	
 	def createbootomup(self,polytope):  #needs to be implemented
 		return polytope
 	def display(self,root):  # needs to be implimented
+		print("polytope vertices")
 		print(root.polytopevertices)
+		print("polytope Weight")
 		print(root.weight)
+		print("Half Spaces")
+		print(root.polytophalyspaces)
+		print("Polytope Equation")
+		print(root.polyhalfspace)
+		print("polytope inRadius")
 		print(root.chebR)
+		print("polytop incenter")
 		print(root.chebXc)
+		print("polytope farthest point")
 		print(root.farthestpoint)
+		print("polytope Stereographic projections")
 		print(root.steriographic_projection)
+		print("polytope faces")
+		print(root.faces)
+		print("convex decomposed faces")
+		print(root.convexdecomposedfaces)
+		print("Dimensions")
+		print(root.dimension)
 		return
 
-head = tree()
-dim=2
-points = tadasets.dsphere(n=100, d=dim-1, r=1, noise=0.1)
-computedistancematrix()	
-triangulation = Delaunay(points)
+distancematrix = []	  #initializae distance matrix
+head = tree()  # initialize a polytopla tree
+dim=2    #dimension of a data
+points = tadasets.dsphere(n=100, d=dim-1, r=1, noise=0.1)  # generate d-sphere datatset
+computedistancematrix(points)	#Populate distance matrix
+root = head.createheadpolytope(points)  # if data lies in n-dimensions; this will make a surface of a lifted (n+1)-dimensional parbolied its projection will be delaunay triangulation
 head.createbootomup(root)  #will need to impliment this function to gro polytopal tree bottom up
 
 head.display(root)
