@@ -40,21 +40,21 @@ def intersection(lst1, lst2):  #return intersection of two lists
 def union(lst1,lst2):        #return union of two lists
 	return list(set().union(lst1 , lst2))
 
-def neighbours(polytop,simplices):    #report all the neighbouring polytopes that shares a face with polytope
+def neighbours(polytop,simplices,dim1):    #report all the neighbouring polytopes that shares a face with polytope
 	polytop = list(polytop)
 	adjacency = []
 	for y in simplices:
 		y = list(y)
 		if(polytop != y):
-			if(len(intersection(polytop,y))==dim):
+			if(len(intersection(polytop,y))==dim1):
 				adjacency.append(y)
 	return adjacency
 
-def mergeneighbors(polytop,simplices,points):    #merge neigbours simplices that results in maximum convex polytop with neighbors
-	neighbors = neighbours(polytop,simplices)
+def mergeneighbors(polytop,simplices,pointscoord):    #merge neigbours simplices that results in maximum convex polytop with neighbors
+	neighbors = neighbours(polytop,simplices,len(pointscoord[0]))
 	for x in neighbors:
 		y = union(x,polytop)
-		hull = ConvexHull([points[i] for i in y])
+		hull = ConvexHull([pointscoord[i] for i in y])
 		hullboundary = {}
 		for sublist in hull.simplices:
 			for item in sublist:
@@ -67,7 +67,7 @@ def mergeneighbors(polytop,simplices,points):    #merge neigbours simplices that
 	return polytop
 
 
-def optimalconvexization(simplices,points):   #Repeate the Maximum convexization for each simplex and returned the sorted list of convex polytopes by weight and vertices
+def optimalconvexization(simplices,pointscoord):   #Repeate the Maximum convexization for each simplex and returned the sorted list of convex polytopes by weight and vertices
 	convexparts = []
 	maxdist = []
 	averagedist = []
@@ -77,7 +77,7 @@ def optimalconvexization(simplices,points):   #Repeate the Maximum convexization
 		distance =0
 		maxval = 0
 		while True:
-			x1 = list(mergeneighbors(x,simplices,points))
+			x1 = list(mergeneighbors(x,simplices,pointscoord))
 			if(x1==x):
 				break
 			x = x1
@@ -85,11 +85,11 @@ def optimalconvexization(simplices,points):   #Repeate the Maximum convexization
 			maxval=0
 			distance = 0
 			convexparts.append(x)
-			hull = ConvexHull([points[i] for i in x])
+			hull = ConvexHull([pointscoord[i] for i in x])
 			for p in hull.simplices:
-				distance = distance + math.dist(points[x[p[0]]],points[x[p[1]]])
-				if(maxval < math.dist(points[x[p[0]]],points[x[p[1]]])):
-					maxval = math.dist(points[x[p[0]]],points[x[p[1]]])
+				distance = distance + math.dist(pointscoord[x[p[0]]],pointscoord[x[p[1]]])
+				if(maxval < math.dist(pointscoord[x[p[0]]],pointscoord[x[p[1]]])):
+					maxval = math.dist(pointscoord[x[p[0]]],pointscoord[x[p[1]]])
 			maxdist.append(maxval)
 			averagedist.append(distance)
 			sizecd.append(len(x))
@@ -97,21 +97,21 @@ def optimalconvexization(simplices,points):   #Repeate the Maximum convexization
 		for tp in convexparts:
 			for lm in tp:
 				k.add(lm)
-		if(len(k)==len(points)):
+		if(len(k)==len(pointscoord)):
 			break;
 	df = pd.DataFrame(list(zip(convexparts,maxdist,averagedist,sizecd)),columns =['convexpart', 'maxdist','averagedist','sizecd'])
 	df = df.sort_values(by = 'sizecd',ascending = False)
 	df = df.sort_values(by = 'maxdist',ascending = True)
 	return df
 
-def iterativeconvexization(simplices,dim,points):   #Keep convex decomposition that minimizes convex polytopes required and minimizes maximum weight edge
+def iterativeconvexization(simplices,dim,pointscoord):   #Keep convex decomposition that minimizes convex polytopes required and minimizes maximum weight edge
 	valid = []
 	convexpartsunion = []
 	simplices = list(simplices)
 	remainingsimplices = simplices
 	premaining = 0
 	while(True):
-		df = optimalconvexization(remainingsimplices,points)
+		df = optimalconvexization(remainingsimplices,pointscoord)
 		i=0
 		pointsaddressed = []
 		for x in df['convexpart'].tolist():
@@ -121,7 +121,7 @@ def iterativeconvexization(simplices,dim,points):   #Keep convex decomposition t
 					check = 0
 			if(check==1):
 				valid.append(i)
-				hull = ConvexHull([points[i] for i in x])
+				hull = ConvexHull([pointscoord[i] for i in x])
 				pointsaddressed = union(pointsaddressed,x)
 				convexpartsunion.append(x)
 			i = i+1
@@ -205,7 +205,13 @@ def PCAprojection(pts):
 	return pca_x
     # will need to add farthest point simplice
 
-
+def generatesimplexfacets(poly):
+	facets = []
+	for i in range(0,len(poly)):
+		k = poly[:]
+		np.delete(k,i)
+		facets.append(k)
+	return facets
 
 class polytope:
 	def __init__(self,polytope1,weight1,polytophalyspaces,polyhalfspace,chebR1,chebXc1,farthestpoint1,steriographic_projection1,faces,convexdecomposedfaces,dimension,pca_x):
@@ -249,22 +255,58 @@ class tree:
 		chebR = polyhalfspace.chebR
 		chebXc = polyhalfspace.chebXc
 		farthestpoint = fathestpointpolytopeindex(points,chebXc,polytopal_points)
+		print(points[farthestpoint])
 		nearesttofarthest = nearesttofarthestpoint(points,farthestpoint,polytopal_points)
 		steriographic_projection = computesteriographicprojection(points ,chebXc,farthestpoint,nearesttofarthest,polytopal_points)
 		pca_x = PCAprojection(steriographic_projection)
 		faces = Delaunay(pca_x).simplices
-		hull = ConvexHull(pca_x).simplices
+		hull = ConvexHull(pca_x)
 		convexdecomposedfaces = iterativeconvexization(faces,len(pca_x[0]),pca_x)
+		if(len(pca_x[0])>2):
+			X=np.array(pca_x)
+			fig = plt.figure(figsize=(10,7))
+			ax=Axes3D(fig)
+			X1 = np.transpose(X)[0]
+			Y1 = np.transpose(X)[1]
+			Z1 = np.transpose(X)[2]
+		else:
+			fig, ax = plt.subplots() # note we must use plt.subplots, not plt.subplot
+
+
+		for x in convexdecomposedfaces:
+			print(len(x))
+			hull = ConvexHull([pca_x[i] for i in x])
+			for p in hull.simplices:
+				for t in range(0,len(p)):
+					for e in range(t+1,len(p)): 
+						if(len(pca_x[0])==2):
+							ax.plot([pca_x[x[p[0]]][0],pca_x[x[p[1]]][0]],[pca_x[x[p[0]]][1],pca_x[x[p[1]]][1]])
+						else:
+							ax.plot([X1[x[p[t]]],X1[x[p[e]]]], [Y1[x[p[t]]],Y1[x[p[e]]]], [Z1[x[p[t]]],Z1[x[p[e]]]])
+
+		if(len(pca_x[0])<=2):
+			ax.scatter(pca_x[:,0],pca_x[:,1],s=10,color='black')
+		else:
+			ax.scatter(np.transpose(X)[0], np.transpose(X)[1], np.transpose(X)[2])
+		plt.show()
+
+			
 		mappedconvexedfaces = []
 		for a in convexdecomposedfaces:
 			list1 = []
 			for y in a:
-				list1.append(points[y])
+				if(y>=farthestpoint):
+					list1.append(points[y+1])
+				else:
+					list1.append(points[y])
 			mappedconvexedfaces.append(list1)
-		for x in hull:
+		for x in hull.simplices:
 			list1 = []
 			for j in x:
-				list1.append(points[j])
+				if(j>=farthestpoint):
+					list1.append(points[j+1])
+				else:
+					list1.append(points[j])
 			list1.append(points[farthestpoint])
 			mappedconvexedfaces.append(list1)
 		print(len(mappedconvexedfaces))
@@ -272,14 +314,18 @@ class tree:
 		dimension = len(pca_x[0])+1
 		return polytope(poly,weight,polytophalfspaces,polyhalfspace,chebR,chebXc,farthestpoint,steriographic_projection,faces,mappedconvexedfaces,dimension,pca_x)
 	
-	def createbootomup(self,polytope):  #needs to be implemented
+	def createbootomup(self,poly):  #needs to be implemented
 		i = 0
-		for polytop in polytope.convexdecomposedfaces:
-			newchild = self.createpolytope(polytop,polytope.pca_x)
+		for polytop in poly.convexdecomposedfaces:
+			if(len(polytop)==len(poly.pca_x[0])+1):
+				mappedconvexfaces = generatesimplexfacets(polytop)
+				newchild = polytope(poly,0,[],[],[],[],[],[],[],mappedconvexfaces,-1,[])
+			else:
+				newchild = self.createpolytope(polytop,poly.pca_x)
 			print(i)
 			i=i+1
-			polytope.childrens.append(newchild)
-		return polytope
+			poly.childrens.append(newchild)
+		return poly
 	def display(self,root):  # needs to be implimented
 		print("polytope vertices")
 		print(root.polytopevertices)
@@ -307,8 +353,8 @@ class tree:
 
 distancematrix = []	  #initializae distance matrix
 head = tree()  # initialize a polytopla tree
-dim=3    #dimension of a data
-inputpoints = tadasets.dsphere(n=100, d=dim-1, r=1, noise=0.3)  # generate d-sphere datatset
+dim=4    #dimension of a data
+inputpoints = tadasets.dsphere(n=50, d=dim-1, r=1, noise=0.3)  # generate d-sphere datatset
 points = [i for i in range(0,len(inputpoints))]
 computedistancematrix(inputpoints)	#Populate distance matrix
 root = head.createheadpolytope(points)  # if data lies in n-dimensions; this will make a surface of a lifted (n+1)-dimensional parbolied its projection will be delaunay triangulation
