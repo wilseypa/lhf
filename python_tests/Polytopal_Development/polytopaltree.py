@@ -16,23 +16,38 @@ def computedistancematrix(points):    #compute Distance Matrix
 	global distancematrix
 	for x in range(0,len(points)):
 		distance = []
+		incidence = []
 		for y in range(x,len(points)):
 			di = math.dist(points[x],points[y])
 			distance.append(di)
+			incidence.append(0)
 			if(di>maximumdistance):
 				maximumdistance = di
 			if(di<minimumdistance and di != 0):
 				minimumdistance = di
 		distancematrix.append(distance)
+		delaunayincidence.append(incidence)
 	return distancematrix
 
 def distanceindex(x,y): # compute Distance by index b/w two points
-	computedistancematrix()
+	computedistancematrix(inputpoints)
 	global distancematrix 
 	if(x>y):
 		return distancematrix[y][x-y]
 	else:
 		return distancematrix[x][y-x]
+def incidenceindexreturn(x,y): # compute Distance by index b/w two points
+	global delaunayincidence 
+	if(x>y):
+		return delaunayincidence[y][x-y]
+	else:
+		return delaunayincidence[x][y-x]
+def incidenceindex(x,y): # Update incedence by index b/w two points
+	global delaunayincidence 
+	if(x>y):
+		delaunayincidence[y][x-y] =1
+	else:
+		delaunayincidence[x][y-x] =1
 		
 def intersection(lst1, lst2):  #return intersection of two lists
     return list(set(lst1) & set(lst2))
@@ -238,6 +253,9 @@ class tree:
 		farthestpoint = 9999999
 		steriographic_projection = inputpoints
 		faces =  Delaunay(inputpoints).simplices
+		for x in faces:
+			for k in generatesimplexfacets(x,2):
+				incidenceindex(k[0],k[1])
 		convexdecomposedfaces = iterativeconvexization(faces,len(inputpoints[0]),inputpoints)
 		dimension = len(inputpoints[0])
 		pca_x = inputpoints
@@ -371,13 +389,8 @@ class tree:
 		vertices = []
 		for i in range(0,datasize):
 			vertices.append(i)
-		polytopaltree.append(vertices)
-		dimension1 =dim
-		for x in polytopaltree:
-			print("polytopes of dimension :: ",dimension1," ::",len(x))
-			dimension1 = dimension1-1
-	    
-		return poly
+		polytopaltree.append(vertices)    
+		return polytopaltree
 	def display(self,root):  # needs to be implimented
 		print("polytope vertices")
 		print(root.polytopevertices)
@@ -404,13 +417,34 @@ class tree:
 		return
 
 distancematrix = []	  #initializae distance matrix
+delaunayincidence = []
 head = tree()  # initialize a polytopla tree
 dim= 5  #dimension of a data
-datasize = 50
+datasize = 20
 inputpoints = tadasets.dsphere(n=datasize, d=dim-1, r=1, noise=0.1)  # generate d-sphere datatset
 points = [i for i in range(0,len(inputpoints))]
 computedistancematrix(inputpoints)	#Populate distance matrix
 root = head.createheadpolytope(points)  # if data lies in n-dimensions; this will make a surface of a lifted (n+1)-dimensional parbolied its projection will be delaunay triangulation
-head.createbootomup(root)  #will need to impliment this function to gro polytopal tree bottom up
-
-#head.display(root)
+polytopalarraylist  = head.createbootomup(root)  #will need to impliment this function to gro polytopal tree bottom up
+dimension1 =dim
+weights = []
+for dimensionlist in polytopalarraylist:
+	distancedime = []
+	for polytope in dimensionlist:
+		maxedge = 0
+		x = int(0)
+		if(type(polytope)!= type(x)):
+			edges = generatesimplexfacets(polytope,2)
+			for edge in edges:
+				if(incidenceindexreturn(edge[0],edge[1])==1):
+					if(maxedge<distanceindex(edge[0],edge[1])):
+						maxedge = distanceindex(edge[0],edge[1])
+			distancedime.append(maxedge)
+		else:
+			distancedime.append(0)
+	weights.append(distancedime)
+	
+for x in polytopalarraylist:
+	print("polytopes of dimension :: ",dimension1," ::",len(x))
+	dimension1 = dimension1-1
+dimension1 =dim
