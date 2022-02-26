@@ -9,7 +9,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import polytope as pc
 import pypoman.duality as polyfun
 from sklearn.decomposition import PCA
-
+from itertools import combinations
 def computedistancematrix(points):    #compute Distance Matrix
 	minimumdistance = 99999
 	maximumdistance = 0
@@ -205,17 +205,14 @@ def PCAprojection(pts):
 	return pca_x
     # will need to add farthest point simplice
 
-def generatesimplexfacets(poly):
-	facets = []
-	for i in range(0,len(poly)):
-		k = poly[:]
-		np.delete(k,i)
-		facets.append(k)
-	return facets
+def generatesimplexfacets(poly,dimen):
+	return list(combinations(poly, dimen))
+
 
 class polytope:
-	def __init__(self,polytope1,weight1,polytophalyspaces,polyhalfspace,chebR1,chebXc1,farthestpoint1,steriographic_projection1,faces,convexdecomposedfaces,dimension,pca_x):
+	def __init__(self,polytope1,polyunmapped,weight1,polytophalyspaces,polyhalfspace,chebR1,chebXc1,farthestpoint1,steriographic_projection1,faces,convexdecomposedfaces,mappedconvexdecomposedfaces,dimension,pca_x):
 		self.polytopevertices = polytope1  # list of coordinates of polytope vertices
+		self.polytopunmappedvertices = polyunmapped
 		self.weight = weight1  #weight of polytope
 		self.polytophalyspaces = polytophalyspaces  #Hyperplane System of Equations
 		self.polyhalfspace = polyhalfspace  # Create polytope object
@@ -224,7 +221,8 @@ class polytope:
 		self.farthestpoint = farthestpoint1 #polytope fathest point from incenter coordinates
 		self.steriographic_projection = steriographic_projection1 # list of corrdinates one dimensional less (Conformal Projection)
 		self.faces = faces #list of polytopal faces
-		self.convexdecomposedfaces =  convexdecomposedfaces  #PCA Dimensionality Reduction for lower order faces
+		self.convexdecomposed = convexdecomposedfaces
+		self.convexdecomposedfaces =  mappedconvexdecomposedfaces  #PCA Dimensionality Reduction for lower order faces
 		self.dimension = dimension # vertices in highest simplex
 		self.childrens = []
 		self.pca_x = pca_x
@@ -237,60 +235,58 @@ class tree:
 		polyhalfspace = []
 		chebR = []
 		chebXc = []
-		farthestpoint = []
+		farthestpoint = 9999999
 		steriographic_projection = inputpoints
 		faces =  Delaunay(inputpoints).simplices
 		convexdecomposedfaces = iterativeconvexization(faces,len(inputpoints[0]),inputpoints)
-		dimension = len(inputpoints[0])+1
+		dimension = len(inputpoints[0])
 		pca_x = inputpoints
-		return polytope(poly,weight,polytophalyspaces,polyhalfspace,chebR,chebXc,farthestpoint,steriographic_projection,faces,convexdecomposedfaces,dimension,pca_x)
+		return polytope(poly,poly,weight,polytophalyspaces,polyhalfspace,chebR,chebXc,farthestpoint,steriographic_projection,faces,convexdecomposedfaces,convexdecomposedfaces,dimension,pca_x)
 
-	def createpolytope(self,points,pca_x1):
+	def createpolytope(self,points,points1,pca_x1,farthest,dimension):
 		poly = points
-		print(points)
-		polytopal_points = [pca_x1[i] for i in points]
+		polyunmapped = points1
+		#print(points)
+		polytopal_points = []
+
+		if(farthest ==-1 or len(points1) == dimension+1):
+			mappedconvexfaces = generatesimplexfacets(poly, dimension)
+			convexfaces = generatesimplexfacets([i for i in range(0,len(points))], dimension)
+			return polytope(poly,points1,0,[],[],[],[],-1,[],[],convexfaces,mappedconvexfaces,dimension-1,[])
+		for i in points1:
+			if(len(pca_x1[0]) == dim):
+				polytopal_points.append(pca_x1[i])
+			elif(i>=farthest):
+				polytopal_points.append(pca_x1[i-1])
+			else:
+				polytopal_points.append(pca_x1[i])
+	
 		weight = 0 #delauney retension
 		polytophalfspaces = polyfun.compute_polytope_halfspaces(polytopal_points)
 		polyhalfspace = pc.Polytope(polytophalfspaces[0],polytophalfspaces[1])
 		chebR = polyhalfspace.chebR
 		chebXc = polyhalfspace.chebXc
-		farthestpoint = fathestpointpolytopeindex(points,chebXc,polytopal_points)
-		print(points[farthestpoint])
-		nearesttofarthest = nearesttofarthestpoint(points,farthestpoint,polytopal_points)
-		steriographic_projection = computesteriographicprojection(points ,chebXc,farthestpoint,nearesttofarthest,polytopal_points)
+		farthestpoint = fathestpointpolytopeindex(points1,chebXc,polytopal_points)
+		#print(points[farthestpoint])
+		nearesttofarthest = nearesttofarthestpoint(points1,farthestpoint,polytopal_points)
+		steriographic_projection = computesteriographicprojection(points1 ,chebXc,farthestpoint,nearesttofarthest,polytopal_points)
 		pca_x = PCAprojection(steriographic_projection)
-		faces = Delaunay(pca_x).simplices
-		hull = ConvexHull(pca_x)
-		convexdecomposedfaces = iterativeconvexization(faces,len(pca_x[0]),pca_x)
-		if(len(pca_x[0])>2):
-			X=np.array(pca_x)
-			fig = plt.figure(figsize=(10,7))
-			ax=Axes3D(fig)
-			X1 = np.transpose(X)[0]
-			Y1 = np.transpose(X)[1]
-			Z1 = np.transpose(X)[2]
+		if(len(pca_x[0]) <= 1):
+			faces=[]
+			pcx = []
+			for x in pca_x:
+				for k in x:
+					pcx.append(k)
+			convexdecomposedfaces = []
+			indices = np.argsort(pcx)
+			for x in range(0,len(indices)-1):
+				convexdecomposedfaces.append([indices[x],indices[x+1]])
+			hull = [[indices[0]],[indices[len(indices)-1]]]					
 		else:
-			fig, ax = plt.subplots() # note we must use plt.subplots, not plt.subplot
-
-
-		for x in convexdecomposedfaces:
-			print(len(x))
-			hull = ConvexHull([pca_x[i] for i in x])
-			for p in hull.simplices:
-				for t in range(0,len(p)):
-					for e in range(t+1,len(p)): 
-						if(len(pca_x[0])==2):
-							ax.plot([pca_x[x[p[0]]][0],pca_x[x[p[1]]][0]],[pca_x[x[p[0]]][1],pca_x[x[p[1]]][1]])
-						else:
-							ax.plot([X1[x[p[t]]],X1[x[p[e]]]], [Y1[x[p[t]]],Y1[x[p[e]]]], [Z1[x[p[t]]],Z1[x[p[e]]]])
-
-		if(len(pca_x[0])<=2):
-			ax.scatter(pca_x[:,0],pca_x[:,1],s=10,color='black')
-		else:
-			ax.scatter(np.transpose(X)[0], np.transpose(X)[1], np.transpose(X)[2])
-		plt.show()
-
-			
+			faces = Delaunay(pca_x).simplices
+			hull = ConvexHull(pca_x).simplices
+			convexdecomposedfaces = iterativeconvexization(faces,len(pca_x[0]),pca_x)
+	
 		mappedconvexedfaces = []
 		for a in convexdecomposedfaces:
 			list1 = []
@@ -300,31 +296,87 @@ class tree:
 				else:
 					list1.append(points[y])
 			mappedconvexedfaces.append(list1)
-		for x in hull.simplices:
+		for x in hull:
 			list1 = []
+			list2 = []
 			for j in x:
 				if(j>=farthestpoint):
 					list1.append(points[j+1])
+					list2.append(j+1)
 				else:
 					list1.append(points[j])
+					list2.append(j)	
 			list1.append(points[farthestpoint])
+			list2.append(farthestpoint)
+			convexdecomposedfaces.append(list2)
 			mappedconvexedfaces.append(list1)
-		print(len(mappedconvexedfaces))
-		print(mappedconvexedfaces)
-		dimension = len(pca_x[0])+1
-		return polytope(poly,weight,polytophalfspaces,polyhalfspace,chebR,chebXc,farthestpoint,steriographic_projection,faces,mappedconvexedfaces,dimension,pca_x)
+		dimension = len(pca_x[0])
+		return polytope(poly,polyunmapped,weight,polytophalfspaces,polyhalfspace,chebR,chebXc,farthestpoint,steriographic_projection,faces,convexdecomposedfaces,mappedconvexedfaces,dimension,pca_x)
 	
 	def createbootomup(self,poly):  #needs to be implemented
 		i = 0
-		for polytop in poly.convexdecomposedfaces:
-			if(len(polytop)==len(poly.pca_x[0])+1):
-				mappedconvexfaces = generatesimplexfacets(polytop)
-				newchild = polytope(poly,0,[],[],[],[],[],[],[],mappedconvexfaces,-1,[])
-			else:
-				newchild = self.createpolytope(polytop,poly.pca_x)
-			print(i)
-			i=i+1
-			poly.childrens.append(newchild)
+		queue = []
+		queue.append(poly)
+		polytopaltree = []
+		polytopallevel = []
+		xdimension = []	  
+		currentdim = dim
+		queuelevel = []
+		level = 0
+		previouslevel = 0
+		queuelevel.append(level)
+		k=0
+		while(queue !=[] and  currentdim>0):
+			poly = queue.pop(0)
+			level1 = queuelevel.pop(0)
+			level = level1
+			currentdim = poly.dimension
+			k = 0
+			for polytop in poly.convexdecomposedfaces:
+				if(len(polytop) >=1):
+					#print(poly.dimension)
+					#print(len(poly.pca_x[0]))
+					#print(len(polytop))
+					#print(len(poly.pca_x[0])+1)
+					if(len(polytop)==poly.dimension):
+						mappedconvexfaces = generatesimplexfacets(polytop,poly.dimension)
+						convexfaces = generatesimplexfacets([i for i in range(0,len(polytop))],poly.dimension)
+						newchild = polytope(polytop,poly.convexdecomposed[k],0,[],[],[],[],-1,[],[],convexfaces,mappedconvexfaces,poly.dimension-1,[])
+					else:
+						newchild = self.createpolytope(polytop,poly.convexdecomposed[k],poly.pca_x,poly.farthestpoint,poly.dimension)
+					i=i+1
+					if(i%10000==0):
+						print(i)
+					poly.childrens.append(newchild)
+					queue.append(newchild)
+					queuelevel.append(level+1)
+					tuple1 = ()
+					if(level>previouslevel):
+						res = []
+						res1 = []
+						for x in xdimension:
+							if(type(x)!=type(xdimension)):
+								if(type(x) == type(tuple1)):
+									res1.append(list(x))
+								else:
+									res1.append(x.tolist())
+							else:
+								res1.append(x)
+						[res.append(x) for x in res1 if x not in res]
+						polytopaltree.append(res)
+						xdimension = []
+						previouslevel = level
+					xdimension.append(polytop)
+					k=k+1
+		vertices = []
+		for i in range(0,datasize):
+			vertices.append(i)
+		polytopaltree.append(vertices)
+		dimension1 =dim
+		for x in polytopaltree:
+			print("polytopes of dimension :: ",dimension1," ::",len(x))
+			dimension1 = dimension1-1
+	    
 		return poly
 	def display(self,root):  # needs to be implimented
 		print("polytope vertices")
@@ -353,8 +405,9 @@ class tree:
 
 distancematrix = []	  #initializae distance matrix
 head = tree()  # initialize a polytopla tree
-dim=4    #dimension of a data
-inputpoints = tadasets.dsphere(n=50, d=dim-1, r=1, noise=0.3)  # generate d-sphere datatset
+dim= 5  #dimension of a data
+datasize = 50
+inputpoints = tadasets.dsphere(n=datasize, d=dim-1, r=1, noise=0.1)  # generate d-sphere datatset
 points = [i for i in range(0,len(inputpoints))]
 computedistancematrix(inputpoints)	#Populate distance matrix
 root = head.createheadpolytope(points)  # if data lies in n-dimensions; this will make a surface of a lifted (n+1)-dimensional parbolied its projection will be delaunay triangulation
