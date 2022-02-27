@@ -10,10 +10,10 @@ import polytope as pc
 import pypoman.duality as polyfun
 from sklearn.decomposition import PCA
 from itertools import combinations
+import heapq as hq
 def computedistancematrix(points):    #compute Distance Matrix
 	minimumdistance = 99999
 	maximumdistance = 0
-	global distancematrix
 	for x in range(0,len(points)):
 		distance = []
 		incidence = []
@@ -30,20 +30,16 @@ def computedistancematrix(points):    #compute Distance Matrix
 	return distancematrix
 
 def distanceindex(x,y): # compute Distance by index b/w two points
-	computedistancematrix(inputpoints)
-	global distancematrix 
 	if(x>y):
 		return distancematrix[y][x-y]
 	else:
 		return distancematrix[x][y-x]
 def incidenceindexreturn(x,y): # compute Distance by index b/w two points
-	global delaunayincidence 
 	if(x>y):
 		return delaunayincidence[y][x-y]
 	else:
 		return delaunayincidence[x][y-x]
-def incidenceindex(x,y): # Update incedence by index b/w two points
-	global delaunayincidence 
+def setincidenceindex(x,y): # Update incedence by index b/w two points
 	if(x>y):
 		delaunayincidence[y][x-y] =1
 	else:
@@ -255,7 +251,7 @@ class tree:
 		faces =  Delaunay(inputpoints).simplices
 		for x in faces:
 			for k in generatesimplexfacets(x,2):
-				incidenceindex(k[0],k[1])
+				setincidenceindex(k[0],k[1])
 		convexdecomposedfaces = iterativeconvexization(faces,len(inputpoints[0]),inputpoints)
 		dimension = len(inputpoints[0])
 		pca_x = inputpoints
@@ -388,7 +384,7 @@ class tree:
 					k=k+1
 		vertices = []
 		for i in range(0,datasize):
-			vertices.append(i)
+			vertices.append([i])
 		polytopaltree.append(vertices)    
 		return polytopaltree
 	def display(self,root):  # needs to be implimented
@@ -418,7 +414,7 @@ class tree:
 
 distancematrix = []	  #initializae distance matrix
 delaunayincidence = []
-head = tree()  # initialize a polytopla tree
+head = tree()  # initialize a polytopal tree
 dim= 5  #dimension of a data
 datasize = 20
 inputpoints = tadasets.dsphere(n=datasize, d=dim-1, r=1, noise=0.1)  # generate d-sphere datatset
@@ -432,19 +428,197 @@ for dimensionlist in polytopalarraylist:
 	distancedime = []
 	for polytope in dimensionlist:
 		maxedge = 0
-		x = int(0)
-		if(type(polytope)!= type(x)):
+		if(len(polytope)!= 1):
 			edges = generatesimplexfacets(polytope,2)
 			for edge in edges:
 				if(incidenceindexreturn(edge[0],edge[1])==1):
 					if(maxedge<distanceindex(edge[0],edge[1])):
 						maxedge = distanceindex(edge[0],edge[1])
-			distancedime.append(maxedge)
+			if(maxedge==0):
+				distancedime.append(distanceindex(edge[0],edge[1]))
+			else:
+				distancedime.append(maxedge)
 		else:
 			distancedime.append(0)
 	weights.append(distancedime)
+
+class orderedarraylistnode(object):
+	def __init__(self,polytop,weight):
+		self.polytop = sorted(polytop,reverse=True)
+		self.weight = weight
 	
-for x in polytopalarraylist:
-	print("polytopes of dimension :: ",dimension1," ::",len(x))
+	def __hash__(self):
+		return hash((tuple(self.polytop), self.weight))
+	
+	def __getitem__(self, item):
+		return [self.polytop,self.weight]
+	
+	def __lt__(self, nxt):
+		if self.weight > nxt.weight:
+			return True
+		elif self.polytop > nxt.polytop:
+			return True
+		else:
+			return False
+	
+	def __eq__(self, other):
+		if not isinstance(other, type(self)):
+			return NotImplemented
+		return self.polytop == other.polytop and self.weight == other.weight
+        
+        
+        
+orderedpolytoparraylist = []        
+
+
+for (polytop, weight) in zip(polytopalarraylist, weights):
+	dimensionwiseorderedpolytopes = set()
+	for (poly,weig) in zip(polytop,weight):
+		node = orderedarraylistnode(poly,weig)
+		dimensionwiseorderedpolytopes.add(node)
+	sorted_list = sorted(dimensionwiseorderedpolytopes, key = lambda x: (x.weight, x.polytop))
+	orderedpolytoparraylist.append(sorted_list)
+'''
+for x in orderedpolytoparraylist:
+	print("polytopes of Dimension ::",dimension1,"  ::  ")
+	for p in x:
+		#print(p.polytop,p.weight)
+		if(dimension1 == 1):
+			print(p.polytop,p.weight)
+			print(inputpoints[p.polytop[0]])
+			print(inputpoints[p.polytop[1]])
+			t = input()
 	dimension1 = dimension1-1
-dimension1 =dim
+'''
+class DisjointSet:
+    def __init__(self, n):
+        self.parent = [i for i in range(n)]
+        self.rank = [1 for _ in range(n)]
+    
+    # make a and b part of the same component
+    # union by rank optimization
+    def union(self, a, b):
+        pa = self.find(a)
+        pb = self.find(b)
+        if pa == pb: return
+        if self.rank[pa] > self.rank[pb]:
+            self.parent[pb] = pa
+            self.rank[pa] += self.rank[pb]
+        else:
+            self.parent[pa] = pb
+            self.rank[pb] += self.rank[pa]
+    
+    # find the representative of the 
+    # path compression optimization
+    def find(self, a):
+        if self.parent[a] == a:
+            return a
+        
+        self.parent[a] = self.find(self.parent[a])
+        return self.parent[a]
+    
+bettieTable = []
+def minimumspanningtree(edges1):
+	# using Kruskal's algorithm to find the cost of Minimum Spanning Tree
+	res = 0
+	pivots = []
+	mstSize = 0
+	ds = DisjointSet(datasize)
+	for x in edges1:
+		if ds.find(x.polytop[0]) != ds.find(x.polytop[1]):
+			ds.union(x.polytop[0], x.polytop[1])
+			res += x.weight
+			mstSize +=1
+			pivots.append(x)
+			bettitableentry = [0,0,x.weight,x.polytop]
+			bettieTable.append(bettitableentry)
+			if(mstSize >= len(inputpoints)-1):
+				for i in range(0,len(inputpoints)):
+					if(ds.find(i) == i):
+						bettitableentry = [0,0,'inf',[]]
+						bettieTable.append(bettitableentry)
+				return pivots
+	return pivots
+
+def getDimEdges(dimension):
+	return orderedpolytoparraylist[dim -dimension]
+
+def getAllCofacets(polytop,dimension):
+	returnlist = []
+	for x in orderedpolytoparraylist[dim-dimension-1]:
+		if(len(intersection(x.polytop,polytop)) == len(polytop)):
+			returnlist.append(x)
+	return returnlist
+				
+	
+def persistenceByDimension( edges, pivots, dimension):
+	pivotcounter = 0
+	nextPivots = []	
+	v = {} 
+	pivotPairs = {}	
+	for e in edges:
+		polytop = e.polytop
+		if(pivotcounter >= len(pivots) or pivots[pivotcounter].weight != e.weight or pivots[pivotcounter].polytop != e.polytop):
+			faceList = getAllCofacets(e.polytop,dimension)
+			columnV = []
+			columnV.append(e)
+			hq.heapify(faceList)
+			while(True):
+				while(faceList!=[]):
+					pivot = faceList[0]
+					hq.heappop(faceList)
+				if(faceList!=[] and pivot==faceList[0]):
+					hq.heappop(faceList)
+				else:
+					hq.heappush(faceList,pivot)
+					break
+    
+
+				if(faceList==[]):
+					break;
+				elif pivotPairs.has_key(pivot):
+					pivotPairs[pivot] = polytop
+					nextPivots.push_back(pivot)
+					columnV = sorted(columnV, key = lambda x: (x.weight, x.polytop))
+					k =0
+					for x in columnV:
+						if(k+1 < len(columnV) and columnV[k]==columnV[k+1]):
+							k+=1
+						else:
+							f = v[tuple(polytop)]
+							f.append(columnV[k])
+							v[tuple(polytop)] = f;
+						k+=1
+					
+
+					if(e.weight != pivot.weight):
+						bettitableentry = [dimension,min(pivot.weight, polytop.weight),max(pivot.weight, polytop.weight)]
+						bettieTable.append(bettitableentry)
+						break
+				else:
+					for polytopnp in v[pivotPairs[pivot]]:
+						columnV.push_back(polytopnp)
+						faces =  getAllCofacets(e.polytop,dimension)
+						for fc in faces:
+							faceList.insert(fc)
+					hq.heapify(faceList)
+		else:
+			pivotcounter+=1
+	return nextPivots
+	
+def fastpersistance(polytopalcomplex):
+	vertices = getDimEdges(0)
+	edges = getDimEdges(1)
+	pivots  = minimumspanningtree(edges)
+	
+	for d  in range(1,dim):
+		if(d != 1):
+			 edges = getDimEdges(d)
+
+		pivots = persistenceByDimension(edges, pivots, d)
+	return
+
+fastpersistance(orderedpolytoparraylist)
+
+for x in bettieTable:
+	print(x)
