@@ -297,7 +297,7 @@ class tree:
 				convexdecomposedfaces.append([indices[x],indices[x+1]])
 			hull = [[indices[0]],[indices[len(indices)-1]]]					
 		else:
-			faces = Delaunay(pca_x).simplices
+			faces = Delaunay(pca_x).simplices  #Needs to be updated :: No need for delaunay calculation ; should use projected edges
 			hull = ConvexHull(pca_x).simplices
 			convexdecomposedfaces = iterativeconvexization(faces,len(pca_x[0]),pca_x)
 	
@@ -530,12 +530,12 @@ def minimumspanningtree(edges1):
 			res += x.weight
 			mstSize +=1
 			pivots.append(x)
-			bettitableentry = [0,0,x.weight,x.polytop]
+			bettitableentry = [0,0,x.weight]
 			bettieTable.append(bettitableentry)
 			if(mstSize >= len(inputpoints)-1):
 				for i in range(0,len(inputpoints)):
 					if(ds.find(i) == i):
-						bettitableentry = [0,0,'inf',[]]
+						bettitableentry = [0,0,'inf']
 						bettieTable.append(bettitableentry)
 				return pivots
 	return pivots
@@ -555,53 +555,74 @@ def persistenceByDimension( edges, pivots, dimension):
 	pivotcounter = 0
 	nextPivots = []	
 	v = {} 
+	#for x in pivots:
+	#	print(x.polytop,x.weight)
 	pivotPairs = {}	
 	for e in edges:
-		polytop = e.polytop
 		if(pivotcounter >= len(pivots) or pivots[pivotcounter].weight != e.weight or pivots[pivotcounter].polytop != e.polytop):
 			faceList = getAllCofacets(e.polytop,dimension)
+			#print(e.polytop)
+			#for x in faceList:
+			#	print(x.polytop,x.weight)
+			#x=input()
 			columnV = []
 			columnV.append(e)
 			hq.heapify(faceList)
 			while(True):
+				print("k:")
 				while(faceList!=[]):
+					print("k:")
 					pivot = faceList[0]
 					hq.heappop(faceList)
-				if(faceList!=[] and pivot==faceList[0]):
-					hq.heappop(faceList)
-				else:
-					hq.heappush(faceList,pivot)
-					break
-    
-
+					if(faceList!=[] and pivot==faceList[0]):
+						hq.heappop(faceList)
+					else:
+						hq.heappush(faceList,pivot)
+						break
 				if(faceList==[]):
-					break;
-				elif pivotPairs.has_key(pivot):
-					pivotPairs[pivot] = polytop
-					nextPivots.push_back(pivot)
+					break
+				elif pivot not in pivotPairs:
+					pivotPairs[pivot] = e
+					nextPivots.append(pivot)
+					for x in columnV:
+						print(x.polytop,x.weight)
+					
 					columnV = sorted(columnV, key = lambda x: (x.weight, x.polytop))
+					for x in columnV:
+						print(x.polytop,x.weight)
+					dt = input()
 					k =0
 					for x in columnV:
 						if(k+1 < len(columnV) and columnV[k]==columnV[k+1]):
 							k+=1
 						else:
-							f = v[tuple(polytop)]
-							f.append(columnV[k])
-							v[tuple(polytop)] = f;
+							if e not in v:
+								v[e] = columnV[k]
+							else:
+								f = v[e]
+								f.append(columnV[k])
+								v[e] = columnV[k]
 						k+=1
-					
-
 					if(e.weight != pivot.weight):
-						bettitableentry = [dimension,min(pivot.weight, polytop.weight),max(pivot.weight, polytop.weight)]
+						bettitableentry = [dimension,min(pivot.weight, e.weight),max(pivot.weight, e.weight)]
 						bettieTable.append(bettitableentry)
 						break
 				else:
-					for polytopnp in v[pivotPairs[pivot]]:
-						columnV.push_back(polytopnp)
-						faces =  getAllCofacets(e.polytop,dimension)
-						for fc in faces:
-							faceList.insert(fc)
-					hq.heapify(faceList)
+					if v and pivotPairs:
+						print(v)
+						for polytopnp in v[pivotPairs[pivot]]:
+							for x in polytopnp:
+								print(x)
+								print(x[0],x[1])
+								columnV.append(orderedarraylistnode(x[0],x[1]))
+							faces =  getAllCofacets(e.polytop,dimension)
+							k=0
+							for fc in faces:
+								print("k:",k)
+								k +=1
+								faceList.append(fc)
+						hq.heapify(faceList)
+			print("here")
 		else:
 			pivotcounter+=1
 	return nextPivots
@@ -616,6 +637,8 @@ def fastpersistance(polytopalcomplex):
 			 edges = getDimEdges(d)
 
 		pivots = persistenceByDimension(edges, pivots, d)
+		for x in pivots:
+			print(x.polytop,x.weight)
 	return
 
 fastpersistance(orderedpolytoparraylist)
