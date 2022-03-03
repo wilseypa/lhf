@@ -578,11 +578,10 @@ def persistenceByDimension( edges, pivots, dimension):
 							k+=1
 						else:
 							if e not in v:
-								v[e] = columnV[k]
+								v[e] = [columnV[k]]
 							else:
-								f = v[e]
-								f.append(columnV[k])
-								v[e] = columnV[k]
+								f = v[e] + [columnV[k]]
+								v[e] = f
 						k+=1
 					if(e.weight != pivot.weight):
 						bettitableentry = [dimension,min(pivot.weight, e.weight),max(pivot.weight, e.weight)]
@@ -591,17 +590,14 @@ def persistenceByDimension( edges, pivots, dimension):
 				else:
 					if v and pivotPairs:
 						print(len(v))
-						print(v)
-						print(pivotPairs[pivot].polytop)
+						print(pivotPairs[pivot])
 						for polytopnp in v[pivotPairs[pivot]]:
-							
 							columnV.append(polytopnp)
-							faces =  getAllCofacets(e.polytop,dimension)
-						k=0
-						for fc in faces:
-							print("k:",k)
-							k =k+1
-							faceList.append(fc)
+							faces =  getAllCofacets(polytopnp.polytop,dimension)
+							for fc in faces:
+								print("k:",k)
+								k =k+1
+								faceList.append(fc)
 						hq.heapify(faceList)
 			print("here")
 		else:
