@@ -11,6 +11,111 @@ import pypoman.duality as polyfun
 from sklearn.decomposition import PCA
 from itertools import combinations
 import heapq as hq
+
+
+   
+def minimumspanningtree(edges1):
+	# using Kruskal's algorithm to find the cost of Minimum Spanning Tree
+	res = 0
+	pivots = []
+	mstSize = 0
+	ds = DisjointSet(datasize)
+	for x in edges1:
+		if ds.find(x.polytop[0]) != ds.find(x.polytop[1]):
+			ds.union(x.polytop[0], x.polytop[1])
+			res += x.weight
+			mstSize +=1
+			pivots.append(x)
+			bettitableentry = [0,0,x.weight]
+			bettieTable.append(bettitableentry)
+			if(mstSize >= len(inputpoints)-1):
+				for i in range(0,len(inputpoints)):
+					if(ds.find(i) == i):
+						bettitableentry = [0,0,'inf']
+						bettieTable.append(bettitableentry)
+				return pivots
+	return pivots
+
+def getDimEdges(dimension):
+	return orderedpolytoparraylist[dim -dimension]
+
+def getAllCofacets(polytop,dimension):
+	returnlist = []
+	for x in orderedpolytoparraylist[dim-dimension-1]:
+		if(len(intersection(x.polytop,polytop)) == len(polytop)):
+			returnlist.append(x)
+	return returnlist
+				
+	
+def persistenceByDimension( edges, pivots, dimension):
+	pivotcounter = 0
+	sorted(edges)
+	sorted(pivots)
+
+	nextPivots = []	
+	v = {} 
+	pivotPairs = {}
+	for e in reversed(edges):
+		if(pivotcounter > len(pivots)-1 or pivots[pivotcounter].weight != e.weight or pivots[pivotcounter].polytop != e.polytop):
+			faceList = getAllCofacets(e.polytop,dimension)
+			columnV = []
+			columnV.append(e)
+			hq.heapify(faceList)
+			while(True):
+				while(faceList!=[]):
+					pivot = faceList[0]
+					hq.heappop(faceList)
+					if(faceList!=[] and pivot==faceList[0]):
+						hq.heappop(faceList)
+					else:
+						hq.heappush(faceList,pivot)
+						break
+				if(faceList==[]):
+					break
+				elif pivot not in pivotPairs:
+					pivotPairs[pivot] = e
+					nextPivots.append(pivot)
+					columnV = sorted(columnV)
+					k =0
+					for x in columnV:
+						if(k+1 < len(columnV) and columnV[k]==columnV[k+1]):
+							k+=1
+						else:
+							if e not in v:
+								v[e] = [columnV[k]]
+							else:
+								f = v[e] + [columnV[k]]
+								v[e] = f
+							k+=1
+					if(e.weight != pivot.weight):
+						bettitableentry = [dimension,min(pivot.weight, e.weight),max(pivot.weight, e.weight)]
+						bettieTable.append(bettitableentry)
+					break
+				else:
+					if v and pivotPairs:
+						for polytopnp in v[pivotPairs[pivot]]:
+							columnV.append(polytopnp)
+							faces =  getAllCofacets(polytopnp.polytop,dimension)
+							for fc in faces:
+								faceList.append(fc)
+						hq.heapify(faceList)
+		else:
+			pivotcounter = pivotcounter + 1
+	return nextPivots
+	
+def fastpersistance(polytopalcomplex):
+	vertices = getDimEdges(0)
+	edges = getDimEdges(1)
+	pivots  = minimumspanningtree(edges)
+	
+	for d  in range(1,dim):
+		
+		if(d != 1):
+			 edges = getDimEdges(d)
+		pivots = persistenceByDimension(edges, pivots, d)
+	return
+
+
 def computedistancematrix(points):    #compute Distance Matrix
 	minimumdistance = 99999
 	maximumdistance = 0
@@ -222,7 +327,59 @@ def PCAprojection(pts):
 def generatesimplexfacets(poly,dimen):
 	return list(combinations(poly, dimen))
 
+class DisjointSet:
+    def __init__(self, n):
+        self.parent = [i for i in range(n)]
+        self.rank = [1 for _ in range(n)]
+    
+    # make a and b part of the same component
+    # union by rank optimization
+    def union(self, a, b):
+        pa = self.find(a)
+        pb = self.find(b)
+        if pa == pb: return
+        if self.rank[pa] > self.rank[pb]:
+            self.parent[pb] = pa
+            self.rank[pa] += self.rank[pb]
+        else:
+            self.parent[pa] = pb
+            self.rank[pb] += self.rank[pa]
+    
+    # find the representative of the 
+    # path compression optimization
+    def find(self, a):
+        if self.parent[a] == a:
+            return a
+        
+        self.parent[a] = self.find(self.parent[a])
+        return self.parent[a]
 
+class orderedarraylistnode(object):
+	def __init__(self,polytop,weight):
+		self.polytop = sorted(polytop,reverse=False)
+		self.weight = weight
+	
+	def __hash__(self):
+		return hash((tuple(self.polytop), self.weight))
+	
+	def __getitem__(self, item):
+		return [self.polytop,self.weight]
+	
+	def __lt__(self, nxt):
+		if self.weight < nxt.weight:
+			return True
+		elif self.weight == nxt.weight:
+			for (x,y) in zip(reversed(self.polytop),reversed(nxt.polytop)):
+				if(x > y):
+					return True
+		return False
+	
+	def __eq__(self, other):
+		if not isinstance(other, type(self)):
+			return NotImplemented
+		return self.polytop == other.polytop and self.weight == other.weight
+        
+        
 class polytope:
 	def __init__(self,polytope1,polyunmapped,weight1,farthestpoint1,convexdecomposedfaces,mappedconvexdecomposedfaces,dimension,pca_x):
 		self.polytopevertices = polytope1  # list of coordinates of polytope vertices
@@ -404,9 +561,9 @@ distancematrix = []	  #initializae distance matrix
 delaunayincidence = []
 head = tree()  # initialize a polytopal tree
 dim= 3  #dimension of a data
-datasize = 10
+datasize = 95
 inputpoints = tadasets.dsphere(n=datasize, d=dim-1, r=1, noise=0)  # generate d-sphere datatset
-inputpoints = np.array([[3,2,7],[5,4,3],[-3,-1,6],[-2,-3,4],[-3,2,6],[4,-4,3],[2,-2,5],[0,0,-8],[-5,5,1],[-5,-5,1]])
+#inputpoints = np.array([[3,2,7],[5,4,3],[-3,-1,6],[-2,-3,4],[-3,2,6],[4,-4,3],[2,-2,5],[0,0,-8],[-5,5,1],[-5,-5,1]])
 points = [i for i in range(0,len(inputpoints))]
 computedistancematrix(inputpoints)	#Populate distance matrix
 root = head.createheadpolytope(points)  # if data lies in n-dimensions; this will make a surface of a lifted (n+1)-dimensional parbolied its projection will be delaunay triangulation
@@ -431,195 +588,65 @@ for dimensionlist in polytopalarraylist:
 			distancedime.append(0)
 	weights.append(distancedime)
 
-class orderedarraylistnode(object):
-	def __init__(self,polytop,weight):
-		self.polytop = sorted(polytop,reverse=True)
-		self.weight = weight
-	
-	def __hash__(self):
-		return hash((tuple(self.polytop), self.weight))
-	
-	def __getitem__(self, item):
-		return [self.polytop,self.weight]
-	
-	def __lt__(self, nxt):
-		if self.weight > nxt.weight:
-			return True
-		elif self.polytop > nxt.polytop:
-			return True
-		else:
-			return False
-	
-	def __eq__(self, other):
-		if not isinstance(other, type(self)):
-			return NotImplemented
-		return self.polytop == other.polytop and self.weight == other.weight
-        
         
         
 orderedpolytoparraylist = []        
+fr = input()
+print(fr,type(fr))
+if fr == "0":
+	for (polytop, weight) in zip(polytopalarraylist, weights):
+		dimensionwiseorderedpolytopes = set()
+		for (poly,weig) in zip(polytop,weight):
+			node = orderedarraylistnode(poly,weig)
+			dimensionwiseorderedpolytopes.add(node)
+		sorted_list = sorted(dimensionwiseorderedpolytopes, key = lambda x: (x.weight, x.polytop))
+		orderedpolytoparraylist.append(sorted_list)
+	#for x in orderedpolytoparraylist:
+	#	print("polytopes of Dimension ::",dimension1,"  ::  ")
+	#	for p in x:
+	#		print(p.polytop,p.weight)
+	#	dimension1 = dimension1-1
+	bettieTable = []
+	fastpersistance(orderedpolytoparraylist)
+	for x in bettieTable:
+		print(x)
 
+else:
+	orderedpolytoparraylist1 = []        
+	dimension1 = 3
 
-for (polytop, weight) in zip(polytopalarraylist, weights):
-	dimensionwiseorderedpolytopes = set()
-	for (poly,weig) in zip(polytop,weight):
-		node = orderedarraylistnode(poly,weig)
-		dimensionwiseorderedpolytopes.add(node)
-	sorted_list = sorted(dimensionwiseorderedpolytopes, key = lambda x: (x.weight, x.polytop))
-	orderedpolytoparraylist.append(sorted_list)
-	
-for x in orderedpolytoparraylist:
-	print("polytopes of Dimension ::",dimension1,"  ::  ")
-	for p in x:
-		print(p.polytop,p.weight)
-	dimension1 = dimension1-1
-
-class DisjointSet:
-    def __init__(self, n):
-        self.parent = [i for i in range(n)]
-        self.rank = [1 for _ in range(n)]
-    
-    # make a and b part of the same component
-    # union by rank optimization
-    def union(self, a, b):
-        pa = self.find(a)
-        pb = self.find(b)
-        if pa == pb: return
-        if self.rank[pa] > self.rank[pb]:
-            self.parent[pb] = pa
-            self.rank[pa] += self.rank[pb]
-        else:
-            self.parent[pa] = pb
-            self.rank[pb] += self.rank[pa]
-    
-    # find the representative of the 
-    # path compression optimization
-    def find(self, a):
-        if self.parent[a] == a:
-            return a
-        
-        self.parent[a] = self.find(self.parent[a])
-        return self.parent[a]
-    
-bettieTable = []
-def minimumspanningtree(edges1):
-	# using Kruskal's algorithm to find the cost of Minimum Spanning Tree
-	res = 0
-	pivots = []
-	mstSize = 0
-	ds = DisjointSet(datasize)
-	for x in edges1:
-		if ds.find(x.polytop[0]) != ds.find(x.polytop[1]):
-			ds.union(x.polytop[0], x.polytop[1])
-			res += x.weight
-			mstSize +=1
-			pivots.append(x)
-			bettitableentry = [0,0,x.weight]
-			bettieTable.append(bettitableentry)
-			if(mstSize >= len(inputpoints)-1):
-				for i in range(0,len(inputpoints)):
-					if(ds.find(i) == i):
-						bettitableentry = [0,0,'inf']
-						bettieTable.append(bettitableentry)
-				return pivots
-	return pivots
-
-def getDimEdges(dimension):
-	return orderedpolytoparraylist[dim -dimension]
-
-def getAllCofacets(polytop,dimension):
-	returnlist = []
-	for x in orderedpolytoparraylist[dim-dimension-1]:
-		if(len(intersection(x.polytop,polytop)) == len(polytop)):
-			returnlist.append(x)
-	return returnlist
-				
-	
-def persistenceByDimension( edges, pivots, dimension):
-	pivotcounter = 0
-	nextPivots = []	
-	v = {} 
-	#for x in pivots:
-	#	print(x.polytop,x.weight)
-	pivotPairs = {}	
-	for e in edges:
-		if(pivotcounter >= len(pivots) or pivots[pivotcounter].weight != e.weight or pivots[pivotcounter].polytop != e.polytop):
-			faceList = getAllCofacets(e.polytop,dimension)
-			#print(e.polytop)
-			#for x in faceList:
-			#	print(x.polytop,x.weight)
-			#x=input()
-			columnV = []
-			columnV.append(e)
-			hq.heapify(faceList)
-			while(True):
-				while(faceList!=[]):
-					pivot = faceList[0]
-					hq.heappop(faceList)
-					if(faceList!=[] and pivot==faceList[0]):
-						hq.heappop(faceList)
-					else:
-						hq.heappush(faceList,pivot)
-						break
-				if(faceList==[]):
-					break
-				elif pivot not in pivotPairs:
-					pivotPairs[pivot] = e
-					nextPivots.append(pivot)
-					for x in columnV:
-						print(x.polytop,x.weight)
-					
-					columnV = sorted(columnV, key = lambda x: (x.weight, x.polytop))
-					for x in columnV:
-						print(x.polytop,x.weight)
-					k =0
-					for x in columnV:
-						if(k+1 < len(columnV) and columnV[k]==columnV[k+1]):
-							k+=1
-						else:
-							if e not in v:
-								v[e] = [columnV[k]]
-							else:
-								f = v[e] + [columnV[k]]
-								v[e] = f
-						k+=1
-					if(e.weight != pivot.weight):
-						bettitableentry = [dimension,min(pivot.weight, e.weight),max(pivot.weight, e.weight)]
-						bettieTable.append(bettitableentry)
-						break
-				else:
-					if v and pivotPairs:
-						print(len(v))
-						print(pivotPairs[pivot])
-						for polytopnp in v[pivotPairs[pivot]]:
-							columnV.append(polytopnp)
-							faces =  getAllCofacets(polytopnp.polytop,dimension)
-							for fc in faces:
-								print("k:",k)
-								k =k+1
-								faceList.append(fc)
-						hq.heapify(faceList)
-			print("here")
+	for d in range(0,dimension1+1):
+		dimensionwiseorderedpolytopes = set()
+		if(d==0):
+			for i in range(0,datasize):
+				node = orderedarraylistnode([i],0)
+				dimensionwiseorderedpolytopes.add(node)
 		else:
-			pivotcounter+=1
-	return nextPivots
-	
-def fastpersistance(polytopalcomplex):
-	vertices = getDimEdges(0)
-	edges = getDimEdges(1)
-	pivots  = minimumspanningtree(edges)
-	
-	for d  in range(1,dim):
-		if(d != 1):
-			 edges = getDimEdges(d)
+			for i in orderedpolytoparraylist1[d-1]:
+				for j in range(max(i.polytop)+1,datasize):
+					weight1 = i.weight
+					for p in i.polytop:
+						if(distanceindex(p,j)>weight1):
+							weight1 =  distanceindex(p,j)
+					node = orderedarraylistnode(i.polytop+[j],weight1)
+					dimensionwiseorderedpolytopes.add(node)
+		sorted_list = list(dimensionwiseorderedpolytopes)
+		orderedpolytoparraylist1.append(sorted(sorted_list))
 
-		pivots = persistenceByDimension(edges, pivots, d)
-		for x in pivots:
-			print(x.polytop,x.weight)
-	return
+	orderedpolytoparraylist = []        
+	for x in range(dim,-1,-1):
+		orderedpolytoparraylist.append(orderedpolytoparraylist1[x])
+	'''
+	#simplicial Complex
+	for x in orderedpolytoparraylist:
+		print("simplicies of Dimension ::",dimension1,"  ::  ")
+		for p in x:
+			print(p.polytop,p.weight)
+		dimension1 = dimension1-1
+    '''
+	bettieTable = []
+	fastpersistance(orderedpolytoparraylist)
+	for x in bettieTable:
+		print(x)
 
-fastpersistance(orderedpolytoparraylist)
-
-for x in bettieTable:
-	print(x)
 
