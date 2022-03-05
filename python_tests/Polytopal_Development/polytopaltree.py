@@ -421,26 +421,21 @@ class tree:
 	def createpolytope(self,points,points1,pca_x1,farthest,dimension):
 		poly = points
 		polyunmapped = points1
+		
 		polytopal_points = []
-		if(farthest ==-1 or len(points1) == dimension+1):
+		if(farthest == -1 or len(points1) == dimension+1):
 			mappedconvexfaces = generatesimplexfacets(poly, dimension)
 			convexfaces = generatesimplexfacets([i for i in range(0,len(points))], dimension)
 			return polytope(poly,points1,0,-1,convexfaces,mappedconvexfaces,dimension-1,[])
 			
 		for i in points1:
-			if(len(pca_x1[0]) == dim):
-				polytopal_points.append(pca_x1[i])
-			elif(i>=farthest):
-				polytopal_points.append(pca_x1[i-1])
-			else:
-				polytopal_points.append(pca_x1[i])
+			polytopal_points.append(pca_x1[i])
 		weight = 0 #delauney retension
 		polytophalfspaces = polyfun.compute_polytope_halfspaces(polytopal_points)
 		polyhalfspace = pc.Polytope(polytophalfspaces[0],polytophalfspaces[1])
 		chebR = polyhalfspace.chebR
 		chebXc = polyhalfspace.chebXc
 		farthestpoint = fathestpointpolytopeindex(points1,chebXc,polytopal_points)
-		#print(points[farthestpoint])
 		
 		nearesttofarthest = nearesttofarthestpoint(points1,farthestpoint,polytopal_points)
 		
@@ -459,10 +454,10 @@ class tree:
 		for c in faces1:
 			fc = []
 			for k in c:
-				if(k>=farthestpoint):
-					fc.append(k-1)
-				else:
+				if(k<farthestpoint):
 					fc.append(k)
+				else:
+					fc.append(k-1)
 			faces.append(fc)
 		if(len(pca_x[0]) <= 1):
 			convexdecomposedfaces = faces		
@@ -509,12 +504,12 @@ class tree:
 			k = 0
 			for polytop in poly.convexdecomposedfaces:
 				if(len(polytop) >=1):
-					if(len(polytop)==poly.dimension or	 len(polytop) ==1):
+					if(len(polytop)==poly.dimension+1 or	 len(polytop) ==1):
 						mappedconvexfaces = generatesimplexfacets(polytop,poly.dimension)
 						convexfaces = generatesimplexfacets([i for i in range(0,len(polytop))],poly.dimension)
 						newchild = polytope(polytop,poly.convexdecomposed[k],0,-1,convexfaces,mappedconvexfaces,poly.dimension-1,[])
 					else:
-						newchild = self.createpolytope(polytop,poly.convexdecomposed[k],poly.pca_x,poly.farthestpoint,poly.dimension)
+						newchild = self.createpolytope(polytop,poly.convexdecomposed[k],poly.pca_x,poly.farthestpoint,poly.dimension-1)
 					i=i+1
 					if(i%10000==0):
 						print(i)
@@ -613,13 +608,13 @@ if fr == "0":
 		sorted_list = list(dimensionwiseorderedpolytopes)
 		sorted_list.sort(key = letter_cmp_key)
 		orderedpolytoparraylist.append(sorted_list)
-	'''
+	
 	for x in orderedpolytoparraylist:
 		print("polytopes of Dimension ::",dimension1,"  ::  ")
 		for p in x:
 			print(p.polytop,p.weight)
 		dimension1 = dimension1-1
-	'''
+	
 	bettieTable = []
 	fastpersistance(orderedpolytoparraylist)
 	for x in bettieTable:
