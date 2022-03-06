@@ -12,6 +12,7 @@ from sklearn.decomposition import PCA
 from itertools import combinations
 import heapq as hq
 from functools import cmp_to_key
+import csv
 
 
    
@@ -40,12 +41,33 @@ def minimumspanningtree(edges1):
 def getDimEdges(dimension):
 	return orderedpolytoparraylist[dim -dimension]
 
-def getAllCofacets(polytop,dimension):    #will update this function a little
+def getAllCofacets(e,dimension):    #will update this function a little
 	returnlist = []
 	for x in orderedpolytoparraylist[dim-dimension-1]:
-		if(len(intersection(x.polytop,polytop)) == len(polytop)):
+		if(len(intersection(x.polytop,e.polytop)) == len(e.polytop)):
+			#if(len(x.polytop) == dimension+2):
 			returnlist.append(x)
 	return returnlist
+
+'''			else:
+				minweight = max(x.weight,e.weight)
+				otheredges = [y for y in x.polytop if y not in e.polytop]
+				for check in otheredges:
+					maxweight = e.weight
+					valid = 1
+					for f in e.polytop:
+						if(incidenceindexreturn(check,f)!=1):
+							valid = 0
+							break
+					if(valid==1):
+						for f in e.polytop:		
+							if(maxweight < distanceindex(check,f)):
+								maxweight = distanceindex(check,f)
+					if(minweight>maxweight):
+						minweight = maxweight
+				x.weight = minweight
+				returnlist.append(x)
+'''
 			
 def letter_cmp(a, b):
     if a.weight > b.weight:
@@ -70,7 +92,7 @@ def persistenceByDimension( edges, pivots, dimension):
 	pivotPairs = {}
 	for e in reversed(edges):
 		if(pivotcounter < 0 or pivots[pivotcounter].weight != e.weight or pivots[pivotcounter].polytop != e.polytop):
-			faceList = getAllCofacets(e.polytop,dimension)
+			faceList = getAllCofacets(e,dimension)
 			columnV = []
 			columnV.append(e)
 			hq.heapify(faceList)
@@ -108,7 +130,7 @@ def persistenceByDimension( edges, pivots, dimension):
 					if v and pivotPairs:
 						for polytopnp in v[pivotPairs[pivot]]:
 							columnV.append(polytopnp)
-							faces =  getAllCofacets(polytopnp.polytop,dimension)
+							faces =  getAllCofacets(polytopnp,dimension)
 							for fc in faces:
 								faceList.append(fc)
 						hq.heapify(faceList)
@@ -398,7 +420,7 @@ class polytope:
 		self.polytopunmappedvertices = polyunmapped
 		self.weight = weight1  #weight of polytope
 		self.farthestpoint = farthestpoint1 #polytope fathest point from incenter coordinates
-		self.convexdecomposed = convexdecomposedfaces
+		self.unmappedconvexdecomposed = convexdecomposedfaces
 		self.convexdecomposedfaces =  mappedconvexdecomposedfaces  #PCA Dimensionality Reduction for lower order faces
 		self.dimension = dimension # vertices in highest simplex
 		self.childrens = []
@@ -421,7 +443,7 @@ class tree:
 	def createpolytope(self,points,points1,pca_x1,farthest,dimension):
 		poly = points
 		polyunmapped = points1
-		
+
 		polytopal_points = []
 		if(farthest == -1 or len(points1) == dimension+1):
 			mappedconvexfaces = generatesimplexfacets(poly, dimension)
@@ -460,9 +482,10 @@ class tree:
 					fc.append(k-1)
 			faces.append(fc)
 		if(len(pca_x[0]) <= 1):
-			convexdecomposedfaces = faces		
+			convexdecomposedfaces = sorted(faces)		
 		else:
 			convexdecomposedfaces = iterativeconvexization(faces,len(pca_x[0]),pca_x)
+			convexdecomposedfaces = sorted(convexdecomposedfaces)
 		mappedconvexedfaces = []
 		for a in convexdecomposedfaces:
 			list1 = []
@@ -480,6 +503,7 @@ class tree:
 				list2.append(j)	
 			convexdecomposedfaces.append(sorted(list2))
 			mappedconvexedfaces.append(sorted(list1))
+
 		dimension = len(pca_x[0])
 		return polytope(poly,polyunmapped,weight,farthestpoint,convexdecomposedfaces,mappedconvexedfaces,dimension,pca_x)
 	
@@ -507,9 +531,9 @@ class tree:
 					if(len(polytop)==poly.dimension+1 or	 len(polytop) ==1):
 						mappedconvexfaces = generatesimplexfacets(polytop,poly.dimension)
 						convexfaces = generatesimplexfacets([i for i in range(0,len(polytop))],poly.dimension)
-						newchild = polytope(polytop,poly.convexdecomposed[k],0,-1,convexfaces,mappedconvexfaces,poly.dimension-1,[])
+						newchild = polytope(polytop,poly.unmappedconvexdecomposed[k],0,-1,convexfaces,mappedconvexfaces,poly.dimension-1,[])
 					else:
-						newchild = self.createpolytope(polytop,poly.convexdecomposed[k],poly.pca_x,poly.farthestpoint,poly.dimension-1)
+						newchild = self.createpolytope(polytop,poly.unmappedconvexdecomposed[k],poly.pca_x,poly.farthestpoint,poly.dimension-1)
 					i=i+1
 					if(i%10000==0):
 						print(i)
@@ -567,14 +591,67 @@ class tree:
 distancematrix = []	  #initializae distance matrix
 delaunayincidence = []
 head = tree()  # initialize a polytopal tree
-dim= 3  #dimension of a data
-datasize = 10
-inputpoints = tadasets.dsphere(n=datasize, d=dim-1, r=1, noise=0)  # generate d-sphere datatset
-inputpoints = np.array([[3,2,7],[5,4,3],[-3,-1,6],[-2,-3,4],[-3,2,6],[4,-4,3],[2,-2,5],[0,0,-8],[-5,5,1],[-5,-5,1]])
+#read file
+'''
+print("Here")
+
+inputpoints = []
+with open("input.csv", "r") as f:
+	reader = csv.reader(f)
+	for line in reader:
+		k=[]
+		for x in line:
+			k.append(float(x))
+		inputpoints.append(k)
+			
+print(inputpoints)
+'''
+inputpoints = []
+def genPermutahedron(a, size):
+    # if size becomes 1 then prints the obtained
+    # permutation
+    if size == 1:
+        inputpoints.append(np.array(a))
+        return
+ 
+    for i in range(size):
+        genPermutahedron(a, size-1)
+ 
+        # if size is odd, swap 0th i.e (first)
+        # and (size-1)th i.e (last) element
+        # else If size is even, swap ith
+        # and (size-1)th i.e (last) element
+        if size & 1:
+            a[0], a[size-1] = a[size-1], a[0]
+        else:
+            a[i], a[size-1] = a[size-1], a[i]
+
+b = [0,1,2,3]
+size = len(b)
+genPermutahedron(b,size)
+
+x, y = np.meshgrid(np.linspace(-1,1,len(b)-1), np.linspace(-1,1,24))
+dst = np.sqrt(x*x+y*y)
+
+sigma = 1
+muu = 0.000
+ 
+# Calculating Gaussian array
+gauss = np.exp(-( (dst-muu)**2 / ( 2.0 * sigma**2 ) ) )
+
+pca_x = PCAprojection(inputpoints)
+inputpoints = pca_x
+inputpoints = np.array(inputpoints) + gauss
+#print(inputpoints)            
+dim= len(inputpoints[0])  #dimension of a data
+datasize = len(inputpoints)
+#inputpoints = tadasets.dsphere(n=datasize, d=dim-1, r=1, noise=0.65)  # generate d-sphere datatset
+#inputpoints = np.array([[3,2,7],[5,4,3],[-3,-1,6],[-2,-3,4],[-3,2,6],[4,-4,3],[2,-2,5],[0,0,-8],[-5,5,1],[-5,-5,1]])
+#inputpoints = np.array([[-0.33503,-0.93161,0.14092],[-0.58394,0.6616,0.47041],[-0.60231,-0.10734,-0.79101],[0.5778,0.58913,0.56486],[0.96496,0.24644,-0.09013],[-0.49422,-0.0695,0.86655],[0.9337,0.34562,-0.09359],[0.95858,-0.19768,-0.20505],[-0.75412,-0.62654,-0.19683],[-0.38701,0.41265,0.82459],[0.86506,0.40221,0.29983],[0.69299,0.37824,0.61376],[-0.35164,-0.6592,-0.66468],[-0.42816,0.16204,-0.88906],[0.93148,-0.17783, 0.31738],[ 0.06839, 0.89008 ,0.45064],[ 0.3142,  0.7662 ,-0.56055],[ 0.89106,0.07213,0.44813],[-0.43599,0.70498,0.55939],[-0.86108,0.49248,0.1265]])
 points = [i for i in range(0,len(inputpoints))]
 computedistancematrix(inputpoints)	#Populate distance matrix
 root = head.createheadpolytope(points)  # if data lies in n-dimensions; this will make a surface of a lifted (n+1)-dimensional parbolied its projection will be delaunay triangulation
-polytopalarraylist  = head.createbootomup(root)  #will need to impliment this function to gro polytopal tree bottom up
+polytopalarraylist  = head.createbootomup(root) 
 dimension1 =dim
 weights = []
 for dimensionlist in polytopalarraylist:
@@ -588,7 +665,7 @@ for dimensionlist in polytopalarraylist:
 					if(maxedge<distanceindex(edge[0],edge[1])):
 						maxedge = distanceindex(edge[0],edge[1])
 			if(maxedge==0):
-				distancedime.append(maxedge)#distanceindex(edge[0],edge[1]))
+				distancedime.append(distanceindex(edge[0],edge[1]))#distanceindex(edge[0],edge[1]))
 			else:
 				distancedime.append(maxedge)
 		else:
@@ -598,28 +675,26 @@ for dimensionlist in polytopalarraylist:
         
         
 orderedpolytoparraylist = []        
-fr = input()
-if fr == "0":
-	for (polytop, weight) in zip(polytopalarraylist, weights):
-		dimensionwiseorderedpolytopes = set()
-		for (poly,weig) in zip(polytop,weight):
-			node = orderedarraylistnode(poly,weig)
-			dimensionwiseorderedpolytopes.add(node)
-		sorted_list = list(dimensionwiseorderedpolytopes)
-		sorted_list.sort(key = letter_cmp_key)
-		orderedpolytoparraylist.append(sorted_list)
+for (polytop, weight) in zip(polytopalarraylist, weights):
+	dimensionwiseorderedpolytopes = set()
+	for (poly,weig) in zip(polytop,weight):
+		node = orderedarraylistnode(poly,weig)
+		dimensionwiseorderedpolytopes.add(node)
+	sorted_list = list(dimensionwiseorderedpolytopes)
+	sorted_list.sort(key = letter_cmp_key)
+	orderedpolytoparraylist.append(sorted_list)
+	dimension1 = dim
+for x in orderedpolytoparraylist:
+	print("polytopes of Dimension ::",dimension1,"  ::  ",len(x))
+	#for p in x:
+	#	print(p.polytop,p.weight)
+	dimension1 = dimension1-1
 	
-	for x in orderedpolytoparraylist:
-		print("polytopes of Dimension ::",dimension1,"  ::  ")
-		for p in x:
-			print(p.polytop,p.weight)
-		dimension1 = dimension1-1
-	
-	bettieTable = []
-	fastpersistance(orderedpolytoparraylist)
-	for x in bettieTable:
-		print(x)
-
+bettieTable = []
+fastpersistance(orderedpolytoparraylist)
+for x in bettieTable:
+	print(x)
+'''
 else:
 	orderedpolytoparraylist1 = []        
 	dimension1 = 3
@@ -646,17 +721,17 @@ else:
 	orderedpolytoparraylist = []        
 	for x in range(dim,-1,-1):
 		orderedpolytoparraylist.append(orderedpolytoparraylist1[x])
-	'''
+	
 	#simplicial Complex
 	for x in orderedpolytoparraylist:
 		print("simplicies of Dimension ::",dimension1,"  ::  ")
 		for p in x:
 			print(p.polytop,p.weight)
 		dimension1 = dimension1-1
-    '''
+
 	bettieTable = []
 	fastpersistance(orderedpolytoparraylist)
 	for x in bettieTable:
 		print(x)
 
-
+'''
