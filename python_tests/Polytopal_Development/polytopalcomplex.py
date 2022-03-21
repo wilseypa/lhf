@@ -422,8 +422,12 @@ class orderedarraylistnode(object):
 			return True
 		elif self.weight == nxt.weight:
 			for (x,y) in zip(reversed(self.polytop),reversed(nxt.polytop)):
-				if(x > y):
+				if(x < y):
 					return True
+				elif(x==y):
+					continue
+				else:
+					return False
 		return False
 	def __eq__(self, other):
 		if not isinstance(other, type(self)):
@@ -445,9 +449,15 @@ class orderedarraylistnodeorig(object):
 		if self.weight < nxt.weight:
 			return True
 		elif self.weight == nxt.weight:
+			if(self.polytop==nxt.polytop):
+				return True
 			for (x,y) in zip(reversed(self.polytop),reversed(nxt.polytop)):
-				if(x > y):
+				if(x < y):
 					return True
+				elif(x==y):
+					continue
+				else:
+					return False
 		return False
 	def __eq__(self, other):
 		if not isinstance(other, type(self)):
@@ -478,9 +488,9 @@ def assignweights(polytopaltree):
 						localmax =0
 						edges = generatesimplexfacets(poly,2)
 						for edge in edges:
-							if(incidenceindexreturn(edge[0],edge[1])==1):
-								if(localmax<distanceindex(edge[0],edge[1])):
-									localmax = distanceindex(edge[0],edge[1])
+							#if(incidenceindexreturn(edge[0],edge[1])==1):
+							if(localmax<distanceindex(edge[0],edge[1])):
+								localmax = distanceindex(edge[0],edge[1])
 						polytp.append([poly,localmax])
 						if(maxedge<localmax):
 							maxedge = localmax
@@ -520,36 +530,83 @@ def minimumspanningtree(edges1):
 	return pivots
 
 def getDimEdges(dimension):
-	edg =  polytopaltree[dim -dimension]
+	if(dimension==0 or dimension == dim):
+		edg =  polytopaltree[dim -dimension]
+	else:
+		edg = polytopaltree[dim -dimension-1]
+		dimensionwiseorderedpolytopes = set()
+		for x in edg:
+			boundary = generatesimplexfacets(x.polytop,len(x.polytop)-1)
+			for poly in boundary:
+				localmax =0
+				edges = generatesimplexfacets(poly,2)
+				for edge in edges:
+					if(localmax<distanceindex(edge[0],edge[1])):
+							localmax = distanceindex(edge[0],edge[1])
+				node = orderedarraylistnodeorig(poly,localmax)
+				dimensionwiseorderedpolytopes.add(node)
+		sorted_list = list(dimensionwiseorderedpolytopes)
+		sorted_list.sort(key = letter_cmp_key)
+		edg = sorted_list
+	#print("dimension :: ",len(edg))
 	return edg
+	
 def getAllCofacets(e,dimension):    #will update this function a little
 	returnlist = []
 	for x in polytopaltree[dim-dimension-1]:
 		if(len(intersection(x.polytop,e.polytop)) == len(e.polytop)):
-			#if(len(x.polytop) == dimension+2):
 			returnlist.append(x)
 	return returnlist
 
 def persistenceByDimension( edges, pivots, dimension):
 	pivotcounter = len(pivots)-1
 	edges.sort(key = letter_cmp_key)
-	pivots.sort(key = letter_cmp_key)
 	nextPivots = []	
+	'''
+	print("Pivots")
+	for x in pivots:
+		print(x.polytop,"  ",x.weight)
+	print("simpklices")
+	for y in edges:
+		print(y.polytop," ",y.weight)
+	pivots.sort(key = letter_cmp_key)
+	input()
+	'''
 	v = {} 
 	pivotPairs = {}
-	for e in reversed(edges):
-		if(pivotcounter < 0 or pivots[pivotcounter].weight != e.weight or pivots[pivotcounter].polytop != e.polytop):
+	for e in edges:
+		if(pivotcounter < 0 or pivots[pivotcounter].polytop != e.polytop):
 			faceList = getAllCofacets(e,dimension)
 			columnV = []
 			columnV.append(e)
 			hq.heapify(faceList)
-			i = 0
+			i = 1
 			while(True):
-				print(i)
+				hq.heapify(faceList)
+				if(i%1000==0):
+					print(e.polytop,e.weight)
+					print(pivots[pivotcounter].polytop,pivots[pivotcounter].weight)
+					for x in faceList:
+						print(x.polytop,x.weight)
+					print(len(faceList))
+					print(pivot.polytop,pivot.weight)
+					print(i)
+					input()
 				i=i+1
 				while(faceList!=[]):
-					pivot = faceList[0]
-					hq.heappop(faceList)
+					hq.heapify(faceList)
+					'''
+					print("Facelist1")
+					for x in faceList:
+						print(x.polytop,x.weight)
+					print("Facelist2")
+					'''
+					pivot =	hq.heappop(faceList)
+					'''
+					print(pivot.polytop,pivot.weight)
+					if(faceList != []):
+						print(faceList[0].polytop,faceList[0].weight)
+					'''				
 					if(faceList!=[] and pivot.polytop==faceList[0].polytop):
 						hq.heappop(faceList)
 					else:
@@ -587,21 +644,16 @@ def persistenceByDimension( edges, pivots, dimension):
 		else:
 			pivotcounter = pivotcounter - 1
 	return nextPivots
-def updatedpivots(pivots):
-	print(pivots)
-	print(type(pivots[0]))
-	k = input()
+
 def fastpersistance(polytopalcomplex):
 	vertices = getDimEdges(0)
 	edges = getDimEdges(1)
 	pivots  = minimumspanningtree(edges)
 	
 	for d  in range(1,dim):
-		
 		if(d != 1):
 			 edges = getDimEdges(d)
 		pivots = persistenceByDimension(edges, pivots, d)
-		#pivots = updatedpivots(pivots)
 	return
 class DisjointSet:
     def __init__(self, n):
@@ -646,17 +698,25 @@ def disintegrate(polytopaltree):
 		orderedpolytoparraylist.append(sorted_list)
 	return orderedpolytoparraylist
 
-dim = 5
-datasize = 70
+dim = 6
+datasize = 40
+#inputpoints = np.array([[1.2,1.1],[2.5,1.3],[1.23,2.14],[2.31,2.41],[3.21,2.72]])
 inputpoints = tadasets.dsphere(n=datasize, d=dim-1, r=1, noise=0)  # generate d-sphere datatset
 letter_cmp_key = cmp_to_key(letter_cmp)    #comparison function
-#polytopaltree = createpolytopaltree(inputpoints)
-polytopaltree = createnormalpolytopaltree(inputpoints)
+polytopaltree = createpolytopaltree(inputpoints)
 polytopaltree = assignweights(polytopaltree)
-#polytopaltree = disintegrate(polytopaltree)
+polytopaltree = disintegrate(polytopaltree)
+y = dim
 for x in polytopaltree:
-	print(len(x))
-input()
+#	for y in x:
+#		print(y.polytop,y.polytopparts,y.weight)
+	print("level :: ",y,"::--------",len(x))
+	y=y-1
+y = dim
+#for x in polytopaltree:
+#	print(len(getDimEdges(y)))
+#	y=y-1
+#input()
 bettieTable = set()
 fastpersistance(polytopaltree)
 dim0=0
