@@ -125,6 +125,7 @@ def optimalconvexization(simplices,pointscoord,points):   #Repeate the Maximum c
 		distance =0
 		maxweight = simplexweight(x)
 		maxval = 0
+		print(i)
 		while True:
 			x1,delaunaypart,w = mergeneighbors(x,simplices,pointscoord,delaunaypart,points)
 			if(maxweight<w):
@@ -169,8 +170,10 @@ def iterativeconvexization(simplices,dim,pointscoord):   #Keep convex decomposit
 	remainingsimplices = simplices
 	premaining = 0
 	while(True):
+		print(len(remainingsimplices))
 		df = optimalconvexization(remainingsimplices,pointscoord,points)
 		i=0
+		print(i)
 		pointsaddressed = []
 		for x,y,weight in zip(df['convexpart'].tolist(),df['delaunayparts'].tolist(),df['weight'].tolist()):
 			check = 1
@@ -428,11 +431,12 @@ def generatelowerorderdecompositions(indices,coordinates):
 	points = []
 	[points.append(x) for z in indices for x in z if x not in points]
 	points = sorted(points)
-	triangulation = hullfromtriangulation(indices) #ConvexHull(coords).simplices
+	triangulation = hullfromtriangulation(indices) 
 	projectedpts = findfarthestfacetprojection(coords)
+	print("here")
 	convexdecomposition,delaunayparts,weights = iterativeconvexization(triangulation,len(projectedpts[0]),projectedpts)
-	convexdecompositionmapped = convexdecomposition# mapindices(convexdecomposition,points)
-	delaunaypartsmapped = delaunayparts#mapdelaunayindices(delaunayparts,points)
+	convexdecompositionmapped = convexdecomposition
+	delaunaypartsmapped = delaunayparts
 	for (x,y,z,w) in zip(convexdecomposition,convexdecompositionmapped,delaunaypartsmapped,weights):
 		x = sorted(x)
 		lowercoordinates = [projectedpts[points.index(i)] for i in x]
@@ -455,12 +459,12 @@ def addEdgesAndVertices(polytopaltree):
 			facets = generatesimplexfacets(points,2)
 			[level.append(sorted(t)) for t in facets if sorted(t) not in level]
 	polytopaltree.append(level)
-	print("level::",1,"::",len(level))
+	print("Polytopes at Dimension ::",1,"::",len(level))
 	level = []
 	for x in range(0,len(inputpoints)):
 		level.append([x])
 	polytopaltree.append(level)
-	print("level::",0,"::",len(level))
+	print("Polytopes at Dimension ::",0,"::",len(level))
 	return polytopaltree
 
 def createnormalpolytopaltree(inputpoints):
@@ -479,7 +483,7 @@ def createnormalpolytopaltree(inputpoints):
 		x = sorted(x)
 		lowercoordinates = [coordinates[i] for i in x]
 		level.append([z,lowercoordinates])
-	print("level::",dim)
+	print("Polytopes at Dimension ::",dim)
 	#cascade down to Triangles
 	for d in range(1,dim-1):
 		convexdecompositions = copy.deepcopy(polytopaltree[d-1])
@@ -505,7 +509,7 @@ def createnormalpolytopaltree(inputpoints):
 						level.append([y,[]])
 				lenthr = lenthr + len(facets)
 		polytopaltree.append(level)
-		print("level ::",(dim-d))
+		print("Polytopes at Dimension ::",(dim-d))
 	#Add edges and vertices
 	polytopaltree = addEdgesAndVertices(polytopaltree)
 	return polytopaltree
@@ -526,7 +530,7 @@ def createpolytopaltree(inputpoints):
 		lowercoordinates = [coordinates[i] for i in x]
 		level.append([z,lowercoordinates,w])
 	polytopaltree.append(level)
-	print("level::",dim,"::",len(level))
+	print("Polytopes at Dimension ::",dim,"::",len(level))
 	#cascade down to Triangles
 	for d in range(1,dim):
 		convexdecompositions = copy.deepcopy(polytopaltree[d-1])
@@ -546,7 +550,7 @@ def createpolytopaltree(inputpoints):
 					lenthr = lenthr + len(facets)
 				else:
 					lowercd = generatelowerorderdecompositions(cd[0],cd[1])
-					#input()
+					print("here")
 					for x in lowercd:
 						y = sorted(x[0])
 						if y not in levelcheck:
@@ -563,12 +567,12 @@ def createpolytopaltree(inputpoints):
 						level.append([y,[],simplexweight(y)])
 				lenthr = lenthr + len(facets)
 		polytopaltree.append(level)
-		print("level ::",(dim-d),"::",len(level))
+		print("Polytopes at Dimension ::",(dim-d),"::",len(level))
 	level = []
 	for x in range(0,len(inputpoints)):
 		level.append([[[x]]])
 	polytopaltree.append(level)
-	print("level::",0,"::",len(level))
+	print("Polytopes at Dimension ::",0,"::",len(level))
 	#Add vertices
 	#polytopaltree = addEdgesAndVertices(polytopaltree)
 	return polytopaltree
@@ -962,6 +966,59 @@ def disintegrate(polytopaltree):
 	return orderedpolytoparraylist
 
 
+
+def checkplotsimplices(simplices):
+	newpolyparts = []
+	indices = []
+	[indices.append(i) for x in simplices for i in x if i not in indices]
+	for x in simplices:
+		for t in ConvexHull([inputpoints[i] for i in x],qhull_options="QJ").simplices:
+			t = [x[i] for i in t]
+			newpolyparts.append(t)
+	polyparts = newpolyparts
+	hull = polyparts#ConvexHull(points).simplices
+	newlist = []
+	i = 1
+	fig = plt.figure()
+	ax = Axes3D(fig, auto_add_to_figure=False)
+	fig.add_axes(ax)	
+	for y in hull:
+		#newlist.append(y)
+		for x in [y]:
+			pts = [inputpoints[x1] for x1 in x]
+			ptrans = np.transpose(pts)
+			verts = [list(zip(ptrans[0],ptrans[1],ptrans[2]))]
+			ax.scatter3D(ptrans[0],ptrans[1],ptrans[2])
+			ax.add_collection3d(Poly3DCollection(verts,facecolors='b', edgecolor = 'black', linewidths=1, alpha=0.15))
+		if(i%12==0):
+			plt.show()
+		i=i+1
+
+def plotpolytop(polyparts,d):
+	if(d==3):
+		newpolyparts = []
+		for x in polyparts:
+			x=x[0]
+			for t in ConvexHull([inputpoints[i] for i in x],qhull_options="QJ").simplices:
+				t = [x[i] for i in t]
+				if(sorted(t) not in newpolyparts):
+					newpolyparts.append(sorted(t))
+		polyparts = newpolyparts
+	hull = polyparts#ConvexHull(points).simplices
+	fig = plt.figure()
+	ax = Axes3D(fig, auto_add_to_figure=False)
+	fig.add_axes(ax)
+	for x in hull:
+		if(d!=3):
+			#x=x[0]
+			x=x
+		pts = [inputpoints[x1] for x1 in x]
+		ptrans = np.transpose(pts)
+		verts = [list(zip(ptrans[0],ptrans[1],ptrans[2]))]
+		ax.scatter3D(ptrans[0],ptrans[1],ptrans[2])
+		ax.add_collection3d(Poly3DCollection(verts,facecolors='b', edgecolor = 'black', linewidths=1, alpha=0.15))
+	plt.show()
+
 def genPermutahedron(a, size):
     if size == 1:
         inputpoints.append(np.array(a))
@@ -1046,7 +1103,7 @@ def addgaussiannoise(inputpoints,noiseper):
 	x, y = np.meshgrid(np.linspace(-1,1,dim), np.linspace(-1,1,datasize))
 	dst = np.sqrt(x*x+y*y)
 	sigma = 1
-	muu = 0.000
+	muu = 0.0001
  	# Calculating Gaussian array
 	gauss = np.exp(-( (dst-muu)**2 / ( 2.0 * sigma**2 ) ) )
 	inputpoints = np.array(inputpoints) + gauss*noiseper
@@ -1060,15 +1117,16 @@ print("3: Hyperpermutahedron Sphere")
 print("4: Hyperfibonnacci Sphere")
 print("5: Read From File")
 datatype = input()
-print("Dimension ::")
-dim = input()
-dim = int(dim)
-print("Intended DataSize ::")
-datasize = input()
-datasize = int(datasize)
-print("Gaussian noise in percentage ::")
-noiseper = input()
-noiseper = int(noiseper)/100
+if(datatype!='5'):
+	print("Dimension ::")
+	dim = input()
+	dim = int(dim)
+	print("Intended DataSize ::")
+	datasize = input()
+	datasize = int(datasize)
+	print("Gaussian noise in percentage ::")
+	noiseper = input()
+	noiseper = int(noiseper)/1000
 if datatype=='1':  #Tetrahedron
 	edgecount = (int)(dim*(dim+1)/2)
 	points = max(datasize,dim+1)
@@ -1164,10 +1222,11 @@ elif datatype=='5': #ReadFile
 			unitsphere.append(k)
 			
 inputpoints = unitsphere
-refine(inputpoints)
 datasize = len(inputpoints)
 dim=len(inputpoints[0])
-inputpoints = addgaussiannoise(inputpoints,noiseper)
+if(datatype!='5'):
+	refine(inputpoints)
+	inputpoints = addgaussiannoise(inputpoints,noiseper)
 print("Final Data Size::",datasize," in dimension ::",dim)
 fig = plt.figure()
 ax = plt.axes(projection='3d')
@@ -1177,94 +1236,18 @@ ydata = [item[2] for item in unitsphere]
 ax.scatter3D(xdata, ydata, zdata)
 plt.show()
 
-
-def checkplotsimplices(simplices):
-	newpolyparts = []
-	indices = []
-	[indices.append(i) for x in simplices for i in x if i not in indices]
-	for x in simplices:
-		for t in ConvexHull([inputpoints[i] for i in x],qhull_options="QJ").simplices:
-			t = [x[i] for i in t]
-			newpolyparts.append(t)
-	polyparts = newpolyparts
-	hull = polyparts#ConvexHull(points).simplices
-	newlist = []
-	i = 1
-	fig = plt.figure()
-	ax = Axes3D(fig, auto_add_to_figure=False)
-	fig.add_axes(ax)	
-	for y in hull:
-		#newlist.append(y)
-		for x in [y]:
-			pts = [inputpoints[x1] for x1 in x]
-			ptrans = np.transpose(pts)
-			verts = [list(zip(ptrans[0],ptrans[1],ptrans[2]))]
-			ax.scatter3D(ptrans[0],ptrans[1],ptrans[2])
-			ax.add_collection3d(Poly3DCollection(verts,facecolors='b', edgecolor = 'black', linewidths=1, alpha=0.15))
-		if(i%12==0):
-			plt.show()
-		i=i+1
-
-def plotpolytop(polyparts,d):
-	if(d==3):
-		newpolyparts = []
-		for x in polyparts:
-			x=x[0]
-			for t in ConvexHull([inputpoints[i] for i in x],qhull_options="QJ").simplices:
-				t = [x[i] for i in t]
-				if(sorted(t) not in newpolyparts):
-					newpolyparts.append(sorted(t))
-		polyparts = newpolyparts
-	hull = polyparts#ConvexHull(points).simplices
-	fig = plt.figure()
-	ax = Axes3D(fig, auto_add_to_figure=False)
-	fig.add_axes(ax)
-	for x in hull:
-		if(d!=3):
-			#x=x[0]
-			x=x
-		pts = [inputpoints[x1] for x1 in x]
-		ptrans = np.transpose(pts)
-		verts = [list(zip(ptrans[0],ptrans[1],ptrans[2]))]
-		ax.scatter3D(ptrans[0],ptrans[1],ptrans[2])
-		ax.add_collection3d(Poly3DCollection(verts,facecolors='b', edgecolor = 'black', linewidths=1, alpha=0.15))
-	plt.show()
-
 letter_cmp_key = cmp_to_key(letter_cmp)    #comparison function
 polytopaltree = createpolytopaltree(inputpoints)
 polytopaltree = assignweights(polytopaltree)
 k= dim
-'''
-for x in polytopaltree:
-	print("dimension",k)
-	for y in x:
-		print(y.polytop,y.weight)
-		plotpolytop(y.polytopparts,k)
-	k = k-1
-'''
+
 polytopaltree = disintegrate(polytopaltree)
-
-#for x in distancematrix:
-#	print(x)
-#	input()
-#for x in polytopaltree:
-#	for y in x:
-#		print(y.polytop,y.weight)
-#	input()
-	
 	
 y = dim
 for x in polytopaltree:
-#	for y in x:
-#		print(y.polytop,y.polytopparts,y.weight)
-	print("level :: ",y,"::--------",len(x))
+	print("Simplices of Dimension :: ",y,"::--------",len(x))
 	y=y-1
-y = dim
 
-#for x in polytopaltree:
-#	print(len(getDimEdges(y)))
-#	y=y-1
-#input()
 bettieTable = []
 fastpersistance(polytopaltree)
 dimcount=[0 for i in range(0,dim)]
@@ -1275,7 +1258,7 @@ for x in bettieTable:
 	table[x[0]].append(x)
 	dimcount[x[0]]= dimcount[x[0]]+1
 for i in range(0,dim):
-	print("Dimemnsion ",i," ::",dimcount[i])
+	print("Dimemnsion ",i," Betti Count ::",dimcount[i])
 i=0
 colors = ["Orange","yellow","Green",'Blue','Red','Black',"pink"]
 
@@ -1286,7 +1269,7 @@ for d in range(0,dim):
 	df = df.sort_values(by = 'death',ascending = True)
 	plt.scatter(df["birth"], df["death"],color=colors[d],s=6)
 plt.axline([0, 0], [2, 2],linewidth=1,color="black")
-plt.savefig("persistencePolytopalinterval.pdf", bbox_inches = 'tight',pad_inches = 0)
+plt.savefig("outputBCPolytopal.pdf", bbox_inches = 'tight',pad_inches = 0)
 plt.show()
 
 for d in range(0,dim):
@@ -1299,9 +1282,22 @@ for d in range(0,dim):
 	i=i+len(table[d])
 	plt.plot([df["birth"], df["death"]], [counter, counter],color=colors[d],linestyle='solid',linewidth=1)
 plt.show()
-plt.savefig("persistencePolytopalbarcodes.pdf", bbox_inches = 'tight',pad_inches = 0)
+plt.savefig("outputPIpolytopal.pdf", bbox_inches = 'tight',pad_inches = 0)
 
-for x in table:
-	for y in x:
-		print(y)
+birth = []
+death = []
+dimension = []
 
+for d in range(0,dim):
+	for x in table[d]:
+		dimension.append(x[0])
+		birth.append(x[1])
+		death.append(x[2])
+		
+df = pd.DataFrame(list(zip(dimension,birth,death)),columns =['dimension','birth','death'])
+df.to_csv('outputPolytopal.csv',index=False,header=False)
+import csv
+
+with open("PolytopalData.csv", "w", newline="") as f:
+    writer = csv.writer(f)
+    writer.writerows(inputpoints)
