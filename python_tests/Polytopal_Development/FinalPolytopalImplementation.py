@@ -1042,6 +1042,16 @@ def generatesimplexfacets(poly,dimen):  #generate simplices of dimension dimen
 		listreturn.append(list(x))
 	return listreturn
 
+def addgaussiannoise(inputpoints,noiseper):
+	x, y = np.meshgrid(np.linspace(-1,1,dim), np.linspace(-1,1,datasize))
+	dst = np.sqrt(x*x+y*y)
+	sigma = 1
+	muu = 0.000
+ 	# Calculating Gaussian array
+	gauss = np.exp(-( (dst-muu)**2 / ( 2.0 * sigma**2 ) ) )
+	inputpoints = np.array(inputpoints) + gauss*noiseper
+	return inputpoints
+
 unitsphere = []
 print("Please Choose Data Type::")
 print("1: Hypertetrahedron Sphere")
@@ -1053,9 +1063,12 @@ datatype = input()
 print("Dimension ::")
 dim = input()
 dim = int(dim)
-print("DataSize ::")
+print("Intended DataSize ::")
 datasize = input()
 datasize = int(datasize)
+print("Gaussian noise in percentage ::")
+noiseper = input()
+noiseper = int(noiseper)/100
 if datatype=='1':  #Tetrahedron
 	edgecount = (int)(dim*(dim+1)/2)
 	points = max(datasize,dim+1)
@@ -1080,7 +1093,7 @@ if datatype=='1':  #Tetrahedron
 		points = set()
 		edges = generatesimplexfacets(poly,2)
 		for e in edges:
-			for t in np.linspace(0, 1, pointperedge):
+			for t in np.linspace(0.1, 0.9, pointperedge):
 				points.add(tuple(t*(newpoints[e[0]])-newpoints[e[1]]*(t-1)))
 		for x in points:
 			x = np.array(x)
@@ -1102,7 +1115,7 @@ elif datatype=='2':	#"HyperCube"
 		edges = generatesimplexfacets(poly,2)
 		for e in edges:
 			if(incidence[e[0]][e[1]]==1):
-				for t in np.linspace(0, 1, pointperedge):
+				for t in np.linspace(0.1, 0.9, pointperedge):
 					points.add(tuple(t*(newpoints[e[0]])-newpoints[e[1]]*(t-1)))
 		for x in points:
 			x = np.array(x)
@@ -1132,7 +1145,7 @@ elif datatype=='3':	#Permutahedron
 		edges = generatesimplexfacets(poly,2)
 		for e in edges:
 			if(incidence[e[0]][e[1]]==1):
-				for t in np.linspace(0, 1, pointperedge):
+				for t in np.linspace(0.1, 0.9, pointperedge):
 					points.add(tuple(t*(newpoints[e[0]])-newpoints[e[1]]*(t-1)))
 		for x in points:
 			x = np.array(x)
@@ -1154,7 +1167,8 @@ inputpoints = unitsphere
 refine(inputpoints)
 datasize = len(inputpoints)
 dim=len(inputpoints[0])
-
+inputpoints = addgaussiannoise(inputpoints,noiseper)
+print("Final Data Size::",datasize," in dimension ::",dim)
 fig = plt.figure()
 ax = plt.axes(projection='3d')
 zdata = [item[0] for item in unitsphere]
@@ -1253,66 +1267,24 @@ y = dim
 #input()
 bettieTable = []
 fastpersistance(polytopaltree)
-dim0=0
-dim1=0
-dim2=0
-dim3=0
-dim4=0
-dim5=0
-dim6=0
-dim7=0
-dim8=0
-dim9=0
+dimcount=[0 for i in range(0,dim)]
 
+table = [[] for i in range(0,dim)]
 
-table = [[],[],[],[],[],[],[],[],[],[]]
 for x in bettieTable:
-	if(x[0]==0):
-		table[0].append(x)
-		dim0= dim0+1
-	if(x[0]==1):
-		table[1].append(x)
-		dim1= dim1+1
-	if(x[0]==2):
-		table[2].append(x)
-		dim2= dim2+1
-	if(x[0]==3):
-		table[3].append(x)
-		dim3= dim3+1
-	if(x[0]==4):
-		table[4].append(x)
-		dim4= dim4+1
-	if(x[0]==5):
-		table[5].append(x)
-		dim5= dim4+1
-	if(x[0]==6):
-		table[6].append(x)
-		dim6= dim4+1
-	if(x[0]==7):
-		table[7].append(x)
-		dim7= dim4+1
-	if(x[0]==8):
-		table[8].append(x)
-		dim8= dim4+1
-	if(x[0]==9):
-		table[9].append(x)
-		dim9= dim4+1
-print("Dimemnsion 0 ::",dim0)
-print("Dimemnsion 1 ::",dim1)
-print("Dimemnsion 2 ::",dim2)
-print("Dimemnsion 3 ::",dim3)
-print("Dimemnsion 4 ::",dim4)
-print("Dimemnsion 5 ::",dim5)
-print("Dimemnsion 6 ::",dim6)
-print("Dimemnsion 7 ::",dim7)
-print("Dimemnsion 8 ::",dim8)
-print("Dimemnsion 9 ::",dim9)
+	table[x[0]].append(x)
+	dimcount[x[0]]= dimcount[x[0]]+1
+for i in range(0,dim):
+	print("Dimemnsion ",i," ::",dimcount[i])
 i=0
-colors = ["Blue","Red","Green","Black",'Orange','yellow','pink']
+colors = ["Orange","yellow","Green",'Blue','Red','Black',"pink"]
+
 for d in range(0,dim):
 	birth = [x[1] for x in table[d]]
 	death = [x[2] for x in table[d]]
-	plt.scatter(birth, death,color=colors[d],s=6)
+	df = pd.DataFrame(list(zip(birth,death)),columns =['birth','death'])
+	df = df.sort_values(by = 'death',ascending = True)
+	plt.scatter(df["birth"], df["death"],color=colors[d],s=6)
 plt.axline([0, 0], [2, 2],linewidth=1,color="black")
 plt.savefig("persistencePolytopalinterval.pdf", bbox_inches = 'tight',pad_inches = 0)
 plt.show()
@@ -1320,10 +1292,12 @@ plt.show()
 for d in range(0,dim):
 	birth = [x[1] for x in table[d]]
 	death = [x[2] for x in table[d]]
+	df = pd.DataFrame(list(zip(birth,death)),columns =['birth','death'])
+	df = df.sort_values(by = 'death',ascending = True)
 	counter = []
 	[counter.append(j+i) for j in range(0,len(table[d]))]
 	i=i+len(table[d])
-	plt.plot([birth, death], [counter, counter],color=colors[d],linestyle='solid',linewidth=1)
+	plt.plot([df["birth"], df["death"]], [counter, counter],color=colors[d],linestyle='solid',linewidth=1)
 plt.show()
 plt.savefig("persistencePolytopalbarcodes.pdf", bbox_inches = 'tight',pad_inches = 0)
 
