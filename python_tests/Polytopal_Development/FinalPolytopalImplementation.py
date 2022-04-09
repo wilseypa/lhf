@@ -13,10 +13,14 @@ from functools import cmp_to_key
 import heapq as hq
 import csv
 import fiblat
+import itertools
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.pyplot as plt
+import math
 
+maxepsilon = 2
+mindist = 0.0001
 distancematrix = []	  #initializae distance matrix
 delaunayincidence = []
 
@@ -90,7 +94,7 @@ def mergeneighbors(polytop,simplices,pointscoord,delaunaypart,points):    #merge
 	maxweightedge = 0
 	for x in neighbors:
 		y = union(x,polytop)
-		hull = ConvexHull([pointscoord[points.index(i)] for i in y])
+		hull = ConvexHull([pointscoord[points.index(i)] for i in y],qhull_options="QJ")
 		hullboundary = {}
 		for sublist in hull.simplices:
 			for item in sublist:
@@ -134,7 +138,7 @@ def optimalconvexization(simplices,pointscoord,points):   #Repeate the Maximum c
 			convexparts.append(x)
 			maxdist.append(maxweight)
 			delaunayparts.append(delaunaypart)
-			hull = ConvexHull([pointscoord[points.index(i)] for i in x])
+			hull = ConvexHull([pointscoord[points.index(i)] for i in x],qhull_options="QJ")
 			for p in hull.simplices:
 				distance = distance + math.dist(pointscoord[points.index(x[p[0]])],pointscoord[points.index(x[p[1]])])
 				if(maxval < math.dist(pointscoord[points.index(x[p[0]])],pointscoord[points.index(x[p[1]])])):
@@ -175,7 +179,7 @@ def iterativeconvexization(simplices,dim,pointscoord):   #Keep convex decomposit
 					check = 0
 			if(check==1):
 				valid.append(i)
-				hull = ConvexHull([pointscoord[points.index(i)] for i in x])
+				hull = ConvexHull([pointscoord[points.index(i)] for i in x],qhull_options="QJ")
 				pointsaddressed = union(pointsaddressed,x)
 				convexpartsunion.append(x)
 				delaunayparts.append(y)
@@ -352,7 +356,7 @@ def findfarthestfacetprojection(coordinates_points):  #compute farthest facet st
 	polyhalfspace = pc.Polytope(polytophalfspaces[0],polytophalfspaces[1])
 	chebR = polyhalfspace.chebR
 	chebXc = polyhalfspace.chebXc
-	faces = ConvexHull(polytopalpoints).simplices
+	faces = ConvexHull(polytopalpoints,qhull_options="QJ").simplices
 	farthest = 0
 	farthestface = []
 	centroid1 = []
@@ -402,8 +406,6 @@ def findfarthestfacetprojection(coordinates_points):  #compute farthest facet st
 	return PCAprojection(pts)
 def hullfromtriangulation(simplices):
 	hull= []
-	#checkplotsimplices(simplices)
-	#print(simplices)
 	for x in simplices:
 		facets = generatesimplexfacets(x,len(x)-1)
 		for f in facets:
@@ -446,7 +448,7 @@ def addEdgesAndVertices(polytopaltree):
 		[points.append(x) for z in indices for x in z if x not in points]
 		points = sorted(points)
 		if(len(points)>3):
-			triangulation = ConvexHull(coords).simplices
+			triangulation = ConvexHull(coords,qhull_options="QJ").simplices
 			mappedindices = mapindices(triangulation,points)
 			[level.append(sorted(t)) for t in mappedindices.tolist() if sorted(t) not in level]
 		else:
@@ -484,11 +486,9 @@ def createnormalpolytopaltree(inputpoints):
 		level = []
 		levelcheck = []
 		lenthr = 0
-		print(d)
 		for cd in convexdecompositions:
-			print(cd)
 			if(len(cd[0])!=1):
-				lowercd = ConvexHull(cd[1]).simplices
+				lowercd = ConvexHull(cd[1],qhull_options="QJ").simplices
 				for x in lowercd:
 					y = sorted(x)
 					if y not in levelcheck:
@@ -516,7 +516,6 @@ def createpolytopaltree(inputpoints):
 	polytopaltree = []
 	#initialize the top level polytopes
 	triangulation =  Delaunay(coordinates).simplices
-	#print(ConvexHull(coordinates).simplices)
 	for x in triangulation:
 		for k in generatesimplexfacets(x,2):
 			setincidenceindex(k[0],k[1])
@@ -531,14 +530,13 @@ def createpolytopaltree(inputpoints):
 	#cascade down to Triangles
 	for d in range(1,dim):
 		convexdecompositions = copy.deepcopy(polytopaltree[d-1])
-		#print(d)
 		level = []
 		levelcheck = []
 		lenthr = 0
 		for cd in convexdecompositions:
 			if(len(cd[0])!=1):
 				if(d == dim-1):
-					facets = ConvexHull(cd[1]).simplices
+					facets = ConvexHull(cd[1],qhull_options="QJ").simplices
 					for x in facets:
 						y = sorted(x)
 						y= [y]
@@ -560,8 +558,6 @@ def createpolytopaltree(inputpoints):
 				for x in facets:
 					y = sorted(x)
 					y= [y]
-					#print(y)
-					#print(levelcheck)
 					if y not in levelcheck:
 						levelcheck.append(y)
 						level.append([y,[],simplexweight(y)])
@@ -596,25 +592,16 @@ class orderedarraylistnode(object):
 		return [self.polytop,self.weight]
 	
 	def __lt__(self, nxt):
-		print(self.polytop)
-		print(nxt.polytop)
-		print(self.weight)
-		print(nxt.weight)
-		input()
 		if self.weight < nxt.weight:
-			print("true")
 			return True
 		elif self.weight == nxt.weight:
 			for (x,y) in zip(reversed(self.polytop),reversed(nxt.polytop)):
 				if(x < y):
-					print("true")
 					return True
 				elif(x==y):
 					continue
 				else:
-					print("false")
 					return False
-		print("false")
 		return False
 	def __eq__(self, other):
 		if not isinstance(other, type(self)):
@@ -633,27 +620,18 @@ class orderedarraylistnodeorig(object):
 		return [self.polytop,self.weight]
 	
 	def __lt__(self, nxt):
-		#print(self.polytop)
-		#print(nxt.polytop)
-		#print(self.weight)
-		#print(nxt.weight)
-		#input()
 		if self.weight < nxt.weight:
 			return True
 		elif self.weight == nxt.weight:
 			if(self.polytop==nxt.polytop):
-				#print("true")
 				return True
 			for (x,y) in zip(reversed(self.polytop),reversed(nxt.polytop)):
 				if(x < y):
-					#print("true")
 					return True
 				elif(x==y):
 					continue
 				else:
-					#print("false")
 					return False
-		#print("false")
 		return False
 	def __eq__(self, other):
 		if not isinstance(other, type(self)):
@@ -775,10 +753,7 @@ def assignweights(polytopaltree):
 		for polytope in dimensionlist:	
 			maxedge = 0
 			polytp = []
-			#print(polytope[0])
 			for poly in polytope[0]:
-				#print(poly)
-				#input()
 				if(maxedge<simplexweight(poly)):
 					maxedge = simplexweight(poly)
 				polytp.append([poly,simplexweight(poly)])
@@ -802,19 +777,16 @@ def minimumspanningtree(edges1):
 			mstSize +=1
 			pivots.append(x)
 			bettitableentry = [0,0,x.weight]
-			bettieTable.add(tuple(bettitableentry))
+			bettieTable.append(tuple(bettitableentry))
 			if(mstSize >= len(inputpoints)-1):
 				for i in range(0,len(inputpoints)):
 					if(ds.find(i) == i):
-						bettitableentry = [0,0,'inf']
-						bettieTable.add(tuple(bettitableentry))
+						bettitableentry = [0,0,maxepsilon]
+						bettieTable.append(tuple(bettitableentry))
 				return pivots
 	return pivots
 
 def getDimEdges(dimension):
-	#print("Max Dimension::",dim)
-	#print("Current Dimension::",dimension)
-	#input()
 	if(dimension==0 or dimension == dim):
 		edg =  polytopaltree[dim -dimension]
 	else:
@@ -833,11 +805,6 @@ def getDimEdges(dimension):
 		sorted_list = list(dimensionwiseorderedpolytopes)
 		sorted_list.sort(key = letter_cmp_key)
 		edg = sorted_list
-	#print("dimension :: ",len(edg))
-	#for e in edg:
-	#	print(e.polytop,e.weight)
-	#input()
-	#edg =  polytopaltree[dim -dimension]
 	return edg
 	
 def getAllCofacets(e,dimension):    #will update this function a little
@@ -872,13 +839,7 @@ def persistenceByDimension( edges, pivots, dimension):
 			i = 1
 			while(True):
 				hq.heapify(faceList)
-				if(i%1000==0):
-					print(e.polytop,e.weight)
-					print(pivots[pivotcounter].polytop,pivots[pivotcounter].weight)
-					for x in faceList:
-						print(x.polytop,x.weight)
-					print(len(faceList))
-					print(pivot.polytop,pivot.weight)
+				if(i%10000==0):
 					print(i)
 					input()
 				i=i+1
@@ -920,7 +881,7 @@ def persistenceByDimension( edges, pivots, dimension):
 							k+=1
 					if(e.weight < pivot.weight):
 						bettitableentry = [dimension,min(pivot.weight, e.weight),max(pivot.weight, e.weight)]
-						bettieTable.add(tuple(bettitableentry))
+						bettieTable.append(tuple(bettitableentry))
 					break
 				else:
 					if v and pivotPairs:
@@ -1001,32 +962,214 @@ def disintegrate(polytopaltree):
 	return orderedpolytoparraylist
 
 
-dim = 5
-datasize = 50
-#inputpoints = np.array([[1.2,1.1],[2.5,1.3],[1.23,2.14],[2.31,2.41],[3.21,2.72]])
-#inputpoints = tadasets.dsphere(n=datasize, d=dim-1, r=1, noise=0.5)  # generate d-sphere datatset
-inputpoints =  np.array(fiblat.sphere_lattice(dim,datasize))
+def genPermutahedron(a, size):
+    if size == 1:
+        inputpoints.append(np.array(a))
+        return
+ 
+    for i in range(size):
+        genPermutahedron(a, size-1)
+        if size & 1:
+            a[0], a[size-1] = a[size-1], a[0]
+        else:
+            a[i], a[size-1] = a[size-1], a[i]
+def swapdifferbyone(pnt1,pnt2):
+	cnt=0
+	lst = []
+	for i in range(0,len(pnt1)):
+		if(pnt1[i]!=pnt2[i]):
+			cnt=cnt+1
+			lst.append(pnt1[i])
+	if(cnt==2 and abs(lst[0]-lst[1])==1):
+		return True
+	else:
+		return False
+		
+def permutahedronincidence(points):
+	for i in range(0,len(points)):
+		lst = []
+		for j in range(0,len(points)):
+			if(swapdifferbyone(points[i],points[j])):
+				lst.append(1)
+			else:
+				lst.append(0)
+		incidence.append(lst)
 
-#print(inputpoints)
-'''
-inputpoints = []
-with open("lion200.csv", "r") as f:
-	reader = csv.reader(f)
-	for line in reader:
-		k=[]
-		for x in line:
-			k.append(float(x))
-		inputpoints.append(k)
-'''
+def generatehypercube(dimensions):
+	result = list(itertools.product('10', repeat=dimensions))
+	inputpoints = [[int(y) for y in x] for x in result]
+	return np.array(inputpoints)-0.5
+
+def differbyone(pnt1,pnt2):
+	cnt=0
+	for i in range(0,len(pnt1)):
+		if(pnt1[i]!=pnt2[i]):
+			cnt=cnt+1
+	if(cnt>1):
+		return False
+	else:
+		return True
+
+def hypercubeincidence(points):
+	for i in range(0,len(points)):
+		lst = []
+		for j in range(0,len(points)):
+			if(differbyone(points[i],points[j])):
+				lst.append(1)
+			else:
+				lst.append(0)
+		incidence.append(lst)
+
+def refine(points):
+	rmlist = []
+	for i in points:
+		for j in points:
+			if((i!=j).all()):
+				if(math.dist(i,j)<mindist):
+					rmlist.append(j)
+	for i in rmlist:
+		inputpoints.pop(i)
+
+def PCAprojection(pts):
+	pca = PCA(n_components=len(pts[0])-1).fit(pts)
+	pca_x = pca.transform(pts)
+	return pca_x
+
+def generatesimplexfacets(poly,dimen):  #generate simplices of dimension dimen
+	tp = list(combinations(poly, dimen))
+	listreturn = []
+	for x in tp:
+		listreturn.append(list(x))
+	return listreturn
+
+unitsphere = []
+print("Please Choose Data Type::")
+print("1: Hypertetrahedron Sphere")
+print("2: HypercubeSphere Sphere")
+print("3: Hyperpermutahedron Sphere")
+print("4: Hyperfibonnacci Sphere")
+print("5: Read From File")
+datatype = input()
+print("Dimension ::")
+dim = input()
+dim = int(dim)
+print("DataSize ::")
+datasize = input()
+datasize = int(datasize)
+if datatype=='1':  #Tetrahedron
+	edgecount = (int)(dim*(dim+1)/2)
+	points = max(datasize,dim+1)
+	pointperedge = (int)(points/edgecount) +1
+	poly = [i for i in range(0,dim+1)]	
+        
+	for dimension in range(dim,dim+1):
+		points = []
+		pnts = dimension+1
+		cnt  =0
+		origin = [0 for x in range(0,dimension)]
+		for x in range(0,pnts):
+			coords = []
+			for y in range(0,dimension+1):
+				if(y==cnt):
+					coords.append(1)
+				else:
+					coords.append(0)
+			points.append(coords)
+			cnt = cnt+1
+		newpoints = PCAprojection(points)
+		points = set()
+		edges = generatesimplexfacets(poly,2)
+		for e in edges:
+			for t in np.linspace(0, 1, pointperedge):
+				points.add(tuple(t*(newpoints[e[0]])-newpoints[e[1]]*(t-1)))
+		for x in points:
+			x = np.array(x)
+			unitsphere.append(x/math.dist(origin,x))
+elif datatype=='2':	#"HyperCube"
+	vertices = 2**dim
+	edgecount = 2**(dim-1)*dim
+	points = max(datasize,vertices)
+	pointperedge = (int)(points/edgecount) +1
+	poly = [i for i in range(0,vertices)]
+	incidence = []
+	for dimension in range(dim,dim+1):
+		pnts = dimension+1
+		cnt  =0
+		origin = [0 for x in range(0,dimension)]
+		newpoints = generatehypercube(dim)
+		hypercubeincidence(newpoints)
+		points = set()
+		edges = generatesimplexfacets(poly,2)
+		for e in edges:
+			if(incidence[e[0]][e[1]]==1):
+				for t in np.linspace(0, 1, pointperedge):
+					points.add(tuple(t*(newpoints[e[0]])-newpoints[e[1]]*(t-1)))
+		for x in points:
+			x = np.array(x)
+			unitsphere.append(x/math.dist(origin,x))
+elif datatype=='3':	#Permutahedron
+	dim = dim+1
+	b = [i for i in range(0,dim)]
+	vertices = math.factorial(dim)
+	edgecount = ((dim-1)*math.factorial(dim))/2
+	points = max(datasize,vertices)
+	pointperedge = (int)(points/edgecount) +1
+	poly = [i for i in range(0,vertices)]
+	incidence = []
+	for dimension in range(dim-1,dim):
+		pnts = dimension+1
+		cnt  =0
+		origin = [0 for x in range(0,dimension)]
+		inputpoints = []
+		size = len(b)
+		genPermutahedron(b,size)
+		permutahedronincidence(inputpoints)
+		pca_x = PCAprojection(inputpoints)
+		inputpoints = pca_x
+		inputpoints = np.array(inputpoints)
+		newpoints = inputpoints
+		points = set()
+		edges = generatesimplexfacets(poly,2)
+		for e in edges:
+			if(incidence[e[0]][e[1]]==1):
+				for t in np.linspace(0, 1, pointperedge):
+					points.add(tuple(t*(newpoints[e[0]])-newpoints[e[1]]*(t-1)))
+		for x in points:
+			x = np.array(x)
+			unitsphere.append(x/math.dist(origin,x))
+			
+elif datatype=='4': #FibbonacciLaticce
+	unitsphere =  np.array(fiblat.sphere_lattice(dim,datasize))
+
+elif datatype=='5': #ReadFile
+	with open("lion200.csv", "r") as f:
+		reader = csv.reader(f)
+		for line in reader:
+			k=[]
+			for x in line:
+				k.append(float(x))
+			unitsphere.append(k)
+			
+inputpoints = unitsphere
+refine(inputpoints)
+datasize = len(inputpoints)
+dim=len(inputpoints[0])
+
+fig = plt.figure()
+ax = plt.axes(projection='3d')
+zdata = [item[0] for item in unitsphere]
+xdata = [item[1] for item in unitsphere]
+ydata = [item[2] for item in unitsphere]
+ax.scatter3D(xdata, ydata, zdata)
+plt.show()
+
+
 def checkplotsimplices(simplices):
 	newpolyparts = []
-	print(len(simplices))
 	indices = []
 	[indices.append(i) for x in simplices for i in x if i not in indices]
-	print(len(Delaunay([inputpoints[i] for i in indices]).simplices))
-	input()
 	for x in simplices:
-		for t in ConvexHull([inputpoints[i] for i in x]).simplices:
+		for t in ConvexHull([inputpoints[i] for i in x],qhull_options="QJ").simplices:
 			t = [x[i] for i in t]
 			newpolyparts.append(t)
 	polyparts = newpolyparts
@@ -1053,7 +1196,7 @@ def plotpolytop(polyparts,d):
 		newpolyparts = []
 		for x in polyparts:
 			x=x[0]
-			for t in ConvexHull([inputpoints[i] for i in x]).simplices:
+			for t in ConvexHull([inputpoints[i] for i in x],qhull_options="QJ").simplices:
 				t = [x[i] for i in t]
 				if(sorted(t) not in newpolyparts):
 					newpolyparts.append(sorted(t))
@@ -1073,7 +1216,6 @@ def plotpolytop(polyparts,d):
 		ax.add_collection3d(Poly3DCollection(verts,facecolors='b', edgecolor = 'black', linewidths=1, alpha=0.15))
 	plt.show()
 
-#print(inputpoints)
 letter_cmp_key = cmp_to_key(letter_cmp)    #comparison function
 polytopaltree = createpolytopaltree(inputpoints)
 polytopaltree = assignweights(polytopaltree)
@@ -1109,13 +1251,19 @@ y = dim
 #	print(len(getDimEdges(y)))
 #	y=y-1
 #input()
-bettieTable = set()
+bettieTable = []
 fastpersistance(polytopaltree)
 dim0=0
 dim1=0
 dim2=0
 dim3=0
 dim4=0
+dim5=0
+dim6=0
+dim7=0
+dim8=0
+dim9=0
+
 
 table = [[],[],[],[],[],[],[],[],[],[]]
 for x in bettieTable:
@@ -1131,16 +1279,55 @@ for x in bettieTable:
 	if(x[0]==3):
 		table[3].append(x)
 		dim3= dim3+1
-	if(x[0]==3):
+	if(x[0]==4):
 		table[4].append(x)
 		dim4= dim4+1
+	if(x[0]==5):
+		table[5].append(x)
+		dim5= dim4+1
+	if(x[0]==6):
+		table[6].append(x)
+		dim6= dim4+1
+	if(x[0]==7):
+		table[7].append(x)
+		dim7= dim4+1
+	if(x[0]==8):
+		table[8].append(x)
+		dim8= dim4+1
+	if(x[0]==9):
+		table[9].append(x)
+		dim9= dim4+1
 print("Dimemnsion 0 ::",dim0)
 print("Dimemnsion 1 ::",dim1)
 print("Dimemnsion 2 ::",dim2)
 print("Dimemnsion 3 ::",dim3)
 print("Dimemnsion 4 ::",dim4)
+print("Dimemnsion 5 ::",dim5)
+print("Dimemnsion 6 ::",dim6)
+print("Dimemnsion 7 ::",dim7)
+print("Dimemnsion 8 ::",dim8)
+print("Dimemnsion 9 ::",dim9)
+i=0
+colors = ["Blue","Red","Green","Black",'Orange','yellow','pink']
+for d in range(0,dim):
+	birth = [x[1] for x in table[d]]
+	death = [x[2] for x in table[d]]
+	plt.scatter(birth, death,color=colors[d],s=6)
+plt.axline([0, 0], [2, 2],linewidth=1,color="black")
+plt.savefig("persistencePolytopalinterval.pdf", bbox_inches = 'tight',pad_inches = 0)
+plt.show()
+
+for d in range(0,dim):
+	birth = [x[1] for x in table[d]]
+	death = [x[2] for x in table[d]]
+	counter = []
+	[counter.append(j+i) for j in range(0,len(table[d]))]
+	i=i+len(table[d])
+	plt.plot([birth, death], [counter, counter],color=colors[d],linestyle='solid',linewidth=1)
+plt.show()
+plt.savefig("persistencePolytopalbarcodes.pdf", bbox_inches = 'tight',pad_inches = 0)
 
 for x in table:
 	for y in x:
 		print(y)
-	
+
