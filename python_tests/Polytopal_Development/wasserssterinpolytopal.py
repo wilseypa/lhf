@@ -17,4 +17,4 @@ for file1 in x:
 				dimbetadgm = dimbetadgm[dimbetadgm['Death']<2]
 				dgm1 = np.array(np.transpose([dimVRdgm['Birth'],dimVRdgm['Death']]))
 				dgm2 = np.array(np.transpose([dimbetadgm['Birth'],dimbetadgm['Death']]))
-				print("dimension",dim,file1,persim.sliced_wasserstein(dgm1,dgm2),dimVRdgm.size,dimbetadgm.size)
+				print("dimension",dim,file1,persim.sliced_wasserstein(dgm1,dgm2),dimVRdgm.size/3,dimbetadgm.size/3)

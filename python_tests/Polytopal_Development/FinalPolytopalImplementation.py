@@ -18,13 +18,19 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.pyplot as plt
 import math
+import sys
 
 maxepsilon = 2
 mindist = 0.0001
 distancematrix = []	  #initializae distance matrix
 delaunayincidence = []
+	
 
 def computedistancematrix(points):    #compute Distance Matrix
+	global distancematrix    #initializae distance matrix
+	distancematrix = []  
+	global delaunayincidence
+	delaunayincidence = []
 	minimumdistance = 99999
 	maximumdistance = 0
 	for x in range(0,len(points)):
@@ -40,7 +46,6 @@ def computedistancematrix(points):    #compute Distance Matrix
 				minimumdistance = di
 		distancematrix.append(distance)
 		delaunayincidence.append(incidence)
-	return distancematrix
 
 def distanceindex(x,y): # compute Distance by index b/w two points
 	if(x>y):
@@ -110,22 +115,33 @@ def mergeneighbors(polytop,simplices,pointscoord,delaunaypart,points):    #merge
 			
 	return list(polytop),delaunaypart,maxweightedge
 
+def getnextsimplex(simplices,x,addresspoints):
+	
+	addresspoints = union(addresspoints,x)
+	for y in simplices:
+		if(len(intersection(y,addresspoints)) != len(y)):
+			break
+	return list(y),addresspoints
 
 def optimalconvexization(simplices,pointscoord,points):   #Repeate the Maximum convexization for each simplex and returned the sorted list of convex polytopes by weight and vertices
 	convexparts = []
 	maxdist = []
 	points= sorted(points)
 	averagedist = []
+	totalpoints = []
+	[totalpoints.append(k) for y in simplices for k in y if k not in totalpoints]
 	delaunayparts = []
 	sizecd = []
+	updatedsimplices = simplices
+	addressedpoints = []
+	x = []
 	for i in range(0,len(simplices)):
-		x= list(simplices[i])
+		x,addressedpoints = getnextsimplex(simplices,x,addressedpoints)
 		delaunaypart = []
 		delaunaypart.append(x)
 		distance =0
 		maxweight = simplexweight(x)
 		maxval = 0
-		print(i)
 		while True:
 			x1,delaunaypart,w = mergeneighbors(x,simplices,pointscoord,delaunaypart,points)
 			if(maxweight<w):
@@ -151,7 +167,7 @@ def optimalconvexization(simplices,pointscoord,points):   #Repeate the Maximum c
 		for tp in convexparts:
 			for lm in tp:
 				k.add(lm)
-		if(len(k)==len(pointscoord)):
+		if(len(k)==len(totalpoints)):
 			break;
 	df = pd.DataFrame(list(zip(convexparts,delaunayparts,maxdist,averagedist,sizecd,maxdist)),columns =['convexpart','delaunayparts','maxdist','averagedist','sizecd','weight'])
 	df = df.sort_values(by = 'sizecd',ascending = False)
@@ -170,10 +186,8 @@ def iterativeconvexization(simplices,dim,pointscoord):   #Keep convex decomposit
 	remainingsimplices = simplices
 	premaining = 0
 	while(True):
-		print(len(remainingsimplices))
 		df = optimalconvexization(remainingsimplices,pointscoord,points)
 		i=0
-		print(i)
 		pointsaddressed = []
 		for x,y,weight in zip(df['convexpart'].tolist(),df['delaunayparts'].tolist(),df['weight'].tolist()):
 			check = 1
@@ -247,12 +261,12 @@ def mapdelaunayindices(fromindices,toindices):
 def hyperplane(points):
    X=np.matrix(points)
    k=np.ones((len(points[0]),1))
-   a=np.matrix.dot(np.linalg.inv(X), k)
+   a=np.matrix.dot(np.linalg.pinv(X), k)
    
    return a
  
 def solutionlinalg(matrixA,matrixB):
-	return np.linalg.inv(matrixA)*matrixB  
+	return np.linalg.pinv(matrixA)*matrixB  
 
 def PCAprojection(pts):
 	pca = PCA(n_components=len(pts[0])-1).fit(pts)
@@ -354,7 +368,6 @@ def maximumfacetprojection(coordinates_points):
 '''	
 def findfarthestfacetprojection(coordinates_points):  #compute farthest facet steriographic projection
 	polytopalpoints = coordinates_points
-	
 	polytophalfspaces = polyfun.compute_polytope_halfspaces(polytopalpoints)
 	polyhalfspace = pc.Polytope(polytophalfspaces[0],polytophalfspaces[1])
 	chebR = polyhalfspace.chebR
@@ -363,6 +376,7 @@ def findfarthestfacetprojection(coordinates_points):  #compute farthest facet st
 	farthest = 0
 	farthestface = []
 	centroid1 = []
+	'''
 	for edges in faces:
 		pts = [coordinates_points[x] for x in edges]
 		centroid = sum(np.transpose(list(list(x) for x in list(np.transpose(pts)))))/len(pts[0])
@@ -371,6 +385,10 @@ def findfarthestfacetprojection(coordinates_points):  #compute farthest facet st
 			farthestface = edges
 			centroid1 = centroid
 	farthestface = list(farthestface)
+	'''
+	pts = [coordinates_points[x] for x in faces[0]]
+	farthestface = faces[0]
+	centroid1 = sum(np.transpose(list(list(x) for x in list(np.transpose(pts)))))/len(pts[0])
 	farthestfaceslist = []
 	for x in farthestface:
 		faceedge = [t for t in farthestface if t != x]
@@ -433,7 +451,6 @@ def generatelowerorderdecompositions(indices,coordinates):
 	points = sorted(points)
 	triangulation = hullfromtriangulation(indices) 
 	projectedpts = findfarthestfacetprojection(coords)
-	print("here")
 	convexdecomposition,delaunayparts,weights = iterativeconvexization(triangulation,len(projectedpts[0]),projectedpts)
 	convexdecompositionmapped = convexdecomposition
 	delaunaypartsmapped = delaunayparts
@@ -546,11 +563,10 @@ def createpolytopaltree(inputpoints):
 						y= [y]
 						if y not in levelcheck:
 							levelcheck.append(y)
-							level.append([y,[],simplexweight(y)])
+							level.append([y,y,simplexweight(y)])
 					lenthr = lenthr + len(facets)
 				else:
 					lowercd = generatelowerorderdecompositions(cd[0],cd[1])
-					print("here")
 					for x in lowercd:
 						y = sorted(x[0])
 						if y not in levelcheck:
@@ -564,7 +580,7 @@ def createpolytopaltree(inputpoints):
 					y= [y]
 					if y not in levelcheck:
 						levelcheck.append(y)
-						level.append([y,[],simplexweight(y)])
+						level.append([y,y,simplexweight(y)])
 				lenthr = lenthr + len(facets)
 		polytopaltree.append(level)
 		print("Polytopes at Dimension ::",(dim-d),"::",len(level))
@@ -1020,16 +1036,16 @@ def plotpolytop(polyparts,d):
 	plt.show()
 
 def genPermutahedron(a, size):
-    if size == 1:
-        inputpoints.append(np.array(a))
-        return
- 
-    for i in range(size):
-        genPermutahedron(a, size-1)
-        if size & 1:
-            a[0], a[size-1] = a[size-1], a[0]
-        else:
-            a[i], a[size-1] = a[size-1], a[i]
+	global ptspermutahedron
+	if size == 1:
+		ptspermutahedron.append(np.array(a))
+		return
+	for i in range(size):
+		genPermutahedron(a, size-1)
+		if size & 1:
+			a[0], a[size-1] = a[size-1], a[0]
+		else:
+			a[i], a[size-1] = a[size-1], a[i]
 def swapdifferbyone(pnt1,pnt2):
 	cnt=0
 	lst = []
@@ -1043,6 +1059,7 @@ def swapdifferbyone(pnt1,pnt2):
 		return False
 		
 def permutahedronincidence(points):
+	incidence = []
 	for i in range(0,len(points)):
 		lst = []
 		for j in range(0,len(points)):
@@ -1051,6 +1068,7 @@ def permutahedronincidence(points):
 			else:
 				lst.append(0)
 		incidence.append(lst)
+	return incidence
 
 def generatehypercube(dimensions):
 	result = list(itertools.product('10', repeat=dimensions))
@@ -1068,6 +1086,7 @@ def differbyone(pnt1,pnt2):
 		return True
 
 def hypercubeincidence(points):
+	incidence = []
 	for i in range(0,len(points)):
 		lst = []
 		for j in range(0,len(points)):
@@ -1076,7 +1095,7 @@ def hypercubeincidence(points):
 			else:
 				lst.append(0)
 		incidence.append(lst)
-
+	return incidence
 def refine(points):
 	rmlist = []
 	for i in points:
@@ -1085,7 +1104,8 @@ def refine(points):
 				if(math.dist(i,j)<mindist):
 					rmlist.append(j)
 	for i in rmlist:
-		inputpoints.pop(i)
+		points.pop(i)
+	return points
 
 def PCAprojection(pts):
 	pca = PCA(n_components=len(pts[0])-1).fit(pts)
@@ -1099,157 +1119,208 @@ def generatesimplexfacets(poly,dimen):  #generate simplices of dimension dimen
 		listreturn.append(list(x))
 	return listreturn
 
-def addgaussiannoise(inputpoints,noiseper):
-	x, y = np.meshgrid(np.linspace(-1,1,dim), np.linspace(-1,1,datasize))
+def addgaussiannoise(unitsphere,noiseper):
+	x, y = np.meshgrid(np.linspace(-1,1,len(unitsphere[0])), np.linspace(-1,1,len(unitsphere)))
 	dst = np.sqrt(x*x+y*y)
 	sigma = 1
 	muu = 0.0001
  	# Calculating Gaussian array
 	gauss = np.exp(-( (dst-muu)**2 / ( 2.0 * sigma**2 ) ) )
-	inputpoints = np.array(inputpoints) + gauss*noiseper
-	return inputpoints
+	unitsphere = np.array(unitsphere) + gauss*noiseper
+	return unitsphere
+def writebetties(table,filename):
+	birth = []
+	death = []
+	dimension = []
 
-unitsphere = []
-print("Please Choose Data Type::")
-print("1: Hypertetrahedron Sphere")
-print("2: HypercubeSphere Sphere")
-print("3: Hyperpermutahedron Sphere")
-print("4: Hyperfibonnacci Sphere")
-print("5: Read From File")
-datatype = input()
-if(datatype!='5'):
-	print("Dimension ::")
-	dim = input()
-	dim = int(dim)
-	print("Intended DataSize ::")
-	datasize = input()
-	datasize = int(datasize)
-	print("Gaussian noise in percentage ::")
-	noiseper = input()
-	noiseper = int(noiseper)/1000
-if datatype=='1':  #Tetrahedron
-	edgecount = (int)(dim*(dim+1)/2)
-	points = max(datasize,dim+1)
-	pointperedge = (int)(points/edgecount) +1
-	poly = [i for i in range(0,dim+1)]	
+	for d in range(0,dim):
+		for x in table[d]:
+			dimension.append(x[0])
+			birth.append(x[1])
+			death.append(x[2])
+	df = pd.DataFrame(list(zip(dimension,birth,death)),columns =['dimension','birth','death'])
+	df.to_csv(filename,index=False,header=False)
+
+def getstarted(datatype,dimension,datasize,noiseper):
+	unitsphere = []
+	filenameinput = 'input'+datatype
+	filenameoutput = 'output'+datatype
+	if(datatype=='0'):
+		print("Please Choose Data Type::")
+		print("1: Hypertetrahedron Sphere")
+		print("2: HypercubeSphere Sphere")
+		print("3: Hyperpermutahedron Sphere")
+		print("4: Hyperfibonnacci Sphere")
+		print("5: Read From File")
+		datatype = input()
+	if(datatype!='5'):
+		if(dimension=='0'):
+			print("Dimension ::")
+			dimension = input()
+		filenameinput = filenameinput+'dim'+dimension
+		filenameoutput = filenameoutput+'dim'+dimension
+		dim = int(dimension)
+		if(datasize=='0'):
+			print("Intended DataSize ::")
+			datasize = input()
+		filenameinput = filenameinput+'size'+datasize
+		filenameoutput = filenameoutput+'size'+datasize
+		datasize = int(datasize)
+		if(noiseper=='0'):
+			print("Gaussian noise in percentage ::")
+			noiseper = input()
+		filenameinput = filenameinput+'noise'+ noiseper
+		filenameoutput = filenameoutput+'noise'+ noiseper
+		noiseper = int(noiseper)/1000
+	if datatype=='1':  #Tetrahedron
+		edgecount = (int)(dim*(dim+1)/2)
+		points = max(datasize,dim+1)
+		pointperedge = (int)(points/edgecount) +1
+		poly = [i for i in range(0,dim+1)]	
         
-	for dimension in range(dim,dim+1):
-		points = []
-		pnts = dimension+1
-		cnt  =0
-		origin = [0 for x in range(0,dimension)]
-		for x in range(0,pnts):
-			coords = []
-			for y in range(0,dimension+1):
-				if(y==cnt):
-					coords.append(1)
-				else:
-					coords.append(0)
-			points.append(coords)
-			cnt = cnt+1
-		newpoints = PCAprojection(points)
-		points = set()
-		edges = generatesimplexfacets(poly,2)
-		for e in edges:
-			for t in np.linspace(0.1, 0.9, pointperedge):
-				points.add(tuple(t*(newpoints[e[0]])-newpoints[e[1]]*(t-1)))
-		for x in points:
-			x = np.array(x)
-			unitsphere.append(x/math.dist(origin,x))
-elif datatype=='2':	#"HyperCube"
-	vertices = 2**dim
-	edgecount = 2**(dim-1)*dim
-	points = max(datasize,vertices)
-	pointperedge = (int)(points/edgecount) +1
-	poly = [i for i in range(0,vertices)]
-	incidence = []
-	for dimension in range(dim,dim+1):
-		pnts = dimension+1
-		cnt  =0
-		origin = [0 for x in range(0,dimension)]
-		newpoints = generatehypercube(dim)
-		hypercubeincidence(newpoints)
-		points = set()
-		edges = generatesimplexfacets(poly,2)
-		for e in edges:
-			if(incidence[e[0]][e[1]]==1):
+		for dimension in range(dim,dim+1):
+			points = []
+			pnts = dimension+1
+			cnt  =0
+			origin = [0 for x in range(0,dimension)]
+			for x in range(0,pnts):
+				coords = []
+				for y in range(0,dimension+1):
+					if(y==cnt):
+						coords.append(1)
+					else:
+						coords.append(0)
+				points.append(coords)
+				cnt = cnt+1
+			newpoints = PCAprojection(points)
+			points = set()
+			edges = generatesimplexfacets(poly,2)
+			for e in edges:
 				for t in np.linspace(0.1, 0.9, pointperedge):
 					points.add(tuple(t*(newpoints[e[0]])-newpoints[e[1]]*(t-1)))
-		for x in points:
-			x = np.array(x)
-			unitsphere.append(x/math.dist(origin,x))
-elif datatype=='3':	#Permutahedron
-	dim = dim+1
-	b = [i for i in range(0,dim)]
-	vertices = math.factorial(dim)
-	edgecount = ((dim-1)*math.factorial(dim))/2
-	points = max(datasize,vertices)
-	pointperedge = (int)(points/edgecount) +1
-	poly = [i for i in range(0,vertices)]
-	incidence = []
-	for dimension in range(dim-1,dim):
-		pnts = dimension+1
-		cnt  =0
-		origin = [0 for x in range(0,dimension)]
-		inputpoints = []
-		size = len(b)
-		genPermutahedron(b,size)
-		permutahedronincidence(inputpoints)
-		pca_x = PCAprojection(inputpoints)
-		inputpoints = pca_x
-		inputpoints = np.array(inputpoints)
-		newpoints = inputpoints
-		points = set()
-		edges = generatesimplexfacets(poly,2)
-		for e in edges:
-			if(incidence[e[0]][e[1]]==1):
-				for t in np.linspace(0.1, 0.9, pointperedge):
-					points.add(tuple(t*(newpoints[e[0]])-newpoints[e[1]]*(t-1)))
-		for x in points:
-			x = np.array(x)
-			unitsphere.append(x/math.dist(origin,x))
-			
-elif datatype=='4': #FibbonacciLaticce
-	unitsphere =  np.array(fiblat.sphere_lattice(dim,datasize))
-
-elif datatype=='5': #ReadFile
-	with open("lion200.csv", "r") as f:
-		reader = csv.reader(f)
-		for line in reader:
-			k=[]
-			for x in line:
-				k.append(float(x))
-			unitsphere.append(k)
-			
-inputpoints = unitsphere
-datasize = len(inputpoints)
-dim=len(inputpoints[0])
-if(datatype!='5'):
-	refine(inputpoints)
-	inputpoints = addgaussiannoise(inputpoints,noiseper)
-print("Final Data Size::",datasize," in dimension ::",dim)
-fig = plt.figure()
-ax = plt.axes(projection='3d')
-zdata = [item[0] for item in unitsphere]
-xdata = [item[1] for item in unitsphere]
-ydata = [item[2] for item in unitsphere]
-ax.scatter3D(xdata, ydata, zdata)
-plt.show()
-
-letter_cmp_key = cmp_to_key(letter_cmp)    #comparison function
-polytopaltree = createpolytopaltree(inputpoints)
-polytopaltree = assignweights(polytopaltree)
-k= dim
-
-polytopaltree = disintegrate(polytopaltree)
+			for x in points:
+				x = np.array(x)
+				unitsphere.append(x/math.dist(origin,x))
+	elif datatype=='2':	#"HyperCube"
+		vertices = 2**dim
+		edgecount = 2**(dim-1)*dim
+		points = max(datasize,vertices)
+		pointperedge = (int)(points/edgecount) +1
+		poly = [i for i in range(0,vertices)]
+		incidence = []
+		for dimension in range(dim,dim+1):
+			pnts = dimension+1
+			cnt  =0
+			origin = [0 for x in range(0,dimension)]
+			newpoints = generatehypercube(dim)
+			incidence = hypercubeincidence(newpoints)
+			points = set()
+			edges = generatesimplexfacets(poly,2)
+			for e in edges:
+				if(incidence[e[0]][e[1]]==1):
+					for t in np.linspace(0.1, 0.9, pointperedge):
+						points.add(tuple(t*(newpoints[e[0]])-newpoints[e[1]]*(t-1)))
+			for x in points:
+				x = np.array(x)
+				unitsphere.append(x/math.dist(origin,x))
+	elif datatype=='3':	#Permutahedron
+		dim = dim+1
+		b = [i for i in range(0,dim)]
+		vertices = math.factorial(dim)
+		edgecount = ((dim-1)*math.factorial(dim))/2
+		points = max(datasize,vertices)
+		pointperedge = (int)(points/edgecount) +1
+		poly = [i for i in range(0,vertices)]
+		incidence = []
+		for dimension in range(dim-1,dim):
+			pnts = dimension+1
+			cnt  =0
+			origin = [0 for x in range(0,dimension)]
+			size = len(b)
+			global ptspermutahedron
+			ptspermutahedron = []
+			genPermutahedron(b,size)
+			incidence = permutahedronincidence(ptspermutahedron)
+			pca_x = PCAprojection(ptspermutahedron)
+			pts = pca_x
+			pts = np.array(pts)
+			newpoints = pts
+			points = set()
+			edges = generatesimplexfacets(poly,2)
+			for e in edges:
+				if(incidence[e[0]][e[1]]==1):
+					for t in np.linspace(0.1, 0.9, pointperedge):
+						points.add(tuple(t*(newpoints[e[0]])-newpoints[e[1]]*(t-1)))
+			for x in points:
+				x = np.array(x)
+				unitsphere.append(x/math.dist(origin,x))
+				
+	elif datatype=='4': #FibbonacciLaticce
+		unitsphere =  np.array(fiblat.sphere_lattice(dim,datasize))
 	
-y = dim
-for x in polytopaltree:
-	print("Simplices of Dimension :: ",y,"::--------",len(x))
-	y=y-1
+	elif datatype=='5': #ReadFile
+		print("Enter File Name")
+		filename = input()
+		with open(filaname, "r") as f:
+			reader = csv.reader(f)
+			for line in reader:
+				k=[]
+				for x in line:
+					k.append(float(x))
+				unitsphere.append(k)
+	
+	if(datatype!='5'):
+		unitsphere  = refine(unitsphere)
+		unitsphere = addgaussiannoise(unitsphere,noiseper)
+		print("Final Data Size::",datasize," in dimension ::",dim)
+		with open(filenameinput, "w", newline="") as f:
+			writer = csv.writer(f)
+			writer.writerows(unitsphere)
+	return unitsphere,filenameoutput
+ptspermutahedron = []
+datatype = [1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4]
+dimension = [3,3,3,3,3,3,3,3,4,4,4,4,5,5,5,5,3,3,3,3,4,4,4,4,5,5,5,5,3,3,3,3,4,4,4,4,5,5,5,5,3,3,3,3,4,4,4,4,5,5,5,5,3,3,3,3,4,4,4,4,5,5,5,5]
+datasize = [100,100,100,100,250,250,250,250,300,300,300,300,400,400,400,400,200,200,200,200,300,300,300,300,400,400,400,400,200,200,200,200,300,300,300,300,400,400,400,400,200,200,200,200,300,300,300,300,400,400,400,400,200,200,200,200,300,300,300,300,400,400,400,400]
+noiseper = [100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100]
+for d,dim,s,n in zip(datatype,dimension,datasize,noiseper):
+	print(" Type:: ",d, " Dimension :: ",dim," Size :: ",s," Noise:: ",n)
+	inputpoints,outputfilename = getstarted(str(d),str(dim),str(s),str(n))
+	datasize = len(inputpoints)
+	dim=len(inputpoints[0])
+	'''
+	fig = plt.figure()
+	ax = plt.axes(projection='3d')
+	zdata = [item[0] for item in inputpoints]
+	xdata = [item[1] for item in inputpoints]
+	ydata = [item[2] for item in inputpoints]
+	ax.scatter3D(xdata, ydata, zdata)
+	plt.show()
+	'''
+	letter_cmp_key = cmp_to_key(letter_cmp)    #comparison function
+	polytopaltree = createpolytopaltree(inputpoints)
+	polytopaltree = assignweights(polytopaltree)
+	polytopaltree = disintegrate(polytopaltree)
+	
+	y = dim
+	for x in polytopaltree:
+		print("Simplices of Dimension :: ",y,"::--------",len(x))
+		y=y-1
 
-bettieTable = []
-fastpersistance(polytopaltree)
+	bettieTable = []
+	fastpersistance(polytopaltree)
+	dimcount=[0 for i in range(0,dim)]
+	table = [[] for i in range(0,dim)]
+	for x in bettieTable:
+		table[x[0]].append(x)
+		dimcount[x[0]]= dimcount[x[0]]+1
+	for i in range(0,dim):
+		print("Dimemnsion ",i," Betti Count ::",dimcount[i])
+	writebetties(table,outputfilename)
+
+
+
+
+'''
 dimcount=[0 for i in range(0,dim)]
 
 table = [[] for i in range(0,dim)]
@@ -1259,7 +1330,7 @@ for x in bettieTable:
 	dimcount[x[0]]= dimcount[x[0]]+1
 for i in range(0,dim):
 	print("Dimemnsion ",i," Betti Count ::",dimcount[i])
-i=0
+
 colors = ["Orange","yellow","Green",'Blue','Red','Black',"pink"]
 
 for d in range(0,dim):
@@ -1283,21 +1354,4 @@ for d in range(0,dim):
 	plt.plot([df["birth"], df["death"]], [counter, counter],color=colors[d],linestyle='solid',linewidth=1)
 plt.show()
 plt.savefig("outputPIpolytopal.pdf", bbox_inches = 'tight',pad_inches = 0)
-
-birth = []
-death = []
-dimension = []
-
-for d in range(0,dim):
-	for x in table[d]:
-		dimension.append(x[0])
-		birth.append(x[1])
-		death.append(x[2])
-		
-df = pd.DataFrame(list(zip(dimension,birth,death)),columns =['dimension','birth','death'])
-df.to_csv('outputPolytopal.csv',index=False,header=False)
-import csv
-
-with open("PolytopalData.csv", "w", newline="") as f:
-    writer = csv.writer(f)
-    writer.writerows(inputpoints)
+'''
