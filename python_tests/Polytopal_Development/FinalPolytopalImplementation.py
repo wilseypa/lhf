@@ -366,7 +366,7 @@ def maximumfacetprojection(coordinates_points):
 			pts.append(pnt)
 	return PCAprojection(pts),updatedhull
 '''	
-def findfarthestfacetprojection(coordinates_points):  #compute farthest facet steriographic projection
+def findfarthestfacetprojection(coordinates_points,farthestface):  #compute farthest facet steriographic projection
 	polytopalpoints = coordinates_points
 	polytophalfspaces = polyfun.compute_polytope_halfspaces(polytopalpoints)
 	polyhalfspace = pc.Polytope(polytophalfspaces[0],polytophalfspaces[1])
@@ -374,57 +374,142 @@ def findfarthestfacetprojection(coordinates_points):  #compute farthest facet st
 	chebXc = polyhalfspace.chebXc
 	faces = ConvexHull(polytopalpoints,qhull_options="QJ").simplices
 	farthest = 0
-	farthestface = []
+	normal = True
+	if(len(farthestface) == len(coordinates_points[0])):
+		normal = False
+		
+	if(farthestface == []):
+		farthestface = faces[0]
+		normal = False
 	centroid1 = []
-	'''
-	for edges in faces:
-		pts = [coordinates_points[x] for x in edges]
-		centroid = sum(np.transpose(list(list(x) for x in list(np.transpose(pts)))))/len(pts[0])
-		if(math.dist(centroid,chebXc)>farthest):
-			farthest = math.dist(centroid,chebXc)
-			farthestface = edges
-			centroid1 = centroid
-	farthestface = list(farthestface)
-	'''
-	pts = [coordinates_points[x] for x in faces[0]]
-	farthestface = faces[0]
-	centroid1 = sum(np.transpose(list(list(x) for x in list(np.transpose(pts)))))/len(pts[0])
-	farthestfaceslist = []
-	for x in farthestface:
-		faceedge = [t for t in farthestface if t != x]
-		for y in faces:
-			if len(intersection(faceedge,y))==len(faceedge):
-				if(not list(y) == list(farthestface)):
-					farthestfaceslist.append(y)
-	hyperplaneeq = []
-	for x in farthestfaceslist:
-         hyperplaneeq.append(hyperplane([coordinates_points[t] for t in x]))
-	matrixA = []
-	matrixB = []
-	for x in hyperplaneeq:
-		matrixA.append([ g for t in np.array(x) for g in np.array(t)])
-		matrixB.append([1])	
-	matrixA = np.matrix(matrixA)
-	matrixB = np.matrix(matrixB)
-	projection_point = np.transpose(solutionlinalg(matrixA,matrixB))
-	projection_point = [y for j in np.array(projection_point) for y in np.array(j)]
-	stereoprojection_point = (centroid1+projection_point)/2
-	stereoprojection_plane = hyperplane([coordinates_points[t] for t in farthestface])
-	cofficient = [y for j in np.array(stereoprojection_plane) for y in np.array(j)]
-	constant  = -1
-	pts = []
-	for i in range(0,len(coordinates_points)):
-		diff = coordinates_points[i]-stereoprojection_point
-		constterm =0;
-		diffterm = 0;
-		for x in range(0,len(cofficient)):
-			constterm+= stereoprojection_point[x]*cofficient[x]
-			diffterm+= diff[x]*cofficient[x]
-		if(diffterm!=0):
-			t = ((-1)*constant - constterm)/diffterm
-			pnt = t*(coordinates_points[i]-stereoprojection_point)+stereoprojection_point
-			pts.append(pnt)
-	return PCAprojection(pts)
+	projectionfacet = []
+	if(normal):
+		farthestfacet = []
+		hullfacet = ConvexHull([coordinates_points[i] for i in farthestface],qhull_options="QJ").simplices
+		hullfacetmappeds = mapindices(hullfacet,farthestface)
+		hullfacetmapped = []
+		[hullfacetmapped.append(sorted(g)) for g in hullfacetmappeds]
+		dst = 99999
+		for x in hullfacetmapped:
+			ponts = [coordinates_points[y] for y in x]
+			cntr = sum(np.transpose(list(list(y) for y in list(np.transpose(ponts)))))/len(ponts[0])
+			if(math.dist(chebXc,cntr)<dst):
+				farthestfacet = x
+				dst = math.dist(chebXc,cntr)
+		ponts = [coordinates_points[y] for y in farthestface]
+		stereoprojection_point = sum(np.transpose(list(list(y) for y in list(np.transpose(ponts)))))/len(ponts[0])
+		stereoprojection_plane = hyperplane([coordinates_points[t] for t in farthestfacet])
+		cofficient = [y for j in np.array(stereoprojection_plane) for y in np.array(j)]
+		constant  = -1
+		pts = []
+		count = 0
+		for i in range(0,len(coordinates_points)):
+			if(i not in farthestface):
+				count = count+1
+				diff = coordinates_points[i]-stereoprojection_point
+				constterm =0;
+				diffterm = 0;
+				for x in range(0,len(cofficient)):
+					constterm+= stereoprojection_point[x]*cofficient[x]
+					diffterm+= diff[x]*cofficient[x]
+				if(diffterm!=0):
+					t = ((-1)*constant - constterm)/diffterm
+					pnt = t*(coordinates_points[i]-stereoprojection_point)+stereoprojection_point
+					pts.append(pnt)
+			else:
+				done = False
+				for x in faces:
+					if(done):
+						break
+					if(len(intersection(x,[i]))==1):
+						if(len(intersection(x,farthestface))==1):
+							count = count+1
+							facetlower = [coordinates_points[y] for y in x if y not in [i]]
+							centroid = sum(np.transpose(list(list(x) for x in list(np.transpose(facetlower)))))/len(facetlower[0])
+							diff = centroid - coordinates_points[i]
+							constterm =0;
+							diffterm = 0;
+							for x in range(0,len(cofficient)):
+								constterm+= coordinates_points[i][x]*cofficient[x]
+								diffterm+= diff[x]*cofficient[x]
+							if(diffterm!=0):
+								t = ((-1)*constant - constterm)/diffterm
+								pnt = t*(centroid-coordinates_points[i])+coordinates_points[i]
+								pts.append(pnt)
+							done = True
+				if(done == False):
+					for x in faces:
+						if(done):
+							break
+						notfarthestface = []
+						[notfarthestface.append(lg) for lg in range(0,len(coordinates_points)) if lg not in farthestface]
+						if(len(intersection(x,[i]))==1 and len(intersection(x,notfarthestface))==1):
+							count = count+1
+							upperfacet = [coordinates_points[y] for y in x if y not in notfarthestface]
+							centroid = sum(np.transpose(list(list(x) for x in list(np.transpose(upperfacet)))))/len(upperfacet[0])
+							diff = centroid - coordinates_points[i]
+							constterm =0;
+							diffterm = 0;
+							for x in range(0,len(cofficient)):
+								constterm+= coordinates_points[i][x]*cofficient[x]
+								diffterm+= diff[x]*cofficient[x]
+							if(diffterm!=0):
+								t = ((-1)*constant - constterm)/diffterm
+								pnt = t*(centroid-coordinates_points[i])+coordinates_points[i]
+								pts.append(pnt)
+							done = True
+				
+						
+		return PCAprojection(pts)
+	else:					
+		'''
+		for edges in faces:
+			pts = [coordinates_points[x] for x in edges]
+			centroid = sum(np.transpose(list(list(x) for x in list(np.transpose(pts)))))/len(pts[0])
+			if(math.dist(centroid,chebXc)>farthest):
+				farthest = math.dist(centroid,chebXc)
+				farthestface = edges
+				centroid1 = centroid
+		farthestface = list(farthestface)
+		'''
+		pts = [coordinates_points[x] for x in farthestface]
+		centroid1 = sum(np.transpose(list(list(x) for x in list(np.transpose(pts)))))/len(pts[0])
+		farthestfaceslist = []
+		for x in farthestface:
+			faceedge = [t for t in farthestface if t != x]
+			for y in faces:
+				if len(intersection(faceedge,y))==len(faceedge):
+					if(not list(y) == list(farthestface)):
+						farthestfaceslist.append(y)
+		hyperplaneeq = []
+		for x in farthestfaceslist:
+			hyperplaneeq.append(hyperplane([coordinates_points[t] for t in x]))
+		matrixA = []
+		matrixB = []
+		for x in hyperplaneeq:
+			matrixA.append([ g for t in np.array(x) for g in np.array(t)])
+			matrixB.append([1])	
+		matrixA = np.matrix(matrixA)
+		matrixB = np.matrix(matrixB)
+		projection_point = np.transpose(solutionlinalg(matrixA,matrixB))
+		projection_point = [y for j in np.array(projection_point) for y in np.array(j)]
+		stereoprojection_point = (centroid1+projection_point)/2
+		stereoprojection_plane = hyperplane([coordinates_points[t] for t in farthestface])
+		cofficient = [y for j in np.array(stereoprojection_plane) for y in np.array(j)]
+		constant  = -1
+		pts = []
+		for i in range(0,len(coordinates_points)):
+			diff = coordinates_points[i]-stereoprojection_point
+			constterm =0;
+			diffterm = 0;
+			for x in range(0,len(cofficient)):
+				constterm+= stereoprojection_point[x]*cofficient[x]
+				diffterm+= diff[x]*cofficient[x]
+			if(diffterm!=0):
+				t = ((-1)*constant - constterm)/diffterm
+				pnt = t*(coordinates_points[i]-stereoprojection_point)+stereoprojection_point
+				pts.append(pnt)
+		return PCAprojection(pts)
 def hullfromtriangulation(simplices):
 	hull= []
 	for x in simplices:
@@ -447,10 +532,27 @@ def generatelowerorderdecompositions(indices,coordinates):
 	indices = indices
 	coords = coordinates
 	points = []
+	indexs = []
 	[points.append(x) for z in indices for x in z if x not in points]
+	[indexs.append(y) for y in range(0,len(points))]
 	points = sorted(points)
 	triangulation = hullfromtriangulation(indices) 
-	projectedpts = findfarthestfacetprojection(coords)
+	projectedpts = findfarthestfacetprojection(coords,[])
+	convexdecomposition,delaunayparts,weights = iterativeconvexization(triangulation,len(projectedpts[0]),projectedpts)
+	convexhullpoints = ConvexHull(projectedpts).simplices
+	mappedhullpoints = mapindices(convexhullpoints,points)
+	hullpoints = []
+	[hullpoints.append(x) for z in mappedhullpoints for x in z if x not in hullpoints]
+	currentfacetlen = 0
+	projectionfacet = []
+	for x in convexdecomposition:
+		if(len(intersection(x,hullpoints))==0):
+			if(currentfacetlen<len(x)):
+				projectionfacet = x
+				currentfacetlen = len(x)
+	projectionfacetmapped = []
+	[projectionfacetmapped.append(points.index(x)) for x in projectionfacet]
+	projectedpts = findfarthestfacetprojection(coords,projectionfacetmapped)
 	convexdecomposition,delaunayparts,weights = iterativeconvexization(triangulation,len(projectedpts[0]),projectedpts)
 	convexdecompositionmapped = convexdecomposition
 	delaunaypartsmapped = delaunayparts
@@ -861,7 +963,6 @@ def persistenceByDimension( edges, pivots, dimension):
 				hq.heapify(faceList)
 				if(i%10000==0):
 					print(i)
-					input()
 				i=i+1
 				while(faceList!=[]):
 					hq.heapify(faceList)
@@ -1154,19 +1255,19 @@ def getstarted(datatype,dimension,datasize,noiseper):
 		print("5: Read From File")
 		datatype = input()
 	if(datatype!='5'):
-		if(dimension=='0'):
+		if(dimension=='-1'):
 			print("Dimension ::")
 			dimension = input()
 		filenameinput = filenameinput+'dim'+dimension
 		filenameoutput = filenameoutput+'dim'+dimension
 		dim = int(dimension)
-		if(datasize=='0'):
+		if(datasize=='-1'):
 			print("Intended DataSize ::")
 			datasize = input()
 		filenameinput = filenameinput+'size'+datasize
 		filenameoutput = filenameoutput+'size'+datasize
 		datasize = int(datasize)
-		if(noiseper=='0'):
+		if(noiseper=='-1'):
 			print("Gaussian noise in percentage ::")
 			noiseper = input()
 		filenameinput = filenameinput+'noise'+ noiseper
@@ -1281,7 +1382,7 @@ ptspermutahedron = []
 datatype = [1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4]
 dimension = [3,3,3,3,3,3,3,3,4,4,4,4,5,5,5,5,3,3,3,3,4,4,4,4,5,5,5,5,3,3,3,3,4,4,4,4,5,5,5,5,3,3,3,3,4,4,4,4,5,5,5,5,3,3,3,3,4,4,4,4,5,5,5,5]
 datasize = [100,100,100,100,250,250,250,250,300,300,300,300,400,400,400,400,200,200,200,200,300,300,300,300,400,400,400,400,200,200,200,200,300,300,300,300,400,400,400,400,200,200,200,200,300,300,300,300,400,400,400,400,200,200,200,200,300,300,300,300,400,400,400,400]
-noiseper = [100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100]
+noiseper = [0,0,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100]
 for d,dim,s,n in zip(datatype,dimension,datasize,noiseper):
 	print(" Type:: ",d, " Dimension :: ",dim," Size :: ",s," Noise:: ",n)
 	inputpoints,outputfilename = getstarted(str(d),str(dim),str(s),str(n))
