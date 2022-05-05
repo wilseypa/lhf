@@ -19,6 +19,9 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.pyplot as plt
 import math
 import sys
+from sklearn.neighbors import NearestNeighbors
+import igraph as ig
+
 
 maxepsilon = 2
 mindist = 0.0001
@@ -366,6 +369,14 @@ def maximumfacetprojection(coordinates_points):
 			pts.append(pnt)
 	return PCAprojection(pts),updatedhull
 '''	
+
+def candidatedensepoint(coords,dimension):
+	X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
+	nbrs = NearestNeighbors(n_neighbors=dimension*5, algorithm='ball_tree').fit(X)
+	distances, indices = nbrs.kneighbors(X)
+	point = mindistance(distances)
+	return point
+
 def findfarthestfacetprojection(coordinates_points,farthestface):  #compute farthest facet steriographic projection
 	polytopalpoints = coordinates_points
 	polytophalfspaces = polyfun.compute_polytope_halfspaces(polytopalpoints)
@@ -384,6 +395,7 @@ def findfarthestfacetprojection(coordinates_points,farthestface):  #compute fart
 	centroid1 = []
 	projectionfacet = []
 	if(normal):
+		#print(len(farthestface),"::",farthestface)
 		farthestfacet = []
 		hullfacet = ConvexHull([coordinates_points[i] for i in farthestface],qhull_options="QJ").simplices
 		hullfacetmappeds = mapindices(hullfacet,farthestface)
@@ -416,6 +428,8 @@ def findfarthestfacetprojection(coordinates_points,farthestface):  #compute fart
 					t = ((-1)*constant - constterm)/diffterm
 					pnt = t*(coordinates_points[i]-stereoprojection_point)+stereoprojection_point
 					pts.append(pnt)
+				else:
+					pts.append(coordinates_points[i])
 			else:
 				done = False
 				for x in faces:
@@ -436,6 +450,8 @@ def findfarthestfacetprojection(coordinates_points,farthestface):  #compute fart
 								t = ((-1)*constant - constterm)/diffterm
 								pnt = t*(centroid-coordinates_points[i])+coordinates_points[i]
 								pts.append(pnt)
+							else:
+								pts.append(coordinates_points[i])
 							done = True
 				if(done == False):
 					for x in faces:
@@ -445,7 +461,7 @@ def findfarthestfacetprojection(coordinates_points,farthestface):  #compute fart
 						[notfarthestface.append(lg) for lg in range(0,len(coordinates_points)) if lg not in farthestface]
 						if(len(intersection(x,[i]))==1 and len(intersection(x,notfarthestface))==1):
 							count = count+1
-							upperfacet = [coordinates_points[y] for y in x if y not in notfarthestface]
+							upperfacet = [coordinates_points[y] for y in x if y not in farthestface]
 							centroid = sum(np.transpose(list(list(x) for x in list(np.transpose(upperfacet)))))/len(upperfacet[0])
 							diff = centroid - coordinates_points[i]
 							constterm =0;
@@ -457,10 +473,9 @@ def findfarthestfacetprojection(coordinates_points,farthestface):  #compute fart
 								t = ((-1)*constant - constterm)/diffterm
 								pnt = t*(centroid-coordinates_points[i])+coordinates_points[i]
 								pts.append(pnt)
+							else:
+								pts.append(coordinates_points[i])
 							done = True
-				
-						
-		return PCAprojection(pts)
 	else:					
 		'''
 		for edges in faces:
@@ -509,7 +524,21 @@ def findfarthestfacetprojection(coordinates_points,farthestface):  #compute fart
 				t = ((-1)*constant - constterm)/diffterm
 				pnt = t*(coordinates_points[i]-stereoprojection_point)+stereoprojection_point
 				pts.append(pnt)
-		return PCAprojection(pts)
+			else:
+				pts.append(coordinates_points[i])
+	'''
+	fig = plt.figure()
+	ax = fig.add_subplot(projection='3d')
+	#print(len(pts))
+	#print(pts)
+	#input()
+	ax.scatter([item[0] for item in pts],[item[1] for item in pts],[item[2] for item in pts], marker='o')
+	plt.show()
+	fig = plt.figure()
+	plt.scatter([item[0] for item in PCAprojection(pts)],[item[1] for item in PCAprojection(pts)], marker='o')
+	plt.show()
+	'''
+	return PCAprojection(pts),pts
 def hullfromtriangulation(simplices):
 	hull= []
 	for x in simplices:
@@ -527,6 +556,43 @@ def hullfromtriangulation(simplices):
 				if(sorted(f) not in hull):
 					hull.append(sorted(f))
 	return hull
+
+
+def findintriagulation(tri,face):
+	point = face[0]
+	#print(point)
+	#print(tri)
+	#input()
+	candidate = []
+	for x in tri:
+		if(len(intersection([point],x))!=0):
+			candidate.append(x)
+	mindist = 9999
+	#print(candidate)
+	#print("Here")
+	face1 = []
+	for x in candidate:
+		if(simplexweight(x)<mindist):
+			face1 = x
+			mindist = simplexweight(x)
+	return face1
+	
+def uniondecomposition(cd1,cd2):
+	cd = cd1+cd2
+	result = []
+	cd.sort(key = len,reverse = True)
+	for x in cd:
+		present = False
+		for y in result:
+			if(len(intersection(x,y)) == len(x)):
+				present = True
+				break
+		if(not present):
+			result.append(x)
+	#print(len(cd1))
+	#print(len(cd2))
+	#print(len(result))
+	return result
 def generatelowerorderdecompositions(indices,coordinates):
 	level = []
 	indices = indices
@@ -536,30 +602,291 @@ def generatelowerorderdecompositions(indices,coordinates):
 	[points.append(x) for z in indices for x in z if x not in points]
 	[indexs.append(y) for y in range(0,len(points))]
 	points = sorted(points)
-	triangulation = hullfromtriangulation(indices) 
-	projectedpts = findfarthestfacetprojection(coords,[])
-	convexdecomposition,delaunayparts,weights = iterativeconvexization(triangulation,len(projectedpts[0]),projectedpts)
-	convexhullpoints = ConvexHull(projectedpts).simplices
-	mappedhullpoints = mapindices(convexhullpoints,points)
+	X = np.array(coords)
+	neighbors = int(len(coords)/3)+1
+	nbrs = NearestNeighbors(n_neighbors=neighbors , algorithm='ball_tree').fit(X)
+	origdistances, indices1 = nbrs.kneighbors(X)
+	origaveragedist = np.mean(origdistances, axis=1)
+	point1 =  np.where(origaveragedist == min(origaveragedist))[0][0]
+	removed = indices1[point1]
+	updatedcoords = []
+	[updatedcoords.append(coords[i]) for i in range(0,len(coords)) if i not in indices1[point1]]
+	X = np.array(updatedcoords)
+	
+	nbrs = NearestNeighbors(n_neighbors= neighbors, algorithm='ball_tree').fit(X)
+	distances, indices1 = nbrs.kneighbors(X)
+	averagedist = np.mean(distances, axis=1)
+	point2 =  np.where(averagedist == min(averagedist))[0][-1]
+	indices1 = indices1[point2]
+	#print(indices1)
+	newindices= indices1
+	for y in sorted(removed):
+		cnt = 0
+		for x in newindices:
+			if(x>=y):
+				newindices[cnt] = newindices[cnt] +1
+			cnt = cnt+1 
+
+	#print(newindices)
+	mindist = 9999
+	for x in newindices:
+		if(origaveragedist[x]<mindist):
+			point2 = x
+			midist = origaveragedist[x]
+	#print(point1)
+	#print(point2)
+	#input()
+	'''
+	fig = plt.figure(figsize = (10, 7))
+	if(len(coords[0]) ==3):
+		ax = plt.axes(projection ="3d")
+		inptcords = np.array(coords)
+		ax.scatter3D(inptcords[:,0], inptcords[:,1], inptcords[:,2], color = "green")
+		ax.scatter3D(inptcords[point1,0], inptcords[point1,1], inptcords[point1,2], color = "red")
+		ax.scatter3D(inptcords[point2,0], inptcords[point2,1], inptcords[point2,2], color = "red")
+	else:
+		plt.scatter(inptcords[:,0], inptcords[:,1],color = "green")
+	plt.show()
+	'''
+	#input()
+	#print(points)
+	#print(indices)
+	#input()
+	#print(len(coordinates))
+	#fig = plt.figure()
+	#ax = fig.add_subplot(projection='3d')
+	#ax.scatter([item[0] for item in coordinates],[item[1] for item in coordinates],[item[2] for item in coordinates], marker='o')
+	#triangulation = hullfromtriangulation(indices)
+	#print(indices)
+	#print(coords)
+	#input()
+	#triangulation = ConvexHull(coords).simplices
+	'''
+	a = []
+	print(triangulation)
+	for x in triangulation:
+		lst = []
+		for y in x:
+			for z in coordinates[y]:
+				lst.append(z)
+		a.append(lst)
+	a = np.array(a)
+	print(a)
+	input()
+	fig = plt.figure()
+	ax = fig.add_subplot(111, projection='3d')
+
+	fc = ["crimson" if i%2 else "gold" for i in range(a.shape[0}}}}}}}"
+	
+	
+	
+	
+	
+	
+	}}}}"
+	}{
+	{'"
+	
+
+fc = ["crimson" if i%2 else "gold" for i in range(a.shape[0])]
+
+poly3d = [[ a[i, j*3:j*3+3] for j in range(3)  ] for i in range(a.shape[0])]
+
+ax.add_collection3d(Poly3DCollection(poly3d, facecolors=fc, linewidths=1))
+
+ax.set_xlim(-1.5,1.5)
+ax.set_ylim(-1.5,1.5)
+
+plt.show()
+"}
+"}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}
+
+
+"}
+	ax.set_xlim(-1.5,1.5)
+	ax.set_ylim(-1.5,1.5)
+
+	plt.show()
+    '''
+	X = np.array(coords)
+	triangulation = hullfromtriangulation(indices)
+	nbrs = NearestNeighbors(n_neighbors= len(coords[0]), algorithm='ball_tree').fit(X)
+	distances, indices = nbrs.kneighbors(X)
+	#print(distances)
+	#print(indices)
+	face1= indices[point1]
+	#print(face1)
+	face11 = []
+	for x in face1:
+		face11.append(points[x])
+	
+	face1 = findintriagulation(triangulation,face11)
+	face11 = []
+	for x in face1:
+		face11.append(points.index(x))
+	 
+	projectedpts1,upts1 = findfarthestfacetprojection(coords,face11)
+	#plt.plot(list(list(zip(*projectedpts))[0]), list(list(zip(*projectedpts))[1]), 'o', color='black')
+	#plt.show()
+	convexdecomposition1,delaunayparts1,weights1 = iterativeconvexization(triangulation,len(projectedpts1[0]),projectedpts1)
+	face2= indices[point2]
+	face22 = []
+	for x in face2:
+		face22.append(points[x])
+	
+	face2 = findintriagulation(triangulation,face22)
+	face22 = []
+	for x in face2:
+		face22.append(points.index(x))
+	''' 
+	print(face2)
+	print(face1)
+	print(point2)
+	print(point1)
+	print(points)
+	print(face2)
+	print(face1)
+	'''
+	projectedpts2,upts2 = findfarthestfacetprojection(coords,face22)
+	#print(len(projectedpts2))
+	#print(len(projectedpts1))
+	
+	convexdecomposition2,delaunayparts2,weights2 = iterativeconvexization(triangulation,len(projectedpts2[0]),projectedpts2)
+	#input()
+
+	resultantdecomposition = uniondecomposition(convexdecomposition1,convexdecomposition2)
+	df = pd.DataFrame(columns = ['cd', 'dp', 'weight','prj'])
+	for r in resultantdecomposition:
+		present = False;
+		for (w,x,y) in zip(convexdecomposition1,delaunayparts1,weights1):
+			if(w==r):
+				df = df.append({'cd' : w, 'dp' : x, 'weight' : y,'prj' : '1'}, ignore_index = True)
+				present = True
+		if(not present):
+			for (w,x,y) in zip(convexdecomposition2,delaunayparts2,weights2):
+				if(w==r):
+					df = df.append({'cd' : w, 'dp' : x, 'weight' : y,'prj' : '2'}, ignore_index = True)
+					present = True
+		if(not present):
+			print("Not Possible")
+
+	'''
+	lowertriangulation = hullfromtriangulation(triangulation[1:])
+	lowertriangulation = ConvexHull(projectedpts).simplices
+	mappedhullpoints = lowertriangulation#mapindices(convexhullpoints,points)
 	hullpoints = []
 	[hullpoints.append(x) for z in mappedhullpoints for x in z if x not in hullpoints]
 	currentfacetlen = 0
 	projectionfacet = []
-	for x in convexdecomposition:
-		if(len(intersection(x,hullpoints))==0):
-			if(currentfacetlen<len(x)):
-				projectionfacet = x
-				currentfacetlen = len(x)
+	parts = []
+	weight = 0
+	done = False
+	for x,y,z in zip(convexdecomposition,delaunayparts,weights):
+		print(x)
+		if(done):
+			break
+		if(currentfacetlen<len(x)):
+			projectionfacet = x
+			parts = y
+			weight = z
+			currentfacetlen = len(x)
+			if(len(intersection(x,hullpoints))==0):
+					done = True
+	print("choose ::",projectionfacet)
+	a = []
+	print(upts)
+	for x in triangulation:
+		lst = []
+		for y in x:
+			print(len(upts)," ::",y)
+			print(upts[y])
+			if(len(upts[y])==len([])):
+				lst.append(0)
+			else:
+				for z in upts[y]:
+					lst.append(z)
+		a.append(lst)
+	a = np.array(a)
+
+	fig = plt.figure()
+	ax = fig.add_subplot(111, projection='3d')
+
+	fc = ["crimson" if i%2 else "gold" for i in range(a.shape[0])]
+
+	poly3d = [[ a[i, j*3:j*3+3] for j in range(3)  ] for i in range(a.shape[0])]
+	ax.scatter([item[0] for item in upts],[item[1] for item in upts],[item[2] for item in upts], marker='o')
+	ax.scatter([upts[item][0] for item in projectionfacet],[upts[item][1] for item in projectionfacet],[upts[item][2] for item in projectionfacet], marker='o',color = 'r')
+	ax.add_collection3d(Poly3DCollection(poly3d, facecolors='blue', linewidths=1,alpha=0.5,ec='green'))
+
+	ax.set_xlim(-1.5,1.5)
+	ax.set_ylim(-1.5,1.5)
+
+	plt.show()
+	fig = plt.figure()
+	ax = fig.add_subplot(projection='3d')
+	ax.scatter([item[0] for item in upts],[item[1] for item in upts],[item[2] for item in upts], marker='o')
+	ax.scatter([upts[item][0] for item in projectionfacet],[upts[item][1] for item in projectionfacet],[upts[item][2] for item in projectionfacet], marker='o',color = 'r')
+	plt.show()
 	projectionfacetmapped = []
 	[projectionfacetmapped.append(points.index(x)) for x in projectionfacet]
-	projectedpts = findfarthestfacetprojection(coords,projectionfacetmapped)
-	convexdecomposition,delaunayparts,weights = iterativeconvexization(triangulation,len(projectedpts[0]),projectedpts)
+	#print(projectionfacetmapped)
+	projectedpts,upts1 = findfarthestfacetprojection(coords,projectionfacetmapped)
+	plt.plot(list(list(zip(*projectedpts))[0]), list(list(zip(*projectedpts))[1]), 'o', color='black');
+	plt.show()
+	updatedtriangulation = []
+	for x in triangulation:
+		if (len(intersection(x,projectionfacetmapped)) == len(x)):
+			continue
+		else:
+			updatedtriangulation.append(x)
+	#print(updatedtriangulation)
+	#checkplotsimplices(triangulation,upts)
+	
+	
+	a = []
+	#checkplotsimplices(updatedtriangulation,upts)
+	for x in updatedtriangulation:
+		lst = []
+		for y in x:
+			for z in upts1[y]:
+				lst.append(z)
+		a.append(lst)
+	a = np.array(a)
+	fig = plt.figure()
+	ax = fig.add_subplot(111, projection='3d')
+
+	fc = ["crimson" if i%2 else "gold" for i in range(a.shape[0])]
+
+	poly3d = [[ a[i, j*3:j*3+3] for j in range(3)  ] for i in range(a.shape[0])]
+	ax.scatter([item[0] for item in upts1],[item[1] for item in upts1],[item[2] for item in upts1], marker='o')
+	ax.add_collection3d(Poly3DCollection(poly3d, facecolors='blue', ec = 'green', linewidths=0.5,alpha=0.25))
+
+	ax.set_xlim(-1.5,1.5)
+	ax.set_ylim(-1.5,1.5)
+
+	plt.show()
+
+
+	convexdecomposition,delaunayparts,weights = iterativeconvexization(updatedtriangulation,len(projectedpts[0]),projectedpts)
+	convexdecomposition.append(projectionfacet)
+	delaunayparts.append(parts)
+	weights.append(weight)
 	convexdecompositionmapped = convexdecomposition
 	delaunaypartsmapped = delaunayparts
-	for (x,y,z,w) in zip(convexdecomposition,convexdecompositionmapped,delaunaypartsmapped,weights):
+	'''
+	df = df.reset_index()
+	for index, row in df.iterrows():
+		x = row['cd']
+		z = row['dp']
+		w = row['weight']
+		p = row['prj']
 		x = sorted(x)
-		lowercoordinates = [projectedpts[points.index(i)] for i in x]
+		if(p=='1'):
+			lowercoordinates = [projectedpts1[points.index(i)] for i in x]
+		elif(p=='2'):
+			lowercoordinates = [projectedpts2[points.index(i)] for i in x]
 		level.append([z,lowercoordinates,w])
+	
 	return level
 
 def addEdgesAndVertices(polytopaltree):
@@ -643,13 +970,27 @@ def createpolytopaltree(inputpoints):
 		for k in generatesimplexfacets(x,2):
 			setincidenceindex(k[0],k[1])
 	convexdecomposition,delaunayparts,weights = iterativeconvexization(triangulation,len(coordinates[0]),coordinates)
+	'''
+	fig = plt.figure(figsize = (10, 7))
+	if(len(inputpoints[0]) ==3):
+		ax = plt.axes(projection ="3d")
+		ax.scatter3D(inputpoints[:,0], inputpoints[:,1], inputpoints[:,2], color = "green")
+	else:
+		plt.scatter(inputpoints[:,0], inputpoints[:,1],color = "green")
+	plt.show()
+	print(convexdecomposition)
+	print(len(convexdecomposition))
+	'''
 	level = []
+	#plotpolytop(convexdecomposition,len(coordinates[0]))
 	for x,z,w in zip(convexdecomposition,delaunayparts,weights):
 		x = sorted(x)
 		lowercoordinates = [coordinates[i] for i in x]
 		level.append([z,lowercoordinates,w])
 	polytopaltree.append(level)
 	print("Polytopes at Dimension ::",dim,"::",len(level))
+	
+	
 	#cascade down to Triangles
 	for d in range(1,dim):
 		convexdecompositions = copy.deepcopy(polytopaltree[d-1])
@@ -1084,15 +1425,17 @@ def disintegrate(polytopaltree):
 
 
 
-def checkplotsimplices(simplices):
+def checkplotsimplices(simplices,inputpoints):
 	newpolyparts = []
 	indices = []
 	[indices.append(i) for x in simplices for i in x if i not in indices]
+	'''
 	for x in simplices:
 		for t in ConvexHull([inputpoints[i] for i in x],qhull_options="QJ").simplices:
 			t = [x[i] for i in t]
 			newpolyparts.append(t)
-	polyparts = newpolyparts
+	'''
+	polyparts = simplices
 	hull = polyparts#ConvexHull(points).simplices
 	newlist = []
 	i = 1
@@ -1102,7 +1445,7 @@ def checkplotsimplices(simplices):
 	for y in hull:
 		#newlist.append(y)
 		for x in [y]:
-			pts = [inputpoints[x1] for x1 in x]
+			pts = [inputpoints[x1] for x1 in x if inputpoints[x1] !=[]]
 			ptrans = np.transpose(pts)
 			verts = [list(zip(ptrans[0],ptrans[1],ptrans[2]))]
 			ax.scatter3D(ptrans[0],ptrans[1],ptrans[2])
@@ -1112,28 +1455,43 @@ def checkplotsimplices(simplices):
 		i=i+1
 
 def plotpolytop(polyparts,d):
+	if(d==2):
+		newpolyparts = []
+		edges = []
+		for x in polyparts:
+			for t in ConvexHull([inputpoints[i] for i in x]).simplices:
+				t = [x[i] for i in t]
+				edges.append(t)
+				if(sorted(t) not in newpolyparts):
+					newpolyparts.append(sorted(t))
+		polyparts = newpolyparts
+		hull = polyparts#ConvexHull(points).simplices
+		fig = plt.figure()	
 	if(d==3):
 		newpolyparts = []
 		for x in polyparts:
-			x=x[0]
+			#x=x[0]
 			for t in ConvexHull([inputpoints[i] for i in x],qhull_options="QJ").simplices:
 				t = [x[i] for i in t]
 				if(sorted(t) not in newpolyparts):
 					newpolyparts.append(sorted(t))
 		polyparts = newpolyparts
-	hull = polyparts#ConvexHull(points).simplices
-	fig = plt.figure()
-	ax = Axes3D(fig, auto_add_to_figure=False)
-	fig.add_axes(ax)
+		hull = polyparts#ConvexHull(points).simplices
+		fig = plt.figure()
+		ax = Axes3D(fig, auto_add_to_figure=False)
+		fig.add_axes(ax)
 	for x in hull:
-		if(d!=3):
-			#x=x[0]
-			x=x
 		pts = [inputpoints[x1] for x1 in x]
 		ptrans = np.transpose(pts)
-		verts = [list(zip(ptrans[0],ptrans[1],ptrans[2]))]
-		ax.scatter3D(ptrans[0],ptrans[1],ptrans[2])
-		ax.add_collection3d(Poly3DCollection(verts,facecolors='b', edgecolor = 'black', linewidths=1, alpha=0.15))
+		if(d==3):
+			verts = [list(zip(ptrans[0],ptrans[1],ptrans[2]))]
+			ax.scatter3D(ptrans[0],ptrans[1],ptrans[2])
+			ax.add_collection3d(Poly3DCollection(verts,facecolors='b', edgecolor = 'black', linewidths=1, alpha=0.15))
+		else:
+			ptrans = np.transpose(inputpoints)
+			plt.scatter(ptrans[0],ptrans[1])
+			for edge in edges:
+				plt.plot([inputpoints[edge[0]][0],inputpoints[edge[1]][0]],[inputpoints[edge[0]][1],inputpoints[edge[1]][1]],color='blue',linestyle='solid',linewidth=1)
 	plt.show()
 
 def genPermutahedron(a, size):
@@ -1248,6 +1606,7 @@ def getstarted(datatype,dimension,datasize,noiseper):
 	filenameoutput = 'output'+datatype
 	if(datatype=='0'):
 		print("Please Choose Data Type::")
+		print("0: dSphere with noise")
 		print("1: Hypertetrahedron Sphere")
 		print("2: HypercubeSphere Sphere")
 		print("3: Hyperpermutahedron Sphere")
@@ -1272,7 +1631,7 @@ def getstarted(datatype,dimension,datasize,noiseper):
 			noiseper = input()
 		filenameinput = filenameinput+'noise'+ noiseper
 		filenameoutput = filenameoutput+'noise'+ noiseper
-		noiseper = int(noiseper)/1000
+		noiseper = int(noiseper)/100
 	if datatype=='1':  #Tetrahedron
 		edgecount = (int)(dim*(dim+1)/2)
 		points = max(datasize,dim+1)
@@ -1297,7 +1656,7 @@ def getstarted(datatype,dimension,datasize,noiseper):
 			points = set()
 			edges = generatesimplexfacets(poly,2)
 			for e in edges:
-				for t in np.linspace(0.1, 0.9, pointperedge):
+				for t in np.linspace(0, 1, pointperedge):
 					points.add(tuple(t*(newpoints[e[0]])-newpoints[e[1]]*(t-1)))
 			for x in points:
 				x = np.array(x)
@@ -1319,7 +1678,7 @@ def getstarted(datatype,dimension,datasize,noiseper):
 			edges = generatesimplexfacets(poly,2)
 			for e in edges:
 				if(incidence[e[0]][e[1]]==1):
-					for t in np.linspace(0.1, 0.9, pointperedge):
+					for t in np.linspace(0, 1, pointperedge):
 						points.add(tuple(t*(newpoints[e[0]])-newpoints[e[1]]*(t-1)))
 			for x in points:
 				x = np.array(x)
@@ -1350,7 +1709,7 @@ def getstarted(datatype,dimension,datasize,noiseper):
 			edges = generatesimplexfacets(poly,2)
 			for e in edges:
 				if(incidence[e[0]][e[1]]==1):
-					for t in np.linspace(0.1, 0.9, pointperedge):
+					for t in np.linspace(0, 1, pointperedge):
 						points.add(tuple(t*(newpoints[e[0]])-newpoints[e[1]]*(t-1)))
 			for x in points:
 				x = np.array(x)
@@ -1359,6 +1718,9 @@ def getstarted(datatype,dimension,datasize,noiseper):
 	elif datatype=='4': #FibbonacciLaticce
 		unitsphere =  np.array(fiblat.sphere_lattice(dim,datasize))
 	
+	elif datatype=='0': #FibbonacciLaticce
+		unitsphere =  tadasets.dsphere(n= datasize,d=dim-1,r=1,noise=noiseper)
+		
 	elif datatype=='5': #ReadFile
 		print("Enter File Name")
 		filename = input()
@@ -1371,25 +1733,28 @@ def getstarted(datatype,dimension,datasize,noiseper):
 				unitsphere.append(k)
 	
 	if(datatype!='5'):
-		unitsphere  = refine(unitsphere)
-		unitsphere = addgaussiannoise(unitsphere,noiseper)
+		if(datatype!='0' or datatype!='4'):  
+			unitsphere  = refine(unitsphere)
+			unitsphere = addgaussiannoise(unitsphere,noiseper)
 		print("Final Data Size::",datasize," in dimension ::",dim)
 		with open(filenameinput, "w", newline="") as f:
 			writer = csv.writer(f)
 			writer.writerows(unitsphere)
 	return unitsphere,filenameoutput
 ptspermutahedron = []
-datatype = [1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4]
-dimension = [3,3,3,3,3,3,3,3,4,4,4,4,5,5,5,5,3,3,3,3,4,4,4,4,5,5,5,5,3,3,3,3,4,4,4,4,5,5,5,5,3,3,3,3,4,4,4,4,5,5,5,5,3,3,3,3,4,4,4,4,5,5,5,5]
-datasize = [100,100,100,100,250,250,250,250,300,300,300,300,400,400,400,400,200,200,200,200,300,300,300,300,400,400,400,400,200,200,200,200,300,300,300,300,400,400,400,400,200,200,200,200,300,300,300,300,400,400,400,400,200,200,200,200,300,300,300,300,400,400,400,400]
-noiseper = [0,0,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100]
+datatype = [1,2,3,4,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4]
+dimension = [3,3,3,3,3,3,3,3,3,4,4,4,4,5,5,5,5,3,3,3,3,4,4,4,4,5,5,5,5,3,3,3,3,4,4,4,4,5,5,5,5,3,3,3,3,4,4,4,4,5,5,5,5,3,3,3,3,4,4,4,4,5,5,5,5]
+datasize = [50,100,100,100,100,250,250,250,250,300,300,300,300,400,400,400,400,200,200,200,200,300,300,300,300,400,400,400,400,200,200,200,200,300,300,300,300,400,400,400,400,200,200,200,200,300,300,300,300,400,400,400,400,200,200,200,200,300,300,300,300,400,400,400,400]
+noiseper = [0,0,0,0,0,0,0,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100]
 for d,dim,s,n in zip(datatype,dimension,datasize,noiseper):
-	print(" Type:: ",d, " Dimension :: ",dim," Size :: ",s," Noise:: ",n)
-	inputpoints,outputfilename = getstarted(str(d),str(dim),str(s),str(n))
+	#print(" Type:: ",d, " Dimension :: ",dim," Size :: ",s," Noise:: ",n)
+	#inputpoints,outputfilename = getstarted(str(d),str(dim),str(s),str(n))
+	inputpoints,outputfilename = getstarted(str(0),str(-1),str(-1),str(-1))
 	datasize = len(inputpoints)
 	dim=len(inputpoints[0])
-	'''
-	fig = plt.figure()
+	print(datasize)
+	print(dim)
+	''':
 	ax = plt.axes(projection='3d')
 	zdata = [item[0] for item in inputpoints]
 	xdata = [item[1] for item in inputpoints]
@@ -1417,11 +1782,11 @@ for d,dim,s,n in zip(datatype,dimension,datasize,noiseper):
 	for i in range(0,dim):
 		print("Dimemnsion ",i," Betti Count ::",dimcount[i])
 	writebetties(table,outputfilename)
+	break
 
 
 
 
-'''
 dimcount=[0 for i in range(0,dim)]
 
 table = [[] for i in range(0,dim)]
@@ -1455,4 +1820,3 @@ for d in range(0,dim):
 	plt.plot([df["birth"], df["death"]], [counter, counter],color=colors[d],linestyle='solid',linewidth=1)
 plt.show()
 plt.savefig("outputPIpolytopal.pdf", bbox_inches = 'tight',pad_inches = 0)
-'''
