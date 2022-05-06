@@ -21,6 +21,7 @@ import math
 import sys
 from sklearn.neighbors import NearestNeighbors
 import igraph as ig
+from sklearn.preprocessing import MinMaxScaler
 
 
 maxepsilon = 2
@@ -377,13 +378,23 @@ def candidatedensepoint(coords,dimension):
 	point = mindistance(distances)
 	return point
 
-def findfarthestfacetprojection(coordinates_points,farthestface):  #compute farthest facet steriographic projection
+def findfarthestfacetprojection(coordinates_points,farthestface,triangulation):  #compute farthest facet steriographic projection
 	polytopalpoints = coordinates_points
 	polytophalfspaces = polyfun.compute_polytope_halfspaces(polytopalpoints)
 	polyhalfspace = pc.Polytope(polytophalfspaces[0],polytophalfspaces[1])
 	chebR = polyhalfspace.chebR
 	chebXc = polyhalfspace.chebXc
-	faces = ConvexHull(polytopalpoints,qhull_options="QJ").simplices
+	#faces = ConvexHull(polytopalpoints,qhull_options="QJ").simplices
+	points = []
+	[points.append(x) for z in triangulation for x in z if x not in points]
+	points = sorted(points)
+	triangulation1 = []
+	for x in triangulation:
+		simplex = []
+		for y in x:
+			simplex.append(points.index(y))
+		triangulation1.append(simplex)	
+	faces = triangulation1
 	farthest = 0
 	normal = True
 	if(len(farthestface) == len(coordinates_points[0])):
@@ -490,6 +501,7 @@ def findfarthestfacetprojection(coordinates_points,farthestface):  #compute fart
 		pts = [coordinates_points[x] for x in farthestface]
 		centroid1 = sum(np.transpose(list(list(x) for x in list(np.transpose(pts)))))/len(pts[0])
 		farthestfaceslist = []
+
 		for x in farthestface:
 			faceedge = [t for t in farthestface if t != x]
 			for y in faces:
@@ -724,8 +736,7 @@ plt.show()
 	face11 = []
 	for x in face1:
 		face11.append(points.index(x))
-	 
-	projectedpts1,upts1 = findfarthestfacetprojection(coords,face11)
+	projectedpts1,upts1 = findfarthestfacetprojection(coords,face11,triangulation)
 	#plt.plot(list(list(zip(*projectedpts))[0]), list(list(zip(*projectedpts))[1]), 'o', color='black')
 	#plt.show()
 	convexdecomposition1,delaunayparts1,weights1 = iterativeconvexization(triangulation,len(projectedpts1[0]),projectedpts1)
@@ -747,7 +758,7 @@ plt.show()
 	print(face2)
 	print(face1)
 	'''
-	projectedpts2,upts2 = findfarthestfacetprojection(coords,face22)
+	projectedpts2,upts2 = findfarthestfacetprojection(coords,face22,triangulation)
 	#print(len(projectedpts2))
 	#print(len(projectedpts1))
 	
@@ -986,7 +997,11 @@ def createpolytopaltree(inputpoints):
 	for x,z,w in zip(convexdecomposition,delaunayparts,weights):
 		x = sorted(x)
 		lowercoordinates = [coordinates[i] for i in x]
-		level.append([z,lowercoordinates,w])
+		scaler = MinMaxScaler()
+		scaler.fit(lowercoordinates)
+		X_scaled = scaler.transform(lowercoordinates)
+		level.append([z,X_scaled.tolist(),w])
+		#print("Convex Decomposition ::",dim ," ::",x)
 	polytopaltree.append(level)
 	print("Polytopes at Dimension ::",dim,"::",len(level))
 	
@@ -1009,6 +1024,7 @@ def createpolytopaltree(inputpoints):
 							level.append([y,y,simplexweight(y)])
 					lenthr = lenthr + len(facets)
 				else:
+					#print("Convex Decomposition ::",dim-d ," ::",cd[0])
 					lowercd = generatelowerorderdecompositions(cd[0],cd[1])
 					for x in lowercd:
 						y = sorted(x[0])
