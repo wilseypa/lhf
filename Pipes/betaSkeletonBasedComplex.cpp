@@ -328,6 +328,74 @@ unsigned betaSkeletonBasedComplex<alphaNode>:: selectCenter(std::vector<double> 
    }
 return 1;
 }
+
+template <>
+ bool betaSkeletonBasedComplex<alphaNode>:: checkCC_Simplex_Inclusion(std::vector<unsigned> simplex,std::vector<std::vector<double> >  inputData,	std::vector<double> circumCenter){
+	 int i = 0;
+	 std::vector<std::vector<double>> matT;
+	 std::vector<std::vector<double>> matPv;
+	 for(auto x :simplex){
+	    if(i!=1){
+			std::vector<double> tempmat;
+			for(int j = 0;j<inputData[0].size();j++)
+				tempmat.push_back(inputData[x][1]-inputData[x][j]);
+			matT.push_back(tempmat);
+		}
+		if(i==1){
+			for(int j = 0;j<inputData[0].size();j++){
+				std::vector<double> tempmat;
+				tempmat.push_back(circumCenter[j]-inputData[x][j]);
+				matPv.push_back(tempmat);
+			}
+		}
+		i++;
+	 }
+	 std::vector<std::vector<double>> transposematT(matT.size(), std::vector<double> (matT[0].size(), 0));
+	 for (int i = 0; i < matT.size(); ++i)
+		for (int j = 0; j < matT[0].size(); ++j)
+			transposematT[j][i]= matT[i][j];
+        
+	 std::vector<std::vector<double>> lambda = utils::matrixMultiplication(transposematT,matPv);
+	 bool outside = false;
+	 double sum = 0;
+	 for(auto x:lambda){
+		 sum+=x[0];
+		 if(x[0]<0){
+			outside = true;
+			break;
+		}
+	 }
+	 if(sum >1)
+		outside = true;
+     return outside;
+ }
+template<>
+int betaSkeletonBasedComplex<alphaNode>:: getoppvertex(std::vector<unsigned> simplex,std::vector<std::vector<double> >  inputData,	std::vector<double> circumCenter){
+	int oppvertex = -1;
+	double mindist = 999999;
+		for (auto x : simplex){
+			std::vector<unsigned> face1;
+			face1 = simplex;
+			face1.erase(std::remove(face1.begin(),face1.end(),x),face1.end());
+			std::set<unsigned> face(face1.begin(),face1.end());
+			std::vector<double> faceCC ;
+			if(face.size()>2)
+				faceCC = utils::circumCenter(face,inputData);
+			else if(face.size()==2){
+				auto first = face.begin();
+				std::vector<double> fR;
+				std::vector<double> fA = inputData[*first];
+      		    std::advance(first, 1);
+				std::vector<double> fB = inputData[*first];
+	   			std::transform(fA.begin(), fA.end(), fB.begin(), std::back_inserter(fR),[](double e1,double e2){return ((e1+e2)/2);});
+				faceCC = fR;
+			}
+			 if(mindist>utils::vectors_distance(faceCC,circumCenter))
+			    oppvertex = x;
+		   	
+		}
+		return oppvertex;
+}
 template <>
 bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsigned> dsimplex,pipePacket<alphaNode> &inData,double beta,double averageDistance,kdTree tree){
 	double maxEdge = 0;
@@ -588,7 +656,14 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 		else
 			circumRadius = pow((*((alphaComplex<alphaNode>*)inData.complex)->distMatrix)[dsimplex[0]][dsimplex[1]]/2,2);
 		bool first = true;
-		
+	
+ 
+		bool obtuse = false;
+		obtuse = checkCC_Simplex_Inclusion(dsimplex,inData.inputData,circumCenter);
+		int CCfacingfacet = -1;
+		if(obtuse){
+			CCfacingfacet = getoppvertex(dsimplex,inData.inputData,circumCenter);
+		}
 		std::vector<size_t> neighbors;
 		std::vector<std::vector<size_t>> neighborsCircleIntersection;
 		for (auto x : simplex){
@@ -623,19 +698,21 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
 		//	std::cout<<"\n  "<<refbeta<<"\nBefore squareroot "<<std::abs(((fixdistance*fixdistance)/(faceRadius))-1)<<"\n";
 			std::vector<double> refpoint;
 			refbetaCenters = utils::betaCentersCalculation(hpcoff, refbeta, sqrt(faceRadius),faceCC);
-                        
-            double expr1=0;
-		  	double expr3=0;
-		      	for(unsigned i =0;i<hpcoff.size();i++){
-			      	expr1 += hpcoff[i]*refbetaCenters[0][i];
-				    expr3 += hpcoff[i]*inData.inputData[x][i];
-			}
-			expr1--;
-			expr3--;		
-			if((expr1>0&&expr3>0)||(expr1<0&&expr3<0))
-				sameside=true;
-			else
+			
+            //***************************************************Obtuse facet facing circumcenter*************************************************************************************            
+            //double expr1=0;
+		  	//double expr3=0;
+		    //  	for(unsigned i =0;i<hpcoff.size();i++){
+			//      	expr1 += hpcoff[i]*refbetaCenters[0][i];
+			//	    expr3 += hpcoff[i]*inData.inputData[x][i];
+			//}
+			//expr1--;
+			//expr3--;		
+			//**************************************************Obtuse facet facing circumcenter***************************************************************************************
+			if(obtuse && x == CCfacingfacet)
 				sameside=false;
+			else
+				sameside=true;
 			if(sameside)
 				refpoint = refbetaCenters[0];
 			else

@@ -59,6 +59,8 @@ class betaSkeletonBasedComplex : public basePipe<nodeType> {
     betaSkeletonBasedComplex();
     void runPipe(pipePacket<nodeType>& inData);
     bool checkInsertDsimplex(std::vector<unsigned> dsimplex,pipePacket<nodeType> &inData,double beta,double averageDistance,kdTree tree);
+    bool checkCC_Simplex_Inclusion(std::vector<unsigned> simplex,std::vector<std::vector<double> >  inputData,	std::vector<double> circumCenter);
+    int  getoppvertex(std::vector<unsigned> simplex,std::vector<std::vector<double> >  inputData,	std::vector<double> circumCenter);
     unsigned selectCenter(std::vector<double> hpcofffaces, std::vector<std::vector<double>> betaCenters,std::vector<double> otherPoint);
     std::vector<std::vector<int>> qdelaunay_o(const Qhull &qhull);
     std::vector<std::vector<int>> qconvex_o(const Qhull &qhull);
