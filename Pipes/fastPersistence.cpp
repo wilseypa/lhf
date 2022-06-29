@@ -113,6 +113,7 @@ std::vector<simplexNodePointer> fastPersistence<nodeType>::persistenceByDimensio
 						file<<"\n";
 				    	        file.close();
 						}*/
+						
 						inData.bettiTable.push_back(des);
 					}
 
@@ -123,7 +124,6 @@ std::vector<simplexNodePointer> fastPersistence<nodeType>::persistenceByDimensio
 					for(simplexNodePointer simp : v[pivotPairs[pivot]]){
 						columnV.push_back(simp);
 						std::vector<simplexNodePointer> faces = (mode == "homology" ? inData.complex->getAllFacets_P(simp) : (inData.complex->simplexType == "alphaComplex"? inData.complex->getAllDelaunayCofacets(simp):  inData.complex->getAllCofacets(simp->simplex)));
-					
 						faceList.insert(faceList.end(), faces.begin(), faces.end());
 					}
 					std::make_heap(faceList.begin(), faceList.end(), compStruct);
@@ -266,10 +266,12 @@ void fastPersistence<nodeType>::outputData(pipePacket<nodeType> &inData){
 		file << std::to_string(row.bettiDim) << "," << std::to_string(row.birth) << "," << std::to_string(row.death) << std::endl;
 	
 	file.close();
-
-	file.close();
-
-	file.open("output/tArray.csv");
+	
+	
+	if(this->fnmod.size() > 0)
+		file.open("output/tArray"+this->fnmod+".csv");
+	else
+		file.open("output/tArray.csv");
 
 	file << "Dim,Birth,Death,Simplex\n";
 	for(auto tStruct : inData.bettiTable){
