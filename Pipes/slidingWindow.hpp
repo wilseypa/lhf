@@ -44,9 +44,9 @@ public:
     
     
     slidingWindow();
-    pipePacket<nodeType> runPipe(pipePacket<nodeType>);
-    void outputData(pipePacket<nodeType>);
-    bool configPipe(std::map<std::string, std::string>);
+    void runPipe(pipePacket<nodeType>&);
+    void outputData(pipePacket<nodeType>&);    
+    bool configPipe(std::map<std::string, std::string>&); 
     void runSubPipeline(pipePacket<nodeType>);
     void writeComplexStats(pipePacket<nodeType> &);
     static bool nnBasedEvaluator(std::vector<double>&, std::vector<std::vector<double>>&);
