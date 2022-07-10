@@ -27,7 +27,7 @@ EvalParams slidingWindow<nodeType>::defaultVals;
 template<typename nodeType>
 slidingWindow<nodeType>::slidingWindow()
 {
-    defaultVals.windowMaxSize = 100;
+    defaultVals.windowMaxSize = 50;
     defaultVals.key = 0;
     defaultVals.targetPartition = 0;
     this->pipeType = "SlidingWindow";
@@ -567,7 +567,7 @@ bool slidingWindow<nodeType>::nnBasedEvaluator(std::vector<double>& currentVecto
 
 // runPipe -> Run the configured functions of this pipeline segment
 template<typename nodeType>
-pipePacket<nodeType> slidingWindow<nodeType>::runPipe(pipePacket<nodeType> inData)
+void slidingWindow<nodeType>::runPipe(pipePacket<nodeType> &inData)
 {
     readInput rp;
 	//Store our distance matrix
@@ -580,6 +580,8 @@ pipePacket<nodeType> slidingWindow<nodeType>::runPipe(pipePacket<nodeType> inDat
     //		3. IF 100 points have passed, generate persistence intervals
     //
     // Loop this subpipeline until there's no more data
+
+	auto tempData = inData;
 
     std::vector<std::vector<double>> windowValues;
 
@@ -604,18 +606,18 @@ pipePacket<nodeType> slidingWindow<nodeType>::runPipe(pipePacket<nodeType> inDat
                 {
                     std::cout << "Initializing complex" << std::endl;
 
-                    inData.workData = windowValues;
+                    tempData.workData = windowValues;
 
-                    distMatrix.resize(inData.workData.size(), std::vector<double>(inData.workData.size(),0));
+                    distMatrix.resize(tempData.workData.size(), std::vector<double>(tempData.workData.size(),0));
 
 					//Iterate through each vector
-                    for(unsigned i = 0; i < inData.workData.size(); i++)
+                    for(unsigned i = 0; i < tempData.workData.size(); i++)
                     {
-                        if(!inData.workData[i].empty())
+                        if(!tempData.workData[i].empty())
                         {
                             std::vector<double> distsFromCurrVect;
 
-                            for(unsigned j = 0; j < inData.workData.size(); j++)
+                            for(unsigned j = 0; j < tempData.workData.size(); j++)
                             {
                                 if (j < i)
                                 {
@@ -624,7 +626,7 @@ pipePacket<nodeType> slidingWindow<nodeType>::runPipe(pipePacket<nodeType> inDat
                                 else if (j > i)
                                 {
                                     //Calculate vector distance
-                                    auto dist = this->ut.vectors_distance(inData.workData[i], inData.workData[j]);
+                                    auto dist = this->ut.vectors_distance(tempData.workData[i], tempData.workData[j]);
                                     distMatrix[i][j] = dist;
                                     distsFromCurrVect.push_back( dist );
                                 }
@@ -642,13 +644,13 @@ pipePacket<nodeType> slidingWindow<nodeType>::runPipe(pipePacket<nodeType> inDat
                         }
                     }
 
-                    inData.complex->setDistanceMatrix(&distMatrix);
+                    tempData.complex->setDistanceMatrix(&distMatrix);
 
 					for(auto a : windowValues)
-						inData.complex->insert();
+						tempData.complex->insert();
 
                     // Set the stream evaluator
-                    inData.complex->setStreamEvaluator(&nnBasedEvaluator);
+                    tempData.complex->setStreamEvaluator(&nnBasedEvaluator);
 
                     std::cout << "Returning from complex initializer" << std::endl;
 
@@ -678,7 +680,7 @@ pipePacket<nodeType> slidingWindow<nodeType>::runPipe(pipePacket<nodeType> inDat
             }
 
             //Check if we've gone through 100 points
-            if(pointCounter % 500 == 0 && pointCounter >= defaultVals.windowMaxSize)
+            if(pointCounter % 50 == 0 && pointCounter >= defaultVals.windowMaxSize)
             {
                 // Build and trigger remaining pipeline. It should only require the computation of persistence
                 // intervals from the complex being maintained.
@@ -694,7 +696,7 @@ pipePacket<nodeType> slidingWindow<nodeType>::runPipe(pipePacket<nodeType> inDat
 
         }
         //Probably want to trigger the remaining pipeline one last time...
-        if((pointCounter - 1) % 500 != 0)
+        if((pointCounter - 1) % 50 != 0)
         {
             std::cout << "pointCounter: " << pointCounter << "\tSimplex Count: " << inData.complex->simplexCount() << "\tVertex Count: " << inData.complex->vertexCount() << std::endl;
 
@@ -705,7 +707,7 @@ pipePacket<nodeType> slidingWindow<nodeType>::runPipe(pipePacket<nodeType> inDat
         writeComplexStats(inData);
     }
 
-    return inData;
+    return;
 }
 
 template<typename nodeType>
@@ -764,8 +766,12 @@ void slidingWindow<nodeType>::runSubPipeline(pipePacket<nodeType> wrData)
 
 // configPipe -> configure the function settings of this pipeline segment
 template<typename nodeType>
-bool slidingWindow<nodeType>::configPipe(std::map<std::string, std::string> configMap)
+bool slidingWindow<nodeType>::configPipe(std::map<std::string, std::string> &configMap)
 {
+	
+	std::cout << "Sliding Window Config Found" << std::endl;
+	
+	
     std::string strDebug;
     this->subConfigMap = configMap;
 
@@ -805,7 +811,7 @@ bool slidingWindow<nodeType>::configPipe(std::map<std::string, std::string> conf
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
 template<typename nodeType>
-void slidingWindow<nodeType>::outputData(pipePacket<nodeType> inData)
+void slidingWindow<nodeType>::outputData(pipePacket<nodeType> &inData)
 {
     std::ofstream file ("output/" + this->pipeType + "_" + std::to_string(this->repCounter) + "_output.csv");
 
