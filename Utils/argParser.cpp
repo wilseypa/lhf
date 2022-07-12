@@ -136,13 +136,15 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 		args["mode"] = "alpha";   
 		args["pipeline"] = basePipeline;
 		return;
-	}else if(args["complexType"] == "graphInducedComplex" || args["complexType"] == "beta" || args["complexType"] == "betaGeneral"){
+	}else if(args["complexType"] == "graphInducedComplex" || args["complexType"] == "beta" || args["complexType"] == "betaGeneral" || args["complexType"] == "betaExtended"){
 		args["nodeType"] = "alphaNode";
 		args["mode"] = "alpha";
 		if(args["complexType"] == "beta")
 			basePipeline = "distMatrix.neighGraph.rips.fastPersistence";
 		else if(args["complexType"] == "betaGeneral")
 			basePipeline = "distMatrix.betaSkeletonBasedComplex.neighGraph.rips.fastPersistence";
+		else if(args["complexType"] == "betaExtended")
+			basePipeline = "distMatrix.betaSubSkeletonComplex.neighGraph.rips.fastPersistence";
 		
 		args["pipeline"] = basePipeline;
 		args["complexType"] = "alphaComplex";

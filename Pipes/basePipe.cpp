@@ -17,6 +17,7 @@
 #include "ripsPipe.hpp"
 #include "naiveWindow.hpp"
 #include "betaSkeletonBasedComplex.hpp"
+#include "betaSubSkeletonComplex.hpp"
 #include "upscalePipe.hpp"
 #include "qhullPipe.hpp"
 #include "slidingWindow.hpp"
@@ -43,6 +44,8 @@ basePipe<nodeType>* basePipe<nodeType>::newPipe(const std::string &pipeType, con
 		return new upscalePipe<nodeType>();
 	} else if (pipeType == "betaSkeletonBasedComplex"){
 		return new betaSkeletonBasedComplex<nodeType>();
+	} else if (pipeType == "betaSubSkeletonComplex"){
+		return new betaSubSkeletonComplex<nodeType>();
 	}  else if (pipeType == "qhullPipe" || pipeType == "qhull" || pipeType == "alpha"){
 		return new qhullPipe<nodeType>();
 	} else if (pipeType == "slidingwindow" || pipeType == "sliding"){
