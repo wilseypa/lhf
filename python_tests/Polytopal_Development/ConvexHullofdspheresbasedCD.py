@@ -4,7 +4,8 @@ import numpy as np
 import math
 from sklearn.decomposition import PCA
 import random
-
+import csv
+from datetime import datetime
 
 def PCAprojection(pts):
 	pca = PCA(n_components=len(pts[0])-1).fit(pts)
@@ -14,23 +15,35 @@ def PCAprojection(pts):
 
 datasize  = 10
 dim = 3
-unitsphere = np.array([np.array([ 0.70013219, -0.6740024 , -0.23566008]), np.array([ 0.89640578, -0.4363997 ,  0.07753701]), np.array([ 0.41702517, -0.85432765,  0.31018425]), np.array([0.19171654,0.31713976, 0.92879876]), np.array([-0.33456917,  0.82684448, -0.45209698]), np.array([ 0.35478838, -0.9346821 , -0.02223899]), np.array([-0.36459425,  0.82332563, -0.43497809]), np.array([-0.72403641, -0.08169234,  0.68490703]), np.array([-0.64549831,  0.5052651 , -0.572747  ]), np.array([-0.47213208,  0.67731401,  0.56421364])])  #tadasets.dsphere(n=datasize,d=dim-1,r=1,noise=0)
+#unitsphere = np.array([np.array([ 0.70013219, -0.6740024 , -0.23566008]), np.array([ 0.89640578, -0.4363997 ,  0.07753701]), np.array([ 0.41702517, -0.85432765,  0.31018425]), np.array([0.19171654,0.31713976, 0.92879876]), np.array([-0.33456917,  0.82684448, -0.45209698]), np.array([ 0.35478838, -0.9346821 , -0.02223899]), np.array([-0.36459425,  0.82332563, -0.43497809]), np.array([-0.72403641, -0.08169234,  0.68490703]), np.array([-0.64549831,  0.5052651 , -0.572747  ]), np.array([-0.47213208,  0.67731401,  0.56421364])])  #tadasets.dsphere(n=datasize,d=dim-1,r=1,noise=0)
+unitsphere = []
+with open('input0dim3size55noise0', "r") as f:
+			reader = csv.reader(f)
+			for line in reader:
+				k=[]
+				for x in line:
+					k.append(float(x))
+				unitsphere.append(k)
+unitsphere = np.array(unitsphere)
 centroid = sum(unitsphere)/len(unitsphere)
 #print(centroid)
 newunitsphere = [x-centroid for x in unitsphere]
-#ax = plt.axes(projection='3d')
+centroid = [0,0,0]
+
 '''
-zdata = [item[0] for item in unitsphere]
-xdata = [item[1] for item in unitsphere]
-ydata = [item[2] for item in unitsphere]
+ax = plt.axes(projection='3d')
+
+xdata = [item[0] for item in unitsphere]
+ydata = [item[1] for item in unitsphere]
+zdata = [item[2] for item in unitsphere]
 ax.scatter3D(xdata, ydata, zdata,color = 'blue')
-ax.scatter3D([centroid[0]],[centroid[1]],[centroid[2]],color = 'blue')
+plt.show()
+#ax.scatter3D([centroid[0]],[centroid[1]],[centroid[2]],color = 'blue')
 
 zdata = [item[0] for item in newunitsphere]
 xdata = [item[1] for item in newunitsphere]
 ydata = [item[2] for item in newunitsphere]
 ax.scatter3D(xdata, ydata, zdata,color = 'red')
-centroid = [0,0,0]
 ax.scatter3D([centroid[0]],[centroid[1]],[centroid[2]],color = 'red')
 '''
 def simplexpoints(c):
@@ -114,7 +127,8 @@ for y in unitsphere:
 		i = i+1
 	finalpoints = getsimplexsphere(points)
 	newfinalpoints.extend(finalpoints.tolist())
-projectionpoint = [random.randint(-1, 1) for x in range(len(newfinalpoints[0]))]
+random.seed(datetime.now())
+projectionpoint = [random.random() for x in range(len(newfinalpoints[0]))]
 #print(projectionpoint)
 projecteddsphere = []
 for x in newfinalpoints:
@@ -132,6 +146,7 @@ ydata = [item[1] for item in finalpoints]
 plt.scatter(xdata,ydata)
 plt.savefig("projectionstereo.pdf", bbox_inches='tight')
 plt.show()
+'''
 ax = plt.axes(projection='3d')
 
 xdata = [item[0] for item in projecteddsphere]
@@ -141,6 +156,26 @@ ax.scatter3D([projpoint[0]],[projpoint[1]],[projpoint[2]],color = 'green')
 ax.scatter3D(xdata, ydata, zdata,color = 'blue')
 plt.show()
 
+
+fig, ax = plt.subplots()
+i = 0
+for x in range(0,len(projecteddsphere),3):
+	print(finalpoints[x],finalpoints[x+1],finalpoints[x+2])
+	center = findCircumCenter(finalpoints[x],finalpoints[x+1],finalpoints[x+2])
+	#print(center,"   ",finalpoints[x])
+	radius = math.dist(center,finalpoints[x])
+	#print(radius)
+	#input()
+	circle = plt.Circle(center, radius, color='r',alpha = 0.1)
+	ax.add_patch(circle)
+	i = i+1
+print(i)
+ax.set_xlim((-100, 100))
+ax.set_ylim((-100, 100))
+
+plt.show()
+'''
+	
 '''
 	c = len(centroid)-1
 	pca = PCA(n_components=c).fit(points)
