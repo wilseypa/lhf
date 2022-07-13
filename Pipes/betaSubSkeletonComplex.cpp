@@ -227,10 +227,13 @@ bool betaSubSkeletonComplex<alphaNode>:: checkInsertSubDsimplex(std::vector<unsi
    		}
                 
 		double circumRadius;
+/*
 		if(simplex.size()>2)
 			circumRadius = utils::circumRadius(simplex,((alphaComplex<alphaNode>*)inData.complex)->distMatrix);
 		else
 			circumRadius = pow((*((alphaComplex<alphaNode>*)inData.complex)->distMatrix)[dsimplex[0]][dsimplex[1]]/2,2);	
+*/
+        circumRadius = pow(utils::vectors_distance(circumCenter, inData.inputData[dsimplex[0]]),2);
 		std::vector<size_t> neighbors;
 		std::vector<std::vector<size_t>> neighborsCircleIntersection;        
 		std::vector<double> hpcoff = utils::nullSpaceOfMatrix(simplex,inData.inputData,circumCenter,sqrt(circumRadius));
@@ -245,14 +248,14 @@ bool betaSubSkeletonComplex<alphaNode>:: checkInsertSubDsimplex(std::vector<unsi
 		std::sort (neighbors1.begin(),neighbors1.end());
 		std::sort (neighbors2.begin(),neighbors2.end()); 
 		if(intersectionCircle==true){
-			std::vector<size_t> v1(std::min(neighbors1.size(),neighbors1.size()));
+			std::vector<size_t> v1(std::min(neighbors1.size(),neighbors2.size()));
 			std::vector<size_t>::iterator it1;
 			it1=std::set_intersection (neighbors1.begin(), neighbors1.end(), neighbors2.begin(), neighbors2.end(), v1.begin());
 			v1.resize(it1-v1.begin()); 
 			neighborsfinalCircle = v1;
 		}
-		else{
-			std::vector<size_t> v1(std::max(neighbors1.size(),neighbors1.size()));
+		else if(unionCircle ==true){
+			std::vector<size_t> v1(neighbors1.size()+neighbors2.size());
 			std::vector<size_t>::iterator it1;				
 			it1=std::set_union(neighbors1.begin(), neighbors1.end(), neighbors2.begin(), neighbors2.end(), v1.begin());
 			v1.resize(it1-v1.begin()); 
@@ -277,10 +280,12 @@ bool betaSubSkeletonComplex<alphaNode>:: checkInsertSubDsimplex(std::vector<unsi
 			circumCenter = R;
 		}
 		double circumRadius;
-		if(simplex.size()>2)
+/*		if(simplex.size()>2)
 			circumRadius = utils::circumRadius(simplex,((alphaComplex<alphaNode>*)inData.complex)->distMatrix);
 		else
 			circumRadius = pow((*((alphaComplex<alphaNode>*)inData.complex)->distMatrix)[dsimplex[0]][dsimplex[1]]/2,2);
+*/
+        circumRadius = pow(utils::vectors_distance(circumCenter, inData.inputData[dsimplex[0]]),2);
 		bool first = true;
 		for (auto x : simplex){
 			std::vector<double> betaCenter;
@@ -301,7 +306,7 @@ bool betaSubSkeletonComplex<alphaNode>:: checkInsertSubDsimplex(std::vector<unsi
 					neighborsfinalLune = v1;
 				}
 				else{
-					std::vector<size_t> v1(std::max(neighborsfinalLune.size(),neighbors1faces1.size()));
+					std::vector<size_t> v1(neighborsfinalLune.size()+neighbors1faces1.size());
 					std::vector<size_t>::iterator it1;				
 					it1=std::set_union(neighbors1faces1.begin(), neighbors1faces1.end(), neighborsfinalLune.begin(), neighborsfinalLune.end(), v1.begin());
 					v1.resize(it1-v1.begin()); 
