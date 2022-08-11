@@ -150,7 +150,7 @@ class utils {
 	static double getAverage(std::vector<double> &);
 	static std::vector<std::vector<double>> transpose(std::vector<std::vector<double>> );
     static std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> computePCA(std::vector<std::vector<double>> , int);
-    static std::vector<std::vector<double>> computePCAInverse(std::vector<std::vector<double>> , std::vector<std::vector<double>> );
+    static std::vector<std::vector<double>> computePCAInverse(std::vector<std::vector<double>>,std::vector<std::vector<double>> , std::vector<std::vector<double>> );
 
 
 

@@ -292,8 +292,20 @@ std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> uti
 
 		
 }
-std::vector<std::vector<double>> utils:: computePCAInverse(std::vector<std::vector<double>> FinalOutput, std::vector<std::vector<double>> eigenvectors ){
-        return transpose(matrixMultiplication(transpose(eigenvectors),transpose(FinalOutput)));
+std::vector<std::vector<double>> utils:: computePCAInverse(std::vector<std::vector<double>> input,std::vector<std::vector<double>> FinalOutput, std::vector<std::vector<double>> eigenvectors ){
+	    
+	    auto result = transpose(matrixMultiplication(transpose(eigenvectors),transpose(FinalOutput)));
+	    
+	    std::vector<std::vector<double>> transposeinput = transpose(input);
+	    int i =0;
+	    for(auto x:transposeinput){
+		    double average = getAverage(x);
+		    for(int y=0;y<result.size();y++){
+				result[y][i] +=average;
+		     }
+		    i++;
+		}
+        return result;
 
 }
 std::pair<std::vector<double>,std::vector<std::vector<double>>> utils :: nullSpaceOfMatrix(std::set<unsigned> simplex,std::vector<std::vector<double>> inputData,std::vector<double> & cc, double radius,bool lowerdimension){

@@ -230,12 +230,18 @@ bool betaSubSkeletonComplex<alphaNode>:: checkInsertSubDsimplex(std::vector<unsi
         circumRadius = pow(utils::vectors_distance(circumCenter, inData.inputData[dsimplex[0]]),2);
         circumRadius = pow(utils::vectors_distance(circumCenter, inData.inputData[dsimplex[0]]),2);
 		std::vector<size_t> neighbors;
-		std::vector<std::vector<size_t>> neighborsCircleIntersection;      
+		std::vector<std::vector<size_t>> neighborsCircleIntersection;   
+		std::vector<std::vector<double>> mat;
+   
+		for(auto x : simplex)
+			mat.push_back(inData.inputData[x]);
+		mat.push_back(circumCenter);
 		auto hpcoff = utils::nullSpaceOfMatrix(simplex,inData.inputData,circumCenter,sqrt(circumRadius),true);
 
         std::vector<std::vector<double>> refbetaCenters ;
 		refbetaCenters = utils::betaCentersCalculation(hpcoff.first, beta, sqrt(circumRadius),circumCenter);
-		refbetaCenters = utils::computePCAInverse(refbetaCenters,hpcoff.second);
+		
+		refbetaCenters = utils::computePCAInverse(mat,refbetaCenters,hpcoff.second);
 		double betaRadius = utils::vectors_distance(refbetaCenters[0], inData.inputData[dsimplex[0]]);
         std::vector<size_t> neighbors1 = tree.neighborhoodIndices(refbetaCenters[0], betaRadius); //All neighbors in epsilon-ball
 		for(auto t :dsimplex)
