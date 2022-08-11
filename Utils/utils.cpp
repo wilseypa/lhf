@@ -232,16 +232,11 @@ std::vector<std::vector<double>> utils :: inverseOfMatrix(std::vector<std::vecto
 }
 
 std::vector<std::vector<double>> utils :: betaCentersCalculation(std::vector<double> hpcoff, double beta, double circumRadius,std::vector<double> circumCenter,bool lowerdimension){
-	int k;
-	std::cout<<"Rohitabc";
-	std::cin>>k;
 	double distance = sqrt(pow((beta*circumRadius),2) - pow(circumRadius,2));
 	double d1 , d2;   // Parallel Plane coefficient
 	double sqrtofsquaredsum =0,squaredsum=0;
 	double dotproduct = 0;
     int i=0;
-	std::cout<<"Rohitabc";
-	std::cin>>k;
 	for(auto x: hpcoff){
 		squaredsum += x*x;
 	    dotproduct += x*circumCenter[i];
@@ -249,8 +244,6 @@ std::vector<std::vector<double>> utils :: betaCentersCalculation(std::vector<dou
 	}
 	
 	sqrtofsquaredsum = sqrt(squaredsum);
-	std::cout<<"Rohitabc";
-	std::cin>>k;
 	 
 	d1 = -dotproduct + distance*sqrtofsquaredsum;
 	d2 = -dotproduct - distance*sqrtofsquaredsum; 
@@ -316,16 +309,7 @@ std::vector<double> utils :: nullSpaceOfMatrix(std::set<unsigned> simplex,std::v
     for(auto x : simplex)
 	    mat.push_back(inputData[x]);
 
-   	int k;
-	std::cout<<"Rohitabc";
-	std::cin>>k;
-	for(auto x : mat){
-	    for(auto y :x){
-		  std::cout<<y<<" ";
-		}
-	  std::cout<<"\n";
-	}
-  /*  do{	
+   /*  do{	
 		std::vector<std::vector<double>> mat1;
 		mat = mat1;
 		if(simplex.size()==n){
@@ -392,9 +376,7 @@ std::vector<double> utils :: nullSpaceOfMatrix(std::set<unsigned> simplex,std::v
 			}
                 matns[i] /= rectemp;
         }
-        std::cout<<"Rohitabc";
-	std::cin>>k;
-	 
+     
         for (unsigned j = 0; j < n; j++)
         {
            if(mat[j][i] != 0 && j!=i){
@@ -413,11 +395,7 @@ std::vector<double> utils :: nullSpaceOfMatrix(std::set<unsigned> simplex,std::v
                    matns[i] /= rectemp2;
 			}
 		}
-		 std::cout<<"Rohitabc";
-	std::cin>>k;
-  }
-  std::cout<<"Rohitabc";
-	std::cin>>k;
+ }
   return matns;
 }
 std::vector<double> utils :: circumCenter(std::set<unsigned> simplex,std::vector<std::vector<double>> inputData){
