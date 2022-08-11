@@ -4,6 +4,10 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include <eigen3/Eigen/Sparse>
+#include <eigen3/Eigen/Eigenvalues>
+#include <cmath>
+#include <numeric>
 #include "../Preprocessing/kdTree.hpp"
 
 
@@ -129,16 +133,25 @@ class utils {
 	static std::vector<std::vector<double>> inverseOfMatrix(std::vector<std::vector<double>> mat, int n);
 	static std::vector<std::vector<double>> matrixMultiplication(std::vector<std::vector<double>> matA, std::vector<std::vector<double>> matB);
     static std::vector<double> nullSpaceOfMatrix(std::set<unsigned> simplex, std::vector<std::vector<double>> inputdata,std::vector<double> cc, double radius);
-    static std::vector<std::vector<double>> betaCentersCalculation(std::vector<double> hpcoff, double beta, double circumRadius,std::vector<double> circumCenter);
+    static std::vector<std::vector<double>> betaCentersCalculation(std::vector<double> hpcoff, double beta, double circumRadius,std::vector<double> circumCenter,bool lowerdimension=true);
 	static double simplexVolume(std::set<unsigned> simplex,std::vector<std::vector<double>>* distMatrix,int dd);
 	static double simplexVolume(std::vector<std::vector<double>>mat);
     
-        static std::vector<std::vector<bool>> betaNeighbors(std::vector<std::vector<double>> &,double beta,std::string betaMode);
+    static std::vector<std::vector<bool>> betaNeighbors(std::vector<std::vector<double>> &,double beta,std::string betaMode);
 	static std::pair<std::vector<std::vector<double>>,std::vector<double>> calculateBetaCentersandRadius(std::vector<unsigned> simplex ,std::vector<std::vector<double>> &inputData,std::vector<std::vector<double>>* distMatrix, double beta);
 
 	static std::vector<double> serialize(std::vector<std::vector<double>>& );
 	static std::vector<std::vector<double>> deserialize(std::vector<double> , unsigned);
 
 	static std::vector<double> nearestNeighbors(std::vector<double>&, std::vector<std::vector<double>>&);
+	
+	static Eigen::MatrixXd  covariance(std::vector<std::vector<double>> );
+	static std::vector<std::vector<double>> transposeMeanAdjusted(std::vector<std::vector<double>> );
+	static double getAverage(std::vector<double> &);
+	static std::vector<std::vector<double>> transpose(std::vector<std::vector<double>> );
+    static std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> computePCA(std::vector<std::vector<double>> , int);
+    static std::vector<std::vector<double>> computePCAInverse(std::vector<std::vector<double>> , std::vector<std::vector<double>> );
+
+
 
 };

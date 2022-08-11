@@ -51,6 +51,57 @@ utils::utils(std::string _debug, std::string _outputFile){
 	outputFile = _outputFile;
 }
 
+double  utils :: getAverage(std::vector<double> &v) {
+    if (v.empty()) {
+        return 0;
+    }
+    return std::accumulate(v.begin(), v.end(), 0.0) / v.size();
+}
+
+std::vector<std::vector<double>> utils ::  transposeMeanAdjusted(std::vector<std::vector<double>> input){
+    std::vector<std::vector<double>> inputtranspose;
+    std::vector<std::vector<double>> inputstd;
+  
+    for(int i=0;i<input[0].size();i++){
+		std::vector<double> row;
+	  for(int j=0;j<input.size();j++){
+		  row.push_back(input[j][i]);
+	}
+	inputtranspose.push_back(row);
+	}
+	
+    for(int i =0;i<inputtranspose.size();i++){
+		std::vector<double> inter;
+		double averagex = getAverage(inputtranspose[i]);
+		double stdval = 0;
+		for(int j =0;j<inputtranspose[i].size();j++){
+			inter.push_back((inputtranspose[i][j] -averagex));
+		}
+		inputstd.push_back(inter);
+		}
+	return inputstd;
+}
+
+Eigen::MatrixXd utils ::  covariance(std::vector<std::vector<double>> input){
+	Eigen::MatrixXd result(input.size(),input.size());
+	int i=0,j=0;
+	for(auto x : input){
+		for(auto y : input){
+			double value = 0;
+			double averagex = getAverage(x);
+			double averagey = getAverage(y);
+			for(int i =0;i<x.size();i++){
+				value += (x[i] -averagex)*(y[i] -averagey);
+			}
+			result(i,j) = value/(x.size()-1);
+			j++;
+		}
+		i++;
+		j=0;
+	}
+	return result;
+}
+	
 
 double utils :: determinantOfMatrix(std::vector<std::vector<double>> mat, int n)
 {
@@ -92,6 +143,21 @@ double utils :: determinantOfMatrix(std::vector<std::vector<double>> mat, int n)
 
 	return (det);
 }
+
+std::vector<std::vector<double>> utils ::  transpose(std::vector<std::vector<double>> input){
+    std::vector<std::vector<double>> inputtranspose;
+    
+    for(int i=0;i<input[0].size();i++){
+		std::vector<double> row;
+	  for(int j=0;j<input.size();j++){
+		  row.push_back(input[j][i]);
+	}
+	inputtranspose.push_back(row);
+	}
+	return inputtranspose;
+}
+
+
 std::vector<std::vector<double>> utils :: matrixMultiplication(std::vector<std::vector<double>> matA, std::vector<std::vector<double>> matB){
 			int n1 = matA.size();
 			int m1 = matA[0].size();
@@ -165,13 +231,17 @@ std::vector<std::vector<double>> utils :: inverseOfMatrix(std::vector<std::vecto
   return matinv;
 }
 
-std::vector<std::vector<double>> utils :: betaCentersCalculation(std::vector<double> hpcoff, double beta, double circumRadius,std::vector<double> circumCenter){
-	
+std::vector<std::vector<double>> utils :: betaCentersCalculation(std::vector<double> hpcoff, double beta, double circumRadius,std::vector<double> circumCenter,bool lowerdimension){
+	int k;
+	std::cout<<"Rohitabc";
+	std::cin>>k;
 	double distance = sqrt(pow((beta*circumRadius),2) - pow(circumRadius,2));
 	double d1 , d2;   // Parallel Plane coefficient
 	double sqrtofsquaredsum =0,squaredsum=0;
 	double dotproduct = 0;
     int i=0;
+	std::cout<<"Rohitabc";
+	std::cin>>k;
 	for(auto x: hpcoff){
 		squaredsum += x*x;
 	    dotproduct += x*circumCenter[i];
@@ -179,7 +249,8 @@ std::vector<std::vector<double>> utils :: betaCentersCalculation(std::vector<dou
 	}
 	
 	sqrtofsquaredsum = sqrt(squaredsum);
-	 
+	std::cout<<"Rohitabc";
+	std::cin>>k;
 	 
 	d1 = -dotproduct + distance*sqrtofsquaredsum;
 	d2 = -dotproduct - distance*sqrtofsquaredsum; 
@@ -203,7 +274,37 @@ std::vector<std::vector<double>> utils :: betaCentersCalculation(std::vector<dou
 	centers.push_back(center2);
 	return centers;
 }
+std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> utils:: computePCA(std::vector<std::vector<double>> input, int targetDim){
+        std::vector<std::vector<double>> transp = transposeMeanAdjusted(input);
+        Eigen::MatrixXd covar = covariance(transp);
+        Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> es;
+        es.compute(covar);		
+		std::vector<double> eigenval;
+	    std::vector<std::vector<double>> eigenvec;
+		for(int k=input[0].size()-1;k>=0;k--){
+			std::vector<double> evec;	
+			for(int p=0;p<input[0].size();p++)
+				evec.push_back(es.eigenvectors().col(k)[p]);
+			eigenvec.push_back(evec);
+		}	
 
+        for(int p=input[0].size()-1;p>=0;p--)
+			eigenval.push_back(es.eigenvalues()[p]);
+	    std::vector<std::vector<double>> eigenVecSelect;
+
+		for(int k=0;k<targetDim;k++)
+			eigenVecSelect.push_back(eigenvec[k]);
+		
+		return std::make_pair(matrixMultiplication(eigenVecSelect,transp),eigenVecSelect);
+
+		
+}
+std::vector<std::vector<double>> utils:: computePCAInverse(std::vector<std::vector<double>> FinalOutput, std::vector<std::vector<double>> eigenvectors ){
+        std::vector<std::vector<double>> originalData;
+        
+        return matrixMultiplication(transpose(eigenvectors),FinalOutput);
+
+}
 std::vector<double> utils :: nullSpaceOfMatrix(std::set<unsigned> simplex,std::vector<std::vector<double>> inputData,std::vector<double> cc, double radius){
     int index;
     srand(time(NULL));
@@ -215,7 +316,15 @@ std::vector<double> utils :: nullSpaceOfMatrix(std::set<unsigned> simplex,std::v
     for(auto x : simplex)
 	    mat.push_back(inputData[x]);
 
-   
+   	int k;
+	std::cout<<"Rohitabc";
+	std::cin>>k;
+	for(auto x : mat){
+	    for(auto y :x){
+		  std::cout<<y<<" ";
+		}
+	  std::cout<<"\n";
+	}
   /*  do{	
 		std::vector<std::vector<double>> mat1;
 		mat = mat1;
@@ -283,6 +392,9 @@ std::vector<double> utils :: nullSpaceOfMatrix(std::set<unsigned> simplex,std::v
 			}
                 matns[i] /= rectemp;
         }
+        std::cout<<"Rohitabc";
+	std::cin>>k;
+	 
         for (unsigned j = 0; j < n; j++)
         {
            if(mat[j][i] != 0 && j!=i){
@@ -301,7 +413,11 @@ std::vector<double> utils :: nullSpaceOfMatrix(std::set<unsigned> simplex,std::v
                    matns[i] /= rectemp2;
 			}
 		}
+		 std::cout<<"Rohitabc";
+	std::cin>>k;
   }
+  std::cout<<"Rohitabc";
+	std::cin>>k;
   return matns;
 }
 std::vector<double> utils :: circumCenter(std::set<unsigned> simplex,std::vector<std::vector<double>> inputData){

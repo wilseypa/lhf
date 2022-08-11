@@ -212,6 +212,9 @@ bool betaSubSkeletonComplex<alphaNode>:: checkInsertSubDsimplex(std::vector<unsi
 	if(this->betaMode == "betaHighCircle"){
 		if(beta<1)
 			beta=1/beta;
+		int k;
+		std::cout<<"Rohit";
+		std::cin>>k;
     	std::set<unsigned> simplex(dsimplex.begin(),dsimplex.end());
 	    std::vector<double> circumCenter;
 	   	if(simplex.size()>2)
@@ -227,20 +230,51 @@ bool betaSubSkeletonComplex<alphaNode>:: checkInsertSubDsimplex(std::vector<unsi
    		}
                 
 		double circumRadius;
+        circumRadius = pow(utils::vectors_distance(circumCenter, inData.inputData[dsimplex[0]]),2);
+std::cout<<"Rohit";
+		std::cin>>k;
 /*
 		if(simplex.size()>2)
 			circumRadius = utils::circumRadius(simplex,((alphaComplex<alphaNode>*)inData.complex)->distMatrix);
 		else
 			circumRadius = pow((*((alphaComplex<alphaNode>*)inData.complex)->distMatrix)[dsimplex[0]][dsimplex[1]]/2,2);	
-*/
+
+        for(auto x:dsimplex)
+			for(auto y : inData.inputData[x])
+			   std::cout<<y<<" ";
+	    std::cout<<"\n";
+	    for(auto x:circumCenter)
+	        std::cout<<x<<" ";
+	    std::cout<<"\n";
+	    std::cout<<pow(circumRadius,0.5)<<" ";
+	   	std::cout<<"\n";
+*/std::cout<<"Rohit";
+		std::cin>>k;
         circumRadius = pow(utils::vectors_distance(circumCenter, inData.inputData[dsimplex[0]]),2);
 		std::vector<size_t> neighbors;
 		std::vector<std::vector<size_t>> neighborsCircleIntersection;        
+		std::cout<<"Rohit123";
+		std::cin>>k;
 		std::vector<double> hpcoff = utils::nullSpaceOfMatrix(simplex,inData.inputData,circumCenter,sqrt(circumRadius));
         std::vector<std::vector<double>> refbetaCenters ;
+        std::cout<<"Rohit123";
+		std::cin>>k;
 		refbetaCenters = utils::betaCentersCalculation(hpcoff, beta, sqrt(circumRadius),circumCenter);
+std::cout<<"Rohit";
+		std::cin>>k;
+/*		for(auto x:refbetaCenters[0])
+	        std::cout<<x<<" ";
+	    std::cout<<"\n";
+	    for(auto x:refbetaCenters[1])
+	        std::cout<<x<<" ";
+		std::cout<<"\n";    
+*/
 		double betaRadius = utils::vectors_distance(refbetaCenters[0], inData.inputData[dsimplex[0]]);
-		
+		std::cout<<"\n";
+	    std::cout<<betaRadius<<" ";
+//	    int k;
+		std::cin>>k;
+
 		std::vector<size_t> neighbors1 = tree.neighborhoodIndices(refbetaCenters[0], betaRadius); //All neighbors in epsilon-ball
 		for(auto t :dsimplex)
 			neighbors1.erase(std::remove(neighbors1.begin(),neighbors1.end(),t),neighbors1.end());
@@ -286,13 +320,32 @@ bool betaSubSkeletonComplex<alphaNode>:: checkInsertSubDsimplex(std::vector<unsi
 			circumRadius = pow((*((alphaComplex<alphaNode>*)inData.complex)->distMatrix)[dsimplex[0]][dsimplex[1]]/2,2);
 */
         circumRadius = pow(utils::vectors_distance(circumCenter, inData.inputData[dsimplex[0]]),2);
+/*		
+        for(auto x:dsimplex)
+			for(auto y : inData.inputData[x])
+			   std::cout<<y<<" ";
+	    std::cout<<"\n";
+	    for(auto x:circumCenter)
+	        std::cout<<x<<" ";
+	    std::cout<<"\n";
+	    std::cout<<pow(circumRadius,0.5)<<" ";
+	   	std::cout<<"\n";
+*/
+
 		bool first = true;
 		for (auto x : simplex){
 			std::vector<double> betaCenter;
 			for(unsigned y =0 ;y< inData.inputData[0].size();y++)
 				betaCenter.push_back(beta*circumCenter[y] + (1-beta)*inData.inputData[x][y]);
 			double betaRadius = beta*sqrt(circumRadius);     
-
+/*
+ 		for(auto x:betaCenter)
+	        std::cout<<x<<" ";
+		std::cout<<"\n";
+	    std::cout<<betaRadius<<" ";
+	    std::cout<<"\n";
+*/
+		
 			std::vector<size_t> neighbors1faces1 = tree.neighborhoodIndices(betaCenter, betaRadius); //All neighbors in epsilon-ball
 			neighbors1faces1.erase(std::remove(neighbors1faces1.begin(),neighbors1faces1.end(),x),neighbors1faces1.end());
 			if(!first){
@@ -317,6 +370,8 @@ bool betaSubSkeletonComplex<alphaNode>:: checkInsertSubDsimplex(std::vector<unsi
 				neighborsfinalLune = neighbors1faces1;
 			first= false;
 		}
+//		int k;
+//		std::cin>>k;
 	}
 	//std::cout<<this->betaMode ;
 	if(this->betaMode == "betaHighLune" && neighborsfinalLune.size() == 0)
