@@ -688,9 +688,9 @@ bool betaSkeletonBasedComplex<alphaNode>:: checkInsertDsimplex(std::vector<unsig
    				faceRadius = utils::circumRadius(face,((alphaComplex<alphaNode>*)inData.complex)->distMatrix);
    			else
 				faceRadius = pow(((*((alphaComplex<alphaNode>*)inData.complex)->distMatrix)[face1[0]][face1[1]]/2),2);
-                        
-			std::vector<double> hpcoff = utils::nullSpaceOfMatrix(face,inData.inputData,faceCC,sqrt(faceRadius));
-            std::vector<std::vector<double>> refbetaCenters ;
+            auto result = utils::nullSpaceOfMatrix(face,inData.inputData,faceCC,sqrt(faceRadius));            
+			std::vector<double> hpcoff = result.first;
+			            std::vector<std::vector<double>> refbetaCenters ;
 			bool sameside = false;
 			double fixdistance = utils::vectors_distance(faceCC,circumCenter) + sqrt(circumRadius);
 		//	std::cout<<fixdistance<<" "<<sqrt(faceRadius)<<"  "<<sqrt(circumRadius)<<"\n";

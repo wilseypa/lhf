@@ -231,7 +231,7 @@ std::vector<std::vector<double>> utils :: inverseOfMatrix(std::vector<std::vecto
   return matinv;
 }
 
-std::vector<std::vector<double>> utils :: betaCentersCalculation(std::vector<double> hpcoff, double beta, double circumRadius,std::vector<double> circumCenter,bool lowerdimension){
+std::vector<std::vector<double>> utils :: betaCentersCalculation(std::vector<double> hpcoff, double beta, double circumRadius,std::vector<double> circumCenter){
 	double distance = sqrt(pow((beta*circumRadius),2) - pow(circumRadius,2));
 	double d1 , d2;   // Parallel Plane coefficient
 	double sqrtofsquaredsum =0,squaredsum=0;
@@ -288,69 +288,32 @@ std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> uti
 		for(int k=0;k<targetDim;k++)
 			eigenVecSelect.push_back(eigenvec[k]);
 		
-		return std::make_pair(matrixMultiplication(eigenVecSelect,transp),eigenVecSelect);
+		return std::make_pair(transpose(matrixMultiplication(eigenVecSelect,transp)),eigenVecSelect);
 
 		
 }
 std::vector<std::vector<double>> utils:: computePCAInverse(std::vector<std::vector<double>> FinalOutput, std::vector<std::vector<double>> eigenvectors ){
-        std::vector<std::vector<double>> originalData;
-        
-        return matrixMultiplication(transpose(eigenvectors),FinalOutput);
+        return transpose(matrixMultiplication(transpose(eigenvectors),transpose(FinalOutput)));
 
 }
-std::vector<double> utils :: nullSpaceOfMatrix(std::set<unsigned> simplex,std::vector<std::vector<double>> inputData,std::vector<double> cc, double radius){
+std::pair<std::vector<double>,std::vector<std::vector<double>>> utils :: nullSpaceOfMatrix(std::set<unsigned> simplex,std::vector<std::vector<double>> inputData,std::vector<double> & cc, double radius,bool lowerdimension){
     int index;
     srand(time(NULL));
-
-    int n = inputData[0].size();
+    int n = simplex.size();
     std::vector<double> matns(n,1);
     std::vector<std::vector<double>> mat;
     
     for(auto x : simplex)
 	    mat.push_back(inputData[x]);
-
-   /*  do{	
-		std::vector<std::vector<double>> mat1;
-		mat = mat1;
-		if(simplex.size()==n){
-			for(auto x : simplex)
-				mat.push_back(inputData[x]);
-		}else if(simplex.size()>n){
-			int count = 0;
-			for(auto x : simplex){
-				mat.push_back(inputData[x]);
-				count++;
-				if(count==n)
-				 break;	
-			}
-		}
-		else{
-			for(auto x : simplex){
-				mat.push_back(inputData[x]);
-				}	
-				for(int i=0;i<(n-simplex.size());i++){
-					std::vector<double> pos(n,1);
-					std::vector<unsigned> angles(n-1,0);
-					for(int j=1;j<n;j++){
-						if(j!=n-1)
-							angles[j] = rand()%180 + 1;
-						else
-							angles[j] = rand()%360 + 1;
-						pos[j] = sin(angles[j])*pos[j-1];
-					}
-					for(int j=0;j<n-1;j++){
-						pos[j] *= radius*cos(angles[j+1]);
-					}
-					for(int j=0;j<n;j++)
-						pos[j] += cc[j];
-					mat.push_back(pos);
-
-				}
-		}
-	}while(simplexVolume(mat) == 0 && n >2);
- */
-	
-
+	mat.push_back(cc);
+	std::pair<std::vector<std::vector<double>>,std::vector<std::vector<double>>> outputPCA;
+	if(lowerdimension==true){    
+		outputPCA = computePCA(mat,simplex.size());
+		mat = outputPCA.first;
+		cc = mat[mat.size()-1];
+		mat.pop_back();
+    }
+   	
     for (unsigned i = 0; i < n; i++)
     {
         index = i;
@@ -396,7 +359,8 @@ std::vector<double> utils :: nullSpaceOfMatrix(std::set<unsigned> simplex,std::v
 			}
 		}
  }
-  return matns;
+
+  return std::make_pair(matns,outputPCA.second);
 }
 std::vector<double> utils :: circumCenter(std::set<unsigned> simplex,std::vector<std::vector<double>> inputData){
 // Soluiton  = inv(matA) * matC
@@ -1383,8 +1347,8 @@ std::pair<std::vector<std::vector<double>>,std::vector<double>> utils::calculate
    				faceRadius = utils::circumRadius(face,distMatrix);
    			else
 				faceRadius = pow((*distMatrix)[face1[0]][face1[1]]/2,2);
-                        
-			std::vector<double> hpcoff = utils::nullSpaceOfMatrix(face,inputData,faceCC,sqrt(faceRadius));
+			auto result = utils::nullSpaceOfMatrix(face,inputData,faceCC,sqrt(faceRadius));            
+			std::vector<double> hpcoff = result.first;
 			std::vector<double> betaCenter;
 			double betaRadius;
              		std::vector<std::vector<double>> betaCenters ;

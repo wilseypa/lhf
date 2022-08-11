@@ -212,7 +212,6 @@ bool betaSubSkeletonComplex<alphaNode>:: checkInsertSubDsimplex(std::vector<unsi
 	if(this->betaMode == "betaHighCircle"){
 		if(beta<1)
 			beta=1/beta;
-		int k;
 		std::set<unsigned> simplex(dsimplex.begin(),dsimplex.end());
 	    std::vector<double> circumCenter;
 	   	if(simplex.size()>2)
@@ -231,14 +230,14 @@ bool betaSubSkeletonComplex<alphaNode>:: checkInsertSubDsimplex(std::vector<unsi
         circumRadius = pow(utils::vectors_distance(circumCenter, inData.inputData[dsimplex[0]]),2);
         circumRadius = pow(utils::vectors_distance(circumCenter, inData.inputData[dsimplex[0]]),2);
 		std::vector<size_t> neighbors;
-		std::vector<std::vector<size_t>> neighborsCircleIntersection;        
-		std::vector<double> hpcoff = utils::nullSpaceOfMatrix(simplex,inData.inputData,circumCenter,sqrt(circumRadius));
-        std::vector<std::vector<double>> refbetaCenters ;
-		refbetaCenters = utils::betaCentersCalculation(hpcoff, beta, sqrt(circumRadius),circumCenter);
-		double betaRadius = utils::vectors_distance(refbetaCenters[0], inData.inputData[dsimplex[0]]);
-	    std::cout<<betaRadius<<" ";
+		std::vector<std::vector<size_t>> neighborsCircleIntersection;      
+		auto hpcoff = utils::nullSpaceOfMatrix(simplex,inData.inputData,circumCenter,sqrt(circumRadius),true);
 
-		std::vector<size_t> neighbors1 = tree.neighborhoodIndices(refbetaCenters[0], betaRadius); //All neighbors in epsilon-ball
+        std::vector<std::vector<double>> refbetaCenters ;
+		refbetaCenters = utils::betaCentersCalculation(hpcoff.first, beta, sqrt(circumRadius),circumCenter);
+		refbetaCenters = utils::computePCAInverse(refbetaCenters,hpcoff.second);
+		double betaRadius = utils::vectors_distance(refbetaCenters[0], inData.inputData[dsimplex[0]]);
+        std::vector<size_t> neighbors1 = tree.neighborhoodIndices(refbetaCenters[0], betaRadius); //All neighbors in epsilon-ball
 		for(auto t :dsimplex)
 			neighbors1.erase(std::remove(neighbors1.begin(),neighbors1.end(),t),neighbors1.end());
 		std::vector<size_t> neighbors2 = tree.neighborhoodIndices(refbetaCenters[1], betaRadius); //All neighbors in epsilon-ball

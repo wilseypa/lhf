@@ -132,8 +132,8 @@ class utils {
 	static std::vector<double> circumCenter(std::set<unsigned> simplex,std::vector<std::vector<double>> inputData);
 	static std::vector<std::vector<double>> inverseOfMatrix(std::vector<std::vector<double>> mat, int n);
 	static std::vector<std::vector<double>> matrixMultiplication(std::vector<std::vector<double>> matA, std::vector<std::vector<double>> matB);
-    static std::vector<double> nullSpaceOfMatrix(std::set<unsigned> simplex, std::vector<std::vector<double>> inputdata,std::vector<double> cc, double radius);
-    static std::vector<std::vector<double>> betaCentersCalculation(std::vector<double> hpcoff, double beta, double circumRadius,std::vector<double> circumCenter,bool lowerdimension=true);
+    static std::pair<std::vector<double>,std::vector<std::vector<double>>> nullSpaceOfMatrix(std::set<unsigned> simplex, std::vector<std::vector<double>> inputdata,std::vector<double> &cc, double radius,bool lowerdimension=false);
+    static std::vector<std::vector<double>> betaCentersCalculation(std::vector<double> hpcoff, double beta, double circumRadius,std::vector<double> circumCenter);
 	static double simplexVolume(std::set<unsigned> simplex,std::vector<std::vector<double>>* distMatrix,int dd);
 	static double simplexVolume(std::vector<std::vector<double>>mat);
     
