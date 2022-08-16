@@ -48,19 +48,19 @@ jobs:
     
     - name: Get Linux OpenMPI dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
       if:   contains(matrix.os,'ubuntu') && contains(matrix.mpi,'openmpi')
-      run:  sudo apt-get install -y openmpi-bin openmpi-common libopenmpi-dev cppcheck
+      run:  sudo apt-get install -y openmpi-bin openmpi-common libopenmpi-dev cppcheck libeigen3-dev
       
     - name: Get Linux MPICH dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
       if:   contains(matrix.os,'ubuntu') && contains(matrix.mpi,'mpich')
-      run:  sudo apt-get install -y mpich cppcheck
+      run:  sudo apt-get install -y mpich cppcheck libeigen3-dev
       
     - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
       if:   contains(matrix.os,'macos') && contains(matrix.mpi,'openmpi')
-      run:  brew install openmpi libomp
+      run:  brew install openmpi libomp eigen
       
     - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
       if:   contains(matrix.os,'macos') && contains(matrix.mpi,'mpich')
-      run:  brew install mpich libomp
+      run:  brew install mpich libomp eigen
                
     - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
       if:   contains(matrix.os,'windows-latest') && contains(matrix.mpi,'openmpi')
