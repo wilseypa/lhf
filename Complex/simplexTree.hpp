@@ -1,8 +1,6 @@
 #pragma once
 #include "utils.hpp"
 #include "simplexBase.hpp"
-#include "kdTree.hpp"
-
 #include <set>
 #include <unordered_map>
 
@@ -10,47 +8,19 @@
 
 class simplexTree : public simplexBase {
   private:
-	
-	//SimplexTreeNode wraps a simplexNode and tree pointers
-	struct simplexTreeNode{
-		struct cmpByIndex{
-			bool operator()(const simplexTreeNode* lhs, const simplexTreeNode* rhs) const{
-				return lhs->simpNode->index < rhs->simpNode->index;
-			}
-			bool operator()(const simplexTreeNode& lhs, const simplexTreeNode& rhs) const{
-				return lhs.simpNode->index < rhs.simpNode->index;
-			}
-		};
-		
-		simplexTreeNode* child = nullptr;
-		simplexTreeNode* sibling = nullptr;
-		simplexTreeNode* parent = nullptr;
-		std::set<simplexTreeNode*, cmpByIndex> children;
-		simplexNode_P simpNode;
-		bool valid= true;	
-		
-		
-		simplexTreeNode(){simpNode = std::make_shared<simplexNode>(simplexNode());}
-		simplexTreeNode(std::set<unsigned> simp, double wt){simpNode = std::make_shared<simplexNode>(simplexNode(simp, wt));}
-	};
-  
-	typedef std::shared_ptr<simplexTreeNode> simplexTreeNode_P;
-  
-	simplexTreeNode* find(std::set<unsigned>::iterator, std::set<unsigned>::iterator, simplexTreeNode*);
-	void recurseGetEdges(std::vector<std::set<simplexNode_P, cmpByWeight>> &, simplexTreeNode*, int, int);
-  
   public:
-	simplexTreeNode* root = nullptr; //Empty node at root of tree (empty simplex)
+	simplexNode* head = nullptr; //First simplex in the tree (0 vertex)
+	simplexNode* root = nullptr; //Empty node at root of tree (empty simplex)
 
-	simplexTree(double, int);
-	std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(simplexTreeNode*, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
-	void printTree(simplexTreeNode*);
-	void printTree1(simplexTreeNode*);
-	void recurseInsert(simplexTreeNode*, unsigned, int, double, std::set<unsigned>);
+	simplexTree(double, std::vector<std::vector<double>>*, int);
+	std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(simplexNode*, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
+	void printTree(simplexNode*);
+	void recurseInsert(simplexNode*, unsigned, int, double, std::set<unsigned>);
 	double findWeight(std::set<unsigned>);
-	void deleteIndexRecurse(int, simplexTreeNode*);
+	void deleteIndexRecurse(int, simplexNode*);
 	void deleteWeightEdgeGraph(int index);
 
+	simplexNode* find(std::set<unsigned>::iterator, std::set<unsigned>::iterator, simplexNode*);
 
 	//virtual interface functions
 	void outputComplex();
@@ -64,22 +34,10 @@ class simplexTree : public simplexBase {
 	int simplexCount();
 	int vertexCount();
 	void prepareCofacets(int){return;}
-	void prepareFacets(int){return;}
-	std::vector<simplexNode_P> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode_P, simplexNode_P>&, bool = true);
-	std::vector<simplexNode*> getAllCofacets(simplexNode_P, const std::unordered_map<long long, simplexNode_P>&, bool = true);
-	std::vector<simplexNode*> getAllCofacets(simplexNode_P);
-	std::vector<simplexNode_P> getAllDelaunayCofacets(simplexNode_P){return std::vector<simplexNode_P>();};
-	std::vector<std::set<simplexNode_P, cmpByWeight>> getAllEdges();
-	void recurseInsertDsimplex(simplexTreeNode* node, std::vector<int> simp,std::vector<std::vector<double>> inputData);
-    void buildAlphaComplex(std::vector<std::vector<int>> dsimplexmesh, int npts,std::vector<std::vector<double>> inputData);
-	std::vector<simplexNode*> getAllFacets(simplexNode*);
-	std::vector<simplexNode_P> getAllFacets_P(simplexNode_P);
-	void validateNodes(simplexTreeNode* headPointer);
+	std::vector<simplexNode*> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode*, simplexNode*>&, bool);
 	bool deletion(std::set<unsigned>);
-	bool deletion(simplexTreeNode*);
+	bool deletion(simplexNode*);
 	void expandDimensions(int){return;};
-	void graphInducedComplex(int dim,std::vector<std::vector<double>> inputData,double beta){return;};
-
 	void reduceComplex();
 	void clear();
 };

@@ -7,36 +7,24 @@
 
 class binomialTable{
 	private:
-		std::vector<std::vector<long long>> v;
+		std::vector<std::vector<long long>> v; 
 	public:
 		binomialTable(unsigned n, unsigned k);
 		long long binom(unsigned n, unsigned k);
 };
 
-template <typename nodeType>
-class simplexArrayList : public simplexBase<nodeType>{
-	
-	typedef std::shared_ptr<nodeType> templateNode_P;
-	
+class simplexArrayList : public simplexBase{
 	private:
-		std::unordered_map<long long, templateNode_P> indexConverter;
-
-	public:
 		binomialTable bin;
-		simplexArrayList(double, double);
+		std::unordered_map<long long, simplexNode*> indexConverter;
+
+		long long simplexHash(const std::set<unsigned>&, binomialTable&);
+		unsigned maxVertex(long long, unsigned, unsigned, unsigned, binomialTable&);
+		std::vector<unsigned> getVertices(long long, int, unsigned, binomialTable&);
+	public:
+		simplexArrayList(double, double, std::vector<std::vector<double>>*);
 		double findWeight(std::set<unsigned>);
-
-		long long simplexHash(const std::set<unsigned>&);
-		unsigned maxVertex(long long, unsigned, unsigned, unsigned);
-		std::set<unsigned> getVertices(long long, int, unsigned);
-
-		void initBinom();
-		std::vector<nodeType*> getAllCofacets(templateNode_P, const std::unordered_map<long long, templateNode_P>&, bool = true, bool = true, unsigned = 0);
-		std::vector<nodeType*> getAllCofacets(templateNode_P);
-		std::vector<nodeType*> getAllFacets(nodeType*, bool = true, unsigned = 0);
-		std::vector<nodeType*> getAllFacets(templateNode_P, bool = true, unsigned = 0);
-		std::vector<templateNode_P> getAllFacets_P(templateNode_P);
-		std::vector<templateNode_P> expandDimension(std::vector<templateNode_P>, bool = true, unsigned = 0);
+		std::pair<std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>> recurseReduce(simplexNode*, std::vector<std::set<unsigned>>, std::vector<std::set<unsigned>>);
 
 		//virtual interface functions
 		double getSize();
@@ -45,10 +33,10 @@ class simplexArrayList : public simplexBase<nodeType>{
 		int simplexCount();
 		int vertexCount();
 		void prepareCofacets(int);
-		void prepareFacets(int);
-		std::vector<templateNode_P> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<templateNode_P, templateNode_P>&, bool = true);
+		std::vector<simplexNode*> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<simplexNode*, simplexNode*>&, bool);
 		bool deletion(std::set<unsigned>);
 		void expandDimensions(int);
-
-		~simplexArrayList();
+		void reduceComplex();
+		void clear();
 };
+
