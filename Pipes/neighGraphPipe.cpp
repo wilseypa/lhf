@@ -15,65 +15,61 @@
 
 
 // basePipe constructor
-template<typename nodeType>
-neighGraphPipe<nodeType>::neighGraphPipe(){
-	this->pipeType = "neighGraph";
+neighGraphPipe::neighGraphPipe(){
+	pipeType = "neighGraph";
 	return;
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
-template<typename nodeType>
-void neighGraphPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){	
+pipePacket neighGraphPipe::runPipe(pipePacket inData){	
 	
 	//Iterate through each vector, inserting into simplex storage
-	for(unsigned i = 0; i < inData.workData.size(); i++){
-		if(!inData.workData[i].empty()){
+	for(unsigned i = 0; i < inData.originalData.size(); i++){
+		if(!inData.originalData[i].empty()){
 			//insert data into the complex (SimplexArrayList, SimplexTree)
 			inData.complex->insert();	
 		}
 	}
 
-	return;
+	return inData;
 }
 
 // configPipe -> configure the function settings of this pipeline segment
-template<typename nodeType>
-bool neighGraphPipe<nodeType>::configPipe(std::map<std::string, std::string> &configMap){
+bool neighGraphPipe::configPipe(std::map<std::string, std::string> configMap){
 	std::string strDebug;
 	
 	auto pipe = configMap.find("debug");
 	if(pipe != configMap.end()){
-		this->debug = std::atoi(configMap["debug"].c_str());
+		debug = std::atoi(configMap["debug"].c_str());
 		strDebug = configMap["debug"];
 	}
 	pipe = configMap.find("outputFile");
 	if(pipe != configMap.end())
-		this->outputFile = configMap["outputFile"].c_str();
+		outputFile = configMap["outputFile"].c_str();
 	
-	this->ut = utils(strDebug, this->outputFile);
+	ut = utils(strDebug, outputFile);
 	
 	pipe = configMap.find("epsilon");
 	if(pipe != configMap.end())
-		this->epsilon = std::atof(configMap["epsilon"].c_str());
+		epsilon = std::atof(configMap["epsilon"].c_str());
 	else return false;
 	
 	pipe = configMap.find("dimensions");
 	if(pipe != configMap.end()){
-		this->dim = std::atoi(configMap["dimensions"].c_str());
+		dim = std::atoi(configMap["dimensions"].c_str());
 	}
 	else return false;
 	
-	this->configured = true;
-	this->ut.writeDebug("neighGraphPipe","Configured with parameters { dim: " + std::to_string(dim) + " , eps: " + configMap["epsilon"] + " , debug: " + strDebug + ", outputFile: " + this->outputFile + " }");
+	configured = true;
+	ut.writeDebug("neighGraphPipe","Configured with parameters { dim: " + std::to_string(dim) + " , eps: " + configMap["epsilon"] + " , debug: " + strDebug + ", outputFile: " + outputFile + " }");
 	
 	return true;
 }
 
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-template<typename nodeType>
-void neighGraphPipe<nodeType>::outputData(pipePacket<nodeType> &inData){
-	std::ofstream file ("output/" + this->pipeType + "_output.csv");
+void neighGraphPipe::outputData(pipePacket inData){
+	std::ofstream file ("output/" + pipeType + "_output.csv");
 	
 	auto edges = inData.complex->getAllEdges();
 	for (auto edge : edges){
@@ -90,8 +86,3 @@ void neighGraphPipe<nodeType>::outputData(pipePacket<nodeType> &inData){
 	file.close();
 	return;
 }
-
-//Explicit Template Class Instantiation
-template class neighGraphPipe<simplexNode>;
-template class neighGraphPipe<alphaNode>;
-template class neighGraphPipe<witnessNode>;

@@ -4,16 +4,15 @@
 #include <map>
 #include "basePipe.hpp"
 
-template <typename nodeType>
-class upscalePipe : public basePipe<nodeType> {
+class upscalePipe : public basePipe {
   private:
   public:
 	std::map<std::string, std::string> subConfigMap;
 	int dim;
 	double scalarV;
     upscalePipe();
-	void runSubPipeline(pipePacket<nodeType>&);
-	//void outputData(pipePacket<nodeType>&);
-    void runPipe(pipePacket<nodeType>&);
-    bool configPipe(std::map<std::string, std::string>&);    
+    pipePacket runPipe(pipePacket inData);
+    bool configPipe(std::map<std::string, std::string> configMap);
+	void runSubPipeline(pipePacket);
 };
+

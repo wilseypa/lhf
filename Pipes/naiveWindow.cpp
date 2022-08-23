@@ -17,25 +17,24 @@
 
 
 // basePipe constructor
-template<typename nodeType>
-naiveWindow<nodeType>::naiveWindow(){
-	this->pipeType = "NaiveWindow";
+naiveWindow::naiveWindow(){
+	pipeType = "NaiveWindow";
 	return;
 }
 
-template<typename nodeType>
-bool naiveWindow<nodeType>::sampleStreamEvaluator(std::vector<double>& vector, std::vector<std::vector<double>>& window){
+bool naiveWindow::sampleStreamEvaluator(std::vector<double>& vector, std::vector<std::vector<double>>& window){
 	//Return true to accept all points into the complex
 	return true;
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
-template<typename nodeType>
-void naiveWindow<nodeType>::runPipe(pipePacket<nodeType> &inData){
+pipePacket naiveWindow::runPipe(pipePacket inData){
 	readInput rp;
 
 
-	int windowMaxSize = 100;
+	//Store our distance matrix
+	std::vector<std::vector<double>> distMatrix;
+	int windowMaxSize = 200;
 
 	// For this pipe, we construct a sub-pipeline:
 	//		1. Read data vector by vector, push into stream evaluation in complex
@@ -65,28 +64,32 @@ void naiveWindow<nodeType>::runPipe(pipePacket<nodeType> &inData){
 				key++;
 				//If we've reached window size, generate the initial complex
 				if(windowValues.size() == windowMaxSize){
-					inData.workData = windowValues;
+					inData.originalData = windowValues;
 
-					distMatrix.resize(inData.workData.size(), std::vector<double>(inData.workData.size(),0));
+					distMatrix.resize(inData.originalData.size(), std::vector<double>(inData.originalData.size(),0));
 
 
 					//Iterate through each vector
-					for(unsigned i = 0; i < inData.workData.size(); i++){
-						if(!inData.workData[i].empty()){
+					for(unsigned i = 0; i < inData.originalData.size(); i++){
+						if(!inData.originalData[i].empty()){
 							//Grab a second vector to compare to
 							std::vector<double> temp;
-							for(unsigned j = i+1; j < inData.workData.size(); j++){
+							for(unsigned j = i+1; j < inData.originalData.size(); j++){
 									//Calculate vector distance
-									auto dist = this->ut.vectors_distance(inData.workData[i],inData.workData[j]);
+									auto dist = ut.vectors_distance(inData.originalData[i],inData.originalData[j]);
 
 									if(dist < epsilon)
 										distMatrix[i][j] = dist;
 							}
 						}
 					}
+					inData.complex->setDistanceMatrix(&distMatrix);
+
+					for(auto a : windowValues)
+						inData.complex->insert();
 
 					// Set the stream evaluator
-					//inData.complex->setStreamEvaluator(&this->sampleStreamEvaluator);
+					inData.complex->setStreamEvaluator(&this->sampleStreamEvaluator);
 				}
 
 			//Window is full, evaluate and add to window
@@ -107,10 +110,8 @@ void naiveWindow<nodeType>::runPipe(pipePacket<nodeType> &inData){
 			if(pointCounter % 10 == 0 && pointCounter >= windowMaxSize){
 				// Build and trigger remaining pipeline. It should only require the computation of persistence
 				// intervals from the complex being maintained.
-				inData.workData = windowValues;
+				inData.originalData = windowValues;
 				runSubPipeline(inData);
-				inData = pipePacket<nodeType>("simplexArrayList",epsilon,dim);
-				
 
 			}
 			pointCounter++;
@@ -122,16 +123,15 @@ void naiveWindow<nodeType>::runPipe(pipePacket<nodeType> &inData){
 		if((pointCounter - 1) % 10 != 0){
 			runSubPipeline(inData);
 		}
-		this->ut.writeLog("naiveWindow", "\tSuccessfully evaluated " + std::to_string(pointCounter) + " points");
+		ut.writeLog("naiveWindow", "\tSuccessfully evaluated " + std::to_string(pointCounter) + " points");
 
 		writeComplexStats(inData);
 	}
 
-	return;
+	return inData;
 }
 
-template<typename nodeType>
-void naiveWindow<nodeType>::writeComplexStats(pipePacket<nodeType> &inData){
+void naiveWindow::writeComplexStats(pipePacket &inData){
 	if(inData.complex->stats.size() > 30){
 		std::ofstream file ("output/complexStats.csv");
 
@@ -142,21 +142,20 @@ void naiveWindow<nodeType>::writeComplexStats(pipePacket<nodeType> &inData){
 	}
 }
 
-template<typename nodeType>
-void naiveWindow<nodeType>::runSubPipeline(pipePacket<nodeType> wrData){
-    if(wrData.workData.size() == 0)
+void naiveWindow::runSubPipeline(pipePacket wrData){
+    if(wrData.originalData.size() == 0)
 		return;
 
-	pipePacket<nodeType> inData = wrData;
+	pipePacket inData = wrData;
 	outputData(inData);
 
-	inData.complex->setDistanceMatrix(&distMatrix);
-	std::string pipeFuncts = "neighGraph.incrementalPersistence";
-	subConfigMap["complexType"] = "simplexArrayList";
+	std::cout << "StreamSize: " << inData.complex->indexCounter << "\tWindowSize: " << inData.originalData.size() << std::endl;
+
+	std::string pipeFuncts = "rips.fast";
 	auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
 	subConfigMap["fn"] = "_" + std::to_string(repCounter);
-	
-	this->repCounter++;
+
+	repCounter++;
 
 	//For each '.' separated pipeline function (count of '.' + 1 -> lim)
 	for(unsigned i = 0; i < lim; i++){
@@ -164,57 +163,54 @@ void naiveWindow<nodeType>::runSubPipeline(pipePacket<nodeType> wrData){
 		pipeFuncts = pipeFuncts.substr(pipeFuncts.find('.') + 1);
 
 		//Build the pipe component, configure and run
-		auto cp = basePipe<nodeType>::newPipe(curFunct, "simplexTree");
+		auto *cp = basePipe::newPipe(curFunct, "simplexTree");
 
 		//Check if the pipe was created and configure
 		if(cp != 0 && cp->configPipe(subConfigMap)){
 			//Run the pipe function (wrapper)
-			cp->runPipeWrapper(inData);
+			inData = cp->runPipeWrapper(inData);
 		} else {
 			std::cout << "LHF subPipe: Failed to configure pipeline: " << curFunct << std::endl;
 		}
 	}
-	
-	distMatrix.clear();
 
 	return;
 }
 
 
 // configPipe -> configure the function settings of this pipeline segment
-template<typename nodeType>
-bool naiveWindow<nodeType>::configPipe(std::map<std::string, std::string> &configMap){
+bool naiveWindow::configPipe(std::map<std::string, std::string> configMap){
 	std::string strDebug;
 	subConfigMap = configMap;
 
 	auto pipe = configMap.find("debug");
 	if(pipe != configMap.end()){
-		this->debug = std::atoi(configMap["debug"].c_str());
+		debug = std::atoi(configMap["debug"].c_str());
 		strDebug = configMap["debug"];
 	}
 	pipe = configMap.find("outputFile");
 	if(pipe != configMap.end())
-		this->outputFile = configMap["outputFile"].c_str();
+		outputFile = configMap["outputFile"].c_str();
 
-	this->ut = utils(strDebug, this->outputFile);
+	ut = utils(strDebug, outputFile);
 
 	pipe = configMap.find("inputFile");
 	if(pipe != configMap.end())
-		this->inputFile = configMap["inputFile"].c_str();
+		inputFile = configMap["inputFile"].c_str();
 
 	pipe = configMap.find("epsilon");
 	if(pipe != configMap.end())
-		this->epsilon = std::atof(configMap["epsilon"].c_str());
+		epsilon = std::atof(configMap["epsilon"].c_str());
 	else return false;
 
 	pipe = configMap.find("dimensions");
 	if(pipe != configMap.end()){
-		this->dim = std::atoi(configMap["dimensions"].c_str());
+		dim = std::atoi(configMap["dimensions"].c_str());
 	}
 	else return false;
 
-	this->configured = true;
-	this->ut.writeDebug("naiveWindow","Configured with parameters { input: " + configMap["inputFile"] + ", dim: " + configMap["dimensions"] + ", eps: " + configMap["epsilon"] + ", debug: " + strDebug + ", outputFile: " + this->outputFile + " }");
+	configured = true;
+	ut.writeDebug("naiveWindow","Configured with parameters { input: " + configMap["inputFile"] + ", dim: " + configMap["dimensions"] + ", eps: " + configMap["epsilon"] + ", debug: " + strDebug + ", outputFile: " + outputFile + " }");
 
 	return true;
 }
@@ -222,11 +218,10 @@ bool naiveWindow<nodeType>::configPipe(std::map<std::string, std::string> &confi
 
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-template<typename nodeType>
-void naiveWindow<nodeType>::outputData(pipePacket<nodeType> &inData){
-	std::ofstream file ("output/" + this->pipeType + "_" + std::to_string(this->repCounter) + "_output.csv");
+void naiveWindow::outputData(pipePacket inData){
+	std::ofstream file ("output/" + pipeType + "_" + std::to_string(repCounter) + "_output.csv");
 
-	for(auto a : inData.workData){
+	for(auto a : inData.originalData){
 		for(auto d : a){
 			file << d << ",";
 		}
@@ -237,7 +232,3 @@ void naiveWindow<nodeType>::outputData(pipePacket<nodeType> &inData){
 	file.close();
 	return;
 }
-
-template class naiveWindow<simplexNode>;
-template class naiveWindow<alphaNode>;
-template class naiveWindow<witnessNode>;

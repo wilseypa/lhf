@@ -19,71 +19,67 @@
 #include "utils.hpp"
 
 // basePipe constructor
-template<typename nodeType>
-ripsPipe<nodeType>::ripsPipe(){
-	this->pipeType = "ripsPipe";
+ripsPipe::ripsPipe(){
+	pipeType = "ripsPipe";
 	return;
 }
 
 
 // runPipe -> Run the configured functions of this pipeline segment
-template<typename nodeType>
-void ripsPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
+pipePacket ripsPipe::runPipe(pipePacket inData){
 	
 	inData.complex->expandDimensions(dim);
 		
-	this->ut.writeDebug("ripsPipe","Expanded Complex Size: " + std::to_string(inData.complex->simplexCount()));
-	this->ut.writeDebug("ripsPipe", "Expanded Complex Mem: " + std::to_string(inData.complex->getSize()));
+	ut.writeDebug("ripsPipe","Expanded Complex Size: " + std::to_string(inData.complex->simplexCount()));
+	ut.writeDebug("ripsPipe", "Expanded Complex Mem: " + std::to_string(inData.complex->getSize()));
 	
-	/*if(collapse == "true" || collapse == "1"){
+	if(collapse == "true" || collapse == "1"){
 		inData.complex->reduceComplex();
 		
-		this->ut.writeDebug("ripsPipe","Reduced Complex Size: " + std::to_string(inData.complex->simplexCount()));
-		this->ut.writeDebug("ripsPipe", "Reduced Complex Mem: " + std::to_string(inData.complex->getSize()));
-	}*/
-	return;
+		ut.writeDebug("ripsPipe","Reduced Complex Size: " + std::to_string(inData.complex->simplexCount()));
+		ut.writeDebug("ripsPipe", "Reduced Complex Mem: " + std::to_string(inData.complex->getSize()));
+	}
+	return inData;
 }
 
 
 // configPipe -> configure the function settings of this pipeline segment
-template<typename nodeType>
-bool ripsPipe<nodeType>::configPipe(std::map<std::string, std::string> &configMap){
+bool ripsPipe::configPipe(std::map<std::string, std::string> configMap){
 	std::string strDebug;
 	
 	auto pipe = configMap.find("debug");
 	if(pipe != configMap.end()){
-		this->debug = std::atoi(configMap["debug"].c_str());
+		debug = std::atoi(configMap["debug"].c_str());
 		strDebug = configMap["debug"];
 	}
 	pipe = configMap.find("outputFile");
 	if(pipe != configMap.end())
-		this->outputFile = configMap["outputFile"].c_str();
+		outputFile = configMap["outputFile"].c_str();
 	
-	this->ut = utils(strDebug, this->outputFile);
+	ut = utils(strDebug, outputFile);
 	
 	pipe = configMap.find("dimensions");
 	if(pipe != configMap.end()){
-		this->dim = std::atoi(configMap["dimensions"].c_str());
+		dim = std::atoi(configMap["dimensions"].c_str());
 	}
 	
 	pipe = configMap.find("collapse");
 	if(pipe != configMap.end())
-		this->collapse = configMap["collapse"];
+		collapse = configMap["collapse"];
 	
-	this->configured = true;
-	this->ut.writeDebug("ripsPipe","Configured with parameters { dim: " + std::to_string(dim) + " , debug: " + strDebug + ", outputFile: " + this->outputFile + ", collapse: " + this->collapse + " }");
+	configured = true;
+	ut.writeDebug("ripsPipe","Configured with parameters { dim: " + std::to_string(dim) + " , debug: " + strDebug + ", outputFile: " + outputFile + ", collapse: " + collapse + " }");
 	
 	return true;
 }
 
 
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
-template<typename nodeType>
-void ripsPipe<nodeType>::outputData(pipePacket<nodeType> &inData){
+void ripsPipe::outputData(pipePacket inData){
 	std::ofstream file;
 	
 	if(inData.complex->simplexType == "simplexArrayList"){
-		file.open("output/" + this->pipeType + "_output.csv");
+		file.open("output/" + pipeType + "_output.csv");
 		for (int i = 0; i < inData.complex->simplexList.size(); i++){
 			for(auto a : inData.complex->simplexList[i]){
 				for(auto d : a->simplex){
@@ -98,6 +94,3 @@ void ripsPipe<nodeType>::outputData(pipePacket<nodeType> &inData){
 	return;
 }
 
-template class ripsPipe<simplexNode>;
-template class ripsPipe<alphaNode>;
-template class ripsPipe<witnessNode>;

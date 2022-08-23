@@ -4,15 +4,13 @@
 #include <map>
 #include "basePipe.hpp"
 
-template<typename nodeType>
-class distMatrixPipe : public basePipe<nodeType> {
+class distMatrixPipe : public basePipe {
   private:
-	double enclosingRadius;
-	double beta;
-	std::string betaMode = "lune";
+	double maxEpsilon;
   public:
     distMatrixPipe();
-    void runPipe(pipePacket<nodeType>& inData);
-    bool configPipe(std::map<std::string, std::string> &configMap);
-	void outputData(pipePacket<nodeType>&);
+    pipePacket runPipe(pipePacket inData);
+    bool configPipe(std::map<std::string, std::string> configMap);
+	void outputData(pipePacket);
 };
+
