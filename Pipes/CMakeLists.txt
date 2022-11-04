@@ -69,41 +69,7 @@ MESSAGE (STATUS "FLAGS: " ${CMAKE_CXX_FLAGS})
 
 #Integrating with CGAL library
 
-FetchContent_Declare(cgalext
-    GIT_REPOSITORY "https://github.com/CGAL/cgal.git"
-    #BUILD_STATIC_LIBS OFF
-    #BUILD_SHARED_LIBS ON
-)
-
-if(${CMAKE_VERSION} VERSION_LESS 3.14)
-    FetchContent_GetProperties(cgalext)
-    if(NOT cgalext_POPULATED)
-        FetchContent_Populate(cgalext)
-        add_subdirectory(${cgalext_SOURCE_DIR} ${cgalext_BINARY_DIR})
-    endif()
-else()
-    FetchContent_MakeAvailable(cgalext)
-endif()
-
-
-include_directories(${PROJECT_SOURCE_DIR}/_deps/cgalext-src/src/)
-link_directories(${PROJECT_SOURCE_DIR}/_deps/cgalext-build/)
-
-set(CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/_deps/cgalext-src/)
-message(Status ${CMAKE_PREFIX_PATH})
 find_package(CGAL)
-target_link_libraries(delaunayPipe CGAL::CGAL basePipe CGAL::CGAL) 
-
-INSTALL (TARGETS delaunayPipe
-	LIBRARY DESTINATION lib
-	ARCHIVE DESTINATION lib)
-
-# TODO: Add tests and install targets if needed.
-
-MESSAGE (STATUS "CMAKE_INCLUDE_PATH: " ${CMAKE_INCLUDE_PATH})
-MESSAGE (STATUS "FLAGS: " ${CMAKE_CXX_FLAGS})
-
+target_link_libraries(delaunayPipe basePipe CGAL)
 find_package(Eigen3)
-if (EIGEN3_FOUND)
-  include( ${EIGEN3_USE_FILE} )
-endif()
+include_directories(${EIGEN3_INCLUDE_DIR})

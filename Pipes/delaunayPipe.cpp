@@ -2,18 +2,10 @@
 #include <CGAL/Epick_d.h>
 #include <CGAL/Delaunay_triangulation.h>
 #include "delaunayPipe.hpp"
+#include "alphaComplex.hpp"
 #include "utils.hpp"
-#include <string>
-#include <iostream>
 #include <fstream>
-#include <vector>
-#include <cmath>
-#include <iterator>
-#include <algorithm>
-#include <numeric>
-#include <functional>
-#include <set>
-#include <algorithm>
+
 // basePipe constructor
 template <typename nodeType>
 delaunayPipe<nodeType>::delaunayPipe(){
@@ -24,39 +16,50 @@ delaunayPipe<nodeType>::delaunayPipe(){
 template <typename nodeType>
 void delaunayPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 {
+
+  int temp_id=0;
   int dim = inData.inputData[0].size();
-  typedef CGAL::Delaunay_triangulation<CGAL::Epick_d< CGAL::Dimension_tag<4> > >      T;
+  int no_of_points=inData.inputData.size();
+  typedef CGAL::Delaunay_triangulation<CGAL::Epick_d<CGAL::Dynamic_dimension_tag>>     T;
   T dt(dim);
-  std::vector<T::Point> points;
-  points.reserve(inData.inputData.size());
-  for(auto i : inData.inputData){
-    T::Point p(i.begin(), i.end());
-    points.push_back(p);
-  }
+  auto point=T::Point (inData.inputData[0].begin(), inData.inputData[0].end());
   T::Vertex_handle hint;
-  int i = 0;
-  for (std::vector<T::Point>::iterator it = points.begin(); it != points.end(); ++it) {
-    if (T::Vertex_handle() != hint) {
-      hint = dt.insert(*it, hint);
+  std::map<std::string, int> id;
+  std::stringstream buffer;
+  hint = dt.insert(point);
+  buffer<<point;
+  id.insert(std::make_pair(buffer.str(),temp_id++));
+    for (int i=1;i<no_of_points;i++) {
+      point=T::Point (inData.inputData[i].begin(), inData.inputData[i].end());
+      hint = dt.insert(point, hint);
+      std::stringstream().swap(buffer);
+      buffer<<point;
+      id.insert({buffer.str(),temp_id++});
   }
-    else {
-      hint = dt.insert(*it);
+  std::vector<std::vector<unsigned>> dsimplexes;
+  std::vector<unsigned> temp;
+    for (auto i = dt.finite_full_cells_begin(); i != dt.finite_full_cells_end(); i++)
+    {
+      for (auto j = i->vertices_begin(); j != i->vertices_end(); j++)
+      {
+        std::stringstream().swap(buffer);
+        buffer<<(**j);
+        temp.push_back(id[buffer.str()]);
+         // std::cout<< id[buffer.str()]<<" ";
+      }
+      dsimplexes.push_back(temp);
+      temp.clear();
+      //std::cout<<std::endl;
     }
-    printf("Processing: %d/%d\n", ++i, (int)points.size());
-  }
-  std::cout<<dt<<std::endl;
-  /*
-  std::cout<<"Number of vertices "<<dt.number_of_vertices()<<std::endl;
-  for (auto i=dt.finite_vertices_begin();i!=dt.finite_vertices_end();i++)
-    std::cout<<"Finite vertices "<<i->point()<<std::endl;
-  std::cout<<"Number of finite full cells "<<dt.number_of_finite_full_cells()<<std::endl;
-  for (auto i=dt.finite_full_cells_begin();i!=dt.finite_full_cells_end();i++){
-    for (auto j=i->vertices_begin();j!=i->vertices_end();++j){
-      std::cout<<j<<" ";}
-    std::cout<<std::endl;}*/
-  this->ut.writeDebug("delaunayPipe","\t Sucessfully Executed Pipe");
+  dt.clear();
+  id.clear();
+ ((alphaComplex<nodeType>*)inData.complex)->buildAlphaComplex(dsimplexes,inData.inputData.size(),inData.inputData);
+  //std::cout<<dsimplexes.size();
+  
   return;
 }
+
+
 // configPipe -> configure the function settings of this pipeline segment
 template <typename nodeType>
 bool delaunayPipe<nodeType>::configPipe(std::map<std::string, std::string> &configMap){
