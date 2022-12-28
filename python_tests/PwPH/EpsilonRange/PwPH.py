@@ -296,6 +296,26 @@ bettieTable = []
 fastpersistance(Complex)
 
 
+
+
+######################################### Outline for PwPH Computaion ################################
+
+# 1. Identify Initial epsilon Value (e0) to identify conquarbale pseudovertices.
+# 2. Compute PH on each PV separtely and store the PIs.
+# 3. Identify the alpha_value to identify shape boundary of each PV. 
+# 4. Keep the boundary points and remove the interior points from the Alpha shape to obtain reduced point cloud P'.
+# 5. Find the subsequent epsilon value so that the next set of PV's are conquarble.
+# 6. Compute PH on next PV's and store the valid PIs. Need to remove the invalid PIs (Will be done by identifying the death simplex centroid inclusion in the alpha shape).
+# 7. Repeate from step 3 until the Point cloud is small enough to be conquered as whole.
+
+
+######################################################################################################
+
+
+
+
+
+
 dimcount=[0 for i in range(0,dim)]
 table = [[] for i in range(0,dim)]
 for x in bettieTable:
