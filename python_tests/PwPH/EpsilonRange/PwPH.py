@@ -10,11 +10,13 @@ import heapq as hq
 import pandas as pd
 import persim
 import matplotlib.pyplot as plt
+import copy
+
 
 
 maxepsilon = 2
 distancematrix = []	  #initializae distance matrix
-
+maximumconquarablesize = 10
 	
 class orderedarraylistnode(object):
 	def __init__(self,simplex,weight):
@@ -57,7 +59,12 @@ class DisjointSet:
     def __init__(self, n):
         self.parent = [i for i in range(n)]
         self.rank = [1 for _ in range(n)]
-    
+    def getPVs(self,n):
+        djs = [[] for i in range(n)]
+        for i in range(n):
+            djs[self.find(i)].append(i)
+        djs = [ele for ele in djs if ele != []]
+        return djs
     # make a and b part of the same component
     # union by rank optimization
     def union(self, a, b):
@@ -79,8 +86,13 @@ class DisjointSet:
         
         self.parent[a] = self.find(self.parent[a])
         return self.parent[a]
+        
+    def findrank(self, a):
+        return self.rank[a]
+    
+    def SameSet(n1, n2):
+        return self.find(n1) == self.find(n2)
 
-	
 
 def computedistancematrix(points):    #compute Distance Matrix
 	global distancematrix    #initializae distance matrix
@@ -132,6 +144,25 @@ def minimumspanningtree(edges1):
 						bettieTable.append(tuple(bettitableentry))
 				return pivots
 	return pivots
+	
+def minimumspanningtreeforinitialization(edges1):
+	# using Kruskal's algorithm to find the cost of Minimum Spanning Tree
+	res = 0
+	mstSize = 0
+	ds = DisjointSet(datasize)
+	previousweight = 0
+	for x in reversed(edges1):
+		if ds.find(x.simplex[0]) != ds.find(x.simplex[1]):
+			previousds = copy.deepcopy(ds)
+			ds.union(x.simplex[0], x.simplex[1])
+			res += x.weight
+			mstSize +=1
+			maxmstsize = max([ds.findrank(i) for i in range(0,len(datapoints))])
+			if(mstSize >= len(datapoints)-1 or maxmstsize > maximumconquarablesize):
+				return previousds,previousweight,x.weight
+			previousweight = x.weight
+	return ds
+	
 
 def getDimEdges(dimension):
 	edg =  Complex[dimension]
@@ -292,8 +323,6 @@ for x in Complex:
 datasize = len(datapoints)
 dim=len(datapoints[0])
 	
-bettieTable = []
-fastpersistance(Complex)
 
 
 
@@ -311,10 +340,13 @@ fastpersistance(Complex)
 
 ######################################################################################################
 
+edges = getDimEdges(1)
+pseudoVertices  = minimumspanningtreeforinitialization(edges)
+print(pseudoVertices[0].getPVs(datasize)," ", pseudoVertices[1])
 
-
-
-
+#bettieTable = []
+#fastpersistance(Complex)
+'''
 
 dimcount=[0 for i in range(0,dim)]
 table = [[] for i in range(0,dim)]
@@ -369,3 +401,4 @@ plt.axline([0, 0], [2, 2],linewidth=1,color="black")
 plt.savefig("outputBCPolytopal.pdf", bbox_inches = 'tight',pad_inches = 0)
 plt.show()
 
+'''
