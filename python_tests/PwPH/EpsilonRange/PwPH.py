@@ -11,12 +11,15 @@ import pandas as pd
 import persim
 import matplotlib.pyplot as plt
 import copy
+import alphashape
+from descartes import PolygonPatch
+from shapely.geometry import Point
 
 
 
 maxepsilon = 2
 distancematrix = []	  #initializae distance matrix
-maximumconquarablesize = 10
+maximumconquarablesize = 70
 	
 class orderedarraylistnode(object):
 	def __init__(self,simplex,weight):
@@ -309,19 +312,17 @@ def createSimplexTree(inputpoints):
 
 datapoints = []
 
-datapoints = tadasets.dsphere(n=40, d = 2, r =1 , noise=0.001)	
+datapoints = tadasets.dsphere(n=200, d = 1, r =1 , noise=0.1)	
 
 letter_cmp_key = cmp_to_key(letter_cmp)    #comparison function
 
-Complex = createSimplexTree(datapoints)
 
 '''
 for x in Complex:
 	for y in x:
 		print(y.simplex,y.weight)
 '''
-datasize = len(datapoints)
-dim=len(datapoints[0])
+
 	
 
 
@@ -339,66 +340,100 @@ dim=len(datapoints[0])
 
 
 ######################################################################################################
+datasize = len(datapoints)
 
-edges = getDimEdges(1)
-pseudoVertices  = minimumspanningtreeforinitialization(edges)
-print(pseudoVertices[0].getPVs(datasize)," ", pseudoVertices[1])
 
-#bettieTable = []
-#fastpersistance(Complex)
-'''
+newpoints = [i for i in range(datasize)]
+while(True):
+	newpoints = [datapoints[i] for i in newpoints]
+	x,y = zip(*newpoints)
+	plt.scatter(x,y)
+	plt.show()
+	datasize = len(newpoints)
+	dim=len(newpoints[0])
+	Complex = createSimplexTree(newpoints)
+	edges = getDimEdges(1)
+	pseudoVertices  = minimumspanningtreeforinitialization(edges)
+	print(pseudoVertices[0].getPVs(datasize)," ", pseudoVertices[1])
 
-dimcount=[0 for i in range(0,dim)]
-table = [[] for i in range(0,dim)]
-for x in bettieTable:
-	table[x[0]].append(x)
-	dimcount[x[0]]= dimcount[x[0]]+1
-for i in range(0,dim):
-	print("Dimemnsion ",i," Betti Count ::",dimcount[i])
+	PVs = pseudoVertices[0].getPVs(datasize)
+	globalbettieTable = []
+
+	newpoints = []
+	for pv in PVs:
+		if (len(pv)>dim):
+			PVpoints = [datapoints[i] for i in pv]
+			alpha_shape = alphashape.alphashape(PVpoints, 0.)
+			fig, ax = plt.subplots()
+			ax.scatter(*zip(*PVpoints))
+			ax.add_patch(PolygonPatch(alpha_shape, alpha=0.2))
+			plt.show()
+		
+			bettieTable = []
+			Complex = createSimplexTree(PVpoints)
+			fastpersistance(Complex)
+			globalbettieTable.append(bettieTable)
+		
+			for i in pv:
+				point = Point(datapoints[i][0],datapoints[i][1]) # analysis point
+				if alpha_shape.contains(point) != True:
+					newpoints.append(i)
+
+			
+			dimcount=[0 for i in range(0,dim)]
+			table = [[] for i in range(0,dim)]
+			for x in bettieTable:
+				table[x[0]].append(x)
+				dimcount[x[0]]= dimcount[x[0]]+1
+			for i in range(0,dim):
+				print("Dimemnsion ",i," Betti Count ::",dimcount[i])
 	
-writebetties(table,"output.csv")
+			writebetties(table,"output.csv")
 	
 
-dimcount=[0 for i in range(0,dim)]
+			dimcount=[0 for i in range(0,dim)]
 
-table = [[] for i in range(0,dim)]
+			table = [[] for i in range(0,dim)]
 
-for x in bettieTable:
-	table[x[0]].append(x)
-	dimcount[x[0]]= dimcount[x[0]]+1
-for i in range(0,dim):
-	print("Dimemnsion ",i," Betti Count ::",dimcount[i])
+			for x in bettieTable:
+				table[x[0]].append(x)
+				dimcount[x[0]]= dimcount[x[0]]+1
+			for i in range(0,dim):
+				print("Dimemnsion ",i," Betti Count ::",dimcount[i])
 
-colors = ["Orange","yellow","Green",'Blue','Red','Black',"pink"]
-Dimension = [x[0] for x in table[0]]
-Birth = [x[1] for x in table[0]]
-Death = [x[2] for x in table[0]]
-df = pd.DataFrame(list(zip(Dimension,Birth,Death)),columns =['Dimension','Birth','Death'])
+			colors = ["Orange","yellow","Green",'Blue','Red','Black',"pink"]
+			Dimension = [x[0] for x in table[0]]
+			Birth = [x[1] for x in table[0]]
+			Death = [x[2] for x in table[0]]
+			df = pd.DataFrame(list(zip(Dimension,Birth,Death)),columns =['Dimension','Birth','Death'])
 
-for d in range(1,dim):
-	Dim = [x[0] for x in table[d]]
-	B = [x[1] for x in table[d]]
-	D = [x[2] for x in table[d]]
-	dftemp = pd.DataFrame(list(zip(Dim,B,D)),columns =['Dimension','Birth','Death'])
-	df = pd.concat([df, dftemp], axis=0)
-print(df)
+			for d in range(1,dim):
+				Dim = [x[0] for x in table[d]]
+				B = [x[1] for x in table[d]]
+				D = [x[2] for x in table[d]]
+				dftemp = pd.DataFrame(list(zip(Dim,B,D)),columns =['Dimension','Birth','Death'])
+				df = pd.concat([df, dftemp], axis=0)
+			print(df)
 
-i = 0
-for d in range(0,dim):
-	counter = []
-	[counter.append(j+i) for j in range(0,len(table[d]))]
-	i=i+len(table[d])
-	df1 =  df[df["Dimension"]==d]
-	plt.plot([df1["Birth"], df1["Death"]], [counter, counter],color=colors[d],linestyle='solid',linewidth=1)
-plt.savefig("outputPIpolytopal.pdf", bbox_inches = 'tight',pad_inches = 0)
-plt.show()
+			i = 0
+			for d in range(0,dim):
+				counter = []
+				[counter.append(j+i) for j in range(0,len(table[d]))]
+				i=i+len(table[d])
+				df1 =  df[df["Dimension"]==d]
+				plt.plot([df1["Birth"], df1["Death"]], [counter, counter],color=colors[d],linestyle='solid',linewidth=1)
+			plt.savefig("outputPIpolytopal.pdf", bbox_inches = 'tight',pad_inches = 0)
+			plt.show()
 
 
-for d in range(0,dim):
-	df1 =  df[df["Dimension"]==d]
-	plt.scatter(df1["Birth"], df1["Death"],color = colors[d])
-plt.axline([0, 0], [2, 2],linewidth=1,color="black")
-plt.savefig("outputBCPolytopal.pdf", bbox_inches = 'tight',pad_inches = 0)
-plt.show()
+			for d in range(0,dim):
+				df1 =  df[df["Dimension"]==d]
+				plt.scatter(df1["Birth"], df1["Death"],color = colors[d])
+			plt.axline([0, 0], [2, 2],linewidth=1,color="black")
+			plt.savefig("outputBCPolytopal.pdf", bbox_inches = 'tight',pad_inches = 0)
+			plt.show()
+		else:
+			for pt in pv:
+				newpoints.append(pt)
 
-'''
+	
