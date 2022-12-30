@@ -14,6 +14,7 @@ import copy
 import alphashape
 from descartes import PolygonPatch
 from shapely.geometry import Point
+from scipy.spatial import Delaunay
 
 
 
@@ -263,8 +264,92 @@ def letter_cmp(a, b):
         else:
             return -1
     else:
-        return 1   
+        return 1 
+        
+  
+def circumRadius(simplex):
+	matA = [[] for i in range(len(simplex))]
+	matACap = [[] for i in range(len(simplex)+1)]
+	ii=0
+	for i in simplex:
+		matACap[ii+1].append(1)
+		for j in simplex:
+			if(math.dist(datapoints[i],datapoints[j])!=0):
+				matA[ii].append(pow(math.dist(datapoints[i],datapoints[j]),2))
+				matACap[ii+1].append(pow(math.dist(datapoints[j],datapoints[i]),2))
+			else:
+				matA[ii].append(pow(math.dist(datapoints[j],datapoints[i]),2))
+				matACap[ii+1].append(pow(math.dist(datapoints[i],datapoints[j]),2))
+		ii= ii+1
+	matACap[0].append(0)
+	for i in simplex:
+		matACap[0].append(1)
+	return math.sqrt(-(np.linalg.det(np.array(matA))/(2*np.linalg.det(np.array(matACap)))))
 	
+def pointInsideSimplex(simplex,point):
+	i = 0
+	matT = []
+	matPv = []
+	for x  in simplex:
+	    if i!=1:
+			tempmat = []
+			for j in range(len(datapoints)):
+				tempmat.append(datapoints[x][1]-datapoints[x][j])
+			matT.append(tempmat)
+		if(i==1):
+			for j in range(len(datapoints)):
+				tempmat = []
+				tempmat.append(point[j]-datapoints[x][j])
+				matPv.append(tempmat)
+		i = i + 1
+	transposematT = [[0 for j in range(len(matT[0]))] for i in range(len(matT))]
+	for in range(len(matT)):
+		for j in range(len(matT[0])):
+			transposematT[j][i]= matT[i][j]
+        
+	 lam = np.matmul(transposematT,matPv)
+	 outside = False;
+	 sum1 = 0;
+	 for x in lam:
+		 sum1 = sum1 + x[0]
+		 if(x[0]<0):
+			outside = True
+			break
+	 if(sum1 > 1):
+		outside = True
+		
+     return outside
+ 
+def computeAlphaShape(points,afv):
+	print(points)
+	triangulation = Delaunay(points).simplices
+	alphaShape = []
+	for simp in triangulation:
+		print(circumRadius(simp))
+		if(circumRadius(simp) < afv):
+			alphaShape.append(simp)
+    # adding isolated vertices
+	return alphaShape
+		
+
+def alphaBoundary(alphaShape):
+	alphahull= []
+	for x in alphaShape:
+		facets = generatesimplexfacets(x,len(x)-1)
+		for f in facets:
+			valid = True
+			for y in alphaShape:
+				if(valid==False):
+					break
+				if(x !=y):
+					if(len(intersection(f,y))==len(f)):
+						valid=False
+						break
+			if(valid==True):
+				if(sorted(f) not in alphahull):
+					alphahull.append(sorted(f))
+	return alphahull
+		
 def simplexweight(simplex):
 	if(len(simplex)==1):
 		return 0
@@ -309,11 +394,28 @@ def createSimplexTree(inputpoints):
 	DelaunayComplex = assignweights(DelaunayComplex)
 	return DelaunayComplex
 	
-
+'''
 datapoints = []
 
-datapoints = tadasets.dsphere(n=200, d = 1, r =1 , noise=0.1)	
+datapoints = tadasets.dsphere(n=200, d = 1, r =4 , noise=0.1)	
+datapoints2 = tadasets.dsphere(n=200, d = 1, r =5 , noise=0.1)
 
+datapoint = np.vstack((datapoints,datapoints2))
+x,y = zip(*datapoint)
+plt.scatter(x,y)
+plt.show()
+print(datapoint)
+#alpha_shape = alphashape.alphashape(datapoint, 2)
+print(computeAlphaShape(datapoints,2))
+fig, ax = plt.subplots()
+ax.scatter(*zip(*datapoint))
+
+#ax.add_patch(PolygonPatch(alpha_shape, alpha=0.8))
+plt.show()
+
+print("Rohit")
+input()
+'''
 letter_cmp_key = cmp_to_key(letter_cmp)    #comparison function
 
 
@@ -324,6 +426,10 @@ for x in Complex:
 '''
 
 	
+datapoints = tadasets.dsphere(n=200, d = 1, r =4 , noise=0.1)	
+datapoints2 = tadasets.dsphere(n=200, d = 1, r =5 , noise=0.1)
+
+datapoints = np.vstack((datapoints,datapoints2))
 
 
 
@@ -357,18 +463,25 @@ while(True):
 	print(pseudoVertices[0].getPVs(datasize)," ", pseudoVertices[1])
 
 	PVs = pseudoVertices[0].getPVs(datasize)
+	alpha_value = pseudoVertices[1]
 	globalbettieTable = []
 
 	newpoints = []
 	for pv in PVs:
 		if (len(pv)>dim):
 			PVpoints = [datapoints[i] for i in pv]
-			alpha_shape = alphashape.alphashape(PVpoints, 0.)
+			alpha_shape = computeAlphaShape(PVpoints,alpha_value)
+			alpha_shape1 = alphashape.alphashape(PVpoints, alpha_value)
+			print(alpha_shape)
 			fig, ax = plt.subplots()
 			ax.scatter(*zip(*PVpoints))
-			ax.add_patch(PolygonPatch(alpha_shape, alpha=0.2))
+			ax.add_patch(PolygonPatch(alpha_shape1, alpha=0.8))
 			plt.show()
 		
+			boundary = alphaBoundary(alpha_shape)
+			print(boundary)
+			input()
+			
 			bettieTable = []
 			Complex = createSimplexTree(PVpoints)
 			fastpersistance(Complex)
@@ -379,7 +492,7 @@ while(True):
 				if alpha_shape.contains(point) != True:
 					newpoints.append(i)
 
-			
+			'''
 			dimcount=[0 for i in range(0,dim)]
 			table = [[] for i in range(0,dim)]
 			for x in bettieTable:
@@ -432,6 +545,7 @@ while(True):
 			plt.axline([0, 0], [2, 2],linewidth=1,color="black")
 			plt.savefig("outputBCPolytopal.pdf", bbox_inches = 'tight',pad_inches = 0)
 			plt.show()
+			'''
 		else:
 			for pt in pv:
 				newpoints.append(pt)
