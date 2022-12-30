@@ -267,19 +267,19 @@ def letter_cmp(a, b):
         return 1 
         
   
-def circumRadius(simplex):
+def circumRadius(simplex,points):
 	matA = [[] for i in range(len(simplex))]
 	matACap = [[] for i in range(len(simplex)+1)]
 	ii=0
 	for i in simplex:
 		matACap[ii+1].append(1)
 		for j in simplex:
-			if(math.dist(datapoints[i],datapoints[j])!=0):
-				matA[ii].append(pow(math.dist(datapoints[i],datapoints[j]),2))
-				matACap[ii+1].append(pow(math.dist(datapoints[j],datapoints[i]),2))
+			if(math.dist(points[i],points[j])!=0):
+				matA[ii].append(pow(math.dist(points[i],points[j]),2))
+				matACap[ii+1].append(pow(math.dist(points[j],points[i]),2))
 			else:
-				matA[ii].append(pow(math.dist(datapoints[j],datapoints[i]),2))
-				matACap[ii+1].append(pow(math.dist(datapoints[i],datapoints[j]),2))
+				matA[ii].append(pow(math.dist(points[j],points[i]),2))
+				matACap[ii+1].append(pow(math.dist(points[i],points[j]),2))
 		ii= ii+1
 	matACap[0].append(0)
 	for i in simplex:
@@ -291,7 +291,7 @@ def pointInsideSimplex(simplex,point):
 	matT = []
 	matPv = []
 	for x  in simplex:
-	    if i!=1:
+		if i!=1:
 			tempmat = []
 			for j in range(len(datapoints)):
 				tempmat.append(datapoints[x][1]-datapoints[x][j])
@@ -303,30 +303,29 @@ def pointInsideSimplex(simplex,point):
 				matPv.append(tempmat)
 		i = i + 1
 	transposematT = [[0 for j in range(len(matT[0]))] for i in range(len(matT))]
-	for in range(len(matT)):
+	for i in range(len(matT)):
 		for j in range(len(matT[0])):
 			transposematT[j][i]= matT[i][j]
-        
-	 lam = np.matmul(transposematT,matPv)
-	 outside = False;
-	 sum1 = 0;
-	 for x in lam:
-		 sum1 = sum1 + x[0]
-		 if(x[0]<0):
+	lam = np.matmul(transposematT,matPv)
+	outside = False;
+	sum1 = 0;
+	for x in lam:
+		sum1 = sum1 + x[0]
+		if(x[0]<0):
 			outside = True
 			break
-	 if(sum1 > 1):
+	if(sum1 > 1):
 		outside = True
-		
-     return outside
+	
+	return outside
  
 def computeAlphaShape(points,afv):
 	print(points)
 	triangulation = Delaunay(points).simplices
 	alphaShape = []
 	for simp in triangulation:
-		print(circumRadius(simp))
-		if(circumRadius(simp) < afv):
+		print(circumRadius(simp,points))
+		if(circumRadius(simp,points) < afv):
 			alphaShape.append(simp)
     # adding isolated vertices
 	return alphaShape
@@ -393,29 +392,45 @@ def createSimplexTree(inputpoints):
 				DelaunayComplex[len(simplex)-1].add(simplex)
 	DelaunayComplex = assignweights(DelaunayComplex)
 	return DelaunayComplex
-	
-'''
+
+def mapindices(alpha_shape,pv):
+	mappedindices = []
+	for x in alpha_shape:
+		simplex = []
+		for y in x:
+			simplex.append(pv[y])
+		mappedindices.append(simplex)
+	return mappedindices 
+
+
+def plotalphaShape(alphashape,points):
+	print(alphashape)
+	plt.figure()
+	for j in alphashape:
+		X = np.array([list(points[i]) for i in j])
+		plt.scatter(X[:, 0], X[:, 1], s = 5, color = "blue")
+		t1 = plt.Polygon(X[:3,:], color="blue")
+		plt.gca().add_patch(t1)
+	plt.show()
+
+
 datapoints = []
 
-datapoints = tadasets.dsphere(n=200, d = 1, r =4 , noise=0.1)	
-datapoints2 = tadasets.dsphere(n=200, d = 1, r =5 , noise=0.1)
+datapoints = tadasets.dsphere(n=50, d = 1, r =4 , noise=0.1)	
+datapoints2 = tadasets.dsphere(n=50, d = 1, r =5 , noise=0.1)
 
 datapoint = np.vstack((datapoints,datapoints2))
+
 x,y = zip(*datapoint)
 plt.scatter(x,y)
 plt.show()
-print(datapoint)
-#alpha_shape = alphashape.alphashape(datapoint, 2)
-print(computeAlphaShape(datapoints,2))
-fig, ax = plt.subplots()
-ax.scatter(*zip(*datapoint))
 
-#ax.add_patch(PolygonPatch(alpha_shape, alpha=0.8))
-plt.show()
-
-print("Rohit")
+alpha_shape = computeAlphaShape(datapoint,3)
+#alpha_shape = mapindices(alpha_shape,pv)
+plotalphaShape(alpha_shape,datapoint)
+			
 input()
-'''
+
 letter_cmp_key = cmp_to_key(letter_cmp)    #comparison function
 
 
@@ -430,10 +445,6 @@ datapoints = tadasets.dsphere(n=200, d = 1, r =4 , noise=0.1)
 datapoints2 = tadasets.dsphere(n=200, d = 1, r =5 , noise=0.1)
 
 datapoints = np.vstack((datapoints,datapoints2))
-
-
-
-
 ######################################### Outline for PwPH Computaion ################################
 
 # 1. Identify Initial epsilon Value (e0) to identify conquarbale pseudovertices.
@@ -471,7 +482,10 @@ while(True):
 		if (len(pv)>dim):
 			PVpoints = [datapoints[i] for i in pv]
 			alpha_shape = computeAlphaShape(PVpoints,alpha_value)
+			alpha_shape = mapindices(alpha_shape,pv)
+			print(pv)
 			alpha_shape1 = alphashape.alphashape(PVpoints, alpha_value)
+			plotalphaShape(alpha_shape,datapoints)
 			print(alpha_shape)
 			fig, ax = plt.subplots()
 			ax.scatter(*zip(*PVpoints))
