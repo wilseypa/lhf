@@ -286,26 +286,31 @@ def circumRadius(simplex,points):
 		matACap[0].append(1)
 	return math.sqrt(-(np.linalg.det(np.array(matA))/(2*np.linalg.det(np.array(matACap)))))
 	
-def pointInsideSimplex(simplex,point):
+def pointInsideSimplex(simplex,point,points):
 	i = 0
 	matT = []
 	matPv = []
+	print(simplex)
+	print(point)
+	print(points)
 	for x  in simplex:
 		if i!=1:
 			tempmat = []
-			for j in range(len(datapoints)):
-				tempmat.append(datapoints[x][1]-datapoints[x][j])
+			for j in range(len(points[0])):
+				tempmat.append(points[x][1]-points[x][j])
 			matT.append(tempmat)
 		if(i==1):
-			for j in range(len(datapoints)):
+			for j in range(len(points[0])):
 				tempmat = []
-				tempmat.append(point[j]-datapoints[x][j])
+				tempmat.append(point[j]-points[x][j])
 				matPv.append(tempmat)
 		i = i + 1
+	print(matT)
 	transposematT = [[0 for j in range(len(matT[0]))] for i in range(len(matT))]
 	for i in range(len(matT)):
 		for j in range(len(matT[0])):
 			transposematT[j][i]= matT[i][j]
+	print(transposematT)
 	lam = np.matmul(transposematT,matPv)
 	outside = False;
 	sum1 = 0;
@@ -317,7 +322,7 @@ def pointInsideSimplex(simplex,point):
 	if(sum1 > 1):
 		outside = True
 	
-	return outside
+	return not outside
  
 def computeAlphaShape(points,afv):
 	print(points)
@@ -413,7 +418,8 @@ def plotalphaShape(alphashape,points):
 		plt.gca().add_patch(t1)
 	plt.show()
 
-
+#print(pointInsideSimplex([0,1,2],[2,2],[[1,1],[3,1],[2,3]]))
+#input()
 datapoints = []
 
 datapoints = tadasets.dsphere(n=50, d = 1, r =4 , noise=0.1)	
