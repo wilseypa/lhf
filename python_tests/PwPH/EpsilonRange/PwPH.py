@@ -18,9 +18,9 @@ from scipy.spatial import Delaunay
 
 
 
-maxepsilon = 2
+maxepsilon = 9999
 distancematrix = []	  #initializae distance matrix
-maximumconquarablesize = 70
+maximumconquarablesize = 200
 	
 class orderedarraylistnode(object):
 	def __init__(self,simplex,weight):
@@ -127,7 +127,7 @@ def writebetties(table,filename):
 	df = pd.DataFrame(list(zip(dimension,birth,death)),columns =['dimension','birth','death'])
 	df.to_csv(filename,index=False,header=False)
 				
-def minimumspanningtree(edges1):
+def minimumspanningtree(edges1,datapoints):
 	# using Kruskal's algorithm to find the cost of Minimum Spanning Tree
 	res = 0
 	pivots = []
@@ -149,11 +149,11 @@ def minimumspanningtree(edges1):
 				return pivots
 	return pivots
 	
-def minimumspanningtreeforinitialization(edges1):
+def minimumspanningtreeforinitialization(edges1,datapoints):
 	# using Kruskal's algorithm to find the cost of Minimum Spanning Tree
 	res = 0
 	mstSize = 0
-	ds = DisjointSet(datasize)
+	ds = DisjointSet(len(datapoints))
 	previousweight = 0
 	for x in reversed(edges1):
 		if ds.find(x.simplex[0]) != ds.find(x.simplex[1]):
@@ -245,10 +245,10 @@ def persistenceByDimension( edges, pivots, dimension):
 			pivotcounter = pivotcounter - 1
 	return nextPivots
 
-def fastpersistance(simplicialcomplex):
+def fastpersistance(simplicialcomplex,newpoints):
 	vertices = getDimEdges(0)
 	edges = getDimEdges(1)
-	pivots  = minimumspanningtree(edges)
+	pivots  = minimumspanningtree(edges,newpoints)
 	for d  in range(1,dim):
 		if(d != 1):
 			 edges = getDimEdges(d)
@@ -325,19 +325,17 @@ def pointInsideSimplex(simplex,point,points):
 	return not outside
  
 def computeAlphaShape(points,afv):
-	print(points)
 	triangulation = Delaunay(points).simplices
 	alphaShape = []
 	for simp in triangulation:
-		print(circumRadius(simp,points))
 		if(circumRadius(simp,points) < afv):
 			alphaShape.append(simp)
-    # adding isolated vertices
 	return alphaShape
 		
 
-def alphaBoundary(alphaShape):
+def alphaBoundary(alphaShape,isolatedVertices):
 	alphahull= []
+	boundaryVertices = isolatedVertices
 	for x in alphaShape:
 		facets = generatesimplexfacets(x,len(x)-1)
 		for f in facets:
@@ -352,7 +350,11 @@ def alphaBoundary(alphaShape):
 			if(valid==True):
 				if(sorted(f) not in alphahull):
 					alphahull.append(sorted(f))
-	return alphahull
+	for x in alphahull:
+		for y in x:
+			if y not in boundaryVertices:
+				boundaryVertices.append(y)
+	return alphahull,boundaryVertices
 		
 def simplexweight(simplex):
 	if(len(simplex)==1):
@@ -398,44 +400,91 @@ def createSimplexTree(inputpoints):
 	DelaunayComplex = assignweights(DelaunayComplex)
 	return DelaunayComplex
 
-def mapindices(alpha_shape,pv):
+def createVRComplexTree(inputpoints,epsilon,dimension):
+	computedistancematrix(inputpoints)
+	VRComplex = [set() for x in range(len(inputpoints[0])+1)]
+	for i in range(len(inputpoints)):
+		VRComplex[0].add((i))
+	for i in range(len(inputpoints)):
+		for j in range(i+1,len(inputpoints)):
+			if math.dist(inputpoints[i],inputpoints[j]) <= epsilon:
+				VRComplex[1].add((i,j))
+	dim = 2
+	while(dim<=dimension):
+		for x in VRComplex[dim-1]:
+			maxindex = max(x)
+			for y in range(maxindex+1,len(inputpoints)):
+				nextsimplex = x.append(y)
+				for i in range(len(nextsimplex)):
+					for j in range(i+1,len(nextsimplex)):
+						distance = math.dist(inputpoints[i],inputpoints[j])
+						if distance > maxdist:
+							maxdist = distance
+				if maxdist <= epsilon:
+					VRComplex[dim].add((nextsimplex))
+	return VRComplex
+	
+	
+def alphaShapeMapAppendIndices(alpha_shape,pv):
 	mappedindices = []
+	uniqueIndices = set()
+	isolatedVertices = []
 	for x in alpha_shape:
 		simplex = []
 		for y in x:
 			simplex.append(pv[y])
+			uniqueIndices.add(pv[y])
 		mappedindices.append(simplex)
-	return mappedindices 
+	for x in pv:
+		if x not in uniqueIndices:
+			isolatedVertices.append(x)
+	return mappedindices,isolatedVertices
 
 
-def plotalphaShape(alphashape,points):
-	print(alphashape)
-	plt.figure()
-	for j in alphashape:
-		X = np.array([list(points[i]) for i in j])
-		plt.scatter(X[:, 0], X[:, 1], s = 5, color = "blue")
-		t1 = plt.Polygon(X[:3,:], color="blue")
-		plt.gca().add_patch(t1)
+def plotalphaShape(list1,newpoints):
+	x,y = zip(*newpoints)
+	plt.scatter(x,y,s=5,color = "red")
+	for x in list1:
+		alphashape = x[0]
+		points = x[1]
+		isolatedVertices = x[2]
+		b = x[3]
+		bv = x[4]
+		for j in alphashape:
+			X = np.array([list(points[i]) for i in j])
+			plt.scatter(X[:, 0], X[:, 1], s = 5, color = "blue")
+			t1 = plt.Polygon(X[:3,:], color="blue",alpha = 0.3)
+			plt.gca().add_patch(t1)
+		for j in b:
+			X = np.array([list(points[i]) for i in j])
+			plt.scatter(X[:, 0], X[:, 1], s = 5, color = "green")
+			t1 = plt.Polygon(X[:3,:], color="green",alpha = 1,lw = 2)
+			plt.gca().add_patch(t1)
+		IV = np.array([list(points[i]) for i in isolatedVertices])
+		if(IV.size > 0):
+			plt.scatter(IV[:, 0], IV[:, 1], s = 10, color = "red")
+		bvi = np.array([list(points[i]) for i in bv])
+		if(bvi.size > 0):
+			plt.scatter(bvi[:, 0], bvi[:, 1], s = 20, color = "black")
 	plt.show()
-
 #print(pointInsideSimplex([0,1,2],[2,2],[[1,1],[3,1],[2,3]]))
 #input()
-datapoints = []
+#datapoints = []
 
-datapoints = tadasets.dsphere(n=50, d = 1, r =4 , noise=0.1)	
-datapoints2 = tadasets.dsphere(n=50, d = 1, r =5 , noise=0.1)
+#datapoints = tadasets.dsphere(n=50, d = 1, r =4 , noise=0.1)	
+#datapoints2 = tadasets.dsphere(n=50, d = 1, r =5 , noise=0.1)
 
-datapoint = np.vstack((datapoints,datapoints2))
+#datapoint = np.vstack((datapoints,datapoints2))
 
-x,y = zip(*datapoint)
-plt.scatter(x,y)
-plt.show()
+#x,y = zip(*datapoint)
+#plt.scatter(x,y)
+#plt.show()
 
-alpha_shape = computeAlphaShape(datapoint,3)
+#alpha_shape = computeAlphaShape(datapoint,3)
 #alpha_shape = mapindices(alpha_shape,pv)
-plotalphaShape(alpha_shape,datapoint)
+#plotalphaShape(alpha_shape,datapoint)
 			
-input()
+#input()
 
 letter_cmp_key = cmp_to_key(letter_cmp)    #comparison function
 
@@ -447,8 +496,8 @@ for x in Complex:
 '''
 
 	
-datapoints = tadasets.dsphere(n=200, d = 1, r =4 , noise=0.1)	
-datapoints2 = tadasets.dsphere(n=200, d = 1, r =5 , noise=0.1)
+datapoints = tadasets.dsphere(n=400, d = 1, r =4 , noise=0.3)	
+datapoints2 = tadasets.dsphere(n=400, d = 1, r =2 , noise=0.3)
 
 datapoints = np.vstack((datapoints,datapoints2))
 ######################################### Outline for PwPH Computaion ################################
@@ -464,54 +513,52 @@ datapoints = np.vstack((datapoints,datapoints2))
 
 ######################################################################################################
 datasize = len(datapoints)
-
-
 newpoints = [i for i in range(datasize)]
+globalbettieTable = []
+
+
 while(True):
+	print("Reduced Point Cloud " ,len(newpoints))
+	newpoints1 = [datapoints[i] for i in newpoints]
 	newpoints = [datapoints[i] for i in newpoints]
-	x,y = zip(*newpoints)
-	plt.scatter(x,y)
-	plt.show()
 	datasize = len(newpoints)
 	dim=len(newpoints[0])
 	Complex = createSimplexTree(newpoints)
 	edges = getDimEdges(1)
-	pseudoVertices  = minimumspanningtreeforinitialization(edges)
-	print(pseudoVertices[0].getPVs(datasize)," ", pseudoVertices[1])
-
+	#print(edges)
+	# 1 Identifying pseduoVertices and value of cutoff Epsilon
+	pseudoVertices  = minimumspanningtreeforinitialization(edges,newpoints)
 	PVs = pseudoVertices[0].getPVs(datasize)
 	alpha_value = pseudoVertices[1]
-	globalbettieTable = []
-
 	newpoints = []
+	print("Subsequent Epsilons", alpha_value)
+	print("Total number of Pseudo Vertices ", len(PVs), "   ", PVs)
+	if len(PVs)==1:
+		Complex = createSimplexTree(PVpoints)
+		fastpersistance(Complex,PVpoints)
+		globalbettieTable.append(bettieTable)
+		break;
+	list2= []
 	for pv in PVs:
 		if (len(pv)>dim):
-			PVpoints = [datapoints[i] for i in pv]
-			alpha_shape = computeAlphaShape(PVpoints,alpha_value)
-			alpha_shape = mapindices(alpha_shape,pv)
-			print(pv)
-			alpha_shape1 = alphashape.alphashape(PVpoints, alpha_value)
-			plotalphaShape(alpha_shape,datapoints)
-			print(alpha_shape)
-			fig, ax = plt.subplots()
-			ax.scatter(*zip(*PVpoints))
-			ax.add_patch(PolygonPatch(alpha_shape1, alpha=0.8))
-			plt.show()
-		
-			boundary = alphaBoundary(alpha_shape)
-			print(boundary)
-			input()
-			
+			# 2 Compute PH on PV and store the results
 			bettieTable = []
+			PVpoints = [datapoints[i] for i in pv]
 			Complex = createSimplexTree(PVpoints)
-			fastpersistance(Complex)
+			fastpersistance(Complex,PVpoints)
+			# 2a Store all of the if First level PV's
+			# 2b Prune Invalid PVs after first level PV's
 			globalbettieTable.append(bettieTable)
 		
-			for i in pv:
-				point = Point(datapoints[i][0],datapoints[i][1]) # analysis point
-				if alpha_shape.contains(point) != True:
-					newpoints.append(i)
-
+			# 3 Compute Alpha Shape on Each PV and compute its boundary
+			alpha_shape = computeAlphaShape(PVpoints,alpha_value)
+			alpha_shape,isolatedVertices = alphaShapeMapAppendIndices(alpha_shape,pv)
+			boundary, boundaryVertices = alphaBoundary(alpha_shape,isolatedVertices)
+			list2.append([alpha_shape,datapoints,isolatedVertices,boundary,boundaryVertices])
+			# 4 Consider Only boundary Vertices for next iteration
+			# (Remove Interior Points)
+			for pt in boundaryVertices:
+				newpoints.append(pt)
 			'''
 			dimcount=[0 for i in range(0,dim)]
 			table = [[] for i in range(0,dim)]
@@ -569,5 +616,7 @@ while(True):
 		else:
 			for pt in pv:
 				newpoints.append(pt)
+	plotalphaShape(list2,newpoints1)
+	plt.show()
 
 	
