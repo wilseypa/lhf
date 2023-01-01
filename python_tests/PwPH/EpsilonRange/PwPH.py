@@ -15,12 +15,13 @@ import alphashape
 from descartes import PolygonPatch
 from shapely.geometry import Point
 from scipy.spatial import Delaunay
+from scipy.spatial import ConvexHull
 
 
 
 maxepsilon = 9999
 distancematrix = []	  #initializae distance matrix
-maximumconquarablesize = 200
+maximumconquarablesize = 100
 	
 class orderedarraylistnode(object):
 	def __init__(self,simplex,weight):
@@ -163,7 +164,8 @@ def minimumspanningtreeforinitialization(edges1,datapoints):
 			mstSize +=1
 			maxmstsize = max([ds.findrank(i) for i in range(0,len(datapoints))])
 			if(mstSize >= len(datapoints)-1 or maxmstsize > maximumconquarablesize):
-				return previousds,previousweight,x.weight
+				#return previousds,previousweight,x.weight
+				return ds,x.weight,previousweight
 			previousweight = x.weight
 	return ds
 	
@@ -403,32 +405,26 @@ def createSimplexTree(inputpoints):
 def createVRComplexTree(inputpoints,epsilon,dimension):
 	computedistancematrix(inputpoints)
 	VRComplex = [set() for x in range(len(inputpoints[0])+1)]
-	for i in range(len(inputpoints)):
-		VRComplex[0].add((i))
-	for i in range(len(inputpoints)):
-		for j in range(i+1,len(inputpoints)):
-			if math.dist(inputpoints[i],inputpoints[j]) <= epsilon:
-				VRComplex[1].add((i,j))
-	dim = 2
-	while(dim<=dimension):
-		for x in VRComplex[dim-1]:
-			maxindex = max(x)
-			for y in range(maxindex+1,len(inputpoints)):
-				nextsimplex = x.append(y)
-				for i in range(len(nextsimplex)):
-					for j in range(i+1,len(nextsimplex)):
-						distance = math.dist(inputpoints[i],inputpoints[j])
-						if distance > maxdist:
-							maxdist = distance
-				if maxdist <= epsilon:
-					VRComplex[dim].add((nextsimplex))
+	triangulation = range(len(inputpoints))
+	for y in range(dimension+1):
+		simplexes = itertools.combinations(triangulation, y)
+		for simplex in simplexes:
+			VRComplex[len(simplex)-1].add(simplex)
+	VRComplex = assignweights(VRComplex)
 	return VRComplex
+
 	
-	
-def alphaShapeMapAppendIndices(alpha_shape,pv):
+def alphaShapeMapAppendIndices(alpha_shape,pv,hull):
 	mappedindices = []
+	hullindices = []
 	uniqueIndices = set()
 	isolatedVertices = []
+	for x in hull:
+		simplex = []
+		for y in x:
+			simplex.append(pv[y])
+		hullindices.append(simplex)
+	
 	for x in alpha_shape:
 		simplex = []
 		for y in x:
@@ -438,8 +434,17 @@ def alphaShapeMapAppendIndices(alpha_shape,pv):
 	for x in pv:
 		if x not in uniqueIndices:
 			isolatedVertices.append(x)
-	return mappedindices,isolatedVertices
+	return mappedindices,isolatedVertices,hullindices
 
+def MapPVs(Pvs,nps):
+	mappedindices = []
+	for x in Pvs:
+		pseudov = []
+		for y in x:
+			pseudov.append(nps[y])
+		mappedindices.append(pseudov)
+	return mappedindices
+	
 
 def plotalphaShape(list1,newpoints):
 	x,y = zip(*newpoints)
@@ -450,6 +455,7 @@ def plotalphaShape(list1,newpoints):
 		isolatedVertices = x[2]
 		b = x[3]
 		bv = x[4]
+		hull = x[5]
 		for j in alphashape:
 			X = np.array([list(points[i]) for i in j])
 			plt.scatter(X[:, 0], X[:, 1], s = 5, color = "blue")
@@ -459,6 +465,11 @@ def plotalphaShape(list1,newpoints):
 			X = np.array([list(points[i]) for i in j])
 			plt.scatter(X[:, 0], X[:, 1], s = 5, color = "green")
 			t1 = plt.Polygon(X[:3,:], color="green",alpha = 1,lw = 2)
+			plt.gca().add_patch(t1)
+		for j in hull:
+			X = np.array([list(points[i]) for i in j])
+			plt.scatter(X[:, 0], X[:, 1], s = 5, color = "green")
+			t1 = plt.Polygon(X[:3,:], color="pink",alpha = 1,lw = 2)
 			plt.gca().add_patch(t1)
 		IV = np.array([list(points[i]) for i in isolatedVertices])
 		if(IV.size > 0):
@@ -496,8 +507,8 @@ for x in Complex:
 '''
 
 	
-datapoints = tadasets.dsphere(n=400, d = 1, r =4 , noise=0.3)	
-datapoints2 = tadasets.dsphere(n=400, d = 1, r =2 , noise=0.3)
+datapoints = tadasets.dsphere(n=200, d = 1, r =4 , noise=0.3)	
+datapoints2 = tadasets.dsphere(n=200, d = 1, r =2 , noise=0.3)
 
 datapoints = np.vstack((datapoints,datapoints2))
 ######################################### Outline for PwPH Computaion ################################
@@ -513,30 +524,46 @@ datapoints = np.vstack((datapoints,datapoints2))
 
 ######################################################################################################
 datasize = len(datapoints)
+dim = len(datapoints[0])
 newpoints = [i for i in range(datasize)]
 globalbettieTable = []
-
-
+finalfigure = []
 while(True):
 	print("Reduced Point Cloud " ,len(newpoints))
+	#print(sorted(newpoints), "  ", len(newpoints))
+	#for t in range(len(datapoints)):
+	#	if t not in newpoints:
+	#		print(t)
+	nps = newpoints
 	newpoints1 = [datapoints[i] for i in newpoints]
 	newpoints = [datapoints[i] for i in newpoints]
 	datasize = len(newpoints)
-	dim=len(newpoints[0])
-	Complex = createSimplexTree(newpoints)
+	Complex = createVRComplexTree(newpoints,maxepsilon,dim)
 	edges = getDimEdges(1)
 	#print(edges)
 	# 1 Identifying pseduoVertices and value of cutoff Epsilon
 	pseudoVertices  = minimumspanningtreeforinitialization(edges,newpoints)
 	PVs = pseudoVertices[0].getPVs(datasize)
+	#print(PVs)
+	#print(nps)
+	PVs = MapPVs(PVs,nps)
+	#print(PVs)
 	alpha_value = pseudoVertices[1]
 	newpoints = []
 	print("Subsequent Epsilons", alpha_value)
-	print("Total number of Pseudo Vertices ", len(PVs), "   ", PVs)
+	print("Total number of Pseudo Vertices ", len(PVs), " ")
 	if len(PVs)==1:
-		Complex = createSimplexTree(PVpoints)
+		bettieTable = []
+		PVpoints = [datapoints[i] for i in PVs[0]]
+		Complex = createVRComplexTree(PVpoints,maxepsilon,dim)
 		fastpersistance(Complex,PVpoints)
 		globalbettieTable.append(bettieTable)
+		alpha_shape = computeAlphaShape(PVpoints,alpha_value)
+		hull = ConvexHull(PVpoints,qhull_options="QJ").simplices
+		alpha_shape,isolatedVertices,hull = alphaShapeMapAppendIndices(alpha_shape,PVs[0],hull)
+		boundary, boundaryVertices = alphaBoundary(alpha_shape,isolatedVertices)
+		list2.append([alpha_shape,datapoints,isolatedVertices,boundary,boundaryVertices,hull])
+		finalfigure.append([list2,newpoints1])	
 		break;
 	list2= []
 	for pv in PVs:
@@ -544,7 +571,7 @@ while(True):
 			# 2 Compute PH on PV and store the results
 			bettieTable = []
 			PVpoints = [datapoints[i] for i in pv]
-			Complex = createSimplexTree(PVpoints)
+			Complex = createVRComplexTree(PVpoints,maxepsilon,dim)
 			fastpersistance(Complex,PVpoints)
 			# 2a Store all of the if First level PV's
 			# 2b Prune Invalid PVs after first level PV's
@@ -552,11 +579,14 @@ while(True):
 		
 			# 3 Compute Alpha Shape on Each PV and compute its boundary
 			alpha_shape = computeAlphaShape(PVpoints,alpha_value)
-			alpha_shape,isolatedVertices = alphaShapeMapAppendIndices(alpha_shape,pv)
+			hull = ConvexHull(PVpoints,qhull_options="QJ").simplices
+			alpha_shape,isolatedVertices,hull = alphaShapeMapAppendIndices(alpha_shape,pv,hull)
 			boundary, boundaryVertices = alphaBoundary(alpha_shape,isolatedVertices)
-			list2.append([alpha_shape,datapoints,isolatedVertices,boundary,boundaryVertices])
+			list2.append([alpha_shape,datapoints,isolatedVertices,boundary,boundaryVertices,hull])
 			# 4 Consider Only boundary Vertices for next iteration
 			# (Remove Interior Points)
+			
+			#5 Collect point for reduced dataset
 			for pt in boundaryVertices:
 				newpoints.append(pt)
 			'''
@@ -614,9 +644,64 @@ while(True):
 			plt.show()
 			'''
 		else:
+			#5 Collect Isolated point for reduced dataset
 			for pt in pv:
 				newpoints.append(pt)
-	plotalphaShape(list2,newpoints1)
+	#plotalphaShape(list2,newpoints1)
+	finalfigure.append([list2,newpoints1])
 	plt.show()
 
-	
+# Plot Final Figure
+
+#plt.figure(figsize=(6, 4))
+
+number = int(math.sqrt(len(finalfigure)))
+rows, cols = number,number+1
+fig, ax = plt.subplots(rows, cols,sharex='col', sharey='row')
+
+i = -1
+for xx in range(rows):
+	for yy in range(cols):
+		if(i==-1):
+			x,y = zip(*datapoints)
+			ax[xx,yy].scatter(x,y,s=5,color = "blue")
+			i = i+1
+		else:
+			plot1 = finalfigure[i]
+			list1 = plot1[0]
+			newpoints = plot1[1]
+			x,y = zip(*newpoints)
+			ax[xx,yy].scatter(x,y,s=5,color = "red")
+			for x in list1:
+				alphashape = x[0]
+				points = x[1]
+				isolatedVertices = x[2]
+				b = x[3]
+				bv = x[4]
+				hull = x[5]
+				for j in alphashape:
+					X = np.array([list(points[i]) for i in j])
+					ax[xx,yy].scatter(X[:, 0], X[:, 1], s = 5, color = "blue")
+					t1 = plt.Polygon(X[:3,:], color="blue",alpha = 0.3)
+					ax[xx,yy].add_patch(t1)
+				for j in b:
+					X = np.array([list(points[i]) for i in j])
+					ax[xx,yy].scatter(X[:, 0], X[:, 1], s = 5, color = "green")
+					t1 = plt.Polygon(X[:3,:], color="green",alpha = 1,lw = 2)
+					ax[xx,yy].add_patch(t1)
+				for j in hull:
+					X = np.array([list(points[i]) for i in j])
+					ax[xx,yy].scatter(X[:, 0], X[:, 1], s = 5, color = "green")
+					t1 = plt.Polygon(X[:3,:], color="pink",alpha = 1,lw = 2)
+					ax[xx,yy].add_patch(t1)
+				IV = np.array([list(points[i]) for i in isolatedVertices])
+				if(IV.size > 0):
+					ax[xx,yy].scatter(IV[:, 0], IV[:, 1], s = 5, color = "red")
+				bvi = np.array([list(points[i]) for i in bv])
+				if(bvi.size > 0):
+					ax[xx,yy].scatter(bvi[:, 0], bvi[:, 1], s = 5, color = "black")
+			i = i + 1
+			if(i >= len(finalfigure)):
+				break
+plt.savefig("SubsequentPVs.pdf", bbox_inches = 'tight',pad_inches = 0)
+plt.show()
