@@ -19,9 +19,9 @@ from scipy.spatial import ConvexHull
 
 
 
-maxepsilon = 9999
+maxepsilon = 5
 distancematrix = []	  #initializae distance matrix
-maximumconquarablesize = 100
+maximumconquarablesize = 50
 	
 class orderedarraylistnode(object):
 	def __init__(self,simplex,weight):
@@ -140,12 +140,12 @@ def minimumspanningtree(edges1,datapoints):
 			res += x.weight
 			mstSize +=1
 			pivots.append(x)
-			bettitableentry = [0,0,float(f'{x.weight:.6f}')]
+			bettitableentry = [0,0,float(f'{x.weight:.6f}'),tuple([1000,1000])]
 			bettieTable.append(tuple(bettitableentry))
 			if(mstSize >= len(datapoints)-1):
 				for i in range(0,len(datapoints)):
 					if(ds.find(i) == i):
-						bettitableentry = [0,0,maxepsilon]
+						bettitableentry = [0,0,maxepsilon,tuple([1000,1000])]
 						bettieTable.append(tuple(bettitableentry))
 				return pivots
 	return pivots
@@ -186,9 +186,20 @@ def intersection(lst1, lst2):  #return intersection of two lists
  
 def union(lst1,lst2):        #return union of two lists
 	return list(set().union(lst1 , lst2))
+	
+def centroid(simplex,newpoints):
+	cntr = []
+	for i in range(len(newpoints[0])):
+		coord = 0
+		for x in simplex:
+			coord = coord + newpoints[x][i]
+		coord = coord/len(simplex)
+		cntr.append(coord)
+	return cntr
 
 
-def persistenceByDimension( edges, pivots, dimension):
+
+def persistenceByDimension( edges, pivots, dimension,newpoints):
 	pivotcounter = len(pivots)-1
 	edges.sort(key = letter_cmp_key)
 	nextPivots = []	
@@ -232,7 +243,8 @@ def persistenceByDimension( edges, pivots, dimension):
 								v[e] = f
 							k+=1
 					if(e.weight < pivot.weight):
-						bettitableentry = [dimension,float(f'{min(pivot.weight, e.weight):.6f}'),float(f'{max(pivot.weight, e.weight):.6f}')]
+						centroidsimplex = centroid(e.simplex,newpoints)
+						bettitableentry = [dimension,float(f'{min(pivot.weight, e.weight):.6f}'),float(f'{max(pivot.weight, e.weight):.6f}'),tuple(centroidsimplex)]
 						bettieTable.append(tuple(bettitableentry))
 					break
 				else:
@@ -254,7 +266,7 @@ def fastpersistance(simplicialcomplex,newpoints):
 	for d  in range(1,dim):
 		if(d != 1):
 			 edges = getDimEdges(d)
-		pivots = persistenceByDimension(edges, pivots, d)
+		pivots = persistenceByDimension(edges, pivots, d,newpoints)
 	return
 
 def letter_cmp(a, b):
@@ -292,9 +304,6 @@ def pointInsideSimplex(simplex,point,points):
 	i = 0
 	matT = []
 	matPv = []
-	print(simplex)
-	print(point)
-	print(points)
 	for x  in simplex:
 		if i!=1:
 			tempmat = []
@@ -307,12 +316,10 @@ def pointInsideSimplex(simplex,point,points):
 				tempmat.append(point[j]-points[x][j])
 				matPv.append(tempmat)
 		i = i + 1
-	print(matT)
 	transposematT = [[0 for j in range(len(matT[0]))] for i in range(len(matT))]
 	for i in range(len(matT)):
 		for j in range(len(matT[0])):
 			transposematT[j][i]= matT[i][j]
-	print(transposematT)
 	lam = np.matmul(transposematT,matPv)
 	outside = False;
 	sum1 = 0;
@@ -395,7 +402,7 @@ def createSimplexTree(inputpoints):
 	DelaunayComplex = [set() for x in range(len(inputpoints[0])+1)]
 	triangulation =  Delaunay(inputpoints).simplices
 	for x in triangulation:
-		for y in range(len(triangulation[0])+1):
+		for y in range(len(inputpoints[0])+1):
 			simplexes = itertools.combinations(x, y)
 			for simplex in simplexes:
 				DelaunayComplex[len(simplex)-1].add(simplex)
@@ -406,10 +413,12 @@ def createVRComplexTree(inputpoints,epsilon,dimension):
 	computedistancematrix(inputpoints)
 	VRComplex = [set() for x in range(len(inputpoints[0])+1)]
 	triangulation = range(len(inputpoints))
-	for y in range(dimension+1):
+	for y in range(len(inputpoints[0])+1):
+		y = y+1
 		simplexes = itertools.combinations(triangulation, y)
 		for simplex in simplexes:
-			VRComplex[len(simplex)-1].add(simplex)
+			if(simplexweight(simplex)<maxepsilon):
+				VRComplex[len(simplex)-1].add(simplex)
 	VRComplex = assignweights(VRComplex)
 	return VRComplex
 
@@ -444,7 +453,19 @@ def MapPVs(Pvs,nps):
 			pseudov.append(nps[y])
 		mappedindices.append(pseudov)
 	return mappedindices
-	
+
+def filterPIs(bettieTable,alphashapesimplices):
+	prunedPis = []
+	for x in bettieTable:
+		inside = False
+		for y in alphashapesimplices:
+			if pointInsideSimplex(y,x[3],datapoints):
+				inside = True
+				break
+		if not inside:
+			prunedPis.append(x)
+	return prunedPis
+
 
 def plotalphaShape(list1,newpoints):
 	x,y = zip(*newpoints)
@@ -507,8 +528,8 @@ for x in Complex:
 '''
 
 	
-datapoints = tadasets.dsphere(n=200, d = 1, r =4 , noise=0.3)	
-datapoints2 = tadasets.dsphere(n=200, d = 1, r =2 , noise=0.3)
+datapoints = tadasets.dsphere(n=50, d = 1, r =4 , noise=0.3)	
+datapoints2 = tadasets.dsphere(n=50, d = 1, r =2 , noise=0.3)
 
 datapoints = np.vstack((datapoints,datapoints2))
 ######################################### Outline for PwPH Computaion ################################
@@ -526,8 +547,10 @@ datapoints = np.vstack((datapoints,datapoints2))
 datasize = len(datapoints)
 dim = len(datapoints[0])
 newpoints = [i for i in range(datasize)]
-globalbettieTable = []
+globalbettieTable = set()
+alphashapesimplices = set()
 finalfigure = []
+alpha_shape = []
 while(True):
 	print("Reduced Point Cloud " ,len(newpoints))
 	#print(sorted(newpoints), "  ", len(newpoints))
@@ -550,24 +573,32 @@ while(True):
 	#print(PVs)
 	alpha_value = pseudoVertices[1]
 	newpoints = []
+	list2= []
 	print("Subsequent Epsilons", alpha_value)
 	print("Total number of Pseudo Vertices ", len(PVs), " ")
 	if len(PVs)==1:
+		for x in alpha_shape:
+			alphashapesimplices.add(tuple(x))
 		bettieTable = []
 		PVpoints = [datapoints[i] for i in PVs[0]]
 		Complex = createVRComplexTree(PVpoints,maxepsilon,dim)
 		fastpersistance(Complex,PVpoints)
-		globalbettieTable.append(bettieTable)
 		alpha_shape = computeAlphaShape(PVpoints,alpha_value)
 		hull = ConvexHull(PVpoints,qhull_options="QJ").simplices
 		alpha_shape,isolatedVertices,hull = alphaShapeMapAppendIndices(alpha_shape,PVs[0],hull)
 		boundary, boundaryVertices = alphaBoundary(alpha_shape,isolatedVertices)
 		list2.append([alpha_shape,datapoints,isolatedVertices,boundary,boundaryVertices,hull])
 		finalfigure.append([list2,newpoints1])	
+		for x in alpha_shape:
+			alphashapesimplices.add(tuple(x))			
+		prunedPIs = filterPIs(bettieTable,alphashapesimplices)
+		for x in prunedPIs:
+			globalbettieTable.add(x)
 		break;
-	list2= []
 	for pv in PVs:
 		if (len(pv)>dim):
+			for x in alpha_shape:
+				alphashapesimplices.add(tuple(x))
 			# 2 Compute PH on PV and store the results
 			bettieTable = []
 			PVpoints = [datapoints[i] for i in pv]
@@ -575,7 +606,6 @@ while(True):
 			fastpersistance(Complex,PVpoints)
 			# 2a Store all of the if First level PV's
 			# 2b Prune Invalid PVs after first level PV's
-			globalbettieTable.append(bettieTable)
 		
 			# 3 Compute Alpha Shape on Each PV and compute its boundary
 			alpha_shape = computeAlphaShape(PVpoints,alpha_value)
@@ -585,64 +615,12 @@ while(True):
 			list2.append([alpha_shape,datapoints,isolatedVertices,boundary,boundaryVertices,hull])
 			# 4 Consider Only boundary Vertices for next iteration
 			# (Remove Interior Points)
-			
 			#5 Collect point for reduced dataset
 			for pt in boundaryVertices:
-				newpoints.append(pt)
-			'''
-			dimcount=[0 for i in range(0,dim)]
-			table = [[] for i in range(0,dim)]
-			for x in bettieTable:
-				table[x[0]].append(x)
-				dimcount[x[0]]= dimcount[x[0]]+1
-			for i in range(0,dim):
-				print("Dimemnsion ",i," Betti Count ::",dimcount[i])
-	
-			writebetties(table,"output.csv")
-	
-
-			dimcount=[0 for i in range(0,dim)]
-
-			table = [[] for i in range(0,dim)]
-
-			for x in bettieTable:
-				table[x[0]].append(x)
-				dimcount[x[0]]= dimcount[x[0]]+1
-			for i in range(0,dim):
-				print("Dimemnsion ",i," Betti Count ::",dimcount[i])
-
-			colors = ["Orange","yellow","Green",'Blue','Red','Black',"pink"]
-			Dimension = [x[0] for x in table[0]]
-			Birth = [x[1] for x in table[0]]
-			Death = [x[2] for x in table[0]]
-			df = pd.DataFrame(list(zip(Dimension,Birth,Death)),columns =['Dimension','Birth','Death'])
-
-			for d in range(1,dim):
-				Dim = [x[0] for x in table[d]]
-				B = [x[1] for x in table[d]]
-				D = [x[2] for x in table[d]]
-				dftemp = pd.DataFrame(list(zip(Dim,B,D)),columns =['Dimension','Birth','Death'])
-				df = pd.concat([df, dftemp], axis=0)
-			print(df)
-
-			i = 0
-			for d in range(0,dim):
-				counter = []
-				[counter.append(j+i) for j in range(0,len(table[d]))]
-				i=i+len(table[d])
-				df1 =  df[df["Dimension"]==d]
-				plt.plot([df1["Birth"], df1["Death"]], [counter, counter],color=colors[d],linestyle='solid',linewidth=1)
-			plt.savefig("outputPIpolytopal.pdf", bbox_inches = 'tight',pad_inches = 0)
-			plt.show()
-
-
-			for d in range(0,dim):
-				df1 =  df[df["Dimension"]==d]
-				plt.scatter(df1["Birth"], df1["Death"],color = colors[d])
-			plt.axline([0, 0], [2, 2],linewidth=1,color="black")
-			plt.savefig("outputBCPolytopal.pdf", bbox_inches = 'tight',pad_inches = 0)
-			plt.show()
-			'''
+				newpoints.append(pt)			
+			prunedPIs = filterPIs(bettieTable,alphashapesimplices)
+			for x in prunedPIs:
+				globalbettieTable.add(x)
 		else:
 			#5 Collect Isolated point for reduced dataset
 			for pt in pv:
@@ -651,10 +629,14 @@ while(True):
 	finalfigure.append([list2,newpoints1])
 	plt.show()
 
+x,y = zip(*datapoints)
+plt.scatter(x,y,s=5,color = "blue")
+plt.show()		
+			
 # Plot Final Figure
 
 #plt.figure(figsize=(6, 4))
-
+'''
 number = int(math.sqrt(len(finalfigure)))
 rows, cols = number,number+1
 fig, ax = plt.subplots(rows, cols,sharex='col', sharey='row')
@@ -704,4 +686,60 @@ for xx in range(rows):
 			if(i >= len(finalfigure)):
 				break
 plt.savefig("SubsequentPVs.pdf", bbox_inches = 'tight',pad_inches = 0)
+plt.show()
+
+'''
+bettieTable = globalbettieTable
+dimcount=[0 for i in range(0,dim)]
+table = [[] for i in range(0,dim)]
+for x in bettieTable:
+	table[x[0]].append(x)
+	dimcount[x[0]]= dimcount[x[0]]+1
+#for i in range(0,dim):
+#	print("Dimemnsion ",i," Betti Count ::",dimcount[i])
+	
+writebetties(table,"output.csv")
+	
+
+dimcount=[0 for i in range(0,dim)]
+
+table = [[] for i in range(0,dim)]
+
+for x in bettieTable:
+	table[x[0]].append(x)
+	dimcount[x[0]]= dimcount[x[0]]+1
+#for i in range(0,dim):
+#	print("Dimemnsion ",i," Betti Count ::",dimcount[i])
+
+colors = ["Green",'Blue','Red','Black',"Orange","yellow","pink"]
+Dimension = [x[0] for x in table[0]]
+Birth = [x[1] for x in table[0]]
+Death = [x[2] for x in table[0]]
+df = pd.DataFrame(list(zip(Dimension,Birth,Death)),columns =['Dimension','Birth','Death'])
+
+for d in range(1,dim):
+	Dim = [x[0] for x in table[d]]
+	B = [x[1] for x in table[d]]
+	D = [x[2] for x in table[d]]
+	dftemp = pd.DataFrame(list(zip(Dim,B,D)),columns =['Dimension','Birth','Death'])
+	df = pd.concat([df, dftemp], axis=0)
+
+df = df.sort_values(by=['Death'])
+
+i = 0
+for d in range(0,dim):
+	counter = []
+	[counter.append(j+i) for j in range(0,len(table[d]))]
+	i=i+len(table[d])
+	df1 =  df[df["Dimension"]==d]
+	plt.plot([df1["Birth"], df1["Death"]], [counter, counter],color=colors[d],linestyle='solid',linewidth=1)
+plt.savefig("outputPIpolytopal.pdf", bbox_inches = 'tight',pad_inches = 0)
+plt.show()
+
+
+for d in range(0,dim):
+	df1 =  df[df["Dimension"]==d]
+	plt.scatter(df1["Birth"], df1["Death"],color = colors[d])
+plt.axline([0, 0], [2, 2],linewidth=1,color="black")
+plt.savefig("outputBCPolytopal.pdf", bbox_inches = 'tight',pad_inches = 0)
 plt.show()
