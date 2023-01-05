@@ -41,7 +41,9 @@ class DisjointSet:
     # union by rank optimization
     def union(self, a, b):
         pa = self.find(a)
+        print("PA",pa)
         pb = self.find(b)
+        print(pb)
         if pa == pb: return
         if self.rank[self.original.index(pa)] > self.rank[self.original.index(pb)]:
             self.parent[self.original.index(pb)] = pa
@@ -57,6 +59,7 @@ class DisjointSet:
             return a
         
         self.parent[self.original.index(a)] = self.find(self.parent[self.original.index(a)])
+        print("Parent  ",self.parent)
         return self.parent[self.original.index(a)]
         
     def findrank(self, a):
@@ -94,7 +97,6 @@ ds1 = DisjointSet(odd,odd,[1 for i in odd])
 edges1 = generatesedges(odd)
 
 for x in edges1:
-	print(x)
 	if ds1.find(x[0]) != ds1.find(x[1]):
 		ds1.union(x[0], x[1])
 for x,y,z in zip(ds1.parent,ds1.rank,ds1.original):
@@ -112,7 +114,15 @@ for x,y,z in zip(ds2.parent,ds2.rank,ds2.original):
 	print(" Parent ::", x," Rank ::", y, " Indices :: ", z)
 print("********")
 
+
 mergeddiskointset = merge(ds1,ds2)
+edges1 = generatesedges(dataindexes)
+
+for x in edges1:
+	print(x)
+	if mergeddiskointset.find(x[0]) != mergeddiskointset.find(x[1]):
+		mergeddiskointset.union(x[0], x[1])
+	
 for x,y,z in zip(mergeddiskointset.parent,mergeddiskointset.rank,mergeddiskointset.original):
 	print(" Parent ::", x," Rank ::", y, " Indices :: ", z)
 print("********")
