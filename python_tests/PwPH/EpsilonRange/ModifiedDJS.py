@@ -16,8 +16,10 @@ from descartes import PolygonPatch
 from shapely.geometry import Point
 from scipy.spatial import Delaunay
 from scipy.spatial import ConvexHull
+from matplotlib.collections import LineCollection
 
-maximumconquarablesize = 100
+
+maximumconquarablesize = 300
 epsilon = 9999999
 def generatesedges(dataindexes):  #generate simplices of dimension dimen
 	tp = list(combinations(dataindexes, 2))
@@ -114,28 +116,32 @@ def growFullMST(points):
 	ds = DisjointSet(points,points,[1 for i in points])
 	edges = generatesedges(points)
 	mstSize = 0
+	mstedges = []
 	for x in edges:
 		if ds.find(x[0]) != ds.find(x[1]):
 			ds.union(x[0], x[1])
+			mstedges.append([x[0],x[1]])
 			mstSize +=1
 		if(mstSize >= len(points)-1):
-			return ds
-	return ds
+			return ds,mstedges
+	return ds,mstedges
 
 def growPVs(updatedVertices,ds):
 	# using Kruskal's algorithm to find the cost of Minimum Spanning Tree
 	res = 0
 	mstSize = 0
 	previousweight = 0
+	mstedges = []
 	edges = generatesedges(updatedVertices)
 	for x in edges:
 		if ds.find(x[0]) != ds.find(x[1]):
 			ds.union(x[0], x[1])
+			mstedges.append([x[0],x[1]])
 			mstSize +=1
 			maxmstsize = max([ds.findrank(i) for i in range(0,len(updatedVertices))])
 			if(mstSize >= len(updatedVertices)-1 or maxmstsize > maximumconquarablesize):
-				return ds,x[2]
-	return ds, 9999
+				return ds,x[2],mstedges
+	return ds, 9999,mstedges
 #***********************************************************
  
 def circumRadius(simplex,points):
@@ -216,10 +222,15 @@ def computeAlphaShape(vertices,afv):
 
 #***********************************************************
 	
-datapoints = tadasets.dsphere(n=200, d = 1, r =4 , noise=0.1)	
-datapoints2 = tadasets.dsphere(n=200, d = 1, r =2 , noise=0.1)
+#datapoints = tadasets.dsphere(n=200, d = 1, r =4 , noise=0.1)	
+#datapoints2 = tadasets.dsphere(n=200, d = 1, r =2 , noise=0.1)
 
-datapoints = np.vstack((datapoints,datapoints2))
+#datapoints = np.vstack((datapoints,datapoints2))
+
+#datapoints = np.loadtxt("PathBased.csv",delimiter=",", dtype=float)
+#datapoints = np.loadtxt("ZahnsCompund.csv",delimiter=",", dtype=float)
+datapoints = np.loadtxt("D31.csv",delimiter=",", dtype=float)
+
 dim = len(datapoints[0])
 
 #******************************************
@@ -232,11 +243,16 @@ while True:
 	print("********")
 	updatedVertices = []
 	updatedVertices += updatedPVs[0]
-	globalDS = growFullMST(updatedPVs[0])
+	globalmstedges = []
+	globalDS,mstedge = growFullMST(updatedPVs[0])
+	if(mstedge):
+		globalmstedges.append(mstedge)
 	for i in range(1,len(updatedPVs)):
 		updatedVertices += updatedPVs[i]
-		ds = growFullMST(updatedPVs[i])
+		ds,mstedge = growFullMST(updatedPVs[i])
 		globalDS = merge(globalDS,ds)
+		if(mstedge):
+			globalmstedges.append(mstedge)
 		'''j = 0
 		for x,y,z in zip(ds.parent,ds.rank,ds.original):
 			print(j," Parent ::", x," Rank ::", y, " Indices :: ", z)
@@ -255,6 +271,7 @@ while True:
 	print("PseudoVertices  ")
 	'''
 	list2= []
+	newmstedges = pseudoVertices[2]
 	PVs = pseudoVertices[0].getPVs(updatedVertices)
 	print("Total PVs ", len(PVs))
 	alpha_value = pseudoVertices[1]
@@ -262,7 +279,7 @@ while True:
 	if len(PVs)==1:		
 		alpha_shape,isolatedVertices = computeAlphaShape(PVs[0],epsilon)
 		list2.append([alpha_shape,isolatedVertices])
-		finalfigure.append(list2)
+		finalfigure.append([list2,globalmstedges,newmstedges])
 		break
 	updatedPVs = []
 	for pv in PVs:
@@ -279,14 +296,15 @@ while True:
 			#5 Collect Isolated point for reduced dataset
 			for pt in pv:
 				updatedPV.append(pt)
+			list2.append([[],updatedPV])
 		updatedPVs.append(updatedPV)
-	finalfigure.append(list2)
+	finalfigure.append([list2,globalmstedges,newmstedges])
 
 #**************************************
 
-number = int(math.sqrt(len(finalfigure)))
-number = number+1
-rows, cols = number,number
+number1 = int(math.sqrt(len(finalfigure)))
+number2 = int(((len(finalfigure))/number1)+1)
+rows, cols = number1,number2
 fig, ax = plt.subplots(rows, cols,sharex='col', sharey='row')
 
 i = -1
@@ -294,27 +312,38 @@ for xx in range(rows):
 	for yy in range(cols):
 		if(i==-1):
 			x,y = zip(*datapoints)
-			ax[xx,yy].scatter(x,y,s=5,color = "blue")
+			ax[xx,yy].scatter(x,y,s=0.5,color = "blue")
 			i = i+1
 		else:
-			plot1 = finalfigure[i]
+			plotdata = finalfigure[i]
+			plot1 = plotdata[0]
+			mst2 = np.array(plotdata[2])
+			mst1 = plotdata[1]
+			if(mst1):
+				for y in mst1:
+					edg = np.array(y)
+					lc1 = LineCollection(datapoints[edg])
+					ax[xx,yy].add_collection(lc1)
+			if(mst2.size>0):
+				lc2 = LineCollection(datapoints[mst2])
+				ax[xx,yy].add_collection(lc2)
 			for x in plot1:
 				alphashape = x[0]
 				isolatedVertices = x[1]
 				for j in alphashape:
 					X = np.array([list(datapoints[i]) for i in j])
-					ax[xx,yy].scatter(X[:, 0], X[:, 1], s = 5, color = "blue")
-					t1 = plt.Polygon(X[:3,:], color="blue",alpha = 0.3)
+					ax[xx,yy].scatter(X[:, 0], X[:, 1],s=0.5, color = "blue")
+					t1 = plt.Polygon(X[:3,:], color="blue",alpha = 0.2,lw = 0.2)
 					ax[xx,yy].add_patch(t1)
 				IV = np.array([list(datapoints[i]) for i in isolatedVertices])
 				if(IV.size > 0):
-					ax[xx,yy].scatter(IV[:, 0], IV[:, 1], s = 5, color = "red")
+					ax[xx,yy].scatter(IV[:, 0], IV[:, 1],s=0.5, color = "red")
 			i = i + 1
 		if(i >= len(finalfigure)):
 			break
 	if(i >= len(finalfigure)):
 		break
-plt.savefig("SubsequentPVs.pdf", bbox_inches = 'tight',pad_inches = 0)
+plt.savefig("SubsequentPVsD31.pdf", bbox_inches = 'tight',pad_inches = 0)
 plt.show()
 
 '''
