@@ -530,8 +530,11 @@ letter_cmp_key = cmp_to_key(letter_cmp)    #comparison function
 #datapoints2 = tadasets.dsphere(n=200, d = 1, r =2 , noise=0.1)
 
 #datapoints = np.vstack((datapoints,datapoints2))
+filename = "PathBased"
+#filename = "ZahnsCompund"
+#filename = "D31"
 
-datapoints = np.loadtxt("PathBased.csv",delimiter=",", dtype=float)
+datapoints = np.loadtxt(filename+".csv",delimiter=",", dtype=float)
 #datapoints = np.loadtxt("ZahnsCompund.csv",delimiter=",", dtype=float)
 #datapoints = np.loadtxt("D31.csv",delimiter=",", dtype=float)
 
@@ -630,7 +633,7 @@ while True:
 	finalfigure.append([list2,globalmstedges,newmstedges])
 
 #**************************************
-'''
+
 number1 = int(math.sqrt(len(finalfigure)))
 number2 = int(((len(finalfigure))/number1)+1)
 rows, cols = number1,number2
@@ -672,12 +675,12 @@ for xx in range(rows):
 			break
 	if(i >= len(finalfigure)):
 		break
-plt.savefig("SubsequentPVsD31.pdf", bbox_inches = 'tight',pad_inches = 0)
+plt.savefig("Subsequent"+filename+".pdf", bbox_inches = 'tight',pad_inches = 0)
 plt.show()
 
 
 
-	
+'''	
 datapoints1 = tadasets.dsphere(n=10, d = 1, r =4 , noise=0.3)	
 datapoints2 = tadasets.dsphere(n=10, d = 1, r =2 , noise=0.3)
 
@@ -745,10 +748,9 @@ for x in edges1:
 for x,y,z in zip(mergeddiskointset.parent,mergeddiskointset.rank,mergeddiskointset.original):
 	print(" Parent ::", x," Rank ::", y, " Indices :: ", z)
 print("********")
-
 '''
 
-writebetties(table,"output.csv")
+writebetties(table,"output"+filename+".csv")
 	
 
 dimcount=[0 for i in range(0,dim)]
@@ -783,7 +785,7 @@ for d in range(0,dim):
 	i=i+len(table[d])
 	df1 =  df[df["Dimension"]==d]
 	plt.plot([df1["Birth"], df1["Death"]], [counter, counter],color=colors[d],linestyle='solid',linewidth=1)
-plt.savefig("outputPIpolytopal.pdf", bbox_inches = 'tight',pad_inches = 0)
+plt.savefig("outputPI"+filename+".pdf", bbox_inches = 'tight',pad_inches = 0)
 plt.show()
 
 
@@ -791,5 +793,5 @@ for d in range(0,dim):
 	df1 =  df[df["Dimension"]==d]
 	plt.scatter(df1["Birth"], df1["Death"],color = colors[d])
 plt.axline([0, 0], [2, 2],linewidth=1,color="black")
-plt.savefig("outputBCPolytopal.pdf", bbox_inches = 'tight',pad_inches = 0)
+plt.savefig("outputBC"+filename+".pdf", bbox_inches = 'tight',pad_inches = 0)
 plt.show()
