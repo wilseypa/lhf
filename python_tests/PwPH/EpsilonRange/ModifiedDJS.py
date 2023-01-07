@@ -18,9 +18,16 @@ from scipy.spatial import Delaunay
 from scipy.spatial import ConvexHull
 from matplotlib.collections import LineCollection
 
+#***********************************************************
 
-maximumconquarablesize = 300
+maximumconquarablesize = 100
 epsilon = 9999999
+maxepsilon = 99999999
+distancematrix = []	  #initializae distance matrix
+
+#***********************************************************
+
+
 def generatesedges(dataindexes):  #generate simplices of dimension dimen
 	tp = list(combinations(dataindexes, 2))
 	listreturn = []
@@ -30,6 +37,7 @@ def generatesedges(dataindexes):  #generate simplices of dimension dimen
 		listreturn.append(list(x))
 	return sorted(listreturn, key = lambda x: x[2])
 
+#***********************************************************
 
 	
 class orderedarraylistnode(object):
@@ -67,6 +75,42 @@ class orderedarraylistnode(object):
 			return NotImplemented
 		return self.simplex == other.simplex and self.weight == other.weight
 
+#***********************************************************
+
+def computedistancematrix(points):    #compute Distance Matrix
+	global distancematrix    #initializae distance matrix
+	distancematrix = []  
+	for x in range(0,len(points)):
+		distance = []
+		for y in range(x,len(points)):
+			di = math.dist(points[x],points[y])
+			distance.append(di)
+		distancematrix.append(distance)
+
+#***********************************************************
+
+def distanceindex(x,y): # compute Distance by index b/w two points
+	if(x>y):
+		return distancematrix[y][x-y]
+	else:
+		return distancematrix[x][y-x]
+
+#***********************************************************
+
+def writebetties(table,filename):
+	birth = []
+	death = []
+	dimension = []
+
+	for d in range(0,dim):
+		for x in table[d]:
+			dimension.append(x[0])
+			birth.append(x[1])
+			death.append(x[2])
+	df = pd.DataFrame(list(zip(dimension,birth,death)),columns =['dimension','birth','death'])
+	df.to_csv(filename,index=False,header=False)
+
+#***********************************************************
 
 class DisjointSet:
     def __init__(self, indexes,p,r):
@@ -106,11 +150,15 @@ class DisjointSet:
     def SameSet(n1, n2):
         return self.find(n1) == self.find(n2)
 
+#***********************************************************
+
 def merge(ds1,ds2):
 	indexes  = ds1.original + ds2.original
 	parents = ds1.parent + ds2.parent
 	rank = ds1.rank + ds2.rank
 	return DisjointSet(indexes,parents,rank)
+
+#***********************************************************
 	
 def growFullMST(points):
 	ds = DisjointSet(points,points,[1 for i in points])
@@ -125,6 +173,8 @@ def growFullMST(points):
 		if(mstSize >= len(points)-1):
 			return ds,mstedges
 	return ds,mstedges
+
+#***********************************************************
 
 def growPVs(updatedVertices,ds):
 	# using Kruskal's algorithm to find the cost of Minimum Spanning Tree
@@ -142,6 +192,7 @@ def growPVs(updatedVertices,ds):
 			if(mstSize >= len(updatedVertices)-1 or maxmstsize > maximumconquarablesize):
 				return ds,x[2],mstedges
 	return ds, 9999,mstedges
+\
 #***********************************************************
  
 def circumRadius(simplex,points):
@@ -163,9 +214,12 @@ def circumRadius(simplex,points):
 		matACap[0].append(1)
 	return math.sqrt(-(np.linalg.det(np.array(matA))/(2*np.linalg.det(np.array(matACap)))))
 
+#***********************************************************
+
 def intersection(lst1, lst2):  #return intersection of two lists
     return list(set(lst1) & set(lst2))
-    
+
+#***********************************************************    
     
 def generatesimplexfacets(simplex,dimen):  #generate simplices of dimension dimen
 	tp = list(combinations(simplex, dimen))
@@ -175,6 +229,22 @@ def generatesimplexfacets(simplex,dimen):  #generate simplices of dimension dime
 	return listreturn
 	
 #***********************************************************	
+
+def getDimEdges(dimension):
+	edg =  Complex[dimension]
+	return edg
+	
+#***********************************************************	
+
+def getAllCofacets(e,dimension):    #will update this function a little
+	returnlist = []
+	for x in Complex[dimension+1]:
+		if(len(intersection(x.simplex,e.simplex)) == len(e.simplex)):
+			returnlist.append(x)
+	return returnlist
+
+#***********************************************************	
+
 def alphaBoundary(alphaShape,isolatedVertices):
 	boundaryVertices = isolatedVertices
 	alphahull = []
@@ -198,9 +268,228 @@ def alphaBoundary(alphaShape,isolatedVertices):
 				boundaryVertices.append(y)
 	return boundaryVertices
 
-	
-	
 #***********************************************************
+
+def centroid(simplex,newpoints):
+	cntr = []
+	for i in range(len(newpoints[0])):
+		coord = 0
+		for x in simplex:
+			coord = coord + newpoints[x][i]
+		coord = coord/len(simplex)
+		cntr.append(coord)
+	return cntr
+
+#***********************************************************
+
+def persistenceByDimension( edges, pivots, dimension,newpoints):
+	pivotcounter = len(pivots)-1
+	edges.sort(key = letter_cmp_key)
+	nextPivots = []	
+	v = {} 
+	pivotPairs = {}
+	for e in edges:
+		if(pivotcounter < 0 or pivots[pivotcounter].simplex != e.simplex):
+			faceList = getAllCofacets(e,dimension)
+			columnV = []
+			columnV.append(e)
+			hq.heapify(faceList)
+			i = 1
+			while(True):
+				hq.heapify(faceList)
+				if(i%10000==0):
+					print(i)
+				i=i+1
+				while(faceList!=[]):
+					hq.heapify(faceList)
+					pivot =	hq.heappop(faceList)
+					if(faceList!=[] and pivot.simplex==faceList[0].simplex):
+						hq.heappop(faceList)
+					else:
+						hq.heappush(faceList,pivot)
+						break
+				if(faceList==[]):
+					break
+				elif pivot not in pivotPairs:
+					pivotPairs[pivot] = e
+					nextPivots.append(pivot)
+					columnV.sort(key = letter_cmp_key)
+					k =0
+					for x in columnV:
+						if(k+1 < len(columnV) and columnV[k]==columnV[k+1]):
+							k+=1
+						else:
+							if e not in v:
+								v[e] = [columnV[k]]
+							else:
+								f = v[e] + [columnV[k]]
+								v[e] = f
+							k+=1
+					if(e.weight < pivot.weight):
+						centroidsimplex = centroid(e.simplex,newpoints)
+						bettitableentry = [dimension,float(f'{min(pivot.weight, e.weight):.6f}'),float(f'{max(pivot.weight, e.weight):.6f}'),tuple(centroidsimplex)]
+						bettieTable.append(tuple(bettitableentry))
+					break
+				else:
+					if v and pivotPairs:
+						for polytopnp in v[pivotPairs[pivot]]:
+							columnV.append(polytopnp)
+							faces =  getAllCofacets(polytopnp,dimension)
+							for fc in faces:
+								faceList.append(fc)
+						hq.heapify(faceList)
+		else:
+			pivotcounter = pivotcounter - 1
+	return nextPivots
+
+#***********************************************************
+countPHPVS = 0
+def fastpersistance(simplicialcomplex,newpoints):
+	global countPHPVS
+	countPHPVS = countPHPVS + 1
+	print("Computing PH of PV", countPHPVS, len(newpoints))
+
+	vertices = getDimEdges(0)
+	edges = getDimEdges(1)
+	pivots  = minimumspanningtree(edges,newpoints)
+	for d  in range(1,dim):
+		if(d != 1):
+			 edges = getDimEdges(d)
+		pivots = persistenceByDimension(edges, pivots, d,newpoints)
+	return
+
+#***********************************************************
+
+def minimumspanningtree(edges1,datapoints):
+	# using Kruskal's algorithm to find the cost of Minimum Spanning Tree
+	res = 0
+	pivots = []
+	mstSize = 0
+	ds = DisjointSet([i for i in range(datasize)],[i for i in range(datasize)],[1 for i in range(datasize)])
+	for x in reversed(edges1):
+		if ds.find(x.simplex[0]) != ds.find(x.simplex[1]):
+			ds.union(x.simplex[0], x.simplex[1])
+			res += x.weight
+			mstSize +=1
+			pivots.append(x)
+			bettitableentry = [0,0,float(f'{x.weight:.6f}'),tuple([1000,1000])]
+			bettieTable.append(tuple(bettitableentry))
+			if(mstSize >= len(datapoints)-1):
+				for i in range(0,len(datapoints)):
+					if(ds.find(i) == i):
+						bettitableentry = [0,0,maxepsilon,tuple([1000,1000])]
+						bettieTable.append(tuple(bettitableentry))
+				return pivots
+	return pivots
+
+#***********************************************************
+
+def letter_cmp(a, b):
+    if a.weight > b.weight:
+        return -1
+    elif a.weight == b.weight:
+        if a.simplex > b.simplex:
+            return 1
+        else:
+            return -1
+    else:
+        return 1 
+        
+#***********************************************************
+	
+def pointInsideSimplex(simplex,point,points):
+	i = 0
+	matT = []
+	matPv = []
+	for x  in simplex:
+		if i!=1:
+			tempmat = []
+			for j in range(len(points[0])):
+				tempmat.append(points[x][1]-points[x][j])
+			matT.append(tempmat)
+		if(i==1):
+			for j in range(len(points[0])):
+				tempmat = []
+				tempmat.append(point[j]-points[x][j])
+				matPv.append(tempmat)
+		i = i + 1
+	transposematT = [[0 for j in range(len(matT[0]))] for i in range(len(matT))]
+	for i in range(len(matT)):
+		for j in range(len(matT[0])):
+			transposematT[j][i]= matT[i][j]
+	lam = np.matmul(transposematT,matPv)
+	outside = False;
+	sum1 = 0;
+	for x in lam:
+		sum1 = sum1 + x[0]
+		if(x[0]<0):
+			outside = True
+			break
+	if(sum1 > 1):
+		outside = True
+	
+	return not outside
+ 
+#***********************************************************
+
+def simplexweight(simplex):
+	if(len(simplex)==1):
+		return 0
+	facets = generatesimplexfacets(simplex,2)
+	dist = 0
+	for edge in facets:
+		if(dist < distanceindex(edge[0],edge[1])):
+			dist = distanceindex(edge[0],edge[1])
+	return dist
+
+#***********************************************************
+
+def assignweights(simplextree):
+	orderedsimplexarraylist = []
+	for dimensionlist in simplextree:
+		dimensionwiseorderedpolytopes = set()
+		for simplex in dimensionlist:	
+			maxedge = 0
+			smplex = []
+			smplex.append([simplex,simplexweight(simplex)])
+			node = orderedarraylistnode(smplex,simplexweight(simplex))
+			dimensionwiseorderedpolytopes.add(node)
+		sorted_list = list(dimensionwiseorderedpolytopes)
+		sorted_list.sort(key = letter_cmp_key)
+		orderedsimplexarraylist.append(sorted_list)
+	return orderedsimplexarraylist
+
+#***********************************************************
+
+def createSimplexTree(inputpoints):
+	computedistancematrix(inputpoints)
+	DelaunayComplex = [set() for x in range(len(inputpoints[0])+1)]
+	triangulation =  Delaunay(inputpoints).simplices
+	for x in triangulation:
+		for y in range(len(inputpoints[0])+1):
+			simplexes = itertools.combinations(x, y)
+			for simplex in simplexes:
+				DelaunayComplex[len(simplex)-1].add(simplex)
+	DelaunayComplex = assignweights(DelaunayComplex)
+	return DelaunayComplex
+
+#***********************************************************
+
+def createVRComplexTree(inputpoints,epsilon,dimension):
+	computedistancematrix(inputpoints)
+	VRComplex = [set() for x in range(len(inputpoints[0])+1)]
+	triangulation = range(len(inputpoints))
+	for y in range(len(inputpoints[0])+1):
+		y = y+1
+		simplexes = itertools.combinations(triangulation, y)
+		for simplex in simplexes:
+			if(simplexweight(simplex)<maxepsilon):
+				VRComplex[len(simplex)-1].add(simplex)
+	VRComplex = assignweights(VRComplex)
+	return VRComplex
+
+#***********************************************************
+
 def computeAlphaShape(vertices,afv):
 	isolatedVertices = []
 	uniqueIndices = set()
@@ -221,29 +510,48 @@ def computeAlphaShape(vertices,afv):
 	return alphaShape,isolatedVertices
 
 #***********************************************************
-	
+
+def filterPIs(bettieTable,alphashapesimplices):
+	prunedPis = []
+	for x in bettieTable:
+		inside = False
+		for y in alphashapesimplices:
+			if pointInsideSimplex(y,x[3],datapoints):
+				inside = True
+				break
+		if not inside:
+			prunedPis.append(x)
+	return prunedPis
+
+#***********************************************************
+letter_cmp_key = cmp_to_key(letter_cmp)    #comparison function
+
 #datapoints = tadasets.dsphere(n=200, d = 1, r =4 , noise=0.1)	
 #datapoints2 = tadasets.dsphere(n=200, d = 1, r =2 , noise=0.1)
 
 #datapoints = np.vstack((datapoints,datapoints2))
 
-#datapoints = np.loadtxt("PathBased.csv",delimiter=",", dtype=float)
+datapoints = np.loadtxt("PathBased.csv",delimiter=",", dtype=float)
 #datapoints = np.loadtxt("ZahnsCompund.csv",delimiter=",", dtype=float)
-datapoints = np.loadtxt("D31.csv",delimiter=",", dtype=float)
+#datapoints = np.loadtxt("D31.csv",delimiter=",", dtype=float)
 
 dim = len(datapoints[0])
-
+datasize = len(datapoints)
 #******************************************
 updatedPVs = [[i] for i in range(len(datapoints))]
 finalfigure = []
 
+globalbettieTable = set()
+alphashapesimplices = set()
+alpha_shape = []
 
 while True:
-	print()
 	print("********")
+	reduceddatasize = 0
 	updatedVertices = []
 	updatedVertices += updatedPVs[0]
 	globalmstedges = []
+	reduceddatasize += len(updatedPVs[0])
 	globalDS,mstedge = growFullMST(updatedPVs[0])
 	if(mstedge):
 		globalmstedges.append(mstedge)
@@ -251,6 +559,7 @@ while True:
 		updatedVertices += updatedPVs[i]
 		ds,mstedge = growFullMST(updatedPVs[i])
 		globalDS = merge(globalDS,ds)
+		reduceddatasize += len(updatedPVs[i])
 		if(mstedge):
 			globalmstedges.append(mstedge)
 		'''j = 0
@@ -259,7 +568,7 @@ while True:
 			j += 1
 		print("********")
 		'''
-
+	print("Size::",reduceddatasize)
 	pseudoVertices = growPVs(updatedVertices,globalDS)
 	'''
 	i = 0
@@ -276,15 +585,32 @@ while True:
 	print("Total PVs ", len(PVs))
 	alpha_value = pseudoVertices[1]
 	print("Alpha Value  ",alpha_value)
-	if len(PVs)==1:		
+	if len(PVs)==1:
+		for x in alpha_shape:
+			alphashapesimplices.add(tuple(x))
+		bettieTable = []
+		PVpoints = [datapoints[i] for i in pv]
+		Complex = createVRComplexTree(PVpoints,maxepsilon,dim)
+		fastpersistance(Complex,PVpoints)
+		
 		alpha_shape,isolatedVertices = computeAlphaShape(PVs[0],epsilon)
 		list2.append([alpha_shape,isolatedVertices])
 		finalfigure.append([list2,globalmstedges,newmstedges])
+		prunedPIs = filterPIs(bettieTable,alphashapesimplices)
+		for x in prunedPIs:
+			globalbettieTable.add(x)
 		break
 	updatedPVs = []
 	for pv in PVs:
 		updatedPV = []
 		if (len(pv)>dim):
+			for x in alpha_shape:
+				alphashapesimplices.add(tuple(x))
+			bettieTable = []
+			PVpoints = [datapoints[i] for i in pv]
+			Complex = createVRComplexTree(PVpoints,maxepsilon,dim)
+			fastpersistance(Complex,PVpoints)
+						
 		    #****************************************************
 			alpha_shape,isolatedVertices = computeAlphaShape(pv,alpha_value)
 			boundaryVertices = alphaBoundary(alpha_shape,isolatedVertices)
@@ -292,6 +618,9 @@ while True:
 		    #****************************************************
 			for pt in boundaryVertices:
 				updatedPV.append(pt)
+			prunedPIs = filterPIs(bettieTable,alphashapesimplices)
+			for x in prunedPIs:
+				globalbettieTable.add(x)
 		else:
 			#5 Collect Isolated point for reduced dataset
 			for pt in pv:
@@ -301,7 +630,7 @@ while True:
 	finalfigure.append([list2,globalmstedges,newmstedges])
 
 #**************************************
-
+'''
 number1 = int(math.sqrt(len(finalfigure)))
 number2 = int(((len(finalfigure))/number1)+1)
 rows, cols = number1,number2
@@ -322,10 +651,10 @@ for xx in range(rows):
 			if(mst1):
 				for y in mst1:
 					edg = np.array(y)
-					lc1 = LineCollection(datapoints[edg])
+					lc1 = LineCollection(datapoints[edg],linewidths=(0.5))
 					ax[xx,yy].add_collection(lc1)
 			if(mst2.size>0):
-				lc2 = LineCollection(datapoints[mst2])
+				lc2 = LineCollection(datapoints[mst2],linewidths=(0.5))
 				ax[xx,yy].add_collection(lc2)
 			for x in plot1:
 				alphashape = x[0]
@@ -346,7 +675,7 @@ for xx in range(rows):
 plt.savefig("SubsequentPVsD31.pdf", bbox_inches = 'tight',pad_inches = 0)
 plt.show()
 
-'''
+
 
 	
 datapoints1 = tadasets.dsphere(n=10, d = 1, r =4 , noise=0.3)	
@@ -418,3 +747,49 @@ for x,y,z in zip(mergeddiskointset.parent,mergeddiskointset.rank,mergeddiskoints
 print("********")
 
 '''
+
+writebetties(table,"output.csv")
+	
+
+dimcount=[0 for i in range(0,dim)]
+
+table = [[] for i in range(0,dim)]
+
+for x in bettieTable:
+	table[x[0]].append(x)
+	dimcount[x[0]]= dimcount[x[0]]+1
+#for i in range(0,dim):
+#	print("Dimemnsion ",i," Betti Count ::",dimcount[i])
+
+colors = ["Green",'Blue','Red','Black',"Orange","yellow","pink"]
+Dimension = [x[0] for x in table[0]]
+Birth = [x[1] for x in table[0]]
+Death = [x[2] for x in table[0]]
+df = pd.DataFrame(list(zip(Dimension,Birth,Death)),columns =['Dimension','Birth','Death'])
+
+for d in range(1,dim):
+	Dim = [x[0] for x in table[d]]
+	B = [x[1] for x in table[d]]
+	D = [x[2] for x in table[d]]
+	dftemp = pd.DataFrame(list(zip(Dim,B,D)),columns =['Dimension','Birth','Death'])
+	df = pd.concat([df, dftemp], axis=0)
+
+df = df.sort_values(by=['Death'])
+
+i = 0
+for d in range(0,dim):
+	counter = []
+	[counter.append(j+i) for j in range(0,len(table[d]))]
+	i=i+len(table[d])
+	df1 =  df[df["Dimension"]==d]
+	plt.plot([df1["Birth"], df1["Death"]], [counter, counter],color=colors[d],linestyle='solid',linewidth=1)
+plt.savefig("outputPIpolytopal.pdf", bbox_inches = 'tight',pad_inches = 0)
+plt.show()
+
+
+for d in range(0,dim):
+	df1 =  df[df["Dimension"]==d]
+	plt.scatter(df1["Birth"], df1["Death"],color = colors[d])
+plt.axline([0, 0], [2, 2],linewidth=1,color="black")
+plt.savefig("outputBCPolytopal.pdf", bbox_inches = 'tight',pad_inches = 0)
+plt.show()
