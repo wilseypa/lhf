@@ -20,9 +20,9 @@ from matplotlib.collections import LineCollection
 
 #***********************************************************
 
-maximumconquarablesize = 100
-epsilon = 9999999
-maxepsilon = 99999999
+print("Enter Maximum Conquerable Size ::")
+maximumconquarablesize = int(input())
+maxepsilon = 999999
 distancematrix = []	  #initializae distance matrix
 
 #***********************************************************
@@ -189,6 +189,8 @@ def growPVs(updatedVertices,ds):
 			mstedges.append([x[0],x[1]])
 			mstSize +=1
 			maxmstsize = max([ds.findrank(i) for i in range(0,len(updatedVertices))])
+			bettitableentry = [0,0,float(f'{x[2]:.6f}'),tuple([x[0],x[1]])]
+			bettieTable.append(tuple(bettitableentry))
 			if(mstSize >= len(updatedVertices)-1 or maxmstsize > maximumconquarablesize):
 				return ds,x[2],mstedges
 	return ds, 9999,mstedges
@@ -325,8 +327,8 @@ def persistenceByDimension( edges, pivots, dimension,newpoints):
 								f = v[e] + [columnV[k]]
 								v[e] = f
 							k+=1
-					if(e.weight < pivot.weight):
-						centroidsimplex = centroid(e.simplex,newpoints)
+					if(e.weight != pivot.weight):
+						centroidsimplex = centroid(pivot.simplex,newpoints)
 						bettitableentry = [dimension,float(f'{min(pivot.weight, e.weight):.6f}'),float(f'{max(pivot.weight, e.weight):.6f}'),tuple(centroidsimplex)]
 						bettieTable.append(tuple(bettitableentry))
 					break
@@ -372,13 +374,13 @@ def minimumspanningtree(edges1,datapoints):
 			res += x.weight
 			mstSize +=1
 			pivots.append(x)
-			bettitableentry = [0,0,float(f'{x.weight:.6f}'),tuple([1000,1000])]
-			bettieTable.append(tuple(bettitableentry))
+			#bettitableentry = [0,0,float(f'{x.weight:.6f}'),tuple([1000,1000])]
+			#bettieTable.append(tuple(bettitableentry))
 			if(mstSize >= len(datapoints)-1):
-				for i in range(0,len(datapoints)):
-					if(ds.find(i) == i):
-						bettitableentry = [0,0,maxepsilon,tuple([1000,1000])]
-						bettieTable.append(tuple(bettitableentry))
+				#for i in range(0,len(datapoints)):
+					#if(ds.find(i) == i):
+						#bettitableentry = [0,0,maxepsilon,tuple([1000,1000])]
+						#bettieTable.append(tuple(bettitableentry))
 				return pivots
 	return pivots
 
@@ -398,26 +400,22 @@ def letter_cmp(a, b):
 #***********************************************************
 	
 def pointInsideSimplex(simplex,point,points):
-	i = 0
 	matT = []
 	matPv = []
-	for x  in simplex:
-		if i!=1:
-			tempmat = []
-			for j in range(len(points[0])):
-				tempmat.append(points[x][1]-points[x][j])
-			matT.append(tempmat)
-		if(i==1):
-			for j in range(len(points[0])):
-				tempmat = []
-				tempmat.append(point[j]-points[x][j])
-				matPv.append(tempmat)
-		i = i + 1
+	for x  in range(len(simplex)-1):
+		tempmat = []
+		for j in range(len(points[0])):
+			tempmat.append(points[x][j]-points[len(simplex)-1][j])
+		matT.append(tempmat)
+	for j in range(len(points[0])):
+		tempmat = []
+		tempmat.append(point[j]-points[len(simplex)-1][j])
+		matPv.append(tempmat)
 	transposematT = [[0 for j in range(len(matT[0]))] for i in range(len(matT))]
 	for i in range(len(matT)):
 		for j in range(len(matT[0])):
 			transposematT[j][i]= matT[i][j]
-	lam = np.matmul(transposematT,matPv)
+	lam = np.matmul(np.linalg.inv(transposematT),matPv)
 	outside = False;
 	sum1 = 0;
 	for x in lam:
@@ -461,21 +459,23 @@ def assignweights(simplextree):
 
 #***********************************************************
 
-def createSimplexTree(inputpoints):
+def createSimplexTree(inputpoints,epsilon):
 	computedistancematrix(inputpoints)
 	DelaunayComplex = [set() for x in range(len(inputpoints[0])+1)]
 	triangulation =  Delaunay(inputpoints).simplices
 	for x in triangulation:
 		for y in range(len(inputpoints[0])+1):
+			y= y+1
 			simplexes = itertools.combinations(x, y)
 			for simplex in simplexes:
-				DelaunayComplex[len(simplex)-1].add(simplex)
+				if(simplexweight(simplex)<=epsilon):
+					DelaunayComplex[len(simplex)-1].add(simplex)
 	DelaunayComplex = assignweights(DelaunayComplex)
 	return DelaunayComplex
 
 #***********************************************************
 
-def createVRComplexTree(inputpoints,epsilon,dimension):
+def createVRComplexTree(inputpoints,epsilon):
 	computedistancematrix(inputpoints)
 	VRComplex = [set() for x in range(len(inputpoints[0])+1)]
 	triangulation = range(len(inputpoints))
@@ -483,7 +483,7 @@ def createVRComplexTree(inputpoints,epsilon,dimension):
 		y = y+1
 		simplexes = itertools.combinations(triangulation, y)
 		for simplex in simplexes:
-			if(simplexweight(simplex)<maxepsilon):
+			if(simplexweight(simplex)<=epsilon):
 				VRComplex[len(simplex)-1].add(simplex)
 	VRComplex = assignweights(VRComplex)
 	return VRComplex
@@ -511,7 +511,7 @@ def computeAlphaShape(vertices,afv):
 
 #***********************************************************
 
-def filterPIs(bettieTable,alphashapesimplices):
+def filterPIs(bettieTable,alphashapesimplices,epsilon):
 	prunedPis = []
 	for x in bettieTable:
 		inside = False
@@ -519,7 +519,7 @@ def filterPIs(bettieTable,alphashapesimplices):
 			if pointInsideSimplex(y,x[3],datapoints):
 				inside = True
 				break
-		if not inside:
+		if not inside and x[2]>epsilon:
 			prunedPis.append(x)
 	return prunedPis
 
@@ -530,10 +530,11 @@ letter_cmp_key = cmp_to_key(letter_cmp)    #comparison function
 #datapoints2 = tadasets.dsphere(n=200, d = 1, r =2 , noise=0.1)
 
 #datapoints = np.vstack((datapoints,datapoints2))
-filename = "PathBased"
+#filename = "PathBased"
 #filename = "ZahnsCompund"
 #filename = "D31"
-
+print("Enter File Name")
+filename = input()
 datapoints = np.loadtxt(filename+".csv",delimiter=",", dtype=float)
 #datapoints = np.loadtxt("ZahnsCompund.csv",delimiter=",", dtype=float)
 #datapoints = np.loadtxt("D31.csv",delimiter=",", dtype=float)
@@ -547,7 +548,6 @@ finalfigure = []
 globalbettieTable = set()
 alphashapesimplices = set()
 alpha_shape = []
-
 while True:
 	print("********")
 	reduceddatasize = 0
@@ -572,7 +572,10 @@ while True:
 		print("********")
 		'''
 	print("Size::",reduceddatasize)
+	bettieTable = []
 	pseudoVertices = growPVs(updatedVertices,globalDS)
+	for x in bettieTable:
+		globalbettieTable.add(x)
 	'''
 	i = 0
 	for x,y,z in zip(pseudoVertices[0].parent,pseudoVertices[0].rank,pseudoVertices[0].original):
@@ -589,17 +592,19 @@ while True:
 	alpha_value = pseudoVertices[1]
 	print("Alpha Value  ",alpha_value)
 	if len(PVs)==1:
+		pv = PVs[0]
 		for x in alpha_shape:
 			alphashapesimplices.add(tuple(x))
 		bettieTable = []
 		PVpoints = [datapoints[i] for i in pv]
-		Complex = createVRComplexTree(PVpoints,maxepsilon,dim)
+		#Complex = createSimplexTree(PVpoints,maxepsilon)
+		Complex = createVRComplexTree(PVpoints,maxepsilon)
 		fastpersistance(Complex,PVpoints)
 		
-		alpha_shape,isolatedVertices = computeAlphaShape(PVs[0],epsilon)
+		alpha_shape,isolatedVertices = computeAlphaShape(PVs[0],maxepsilon)
 		list2.append([alpha_shape,isolatedVertices])
 		finalfigure.append([list2,globalmstedges,newmstedges])
-		prunedPIs = filterPIs(bettieTable,alphashapesimplices)
+		prunedPIs = filterPIs(bettieTable,alphashapesimplices,alpha_value)
 		for x in prunedPIs:
 			globalbettieTable.add(x)
 		break
@@ -611,7 +616,8 @@ while True:
 				alphashapesimplices.add(tuple(x))
 			bettieTable = []
 			PVpoints = [datapoints[i] for i in pv]
-			Complex = createVRComplexTree(PVpoints,maxepsilon,dim)
+			#Complex = createSimplexTree(PVpoints,alpha_value)
+			Complex = createVRComplexTree(PVpoints,alpha_value)
 			fastpersistance(Complex,PVpoints)
 						
 		    #****************************************************
@@ -621,7 +627,7 @@ while True:
 		    #****************************************************
 			for pt in boundaryVertices:
 				updatedPV.append(pt)
-			prunedPIs = filterPIs(bettieTable,alphashapesimplices)
+			prunedPIs = filterPIs(bettieTable,alphashapesimplices,alpha_value)
 			for x in prunedPIs:
 				globalbettieTable.add(x)
 		else:
@@ -633,13 +639,15 @@ while True:
 	finalfigure.append([list2,globalmstedges,newmstedges])
 
 #**************************************
+print("Done Post Processing")
 
+'''
 number1 = int(math.sqrt(len(finalfigure)))
 number2 = int(((len(finalfigure))/number1)+1)
-rows, cols = number1,number2
+rows, cols = number1,number2-1
 fig, ax = plt.subplots(rows, cols,sharex='col', sharey='row')
 
-i = -1
+i = 0
 for xx in range(rows):
 	for yy in range(cols):
 		if(i==-1):
@@ -679,8 +687,6 @@ plt.savefig("Subsequent"+filename+".pdf", bbox_inches = 'tight',pad_inches = 0)
 plt.show()
 
 
-
-'''	
 datapoints1 = tadasets.dsphere(n=10, d = 1, r =4 , noise=0.3)	
 datapoints2 = tadasets.dsphere(n=10, d = 1, r =2 , noise=0.3)
 
@@ -749,7 +755,14 @@ for x,y,z in zip(mergeddiskointset.parent,mergeddiskointset.rank,mergeddiskoints
 	print(" Parent ::", x," Rank ::", y, " Indices :: ", z)
 print("********")
 '''
-
+bettieTable = globalbettieTable
+dimcount=[0 for i in range(0,dim)]
+table = [[] for i in range(0,dim)]
+for x in bettieTable:
+	if(x[2] != maxepsilon):
+		table[x[0]].append(x)
+		dimcount[x[0]]= dimcount[x[0]]+1
+	
 writebetties(table,"output"+filename+".csv")
 	
 
@@ -758,8 +771,9 @@ dimcount=[0 for i in range(0,dim)]
 table = [[] for i in range(0,dim)]
 
 for x in bettieTable:
-	table[x[0]].append(x)
-	dimcount[x[0]]= dimcount[x[0]]+1
+	if(x[2] != maxepsilon):
+		table[x[0]].append(x)
+		dimcount[x[0]]= dimcount[x[0]]+1
 #for i in range(0,dim):
 #	print("Dimemnsion ",i," Betti Count ::",dimcount[i])
 
@@ -792,6 +806,6 @@ plt.show()
 for d in range(0,dim):
 	df1 =  df[df["Dimension"]==d]
 	plt.scatter(df1["Birth"], df1["Death"],color = colors[d])
-plt.axline([0, 0], [2, 2],linewidth=1,color="black")
+plt.axline([0, 0], [10, 10],linewidth=1,color="black")
 plt.savefig("outputBC"+filename+".pdf", bbox_inches = 'tight',pad_inches = 0)
 plt.show()
