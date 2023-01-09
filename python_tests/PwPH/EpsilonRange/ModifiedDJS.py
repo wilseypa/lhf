@@ -481,7 +481,7 @@ def createVRComplexTree(inputpoints,epsilon):
 		y = y+1
 		simplexes = itertools.combinations(triangulation, y)
 		for simplex in simplexes:
-			if(simplexweight(simplex)<=epsilon):
+			if(simplexweight(simplex)<=(epsilon+.0000001)):
 				VRComplex[len(simplex)-1].add(simplex)
 	VRComplex = assignweights(VRComplex)
 	return VRComplex
@@ -537,6 +537,9 @@ letter_cmp_key = cmp_to_key(letter_cmp)    #comparison function
 print("Enter File Name")
 filename = input()
 datapoints = np.loadtxt(filename+".csv",delimiter=",", dtype=float)
+
+print("Enter Complex to Use:: (Del/VR)")
+complextype = input()
 #datapoints = np.loadtxt("ZahnsCompund.csv",delimiter=",", dtype=float)
 #datapoints = np.loadtxt("D31.csv",delimiter=",", dtype=float)
 
@@ -608,8 +611,10 @@ while True:
 		
 		bettieTable = []
 		PVpoints = [datapoints[i] for i in pv]
-		#Complex = createSimplexTree(PVpoints,PHepsilon)
-		Complex = createVRComplexTree(PVpoints,maxepsilon)
+		if complextype == "Del" or complextype == "del" or complextype == "Delaunay" or complextype == "delaunay":
+			Complex = createSimplexTree(PVpoints,PHepsilon)
+		else:
+			Complex = createVRComplexTree(PVpoints,maxepsilon)
 		fastpersistance(Complex,PVpoints)
 		
 		prunedPIs = filterPIs(bettieTable,alphashapesimplices,alpha_value)
@@ -621,7 +626,7 @@ while True:
 	updatedPVs = []
 	for pv in PVs:
 		updatedPV = []
-		if (len(pv)>dim):
+		if (len(pv)>(dim+1)):
 			for x in alpha_shape:
 				alphashapesimplices.add(tuple(x))
 			#****************************************************
@@ -634,8 +639,10 @@ while True:
 			
 			bettieTable = []
 			PVpoints = [datapoints[i] for i in pv]
-			#Complex = createSimplexTree(PVpoints,PHepsilon)
-			Complex = createVRComplexTree(PVpoints,alpha_value)
+			if complextype == "Del" or complextype == "del" or complextype == "Delaunay" or complextype == "delaunay":
+				Complex = createSimplexTree(PVpoints,PHepsilon)
+			else:
+				Complex = createVRComplexTree(PVpoints,PHepsilon)
 			fastpersistance(Complex,PVpoints)
 			prunedPIs = filterPIs(bettieTable,alphashapesimplices,alpha_value)
 			for x in prunedPIs:
@@ -767,20 +774,24 @@ for x,y,z in zip(mergeddiskointset.parent,mergeddiskointset.rank,mergeddiskoints
 	print(" Parent ::", x," Rank ::", y, " Indices :: ", z)
 print("********")
 '''
-globalseparatebettieTable.append(globalbettieTable)
-print("Length of Iteration",len(globalseparatebettieTable))
+#globalseparatebettieTable.append(globalbettieTable)
+#print("Length of Iteration",len(globalseparatebettieTable))
 number1 = int(math.sqrt(len(globalseparatebettieTable)))
 number2 = int(((len(globalseparatebettieTable))/number1)+1)
 rows, cols = number1,number2
 fig, ax = plt.subplots(rows,cols,sharex='col', sharey='row')
+fig1, ax1 = plt.subplots(rows,cols,sharex='col', sharey='row')
 iteration=0
+maxvalue = 0
+for x in distancematrix:
+	if maxvalue < max(x):
+		maxvalue = max(x)
+bettieTable = []
 for globalbettieTable in globalseparatebettieTable:
 	xx = int(iteration/cols)
 	yy = int(iteration%cols)
-	print(xx)
-	print(yy)
-	print(rows," ",cols)
-	bettieTable = globalbettieTable
+	for it in globalbettieTable:
+		bettieTable.append(it)
 	dimcount=[0 for i in range(0,dim)]
 	table = [[] for i in range(0,dim)]
 	for x in bettieTable:
@@ -818,20 +829,22 @@ for globalbettieTable in globalseparatebettieTable:
 	df = df.sort_values(by=['Death'])
 
 	i = 0
-	#for d in range(0,dim):
-	#	counter = []
-	#	[counter.append(j+i) for j in range(0,len(table[d]))]
-	#	i=i+len(table[d])
-	#	df1 =  df[df["Dimension"]==d]
-	#	ax[xx][yy].plot([df1["Birth"], df1["Death"]], [counter, counter],color=colors[d],linestyle='solid',linewidth=1)
-
+	for d in range(0,dim):
+		counter = []
+		[counter.append(j+i) for j in range(0,len(table[d]))]
+		i=i+len(table[d])
+		df1 =  df[df["Dimension"]==d]
+		ax[xx][yy].plot([df1["Birth"], df1["Death"]], [counter, counter],color=colors[d],linestyle='solid',linewidth=1)
+		ax[xx][yy].set_xlim([0,maxvalue])
 	for d in range(0,dim):
 		df1 =  df[df["Dimension"]==d]
-		ax[xx][yy].scatter(df1["Birth"], df1["Death"],color = colors[d],s=0.5)	
-	#ax[xx][yy].axline([0, 0], [maxedge, maxedge],linewidth=1,color="black")
+		ax1[xx][yy].scatter(df1["Birth"], df1["Death"],color = colors[d],s=0.5)	
+		ax1[xx][yy].axline([0, 0], [maxvalue, maxvalue],linewidth=1,color="black")
+		ax1[xx][yy].set_xlim([0,maxvalue])
+
 	iteration += 1
-#plt.savefig("outputBarcode"+filename+".pdf", bbox_inches = 'tight',pad_inches = 0)
-#plt.show()
+fig.savefig("outputBarcode"+filename+".pdf", bbox_inches = 'tight',pad_inches = 0)
+fig.show()
 	
-plt.savefig("outputPI"+filename+".pdf", bbox_inches = 'tight',pad_inches = 0)
-plt.show()
+fig1.savefig("outputPI"+filename+".pdf", bbox_inches = 'tight',pad_inches = 0)
+fig1.show()
