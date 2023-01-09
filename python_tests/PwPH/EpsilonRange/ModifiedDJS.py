@@ -460,7 +460,6 @@ def assignweights(simplextree):
 #***********************************************************
 
 def createSimplexTree(inputpoints,epsilon):
-	computedistancematrix(inputpoints)
 	DelaunayComplex = [set() for x in range(len(inputpoints[0])+1)]
 	triangulation =  Delaunay(inputpoints).simplices
 	for x in triangulation:
@@ -468,7 +467,7 @@ def createSimplexTree(inputpoints,epsilon):
 			y= y+1
 			simplexes = itertools.combinations(x, y)
 			for simplex in simplexes:
-				if(simplexweight(simplex)<=epsilon):
+				if(simplexweight(simplex)<=(epsilon)):
 					DelaunayComplex[len(simplex)-1].add(simplex)
 	DelaunayComplex = assignweights(DelaunayComplex)
 	return DelaunayComplex
@@ -476,7 +475,6 @@ def createSimplexTree(inputpoints,epsilon):
 #***********************************************************
 
 def createVRComplexTree(inputpoints,epsilon):
-	computedistancematrix(inputpoints)
 	VRComplex = [set() for x in range(len(inputpoints[0])+1)]
 	triangulation = range(len(inputpoints))
 	for y in range(len(inputpoints[0])+1):
@@ -493,7 +491,7 @@ def createVRComplexTree(inputpoints,epsilon):
 def computeAlphaShape(vertices,afv):
 	isolatedVertices = []
 	uniqueIndices = set()
-
+	maxedge = 0
 	points = [datapoints[i] for i in vertices]
 	triangulation = Delaunay(points).simplices
 	alphaShape = []
@@ -504,10 +502,13 @@ def computeAlphaShape(vertices,afv):
 				simplex.append(vertices[y])
 				uniqueIndices.add(vertices[y])
 			alphaShape.append(simplex)
+			weight = simplexweight(simplex)
+			if(maxedge<weight):
+				maxedge = weight
 	for x in vertices:
 		if x not in uniqueIndices:
 			isolatedVertices.append(x)
-	return alphaShape,isolatedVertices
+	return alphaShape,isolatedVertices,maxedge
 
 #***********************************************************
 
@@ -544,10 +545,11 @@ datasize = len(datapoints)
 #******************************************
 updatedPVs = [[i] for i in range(len(datapoints))]
 finalfigure = []
-
+globalseparatebettieTable = []
 globalbettieTable = set()
 alphashapesimplices = set()
 alpha_shape = []
+computedistancematrix(datapoints)
 while True:
 	print("********")
 	reduceddatasize = 0
@@ -571,11 +573,14 @@ while True:
 			j += 1
 		print("********")
 		'''
+	getbetties = set()
 	print("Size::",reduceddatasize)
 	bettieTable = []
 	pseudoVertices = growPVs(updatedVertices,globalDS)
 	for x in bettieTable:
 		globalbettieTable.add(x)
+		getbetties.add(x)
+
 	'''
 	i = 0
 	for x,y,z in zip(pseudoVertices[0].parent,pseudoVertices[0].rank,pseudoVertices[0].original):
@@ -595,18 +600,23 @@ while True:
 		pv = PVs[0]
 		for x in alpha_shape:
 			alphashapesimplices.add(tuple(x))
+		#****************************************************
+		alpha_shape,isolatedVertices,PHepsilon = computeAlphaShape(PVs[0],maxepsilon)
+		list2.append([alpha_shape,isolatedVertices])
+		finalfigure.append([list2,globalmstedges,newmstedges])
+		#****************************************************
+		
 		bettieTable = []
 		PVpoints = [datapoints[i] for i in pv]
-		#Complex = createSimplexTree(PVpoints,maxepsilon)
+		#Complex = createSimplexTree(PVpoints,PHepsilon)
 		Complex = createVRComplexTree(PVpoints,maxepsilon)
 		fastpersistance(Complex,PVpoints)
 		
-		alpha_shape,isolatedVertices = computeAlphaShape(PVs[0],maxepsilon)
-		list2.append([alpha_shape,isolatedVertices])
-		finalfigure.append([list2,globalmstedges,newmstedges])
 		prunedPIs = filterPIs(bettieTable,alphashapesimplices,alpha_value)
 		for x in prunedPIs:
 			globalbettieTable.add(x)
+			getbetties.add(x)
+		globalseparatebettieTable.append(getbetties)
 		break
 	updatedPVs = []
 	for pv in PVs:
@@ -614,28 +624,30 @@ while True:
 		if (len(pv)>dim):
 			for x in alpha_shape:
 				alphashapesimplices.add(tuple(x))
-			bettieTable = []
-			PVpoints = [datapoints[i] for i in pv]
-			#Complex = createSimplexTree(PVpoints,alpha_value)
-			Complex = createVRComplexTree(PVpoints,alpha_value)
-			fastpersistance(Complex,PVpoints)
-						
-		    #****************************************************
-			alpha_shape,isolatedVertices = computeAlphaShape(pv,alpha_value)
+			#****************************************************
+			alpha_shape,isolatedVertices,PHepsilon = computeAlphaShape(pv,alpha_value)
 			boundaryVertices = alphaBoundary(alpha_shape,isolatedVertices)
 			list2.append([alpha_shape,isolatedVertices])
 		    #****************************************************
 			for pt in boundaryVertices:
 				updatedPV.append(pt)
+			
+			bettieTable = []
+			PVpoints = [datapoints[i] for i in pv]
+			#Complex = createSimplexTree(PVpoints,PHepsilon)
+			Complex = createVRComplexTree(PVpoints,alpha_value)
+			fastpersistance(Complex,PVpoints)
 			prunedPIs = filterPIs(bettieTable,alphashapesimplices,alpha_value)
 			for x in prunedPIs:
 				globalbettieTable.add(x)
+				getbetties.add(x)
 		else:
 			#5 Collect Isolated point for reduced dataset
 			for pt in pv:
 				updatedPV.append(pt)
 			list2.append([[],updatedPV])
 		updatedPVs.append(updatedPV)
+	globalseparatebettieTable.append(getbetties)
 	finalfigure.append([list2,globalmstedges,newmstedges])
 
 #**************************************
@@ -644,10 +656,10 @@ print("Done Post Processing")
 '''
 number1 = int(math.sqrt(len(finalfigure)))
 number2 = int(((len(finalfigure))/number1)+1)
-rows, cols = number1,number2-1
+rows, cols = number1,number2
 fig, ax = plt.subplots(rows, cols,sharex='col', sharey='row')
 
-i = 0
+i = -1
 for xx in range(rows):
 	for yy in range(cols):
 		if(i==-1):
@@ -755,57 +767,71 @@ for x,y,z in zip(mergeddiskointset.parent,mergeddiskointset.rank,mergeddiskoints
 	print(" Parent ::", x," Rank ::", y, " Indices :: ", z)
 print("********")
 '''
-bettieTable = globalbettieTable
-dimcount=[0 for i in range(0,dim)]
-table = [[] for i in range(0,dim)]
-for x in bettieTable:
-	if(x[2] != maxepsilon):
-		table[x[0]].append(x)
-		dimcount[x[0]]= dimcount[x[0]]+1
+globalseparatebettieTable.append(globalbettieTable)
+print("Length of Iteration",len(globalseparatebettieTable))
+number1 = int(math.sqrt(len(globalseparatebettieTable)))
+number2 = int(((len(globalseparatebettieTable))/number1)+1)
+rows, cols = number1,number2
+fig, ax = plt.subplots(rows,cols,sharex='col', sharey='row')
+iteration=0
+for globalbettieTable in globalseparatebettieTable:
+	xx = int(iteration/cols)
+	yy = int(iteration%cols)
+	print(xx)
+	print(yy)
+	print(rows," ",cols)
+	bettieTable = globalbettieTable
+	dimcount=[0 for i in range(0,dim)]
+	table = [[] for i in range(0,dim)]
+	for x in bettieTable:
+		if(x[2] != maxepsilon):
+			table[x[0]].append(x)
+			dimcount[x[0]]= dimcount[x[0]]+1
 	
-writebetties(table,"output"+filename+".csv")
+	writebetties(table,"output"+str(i)+filename+".csv")
 	
 
-dimcount=[0 for i in range(0,dim)]
+	dimcount=[0 for i in range(0,dim)]
 
-table = [[] for i in range(0,dim)]
+	table = [[] for i in range(0,dim)]
 
-for x in bettieTable:
-	if(x[2] != maxepsilon):
-		table[x[0]].append(x)
-		dimcount[x[0]]= dimcount[x[0]]+1
-#for i in range(0,dim):
-#	print("Dimemnsion ",i," Betti Count ::",dimcount[i])
+	for x in bettieTable:
+		if(x[2] != maxepsilon):
+			table[x[0]].append(x)
+			dimcount[x[0]]= dimcount[x[0]]+1
+	#for i in range(0,dim):	
+	#	print("Dimemnsion ",i," Betti Count ::",dimcount[i])
 
-colors = ["Green",'Blue','Red','Black',"Orange","yellow","pink"]
-Dimension = [x[0] for x in table[0]]
-Birth = [x[1] for x in table[0]]
-Death = [x[2] for x in table[0]]
-df = pd.DataFrame(list(zip(Dimension,Birth,Death)),columns =['Dimension','Birth','Death'])
+	colors = ["Green",'Blue','Red','Black',"Orange","yellow","pink"]
+	Dimension = [x[0] for x in table[0]]
+	Birth = [x[1] for x in table[0]]
+	Death = [x[2] for x in table[0]]
+	df = pd.DataFrame(list(zip(Dimension,Birth,Death)),columns =['Dimension','Birth','Death'])
 
-for d in range(1,dim):
-	Dim = [x[0] for x in table[d]]
-	B = [x[1] for x in table[d]]
-	D = [x[2] for x in table[d]]
-	dftemp = pd.DataFrame(list(zip(Dim,B,D)),columns =['Dimension','Birth','Death'])
-	df = pd.concat([df, dftemp], axis=0)
+	for d in range(1,dim):
+		Dim = [x[0] for x in table[d]]
+		B = [x[1] for x in table[d]]
+		D = [x[2] for x in table[d]]
+		dftemp = pd.DataFrame(list(zip(Dim,B,D)),columns =['Dimension','Birth','Death'])
+		df = pd.concat([df, dftemp], axis=0)
 
-df = df.sort_values(by=['Death'])
+	df = df.sort_values(by=['Death'])
 
-i = 0
-for d in range(0,dim):
-	counter = []
-	[counter.append(j+i) for j in range(0,len(table[d]))]
-	i=i+len(table[d])
-	df1 =  df[df["Dimension"]==d]
-	plt.plot([df1["Birth"], df1["Death"]], [counter, counter],color=colors[d],linestyle='solid',linewidth=1)
+	i = 0
+	#for d in range(0,dim):
+	#	counter = []
+	#	[counter.append(j+i) for j in range(0,len(table[d]))]
+	#	i=i+len(table[d])
+	#	df1 =  df[df["Dimension"]==d]
+	#	ax[xx][yy].plot([df1["Birth"], df1["Death"]], [counter, counter],color=colors[d],linestyle='solid',linewidth=1)
+
+	for d in range(0,dim):
+		df1 =  df[df["Dimension"]==d]
+		ax[xx][yy].scatter(df1["Birth"], df1["Death"],color = colors[d],s=0.5)	
+	#ax[xx][yy].axline([0, 0], [maxedge, maxedge],linewidth=1,color="black")
+	iteration += 1
+#plt.savefig("outputBarcode"+filename+".pdf", bbox_inches = 'tight',pad_inches = 0)
+#plt.show()
+	
 plt.savefig("outputPI"+filename+".pdf", bbox_inches = 'tight',pad_inches = 0)
-plt.show()
-
-
-for d in range(0,dim):
-	df1 =  df[df["Dimension"]==d]
-	plt.scatter(df1["Birth"], df1["Death"],color = colors[d])
-plt.axline([0, 0], [10, 10],linewidth=1,color="black")
-plt.savefig("outputBC"+filename+".pdf", bbox_inches = 'tight',pad_inches = 0)
 plt.show()
