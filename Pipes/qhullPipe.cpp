@@ -34,16 +34,7 @@ void qhullPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
     PointCoordinates *pts = new PointCoordinates(qh,inData.inputData[0].size(),"UCI Data Sets");
     pts->append(sdata);
     qh.runQhull(pts->comment().c_str(),pts->dimension(),pts->count(),&*pts->coordinates(),"d o");
-    std::vector<std::vector<int>> dsimplexes1 = qdelaunay_o(qh);
-    
-    std::vector<std::vector<unsigned>> dsimplexes;
-    for(auto x: dsimplexes1){
-	    std::vector<unsigned> temp;
-	    for(auto y :x)
-		    temp.push_back(y);
-	   dsimplexes.push_back(temp);
-    }
-    
+    std::vector<std::vector<unsigned>> dsimplexes = qdelaunay_o(qh);    
     //Again, (as stated in betaSkeletonBasedComplex) this should be a function of a different
     //	class instead of a new virtual function (because not every complex implements this).
     //		So cast and run, such as:
@@ -57,9 +48,9 @@ void qhullPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
 }
 
 template <typename nodeType>
-std::vector<std::vector<int>>  qhullPipe<nodeType>::qdelaunay_o(const Qhull &qhull){
+std::vector<std::vector<unsigned>>  qhullPipe<nodeType>::qdelaunay_o(const Qhull &qhull){
 	int hullDimension = qhull.hullDimension();
-        std::vector<std::vector<double> > inputSites;
+    std::vector<std::vector<double> > inputSites;
 	QhullPoints points = qhull.points();
 
 	QhullPointsIterator j(points);
@@ -71,17 +62,15 @@ std::vector<std::vector<int>>  qhullPipe<nodeType>::qdelaunay_o(const Qhull &qhu
 	int numFacets = facets.count();
 	size_t numRidges = numFacets*hullDimension/2;
 
-	std::vector<std::vector<int>> regions;
+	std::vector<std::vector<unsigned>> regions;
 	QhullFacetListIterator k(facets);
 	while(k.hasNext()){
 		QhullFacet f = k.next();
-		std::vector<int> vertices;
+		std::vector<unsigned> vertices;
 		if(!f.isUpperDelaunay()){
 			if(!f.isTopOrient() && f.isSimplicial()){
 				QhullVertexSet vs = f.vertices();
-				vertices.push_back(vs[1].point().id());
-				vertices.push_back(vs[0].point().id());
-				for(int i=2;i<(int)vs.size();++i){
+				for(int i=0;i<(int)vs.size();++i){
 					vertices.push_back(vs[i].point().id());
 				}
 			}
@@ -96,7 +85,7 @@ std::vector<std::vector<int>>  qhullPipe<nodeType>::qdelaunay_o(const Qhull &qhu
 			regions.push_back(vertices);
 		}
 	}
-      return regions;
+    return regions;
 }
 
 

@@ -70,6 +70,7 @@ MESSAGE (STATUS "FLAGS: " ${CMAKE_CXX_FLAGS})
 #Integrating with CGAL library
 
 find_package(CGAL)
-target_link_libraries(delaunayPipe basePipe CGAL)
+find_package(OpenMP)
+target_link_libraries(delaunayPipe basePipe CGAL::CGAL OpenMP::OpenMP_CXX)
 find_package(Eigen3)
 include_directories(${EIGEN3_INCLUDE_DIR})
