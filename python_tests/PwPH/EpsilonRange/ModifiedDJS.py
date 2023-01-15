@@ -530,16 +530,20 @@ letter_cmp_key = cmp_to_key(letter_cmp)    #comparison function
 #datapoints = tadasets.dsphere(n=200, d = 1, r =4 , noise=0.1)	
 #datapoints2 = tadasets.dsphere(n=200, d = 1, r =2 , noise=0.1)
 
+datapoints = np.loadtxt("bluebrainData.csv",delimiter=",", dtype=float)
+
+
 #datapoints = np.vstack((datapoints,datapoints2))
 #filename = "PathBased"
 #filename = "ZahnsCompund"
 #filename = "D31"
-print("Enter File Name")
-filename = input()
-datapoints = np.loadtxt(filename+".csv",delimiter=",", dtype=float)
 
-print("Enter Complex to Use:: (Del/VR)")
-complextype = input()
+#print("Enter File Name")
+#filename = input()
+#datapoints = np.loadtxt(filename+".csv",delimiter=",", dtype=float)
+
+#print("Enter Complex to Use:: (Del/VR)")
+#complextype = input()
 #datapoints = np.loadtxt("ZahnsCompund.csv",delimiter=",", dtype=float)
 #datapoints = np.loadtxt("D31.csv",delimiter=",", dtype=float)
 
@@ -580,11 +584,12 @@ while True:
 	print("Size::",reduceddatasize)
 	bettieTable = []
 	pseudoVertices = growPVs(updatedVertices,globalDS)
+	'''
 	for x in bettieTable:
 		globalbettieTable.add(x)
 		getbetties.add(x)
 
-	'''
+
 	i = 0
 	for x,y,z in zip(pseudoVertices[0].parent,pseudoVertices[0].rank,pseudoVertices[0].original):
 		print(i," Parent ::", x," Rank ::", y, " Indices :: ", z)
@@ -611,6 +616,7 @@ while True:
 		
 		bettieTable = []
 		PVpoints = [datapoints[i] for i in pv]
+		'''
 		if complextype == "Del" or complextype == "del" or complextype == "Delaunay" or complextype == "delaunay":
 			Complex = createSimplexTree(PVpoints,PHepsilon)
 		else:
@@ -622,6 +628,7 @@ while True:
 			globalbettieTable.add(x)
 			getbetties.add(x)
 		globalseparatebettieTable.append(getbetties)
+		'''
 		break
 	updatedPVs = []
 	for pv in PVs:
@@ -636,7 +643,7 @@ while True:
 		    #****************************************************
 			for pt in boundaryVertices:
 				updatedPV.append(pt)
-			
+			'''
 			bettieTable = []
 			PVpoints = [datapoints[i] for i in pv]
 			if complextype == "Del" or complextype == "del" or complextype == "Delaunay" or complextype == "delaunay":
@@ -648,6 +655,7 @@ while True:
 			for x in prunedPIs:
 				globalbettieTable.add(x)
 				getbetties.add(x)
+			'''
 		else:
 			#5 Collect Isolated point for reduced dataset
 			for pt in pv:
@@ -659,50 +667,51 @@ while True:
 
 #**************************************
 print("Done Post Processing")
-
 '''
+
 number1 = int(math.sqrt(len(finalfigure)))
 number2 = int(((len(finalfigure))/number1)+1)
-rows, cols = number1,number2
+rows, cols = 1,number1*number2-1
+print(number1," ",number2)
 fig, ax = plt.subplots(rows, cols,sharex='col', sharey='row')
 
 i = -1
-for xx in range(rows):
-	for yy in range(cols):
+for xx in range(cols):
+	for yy in range(rows):
 		if(i==-1):
 			x,y = zip(*datapoints)
-			ax[xx,yy].scatter(x,y,s=0.5,color = "blue")
+			ax[xx].scatter(x,y,s=0.5,color = "blue")
 			i = i+1
 		else:
 			plotdata = finalfigure[i]
 			plot1 = plotdata[0]
 			mst2 = np.array(plotdata[2])
 			mst1 = plotdata[1]
-			if(mst1):
+			if(mst1 and mst1 != []):
 				for y in mst1:
 					edg = np.array(y)
 					lc1 = LineCollection(datapoints[edg],linewidths=(0.5))
-					ax[xx,yy].add_collection(lc1)
+					ax[xx].add_collection(lc1)
 			if(mst2.size>0):
 				lc2 = LineCollection(datapoints[mst2],linewidths=(0.5))
-				ax[xx,yy].add_collection(lc2)
+				ax[xx].add_collection(lc2)
 			for x in plot1:
 				alphashape = x[0]
 				isolatedVertices = x[1]
 				for j in alphashape:
 					X = np.array([list(datapoints[i]) for i in j])
-					ax[xx,yy].scatter(X[:, 0], X[:, 1],s=0.5, color = "blue")
+					ax[xx].scatter(X[:, 0], X[:, 1],s=0.5, color = "blue")
 					t1 = plt.Polygon(X[:3,:], color="blue",alpha = 0.2,lw = 0.2)
-					ax[xx,yy].add_patch(t1)
+					ax[xx].add_patch(t1)
 				IV = np.array([list(datapoints[i]) for i in isolatedVertices])
 				if(IV.size > 0):
-					ax[xx,yy].scatter(IV[:, 0], IV[:, 1],s=0.5, color = "red")
+					ax[xx].scatter(IV[:, 0], IV[:, 1],s=0.5, color = "red")
 			i = i + 1
 		if(i >= len(finalfigure)):
 			break
 	if(i >= len(finalfigure)):
 		break
-plt.savefig("Subsequent"+filename+".pdf", bbox_inches = 'tight',pad_inches = 0)
+plt.savefig("Subsequent90"+filename+".pdf", bbox_inches = 'tight',pad_inches = 0)
 plt.show()
 
 
@@ -773,7 +782,7 @@ for x in edges1:
 for x,y,z in zip(mergeddiskointset.parent,mergeddiskointset.rank,mergeddiskointset.original):
 	print(" Parent ::", x," Rank ::", y, " Indices :: ", z)
 print("********")
-'''
+
 #globalseparatebettieTable.append(globalbettieTable)
 #print("Length of Iteration",len(globalseparatebettieTable))
 number1 = int(math.sqrt(len(globalseparatebettieTable)))
@@ -848,3 +857,4 @@ fig.show()
 	
 fig1.savefig("outputPI"+filename+".pdf", bbox_inches = 'tight',pad_inches = 0)
 fig1.show()
+'''
