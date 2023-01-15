@@ -182,6 +182,11 @@ def growPVs(updatedVertices,ds):
 	mstSize = 0
 	previousweight = 0
 	mstedges = []
+	initialmstsize = max([ds.findrank(i) for i in range(0,len(updatedVertices))])
+	setmaximumconquarablesize = maximumconquarablesize
+	minincrease = int(maximumconquarablesize/10)
+	if initialmstsize > (maximumconquarablesize - minincrease):
+		setmaximumconquarablesize = minincrease + max(initialmstsize,maximumconquarablesize)
 	edges = generatesedges(updatedVertices)
 	for x in edges:
 		if ds.find(x[0]) != ds.find(x[1]):
@@ -191,7 +196,7 @@ def growPVs(updatedVertices,ds):
 			maxmstsize = max([ds.findrank(i) for i in range(0,len(updatedVertices))])
 			bettitableentry = [0,0,float(f'{x[2]:.6f}'),tuple([x[0],x[1]])]
 			bettieTable.append(tuple(bettitableentry))
-			if(mstSize >= len(updatedVertices)-1 or maxmstsize > maximumconquarablesize):
+			if(mstSize >= len(updatedVertices)-1 or maxmstsize > setmaximumconquarablesize):
 				return ds,x[2],mstedges
 	return ds, 9999,mstedges
 \
@@ -530,7 +535,7 @@ letter_cmp_key = cmp_to_key(letter_cmp)    #comparison function
 #datapoints = tadasets.dsphere(n=200, d = 1, r =4 , noise=0.1)	
 #datapoints2 = tadasets.dsphere(n=200, d = 1, r =2 , noise=0.1)
 
-datapoints = np.loadtxt("bluebrainData.csv",delimiter=",", dtype=float)
+#datapoints = np.loadtxt("bluebrainData.csv",delimiter=",", dtype=float)
 
 
 #datapoints = np.vstack((datapoints,datapoints2))
@@ -538,9 +543,9 @@ datapoints = np.loadtxt("bluebrainData.csv",delimiter=",", dtype=float)
 #filename = "ZahnsCompund"
 #filename = "D31"
 
-#print("Enter File Name")
-#filename = input()
-#datapoints = np.loadtxt(filename+".csv",delimiter=",", dtype=float)
+print("Enter File Name")
+filename = input()
+datapoints = np.loadtxt(filename+".csv",delimiter=",", dtype=float)
 
 #print("Enter Complex to Use:: (Del/VR)")
 #complextype = input()
@@ -634,6 +639,7 @@ while True:
 	for pv in PVs:
 		updatedPV = []
 		if (len(pv)>(dim+1)):
+			print("pv size ::", len(pv))
 			for x in alpha_shape:
 				alphashapesimplices.add(tuple(x))
 			#****************************************************
