@@ -17,7 +17,10 @@ include_directories(../Preprocessing)
 link_directories(../Preprocessing)
 
 # target_link_libraries(LHF PipeFunctions)
-target_link_libraries(simplexBase utils pipePacket simplexArrayList alphaComplex witnessComplex) #simplexTree)
+target_link_libraries(simplexBase utils pipePacket simplexArrayList alphaComplex witnessComplex ) #simplexTree)
+
+find_package(OpenMP)
+target_link_libraries(alphaComplex OpenMP::OpenMP_CXX)
 
 INSTALL (TARGETS simplexBase
 	LIBRARY DESTINATION lib

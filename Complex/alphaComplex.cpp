@@ -673,58 +673,63 @@ void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<unsigned
 	for(int i=0; i <= this->maxDimension; i++)
 		this->simplexList.push_back({});
 
-	for(auto simplex : dsimplexmesh){
+#pragma omp parallel for
+	for (int i = 0; i < dsimplexmesh.size(); ++i)
+	{
+		auto simplex = dsimplexmesh[i];
+		sort(simplex.begin(), simplex.end());
 		unsigned int pow_set_size = pow(2, simplex.size());
-		for(int counter =1;counter<pow_set_size;counter++){
-			double weight =0;
-			std::set<unsigned> gensimp;
-			for(int j=0;j<simplex.size();j++){
-				if(counter & (1<<j)){
-					unsigned indnew;
-					indnew = *(std::next(simplex.begin(),j));
-					for(auto x:gensimp){
-						if(x<indnew){
-							if(weight<(*(this->distMatrix))[x][indnew])
-								weight = (*(this->distMatrix))[x][indnew];
-						}
-						else if(weight<(*(this->distMatrix))[indnew][x])
-							weight = (*(this->distMatrix))[indnew][x];
+		std::set<unsigned> gensimp;
+		for (int counter = 1; counter < pow_set_size; counter++)
+		{
+			if (__builtin_popcount(counter)>this->maxDimension+1)
+				continue;
+			double weight = 0;
+			for (int j = 0; j < simplex.size(); j++)
+			{
+				if (counter & (1 << j))
+				{
+					unsigned indnew = simplex[j];
+					for (auto x : gensimp)
+					{
+						if (weight < (*(this->distMatrix))[x][indnew])
+							weight = (*(this->distMatrix))[x][indnew];
 					}
 					gensimp.insert(indnew);
 				}
 			}
-			//overwriting for Alpha
-			double weight1;
-			if(gensimp.size()>1)
-	      			weight1 = utils::circumRadius(gensimp,this->distMatrix);
-   			else
-		        	weight1 = weight/2;
-		    weight1=weight;
-			std::shared_ptr<alphaNode> tot = std::make_shared<alphaNode>(alphaNode(gensimp,weight1));
-		
-			if(gensimp.size()>1)
-				tot->circumRadius = sqrt(utils::circumRadius(gensimp,this->distMatrix));
-			else{
-		    		tot->circumRadius = weight/2;
-			}
-			if(gensimp.size()>2)
-				tot->circumCenter = utils::circumCenter(gensimp,inputData);
-			else if(gensimp.size()==2){
- 				auto first = gensimp.begin();
-				std::vector<double> R;
-				std::vector<double> A = inputData[*first];
+			std::shared_ptr<alphaNode> tot = std::make_shared<alphaNode>(alphaNode(gensimp, weight));
+			if (this->simplexList[gensimp.size() - 1].find(tot) == this->simplexList[gensimp.size() - 1].end())
+			{
+				if (gensimp.size() > 2)
+				{
+					tot->circumCenter = utils::circumCenter(gensimp, inputData);
+					tot->circumRadius = sqrt(utils::circumRadius(gensimp, this->distMatrix));
+					tot->hash = this->simplexHash(gensimp);
+				}
+				else if (gensimp.size() == 2)
+				{
+					auto first = gensimp.begin();
+					std::vector<double> R;
+					std::vector<double> A = inputData[*first];
       				std::advance(first, 1);
-				std::vector<double> B = inputData[*first];
-	   			std::transform(A.begin(), A.end(), B.begin(), std::back_inserter(R),[](double e1,double e2){return ((e1+e2)/2);});
-				tot->circumCenter = R;
-   			 }
-			else
-   				tot->circumCenter = inputData[*(gensimp.begin())];
-			if(gensimp.size()==1)
-				tot->hash = *(gensimp.begin());
-			else
-				tot->hash = this->simplexHash(gensimp);
-			this->simplexList[gensimp.size()-1].insert(tot);
+					std::vector<double> B = inputData[*(++first)];
+	   				std::transform(A.begin(), A.end(), B.begin(), std::back_inserter(R),[](double e1,double e2){return ((e1+e2)/2);});
+					tot->circumCenter = R;
+					tot->circumRadius = sqrt(utils::circumRadius(gensimp, this->distMatrix));
+					tot->hash = this->simplexHash(gensimp);
+				}
+				else
+				{
+					tot->circumRadius = weight / 2;
+					tot->circumCenter = inputData[*(gensimp.begin())];
+					tot->hash = *(gensimp.begin());
+				}
+#pragma omp critical
+				{
+					this->simplexList[gensimp.size() - 1].insert(tot);
+				}
+			}
 			gensimp.clear();
 		}
 	}
@@ -733,110 +738,110 @@ void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<unsigned
 	/*Filtration value computation algorithm
 	for i : dimension →0 do
 	   for all σ of dimension i
-	        if filtration(σ) is NaN then
-	            filtration(σ)=α2(σ)
-	        end if
-        	for all τ face of σ do            // propagate alpha filtration value
-        	  if  filtration(τ) is not NaN then
-        	       filtration(τ) = min( filtration(τ), filtration(σ) )
-        	  else
-        	     if τ is not Gabriel for σ then
-        	       filtration(τ) = filtration(σ)
-        	  end if
-       	    end if
-  	   end for
- 	 end for
+			if filtration(σ) is NaN then
+				filtration(σ)=α2(σ)
+			end if
+			for all τ face of σ do            // propagate alpha filtration value
+			  if  filtration(τ) is not NaN then
+				   filtration(τ) = min( filtration(τ), filtration(σ) )
+			  else
+				 if τ is not Gabriel for σ then
+				   filtration(τ) = filtration(σ)
+			  end if
+			end if
+	   end for
+	 end for
 	end for
 	make_filtration_non_decreasing()
 	prune_above_filtration()
-        */
-        /*
-       	for(int dim = this->simplexList.size()-1; dim >= 0; dim--){
-		for(auto simplexiter = this->simplexList[dim].rbegin(); simplexiter != this->simplexList[dim].rend(); ++simplexiter){
-			std::shared_ptr<alphaNode> simplex = (*simplexiter);
-			if(simplex->filterationvalue ==0)
-				simplex->filterationvalue = simplex->circumRadius;
-			if(dim>0){for(int d = dim-1;d>=dim-1;d--)
-				for(auto face : this->simplexList[d]){
-	
-					bool gabriel = true;
-					std::vector<unsigned> points_check(simplex->simplex.size());
-					std::vector<unsigned> guilty_points_check;
-					std::vector<unsigned> A(simplex->simplex.begin(),simplex->simplex.end());
-					std::vector<unsigned> B(face->simplex.begin(),face->simplex.end());
-					std::sort(A.begin(),A.end());
-					std::sort(B.begin(),B.end());
-					if(utils::isSubset(A,B)){
-						if(face->filterationvalue !=0)
-							face->filterationvalue = std::min(face->filterationvalue, simplex->filterationvalue);				
-						else {
-							std::vector<unsigned>::iterator it;											
-							it=std::set_difference (simplex->simplex.begin(), simplex->simplex.end(), face->simplex.begin(), face->simplex.end(), points_check.begin());
-							points_check.resize(it-points_check.begin());
-							for(it = points_check.begin(); it !=points_check.end();++it){
-								std::vector<double> coordinates;
-								for(int i =0;i<face->circumCenter.size();i++)
-									coordinates.push_back(inputData[*it][i]);						
-								double distance = utils::vectors_distance(coordinates,face->circumCenter);
-								if(distance<face->circumRadius){
-									gabriel = false;
-									guilty_points_check.push_back((*it));
-								}
-							}
-						}
-					}
-					if(!gabriel){
-						std::vector<unsigned> v(simplex->simplex.size());
-						std::vector<unsigned>::iterator it;
-						
-						it=std::set_union (face->simplex.begin(), face->simplex.end(), guilty_points_check.begin(), guilty_points_check.end(), v.begin());
-						v.resize(it-v.begin());
-						for(auto iter =this->simplexList[v.size()-1].rbegin();iter != this->simplexList[v.size()-1].rend();++iter){
-							auto face1 = (*iter);
-							std::vector<unsigned> v1(simplex->simplex.size());
-							it = std::set_intersection(v.begin(), v.end(), face1->simplex.begin(), face1->simplex.end(), v1.begin());
-							v1.resize(it-v1.begin());
-							if(v1.size() == face1->simplex.size()){
-								face->filterationvalue = face1->filterationvalue;
-							}
-						}
-					}
-				
-				}
-			}
-		}
-	}
+		*/
+	/*
+	for(int dim = this->simplexList.size()-1; dim >= 0; dim--){
+	for(auto simplexiter = this->simplexList[dim].rbegin(); simplexiter != this->simplexList[dim].rend(); ++simplexiter){
+		std::shared_ptr<alphaNode> simplex = (*simplexiter);
+		if(simplex->filterationvalue ==0)
+			simplex->filterationvalue = simplex->circumRadius;
+		if(dim>0){for(int d = dim-1;d>=dim-1;d--)
+			for(auto face : this->simplexList[d]){
 
-
-
-	for(auto x:this->simplexList)
-	if(!((*x.begin())->simplex.size()>=this->simplexList.size()))
-		for(auto y : x)
-		{
-			for(auto simplex: simplexList[y->simplex.size()]){	
+				bool gabriel = true;
+				std::vector<unsigned> points_check(simplex->simplex.size());
+				std::vector<unsigned> guilty_points_check;
 				std::vector<unsigned> A(simplex->simplex.begin(),simplex->simplex.end());
-				std::vector<unsigned> B(y->simplex.begin(),y->simplex.end());
+				std::vector<unsigned> B(face->simplex.begin(),face->simplex.end());
+				std::sort(A.begin(),A.end());
+				std::sort(B.begin(),B.end());
 				if(utils::isSubset(A,B)){
-					if(simplex->weight < y->weight)
-						simplex->weight = y->weight;
+					if(face->filterationvalue !=0)
+						face->filterationvalue = std::min(face->filterationvalue, simplex->filterationvalue);
+					else {
+						std::vector<unsigned>::iterator it;
+						it=std::set_difference (simplex->simplex.begin(), simplex->simplex.end(), face->simplex.begin(), face->simplex.end(), points_check.begin());
+						points_check.resize(it-points_check.begin());
+						for(it = points_check.begin(); it !=points_check.end();++it){
+							std::vector<double> coordinates;
+							for(int i =0;i<face->circumCenter.size();i++)
+								coordinates.push_back(inputData[*it][i]);
+							double distance = utils::vectors_distance(coordinates,face->circumCenter);
+							if(distance<face->circumRadius){
+								gabriel = false;
+								guilty_points_check.push_back((*it));
+							}
+						}
+					}
 				}
+				if(!gabriel){
+					std::vector<unsigned> v(simplex->simplex.size());
+					std::vector<unsigned>::iterator it;
+
+					it=std::set_union (face->simplex.begin(), face->simplex.end(), guilty_points_check.begin(), guilty_points_check.end(), v.begin());
+					v.resize(it-v.begin());
+					for(auto iter =this->simplexList[v.size()-1].rbegin();iter != this->simplexList[v.size()-1].rend();++iter){
+						auto face1 = (*iter);
+						std::vector<unsigned> v1(simplex->simplex.size());
+						it = std::set_intersection(v.begin(), v.end(), face1->simplex.begin(), face1->simplex.end(), v1.begin());
+						v1.resize(it-v1.begin());
+						if(v1.size() == face1->simplex.size()){
+							face->filterationvalue = face1->filterationvalue;
+						}
+					}
+				}
+
 			}
 		}
+	}
+}
 
-	//Reinserting to sort by filterationvalue and remove simplexes with weight greater than alphafilteration value (maxEpsilon)
-	std::vector<std::set<std::shared_ptr<alphaNode>, cmpByWeight<std::shared_ptr<alphaNode>>>> simplexList1;		//Holds ordered list of simplices in each dimension
-	for(int dim=0;dim < this->simplexList.size();dim++){
-		simplexList1.push_back({});
-	   	for(auto simplex : this->simplexList[dim]){
-			 if(simplex->filterationvalue <= this->alphaFilterationValue){ //Valid Simplex after filteration
-				 simplex->weight = simplex->filterationvalue;
-				 simplexList1[dim].insert(simplex);
 
-			 }
+
+for(auto x:this->simplexList)
+if(!((*x.begin())->simplex.size()>=this->simplexList.size()))
+	for(auto y : x)
+	{
+		for(auto simplex: simplexList[y->simplex.size()]){
+			std::vector<unsigned> A(simplex->simplex.begin(),simplex->simplex.end());
+			std::vector<unsigned> B(y->simplex.begin(),y->simplex.end());
+			if(utils::isSubset(A,B)){
+				if(simplex->weight < y->weight)
+					simplex->weight = y->weight;
+			}
 		}
 	}
-	this->simplexList = simplexList1;
-	* */
+
+//Reinserting to sort by filterationvalue and remove simplexes with weight greater than alphafilteration value (maxEpsilon)
+std::vector<std::set<std::shared_ptr<alphaNode>, cmpByWeight<std::shared_ptr<alphaNode>>>> simplexList1;		//Holds ordered list of simplices in each dimension
+for(int dim=0;dim < this->simplexList.size();dim++){
+	simplexList1.push_back({});
+	for(auto simplex : this->simplexList[dim]){
+		 if(simplex->filterationvalue <= this->alphaFilterationValue){ //Valid Simplex after filteration
+			 simplex->weight = simplex->filterationvalue;
+			 simplexList1[dim].insert(simplex);
+
+		 }
+	}
+}
+this->simplexList = simplexList1;
+* */
 int di=0;
 for( auto x : this->simplexList)
 	std::cout<<"Count of "<<di++<<"-simplex ::"<<x.size()<<"\n";
