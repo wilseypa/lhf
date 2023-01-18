@@ -17,11 +17,67 @@ alphaComplex<nodeType>::~alphaComplex(){
 	this->simplexList.clear();
 }
 
+template<>
+std::set<std::shared_ptr<alphaNode>, cmpByWeight<std::shared_ptr<alphaNode>>> alphaComplex<alphaNode>::getdelaunayDimEdges(int dim)
+{
+	if(dim==0)
+	for(int i=0; i <= this->maxDimension; i++)
+		this->simplexList.push_back({});
+	if(this->simplexList[dim].size()!=0)
+		return this->simplexList[dim];
+#pragma omp parallel for
+	for (int i = 0; i < this->dsimplexmesh.size(); ++i)
+	{
+		auto simplex = this->dsimplexmesh[i];
+		sort(simplex.begin(), simplex.end());
+		unsigned int pow_set_size = pow(2, simplex.size());
+		std::set<unsigned> gensimp;
+		for (int counter = 1; counter < pow_set_size; counter++)
+		{
+			if (__builtin_popcount(counter)!=dim+1)
+				continue;
+			double weight = 0;
+			for (int j = 0; j < simplex.size(); j++)
+			{
+				if (counter & (1 << j))
+				{
+					unsigned indnew = simplex[j];
+					for (auto x : gensimp)
+					{
+						if (weight < (*(this->distMatrix))[x][indnew])
+							weight = (*(this->distMatrix))[x][indnew];
+					}
+					gensimp.insert(indnew);
+				}
+			}
+			std::shared_ptr<alphaNode> tot = std::make_shared<alphaNode>(alphaNode(gensimp, weight));
+			if (this->simplexList[gensimp.size() - 1].find(tot) == this->simplexList[gensimp.size() - 1].end())
+			{
+				tot->hash = gensimp.size() > 1 ? this->simplexHash(gensimp) :  *(gensimp.begin());
+#pragma omp critical
+				{
+					this->simplexList[gensimp.size() - 1].insert(tot);
+				}
+			}
+			gensimp.clear();
+		}
+	}
+	return this->simplexList[dim];
+}
 
+template <typename nodeType>
+std::vector<std::shared_ptr<nodeType>> alphaComplex<nodeType>::expanddelaunayDimension(int dim)
+{
+	this->simplexList[dim-1].clear();
+	std::set<std::shared_ptr<nodeType>, cmpByWeight<std::shared_ptr<nodeType>>> set_simplexes=getdelaunayDimEdges(dim);
+	getdelaunayDimEdges(dim+1);
+	std::vector<std::shared_ptr<nodeType>> ret(set_simplexes.begin(),set_simplexes.end());
+	return ret;
+}
 
 template<typename nodeType>
 std::vector<std::shared_ptr<nodeType>> alphaComplex<nodeType>::getAllDelaunayCofacets(std::shared_ptr<nodeType> simp, std::unordered_map<std::shared_ptr<nodeType>,std::shared_ptr<nodeType>> pivotPairs,bool emergent){	//For each pivot, which column has that pivot
-	
+
 	std::vector<std::shared_ptr<nodeType>> ret;
 	unsigned dimension  = simp->simplex.size();
 	for(auto iter = this->simplexList[dimension].rbegin();iter!=this->simplexList[dimension].rend();++iter){
@@ -69,6 +125,32 @@ std::vector<std::shared_ptr<nodeType>> alphaComplex<nodeType>::getAllDelaunayCof
 
 	return ret;
 }
+
+template<typename nodeType>
+std::vector<nodeType*> alphaComplex<nodeType>::getAllDelaunayCofacets_basePointer(std::shared_ptr<nodeType> simp){
+	std::vector<nodeType*> ret;
+	unsigned dimension  = simp->simplex.size();
+
+	for(auto iter = this->simplexList[dimension].rbegin();iter!=this->simplexList[dimension].rend();++iter){
+/*	
+	for(auto simplex : this->simplexList[dimension]){
+*/		auto simplex = *iter;
+		std::vector<unsigned> :: iterator it;
+		std::vector<unsigned> v(simplex->simplex.size());
+		
+		it = std::set_intersection(simp->simplex.begin(),simp->simplex.end(),simplex->simplex.begin(),simplex->simplex.end(),v.begin());
+		v.resize(it-v.begin());
+		nodeType* x = new nodeType();
+		x->simplex = (*simplex).simplex;
+		x->weight =(*simplex).weight;
+		x->hash = (*simplex).hash;
+
+		if(v.size() == simp->simplex.size())
+			ret.push_back(x);
+	}
+	return ret;
+}
+
 template<typename nodeType>
 
 bool  alphaComplex<nodeType>::checkGabriel(std::vector<double> point, std::vector<unsigned> dsimplex ,std::vector<std::vector<double>> &inputData, double beta)
@@ -152,11 +234,11 @@ int pk;
 		}
 	}
 
-	for(auto dim = maxDimension;dim >0;dim--)
-		for(auto simplex : this->simplexList[dim]){
+	for(auto r = maxDimension;r >0;r--)
+		for(auto simplex : this->simplexList[r]){
 			std::vector<unsigned> vecsimplex(simplex->simplex.begin(),simplex->simplex.end());
 			if(simplex->weight == 0)
-				simplex->weight = (dim>1? utils::circumRadius(simplex->simplex,this->distMatrix):(dim==1?(pow((*(this->distMatrix))[std::min(vecsimplex[0],vecsimplex[1])][std::max(vecsimplex[0],vecsimplex[1])],2)):0));
+				simplex->weight = (r>1? utils::circumRadius(simplex->simplex,this->distMatrix):(r==1?(pow((*(this->distMatrix))[std::min(vecsimplex[0],vecsimplex[1])][std::max(vecsimplex[0],vecsimplex[1])],2)):0));
                  
                  
          	std::vector<std::set<std::shared_ptr<alphaNode>, cmpByWeight<std::shared_ptr<alphaNode>>>> simplexfaceList;
@@ -248,11 +330,11 @@ int pk;
 		}
 
 	std::vector<std::set<std::shared_ptr<alphaNode>, cmpByWeight<std::shared_ptr<alphaNode>>>> simplexList1;		//Holds ordered list of simplices in each dimension
-	for(int dim=0;dim < this->simplexList.size();dim++){
+	for(int r=0;r < this->simplexList.size();r++){
 		simplexList1.push_back({});
-	   	for(auto simplex : this->simplexList[dim]){
+	   	for(auto simplex : this->simplexList[r]){
 			 if(simplex->weight <= this->alphaFilterationValue){ 
-				 simplexList1[dim].insert(simplex);
+				 simplexList1[r].insert(simplex);
 			 }
 		}
 
@@ -508,12 +590,12 @@ void alphaComplex<alphaNode>::buildBetaComplexFilteration(std::vector<std::vecto
 	prune_above_filtration()
         
 int cnt=0;
-	for(int dim = this->simplexList.size()-1; dim >= 0; dim--){
-		for(auto simplexiter = this->simplexList[dim].rbegin(); simplexiter != this->simplexList[dim].rend(); ++simplexiter){
+	for(int r = this->simplexList.size()-1; r >= 0; r--){
+		for(auto simplexiter = this->simplexList[r].rbegin(); simplexiter != this->simplexList[r].rend(); ++simplexiter){
 			std::shared_ptr<alphaNode> simplex = (*simplexiter);
 			if(simplex->filterationvalue==0)
 				simplex->filterationvalue = simplex->circumRadius;
-			if(dim>0){for(int d = dim-1;d>=0;d--)
+			if(r>0){for(int d = r-1;d>=0;d--)
 				for(auto face : this->simplexList[d]){
 					bool gabriel = true;
 					std::vector<unsigned> A(simplex->simplex.begin(),simplex->simplex.end());
@@ -609,7 +691,7 @@ int cnt=0;
 							face->filterationvalue =  face->circumRadius;
 							
 					//	face->filterationvalue = minmax.first;
-						std::cout<<"\nNOT Gabriel Assigned  weight "<<dim-1<<" "<<face->filterationvalue;
+						std::cout<<"\nNOT Gabriel Assigned  weight "<<r-1<<" "<<face->filterationvalue;
 					}
 				//	face->filterationvalue=face->circumRadius;
 				}
@@ -645,12 +727,12 @@ for(auto x:simplexList){
 	
 	//Reinserting to sort by filterationvalue and remove simplexes with weight greater than alphafilteration value (maxEpsilon)
 	std::vector<std::set<std::shared_ptr<alphaNode>, cmpByWeight<std::shared_ptr<alphaNode>>>> simplexList1;		//Holds ordered list of simplices in each dimension
-	for(int dim=0;dim < this->simplexList.size();dim++){
+	for(int r=0;r < this->simplexList.size();r++){
 		simplexList1.push_back({});
-	   	for(auto simplex : this->simplexList[dim]){
+	   	for(auto simplex : this->simplexList[r]){
 			 if(simplex->filterationvalue <= this->alphaFilterationValue){ 
 				 simplex->weight = simplex->filterationvalue;
-				 simplexList1[dim].insert(simplex);
+				 simplexList1[r].insert(simplex);
 			 }
 		}
 	}
@@ -756,12 +838,12 @@ void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<unsigned
 	prune_above_filtration()
 		*/
 	/*
-	for(int dim = this->simplexList.size()-1; dim >= 0; dim--){
-	for(auto simplexiter = this->simplexList[dim].rbegin(); simplexiter != this->simplexList[dim].rend(); ++simplexiter){
+	for(int r = this->simplexList.size()-1; r >= 0; r--){
+	for(auto simplexiter = this->simplexList[r].rbegin(); simplexiter != this->simplexList[r].rend(); ++simplexiter){
 		std::shared_ptr<alphaNode> simplex = (*simplexiter);
 		if(simplex->filterationvalue ==0)
 			simplex->filterationvalue = simplex->circumRadius;
-		if(dim>0){for(int d = dim-1;d>=dim-1;d--)
+		if(r>0){for(int d = r-1;d>=r-1;d--)
 			for(auto face : this->simplexList[d]){
 
 				bool gabriel = true;
@@ -830,12 +912,12 @@ if(!((*x.begin())->simplex.size()>=this->simplexList.size()))
 
 //Reinserting to sort by filterationvalue and remove simplexes with weight greater than alphafilteration value (maxEpsilon)
 std::vector<std::set<std::shared_ptr<alphaNode>, cmpByWeight<std::shared_ptr<alphaNode>>>> simplexList1;		//Holds ordered list of simplices in each dimension
-for(int dim=0;dim < this->simplexList.size();dim++){
+for(int r=0;r < this->simplexList.size();r++){
 	simplexList1.push_back({});
-	for(auto simplex : this->simplexList[dim]){
+	for(auto simplex : this->simplexList[r]){
 		 if(simplex->filterationvalue <= this->alphaFilterationValue){ //Valid Simplex after filteration
 			 simplex->weight = simplex->filterationvalue;
-			 simplexList1[dim].insert(simplex);
+			 simplexList1[r].insert(simplex);
 
 		 }
 	}
@@ -848,6 +930,11 @@ for( auto x : this->simplexList)
 	return;
 }
 
+template<typename nodeType>
+std::set<std::shared_ptr<nodeType>, cmpByWeight<std::shared_ptr<nodeType>>> alphaComplex<nodeType>::getdelaunayDimEdges(int dim){
+	this->ut.writeLog(this->simplexType,"No delaunayDimEdges function defined");
+	return this->simplexList[dim];
+}
 
 
 

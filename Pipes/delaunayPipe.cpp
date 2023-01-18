@@ -48,6 +48,13 @@ template <typename nodeType>
 void delaunayPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 {
   std::vector<std::vector<unsigned>> dsimplexes=qdelaunay_o(inData.inputData);
+  ((alphaComplex<alphaNode> *)inData.complex)->dsimplexmesh=dsimplexes;
+  for(auto i:dsimplexes){
+    for(auto j : i){
+      std::cout<<j<<" ";
+    }
+    std::cout<<std::endl;
+  }
   ((alphaComplex<nodeType> *)inData.complex)->buildAlphaComplex(dsimplexes, inData.inputData.size(), inData.inputData);
   return;
 }
