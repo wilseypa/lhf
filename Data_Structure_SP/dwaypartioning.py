@@ -15,8 +15,12 @@ dim = int(input())
 from pca import pca
 
 #k = np.random.random ([pts,dim])
+#np.savetxt("inputfile.txt",k)
+k = np.loadtxt("inputfile.txt")
+#print(k)
+#input()
 #k = tadasets.dsphere(n=pts,d=dim-1, r=5,noise = 0)
-k =  np.array(fiblat.sphere_lattice(dim,pts))
+#k =  np.array(fiblat.sphere_lattice(dim,pts))
 
 points = k
 
@@ -37,30 +41,27 @@ coords = model.fit_transform(hyplane)
 coords = np.array([coords["PC"].iloc[:, i] for i in range(dim)]).T
 
 class dwayTreeNode:
-  def __init__(self, centroid):
-    self.data = centroid
-    self.Childs = []
+	def __init__(self, centroid,data):
+		self.parent = None
+		self.centroid = centroid
+		self.data = data
+		self.children = []
 
-# intersection between line(p1, p2) and line(p3, p4)
 
-datapoints = []
 def inorder(node):
         if node == None:
             return
-    
-        # All the children except the last
-        for child in node.Childs:
+
+        for child in node.children:
             inorder(child)
-         
-        # Print the current node's data
-        #print(node.data,end=" ")
-        datapoints.append(node.data)
+        datapoints.append(node.centroid)
+
 def buildDwayTree(data):
 	data = np.array(data)
 	if(data.size<=0):
 		return None
 	centroid = data.mean(axis=0)
-	nNode = dwayTreeNode(centroid)
+	nNode = dwayTreeNode(centroid,[])
 	if (nNode == None):
 		print("Memory error")
 		return None
@@ -85,18 +86,80 @@ def buildDwayTree(data):
 		dwaypartition[x].append(list(data[i]))
 		i = i+1
 	for part in dwaypartition:
-		if(len(part)>1):
-			nNode.Childs.append(buildDwayTree(part))
-		if(len(part)==1):
-			nNode.Childs.append(dwayTreeNode(part))
-		else:
-			nNode.Childs.append(None)
+		if(len(part)>dim+1):
+			child = buildDwayTree(part)
+			child.parent = nNode
+			nNode.children.append(child)
+		if(len(part)<=dim+1):
+			data1 = np.array(part)
+			if(data1.size>0):
+				centroid1 = data1.mean(axis=0)
+			else:
+				centroid1 = None
+			child = dwayTreeNode(centroid1,part)
+			child.parent = nNode
+			nNode.children.append(child)
 	return nNode
 
+def get_neighbor_of_greater_or_equal_size(node, direction):   
+	if node.parent is None:
+		return None
+	if node.parent.children[direction] != node: 
+		return node.parent.children[direction]
+		
+	otherneighbornode = get_neighbor_of_greater_or_equal_size(node.parent,direction)
+def	is_leaf(node):
+	if node is None:
+		return True
+	if(len(node.data)<=dim+1):
+		return True
+	else:
+		return False
+	
+def find_neighbors_of_smaller_size(node, neighbor, direction):   
+	candidates = [] if neighbor is None else neighbor
+	neighbors = []
+	while len(candidates) > 0:
+		if is_leaf(candidates[0]):
+			neighbors.append(candidates[0])
+		else:
+			for i in range(1,dim+1):
+				if(candidates[0].children[direction+i%(dim+1)] is not None):
+					candidates.append(candidates[0].children[direction+1%dim])
+		candidates.remove(candidates[0])
+	return neighbors
+	
+def get_neighbors(node, direction):   
+	neighbors = []
+	firstneigh = get_neighbor_of_greater_or_equal_size(node,direction)
+	if firstneigh is not None:
+		neighbors.append(firstneigh) 		#node not a parents i child, parents i child is always a i direction neighbour
+	secondneigh = get_neighbor_of_greater_or_equal_size(node.parent,direction)	#parent->parent until node is not a i child --> parent i child is a neighbor	
+	if secondneigh is not None:
+		neighbors.append(secondneigh) 		#node not a parents i child, parents i child is always a i direction neighbour
+	finalneighbors = find_neighbors_of_smaller_size(node,neighbors, direction)
+	return finalneighbors
+    	
 root = buildDwayTree(points)
+node = root.children[2].children[1].children[1]
+neighbor = []
+print(node.centroid,"sdf")
+for i in range(dim+1):
+	for y in get_neighbors(node,i):
+		neighbor.append(y)
+for neigh in neighbor:
+	print(neigh.centroid)
+
+datapoints = []
 inorder(root)
 
-    
+
+for x in datapoints:
+	print(x)
+	print("******")
+plt.plot(points[:,0], points[:,1], 'o',markersize=1)
+plt.show()
+'''
 #fig, ax = plt.subplots()
 #fig.canvas.draw()  # if running all the code in the same cell, this is required for it to work, not sure why
 xcoords = []
@@ -136,7 +199,7 @@ ax = fig.add_subplot(projection='3d')
 ax.scatter(xcoords,ycoords,zcoords,cmap='inferno', c=colorlist,s=si)
 plt.savefig("dway.pdf", bbox_inches = 'tight',pad_inches = 0)
 plt.show()
-
+'''
 '''
 c=["red","blue","green"]
 i = 0
