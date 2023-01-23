@@ -140,13 +140,12 @@ std::vector<nodeType*> alphaComplex<nodeType>::getAllDelaunayCofacets_basePointe
 		
 		it = std::set_intersection(simp->simplex.begin(),simp->simplex.end(),simplex->simplex.begin(),simplex->simplex.end(),v.begin());
 		v.resize(it-v.begin());
-		nodeType* x = new nodeType();
-		x->simplex = (*simplex).simplex;
-		x->weight =(*simplex).weight;
-		x->hash = (*simplex).hash;
 
-		if(v.size() == simp->simplex.size())
-			ret.push_back(x);
+
+		if(v.size() == simp->simplex.size()){
+			nodeType* x = new nodeType(simplex->simplex,simplex->weight);
+			x->hash = simplex->hash;
+			ret.push_back(x);}
 	}
 	return ret;
 }

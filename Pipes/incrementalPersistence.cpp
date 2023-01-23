@@ -45,7 +45,6 @@ std::vector<simplexNodePointer> incrementalPersistence<nodeType>::incrementalByD
 		std::cout<<"IncrementalPersistence does not support complexes\n";
 		return nextPivots;
 	}
-	int k;
 
 	//Iterate over columns to reduce in reverse order
 	for(auto columnIndexIter = edges.begin(); columnIndexIter != edges.end(); columnIndexIter++){
@@ -57,18 +56,6 @@ std::vector<simplexNodePointer> incrementalPersistence<nodeType>::incrementalByD
 
 			//Get all cofacets using emergent pair optimization
 			std::vector<nodeType *> faceList = (mode == "homology" ? complex->getAllFacets(simplex, saveVertices, dimension) : (inData.complex->simplexType == "alphaComplex" ? inData.complex->getAllDelaunayCofacets_basePointer(simplex) : complex->getAllCofacets(simplex, pivotPairs, true, saveVertices, dimension)));
-		    std::cout<<"simplex";
-			for(auto y :simplex->simplex){
-					std::cout<<y<<" ";
-			   }
-			std::cout<<"Temp"<<dimension<<std::endl;
-			for (auto x:faceList){
-		       for(auto y :x->simplex){
-					std::cout<<y<<" ";
-			   }
-			   std::cout<<std::endl;
-		    }
-			//std::cin>>k;
 
 			std::vector<simplexNodePointer> columnV;	//Reduction column of matrix V
 			columnV.push_back(simplex); //Initially V=I -> 1's along diagonal
@@ -117,7 +104,7 @@ std::vector<simplexNodePointer> incrementalPersistence<nodeType>::incrementalByD
 
 					if(recordIntervals && simplex->weight != pivot->weight){
 						//If we haven't saved the vertices in each simplex, we need to recover them now to determine the boundary points
-						if(!saveVertices){
+						if(!saveVertices && inData.complex->simplexType != "alphaComplex"){
 							for(simplexNodePointer simplex : v[simplex]){
 								simplex->simplex = complex->getVertices(simplex->hash, dimension + 1, nPts);
 							}
