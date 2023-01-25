@@ -115,6 +115,13 @@ std::set<std::shared_ptr<nodeType>, cmpByWeight<std::shared_ptr<nodeType>>> simp
 }
 
 template<typename nodeType>
+std::set<std::shared_ptr<nodeType>, cmpByWeight<std::shared_ptr<nodeType>>> simplexBase<nodeType>::getdelaunayDimEdges(int dim){
+	ut.writeLog(simplexType,"No getdelunayDimEdges function defined");
+	std::set<std::shared_ptr<nodeType>, cmpByWeight<std::shared_ptr<nodeType>>> simplexList[dim];
+	return simplexList[dim];
+}
+
+template<typename nodeType>
 std::vector<std::set<std::shared_ptr<nodeType>, cmpByWeight<std::shared_ptr<nodeType>>>> simplexBase<nodeType>::getAllEdges(){
 	return simplexList;
 }
@@ -140,6 +147,12 @@ template<typename nodeType>
 std::vector<std::shared_ptr<nodeType>> simplexBase<nodeType>::getAllDelaunayCofacets(std::shared_ptr<nodeType>){
 	ut.writeLog(simplexType,"No getdelaunay cofacets function defined");
 	return std::vector<std::shared_ptr<nodeType>>();
+}
+
+template<typename nodeType>
+std::vector<nodeType*> simplexBase<nodeType>::getAllDelaunayCofacets_basePointer(std::shared_ptr<nodeType>){
+	ut.writeLog(simplexType,"No getdelaunay cofacets function defined");
+	return std::vector<nodeType*>();
 }
 
 template<typename nodeType>
@@ -324,6 +337,13 @@ template<typename nodeType>
 std::vector<std::shared_ptr<nodeType>> simplexBase<nodeType>::expandDimension(std::vector<std::shared_ptr<nodeType>> edges){
 	std::vector<std::shared_ptr<nodeType>> ret;
 	ut.writeLog(simplexType,"No expandDimension function defined");
+	return ret;
+}
+
+template<typename nodeType>
+std::vector<std::shared_ptr<nodeType>> simplexBase<nodeType>::expanddelaunayDimension(int dim){
+	std::vector<std::shared_ptr<nodeType>> ret;
+	ut.writeLog(simplexType,"No expanddelaunayDimension function defined");
 	return ret;
 }
 

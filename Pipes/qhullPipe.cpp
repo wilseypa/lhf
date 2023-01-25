@@ -41,6 +41,7 @@ void qhullPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
     //
  //   ((alphaComplex<nodeType>*)inData.complex)->buildBetaComplexFilteration(dsimplexes, inData.inputData.size(),inData.inputData, tree);
 //    ((alphaComplex<nodeType>*)inData.complex)->buildBetaComplex(dsimplexes, inData.inputData.size(),inData.inputData,1,"highDim");
+	((alphaComplex<alphaNode> *)inData.complex)->dsimplexmesh=dsimplexes;
     ((alphaComplex<nodeType>*)inData.complex)->buildAlphaComplex(dsimplexes,inData.inputData.size(),inData.inputData);
 
 	this->ut.writeDebug("qhullPipe", "\tSuccessfully Executed pipe");

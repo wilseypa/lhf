@@ -33,6 +33,7 @@ class simplexBase {
   public:
 	typedef std::shared_ptr<nodeType> templateNode_P;
 	std::vector<std::set<templateNode_P, cmpByWeight<templateNode_P>>> simplexList;		//Holds ordered list of simplices in each dimension
+	std::vector<std::vector<unsigned>> dsimplexmesh;
 	unsigned simplexOffset = 0;
 
 	
@@ -97,6 +98,7 @@ class simplexBase {
 	virtual std::vector<nodeType*> getAllCofacets(templateNode_P, const std::unordered_map<long long, templateNode_P>&, bool);
 	virtual std::vector<nodeType*> getAllCofacets(templateNode_P);
 	virtual std::vector<templateNode_P> getAllDelaunayCofacets(templateNode_P);
+	virtual std::vector<nodeType*> getAllDelaunayCofacets_basePointer(templateNode_P);
 	virtual std::vector<templateNode_P> getAllDelaunayCofacets(templateNode_P simp, std::unordered_map<templateNode_P,templateNode_P> pivotPairs,bool emergent);
 	virtual std::vector<templateNode_P> getAllCofacets(const std::set<unsigned>&);
 	virtual std::vector<nodeType*> getAllFacets(nodeType*);
@@ -105,8 +107,10 @@ class simplexBase {
 
 
 	virtual std::set<templateNode_P, cmpByWeight<templateNode_P>> getDimEdges(int);
+	virtual std::set<templateNode_P, cmpByWeight<templateNode_P>> getdelaunayDimEdges(int);
 	virtual std::vector<std::set<templateNode_P, cmpByWeight<templateNode_P>>> getAllEdges();
 	virtual std::vector<templateNode_P> expandDimension(std::vector<templateNode_P> edges);
+	virtual std::vector<templateNode_P> expanddelaunayDimension(int);
 
 	virtual void expandDimensions(int);
 	//virtual void reduceComplex();
