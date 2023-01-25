@@ -48,11 +48,11 @@ jobs:
     
     - name: Get Linux OpenMPI dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
       if:   contains(matrix.os,'ubuntu') && contains(matrix.mpi,'openmpi')
-      run:  sudo apt-get install -y openmpi-bin openmpi-common libopenmpi-dev cppcheck libeigen3-dev
+      run:  sudo apt-get install -y openmpi-bin openmpi-common libopenmpi-dev cppcheck libeigen3-dev libcgal-dev
       
     - name: Get Linux MPICH dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
       if:   contains(matrix.os,'ubuntu') && contains(matrix.mpi,'mpich')
-      run:  sudo apt-get install -y mpich cppcheck libeigen3-dev
+      run:  sudo apt-get install -y mpich cppcheck libeigen3-dev libcgal-dev
       
     - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
       if:   contains(matrix.os,'macos') && contains(matrix.mpi,'openmpi')
