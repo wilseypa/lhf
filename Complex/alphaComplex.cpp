@@ -842,7 +842,7 @@ void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<unsigned
 		std::shared_ptr<alphaNode> simplex = (*simplexiter);
 		if(simplex->filterationvalue ==0)
 			simplex->filterationvalue = simplex->circumRadius;
-		if(r>0){for(int d = r-1;d>=r-1;d--)
+		if(dim>0){for(int d = dim-1;d>=dim-1;d--)
 			for(auto face : this->simplexList[d]){
 
 				bool gabriel = true;
