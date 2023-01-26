@@ -233,11 +233,11 @@ int pk;
 		}
 	}
 
-	for(auto r = maxDimension;r >0;r--)
-		for(auto simplex : this->simplexList[r]){
+	for(auto dim = maxDimension;dim >0;dim--)
+		for(auto simplex : this->simplexList[dim]){
 			std::vector<unsigned> vecsimplex(simplex->simplex.begin(),simplex->simplex.end());
 			if(simplex->weight == 0)
-				simplex->weight = (r>1? utils::circumRadius(simplex->simplex,this->distMatrix):(r==1?(pow((*(this->distMatrix))[std::min(vecsimplex[0],vecsimplex[1])][std::max(vecsimplex[0],vecsimplex[1])],2)):0));
+				simplex->weight = (dim>1? utils::circumRadius(simplex->simplex,this->distMatrix):(dim==1?(pow((*(this->distMatrix))[std::min(vecsimplex[0],vecsimplex[1])][std::max(vecsimplex[0],vecsimplex[1])],2)):0));
                  
                  
          	std::vector<std::set<std::shared_ptr<alphaNode>, cmpByWeight<std::shared_ptr<alphaNode>>>> simplexfaceList;
@@ -329,11 +329,11 @@ int pk;
 		}
 
 	std::vector<std::set<std::shared_ptr<alphaNode>, cmpByWeight<std::shared_ptr<alphaNode>>>> simplexList1;		//Holds ordered list of simplices in each dimension
-	for(int r=0;r < this->simplexList.size();r++){
+	for(int dim=0;dim < this->simplexList.size();dim++){
 		simplexList1.push_back({});
-	   	for(auto simplex : this->simplexList[r]){
+	   	for(auto simplex : this->simplexList[dim]){
 			 if(simplex->weight <= this->alphaFilterationValue){ 
-				 simplexList1[r].insert(simplex);
+				 simplexList1[dim].insert(simplex);
 			 }
 		}
 
@@ -589,12 +589,12 @@ void alphaComplex<alphaNode>::buildBetaComplexFilteration(std::vector<std::vecto
 	prune_above_filtration()
         
 int cnt=0;
-	for(int r = this->simplexList.size()-1; r >= 0; r--){
-		for(auto simplexiter = this->simplexList[r].rbegin(); simplexiter != this->simplexList[r].rend(); ++simplexiter){
+	for(int dim = this->simplexList.size()-1; dim >= 0; dim--){
+		for(auto simplexiter = this->simplexList[dim].rbegin(); simplexiter != this->simplexList[dim].rend(); ++simplexiter){
 			std::shared_ptr<alphaNode> simplex = (*simplexiter);
 			if(simplex->filterationvalue==0)
 				simplex->filterationvalue = simplex->circumRadius;
-			if(r>0){for(int d = r-1;d>=0;d--)
+			if(dim>0){for(int d = dim-1;d>=0;d--)
 				for(auto face : this->simplexList[d]){
 					bool gabriel = true;
 					std::vector<unsigned> A(simplex->simplex.begin(),simplex->simplex.end());
@@ -690,7 +690,7 @@ int cnt=0;
 							face->filterationvalue =  face->circumRadius;
 							
 					//	face->filterationvalue = minmax.first;
-						std::cout<<"\nNOT Gabriel Assigned  weight "<<r-1<<" "<<face->filterationvalue;
+						std::cout<<"\nNOT Gabriel Assigned  weight "<<dim-1<<" "<<face->filterationvalue;
 					}
 				//	face->filterationvalue=face->circumRadius;
 				}
@@ -726,12 +726,12 @@ for(auto x:simplexList){
 	
 	//Reinserting to sort by filterationvalue and remove simplexes with weight greater than alphafilteration value (maxEpsilon)
 	std::vector<std::set<std::shared_ptr<alphaNode>, cmpByWeight<std::shared_ptr<alphaNode>>>> simplexList1;		//Holds ordered list of simplices in each dimension
-	for(int r=0;r < this->simplexList.size();r++){
+	for(int dim=0;dim < this->simplexList.size();dim++){
 		simplexList1.push_back({});
-	   	for(auto simplex : this->simplexList[r]){
+	   	for(auto simplex : this->simplexList[dim]){
 			 if(simplex->filterationvalue <= this->alphaFilterationValue){ 
 				 simplex->weight = simplex->filterationvalue;
-				 simplexList1[r].insert(simplex);
+				 simplexList1[dim].insert(simplex);
 			 }
 		}
 	}
@@ -837,8 +837,8 @@ void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<unsigned
 	prune_above_filtration()
 		*/
 	/*
-	for(int r = this->simplexList.size()-1; r >= 0; r--){
-	for(auto simplexiter = this->simplexList[r].rbegin(); simplexiter != this->simplexList[r].rend(); ++simplexiter){
+	for(int dim = this->simplexList.size()-1; dim >= 0; dim--){
+	for(auto simplexiter = this->simplexList[dim].rbegin(); simplexiter != this->simplexList[dim].rend(); ++simplexiter){
 		std::shared_ptr<alphaNode> simplex = (*simplexiter);
 		if(simplex->filterationvalue ==0)
 			simplex->filterationvalue = simplex->circumRadius;
@@ -911,12 +911,12 @@ if(!((*x.begin())->simplex.size()>=this->simplexList.size()))
 
 //Reinserting to sort by filterationvalue and remove simplexes with weight greater than alphafilteration value (maxEpsilon)
 std::vector<std::set<std::shared_ptr<alphaNode>, cmpByWeight<std::shared_ptr<alphaNode>>>> simplexList1;		//Holds ordered list of simplices in each dimension
-for(int r=0;r < this->simplexList.size();r++){
+for(int dim=0;dim < this->simplexList.size();dim++){
 	simplexList1.push_back({});
-	for(auto simplex : this->simplexList[r]){
+	for(auto simplex : this->simplexList[dim]){
 		 if(simplex->filterationvalue <= this->alphaFilterationValue){ //Valid Simplex after filteration
 			 simplex->weight = simplex->filterationvalue;
-			 simplexList1[r].insert(simplex);
+			 simplexList1[dim].insert(simplex);
 
 		 }
 	}
