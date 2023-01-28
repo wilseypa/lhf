@@ -17,11 +17,67 @@ alphaComplex<nodeType>::~alphaComplex(){
 	this->simplexList.clear();
 }
 
+template<>
+std::set<std::shared_ptr<alphaNode>, cmpByWeight<std::shared_ptr<alphaNode>>> alphaComplex<alphaNode>::getdelaunayDimEdges(int dim)
+{
+	if(dim==0)
+	for(int i=0; i <= this->maxDimension; i++)
+		this->simplexList.push_back({});
+	if(this->simplexList[dim].size()!=0)
+		return this->simplexList[dim];
+#pragma omp parallel for
+	for (int i = 0; i < this->dsimplexmesh.size(); ++i)
+	{
+		auto simplex = this->dsimplexmesh[i];
+		sort(simplex.begin(), simplex.end());
+		unsigned int pow_set_size = pow(2, simplex.size());
+		std::set<unsigned> gensimp;
+		for (int counter = 1; counter < pow_set_size; counter++)
+		{
+			if (__builtin_popcount(counter)!=dim+1)
+				continue;
+			double weight = 0;
+			for (int j = 0; j < simplex.size(); j++)
+			{
+				if (counter & (1 << j))
+				{
+					unsigned indnew = simplex[j];
+					for (auto x : gensimp)
+					{
+						if (weight < (*(this->distMatrix))[x][indnew])
+							weight = (*(this->distMatrix))[x][indnew];
+					}
+					gensimp.insert(indnew);
+				}
+			}
+			std::shared_ptr<alphaNode> tot = std::make_shared<alphaNode>(alphaNode(gensimp, weight));
+			if (this->simplexList[gensimp.size() - 1].find(tot) == this->simplexList[gensimp.size() - 1].end())
+			{
+				tot->hash = gensimp.size() > 1 ? this->simplexHash(gensimp) :  *(gensimp.begin());
+#pragma omp critical
+				{
+					this->simplexList[gensimp.size() - 1].insert(tot);
+				}
+			}
+			gensimp.clear();
+		}
+	}
+	return this->simplexList[dim];
+}
 
+template <typename nodeType>
+std::vector<std::shared_ptr<nodeType>> alphaComplex<nodeType>::expanddelaunayDimension(int dim)
+{
+	this->simplexList[dim-1].clear();
+	std::set<std::shared_ptr<nodeType>, cmpByWeight<std::shared_ptr<nodeType>>> set_simplexes=getdelaunayDimEdges(dim);
+	getdelaunayDimEdges(dim+1);
+	std::vector<std::shared_ptr<nodeType>> ret(set_simplexes.begin(),set_simplexes.end());
+	return ret;
+}
 
 template<typename nodeType>
 std::vector<std::shared_ptr<nodeType>> alphaComplex<nodeType>::getAllDelaunayCofacets(std::shared_ptr<nodeType> simp, std::unordered_map<std::shared_ptr<nodeType>,std::shared_ptr<nodeType>> pivotPairs,bool emergent){	//For each pivot, which column has that pivot
-	
+
 	std::vector<std::shared_ptr<nodeType>> ret;
 	unsigned dimension  = simp->simplex.size();
 	for(auto iter = this->simplexList[dimension].rbegin();iter!=this->simplexList[dimension].rend();++iter){
@@ -69,6 +125,31 @@ std::vector<std::shared_ptr<nodeType>> alphaComplex<nodeType>::getAllDelaunayCof
 
 	return ret;
 }
+
+template<typename nodeType>
+std::vector<nodeType*> alphaComplex<nodeType>::getAllDelaunayCofacets_basePointer(std::shared_ptr<nodeType> simp){
+	std::vector<nodeType*> ret;
+	unsigned dimension  = simp->simplex.size();
+
+	for(auto iter = this->simplexList[dimension].rbegin();iter!=this->simplexList[dimension].rend();++iter){
+/*	
+	for(auto simplex : this->simplexList[dimension]){
+*/		auto simplex = *iter;
+		std::vector<unsigned> :: iterator it;
+		std::vector<unsigned> v(simplex->simplex.size());
+		
+		it = std::set_intersection(simp->simplex.begin(),simp->simplex.end(),simplex->simplex.begin(),simplex->simplex.end(),v.begin());
+		v.resize(it-v.begin());
+
+
+		if(v.size() == simp->simplex.size()){
+			nodeType* x = new nodeType(simplex->simplex,simplex->weight);
+			x->hash = simplex->hash;
+			ret.push_back(x);}
+	}
+	return ret;
+}
+
 template<typename nodeType>
 
 bool  alphaComplex<nodeType>::checkGabriel(std::vector<double> point, std::vector<unsigned> dsimplex ,std::vector<std::vector<double>> &inputData, double beta)
@@ -848,6 +929,11 @@ for( auto x : this->simplexList)
 	return;
 }
 
+template<typename nodeType>
+std::set<std::shared_ptr<nodeType>, cmpByWeight<std::shared_ptr<nodeType>>> alphaComplex<nodeType>::getdelaunayDimEdges(int dim){
+	this->ut.writeLog(this->simplexType,"No delaunayDimEdges function defined");
+	return this->simplexList[dim];
+}
 
 
 

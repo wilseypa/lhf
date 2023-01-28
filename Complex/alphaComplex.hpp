@@ -35,11 +35,14 @@ class alphaComplex : public simplexArrayList<nodeType>{
 		
 		std::vector<templateNode_P> getAllDelaunayCofacets(templateNode_P);
 		std::vector<templateNode_P> getAllDelaunayCofacets(templateNode_P simp, std::unordered_map<templateNode_P,templateNode_P> pivotPairs,bool emergent);
+		std::vector<nodeType*> getAllDelaunayCofacets_basePointer(templateNode_P);
 		void buildAlphaComplex(std::vector<std::vector<unsigned>> dsimplexmesh, int pts,std::vector<std::vector<double>> inputData);
 		void buildBetaComplex(std::vector<std::vector<unsigned>>dsimplexmesh,int pts, std::vector<std::vector<double>> inData,double beta,std::string betaMode);
 		void buildBetaComplexFilteration(std::vector<std::vector<unsigned>>dsimplexmesh,int pts, std::vector<std::vector<double>> inData,kdTree tree);
 		void buildFilteration(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData,double beta,kdTree tree);
 		bool  checkGabriel(std::vector<double> , std::vector<unsigned>,std::vector<std::vector<double>>& , double );
+		std::vector<templateNode_P> expanddelaunayDimension(int);
+		std::set<templateNode_P, cmpByWeight<templateNode_P>> getdelaunayDimEdges(int);
 		
 
 };

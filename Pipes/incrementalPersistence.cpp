@@ -39,7 +39,7 @@ std::vector<simplexNodePointer> incrementalPersistence<nodeType>::incrementalByD
 	std::unordered_map<long long, simplexNodePointer> pivotPairs;	//For each pivot, which column has that pivot
 
 	simplexArrayList<nodeType>* complex;
-	if(inData.complex->simplexType == "simplexArrayList"){
+	if(inData.complex->simplexType == "simplexArrayList" || inData.complex->simplexType == "alphaComplex"){
 		complex = (simplexArrayList<nodeType>*) inData.complex;
 	} else{
 		std::cout<<"IncrementalPersistence does not support complexes\n";
@@ -55,7 +55,7 @@ std::vector<simplexNodePointer> incrementalPersistence<nodeType>::incrementalByD
 		if(it == pivots.end() || (*it)->hash != simplex->hash){
 
 			//Get all cofacets using emergent pair optimization
-			std::vector<nodeType*> faceList = (mode == "homology" ? complex->getAllFacets(simplex, saveVertices, dimension) : complex->getAllCofacets(simplex, pivotPairs, true, saveVertices, dimension));
+			std::vector<nodeType *> faceList = (mode == "homology" ? complex->getAllFacets(simplex, saveVertices, dimension) : (inData.complex->simplexType == "alphaComplex" ? inData.complex->getAllDelaunayCofacets_basePointer(simplex) : complex->getAllCofacets(simplex, pivotPairs, true, saveVertices, dimension)));
 
 			std::vector<simplexNodePointer> columnV;	//Reduction column of matrix V
 			columnV.push_back(simplex); //Initially V=I -> 1's along diagonal
@@ -104,7 +104,7 @@ std::vector<simplexNodePointer> incrementalPersistence<nodeType>::incrementalByD
 
 					if(recordIntervals && simplex->weight != pivot->weight){
 						//If we haven't saved the vertices in each simplex, we need to recover them now to determine the boundary points
-						if(!saveVertices){
+						if(!saveVertices && inData.complex->simplexType != "alphaComplex"){
 							for(simplexNodePointer simplex : v[simplex]){
 								simplex->simplex = complex->getVertices(simplex->hash, dimension + 1, nPts);
 							}
@@ -122,7 +122,7 @@ std::vector<simplexNodePointer> incrementalPersistence<nodeType>::incrementalByD
 					//Reduce the column of R by computing the appropriate columns of D by enumerating cofacets
 					for(simplexNodePointer simp : v[pivotPairs[pivot->hash]]){
 						columnV.push_back(simp);
-						std::vector<nodeType*> faces = (mode == "homology" ? complex->getAllFacets(simp, saveVertices, dimension) : complex->getAllCofacets(simp, pivotPairs, false, saveVertices, dimension));
+						std::vector<nodeType *> faces = (mode == "homology" ? complex->getAllFacets(simp, saveVertices, dimension) : (inData.complex->simplexType == "alphaComplex" ? inData.complex->getAllDelaunayCofacets_basePointer(simp) : complex->getAllCofacets(simp, pivotPairs, false, saveVertices, dimension)));
 						faceList.insert(faceList.end(), faces.begin(), faces.end());
 					}
 					std::make_heap(faceList.begin(), faceList.end(), compStruct);
@@ -151,13 +151,13 @@ void incrementalPersistence<nodeType>::runPipe(pipePacket<nodeType> &inData){
 	}
 
 	//Get the set of all points
-	auto e = complex->getDimEdges(0);
+	auto e = inData.complex->simplexType == "alphaComplex" ? complex->getdelaunayDimEdges(0) : complex->getDimEdges(0);
 	//Convert the set to a vector
 	std::vector<std::shared_ptr<nodeType>> edges = std::vector<std::shared_ptr<nodeType>>(e.begin(), e.end());
 	//Initialize the binomial table
 	complex->initBinom();
 	//Get the next dimension (edges)
-	edges = complex->expandDimension(edges);
+	edges = inData.complex->simplexType == "alphaComplex" ? complex->expanddelaunayDimension(1) : complex->expandDimension(edges);
 
 	nPts = e.size();
 	//Some notes on fast persistence:
@@ -242,7 +242,7 @@ void incrementalPersistence<nodeType>::runPipe(pipePacket<nodeType> &inData){
 	for(unsigned d = 1; d < dim && !edges.empty(); d++){
 		// //If d=1, we have already expanded the points into edges
 		// //Otherwise, we need to generate the higher dimensional edges (equivalent to simplexList[d])
-		if(d != 1) edges = complex->expandDimension(edges, saveVertices, d);
+		if (d != 1)	edges = inData.complex->simplexType == "alphaComplex" ? complex->expanddelaunayDimension(d) : complex->expandDimension(edges, saveVertices, d);
 
 		pivots = incrementalByDimension(inData, edges, pivots, d, sortReverseLexicographic(), "cohomology", !involuted);
 
