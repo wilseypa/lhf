@@ -44,38 +44,76 @@ int dim;
 class dwaytreenode {
 public:
     std::vector<double> coordinates;
-    dwaytreenode** children;
+    dwaytreenode*parent;
+    int parenttochilddirection;
+    std::vector<dwaytreenode*> children;
     dwaytreenode()
     {
-		coordinates.assign(dim, 0);
-;
-        children = nullptr;
+		this->coordinates.assign(dim, 0);
+		this->parent = nullptr;
     }
-    dwaytreenode(std::vector<double> coords)
+    dwaytreenode(std::vector<double> coords,int direction)
     {
         this->coordinates = coords;
-        this->children = nullptr;
+        this->parenttochilddirection = direction;
     }
-};
- 
-class dwaySPTree {
-    dwaytreenode* root;
- 
-public:
-    dwaySPTree() { 
-		root = nullptr; 
-		}
-    void initialize(std::vector<std::vector<double>> data);
-    void printTree();
+    dwaytreenode* buildDwayTree(std::vector<std::vector<double>> data,int direction);
+    void printTree(dwaytreenode *root);
+    void printLevelOrder(dwaytreenode* root);
+    void printCurrentLevel(dwaytreenode* root, int level);
+    int height(dwaytreenode* node);
+
 };
 
-void dwaySPTree::initialize(std::vector<std::vector<double>> data){
+void dwaytreenode:: printLevelOrder(dwaytreenode* root){
+    int h = height(root);
+    int i;
+    for (i = 1; i <= h; i++){
+		std::cout<<"Level ::"<<i<<"\n";
+        printCurrentLevel(root, i);
+	}
+}
+ 
+void dwaytreenode:: printCurrentLevel(dwaytreenode* root, int level){
+    if (root == nullptr)
+        return;
+    if (level == 1){
+        for(auto x : root->coordinates)
+			std::cout<<x<<" ";
+		std::cout<<" direction"<<root->parenttochilddirection<<"\n";
+	}
+    else if (level > 1) {
+		for(auto child:root->children){
+			printCurrentLevel(child, level - 1);
+			std::cout<<"next child\n";
+		}
+    }
+}
+
+int dwaytreenode:: height(dwaytreenode* node){
+    if (node == nullptr)
+        return 0;
+    else {
+		int maxheight = 0;
+		for(auto child:node->children){
+			int height1 = height(child);
+			if(height1>maxheight)
+				maxheight = height1;
+        }
+            return (maxheight + 1);
+    }
+}
+
+dwaytreenode* dwaytreenode::buildDwayTree(std::vector<std::vector<double>> data,int direction){
 	std::vector<double> centroid;
 	std::vector<std::vector<double>> coords = utils::transpose(data);
 	for(auto coordDim : coords){
 		centroid.push_back(utils::getAverage(coordDim));
 	}
-	dwaytreenode* newNode = new dwaytreenode(centroid);
+	dwaytreenode* root = new dwaytreenode(centroid,direction);
+	if(data.size()<=1){
+		return root;
+	}
     //**********************Partition the data into d+1 buckets*******************
     std::vector<double> partitions; 
 	for(auto A : data){
@@ -90,7 +128,6 @@ void dwaySPTree::initialize(std::vector<std::vector<double>> data){
 		int maxvalue = 0;
 		for(auto B : referenceHypertetrhedron){
 			double cosine =  utils::cosine_similarity(A_vec,B)*(180/M_PI);
-			std::cout<<cosine<<" ";
 			if(maxvalue<cosine){
 				maxvalue = cosine;
 				assignedpartion = i;
@@ -102,36 +139,39 @@ void dwaySPTree::initialize(std::vector<std::vector<double>> data){
 	std::vector<std::vector<std::vector<double>>> dwaypartition(dim+1, std::vector<std::vector<double>>(0, std::vector<double>(0)));
 	int i = 0;
 	for(auto x : partitions){
-		std::cout<<x<<" ";
 		dwaypartition[x].push_back(data[i]);
 		i = i+1;
 	}		
-
-	for(auto x : dwaypartition){
-		for(auto y : x){
-			for(auto z : y){
-				std::cout<<z<<" ";
-			}
-			std::cout<<std::endl;
+	//*****************************Partioning Done********************************
+	i =0;
+	for(auto part : dwaypartition){
+		if(part.size()>1){
+			dwaytreenode *child = root->buildDwayTree(part,i);
+			child->parent = root;
+			root->children.push_back(child);
 		}
-		std::cout<<"*******************"<<std::endl;
-	}
-	for(auto x:centroid){
-		std::cout<<x<<" ";
-	}
-		
-    if (root == nullptr) {
-        root = newNode;
-        return;
-    }
+		else if(part.size()==1){
+			dwaytreenode *child = new dwaytreenode(part[0],i);
+			child->parent = root;
+			root->children.push_back(child);
+		}
+		i++;
+	}	
+    return root;
     
 }
  
-void dwaySPTree::printTree(){
+void dwaytreenode::printTree(dwaytreenode* root){
 	 dwaytreenode* temp = root;
-     if (root == nullptr) {
+     if (temp == nullptr) {
         std::cout << "Tree empty" << std::endl;
         return;
     }
+	for(auto child : temp->children)
+		printTree(child);
+	
+	for(auto x : temp->coordinates)
+     std::cout<<x<<" ";
+    std::cout<<"\n";
     
 }

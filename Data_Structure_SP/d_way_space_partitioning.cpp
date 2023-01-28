@@ -14,22 +14,11 @@ int main(){
 	data = rs.readCSV(filename);
     dim =data[0].size();
 	referenceHypertetrhedron = utils::genCoordsRegularSimplex(dim);
-    for(auto x : referenceHypertetrhedron)
-		for(auto y:x)
-		 std::cout<<y<<" ";
-		 
-	dwaySPTree tree;
  
-    tree.initialize(data);
-    tree.printTree();
-	
-	/*
-	for(auto x : data){
-		for(auto y:x){
-			std::cout<<y<<" ";
-		}
-		std::cout<<std::endl;
-	}
-	* */
+    dwaytreenode *tree; 
+    tree = tree->buildDwayTree(data,-1);
+    //tree->printTree(tree);
+	tree->printLevelOrder(tree);
+
     return 0;
 }
