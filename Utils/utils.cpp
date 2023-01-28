@@ -51,6 +51,25 @@ utils::utils(std::string _debug, std::string _outputFile){
 	outputFile = _outputFile;
 }
 
+	
+std::vector<std::vector<double>> utils::genCoordsRegularSimplex(int d){
+
+std::vector<std::vector<double>> simplex;
+for(int i=0 ; i< d+1;i++){
+	std::vector<double> coord;
+	for(int j=0;j<d+1;j++){
+		if(i==j)
+			coord.push_back(1);
+		else
+			coord.push_back(0);
+	}
+	simplex.push_back(coord);
+}
+
+auto outputsimplex = computePCA(simplex,d);
+return outputsimplex.first;
+}
+
 double  utils :: getAverage(std::vector<double> &v) {
     if (v.empty()) {
         return 0;
@@ -157,6 +176,15 @@ std::vector<std::vector<double>> utils ::  transpose(std::vector<std::vector<dou
 	return inputtranspose;
 }
 
+double utils :: cosine_similarity(std::vector<double> A, std::vector<double> B){
+    double dot = 0.0, denom_a = 0.0, denom_b = 0.0 ;
+     for(unsigned int i = 0; i < A.size(); ++i) {
+        dot += A[i] * B[i] ;
+        denom_a += A[i] * A[i] ;
+        denom_b += B[i] * B[i] ;
+    }
+    return acos(dot / (sqrt(denom_a) * sqrt(denom_b)));
+}
 
 std::vector<std::vector<double>> utils :: matrixMultiplication(std::vector<std::vector<double>> matA, std::vector<std::vector<double>> matB){
 			int n1 = matA.size();
