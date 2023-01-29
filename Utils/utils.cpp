@@ -51,7 +51,44 @@ utils::utils(std::string _debug, std::string _outputFile){
 	outputFile = _outputFile;
 }
 
-	
+std::pair<std::vector<double>,double> utils::generateHyperplaneFromVertices(std::vector<std::vector<double>> pts, std::vector<double> interior){
+    int d = pts[0].size(); // dimension of space
+    int n = pts.size(); // number of points
+    Eigen::MatrixXf points(n, d);
+
+    // Fill points with sample data
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < d; j++) {
+            points(i, j) = pts[i][j];
+        }
+    }
+
+    Eigen::VectorXf mean = points.colwise().mean();
+
+    Eigen::MatrixXf centered = points.rowwise() - mean.transpose();
+    Eigen::MatrixXf covar = centered.adjoint() * centered / float(n - 1);
+
+    Eigen::JacobiSVD<Eigen::MatrixXf> svd(covar, Eigen::ComputeThinU | Eigen::ComputeThinV);
+
+    Eigen::VectorXf normal = svd.matrixV().col(d-1);
+
+    double offset = -normal.dot(mean);
+    double value = 0;
+    std::vector<double> normald;
+    std::vector<double> normaldop;
+	for (int i = 0; i < d; i++) {
+	   normald.push_back(normal(i));
+	   normaldop.push_back(-normal(i));
+       value += normal(i)*interior[i];
+    }
+    value += offset;
+    if(value <0)
+		return std::make_pair(normald,offset);
+	else
+		return std::make_pair(normaldop,-offset);
+}
+
+
 std::vector<std::vector<double>> utils::genCoordsRegularSimplex(int d){
 
 std::vector<std::vector<double>> simplex;

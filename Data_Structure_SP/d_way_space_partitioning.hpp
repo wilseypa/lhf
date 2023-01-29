@@ -62,6 +62,8 @@ public:
     void printLevelOrder(dwaytreenode* root);
     void printCurrentLevel(dwaytreenode* root, int level);
     int height(dwaytreenode* node);
+    void pathToCell(std::vector<dwaytreenode*> &path,dwaytreenode* root,dwaytreenode* node);
+	std::vector<std::vector<double>>  findCellBoundingPolytope(dwaytreenode* root, dwaytreenode* node);
 
 };
 
@@ -78,14 +80,14 @@ void dwaytreenode:: printCurrentLevel(dwaytreenode* root, int level){
     if (root == nullptr)
         return;
     if (level == 1){
-        for(auto x : root->coordinates)
-			std::cout<<x<<" ";
-		std::cout<<" direction"<<root->parenttochilddirection<<"\n";
+        //for(auto x : root->coordinates)
+		//	std::cout<<x<<" ";
+		std::cout<<" direction "<<root->parenttochilddirection<<"\n";
 	}
     else if (level > 1) {
 		for(auto child:root->children){
 			printCurrentLevel(child, level - 1);
-			std::cout<<"next child\n";
+
 		}
     }
 }
@@ -123,44 +125,94 @@ dwaytreenode* dwaytreenode::buildDwayTree(std::vector<std::vector<double>> data,
 			A_vec.push_back(a-centroid[k]);
 			k++;
 		}
-		int i = 0;
+		int direction = -1;
 		int assignedpartion = 0;
 		int maxvalue = 0;
 		for(auto B : referenceHypertetrhedron){
+			direction = direction+1;
 			double cosine =  utils::cosine_similarity(A_vec,B)*(180/M_PI);
 			if(maxvalue<cosine){
 				maxvalue = cosine;
-				assignedpartion = i;
+				assignedpartion = direction;
 			}
-			i = i+1;
 		}
 		partitions.push_back(assignedpartion);
 	}
 	std::vector<std::vector<std::vector<double>>> dwaypartition(dim+1, std::vector<std::vector<double>>(0, std::vector<double>(0)));
-	int i = 0;
+	int pts = 0;
 	for(auto x : partitions){
-		dwaypartition[x].push_back(data[i]);
-		i = i+1;
+		dwaypartition[x].push_back(data[pts]);
+		pts = pts+1;
 	}		
 	//*****************************Partioning Done********************************
-	i =0;
+	direction =0;
+	// Recursively build the tree for each partiotion. Stop recursion when the split size is 1 or 0.
 	for(auto part : dwaypartition){
 		if(part.size()>1){
-			dwaytreenode *child = root->buildDwayTree(part,i);
+			dwaytreenode *child = root->buildDwayTree(part,direction);
 			child->parent = root;
 			root->children.push_back(child);
 		}
 		else if(part.size()==1){
-			dwaytreenode *child = new dwaytreenode(part[0],i);
+			dwaytreenode *child = new dwaytreenode(part[0],direction);
 			child->parent = root;
 			root->children.push_back(child);
 		}
-		i++;
+		direction++;
 	}	
     return root;
     
 }
  
+void dwaytreenode::pathToCell(std::vector<dwaytreenode*> &path,dwaytreenode* croot, dwaytreenode* node){
+	int direction = -1;
+	int assignedpartition = 0;
+	int maxvalue = 0;
+	path.push_back(croot);
+	if(croot==node)
+		return;
+	for(auto B : referenceHypertetrhedron){
+		direction = direction+1;
+		std::vector<double> A_vec;
+		int k =0;
+		for(auto a:croot->coordinates){
+			A_vec.push_back(node->coordinates[k]-a);
+			k++;
+		}
+		double cosine =  utils::cosine_similarity(A_vec,B)*(180/M_PI);
+		std::cout<<cosine<<" cosine ";
+		if(maxvalue<cosine){
+			maxvalue = cosine;
+			assignedpartition = direction;
+		}
+		std::cout<<assignedpartition<<" ap";
+	}
+   std::cout<<" "<<assignedpartition<<" Direction";
+   for(auto child : croot->children){
+	   if(child->parenttochilddirection==assignedpartition){
+		    std::cout<<assignedpartition<<" ap\n";
+			pathToCell(path,child,node);
+		}
+   }
+   return;
+   
+}
+
+std::vector<std::vector<double>>  dwaytreenode::findCellBoundingPolytope(dwaytreenode* root, dwaytreenode* node){
+      std::vector<dwaytreenode*> path;
+      pathToCell(path,root,node);
+		
+	  std::vector<std::vector<double>> boundingVertices(dim+1, std::vector<double>(0));
+	  
+	  for(auto x:path){
+		  if(x->parenttochilddirection !=-1){
+				boundingVertices[x->parenttochilddirection] = x->coordinates;
+		  }
+	  }  
+	  return boundingVertices;	
+}
+
+
 void dwaytreenode::printTree(dwaytreenode* root){
 	 dwaytreenode* temp = root;
      if (temp == nullptr) {

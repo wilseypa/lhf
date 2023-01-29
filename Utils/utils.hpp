@@ -5,6 +5,7 @@
 #include <memory>
 #include <map>
 #include <eigen3/Eigen/Sparse>
+#include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Eigenvalues>
 #include <cmath>
 #include <numeric>
@@ -154,6 +155,8 @@ class utils {
 
 	static std::vector<std::vector<double>> genCoordsRegularSimplex(int d);
 	static double cosine_similarity(std::vector<double> A, std::vector<double> B);
+	static std::pair<std::vector<double>,double> generateHyperplaneFromVertices(std::vector<std::vector<double>> pts, std::vector<double> interior);
+
 
 
 };
