@@ -8,7 +8,7 @@
  * 4. Partioning of space increases with dimensions 2^d
  * 
  * How d-way trees can be fruitful in higher dimensionsl space.
- * 1. The space partioning is leaner to the data diension.
+ * 1. The space partioning is linear to the data dimension.
  * 2. Required point is O(d+1) as compared to O(2^d).
  * 3. Is a way to provide standary multi-way partioning.
  * 4. NN search complexity can be decreased.

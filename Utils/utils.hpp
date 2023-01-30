@@ -156,7 +156,8 @@ class utils {
 	static std::vector<std::vector<double>> genCoordsRegularSimplex(int d);
 	static double cosine_similarity(std::vector<double> A, std::vector<double> B);
 	static std::pair<std::vector<double>,double> generateHyperplaneFromVertices(std::vector<std::vector<double>> pts, std::vector<double> interior);
-
+    static bool intersectionHyperplaneHyperSphere(std::vector<double> HScenter, double radius, std::vector<std::vector<double>> hyperplaneVertices);
+    static double distanceFromHyperplane(std::vector<double> point, std::vector<double> normal, double d);
 
 
 };

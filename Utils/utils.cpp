@@ -51,12 +51,37 @@ utils::utils(std::string _debug, std::string _outputFile){
 	outputFile = _outputFile;
 }
 
+double utils::distanceFromHyperplane(std::vector<double> point, std::vector<double> normal, double d) {
+    double numerator = 0;
+    double denominator = 0;
+    int n = point.size();
+    for (int i = 0; i < n; i++) {
+        numerator += normal[i] * point[i];
+        denominator+=normal[i]*normal[i];
+    }
+    return abs(numerator + d) / sqrt(denominator);
+}
+
+bool utils::intersectionHyperplaneHyperSphere(std::vector<double> HScenter, double radius, std::vector<std::vector<double>> hyperplaneVertices){
+	std::vector<double> interior(HScenter.size(),0);
+	auto hyperplane = generateHyperplaneFromVertices(hyperplaneVertices,interior);
+	auto dist = distanceFromHyperplane(HScenter,hyperplane.first,hyperplane.second);
+	if(dist>radius)
+	   return false;
+	else{
+		for(auto pt:hyperplaneVertices){
+		      if(vectors_distance(pt,HScenter)<radius)
+		           return true;
+		}
+		return false;
+	}
+}
+
 std::pair<std::vector<double>,double> utils::generateHyperplaneFromVertices(std::vector<std::vector<double>> pts, std::vector<double> interior){
     int d = pts[0].size(); // dimension of space
     int n = pts.size(); // number of points
     Eigen::MatrixXf points(n, d);
 
-    // Fill points with sample data
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < d; j++) {
             points(i, j) = pts[i][j];
