@@ -15,7 +15,7 @@ class incrementalPipe : public basePipe<nodeType> {
     std::vector<std::vector<double>> inverseOfMatrix(std::vector<std::vector<double>>, int);
     double circumRadius(std::set<unsigned>,std::vector<std::vector<double>>*);
     std::vector<double> circumCenter(std::set<unsigned>,std::vector<std::vector<double>>);
-    unsigned expand_d_minus_1_simplex();
+    int expand_d_minus_1_simplex(std::vector<unsigned>, unsigned);
     incrementalPipe();
     void runPipe(pipePacket<nodeType>& inData);
     bool configPipe(std::map<std::string, std::string> &configMap);
