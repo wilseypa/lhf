@@ -18,6 +18,7 @@ add_library(incrementalPersistence "incrementalPersistence.cpp" "incrementalPers
 add_library(naiveWindow "naiveWindow.cpp" "naiveWindow.hpp")
 add_library(qhullPipe "qhullPipe.cpp" "qhullPipe.hpp")
 add_library(delaunayPipe "delaunayPipe.cpp" "delaunayPipe.hpp")
+add_library(incrementalPipe "incrementalPipe.cpp" "incrementalPipe.hpp")
 
 
 include_directories(${PROJECT_SOURCE_DIR}/Complex)
@@ -55,7 +56,7 @@ endif()
 include_directories(${PROJECT_SOURCE_DIR}/_deps/qhullext-src/src/)
 link_directories(${PROJECT_SOURCE_DIR}/_deps/qhullext-build/)
 
-target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe incrementalPersistence fastPersistence ripsPipe naiveWindow betaSkeletonBasedComplex betaSubSkeletonComplex upscalePipe qhullcpp qhull_r qhullPipe slidingWindow)
+target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe incrementalPersistence incrementalPipe fastPersistence ripsPipe naiveWindow betaSkeletonBasedComplex betaSubSkeletonComplex upscalePipe qhullcpp qhull_r qhullPipe slidingWindow)
 
 INSTALL (TARGETS basePipe
 	LIBRARY DESTINATION lib
@@ -66,11 +67,13 @@ INSTALL (TARGETS basePipe
 MESSAGE (STATUS "CMAKE_INCLUDE_PATH: " ${CMAKE_INCLUDE_PATH})
 MESSAGE (STATUS "FLAGS: " ${CMAKE_CXX_FLAGS})
 
+include_directories(${PROJECT_SOURCE_DIR}/Utils)
+link_directories(${PROJECT_SOURCE_DIR}/Utils)
 
 #Integrating with CGAL library
 
 find_package(CGAL)
 find_package(OpenMP)
-target_link_libraries(delaunayPipe basePipe CGAL::CGAL OpenMP::OpenMP_CXX)
+target_link_libraries(delaunayPipe incrementalPipe basePipe utils CGAL::CGAL OpenMP::OpenMP_CXX)
 find_package(Eigen3)
 include_directories(${EIGEN3_INCLUDE_DIR})
