@@ -165,6 +165,15 @@ double incrementalPipe<nodeType>::circumRadius(std::set<unsigned> simplex, std::
 
 	return -(determinantOfMatrix(matA, simplex.size()) / (2 * determinantOfMatrix(matACap, simplex.size() + 1)));
 }
+
+double distance(std::vector<double> point_1, std::vector<double> point_2)
+{
+	double dist = 0;
+	for (int i = 0; i < point_1.size(); i++)
+		dist += pow((point_1[i] - point_2[i]), 2);
+	return sqrt(dist);
+}
+
 template <typename nodeType>
 std::vector<double> incrementalPipe<nodeType>::circumCenter(std::set<unsigned> simplex, std::vector<std::vector<double>> inputData)
 {
@@ -222,20 +231,59 @@ std::vector<double> incrementalPipe<nodeType>::circumCenter(std::set<unsigned> s
 template <typename nodeType>
 int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<unsigned> simplex, unsigned omission)
 {
-	
-	std::set<unsigned> simp(simplex.begin(),simplex.end());
-	std::cout<<"New Simplex"<<std::endl;
-	for(auto i: simplex)
-	std::cout<<i<<" ";
-	std::cout<<std::endl;
-	for(auto new_point:this->search_space)
+	double rad_vector[this->inputData.size()];
+	std::set<unsigned> simp(simplex.begin(), simplex.end());
+	std::cout << "New Simplex ";
+	for (auto i : simplex)
+		std::cout << i << " ";
+	std::cout << std::endl;
+	unsigned max_point;
+	double max_val;
+	for (auto new_point : this->search_space)
 	{
-		if(new_point==omission || simp.find(new_point)!=simp.end())
+		if (simp.find(new_point) != simp.end())
 			continue;
 		simp.insert(new_point);
-		std::cout<<new_point<<" "<<circumRadius(simp,this->distMatrix)<<std::endl;
+		rad_vector[new_point] = sqrt(circumRadius(simp, this->distMatrix));
 		simp.erase(new_point);
+		if (max_val < rad_vector[new_point])
+		{
+			max_val = rad_vector[new_point];
+			max_point = new_point;
+		}
 	}
+	simp.insert(max_point);
+	std::vector<double> largest_circle_center = circumCenter(simp, this->inputData);
+	double largest_radius=distance(largest_circle_center, this->inputData[max_point]);
+	max_val=1000000;
+	max_point=1;
+	if (largest_radius > distance(largest_circle_center, this->inputData[omission]))
+	{
+		for (auto new_point : this->search_space)
+		{
+			if(simp.find(new_point) == simp.end()&&new_point!=omission&&largest_radius<distance(largest_circle_center, this->inputData[new_point])){
+			if (max_val > rad_vector[new_point])
+			{
+				max_val = rad_vector[new_point];
+				max_point = new_point;
+			}
+			}
+		}
+	}
+	else
+	{
+		for (auto new_point : this->search_space)
+		{
+			if(simp.find(new_point) == simp.end()&&new_point!=omission&&largest_radius>distance(largest_circle_center, this->inputData[new_point])){
+			if (max_val > rad_vector[new_point])
+			{
+				max_val = rad_vector[new_point];
+				max_point = new_point;
+			}
+			}
+		}
+	}
+	std::cout<<max_point;
 	return -1;
 }
 
@@ -247,15 +295,15 @@ incrementalPipe<nodeType>::incrementalPipe()
 	return;
 }
 /*
-3 4 0 
-3 5 4 
-7 3 8 
-9 7 8 
-8 3 0 
-6 8 0 
-2 9 8 
-6 1 8 
-2 8 1 
+3 4 0
+3 5 4
+7 3 8
+9 7 8
+8 3 0
+6 8 0
+2 9 8
+6 1 8
+2 8 1
 */
 // runPipe -> Run the configured functions of this pipeline segment
 template <typename nodeType>
@@ -264,13 +312,13 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	this->inputData = inData.inputData;
 	unsigned dim = inData.inputData[0].size();
 	unsigned data_set_size = inData.inputData.size();
-	this->search_space = {0,1,2,3,4,5,6,7,8,9};
-	this->distMatrix=(((alphaComplex<alphaNode> *)inData.complex)->distMatrix);
-/* 	for(int i=0;i<(*this->distMatrix).size();i++)
-		for(int j=i+1;j<(*this->distMatrix).size();j++)
-			(*this->distMatrix)[j][i]=(*this->distMatrix)[i][j]; */
+	this->search_space = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+	this->distMatrix = (((alphaComplex<alphaNode> *)inData.complex)->distMatrix);
+	/* 	for(int i=0;i<(*this->distMatrix).size();i++)
+			for(int j=i+1;j<(*this->distMatrix).size();j++)
+				(*this->distMatrix)[j][i]=(*this->distMatrix)[i][j]; */
 	std::vector<std::vector<unsigned>> dsimplexes;
-	std::vector<std::vector<unsigned>> inner_dsimplexes_shell = {{3, 5, 4}};
+	std::vector<std::vector<unsigned>> inner_dsimplexes_shell = {{7,3,8}};
 	dsimplexes.push_back(inner_dsimplexes_shell[0]);
 	std::vector<std::vector<unsigned>> outer_dsimplexes_shell;
 	std::vector<unsigned> simplex;
@@ -284,7 +332,7 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 			for (unsigned j = 0; j <= dim; j++)
 			{
 				simplex = inner_dsimplexes_shell[i];
-				omission=simplex[j];
+				omission = simplex[j];
 				simplex.erase(simplex.begin() + j);
 				new_point = expand_d_minus_1_simplex(simplex, omission);
 				if (new_point == -1)
@@ -294,7 +342,7 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 			}
 		}
 		inner_dsimplexes_shell = outer_dsimplexes_shell;
-		dsimplexes.insert(dsimplexes.end(),inner_dsimplexes_shell.begin(),inner_dsimplexes_shell.end());
+		dsimplexes.insert(dsimplexes.end(), inner_dsimplexes_shell.begin(), inner_dsimplexes_shell.end());
 	}
 	return;
 }
