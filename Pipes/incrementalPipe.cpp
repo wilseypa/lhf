@@ -222,6 +222,20 @@ std::vector<double> incrementalPipe<nodeType>::circumCenter(std::set<unsigned> s
 template <typename nodeType>
 int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<unsigned> simplex, unsigned omission)
 {
+	
+	std::set<unsigned> simp(simplex.begin(),simplex.end());
+	std::cout<<"New Simplex"<<std::endl;
+	for(auto i: simplex)
+	std::cout<<i<<" ";
+	std::cout<<std::endl;
+	for(auto new_point:this->search_space)
+	{
+		if(new_point==omission || simp.find(new_point)!=simp.end())
+			continue;
+		simp.insert(new_point);
+		std::cout<<new_point<<" "<<circumRadius(simp,this->distMatrix)<<std::endl;
+		simp.erase(new_point);
+	}
 	return -1;
 }
 
@@ -250,14 +264,19 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	this->inputData = inData.inputData;
 	unsigned dim = inData.inputData[0].size();
 	unsigned data_set_size = inData.inputData.size();
-	this->search_space = std::vector<unsigned>(inData.inputData.size());
+	this->search_space = {0,1,2,3,4,5,6,7,8,9};
+	this->distMatrix=(((alphaComplex<alphaNode> *)inData.complex)->distMatrix);
+/* 	for(int i=0;i<(*this->distMatrix).size();i++)
+		for(int j=i+1;j<(*this->distMatrix).size();j++)
+			(*this->distMatrix)[j][i]=(*this->distMatrix)[i][j]; */
 	std::vector<std::vector<unsigned>> dsimplexes;
-	std::vector<std::vector<unsigned>> inner_dsimplexes_shell = {{3, 4, 0}};
+	std::vector<std::vector<unsigned>> inner_dsimplexes_shell = {{3, 5, 4}};
 	dsimplexes.push_back(inner_dsimplexes_shell[0]);
 	std::vector<std::vector<unsigned>> outer_dsimplexes_shell;
 	std::vector<unsigned> simplex;
 	int new_point;
-	while (search_space.size() != 0)
+	unsigned omission;
+	while (inner_dsimplexes_shell.size() != 0)
 	{
 		outer_dsimplexes_shell.clear();
 		for (int i = 0; i < inner_dsimplexes_shell.size(); i++)
@@ -265,7 +284,7 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 			for (unsigned j = 0; j <= dim; j++)
 			{
 				simplex = inner_dsimplexes_shell[i];
-				unsigned omission=simplex[j];
+				omission=simplex[j];
 				simplex.erase(simplex.begin() + j);
 				new_point = expand_d_minus_1_simplex(simplex, omission);
 				if (new_point == -1)
@@ -275,8 +294,7 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 			}
 		}
 		inner_dsimplexes_shell = outer_dsimplexes_shell;
-		// dsimplexes.push_back(inner_dsimplexes_shell.begin(),inner_dsimplexes_shell.end());
-		break;
+		dsimplexes.insert(dsimplexes.end(),inner_dsimplexes_shell.begin(),inner_dsimplexes_shell.end());
 	}
 	return;
 }

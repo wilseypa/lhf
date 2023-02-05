@@ -9,6 +9,8 @@ class incrementalPipe : public basePipe<nodeType> {
   private:
     std::vector<std::vector<double>> inputData;
     std::vector<unsigned> search_space;
+    std::vector<std::vector<double>>* distMatrix;
+
   public:
     double determinantOfMatrix(std::vector<std::vector<double>>, int);
     std::vector<std::vector<double>> matrixMultiplication(std::vector<std::vector<double>>, std::vector<std::vector<double>>);
