@@ -41,6 +41,10 @@
 std::vector<std::vector<double>> referenceHypertetrhedron;
 int dim;
 
+void makeCombiUtil(std::vector<std::vector<int> >& ans,std::vector<int>& tmp, int n, int left, int k);
+std::vector<std::vector<int> > makeCombi(int n, int k);
+
+
 class dwaytreenode {
 public:
     std::vector<double> coordinates;
@@ -59,34 +63,114 @@ public:
     }
     dwaytreenode* buildDwayTree(std::vector<std::vector<double>> data,int direction);
     void printTree(dwaytreenode *root);
-    void printLevelOrder(dwaytreenode* root);
-    void printCurrentLevel(dwaytreenode* root, int level);
+    void printLevelOrder(dwaytreenode*,dwaytreenode* root);
+    void printCurrentLevel(dwaytreenode*,dwaytreenode* root, int level);
     int height(dwaytreenode* node);
     void pathToCell(std::vector<dwaytreenode*> &path,dwaytreenode* root,dwaytreenode* node);
 	std::vector<std::vector<double>>  findCellBoundingPolytope(dwaytreenode* root, dwaytreenode* node);
 
 };
 
-void dwaytreenode:: printLevelOrder(dwaytreenode* root){
+void dwaytreenode:: printLevelOrder(dwaytreenode* originalroot,dwaytreenode* root){
     int h = height(root);
     int i;
     for (i = 1; i <= h; i++){
-		std::cout<<"Level ::"<<i<<"\n";
-        printCurrentLevel(root, i);
+//		std::cout<<"Level ::"<<i<<"\n";
+        printCurrentLevel(originalroot,root, i);
 	}
 }
  
-void dwaytreenode:: printCurrentLevel(dwaytreenode* root, int level){
+void dwaytreenode:: printCurrentLevel(dwaytreenode* originalroot,dwaytreenode* root, int level){
     if (root == nullptr)
         return;
+    
     if (level == 1){
-        //for(auto x : root->coordinates)
-		//	std::cout<<x<<" ";
-		std::cout<<" direction "<<root->parenttochilddirection<<"\n";
+        auto coord = originalroot->findCellBoundingPolytope(originalroot,root);
+        std::vector<std::vector<double>> coords;
+        int enume = 0;
+     /*   for(auto xx: root->coordinates){
+			    std::cout<<xx<<" ";
+		}
+		std::cout<<"\n";*/
+        for(auto x:coord){
+			if(x.size()>0)
+			   coords.push_back(x);
+			else{
+			   
+			    int xxx=0;
+			   std::vector<double> temp;
+			   for(auto xx: root->coordinates){
+			    temp.push_back(referenceHypertetrhedron[enume][xxx]+xx);
+			    xxx++;
+				}
+				
+			   coords.push_back(temp);
+			}
+			enume++;   
+		}
+/*		for(auto tpy:coords){
+			for(auto t : tpy){
+				std::cout<<t<<" ";
+			}
+			std::cout<<"\n";
+		}
+	*/
+			
+        int count = 0;
+        int k;
+    	for(auto x : coords){
+			/*std::cout<<"Begin\n";
+			for(auto t : x){
+				std::cout<<t<<" ";
+			}
+			std::cout<<"End\n";
+			*/
+			if(x.size()>0){
+			std::vector<std::vector<double>> pts;
+			pts.push_back(x);
+			int cnt = 0;
+			for(auto axis:referenceHypertetrhedron){
+				if(cnt!=count){
+					int g = 0;
+					std::vector<double> updatedaxis;
+					for(auto shift:x){
+						double num = double(shift)+double(axis[g]);
+						updatedaxis.push_back(num);
+						g++;
+						}
+					pts.push_back(updatedaxis);
+				}
+				cnt++;
+			}
+			auto axisall = makeCombi(referenceHypertetrhedron.size()-1,referenceHypertetrhedron.size()-2);
+			for(auto comb : axisall){
+				std::vector<std::vector<double>> hyplanvertices;
+				hyplanvertices.push_back(x);
+				for(auto y : comb){
+					hyplanvertices.push_back(pts[y]);
+				}
+		/*	for(auto tt: hyplanvertices){
+				for(auto t : tt){
+					std::cout<<t<<" ";
+				}
+			std::cout<<"End\n";
+			}
+			*/
+			auto hyperplane = utils::generateHyperplaneFromVertices(hyplanvertices,root->coordinates);
+			for(auto y : hyperplane.first)
+				  std::cout<<y<<",";
+			std::cout<<hyperplane.second<<"\n";
+
+			}	
+		}
+		count++;
+	}
+//	std::cin>>k;
+//		std::cout<<"\n************************\n";
 	}
     else if (level > 1) {
 		for(auto child:root->children){
-			printCurrentLevel(child, level - 1);
+			printCurrentLevel(originalroot,child, level - 1);
 
 		}
     }
@@ -180,17 +264,13 @@ void dwaytreenode::pathToCell(std::vector<dwaytreenode*> &path,dwaytreenode* cro
 			k++;
 		}
 		double cosine =  utils::cosine_similarity(A_vec,B)*(180/M_PI);
-		std::cout<<cosine<<" cosine ";
 		if(maxvalue<cosine){
 			maxvalue = cosine;
 			assignedpartition = direction;
 		}
-		std::cout<<assignedpartition<<" ap";
 	}
-   std::cout<<" "<<assignedpartition<<" Direction";
    for(auto child : croot->children){
 	   if(child->parenttochilddirection==assignedpartition){
-		    std::cout<<assignedpartition<<" ap\n";
 			pathToCell(path,child,node);
 		}
    }
@@ -206,7 +286,7 @@ std::vector<std::vector<double>>  dwaytreenode::findCellBoundingPolytope(dwaytre
 	  
 	  for(auto x:path){
 		  if(x->parenttochilddirection !=-1){
-				boundingVertices[x->parenttochilddirection] = x->coordinates;
+				boundingVertices[x->parenttochilddirection] = x->parent->coordinates;
 		  }
 	  }  
 	  return boundingVertices;	
@@ -226,4 +306,35 @@ void dwaytreenode::printTree(dwaytreenode* root){
      std::cout<<x<<" ";
     std::cout<<"\n";
     
+}
+
+void makeCombiUtil(std::vector<std::vector<int> >& ans,std::vector<int>& tmp, int n, int left, int k)
+{
+    // Pushing this vector to a vector of vector
+    if (k == 0) {
+        ans.push_back(tmp);
+        return;
+    }
+ 
+    // i iterates from left to n. First time
+    // left will be 1
+    for (int i = left; i <= n; ++i)
+    {
+        tmp.push_back(i);
+        makeCombiUtil(ans, tmp, n, i + 1, k - 1);
+ 
+        // Popping out last inserted element
+        // from the vector
+        tmp.pop_back();
+    }
+}
+ 
+// Prints all combinations of size k of numbers
+// from 1 to n.
+std::vector<std::vector<int> > makeCombi(int n, int k)
+{
+    std::vector<std::vector<int> > ans;
+    std::vector<int> tmp;
+    makeCombiUtil(ans, tmp, n, 1, k);
+    return ans;
 }

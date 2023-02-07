@@ -108,20 +108,20 @@ std::pair<std::vector<double>,double> utils::generateHyperplaneFromVertices(std:
     }
     value += offset;
     if(value <0)
-		return std::make_pair(normald,offset);
+		return std::make_pair(normald,-offset);
 	else
-		return std::make_pair(normaldop,-offset);
+		return std::make_pair(normaldop,offset);
 }
 
 
-std::vector<std::vector<double>> utils::genCoordsRegularSimplex(int d){
+std::vector<std::vector<double>> utils::genCoordsRegularSimplex(int d,double length){
 
 std::vector<std::vector<double>> simplex;
 for(int i=0 ; i< d+1;i++){
 	std::vector<double> coord;
 	for(int j=0;j<d+1;j++){
 		if(i==j)
-			coord.push_back(1);
+			coord.push_back(length);
 		else
 			coord.push_back(0);
 	}
