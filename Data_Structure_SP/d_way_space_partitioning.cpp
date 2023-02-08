@@ -25,6 +25,11 @@ int main(){
     tree = tree->buildDwayTree(data,-1);
     //tree->printTree(tree);
 	tree->printLevelOrder(tree,tree);
+	std::vector<double> pt;
+	pt.push_back(0.67);
+	pt.push_back(0.55);
+	dwaytreenode* NN = tree->findNearestNeighbor(tree, pt);
+	//std::cout<<NN->coordinates[0]<<" "<<NN->coordinates[1]<<" "<<NN->radius;
 	/*std::vector<dwaytreenode*> path;
 	dwaytreenode* node = tree->children[0]->children[2]->children[2]->children[0]->children[1];
     //tree->pathToCell(path,tree, node);

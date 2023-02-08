@@ -37,6 +37,7 @@
 #include "../Utils/utils.hpp"
 #include "../Utils/readInput.hpp"
 
+#define MAXRADIUS 9999
 
 std::vector<std::vector<double>> referenceHypertetrhedron;
 int dim;
@@ -48,6 +49,7 @@ std::vector<std::vector<int> > makeCombi(int n, int k);
 class dwaytreenode {
 public:
     std::vector<double> coordinates;
+    double radius;
     dwaytreenode*parent;
     int parenttochilddirection;
     std::vector<dwaytreenode*> children;
@@ -56,9 +58,10 @@ public:
 		this->coordinates.assign(dim, 0);
 		this->parent = nullptr;
     }
-    dwaytreenode(std::vector<double> coords,int direction)
+    dwaytreenode(std::vector<double> coords,double radius,int direction)
     {
         this->coordinates = coords;
+        this->radius = radius;
         this->parenttochilddirection = direction;
     }
     dwaytreenode* buildDwayTree(std::vector<std::vector<double>> data,int direction);
@@ -68,6 +71,7 @@ public:
     int height(dwaytreenode* node);
     void pathToCell(std::vector<dwaytreenode*> &path,dwaytreenode* root,dwaytreenode* node);
 	std::vector<std::vector<double>>  findCellBoundingPolytope(dwaytreenode* root, dwaytreenode* node);
+	dwaytreenode*  findNearestNeighbor(dwaytreenode* root, std::vector<double>);
 
 };
 
@@ -85,6 +89,11 @@ void dwaytreenode:: printCurrentLevel(dwaytreenode* originalroot,dwaytreenode* r
         return;
     
     if (level == 1){
+		/*for(auto xx: root->coordinates){
+			    std::cout<<xx<<" ";
+		}
+		std::cout<<root->radius<<"\n";
+		*/
         auto coord = originalroot->findCellBoundingPolytope(originalroot,root);
         std::vector<std::vector<double>> coords;
         int enume = 0;
@@ -157,10 +166,10 @@ void dwaytreenode:: printCurrentLevel(dwaytreenode* originalroot,dwaytreenode* r
 			}
 			*/
 			auto hyperplane = utils::generateHyperplaneFromVertices(hyplanvertices,root->coordinates);
-			for(auto y : hyperplane.first)
+	/*		for(auto y : hyperplane.first)
 				  std::cout<<y<<",";
 			std::cout<<hyperplane.second<<"\n";
-
+	*/
 			}	
 		}
 		count++;
@@ -196,7 +205,13 @@ dwaytreenode* dwaytreenode::buildDwayTree(std::vector<std::vector<double>> data,
 	for(auto coordDim : coords){
 		centroid.push_back(utils::getAverage(coordDim));
 	}
-	dwaytreenode* root = new dwaytreenode(centroid,direction);
+	double radius = 0;
+	for(auto x: data){
+		double distance = utils::vectors_distance(x,centroid);
+		if(distance>radius)
+		    radius = distance;
+	}
+	dwaytreenode* root = new dwaytreenode(centroid,radius,direction);
 	if(data.size()<=1){
 		return root;
 	}
@@ -238,7 +253,7 @@ dwaytreenode* dwaytreenode::buildDwayTree(std::vector<std::vector<double>> data,
 			root->children.push_back(child);
 		}
 		else if(part.size()==1){
-			dwaytreenode *child = new dwaytreenode(part[0],direction);
+			dwaytreenode *child = new dwaytreenode(part[0],0,direction);
 			child->parent = root;
 			root->children.push_back(child);
 		}
@@ -338,3 +353,53 @@ std::vector<std::vector<int> > makeCombi(int n, int k)
     makeCombiUtil(ans, tmp, n, 1, k);
     return ans;
 }
+
+dwaytreenode* dwaytreenode:: findNearestNeighbor(dwaytreenode* root, std::vector<double> pt){
+	int direction = -1;
+	int assignedpartion = 0;
+	int maxvalue = 0;
+	if(root->children.size()<=1)
+	    return root;
+	std::vector<double> A_vec;
+		int k =0;
+		for(auto a:pt){
+			A_vec.push_back(a-root->coordinates[k]);
+			k++;
+		}
+	for(auto B : referenceHypertetrhedron){
+		direction = direction+1;
+		double cosine =  utils::cosine_similarity(A_vec,B)*(180/M_PI);
+		if(maxvalue<cosine){
+			maxvalue = cosine;
+			assignedpartion = direction;
+		}
+	}
+	dwaytreenode* temp;
+	for(auto x:root->children){
+	if(x->parenttochilddirection == assignedpartion)
+		temp = findNearestNeighbor(x,pt);	
+	}
+/*	if(temp==nullptr)
+	   temp=temp->parent;
+	dwaytreenode* best = temp;
+	double bestradius = utils::vectors_distance(pt,temp->coordinates);
+	
+	for(auto x:root->children){
+		double distance = utils::vectors_distance(pt,x->coordinates);
+		if(distance<bestradius+x->radius){
+			if(x->parenttochilddirection != assignedpartion){
+				temp = findNearestNeighbor(x,pt);
+				double radius = utils::vectors_distance(pt,temp->coordinates);
+				if(bestradius > radius){
+				    bestradius = radius;
+				    best = temp;
+				}
+			}
+		}
+	}
+	*/
+	return temp;
+	
+}
+
+
