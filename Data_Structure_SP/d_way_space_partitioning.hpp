@@ -257,6 +257,11 @@ dwaytreenode* dwaytreenode::buildDwayTree(std::vector<std::vector<double>> data,
 			child->parent = root;
 			root->children.push_back(child);
 		}
+		/*else{
+			dwaytreenode *child;
+			child = nullptr;
+			root->children.push_back(child);
+		}*/
 		direction++;
 	}	
     return root;
@@ -358,10 +363,14 @@ dwaytreenode* dwaytreenode:: findNearestNeighbor(dwaytreenode* root, std::vector
 	int direction = -1;
 	int assignedpartion = 0;
 	int maxvalue = 0;
+	int k =0;
+	//std::cout<<"ROhit";
+	//std::cin>>k;
+	//std::cout<<"root::"<<root->coordinates[0]<<" "<<root->coordinates[1]<<"\n\n";
+
 	if(root->children.size()<=1)
-	    return root;
+		return root;
 	std::vector<double> A_vec;
-		int k =0;
 		for(auto a:pt){
 			A_vec.push_back(a-root->coordinates[k]);
 			k++;
@@ -374,13 +383,26 @@ dwaytreenode* dwaytreenode:: findNearestNeighbor(dwaytreenode* root, std::vector
 			assignedpartion = direction;
 		}
 	}
-	dwaytreenode* temp;
-	for(auto x:root->children){
-	if(x->parenttochilddirection == assignedpartion)
-		temp = findNearestNeighbor(x,pt);	
+	
+	//std::cout<<"ROhit";
+	//std::cin>>k;
+	dwaytreenode* temp = root;
+	//std::cout<<root->coordinates[0]<<" "<<root->coordinates[1]<<"\n";
+	//std::cin>>k;
+	/*for(auto x:root->children){
+		if(x!=nullptr)
+			std::cout<<x->coordinates[0]<<" "<<x->coordinates[1]<<"\n";
 	}
-/*	if(temp==nullptr)
-	   temp=temp->parent;
+	* */
+	//if(x==nullptr)
+	//	temp = root;
+	for(auto x:root->children){
+	if(x!=nullptr)
+		if(x->parenttochilddirection == assignedpartion)
+			temp = findNearestNeighbor(x,pt);	
+	}
+//	if(temp==nullptr)
+//	   temp=temp->parent;
 	dwaytreenode* best = temp;
 	double bestradius = utils::vectors_distance(pt,temp->coordinates);
 	
@@ -397,8 +419,8 @@ dwaytreenode* dwaytreenode:: findNearestNeighbor(dwaytreenode* root, std::vector
 			}
 		}
 	}
-	*/
-	return temp;
+	
+	return best;
 	
 }
 
