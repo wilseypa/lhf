@@ -12,12 +12,8 @@ class incrementalPipe : public basePipe<nodeType> {
     std::vector<std::vector<double>>* distMatrix;
 
   public:
-    double determinantOfMatrix(std::vector<std::vector<double>>, int);
-    std::vector<std::vector<double>> matrixMultiplication(std::vector<std::vector<double>>, std::vector<std::vector<double>>);
-    std::vector<std::vector<double>> inverseOfMatrix(std::vector<std::vector<double>>, int);
-    double circumRadius(std::set<unsigned>,std::vector<std::vector<double>>*);
-    std::vector<double> circumCenter(std::set<unsigned>,std::vector<std::vector<double>>);
-    int expand_d_minus_1_simplex(std::vector<unsigned>, unsigned);
+    double circumRadius(std::set<unsigned>,unsigned);
+    int expand_d_minus_1_simplex(std::set<unsigned>, unsigned);
     incrementalPipe();
     void runPipe(pipePacket<nodeType>& inData);
     bool configPipe(std::map<std::string, std::string> &configMap);

@@ -3,38 +3,42 @@
 #include "utils.hpp"
 #include <fstream>
 #include <omp.h>
+#include <unistd.h>
 
-const double tolerance=0.99999;
+const double tolerance = 0.999995;
 
 template <typename nodeType>
-int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<unsigned> simplex, unsigned omission)
+double incrementalPipe<nodeType>::circumRadius(std::set<unsigned> simp,unsigned new_point)
+{
+	simp.insert(new_point);
+	return sqrt(utils::circumRadius(simp, this->distMatrix));
+}
+
+template <typename nodeType>
+int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::set<unsigned> simp, unsigned omission)
 {
 	double rad_vector[this->inputData.size()];
-	std::set<unsigned> simp(simplex.begin(), simplex.end());
-	simp.erase(omission);
-	double largest_radius = 0, smallest_radius = 10000000000,ring_radius;
+	double largest_radius = -100, smallest_radius = 10000000000000000, ring_radius;
 	int partitioning_point = -1, triangulation_point = -1;
 	for (auto new_point : this->search_space)
 	{
 		if (simp.find(new_point) != simp.end())
 			continue;
-		simp.insert(new_point);
-		rad_vector[new_point] = sqrt(utils::circumRadius(simp, this->distMatrix));
-		simp.erase(new_point);
+		rad_vector[new_point] = circumRadius(simp, new_point);
 		if (largest_radius < rad_vector[new_point])
 		{
 			largest_radius = rad_vector[new_point];
 			partitioning_point = new_point;
 		}
 	}
-	simp.insert(partitioning_point);
+ 	simp.insert(partitioning_point);
 	std::vector<double> largest_circle_center = utils::circumCenter(simp, this->inputData);
 	simp.erase(partitioning_point);
 	if (largest_radius > utils::vectors_distance(largest_circle_center, this->inputData[omission])) // prior point lied inside the circle new_triangulation will be outside the largest_circle
 	{
 		for (auto new_point : this->search_space)
 		{
-			if (simp.find(new_point) == simp.end() && new_point != omission && smallest_radius > rad_vector[new_point] && largest_radius < tolerance * utils::vectors_distance(largest_circle_center, this->inputData[new_point]))
+			if (simp.find(new_point) == simp.end() && new_point != omission &&smallest_radius > rad_vector[new_point] && largest_radius < tolerance * utils::vectors_distance(largest_circle_center, this->inputData[new_point]))
 			{
 				smallest_radius = rad_vector[new_point];
 				triangulation_point = new_point;
@@ -45,7 +49,7 @@ int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<unsigned> si
 	{
 		for (auto new_point : this->search_space)
 		{
-			if (simp.find(new_point) == simp.end() && new_point != omission && smallest_radius > rad_vector[new_point] && largest_radius * tolerance > utils::vectors_distance(largest_circle_center, this->inputData[new_point]))
+			if (simp.find(new_point) == simp.end() && new_point != omission &&smallest_radius > rad_vector[new_point] &&  largest_radius * tolerance > utils::vectors_distance(largest_circle_center, this->inputData[new_point]))
 			{
 				smallest_radius = rad_vector[new_point];
 				triangulation_point = new_point;
@@ -56,16 +60,16 @@ int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<unsigned> si
 	{
 		simp.insert(triangulation_point);
 		std::vector<double> smallest_circle_center = utils::circumCenter(simp, this->inputData);
-		ring_radius=smallest_radius;
+		ring_radius = smallest_radius;
 		for (auto new_point : this->search_space)
 		{
-			if (simp.find(new_point) == simp.end() && new_point != omission && smallest_radius < rad_vector[new_point] && ring_radius * tolerance > utils::vectors_distance(smallest_circle_center, this->inputData[new_point]))
+			if (simp.find(new_point) == simp.end() && new_point != omission &&smallest_radius < rad_vector[new_point] && ring_radius * 0.99999999> utils::vectors_distance(smallest_circle_center, this->inputData[new_point]))
 			{
 				smallest_radius = rad_vector[new_point];
 				triangulation_point = (int)new_point;
 			}
 		}
-	}
+	} 
 	return triangulation_point;
 }
 
@@ -84,46 +88,63 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	this->inputData = inData.inputData;
 	unsigned dim = inData.inputData[0].size();
 	unsigned data_set_size = inData.inputData.size();
-	this->search_space = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+	for(unsigned i=0;i<this->inputData.size();i++)
+		this->search_space.push_back(i);
 	this->distMatrix = (((alphaComplex<alphaNode> *)inData.complex)->distMatrix);
-	std::vector<std::vector<unsigned>> dsimplexes;
-	/*
-3 4 0
-3 5 4
-7 3 8
-9 7 8
-8 3 0
-6 8 0
-2 9 8
-6 1 8
-2 8 1
-*/
-	std::vector<std::vector<unsigned>> inner_dsimplexes_shell = {{3, 4, 0}, {3, 5, 4}, {7, 3, 8}, {9, 7, 8}, {8, 3, 0}, {6, 8, 0}, {2, 9, 8}, {6, 1, 8}, {2, 8, 1}};
-	dsimplexes.push_back(inner_dsimplexes_shell[0]);
-	std::vector<std::vector<unsigned>> outer_dsimplexes_shell;
-	std::vector<unsigned> simplex;
-	int new_point;
-	unsigned omission;
-	while (inner_dsimplexes_shell.size() != 0)
+	std::set<std::set<unsigned>> dsimplexes;
+	std::map<std::set<unsigned>, unsigned> inner_d_1_shell;
+	std::map<std::set<unsigned>, unsigned> outer_d_1_shell;
+	std::set<std::set<unsigned>> simplex = {{116,128,167}};
+	for (auto new_simplex : simplex)
 	{
-		outer_dsimplexes_shell.clear();
-		for (int i = 0; i < inner_dsimplexes_shell.size(); i++)
+		dsimplexes.insert(new_simplex);
+		for (auto i : new_simplex)
 		{
-			for (unsigned j = 0; j <= dim; j++)
+			std::set<unsigned> key = new_simplex;
+			key.erase(i);
+			inner_d_1_shell[key] = i;
+		}
+	}
+	int new_point;
+	while (inner_d_1_shell.size() != 0)
+	{
+		for (auto iter : inner_d_1_shell)
+		{
+			new_point = expand_d_minus_1_simplex(iter.first, iter.second);
+			if (new_point == -1)
+				continue;
+			std::set<unsigned> new_simplex = iter.first;
+			new_simplex.insert(new_point);
+			auto x = dsimplexes.insert(new_simplex);
+			if(x.second==false)
+				continue;
+			for (auto i : new_simplex)
 			{
-				simplex = inner_dsimplexes_shell[i];
-				omission = simplex[j];
-				new_point = expand_d_minus_1_simplex(simplex, omission);
-				if (new_point == -1)
+				std::set<unsigned> key = new_simplex;
+				key.erase(i);
+				if (outer_d_1_shell.find(key) != outer_d_1_shell.end())
+				{
+					outer_d_1_shell.erase(key);
 					continue;
-				simplex.erase(simplex.begin() + j);
-				simplex.push_back(new_point);
-				outer_dsimplexes_shell.push_back(simplex);
+				}
+				outer_d_1_shell[key] = i;
 			}
 		}
-		inner_dsimplexes_shell = outer_dsimplexes_shell;
-		inner_dsimplexes_shell.clear();
-		dsimplexes.insert(dsimplexes.end(), inner_dsimplexes_shell.begin(), inner_dsimplexes_shell.end());
+		for (auto simp : inner_d_1_shell)
+		{
+			outer_d_1_shell.erase(simp.first);
+		}
+
+		inner_d_1_shell = outer_d_1_shell;
+		outer_d_1_shell.clear();
+	}
+	for (auto simp : dsimplexes)
+	{
+		for (auto i : simp)
+		{
+			std::cout << i << " ";
+		}
+		std::cout << std::endl;
 	}
 	return;
 }
