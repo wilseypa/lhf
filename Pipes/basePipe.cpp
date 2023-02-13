@@ -16,12 +16,12 @@
 #include "fastPersistence.hpp"
 #include "ripsPipe.hpp"
 #include "naiveWindow.hpp"
-#include "betaSkeletonBasedComplex.hpp"
-#include "betaSubSkeletonComplex.hpp"
+//#include "betaSkeletonBasedComplex.hpp"
+//#include "betaSubSkeletonComplex.hpp"
 #include "upscalePipe.hpp"
-#include "qhullPipe.hpp"
+//#include "qhullPipe.hpp"
 #include "slidingWindow.hpp"
-#include "delaunayPipe.hpp"
+//#include "delaunayPipe.hpp"
 
 template<typename nodeType>
 basePipe<nodeType>* basePipe<nodeType>::newPipe(const std::string &pipeType, const std::string &complexType){
@@ -43,16 +43,16 @@ basePipe<nodeType>* basePipe<nodeType>::newPipe(const std::string &pipeType, con
 	} else if (pipeType == "upscale"){
 		std::cout << "Building upscale" << std::endl;
 		return new upscalePipe<nodeType>();
-	} else if (pipeType == "betaSkeletonBasedComplex"){
-		return new betaSkeletonBasedComplex<nodeType>();
-	} else if (pipeType == "betaSubSkeletonComplex"){
-		return new betaSubSkeletonComplex<nodeType>();
-	}  else if (pipeType == "qhullPipe" || pipeType == "qhull" || pipeType == "alpha"){
-		return new qhullPipe<nodeType>();
+	//} else if (pipeType == "betaSkeletonBasedComplex"){
+	//	return new betaSkeletonBasedComplex<nodeType>();
+	//} else if (pipeType == "betaSubSkeletonComplex"){
+	//	return new betaSubSkeletonComplex<nodeType>();
+	//}  else if (pipeType == "qhullPipe" || pipeType == "qhull" || pipeType == "alpha"){
+	//	return new qhullPipe<nodeType>();
 	} else if (pipeType == "slidingwindow" || pipeType == "sliding"){
 		return new slidingWindow<nodeType>();
-	} else if (pipeType == "delaunayPipe"){
-		return new delaunayPipe<nodeType>();
+	//} else if (pipeType == "delaunayPipe"){
+	//	return new delaunayPipe<nodeType>();
 	}
 
 	return 0;
