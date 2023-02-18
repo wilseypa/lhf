@@ -158,6 +158,8 @@ class utils {
 	static std::pair<std::vector<double>,double> generateHyperplaneFromVertices(std::vector<std::vector<double>> pts, std::vector<double> interior);
     static bool intersectionHyperplaneHyperSphere(std::vector<double> HScenter, double radius, std::vector<std::vector<double>> hyperplaneVertices);
     static double distanceFromHyperplane(std::vector<double> point, std::vector<double> normal, double d);
-
-
+    static 	std::pair<std::vector<std::vector<double>>,std::vector<unsigned>> computeDirectionVectors(std::vector<std::vector<double>> ,std::vector<double> centroid, int clusters);
+    static std::vector<std::vector<double>> projectHSphere(std::vector<std::vector<double>> data,std::vector<double> centroid);
+    static 	std::pair<std::vector<std::vector<double>>,std::vector<unsigned>> kmeansplusplus(std::vector<std::vector<double>> data,int, int);
 };
+

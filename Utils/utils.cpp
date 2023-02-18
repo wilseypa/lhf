@@ -7,6 +7,12 @@
 #include <fstream>
 #include "utils.hpp"
 #include <time.h>
+#include <cstdlib>
+#include <limits>
+#include <random>
+#include <chrono>
+#include <functional> 
+#include <vector>
 
 template std::set<unsigned int, std::less<unsigned int>, std::allocator<unsigned int> > utils::extractBoundaryPoints<simplexNode>(std::vector<std::shared_ptr<simplexNode>, std::allocator<std::shared_ptr<simplexNode> > >);
 template std::set<unsigned int, std::less<unsigned int>, std::allocator<unsigned int> > utils::extractBoundaryPoints<alphaNode>(std::vector<std::shared_ptr<alphaNode>, std::allocator<std::shared_ptr<alphaNode> > >);
@@ -51,6 +57,148 @@ utils::utils(std::string _debug, std::string _outputFile){
 	outputFile = _outputFile;
 }
 
+std::pair<std::vector<std::vector<double>>,std::vector<unsigned>> utils :: kmeansplusplus(std::vector<std::vector<double>> data,int num_clusters, int num_iterations){
+	unsigned dim = data[0].size();
+
+    //Initialize centroids (Plus plus mechanism with kmeans - Hartigan, Wong)
+    
+    //initialize first random centroid from data
+    
+    //mersenne twister random algorithm - used to have reproducible results from seed
+    //  This seed should be recorded to reproduce after a run
+    //  There may be multiple seeds in a run depending on how many times k-means is used
+    //static std::random_device seed;
+    static std::mt19937 gen(time(NULL)); 
+    
+    std::uniform_int_distribution<size_t> distribution(0, data.size()-1);
+    int index = distribution(gen); //Randomly choose the first centroid
+
+    std::vector<std::vector<double>> centroids(num_clusters, std::vector<double>(dim, 0)); 
+    std::vector<double> dist(data.size(), std::numeric_limits<double>::max()); //Distance to nearest centroid
+
+    centroids[0] = data[index]; //Adding first mean to centroids
+
+	//Determining initial centroids by probability / distance from previous centroid
+	// 	Do we need to compare the picked centroid to all centroids previously picked 
+	//		-> in order to maximize the distance/difference between centroids
+
+    for(unsigned k = 1; k<num_clusters; k++){ //adding means 2 -> k to centroids based on distance 
+     	double maxDist = 0; //Choose the point that is farthest from its closest centroid
+     	int clusterIndex = 0;
+
+        for(unsigned j=0; j<data.size(); j++) {
+
+			double curDist = vectors_distance(data[j], centroids[k-1]);	
+			if(curDist < dist[j]) dist[j] = curDist;
+
+			if(dist[j] > maxDist){
+				maxDist = dist[j];
+				clusterIndex = j;
+			}
+     	}
+
+        centroids[k] = data[clusterIndex];
+    }
+    
+    std::vector<std::vector<double>> centroidsprev = centroids; 
+    //Now, we need to iterate over the centroids and classify each point
+    //	Compute the new centroid as the geometric mean of the classified points
+    //		IF the centroid has 0 points classified to it, we need to repick/reapproach (find out how)
+    //	Replace old centroids with new centroids, rinse, repeat until convergence
+    //		Convergence on # iterations, or a minimum movement of centroids (< .01)
+    // OUTPUT: Final centroids, labeled data, sum of vectors in a label, count of points in label
+    
+    //Need to store: 
+    //	Counts, the number of clusters in each classification
+    //	summedClusters, the total cluster distance (for r_max and r_avg)
+    //	summedCentroidVectors, for the geometric sum of the centroid
+    //	lastCentroids, to track the change in cluster WCSSE
+    std::vector<unsigned> lastLabels;
+	std::vector<std::vector<double>> summedCentroidVectors(num_clusters, std::vector<double>(dim, 0));
+
+    int z;
+    //Iterate until we reach max iterations or no change in the centroids
+	for (z = 0; z < num_iterations; z++){		
+		std::vector<unsigned> counts(num_clusters, 0);
+		std::vector<unsigned> curLabels(data.size());
+		
+		//For each point, classify it to a centroid
+		for (unsigned j = 0; j < data.size(); j++){
+			double minDist = std::numeric_limits<double>::max();
+			unsigned clusterIndex = 0;
+			
+			//Check each centroid for the minimum distance
+			for (unsigned c = 0; c < centroids.size(); c++){
+				auto curDist = vectors_distance(data[j], centroids[c]);
+				
+				if(curDist < minDist){
+					clusterIndex = c;
+					minDist = curDist;
+				}
+			}
+			
+			if(z == 0){
+				for(int d = 0; d < dim; d++)
+					summedCentroidVectors[clusterIndex][d] += data[j][d];
+			} else if(lastLabels[j] != clusterIndex){
+				for(int d = 0; d < dim; d++){
+					summedCentroidVectors[lastLabels[j]][d] -= data[j][d];
+					summedCentroidVectors[clusterIndex][d] += data[j][d];
+				}
+			}
+			curLabels[j] = clusterIndex;
+			counts[clusterIndex]++;			
+		}		
+		
+		//Otherwise, 
+		//		Shift the centroid geometric centers to new centroids
+		for(int i = 0; i < summedCentroidVectors.size(); i++){
+			if(counts[i] == 0){
+				centroids[i] = data[distribution(gen)];
+			} else{
+				for(int d = 0; d < summedCentroidVectors[0].size(); d++){
+					centroids[i][d] = summedCentroidVectors[i][d] / counts[i];
+				}
+			}
+		}
+		
+		//Check for convergence
+		if(centroids == centroidsprev) break;
+		
+			lastLabels = curLabels;
+			centroidsprev = centroids;
+		
+	}
+    return std::make_pair(centroids,lastLabels);
+}
+std::vector<std::vector<double>> utils :: projectHSphere(std::vector<std::vector<double>> data,std::vector<double> centroid){
+	std::vector<std::vector<double>> pntonHSphere;
+	for(auto pnt : data){
+		double mod = 0.0;
+		std::vector<double> traslatedvector( centroid.size(), 0.0 );
+		for (std::vector<double>::size_type i = 0; i < pnt.size(); i++ ){
+			traslatedvector[i] = pnt[i] - centroid[i];
+			mod += traslatedvector[i]*traslatedvector[i];
+		}
+		double mag = std::sqrt(mod);
+		if (mag == 0) {
+			throw std::logic_error("The input vector is a zero vector");
+		}
+		for (std::vector<double>::size_type i = 0; i < traslatedvector.size(); i++ ){
+			traslatedvector[i] /= mag;
+		}
+		pntonHSphere.push_back(traslatedvector);
+	}
+	return pntonHSphere;
+}
+std::pair<std::vector<std::vector<double>>,std::vector<unsigned>> utils :: computeDirectionVectors(std::vector<std::vector<double>> data,std::vector<double> centroid, int clusters){
+	
+	//project points on hypersphere for spherical clustering
+	auto dataonHSphere = projectHSphere(data,centroid);
+	
+	return kmeansplusplus(dataonHSphere,clusters,100000);
+	
+}
 double utils::distanceFromHyperplane(std::vector<double> point, std::vector<double> normal, double d) {
     double numerator = 0;
     double denominator = 0;

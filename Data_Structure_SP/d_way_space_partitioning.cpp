@@ -28,11 +28,11 @@ int main(){
 	//std::getline (std::cin,filename);
 	data = rs.readCSV(filename);
 	int count, dimension;
-    std::cout<<"Enter Size and Dimension of Original Data"<<std::endl;
-    std::cout<<"Size ::";
-    std::cin>>count;
-    std::cout<<"dimension ::";
-    std::cin>>dimension;
+    //std::cout<<"Enter Size and Dimension of Original Data"<<std::endl;
+    //std::cout<<"Size ::";
+    //std::cin>>count;
+    //std::cout<<"dimension ::";
+    //std::cin>>dimension;
     //std::vector<std::vector<double>> data(count, std::vector<double>(dimension, 0));
     //fill_matrix(data);
     /*for (int i=0; i<count; i++){
@@ -41,11 +41,12 @@ int main(){
 		std::cout<<std::endl;
     }
     */
-    std::cout<<"Enter Size of test Data"<<std::endl;
+    /*std::cout<<"Enter Size of test Data"<<std::endl;
     std::cout<<"Size ::";
     std::cin>>count;
     std::vector<std::vector<double>> testdata(count, std::vector<double>(dimension, 0));
     fill_matrix(testdata);
+    */
     /*for (int i=0; i<count; i++){
         for (int j=0; j<dimension; j++)
 			std::cout<<testdata[i][j]<<" ";
@@ -62,9 +63,9 @@ int main(){
 	}
 	*/
 	dwaytreenode *tree; 
-    tree = tree->buildDwayTree(data,-1);
+    tree = tree->buildDwayTree(data,-1,"nary",2);
     //tree->printTree(tree);
-	//tree->printLevelOrder(tree,tree);
+	tree->printLevelOrder(tree,tree);
 	/*std::vector<double> pt;
 	double k;
 	std::cin>>k;
@@ -72,7 +73,7 @@ int main(){
 	std::cin>>k;
 	pt.push_back(k);
 	*/
-	
+	/*
 	kdTree kdtree(data, data.size()); //KDTree for efficient nearest neighbor search
     double timekdtree1=0;
     double timedwaytree1=0;
@@ -99,7 +100,7 @@ int main(){
 	std::cout<<"\nTime taken by kdtree is  "<<timekdtree1;
 	
 	std::cout<<"\nTime taken by dway tree is  "<<timedwaytree1;
-
+```*/
 	/*std::vector<dwaytreenode*> path;
 	dwaytreenode* node = tree->children[0]->children[2]->children[2]->children[0]->children[1];
     //tree->pathToCell(path,tree, node);
