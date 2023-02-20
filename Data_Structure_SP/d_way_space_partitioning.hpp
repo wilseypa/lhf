@@ -80,7 +80,7 @@ public:
     void pathToCell(std::vector<dwaytreenode*> &path,dwaytreenode* root,dwaytreenode* node);
 	std::vector<std::vector<double>>  findCellBoundingPolytope(dwaytreenode* root, dwaytreenode* node);
 	dwaytreenode*  findNearestNeighbor(dwaytreenode* root, std::vector<double>);
-	bool checkPointInBall(dwaytreenode* root, std::vector<double>,double);
+	bool checkPointInBall(dwaytreenode* root, std::vector<double>,double,std::vector<std::vector<double>>);
 	std::vector<std::vector<double>> pointInBall(dwaytreenode* root, std::vector<double>,double);
     
 };
@@ -434,14 +434,14 @@ dwaytreenode* dwaytreenode:: findNearestNeighbor(dwaytreenode* root, std::vector
 	
 }
 
-bool dwaytreenode::checkPointInBall(dwaytreenode* root, std::vector<double> pt,double radius)
+bool dwaytreenode::checkPointInBall(dwaytreenode* root, std::vector<double> pt,double radius, std::vector<std::vector<double>> omissions)
 {
 	if(root->children.size()==0)
 		if(utils::vectors_distance(pt,root->coordinates) < radius)
-			return true;
+			return std::find(omissions.begin(),omissions.end(),root->coordinates)==omissions.end() ? true : false;
 	for(auto child_node : root->children)
 		if(utils::vectors_distance(pt,child_node->coordinates)<(radius+child_node->radius))
-			if(checkPointInBall(child_node, pt, radius))
+			if(checkPointInBall(child_node, pt, radius,omissions))
 				return true;
 	return false;
 }

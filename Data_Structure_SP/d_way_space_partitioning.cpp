@@ -67,7 +67,7 @@ int main(){
     //tree->printTree(tree);
 	tree->printLevelOrder(tree,tree);
 	/*
-	std::cout<<tree->checkPointInBall(tree,{0,0} ,1.1);
+	std::cout<<tree->checkPointInBall(tree,{0,0} ,1.1,{data[0]});
 	auto temp=tree->pointInBall(tree,{0,0},1.1);
 	for(auto i:temp){
 		for(auto j:i)
