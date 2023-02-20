@@ -66,6 +66,15 @@ int main(){
     tree = tree->buildDwayTree(data,-1,"nary",2);
     //tree->printTree(tree);
 	tree->printLevelOrder(tree,tree);
+	/*
+	std::cout<<tree->checkPointInBall(tree,{0,0} ,1.1);
+	auto temp=tree->pointInBall(tree,{0,0},1.1);
+	for(auto i:temp){
+		for(auto j:i)
+			std::cout<<j<<" ";
+		std::cout<<std::endl;
+	} */
+
 	/*std::vector<double> pt;
 	double k;
 	std::cin>>k;

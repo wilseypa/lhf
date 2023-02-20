@@ -51,7 +51,7 @@ public:
     std::vector<double> coordinates;
     std::vector<std::vector<double>> directionVectors;
     double radius;
-    dwaytreenode*parent;
+    dwaytreenode* parent;
     int parenttochilddirection;
     std::vector<dwaytreenode*> children;
     dwaytreenode()
@@ -434,4 +434,30 @@ dwaytreenode* dwaytreenode:: findNearestNeighbor(dwaytreenode* root, std::vector
 	
 }
 
+bool dwaytreenode::checkPointInBall(dwaytreenode* root, std::vector<double> pt,double radius)
+{
+	if(root->children.size()==0)
+		if(utils::vectors_distance(pt,root->coordinates) < radius)
+			return true;
+	for(auto child_node : root->children)
+		if(utils::vectors_distance(pt,child_node->coordinates)<(radius+child_node->radius))
+			if(checkPointInBall(child_node, pt, radius))
+				return true;
+	return false;
+}
 
+std::vector<std::vector<double>> dwaytreenode::pointInBall(dwaytreenode* root, std::vector<double> pt,double radius)
+{
+	std::vector<std::vector<double>> point_in_Ball;
+	if(root->children.size()==0)
+	{
+		if(utils::vectors_distance(pt,root->coordinates) < radius)
+			point_in_Ball.push_back(root->coordinates);
+		return point_in_Ball;
+	}
+	for(auto child_node : root->children)
+		if(utils::vectors_distance(pt,child_node->coordinates)<(radius+child_node->radius))
+			for(auto point:pointInBall(child_node, pt, radius))
+				point_in_Ball.push_back(point);
+	return point_in_Ball;
+}
