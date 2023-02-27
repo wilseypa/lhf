@@ -29,8 +29,6 @@ setup(
         "Operating System :: OS Independent",
     ],
     packages=setuptools.find_packages(),
-    package_data={'libLHF': ['libLHFlib.so',
-                          'libLHFlib.so.1',
-                          'libLHFlib.so.1.0.0']},
+    package_data={'': ['./libLHFlib.so']},
     include_package_data=True,
 )
