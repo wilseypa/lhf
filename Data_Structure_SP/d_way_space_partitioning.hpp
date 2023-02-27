@@ -224,26 +224,70 @@ int dwaytreenode:: height(dwaytreenode* node){
 
 std::vector<std::vector<std::vector<double>>> dwaytreenode::filterValidSimplices(dwaytreenode* root,std::vector<std::vector<std::vector<double>>> simplicestocheck,double beta){
 	std::vector<std::vector<std::vector<double>>> validlist;
-	
+	std::set<unsigned> simplex;
+	for(int i=0;i<simplicestocheck[0].size();i++)
+		simplex.insert(i);
+
+	for(auto x:simplicestocheck){
+		std::vector<std::vector<double>> distMatrix;
+		int i=0,j=0;
+		for(auto y:x){
+			j=0;
+			for(auto z:x){
+				distMatrix[i][j];
+				j++;
+			}
+			i++;
+		}
+		auto radius = utils::circumRadius(simplex,&distMatrix);
+		auto cc =  utils::circumCenter(simplex,x);
+		if(!checkPointInBall(root, cc,radius, x)){
+			validlist.push_back(x);
+		}
+	}
 	//Need to filter out list based on beta inclusion rule.
 	return validlist;
 }
 
 std::vector<std::vector<std::vector<double>>> dwaytreenode:: generateNewSimplices(std::vector<std::vector<std::vector<double>>> simplices,std::vector<std::vector<double>> points){
 	std::vector<std::vector<std::vector<double>>> newsimplices;
-	
+	for(auto x: simplices){
+		auto facets = generateCombinations(x,x.size()-1);
+		for(auto z : facets){
+			for(auto y : points){
+				z.push_back(y);
+				newsimplices.push_back(z);
+			}
+		}
+	}
 	//It will generate simplices by taking facets from A with each points in B
 	return newsimplices;
 }
 
 std::vector<std::vector<double>> dwaytreenode:: generatePoints(std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<double>>> partition){
 	std::vector<std::vector<double>> points;
+	
+	for(auto x: partition.second)
+		points.push_back(x);
+	
+	for(auto y: partition.first)
+		for(auto z:y)
+			points.push_back(z);
+	
 	//It will degenerate partition to its points
 	return points;
 }
 
 std::vector<std::vector<std::vector<double>>> dwaytreenode:: generateCombinations(std::vector<std::vector<double>> isolatedpoints,double homologydim){
     std::vector<std::vector<std::vector<double>>> simplices;
+    auto simp = makeCombi(isolatedpoints.size(), homologydim+1);
+    for(auto x : simp){
+		std::vector<std::vector<double>> sim;
+		for(auto y:x){
+			sim.push_back(isolatedpoints[y]);
+		}
+		simplices.push_back(sim);
+	}
     //generate simplices from isolate points.
     return simplices;
 }
@@ -264,17 +308,17 @@ std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<
 	else{
 		simplicestocheck = generateCombinations(isolatedpoints,homologydim);
 	}
-	
+	int i=0;
 	for(auto x:meshestomerge){
 		std::vector<std::vector<double>> pointsinotherpartition;
-		for(auto y:meshestomerge){
-			if(x!=y){
-				auto newpts = generatePoints(y);
-				pointsinotherpartition.insert(pointsinotherpartition.end(), newpts.begin(), newpts.end());
-			}
+		for(int g=i+1;g<meshestomerge.size();g++){
+			auto y = meshestomerge[g];
+			auto newpts = generatePoints(y);
+			pointsinotherpartition.insert(pointsinotherpartition.end(), newpts.begin(), newpts.end());
 		}
 		auto newsimplices = generateNewSimplices(x.first,pointsinotherpartition);
 		simplicestocheck.insert(simplicestocheck.end(), newsimplices.begin(), newsimplices.end());
+		i++;
 	}
 	auto validlist = filterValidSimplices(root,simplicestocheck,beta);
 	return std::make_pair(validlist,newisolates);
