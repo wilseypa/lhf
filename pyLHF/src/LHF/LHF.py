@@ -59,8 +59,9 @@ class LHF:
     # print(package_dir)
     # lib = ctypes.CDLL("./env/lib/python3.8/site-packages/libLHF/libLHFlib.so", mode=1)
     lib = ctypes.CDLL(filename, mode=1)
-    args = {"reductionPercentage": "10", "maxSize": "2000", "threads": "30", "threshold": "250", "scalar": "2.0", "mpi": "0", "mode": "standard", "dimensions": "1", "iterations": "250", "pipeline": "", "inputFile": "None",
-            "outputFile": "output", "epsilon": "5", "lambda": ".25", "debug": "0", "complexType": "simplexArrayList", "clusters": "20", "preprocessor": "", "upscale": "false", "seed": "-1", "twist": "false", "collapse": "false"}
+    args = {}
+    #args = {"reductionPercentage": "10", "maxSize": "2000", "threads": "30", "threshold": "250", "scalar": "2.0", "mpi": "0", "mode": "standard", "dimensions": "1", "iterations": "250", "pipeline": "", "inputFile": "None",
+    #        "outputFile": "output", "epsilon": "5", "lambda": ".25", "debug": "0", "complexType": "simplexArrayList", "clusters": "20", "preprocessor": "", "upscale": "false", "seed": "-1", "twist": "false", "collapse": "false"}
     data = []
 
     # Some notes here:
@@ -123,6 +124,27 @@ class LHF:
 
     def testFunc(self, num, st):
         return self.lib.testFunc(num, ctypes.c_char_p(st.encode('utf-8')))
+        
+    def runPH(self, data):
+		
+        #Get data sizes to pass to C
+        self.args["datasize"] = len(data)
+        self.args["datadim"] = len(data[0])
+        
+        temp = self.args2string(self.args)
+        
+        na = ctypes.c_char_p(temp)
+        
+        
+        self.data = data.flatten().tolist()
+        print(len(self.data), len(data), len(data[0]))
+        #self.data = ctypes.cast(self.data, ctypes.POINTER(ctypes.c_double))
+        
+        self.data = (ctypes.c_double * len(self.data))(*self.data)
+        
+        self.lib.pyRunWrapper(len(temp), na, self.data)
+        
+        
 
     def runPH3(self, cmd_input):
         # Create char* for passing to C++
@@ -133,6 +155,8 @@ class LHF:
         argv = cmd_input
         argc = len(argv)
 
+        print("RunPH3", temp)
+        
         p = ((ctypes.POINTER(ctypes.c_char))*len(argv))()
         for i, arg in enumerate(argv):  # not sys.argv, but argv!!!
             # print(i)
@@ -140,7 +164,10 @@ class LHF:
             enc_arg = arg.encode('utf-8')
             p[i] = ctypes.create_string_buffer(enc_arg)
 
-        na = ctypes.cast(p, ctypes.POINTER(ctypes.POINTER(ctypes.c_char)))
+        #na = ctypes.cast(temp, ctypes.POINTER(ctypes.POINTER(ctypes.c_char)))
+        na = ctypes.c_char_p(temp)
+
+        print(na)
 
         #retPH = pipePacketAtt.from_address(self.lib.pyRunWrapper2(len(temp),ctypes.c_char_p(temp), self.data.ctypes.data_as(ctypes.POINTER(ctypes.c_double))))
         retPH = pipePacketAtt.from_address(self.lib.pyRunWrapper2(argc, na))
