@@ -5,6 +5,30 @@ import os
 
 
 class pipePacket:
+    """
+    PipePacket
+
+    Class that contains information about the pipeline's output data
+
+    Attributes:
+    ----------
+    betti : np.array
+        The betti numbers.
+    inputData : np.array
+        The input data.
+    distMatrix : np.array
+        The distance matrix.
+    workData : np.array
+        The centroids.
+    centroidLabels : np.array
+        The labels of the centroids.
+    stats : str
+        The statistics of the computation.
+    runLog : str
+        The log of the computation.
+    ident : str
+        The identity of the pipeline.
+    """
     def __init__(self,arr1,inputData,distMatrix,workData,centroidLabels,stats,runLog,ident):
         self.betti = arr1
         self.inputData = inputData
@@ -19,6 +43,18 @@ class pipePacket:
         #???
 
 class BettiTable:
+    """
+    Class that stores betti numbers
+
+    Attributes:
+    ----------
+    dim : np.array
+        The dimension of the betti numbers.
+    birth : np.array
+        The birth of the betti numbers.
+    death : np.array
+        The death of the betti numbers.
+    """
     def __init__(self,arr1,arr2,arr3):
         self.dim = arr1
         self.birth = arr2
@@ -26,6 +62,18 @@ class BettiTable:
 
 #("dim", ctypes.POINTER(ctypes.c_int)),
 class bettiBoundaryTableEntry(ctypes.Structure):
+    """
+    Class that represents an entry in a betti boundary table.
+
+    Attributes:
+    ----------
+    dim : int
+        The dimension of the betti number.
+    birth : double
+        The birth of the betti number.
+    death : double
+        The death of the betti number.
+    """
     _fields_ = [  # ("dim", ctypes.POINTER(ctypes.c_int)),
         ("dim", ctypes.c_int),
         ("birth", ctypes.c_double),
@@ -33,11 +81,51 @@ class bettiBoundaryTableEntry(ctypes.Structure):
 
 
 class bettiBoundaryTable(ctypes.Structure):
+    """
+    Class that represents a betti boundary table.
+
+    Attributes:
+    ----------
+    size : int
+        The size of the betti boundary table.
+    bettis : ctypes.c_void_p
+        The betti numbers in the betti boundary table.
+    """
     _fields_ = [("size", ctypes.c_int),
                 ("bettis", ctypes.c_void_p)]
 
 
 class pipePacketAtt(ctypes.Structure):
+    """
+    Class that represents the attributes of a pipe packet.
+
+    Attributes:
+    ----------
+    size : int
+        The size of the pipe packet.
+    LHF_size : int
+        The size of the LHF.
+    LHF_dim : int
+        The dimension of the LHF.
+    workData_size : int
+        The size of the work data.
+    bettiTable : ctypes.c_void_p
+        The betti table.
+    inputData : ctypes.c_void_p
+        The input data.
+    distMatrix : ctypes.c_void_p
+        The distance matrix.
+    workData : ctypes.c_void_p
+        The work data.
+    centroidLabels : ctypes.c_void_p
+        The centroid labels.
+    stats : str
+        The statistics of the computation.
+    runLog : str
+        The log of the computation.
+    ident : str
+        The identity of the pipeline.
+    """
     _fields_ = [("size", ctypes.c_int),
                 ("LHF_size", ctypes.c_int),
                 ("LHF_dim", ctypes.c_int),
