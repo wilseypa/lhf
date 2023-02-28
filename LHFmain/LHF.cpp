@@ -841,25 +841,45 @@ extern "C"{
 		return;
 	}
 
-	PRAP *pyRunWrapper2(int argc, char *argv[], const double *pointCloud){
+	PRAP *pyRunWrapper2(int argc, char *argv, const double *pointCloud){
 
-		auto args = argParser::parse(argc, argv);
+		//std::cout << std::endl << "argc: " << argc << std::endl;
+		//First we need to convert arguments from char* to map
+		std::map<std::string, std::string> args;
+		std::vector<std::string> rawArgs;
 
+		//Split arguments into list
+		std::string tempstr = "";
+		for (auto i = 0; i < argc; i++){
+			//Check for space (32)
+			if (argv[i] == 32){
+				rawArgs.push_back(tempstr);
+				tempstr = "";
+			}
+			else
+				tempstr += argv[i];
+		}
 
-		// int dataSize = std::atoi(args["datasize"].c_str());
-		// int dataDim = std::atoi(args["datadim"].c_str());
+		//Split argument list into map
+		for (auto i = 0; i < rawArgs.size(); i += 2){
+			args[rawArgs[i]] = rawArgs[i + 1];
+		}
 
-		// std::vector<std::vector<double>> data(dataSize, std::vector<double>(dataDim));
+		//Next, decode the data
+		int dataSize = std::atoi(args["datasize"].c_str());
+		int dataDim = std::atoi(args["datadim"].c_str());
 
-		// for (auto row = 0; row < dataSize; row++)
-		// {
+		std::vector<std::vector<double>> data(dataSize, std::vector<double>(dataDim));
 
-		// 	for (auto dim = 0; dim < dataDim; dim++)
-		// 	{
+		for (auto row = 0; row < dataSize; row++){
 
-		// 		data[row][dim] = pointCloud[row * dim + dim];
-		// 	}
-		// }
+			for (auto dim = 0; dim < dataDim; dim++){
+
+				data[row][dim] = pointCloud[row * dim + dim];
+			}
+		}
+
+		
 
 		//C interface for python to call into LHF
 		auto lhflib = LHF<simplexNode>();
@@ -868,14 +888,15 @@ extern "C"{
 		//Create a pipePacket<simplexNode>(datatype) to store the complex and pass between engines
 		auto wD = pipePacket<simplexNode>(args, args["complexType"]); //wD (workingData)
 
-		// wD.inputData = data;
-		// wD.workData = wD.inputData;
-		auto rs = readInput();
-		if(args["pipeline"] != "slidingwindow" && args["pipeline"] != "naivewindow" && args["mode"] != "mpi"){
+		wD.inputData = data;
+		wD.workData = wD.inputData;
+		
+		//auto rs = readInput();
+		//if(args["pipeline"] != "slidingwindow" && args["pipeline"] != "naivewindow" && args["mode"] != "mpi"){
 			//Read data from inputFile CSV
-			wD.inputData = rs.readCSV(args["inputFile"]);
-			wD.workData = wD.inputData;
-		}
+		//	wD.inputData = rs.readCSV(args["inputFile"]);
+		//	wD.workData = wD.inputData;
+		//}
 
 
 		//Determine what pipe we will be running

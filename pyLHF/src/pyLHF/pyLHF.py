@@ -17,16 +17,9 @@ np.savetxt("tempData.csv", data, fmt='%.4f', delimiter=',')
 pyLHF = LHF.LHF()
 
 #Set debug mode to true, configure other arguments (optional)
-pyLHF.args["debug"] = "1"
-pyLHF.args["inputFile"] = "tempData.csv"
-pyLHF.args["dimensions"] = "3"
-pyLHF.args["complexType"] = "simplexArrayList"
-pyLHF.args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence"
-pyLHF.args["epsilon"] = "5.0"
-
-#Call a test function to ensure the library is properly loaded
-pyLHF.testFunc(1, "HELLO")
+pyLHF.args["debug"] = "0"
 
 
-pyLHF.runPH(data)
+pis = pyLHF.runPH(data)
  
+print(pis)

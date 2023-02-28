@@ -60,8 +60,8 @@ class LHF:
     # lib = ctypes.CDLL("./env/lib/python3.8/site-packages/libLHF/libLHFlib.so", mode=1)
     lib = ctypes.CDLL(filename, mode=1)
     args = {}
-    #args = {"reductionPercentage": "10", "maxSize": "2000", "threads": "30", "threshold": "250", "scalar": "2.0", "mpi": "0", "mode": "standard", "dimensions": "1", "iterations": "250", "pipeline": "", "inputFile": "None",
-    #        "outputFile": "output", "epsilon": "5", "lambda": ".25", "debug": "0", "complexType": "simplexArrayList", "clusters": "20", "preprocessor": "", "upscale": "false", "seed": "-1", "twist": "false", "collapse": "false"}
+    default = {"reductionPercentage": "10", "maxSize": "2000", "threads": "30", "threshold": "250", "scalar": "2.0", "mpi": "0", "mode": "fast", "dimensions": "2", "iterations": "250", "pipeline": "distMatrix.neighGraph.incrementalPersistence", "inputFile": "None",
+            "outputFile": "output", "epsilon": "5", "lambda": ".25", "debug": "0", "complexType": "simplexArrayList", "clusters": "20", "preprocessor": "", "upscale": "false", "seed": "-1", "twist": "false", "collapse": "false"}
     data = []
 
     # Some notes here:
@@ -87,16 +87,14 @@ class LHF:
             ctypes.c_int, ctypes.c_char_p, ctypes.POINTER(ctypes.c_double)]
         self.lib.pyRunWrapper.restype = None
 
-        # self.lib.pyRunWrapper2.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.POINTER(ctypes.c_double)]
-        # self.lib.pyRunWrapper2.restype = ctypes.c_void_p
-
-        LP_c_char = ctypes.POINTER(ctypes.c_char)
-        LP_LP_c_char = ctypes.POINTER(LP_c_char)
-
-        self.lib.pyRunWrapper2.argtypes = [
-            ctypes.c_int, LP_LP_c_char]
+        self.lib.pyRunWrapper2.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.POINTER(ctypes.c_double)]
         self.lib.pyRunWrapper2.restype = ctypes.c_void_p
 
+    def mergeArgs(self):
+        for arg in self.default:
+            if arg not in self.args.keys():
+                self.args[arg] = self.default[arg]
+                
     def allocation(size):
         class pybettiBoundaryTableEntry(ctypes.Structure):
             _fields_ = [("dim", ctypes.c_int),
@@ -107,17 +105,14 @@ class LHF:
 
     def args2string(self, inList):
         ret = ""
-
         for a in inList:
-            # print(a)
-            ret += a+" "
-            ret += str(inList[a])+" "
-            # print(ret)
+            ret += a + " " + str(inList[a])+" "
 
         return ret.encode('utf-8')
 
     def runPH(self):
         # Create char* for passing to C++
+        self.mergeArgs()
         temp = self.args2string(self.args)
 
         return self.lib.pyRunWrapper(len(temp), ctypes.c_char_p(temp))
@@ -126,10 +121,12 @@ class LHF:
         return self.lib.testFunc(num, ctypes.c_char_p(st.encode('utf-8')))
         
     def runPH(self, data):
-		
+        print("Calling C++ LHF shared library...")
         #Get data sizes to pass to C
         self.args["datasize"] = len(data)
         self.args["datadim"] = len(data[0])
+        
+        self.mergeArgs()
         
         temp = self.args2string(self.args)
         
@@ -137,12 +134,31 @@ class LHF:
         
         
         self.data = data.flatten().tolist()
-        print(len(self.data), len(data), len(data[0]))
         #self.data = ctypes.cast(self.data, ctypes.POINTER(ctypes.c_double))
         
         self.data = (ctypes.c_double * len(self.data))(*self.data)
         
-        self.lib.pyRunWrapper(len(temp), na, self.data)
+        retPH = pipePacketAtt.from_address(self.lib.pyRunWrapper2(len(temp), na, self.data))
+        
+        a = self.decodeReturn(retPH)
+        
+        return a
+        
+        
+    def decodeReturn(self,retPH):
+        print("Total Boundaries", retPH.size)
+        bettiBoundaryTableEntries = type("array", (ctypes.Structure, ), {
+            # data members
+            "_fields_": [("arr", bettiBoundaryTableEntry * retPH.size)]
+        })
+
+        retBounds = bettiBoundaryTableEntries.from_address(retPH.bettiTable)
+        
+        piResults = []
+        for i in range(retPH.size):
+            piResults.append([retBounds.arr[i].dim,retBounds.arr[i].birth,retBounds.arr[i].death])
+        
+        return np.array(piResults)
         
         
 

@@ -81,5 +81,5 @@ extern "C" {
 	//##################//
 	void testFunc(int num1, char* st) { std::cout << "Test: " << num1 << std::endl; std::cout << "\t" << st << std::endl;};
 	void pyRunWrapper(const int, char*, const double *);
-	PRAP* pyRunWrapper2(int, char *argv[], const double *);
+	PRAP* pyRunWrapper2(int, char *, const double *);
 }
