@@ -60,8 +60,7 @@ class LHF:
     # lib = ctypes.CDLL("./env/lib/python3.8/site-packages/libLHF/libLHFlib.so", mode=1)
     lib = ctypes.CDLL(filename, mode=1)
     args = {}
-    default = {"reductionPercentage": "10", "maxSize": "2000", "threads": "30", "threshold": "250", "scalar": "2.0", "mpi": "0", "mode": "fast", "dimensions": "2", "iterations": "250", "pipeline": "distMatrix.neighGraph.incrementalPersistence", "inputFile": "None",
-            "outputFile": "output", "epsilon": "5", "lambda": ".25", "debug": "0", "complexType": "simplexArrayList", "clusters": "20", "preprocessor": "", "upscale": "false", "seed": "-1", "twist": "false", "collapse": "false"}
+    default = {"threads": "30", "mpi": "0", "mode": "standard", "dimensions": "2", "outputFile": "output", "epsilon": "5", "debug": "0", "complexType": "simplexArrayList", "preprocessor": "", "upscale": "false"}
     data = []
 
     # Some notes here:
