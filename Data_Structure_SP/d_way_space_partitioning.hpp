@@ -225,22 +225,23 @@ int dwaytreenode:: height(dwaytreenode* node){
 std::vector<std::vector<std::vector<double>>> dwaytreenode::filterValidSimplices(dwaytreenode* root,std::vector<std::vector<std::vector<double>>> simplicestocheck,double beta){
 	std::vector<std::vector<std::vector<double>>> validlist;
 	std::set<unsigned> simplex;
-	for(int i=0;i<simplicestocheck[0].size();i++)
-		simplex.insert(i);
-
+	if(simplicestocheck.size()>0)
+		for(int i=0;i<simplicestocheck[0].size();i++)
+			simplex.insert(i);
+	
 	for(auto x:simplicestocheck){
-		std::vector<std::vector<double>> distMatrix;
+		std::vector<std::vector<double>> distMatrix(x.size(),std::vector<double>(x.size()));
 		int i=0,j=0;
 		for(auto y:x){
 			j=0;
 			for(auto z:x){
-				distMatrix[i][j];
+				distMatrix[i][j] = utils::vectors_distance(y,z);
 				j++;
 			}
 			i++;
 		}
+  		auto cc =  utils::circumCenter(simplex,x);
 		auto radius = utils::circumRadius(simplex,&distMatrix);
-		auto cc =  utils::circumCenter(simplex,x);
 		if(!checkPointInBall(root, cc,radius, x)){
 			validlist.push_back(x);
 		}
@@ -251,12 +252,14 @@ std::vector<std::vector<std::vector<double>>> dwaytreenode::filterValidSimplices
 
 std::vector<std::vector<std::vector<double>>> dwaytreenode:: generateNewSimplices(std::vector<std::vector<std::vector<double>>> simplices,std::vector<std::vector<double>> points){
 	std::vector<std::vector<std::vector<double>>> newsimplices;
+
 	for(auto x: simplices){
-		auto facets = generateCombinations(x,x.size()-1);
+		auto facets = generateCombinations(x,x.size()-2);
 		for(auto z : facets){
 			for(auto y : points){
 				z.push_back(y);
 				newsimplices.push_back(z);
+				z.pop_back();
 			}
 		}
 	}
@@ -297,11 +300,13 @@ std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<
 	// Coding now only for binary tree, which is suffucient in most practical applications
     std::vector<std::vector<double>> isolatedpoints;
     for(auto x:meshestomerge){
-		for(auto y :x.second)
+		for(auto y :x.second){
 			isolatedpoints.push_back(y);
+		}
 	}
 	std::vector<std::vector<std::vector<double>>> simplicestocheck;
 	std::vector<std::vector<double>> newisolates;
+	
 	if(isolatedpoints.size()<=homologydim){
 		newisolates = isolatedpoints;
 	}
@@ -309,19 +314,24 @@ std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<
 		simplicestocheck = generateCombinations(isolatedpoints,homologydim);
 	}
 	int i=0;
+	std::vector<std::vector<std::vector<double>>> validlist;
 	for(auto x:meshestomerge){
 		std::vector<std::vector<double>> pointsinotherpartition;
 		for(int g=i+1;g<meshestomerge.size();g++){
 			auto y = meshestomerge[g];
-			auto newpts = generatePoints(y);
+			auto newpts = generatePoints(y);		
 			pointsinotherpartition.insert(pointsinotherpartition.end(), newpts.begin(), newpts.end());
 		}
 		auto newsimplices = generateNewSimplices(x.first,pointsinotherpartition);
+		for(auto t:x.first)
+			validlist.push_back(t);
 		simplicestocheck.insert(simplicestocheck.end(), newsimplices.begin(), newsimplices.end());
 		i++;
 	}
-	auto validlist = filterValidSimplices(root,simplicestocheck,beta);
-	return std::make_pair(validlist,newisolates);
+	auto newvalidlist = filterValidSimplices(root,simplicestocheck,beta);
+	std::vector<std::vector<std::vector<double>>> finalvalidlist = validlist;
+    finalvalidlist.insert( finalvalidlist.end(), newvalidlist.begin(), newvalidlist.end() );
+	return std::make_pair(finalvalidlist,newisolates);
 }
 
 
@@ -330,13 +340,17 @@ std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<
 	std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<double>>> mesh;		
     if (root == nullptr)
         return mesh;
- 
-	std::vector<std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<double>>>> meshestomerge;		
+    if(root->children.size()<=0){
+		mesh.second.push_back(root->coordinates);
+		return mesh;
+	}
+ 	std::vector<std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<double>>>> meshestomerge;		
     
     
     for(auto child:root->children){
 		meshestomerge.push_back(meshGeneration(child,beta,homologydim));
 	}
+	
     return mergedmesh(root,meshestomerge,beta,homologydim);
 
 }
@@ -481,7 +495,7 @@ void dwaytreenode::printTree(dwaytreenode* root){
 void makeCombiUtil(std::vector<std::vector<int> >& ans,std::vector<int>& tmp, int n, int left, int k)
 {
     // Pushing this vector to a vector of vector
-    if (k == 0) {
+    if (k == -1) {
         ans.push_back(tmp);
         return;
     }
@@ -505,7 +519,7 @@ std::vector<std::vector<int> > makeCombi(int n, int k)
 {
     std::vector<std::vector<int> > ans;
     std::vector<int> tmp;
-    makeCombiUtil(ans, tmp, n, 1, k);
+    makeCombiUtil(ans, tmp, n-1, 0, k-1);
     return ans;
 }
 
