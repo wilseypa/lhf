@@ -141,6 +141,16 @@ class pipePacketAtt(ctypes.Structure):
 
 
 class LHF:
+    """
+    This class represents the LHF library.
+
+    Attributes:
+        lib (ctypes.CDLL): The LHF library.
+        args (dict): A dictionary containing the arguments to pass to the LHF function.
+        default (dict): A dictionary containing the default arguments for the LHF function.
+        data (list): A list containing the data to be used by the LHF function.
+
+    """
     # Use RTLD_LAZY mode due to undefined symbols
     script_dir = os.path.dirname(__file__)
     filename = os.path.join(script_dir, "libLHFlib.so")
