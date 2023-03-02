@@ -141,6 +141,16 @@ class pipePacketAtt(ctypes.Structure):
 
 
 class LHF:
+    """
+    This class represents the LHF library.
+
+    Attributes:
+        lib (ctypes.CDLL): The LHF library.
+        args (dict): A dictionary containing the arguments to pass to the LHF function.
+        default (dict): A dictionary containing the default arguments for the LHF function.
+        data (list): A list containing the data to be used by the LHF function.
+
+    """
     # Use RTLD_LAZY mode due to undefined symbols
     script_dir = os.path.dirname(__file__)
     filename = os.path.join(script_dir, "libLHFlib.so")
@@ -166,6 +176,12 @@ class LHF:
     ##
 
     def __init__(self):
+        """
+        This class represents MyClass.
+
+        Attributes:
+            lib (ctypes.CDLL): The library used by MyClass.
+        """
 
         self.lib.testFunc.argtypes = [ctypes.c_int, ctypes.c_char_p]
         self.lib.testFunc.restype = None
@@ -178,11 +194,24 @@ class LHF:
         self.lib.pyRunWrapper2.restype = ctypes.c_void_p
 
     def mergeArgs(self):
+        """
+        This method merges the default arguments and the user-supplied arguments.
+
+        """
         for arg in self.default:
             if arg not in self.args.keys():
                 self.args[arg] = self.default[arg]
                 
     def allocation(size):
+        """
+        This method allocates memory for C structures.
+
+        Args:
+            size (int): The size of the memory block to allocate.
+
+        Returns:
+            None
+        """
         class pybettiBoundaryTableEntry(ctypes.Structure):
             _fields_ = [("dim", ctypes.c_int),
                         #("Bettidim", ctypes.POINTER(ctypes.c_uint)),
@@ -191,6 +220,15 @@ class LHF:
                         ("death", types.c_double * size)]
 
     def args2string(self, inList):
+        """
+        Converts a dictionary of arguments into a string.
+
+        Args:
+            inList (dict): A dictionary of arguments.
+
+        Returns:
+            bytes: A byte string containing the dictionary arguments.
+        """
         ret = ""
         for a in inList:
             ret += a + " " + str(inList[a])+" "
@@ -198,6 +236,12 @@ class LHF:
         return ret.encode('utf-8')
 
     def runPH(self):
+        """
+        Runs the persistent homology computation using the PyBind library and returns the computed boundary data.
+
+        Returns:
+            numpy.ndarray: An array of computed persistent homology data.
+        """
         # Create char* for passing to C++
         self.mergeArgs()
         temp = self.args2string(self.args)
@@ -205,9 +249,29 @@ class LHF:
         return self.lib.pyRunWrapper(len(temp), ctypes.c_char_p(temp))
 
     def testFunc(self, num, st):
+        """
+        A test function to check the PyBind functionality.
+
+        Args:
+            num (int): An integer argument.
+            st (str): A string argument.
+
+        Returns:
+            bytes: A byte string containing the computed result.
+        """
         return self.lib.testFunc(num, ctypes.c_char_p(st.encode('utf-8')))
         
     def runPH(self, data):
+        """
+        Runs the persistent homology computation using the PyBind library and returns the computed boundary data.
+
+        Args:
+            data (numpy.ndarray): A 2-dimensional array of data points.
+
+        Returns:
+            numpy.ndarray: An array of computed persistent homology data.
+        """
+
         print("Calling C++ LHF shared library...")
         #Get data sizes to pass to C
         self.args["datasize"] = len(data)
@@ -233,6 +297,15 @@ class LHF:
         
         
     def decodeReturn(self,retPH):
+        """
+        Decodes the computed persistent homology data returned by the PyBind library.
+
+        Args:
+            retPH (pipePacketAtt): A data structure containing the computed persistent homology data.
+
+        Returns:
+            numpy.ndarray: An array of decoded persistent homology data.
+        """
         print("Total Boundaries", retPH.size)
         bettiBoundaryTableEntries = type("array", (ctypes.Structure, ), {
             # data members
@@ -250,6 +323,16 @@ class LHF:
         
 
     def runPH3(self, cmd_input):
+        """
+        Runs the persistent homology computation using the PyBind library and returns the computed boundary data.
+
+        Args:
+            cmd_input (list): A list of command-line arguments.
+
+        Returns:
+            tuple: A tuple of computed persistent homology data.
+        """
+        
         # Create char* for passing to C++
         # att = {"inputFile" : str(cmd_input[1])}
         # print(self.args)
