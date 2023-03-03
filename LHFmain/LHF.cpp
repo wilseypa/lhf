@@ -1,3 +1,8 @@
+"""
+@file LHF.hpp
+@brief Definition of LHF class, which runs the pipeline and outputs betti numbers.
+
+"""
 #include "mpi.h"
 #include "LHF.hpp"
 #include "omp.h"
@@ -7,6 +12,17 @@
 #include <typeinfo>
 #include <thread>
 #include <string>
+
+"""
+@brief Output betti numbers to a file or the console using the writeOutput library.
+
+@tparam nodeType The type of node in the data set.
+
+@param args A map containing the arguments for the pipeline.
+
+@param wD A pipePacket containing the output of the pipeline.
+
+"""
 
 template<typename nodeType>
 void LHF<nodeType>::outputBettis(std::map<std::string, std::string> args, pipePacket<nodeType> &wD){
