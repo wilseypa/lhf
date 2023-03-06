@@ -369,6 +369,18 @@ std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processParallel(std::map<std
 		}
 	}
 
+	"""
+	@brief Merge partitions and compute PH on original centroid dataset, then report results
+	@param args The command line arguments passed to the program
+	@param iterwD An iterator used to access and modify the data throughout the computation
+	@param partBettiTable The betti tables for each partition
+	@param nprocs The number of processors used
+	@param id The id of the current processor
+	@param stats The statistics of the computation
+	@param runLogs The run logs of the computation
+	@return The final merged betti table for this iteration
+	"""
+
 	//5. Merge partitions, compute PH on original centroid dataset, and report results
 
 	//		Merge partitioned betti tables together
@@ -403,6 +415,25 @@ std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processParallel(std::map<std
 	return mergedBettiTable;
 }
 
+"""
+@brief Process the parallel wrapper for the LHF algorithm.
+
+	This function is called when the number of points in a partition are greater than the point threshold. It partitions the source point cloud into separate datasets accordingly.
+
+	If the number of points in the new partitions are under the point threshold, continue. If the number of points in any new partition is above the point threshold, recurse.
+
+	We may also want to limit the number of recursions for bigger data sets.
+
+@tparam nodeType The type of the node in the LHF algorithm.
+
+@param args The arguments for the LHF algorithm.
+
+@param wD The pipeline packet for the LHF algorithm.
+
+@param runPartition Flag for running the partition.
+
+@return std::vector<bettiBoundaryTableEntry> The final merged betti table for this iteration.
+"""
 
 template<typename nodeType>
 std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processParallelWrapper(std::map<std::string, std::string> args, pipePacket<nodeType>&wD, bool runPartition){
