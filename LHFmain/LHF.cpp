@@ -484,6 +484,17 @@ std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processParallelWrapper(std::
 	return processParallel(args, wD.centroidLabels, partitionedData, wD.inputData);
 }
 
+"""
+@brief Wrapper function to perform distributed processing for LHF
+
+@tparam nodeType The datatype of the input data (eg. float or double)
+
+@param args The arguments passed to the LHF algorithm
+
+@param wD The input data and other information passed through a pipe packet
+
+@return std::vector<bettiBoundaryTableEntry> The final merged betti table of all the partitions
+"""
 
 template<typename nodeType>
 std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processDistributedWrapper(std::map<std::string, std::string> args, pipePacket<nodeType>&wD){
@@ -654,7 +665,28 @@ std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processDistributedWrapper(st
 		std::cout << "partitionsize:";
 		utils::print1DVector(partitionsize);
 	}
-
+	"""
+	This function broadcasts all the required information by slaves.
+	@param dimension the dimension of the data points.
+	@param partitionsize_size the total number of partitions.
+	@param partitionsize an array containing the size of each partition.
+	@param originalLabels_size the total number of labels.
+	@param originalLabels an array containing the original labels.
+	@param firstk the index of the first slave process that receives an additional partition.
+	@param minPartitions the minimum number of partitions assigned to each process.
+	@param maxsize the maximum buffer size required for data points.
+	@param maxsizelabel the maximum buffer size required for labels.
+	@param scounts an array containing the number of data points to be sent to each process.
+	@param scountslabel an array containing the number of labels to be sent to each process.
+	@param nprocs the number of processes.
+	@param id the id of the current process.
+	@param sdata an array containing the data points.
+	@param sdatalabel an array containing the labels.
+	@param displs an array containing the offset for each process to read the data points.
+	@param displslabel an array containing the offset for each process to read the labels.
+	@param args the arguments to the processParallel function.
+	@param wD the workingData structure.
+	"""
 	//	broadcasting all the required information by slaves.
 
 	MPI_Bcast(&dimension, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);			//Data dimension
@@ -698,6 +730,31 @@ std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processDistributedWrapper(st
 	// scatter label information
 	MPI_Scatterv(&sdatalabel[0], scountslabel, displslabel, MPI_UNSIGNED, receivedDataLabel, maxsizelabel, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
 
+	"""
+	@brief This function partitions the received data and labels into partitions for each process, performs local computation on each partition, and then serializes the computed betti table to send to the master process for merging.
+
+	@param minPartitions The minimum number of partitions to divide the data and labels into.
+
+	@param id The id of the current process.
+
+	@param firstk The index of the first process which gets one more partition than the others.
+
+	@param partitionsize An array storing the number of elements in each partition.
+
+	@param dimension The dimension of the input data.
+
+	@param receivedData An array storing the received data.
+
+	@param receivedDataLabel An array storing the received data labels.
+
+	@param args Arguments passed to the TDA computation function.
+
+	@param originalLabels The original labels of the input data.
+
+	@param wD The work data containing the input data.
+
+	@return Returns nothing.
+	"""
 	if (minPartitions > 0){
 
 		int displacement = 0; // offset for each processes to read partitions
