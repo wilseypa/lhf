@@ -7,9 +7,6 @@ import numpy as np
 from LHF import LHF
 from LHF.OutputAnalysis import persistenceDiagram, heatmap, barcodeDiagram, bettiCurve
 
-#Load data from file/generate data
-data = tadasets.dsphere(n=100, d=3, r=1, noise=0.1)
-np.savetxt("tempData.csv", data, fmt='%.4f', delimiter=',')
 
 
 
@@ -20,10 +17,18 @@ pyLHF = LHF.LHF()
 pyLHF.args["debug"] = "0"
 pyLHF.args["epsilon"]= 1.0
 
-pis = pyLHF.runPH(data)
+pis = []
 
- 
-print(pis)
+for i in range(0, 10):
+	
+	#Load data from file/generate data
+	data = tadasets.dsphere(n=100+(i*15), d=3, r=1, noise=0.1)
+
+	pis = pyLHF.runPH(data)
+
+	print(len(pis))
+
+
 
 plt = persistenceDiagram(pis, show=True)
 

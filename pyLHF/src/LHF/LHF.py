@@ -186,6 +186,9 @@ class LHF:
         self.lib.testFunc.argtypes = [ctypes.c_int, ctypes.c_char_p]
         self.lib.testFunc.restype = None
 
+        self.lib.freeWrapper.argtypes = [ctypes.c_void_p]
+        self.lib.freeWrapper.restype = None
+        
         self.lib.pyRunWrapper.argtypes = [
             ctypes.c_int, ctypes.c_char_p, ctypes.POINTER(ctypes.c_double)]
         self.lib.pyRunWrapper.restype = None
@@ -283,15 +286,16 @@ class LHF:
         
         na = ctypes.c_char_p(temp)
         
-        
         self.data = data.flatten().tolist()
         #self.data = ctypes.cast(self.data, ctypes.POINTER(ctypes.c_double))
         
         self.data = (ctypes.c_double * len(self.data))(*self.data)
         
-        retPH = pipePacketAtt.from_address(self.lib.pyRunWrapper2(len(temp), na, self.data))
+        retAddr = self.lib.pyRunWrapper2(len(temp), na, self.data)
+        retPH = pipePacketAtt.from_address(retAddr)
         
         a = self.decodeReturn(retPH)
+        self.lib.freeWrapper(retAddr)
         
         return a
         

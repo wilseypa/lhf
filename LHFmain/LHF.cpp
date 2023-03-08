@@ -1,8 +1,8 @@
-"""
+/*
 @file LHF.hpp
 @brief Definition of LHF class, which runs the pipeline and outputs betti numbers.
 
-"""
+*/
 #include "mpi.h"
 #include "LHF.hpp"
 #include "omp.h"
@@ -13,7 +13,7 @@
 #include <thread>
 #include <string>
 
-"""
+/*
 @brief Output betti numbers to a file or the console using the writeOutput library.
 
 @tparam nodeType The type of node in the data set.
@@ -22,7 +22,7 @@
 
 @param wD A pipePacket containing the output of the pipeline.
 
-"""
+*/
 
 template<typename nodeType>
 void LHF<nodeType>::outputBettis(std::map<std::string, std::string> args, pipePacket<nodeType> &wD){
@@ -53,8 +53,7 @@ void LHF<nodeType>::outputBettis(std::map<std::string, std::string> args, pipePa
 	}
 }
 
-"""
-
+/*
 @brief Runs the pipeline with the specified arguments and data packet.
 
 The pipeline consists of a sequence of components connected by pipes
@@ -69,7 +68,7 @@ The pipeline function names are separated by dots and passed as an argument.
 
 @param wD The input and output data packet for the pipeline.
 
-"""
+*/
 template<typename nodeType>
 void LHF<nodeType>::runPipeline(std::map<std::string, std::string> args, pipePacket<nodeType>&wD){
 	// Begin processing parts of the pipeline
@@ -128,7 +127,7 @@ void LHF<nodeType>::runPipeline(std::map<std::string, std::string> args, pipePac
 	outputBettis(args, wD);
 }
 
-"""
+/*
 @brief Runs the preprocessor function, if enabled.
 
 @tparam nodeType The type of node being processed.
@@ -136,7 +135,7 @@ void LHF<nodeType>::runPipeline(std::map<std::string, std::string> args, pipePac
 @param args The arguments to be used for preprocessor configuration.
 
 @param wD The pipeline packet to process.
-"""
+*/
 template<typename nodeType>
 void LHF<nodeType>::runPreprocessor(std::map<std::string, std::string>& args, pipePacket<nodeType>&wD){
 	//Start with the preprocessing function, if enabled
@@ -160,7 +159,7 @@ void LHF<nodeType>::runPreprocessor(std::map<std::string, std::string>& args, pi
 		}
 	}
 }
-"""
+/*
 @brief Processes partitions in parallel and returns a merged betti table
 
 @tparam nodeType The node type for the pipeline
@@ -176,7 +175,7 @@ void LHF<nodeType>::runPreprocessor(std::map<std::string, std::string>& args, pi
 @param displacement The displacement of the first partition in the full dataset
 
 @return std::vector<bettiBoundaryTableEntry> The merged betti table for all partitions
-"""
+*/
 template<typename nodeType>
 std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processParallel(std::map<std::string, std::string> args, std::vector<unsigned> &centroidLabels, std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> &partitionedData, std::vector<std::vector<double>> &inputData, int displacement){
 	//		Parameters
@@ -813,6 +812,14 @@ std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processDistributedWrapper(st
 
 
 extern "C"{
+	
+	void freeWrapper(PRAP *ptr){
+		
+		std::cout << "Freeing address: " << ptr << std::endl;
+		free(ptr);
+		return;
+	}
+	
 
 	void pyRunWrapper(const int argc, char *argv, const double *pointCloud){
 
@@ -930,14 +937,10 @@ extern "C"{
 		std::vector<std::vector<double>> data(dataSize, std::vector<double>(dataDim));
 
 		for (auto row = 0; row < dataSize; row++){
-
 			for (auto dim = 0; dim < dataDim; dim++){
-
-				data[row][dim] = pointCloud[row * dim + dim];
+				data[row][dim] = pointCloud[row*dataDim + dim];
 			}
 		}
-
-		
 
 		//C interface for python to call into LHF
 		auto lhflib = LHF<simplexNode>();
