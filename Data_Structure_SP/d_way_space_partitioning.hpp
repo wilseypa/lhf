@@ -82,12 +82,12 @@ public:
 	dwaytreenode*  findNearestNeighbor(dwaytreenode* root, std::vector<double>);
 	bool checkPointInBall(dwaytreenode* root, std::vector<double>,double,std::vector<std::vector<double>>);
 	std::vector<std::vector<double>> pointInBall(dwaytreenode* root, std::vector<double>,double);
-	std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<double>>> meshGeneration(dwaytreenode* root, double beta, int homologydim);
-	std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<double>>> mergedmesh(dwaytreenode* root, std::vector<std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<double>>>> meshstomerge, double beta, int homologydim);
-	std::vector<std::vector<std::vector<double>>> filterValidSimplices(dwaytreenode* root,std::vector<std::vector<std::vector<double>>> simplicestocheck,double beta);
-	std::vector<std::vector<std::vector<double>>> generateNewSimplices(std::vector<std::vector<std::vector<double>>> simplices, std::vector<std::vector<double>> points);
-	std::vector<std::vector<double>> generatePoints(std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<double>>> partition);
-	std::vector<std::vector<std::vector<double>>> generateCombinations(std::vector<std::vector<double>> isolatedpoints,double homologydim);
+	std::pair<std::set<std::vector<std::vector<double>>>,std::vector<std::vector<double>>> meshGeneration(dwaytreenode* mainroot,dwaytreenode* root, double beta, int homologydim);
+	std::pair<std::set<std::vector<std::vector<double>>>,std::vector<std::vector<double>>> mergedmesh(dwaytreenode* root, std::vector<std::pair<std::set<std::vector<std::vector<double>>>,std::vector<std::vector<double>>>> meshstomerge, double beta, int homologydim);
+	std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<double>>> filterValidSimplices(dwaytreenode* root,std::set<std::vector<std::vector<double>>> simplicestocheck,double beta);
+	std::set<std::vector<std::vector<double>>> generateNewSimplices(std::set<std::vector<std::vector<double>>> simplices, std::vector<std::vector<double>> points);
+	std::set<std::vector<double>> generatePoints(std::pair<std::set<std::vector<std::vector<double>>>,std::vector<std::vector<double>>> partition);
+	std::set<std::vector<std::vector<double>>> generateCombinations(std::vector<std::vector<double>> isolatedpoints,double homologydim);
 };
 
 void dwaytreenode:: printLevelOrder(dwaytreenode* originalroot,dwaytreenode* root){
@@ -222,14 +222,23 @@ int dwaytreenode:: height(dwaytreenode* node){
 }
 
 
-std::vector<std::vector<std::vector<double>>> dwaytreenode::filterValidSimplices(dwaytreenode* root,std::vector<std::vector<std::vector<double>>> simplicestocheck,double beta){
+std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<double>>> dwaytreenode::filterValidSimplices(dwaytreenode* root,std::set<std::vector<std::vector<double>>> simplicestocheck,double beta){
 	std::vector<std::vector<std::vector<double>>> validlist;
 	std::set<unsigned> simplex;
 	if(simplicestocheck.size()>0)
-		for(int i=0;i<simplicestocheck[0].size();i++)
-			simplex.insert(i);
 	
+		for(int i=0;i<(*simplicestocheck.begin()).size();i++)
+			simplex.insert(i);
+	std::set<std::vector<double>> pointsAccounted;
+	std::set<std::vector<double>> totalPoints;
 	for(auto x:simplicestocheck){
+		for(auto y:x){
+			for(auto z:y){
+				std::cout<<z<<",";
+			}
+			std::cout<<std::endl;
+		}
+		std::cout<<std::endl;
 		std::vector<std::vector<double>> distMatrix(x.size(),std::vector<double>(x.size()));
 		int i=0,j=0;
 		for(auto y:x){
@@ -241,24 +250,40 @@ std::vector<std::vector<std::vector<double>>> dwaytreenode::filterValidSimplices
 			i++;
 		}
   		auto cc =  utils::circumCenter(simplex,x);
-		auto radius = utils::circumRadius(simplex,&distMatrix);
+		auto radius = sqrt(utils::circumRadius(simplex,&distMatrix));
+		std::cout<<"\n"<<" "<<radius<<"\n";
+		for(auto g:cc)
+			std::cout<<g<<" ";
+		std::cout<<"\n";
 		if(!checkPointInBall(root, cc,radius, x)){
 			validlist.push_back(x);
-		}
+			for(auto pt:x){
+				pointsAccounted.insert(pt);
+			}
+			std::cout<<"Valid\n";
+		}	
+		for(auto pt:x){
+				totalPoints.insert(pt);
+			}
+			
 	}
+	std::vector<std::vector<double>> isolatedpoints;
+	set_difference(begin(totalPoints), end(totalPoints),  begin(pointsAccounted), end(pointsAccounted), inserter(isolatedpoints, end(isolatedpoints))); 
+	
 	//Need to filter out list based on beta inclusion rule.
-	return validlist;
+	//Need to report isolated points also
+	return std::make_pair(validlist,isolatedpoints);
 }
 
-std::vector<std::vector<std::vector<double>>> dwaytreenode:: generateNewSimplices(std::vector<std::vector<std::vector<double>>> simplices,std::vector<std::vector<double>> points){
-	std::vector<std::vector<std::vector<double>>> newsimplices;
+std::set<std::vector<std::vector<double>>> dwaytreenode:: generateNewSimplices(std::set<std::vector<std::vector<double>>> simplices,std::vector<std::vector<double>> points){
+	std::set<std::vector<std::vector<double>>> newsimplices;
 
 	for(auto x: simplices){
 		auto facets = generateCombinations(x,x.size()-2);
 		for(auto z : facets){
 			for(auto y : points){
 				z.push_back(y);
-				newsimplices.push_back(z);
+				newsimplices.insert(z);
 				z.pop_back();
 			}
 		}
@@ -267,35 +292,35 @@ std::vector<std::vector<std::vector<double>>> dwaytreenode:: generateNewSimplice
 	return newsimplices;
 }
 
-std::vector<std::vector<double>> dwaytreenode:: generatePoints(std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<double>>> partition){
-	std::vector<std::vector<double>> points;
+std::set<std::vector<double>> dwaytreenode:: generatePoints(std::pair<std::set<std::vector<std::vector<double>>>,std::vector<std::vector<double>>> partition){
+	std::set<std::vector<double>> points;
 	
 	for(auto x: partition.second)
-		points.push_back(x);
+		points.insert(x);
 	
 	for(auto y: partition.first)
 		for(auto z:y)
-			points.push_back(z);
+			points.insert(z);
 	
 	//It will degenerate partition to its points
 	return points;
 }
 
-std::vector<std::vector<std::vector<double>>> dwaytreenode:: generateCombinations(std::vector<std::vector<double>> isolatedpoints,double homologydim){
-    std::vector<std::vector<std::vector<double>>> simplices;
+std::set<std::vector<std::vector<double>>> dwaytreenode:: generateCombinations(std::vector<std::vector<double>> isolatedpoints,double homologydim){
+    std::set<std::vector<std::vector<double>>> simplices;
     auto simp = makeCombi(isolatedpoints.size(), homologydim+1);
     for(auto x : simp){
 		std::vector<std::vector<double>> sim;
 		for(auto y:x){
 			sim.push_back(isolatedpoints[y]);
 		}
-		simplices.push_back(sim);
+		simplices.insert(sim);
 	}
     //generate simplices from isolate points.
     return simplices;
 }
 
-std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<double>>> dwaytreenode::mergedmesh(dwaytreenode* root, std::vector<std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<double>>>> meshestomerge,double beta, int homologydim){
+std::pair<std::set<std::vector<std::vector<double>>>,std::vector<std::vector<double>>> dwaytreenode::mergedmesh(dwaytreenode* root, std::vector<std::pair<std::set<std::vector<std::vector<double>>>,std::vector<std::vector<double>>>> meshestomerge,double beta, int homologydim){
 	
 	// Coding now only for binary tree, which is suffucient in most practical applications
     std::vector<std::vector<double>> isolatedpoints;
@@ -304,7 +329,7 @@ std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<
 			isolatedpoints.push_back(y);
 		}
 	}
-	std::vector<std::vector<std::vector<double>>> simplicestocheck;
+	std::set<std::vector<std::vector<double>>> simplicestocheck;
 	std::vector<std::vector<double>> newisolates;
 	
 	if(isolatedpoints.size()<=homologydim){
@@ -314,44 +339,70 @@ std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<
 		simplicestocheck = generateCombinations(isolatedpoints,homologydim);
 	}
 	int i=0;
-	std::vector<std::vector<std::vector<double>>> validlist;
+	std::set<std::vector<std::vector<double>>> validlist;
 	for(auto x:meshestomerge){
 		std::vector<std::vector<double>> pointsinotherpartition;
-		for(int g=i+1;g<meshestomerge.size();g++){
-			auto y = meshestomerge[g];
-			auto newpts = generatePoints(y);		
-			pointsinotherpartition.insert(pointsinotherpartition.end(), newpts.begin(), newpts.end());
+		for(int g=0;g<meshestomerge.size();g++){
+			if(i!=g){
+				auto y = meshestomerge[g];
+				auto newpts = generatePoints(y);		
+				pointsinotherpartition.insert(pointsinotherpartition.end(), newpts.begin(), newpts.end());
+			}
 		}
 		auto newsimplices = generateNewSimplices(x.first,pointsinotherpartition);
 		for(auto t:x.first)
-			validlist.push_back(t);
-		simplicestocheck.insert(simplicestocheck.end(), newsimplices.begin(), newsimplices.end());
+			validlist.insert(t);
+		std::set<std::vector<std::vector<double>>> validlistmerged;
+		std::set_union(newsimplices.begin(), newsimplices.end(),simplicestocheck.begin(), simplicestocheck.end(),std::inserter(validlistmerged, validlistmerged.begin()));
+		simplicestocheck = validlistmerged;
 		i++;
 	}
 	auto newvalidlist = filterValidSimplices(root,simplicestocheck,beta);
-	std::vector<std::vector<std::vector<double>>> finalvalidlist = validlist;
-    finalvalidlist.insert( finalvalidlist.end(), newvalidlist.begin(), newvalidlist.end() );
-	return std::make_pair(finalvalidlist,newisolates);
+	std::set<std::vector<std::vector<double>>> finalvalidlist = validlist;
+	std::set<std::vector<std::vector<double>>> fvl;
+	std::set_union(finalvalidlist.begin(), finalvalidlist.end(),newvalidlist.first.begin(), newvalidlist.first.end(),std::inserter(fvl, fvl.begin()));
+    newisolates.insert(newisolates.end(),newvalidlist.second.begin(),newvalidlist.second.end());
+	return std::make_pair(fvl,newisolates);
 }
 
 
-
-std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<double>>> dwaytreenode::meshGeneration(dwaytreenode* root, double beta, int homologydim){
-	std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<double>>> mesh;		
+std::pair<std::set<std::vector<std::vector<double>>>,std::vector<std::vector<double>>> dwaytreenode::meshGeneration(dwaytreenode* mainroot,dwaytreenode* root, double beta, int homologydim){
+	std::pair<std::set<std::vector<std::vector<double>>>,std::vector<std::vector<double>>> mesh;		
     if (root == nullptr)
         return mesh;
     if(root->children.size()<=0){
 		mesh.second.push_back(root->coordinates);
 		return mesh;
 	}
- 	std::vector<std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<double>>>> meshestomerge;		
+ 	std::vector<std::pair<std::set<std::vector<std::vector<double>>>,std::vector<std::vector<double>>>> meshestomerge;		
     
     
     for(auto child:root->children){
-		meshestomerge.push_back(meshGeneration(child,beta,homologydim));
+		meshestomerge.push_back(meshGeneration(root,child,beta,homologydim));
+	}
+	for(auto mesh:meshestomerge){
+	std::cout<<"simplices::\n";
+    for(auto x:mesh.first){
+		for(auto y:x){
+			for(auto z:y){
+				std::cout<<z<<",";
+			}
+			std::cout<<std::endl;
+		}
+		std::cout<<std::endl;
+	}
+	std::cout<<"Points\n";
+	for(auto x:mesh.second){
+		for(auto y:x){
+			std::cout<<y<<",";
+		}
+		std::cout<<std::endl;
+	}    
 	}
 	
-    return mergedmesh(root,meshestomerge,beta,homologydim);
+	int k;
+	std::cin>>k;
+	return mergedmesh(mainroot,meshestomerge,beta,homologydim);
 
 }
 

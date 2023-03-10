@@ -24,7 +24,7 @@ int main(){
 	auto rs = readInput();
 	std::vector<std::vector<double>> data;
 	//std::cout<<"Enter Input File Name :: ";
-	std::string filename = "inputfile2.txt";
+	std::string filename = "inputfile.txt";
 	//std::getline (std::cin,filename);
 	data = rs.readCSV(filename);
 	int count, dimension;
@@ -65,13 +65,14 @@ int main(){
 	dwaytreenode *tree; 
     tree = tree->buildDwayTree(data,-1,"nary",2);
     //tree->printTree(tree);
-   	//tree->printLevelOrder(tree,tree);
-   	auto mesh = tree->meshGeneration(tree,1,2);
+   	tree->printLevelOrder(tree,tree);
+   	auto mesh = tree->meshGeneration(tree,tree,1,2);
     std::cout<<"simplices::\n";
     for(auto x:mesh.first){
 		for(auto y:x){
+			std::cout<<" ";
 			for(auto z:y){
-				std::cout<<z<<",";
+				std::cout<<" "<<z;
 			}
 			std::cout<<std::endl;
 		}
@@ -80,7 +81,7 @@ int main(){
 	std::cout<<"Points\n";
 	for(auto x:mesh.second){
 		for(auto y:x){
-			std::cout<<y<<",";
+			std::cout<<y<<" ";
 		}
 		std::cout<<std::endl;
 	}
