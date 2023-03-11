@@ -232,13 +232,6 @@ std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<
 	std::set<std::vector<double>> pointsAccounted;
 	std::set<std::vector<double>> totalPoints;
 	for(auto x:simplicestocheck){
-		for(auto y:x){
-			for(auto z:y){
-				std::cout<<z<<",";
-			}
-			std::cout<<std::endl;
-		}
-		std::cout<<std::endl;
 		std::vector<std::vector<double>> distMatrix(x.size(),std::vector<double>(x.size()));
 		int i=0,j=0;
 		for(auto y:x){
@@ -251,16 +244,11 @@ std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<
 		}
   		auto cc =  utils::circumCenter(simplex,x);
 		auto radius = sqrt(utils::circumRadius(simplex,&distMatrix));
-		std::cout<<"\n"<<" "<<radius<<"\n";
-		for(auto g:cc)
-			std::cout<<g<<" ";
-		std::cout<<"\n";
 		if(!checkPointInBall(root, cc,radius, x)){
 			validlist.push_back(x);
 			for(auto pt:x){
 				pointsAccounted.insert(pt);
 			}
-			std::cout<<"Valid\n";
 		}	
 		for(auto pt:x){
 				totalPoints.insert(pt);
@@ -269,7 +257,6 @@ std::pair<std::vector<std::vector<std::vector<double>>>,std::vector<std::vector<
 	}
 	std::vector<std::vector<double>> isolatedpoints;
 	set_difference(begin(totalPoints), end(totalPoints),  begin(pointsAccounted), end(pointsAccounted), inserter(isolatedpoints, end(isolatedpoints))); 
-	
 	//Need to filter out list based on beta inclusion rule.
 	//Need to report isolated points also
 	return std::make_pair(validlist,isolatedpoints);
@@ -323,12 +310,14 @@ std::set<std::vector<std::vector<double>>> dwaytreenode:: generateCombinations(s
 std::pair<std::set<std::vector<std::vector<double>>>,std::vector<std::vector<double>>> dwaytreenode::mergedmesh(dwaytreenode* root, std::vector<std::pair<std::set<std::vector<std::vector<double>>>,std::vector<std::vector<double>>>> meshestomerge,double beta, int homologydim){
 	
 	// Coding now only for binary tree, which is suffucient in most practical applications
-    std::vector<std::vector<double>> isolatedpoints;
+    std::set<std::vector<double>> isolatedpoints1;
     for(auto x:meshestomerge){
 		for(auto y :x.second){
-			isolatedpoints.push_back(y);
-		}
+			isolatedpoints1.insert(y);		
+			}
 	}
+	std::vector<std::vector<double>> isolatedpoints(isolatedpoints1.begin(), isolatedpoints1.end());
+    std::set<std::vector<std::vector<double>>> simplicestocheck1;
 	std::set<std::vector<std::vector<double>>> simplicestocheck;
 	std::vector<std::vector<double>> newisolates;
 	
@@ -337,6 +326,7 @@ std::pair<std::set<std::vector<std::vector<double>>>,std::vector<std::vector<dou
 	}
 	else{
 		simplicestocheck = generateCombinations(isolatedpoints,homologydim);
+		simplicestocheck1 = simplicestocheck;
 	}
 	int i=0;
 	std::set<std::vector<std::vector<double>>> validlist;
@@ -357,6 +347,22 @@ std::pair<std::set<std::vector<std::vector<double>>>,std::vector<std::vector<dou
 		simplicestocheck = validlistmerged;
 		i++;
 	}
+	std::vector<std::vector<double>> pointsinotherpartition1;
+	for(int g=0;g<meshestomerge.size();g++){
+				auto y = meshestomerge[g];
+				auto newpts1 = generatePoints(y);		
+				pointsinotherpartition1.insert(pointsinotherpartition1.end(), newpts1.begin(), newpts1.end());
+	}
+	for(auto x : isolatedpoints)
+		pointsinotherpartition1.erase(std::remove(pointsinotherpartition1.begin(), pointsinotherpartition1.end(), x), pointsinotherpartition1.end());
+
+	
+	auto newsimplices1 = generateNewSimplices(simplicestocheck1,pointsinotherpartition1);
+	
+	std::set<std::vector<std::vector<double>>> validlistmerged1;
+	std::set_union(newsimplices1.begin(), newsimplices1.end(),simplicestocheck.begin(), simplicestocheck.end(),std::inserter(validlistmerged1, validlistmerged1.begin()));
+	simplicestocheck = validlistmerged1;
+		
 	auto newvalidlist = filterValidSimplices(root,simplicestocheck,beta);
 	std::set<std::vector<std::vector<double>>> finalvalidlist = validlist;
 	std::set<std::vector<std::vector<double>>> fvl;
@@ -378,30 +384,8 @@ std::pair<std::set<std::vector<std::vector<double>>>,std::vector<std::vector<dou
     
     
     for(auto child:root->children){
-		meshestomerge.push_back(meshGeneration(root,child,beta,homologydim));
+		meshestomerge.push_back(meshGeneration(mainroot,child,beta,homologydim));
 	}
-	for(auto mesh:meshestomerge){
-	std::cout<<"simplices::\n";
-    for(auto x:mesh.first){
-		for(auto y:x){
-			for(auto z:y){
-				std::cout<<z<<",";
-			}
-			std::cout<<std::endl;
-		}
-		std::cout<<std::endl;
-	}
-	std::cout<<"Points\n";
-	for(auto x:mesh.second){
-		for(auto y:x){
-			std::cout<<y<<",";
-		}
-		std::cout<<std::endl;
-	}    
-	}
-	
-	int k;
-	std::cin>>k;
 	return mergedmesh(mainroot,meshestomerge,beta,homologydim);
 
 }
