@@ -3,6 +3,8 @@
 #
 
 cmake_minimum_required(VERSION 3.5)
+find_package(Eigen3)
+include_directories(${EIGEN3_INCLUDE_DIR})
 
 add_library(simplexBase "simplexBase.cpp" "simplexBase.hpp")
 add_library(simplexArrayList "simplexArrayList.cpp" "simplexArrayList.hpp")

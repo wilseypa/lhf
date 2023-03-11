@@ -3,6 +3,8 @@
 #
 
 cmake_minimum_required(VERSION 3.5)
+find_package(Eigen3)
+include_directories(${EIGEN3_INCLUDE_DIR})
 
 add_library(preprocessor "preprocessor.cpp" "preprocessor.hpp")
 add_library(kMeansPlusPlus "kMeansPlusPlus.cpp" "kMeansPlusPlus.hpp")

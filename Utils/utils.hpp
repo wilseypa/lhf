@@ -4,8 +4,8 @@
 #include <vector>
 #include <memory>
 #include <map>
-#include <eigen3/Eigen/Sparse>
-#include <eigen3/Eigen/Eigenvalues>
+#include <Eigen/Sparse>
+#include <Eigen/Eigenvalues>
 #include <cmath>
 #include <numeric>
 #include "../Preprocessing/kdTree.hpp"

@@ -26,7 +26,6 @@ if(LINUX)
 	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fopenmp")
 else()
     message(STATUS ">>> Not Linux")
-	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/Complex)
