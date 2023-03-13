@@ -54,6 +54,11 @@ struct lexical_compare_points {
 	}
 };
 
+struct comp_by_radius{
+	bool operator() (const std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>> a, const std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>> b) const {
+		return  a.second.second < b.second.second;   
+	}
+};
 class dwaytreenode {
 public:
     std::vector<double> coordinates;
@@ -96,6 +101,12 @@ public:
 	std::set<std::set<std::vector<double>,lexical_compare_points>> generateNewSimplices(std::set<std::set<std::vector<double>,lexical_compare_points>> simplices, std::set<std::vector<double>,lexical_compare_points> points);
 	std::set<std::vector<double>,lexical_compare_points> generatePoints(std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> partition);
 	std::set<std::set<std::vector<double>,lexical_compare_points>> generateCombinations(std::set<std::vector<double>,lexical_compare_points> isolatedpoints,double homologydim);
+	std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> generateAllSimplicestoCheck(std::vector<std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>>> meshestoMerge,int homologydim);
+	std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> validatesimplices(dwaytreenode* root,std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> tovalidate,double beta);
+	std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> generatePartitionFromIsolatedPoints(dwaytreenode* root,std::set<std::vector<double>,lexical_compare_points> isolatedpoints,int homologydim);
+	std::pair<bool,std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>> validatesimplex(dwaytreenode* root,std::set<std::vector<double>,lexical_compare_points> simplex,int homologydim);
+	std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> generateAllSimplicestoCheck1(dwaytreenode* root,std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>> propermeshestomerge,std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> newpartition,int homologydim);
+	std::set<std::set<std::vector<double>,lexical_compare_points>> generateCombinationsall(std::set<std::set<std::vector<double>,lexical_compare_points>> allsimplices,double homologydim);
 };
 
 void dwaytreenode:: printLevelOrder(dwaytreenode* originalroot,dwaytreenode* root){
@@ -326,15 +337,328 @@ std::set<std::set<std::vector<double>,lexical_compare_points>> dwaytreenode:: ge
     return simplices;
 }
 
+std::set<std::set<std::vector<double>,lexical_compare_points>> dwaytreenode:: generateCombinationsall(std::set<std::set<std::vector<double>,lexical_compare_points>> allsimplices,double homologydim){
+    std::set<std::set<std::vector<double>,lexical_compare_points>> simplices;
+    for(auto isolatedpoints : allsimplices){
+		auto simp = makeCombi(isolatedpoints.size(), homologydim+1);
+		for(auto x : simp){
+			std::set<std::vector<double>,lexical_compare_points> sim;
+			for(auto y:x){
+				sim.insert(*std::next(isolatedpoints.begin(), y));
+			}
+			simplices.insert(sim);
+		}
+	}
+    //generate simplices from isolate points.
+    return simplices;
+}
+
+
+std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> dwaytreenode:: generateAllSimplicestoCheck(std::vector<std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>>> meshestoMerge, int homologydim){
+
+std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> simplices;
+
+for(int k = 0;k<homologydim;k++){
+   int otherk = homologydim-k-1;
+   std::set<std::set<std::vector<double>,lexical_compare_points>> facetsa;
+   std::set<std::set<std::vector<double>,lexical_compare_points>> facetsb;
+   if(k==0){
+	   for(auto v:meshestoMerge[0].second){
+			std::set<std::vector<double>,lexical_compare_points> faa;
+			faa.insert(v);
+			facetsa.insert(faa);
+		}
+   }
+   if(otherk==0){
+	   for(auto v:meshestoMerge[1].second){
+		   	std::set<std::vector<double>,lexical_compare_points> fbb;
+			fbb.insert(v);
+			facetsb.insert(fbb);
+		}
+   }
+   for(auto sima: meshestoMerge[0].first){
+        auto facets = generateCombinations(sima,k);
+        for(auto f:facets)
+            facetsa.insert(f);
+   }
+   for(auto simb: meshestoMerge[1].first){
+        auto facets = generateCombinations(simb,otherk);
+		for(auto f:facets)
+            facetsb.insert(f);
+   }
+   std::set<unsigned> repsimplex;
+   for(int i=0;i<homologydim+1;i++)
+			repsimplex.insert(i);
+			
+   std::set<std::set<std::vector<double>,lexical_compare_points>> finalsimplices;   
+   for(auto firsthalf:facetsa){
+	   for(auto secondhalf:facetsb){
+		 std::set<std::vector<double>,lexical_compare_points> simplex;
+		 std::set_union(firsthalf.begin(), firsthalf.end(),secondhalf.begin(), secondhalf.end(),std::inserter(simplex, simplex.begin()));
+         std::vector<std::vector<double>> simp(simplex.begin(), simplex.end());
+		 std::vector<std::vector<double>> distMatrix(simplex.size(),std::vector<double>(simplex.size()));
+		 int i=0,j=0;
+		 for(auto y:simplex){
+			j=0;
+			for(auto z:simplex){
+				distMatrix[i][j] = utils::vectors_distance(y,z);
+				j++;
+			}
+			i++;
+		 } 
+		
+		 auto cc =  utils::circumCenter(repsimplex,simp);
+		 auto radius = sqrt(utils::circumRadius(repsimplex,&distMatrix));
+		 simplices.insert(std::make_pair(simplex,std::make_pair(cc,radius)));
+	   }
+   }
+}
+
+return simplices;
+
+}
+
+std::pair<bool,std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>> dwaytreenode:: validatesimplex(dwaytreenode* root,std::set<std::vector<double>,lexical_compare_points> simplex,int homologydim){
+	
+	std::vector<std::vector<double>> simpl(simplex.begin(), simplex.end());
+	std::vector<std::vector<double>> distMatrix(simplex.size(),std::vector<double>(simplex.size()));
+	std::set<unsigned> repsimplex;
+	for(int i=0;i<homologydim+1;i++)
+		repsimplex.insert(i);
+	int i= 0;
+	int j= 0;
+	for(auto y:simpl){
+		j=0;
+		for(auto z:simpl){
+			distMatrix[i][j] = utils::vectors_distance(y,z);
+			j++;
+		}
+		i++;
+	} 
+	auto cc =  utils::circumCenter(repsimplex,simpl);
+	auto radius = sqrt(utils::circumRadius(repsimplex,&distMatrix));
+	if(!checkPointInBall(root, cc,radius, simpl)){
+			return std::make_pair(true,std::make_pair(simplex,std::make_pair(cc,radius)));			 
+
+	}
+	return std::make_pair(false,std::make_pair(simplex,std::make_pair(cc,radius)));			 
+}
+std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> dwaytreenode:: validatesimplices(dwaytreenode* root,std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> tovalidate,double beta){
+   std::set<std::set<std::vector<double>,lexical_compare_points>> validatedSimplices;
+   int k;
+   std::set<std::vector<double>,lexical_compare_points> accountedpoints;
+   std::set<std::vector<double>,lexical_compare_points> totalpoints;
+   for(auto x:tovalidate)
+	   for(auto y:x.first)
+		  totalpoints.insert(y);
+   
+   while(tovalidate.size()>0){
+	   std::cout<<"Size Remaning "<<tovalidate.size();
+	    auto simp = *(tovalidate.begin());
+	    std::vector<std::vector<double>> simpl(simp.first.begin(), simp.first.end());
+		tovalidate.erase(tovalidate.begin());
+		for(auto fr:tovalidate){
+			for(auto tp : fr.first)
+				for(auto tp1:tp)
+					std::cout<<tp1<<" ";
+		 std::cout<<"\n";
+		}
+   		if(!checkPointInBall(root, simp.second.first,simp.second.second, simpl)){
+			validatedSimplices.insert(simp.first);
+			std::cout<<"Valid";
+			std::cin>>k;
+			// filter Invalid Simplices
+		    std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> remaining;
+			for(auto p: tovalidate){
+				bool val = true;
+				for(auto v:simp.first){
+				     if(utils::vectors_distance(v,p.second.first)<=p.second.second){
+						val = false;
+						break;	
+					}
+				}
+				if(val){
+					for(auto v:p.first){
+						if(utils::vectors_distance(v,simp.second.first)<=simp.second.second){
+							val = false;
+							break;	
+						}
+					}
+				}
+			   if(val){
+				remaining.insert(p);
+				}
+				
+			}
+		std::cin>>k;
+		tovalidate.clear();
+		tovalidate.insert(remaining.begin(), remaining.end());
+		std::cin>>k;
+		for(auto x:simp.first)
+			accountedpoints.insert(x);
+		}
+		else
+			std::cout<<"invalid";
+   }
+   std::vector<std::vector<double>> tp(totalpoints.begin(),totalpoints.end());
+	for(auto x : accountedpoints)
+		tp.erase(std::remove(tp.begin(), tp.end(), x), tp.end());
+	std::set<std::vector<double>,lexical_compare_points> isolatedpoints(tp.begin(),tp.end());
+   return std::make_pair(validatedSimplices,isolatedpoints);
+}
+
+
+std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::generatePartitionFromIsolatedPoints(dwaytreenode* root,std::set<std::vector<double>,lexical_compare_points> isolatedpoints,int homologydim){
+
+        auto simplices = generateCombinations(isolatedpoints,homologydim);
+		std::set<std::set<std::vector<double>,lexical_compare_points>> validones;
+		std::set<std::vector<double>,lexical_compare_points> accountedpoints;
+		std::set<std::vector<double>,lexical_compare_points> remaningpoints;
+        for(auto x:simplices){
+			auto vali = validatesimplex(root,x,homologydim);
+			if(vali.first){
+			   validones.insert(x);
+			   for(auto z: x)
+					accountedpoints.insert(z);
+			}
+		}
+		std::vector<std::vector<double>> tp(isolatedpoints.begin(),isolatedpoints.end());
+
+		for(auto x : accountedpoints)
+			tp.erase(std::remove(tp.begin(), tp.end(), x), tp.end());
+		std::set<std::vector<double>,lexical_compare_points> isolatedpointsnew(tp.begin(),tp.end());
+	
+		return std::make_pair(validones,isolatedpointsnew);
+}
+std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> dwaytreenode:: generateAllSimplicestoCheck1(dwaytreenode* root,std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>> propermeshestomerge,std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> newpartition,int homologydim){
+	std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>> allmeshes(propermeshestomerge.begin(),propermeshestomerge.end());
+	std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> candidateSimplices;
+	allmeshes.push_back(newpartition.first);	
+
+	for(int k = 0;k<homologydim;k++){
+		int otherk = homologydim-k-1;
+		int i=0;
+		for(auto x:allmeshes){
+			auto facetsa = generateCombinationsall(x,k);
+			if(k==0){
+				for(auto v:newpartition.second){
+					std::set<std::vector<double>,lexical_compare_points> faa;
+					faa.insert(v);
+					facetsa.insert(faa);
+				}
+			}
+			std::set<std::set<std::vector<double>,lexical_compare_points>> facetsb;
+			if(otherk==0){
+				for(auto v:newpartition.second){
+					std::set<std::vector<double>,lexical_compare_points> fbb;
+					fbb.insert(v);
+					facetsb.insert(fbb);
+				}
+			}
+			for(int g=0;g<allmeshes.size();g++){
+				if(i!=g){
+					auto y = allmeshes[g];
+					auto facetsbadd = generateCombinationsall(y,otherk);
+					std::set<std::set<std::vector<double>,lexical_compare_points>> simps;
+					std::set_union(facetsbadd.begin(), facetsbadd.end(),facetsb.begin(), facetsb.end(),std::inserter(simps, simps.begin()));
+					facetsb = simps;
+				}
+			}
+			for(auto x: facetsa){
+				for(auto z : facetsb){
+					std::set<std::vector<double>,lexical_compare_points> newsimplex;
+					std::set_union(x.begin(), x.end(),z.begin(), z.end(),std::inserter(newsimplex, newsimplex.begin()));
+					auto simple = validatesimplex(root,newsimplex,homologydim);
+					candidateSimplices.insert(simple.second);
+				}
+			}
+			i++;
+		}
+	}
+	return candidateSimplices;
+}
 std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::mergedmesh(dwaytreenode* root, std::vector<std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>>> meshestomerge,double beta, int homologydim){
 	
 	// Coding now only for binary tree, which is suffucient in most practical applications
     std::set<std::vector<double>,lexical_compare_points> isolatedpoints1;
+    std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>> propermeshestomerge;
+    //Collect All the Isolated Points accross all partitions
     for(auto x:meshestomerge){
 		for(auto y :x.second){
 			isolatedpoints1.insert(y);
 		}
+		propermeshestomerge.push_back(x.first);
 	}
+	//Create a third partition of these Isolated Points by validating any simplex in there
+	auto newpartition = generatePartitionFromIsolatedPoints(root,isolatedpoints1,homologydim);
+	auto propersimplices = generateAllSimplicestoCheck1(root,propermeshestomerge,newpartition,homologydim);
+	auto validatedsimplices = validatesimplices(root,propersimplices,beta);	
+	for(auto x:meshestomerge){
+		for(auto y:x.first)
+			validatedsimplices.first.insert(y);
+	}
+	for(auto x:newpartition.first)
+		validatedsimplices.first.insert(x);
+
+    return validatedsimplices;
+	/*
+	auto propersimplices = generateAllSimplicestoCheck(meshestomerge,homologydim);
+    auto validatedsimplices = validatesimplices(root,propersimplices,beta);	
+    for(auto x:meshestomerge[0].first){
+		validatedsimplices.insert(x);
+	}
+	for(auto x:meshestomerge[1].first){
+		validatedsimplices.insert(x);
+	}
+	if(isolatedpoints1.size()<=homologydim){
+	    return std::make_pair(validatedsimplices,isolatedpoints1);
+	}
+	else{
+		auto isolatedmesh = generateCombinations(isolatedpoints1,homologydim);
+		std::vector<std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>>> abc;
+		std::set<std::vector<double>,lexical_compare_points> iso;
+		abc.push_back(std::make_pair(validatedsimplices,iso));
+		abc.push_back(std::make_pair(isolatedmesh,iso));
+		auto propersimplices1 = generateAllSimplicestoCheck(abc,homologydim);
+		std::set<unsigned> repsimplex;
+		for(int i=0;i<homologydim+1;i++)
+				repsimplex.insert(i);
+				
+		for(auto tp : isolatedmesh){
+			    int i=0,j=0;
+			    std::vector<std::vector<double>> simp(tp.begin(), tp.end());
+				std::vector<std::vector<double>> distMatrix(simp.size(),std::vector<double>(simp.size()));
+		
+				for(auto y:simp){
+					j=0;
+					for(auto z:simp){
+						distMatrix[i][j] = utils::vectors_distance(y,z);
+						j++;
+					}
+					i++;
+				} 
+		
+			auto cc =  utils::circumCenter(repsimplex,simp);
+			auto radius = sqrt(utils::circumRadius(repsimplex,&distMatrix));
+		 
+		    propersimplices1.insert(std::make_pair(tp,std::make_pair(cc,radius)));
+		}
+		auto validatedsimplices1 = validatesimplices(root,propersimplices1,beta);
+		for(auto x:validatedsimplices1)
+			validatedsimplices.insert(x);
+		for(auto g: validatedsimplices1	){
+			for(auto d:g){
+				isolatedpoints1.erase(d);
+			}
+		}
+
+	   return std::make_pair(validatedsimplices,isolatedpoints1);
+	}
+
+  return std::make_pair(validatedsimplices,isolatedpoints1);
+*/
+	    
+	/*
 	std::vector<std::vector<double>> isolatedpoints(isolatedpoints1.begin(), isolatedpoints1.end());
     std::set<std::set<std::vector<double>,lexical_compare_points>> simplicestocheck1;
 	std::set<std::set<std::vector<double>,lexical_compare_points>> simplicestocheck;
@@ -388,7 +712,7 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
 	std::set<std::set<std::vector<double>,lexical_compare_points>> validlistmerged1;
 	std::set_union(newsimplices1.begin(), newsimplices1.end(),simplicestocheck.begin(), simplicestocheck.end(),std::inserter(validlistmerged1, validlistmerged1.begin()));
 	simplicestocheck = validlistmerged1;
-	
+	* 
 	auto newvalidlist = filterValidSimplices(root,simplicestocheck,beta);
 	std::set<std::set<std::vector<double>,lexical_compare_points>> finalvalidlist = validlist;
 	std::set<std::set<std::vector<double>,lexical_compare_points>> fvl;
@@ -410,14 +734,18 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
 	
 
 	return std::make_pair(fvl,newisolateupdated);
+	*/
 }
 
 
 std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::meshGeneration(dwaytreenode* mainroot,dwaytreenode* root, double beta, int homologydim){
 	std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> mesh;		
-    if (root == nullptr)
+    if (root == nullptr){
+		std::cout<<"Null";
         return mesh;
+	}
     if(root->children.size()<=0){
+		std::cout<<"HEre"<<root->coordinates[0]<<" "<<root->coordinates[1]<<"\n";
 		mesh.second.insert(root->coordinates);
 		return mesh;
 	}
@@ -427,7 +755,28 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
     for(auto child:root->children){
 		meshestomerge.push_back(meshGeneration(mainroot,child,beta,homologydim));
 	}
-	
+	for(auto meshes:meshestomerge){
+	    std::cout<<"simplices::\n";
+    for(auto x:mesh.first){
+		for(auto y:x){
+			std::cout<<" ";
+			for(auto z:y){
+				std::cout<<" "<<z;
+			}
+			std::cout<<std::endl;
+		}
+		std::cout<<std::endl;
+	}
+	std::cout<<"Points\n";
+	for(auto x:mesh.second){
+		for(auto y:x){
+			std::cout<<y<<" ";
+		}
+		std::cout<<std::endl;
+	}
+}
+int k;
+std::cin>>k;
 	return mergedmesh(mainroot,meshestomerge,beta,homologydim);
 
 }
