@@ -24,8 +24,8 @@ int main(){
 	auto rs = readInput();
 	std::vector<std::vector<double>> data;
 	//std::cout<<"Enter Input File Name :: ";
-	std::string filename = "filenew.txt";
-	
+	//std::string filename = "filenew.txt";
+	std::string filename = "inputfile.txt";
 	//std::getline (std::cin,filename);
 	data = rs.readCSV(filename);
 	int count, dimension;

@@ -580,6 +580,42 @@ std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pai
 			i++;
 		}
 	}
+	//Cross Partition simplices for isolated points
+	std::set<std::set<std::vector<double>,lexical_compare_points>> candidateSimplices1;
+	for(int k = 0;k<homologydim-1;k++){
+		int otherk = homologydim-k-2;
+		int i=0;
+		for(auto x:allmeshes){
+			auto facetsa = generateCombinationsall(x,k);	
+			std::set<std::set<std::vector<double>,lexical_compare_points>> facetsb;
+	
+			for(int g=0;g<allmeshes.size();g++){
+				if(i!=g){
+					auto y = allmeshes[g];
+					auto facetsbadd = generateCombinationsall(y,otherk);
+					std::set<std::set<std::vector<double>,lexical_compare_points>> simps;
+					std::set_union(facetsbadd.begin(), facetsbadd.end(),facetsb.begin(), facetsb.end(),std::inserter(simps, simps.begin()));
+					facetsb = simps;
+				}
+			}
+			for(auto x: facetsa){
+				for(auto z : facetsb){
+					std::set<std::vector<double>,lexical_compare_points> newsimplex;
+					std::set_union(x.begin(), x.end(),z.begin(), z.end(),std::inserter(newsimplex, newsimplex.begin()));
+					candidateSimplices1.insert(newsimplex);
+				}
+			}
+			i++;
+		}
+	}
+	for(auto v:newpartition.second)
+	  for(auto tr : candidateSimplices1){
+	  		std::set<std::vector<double>,lexical_compare_points> newsimplex(tr.begin(),tr.end());
+			newsimplex.insert(v);
+			auto simple = validatesimplex(root,newsimplex,homologydim);
+			candidateSimplices.insert(simple.second);
+		}
+			
 	return candidateSimplices;
 }
 std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::mergedmesh(dwaytreenode* root, std::vector<std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>>> meshestomerge,double beta, int homologydim){
