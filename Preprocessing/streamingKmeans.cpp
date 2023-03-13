@@ -26,7 +26,17 @@
 // overall goal: get weighted representation of streaming data, then perform k means on that .... Shindler 11
 
 // basePipe constructor
+
+"""
+	@brief The overall goal of this code is to get the weighted representation of streaming data and then perform k-means on it.
+	@tparam nodeType A template parameter representing the node type of the streaming data.
+"""
+
 template<typename nodeType>
+"""
+	@brief Construct a new streamingKmeans object and set the processor name.
+	@tparam nodeType A template parameter representing the node type of the streaming data.
+"""
 streamingKmeans<nodeType>::streamingKmeans(){
 	this->procName = "streamingKmeans";
 	return;
@@ -35,7 +45,18 @@ streamingKmeans<nodeType>::streamingKmeans(){
 
 
 // runPipe -> Run the configured functions of this pipeline segment
+"""
+	@brief Run the configured functions of this pipeline segment.
+
+	@tparam nodeType A template parameter representing the node type of the streaming data.
+
+	@param inData A reference to the input data.
+"""
 template<typename nodeType>
+"""
+	@brief Run the configured functions of this pipeline segment.
+	@param inData A reference to the input data.
+"""
 void streamingKmeans<nodeType>::runPreprocessor(pipePacket<nodeType> &inData){
 	
 	if(!this->configured){
