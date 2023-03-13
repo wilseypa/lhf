@@ -22,7 +22,6 @@
 	@class streamingKmeans
 	@brief A class for implementing the streaming k-means algorithm
 	@tparam nodeType The type of data points to cluster
-
 """
 // overall goal: get weighted representation of streaming data, then perform k means on that .... Shindler 11
 
