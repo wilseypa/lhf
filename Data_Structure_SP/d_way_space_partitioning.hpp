@@ -39,6 +39,7 @@
 
 #define MAXRADIUS 9999
 
+double precision = 10000;
 std::vector<std::vector<double>> referenceHypertetrhedron;
 int dim;
 
@@ -456,30 +457,35 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
 	   std::cout<<"Size Remaning "<<tovalidate.size();
 	    auto simp = *(tovalidate.begin());
 	    std::vector<std::vector<double>> simpl(simp.first.begin(), simp.first.end());
-		tovalidate.erase(tovalidate.begin());
 		for(auto fr:tovalidate){
 			for(auto tp : fr.first)
 				for(auto tp1:tp)
 					std::cout<<tp1<<" ";
 		 std::cout<<"\n";
 		}
+		tovalidate.erase(tovalidate.begin());
    		if(!checkPointInBall(root, simp.second.first,simp.second.second, simpl)){
 			validatedSimplices.insert(simp.first);
 			std::cout<<"Valid";
-			std::cin>>k;
+			//std::cin>>k;
 			// filter Invalid Simplices
 		    std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> remaining;
 			for(auto p: tovalidate){
+				std::cout<<"Next Simplex";
 				bool val = true;
 				for(auto v:simp.first){
-				     if(utils::vectors_distance(v,p.second.first)<=p.second.second){
+					bool val1 = int(round(utils::vectors_distance(v,p.second.first)*precision))<int(round(p.second.second*precision));
+					std::cout<<"\n"<<utils::vectors_distance(v,p.second.first)<<"<"<<p.second.second<<val1<<"\n";
+				     if(int(round(utils::vectors_distance(v,p.second.first)*precision))<int(round(p.second.second*precision))){
 						val = false;
 						break;	
 					}
 				}
 				if(val){
 					for(auto v:p.first){
-						if(utils::vectors_distance(v,simp.second.first)<=simp.second.second){
+						bool val1 = int(round(utils::vectors_distance(v,simp.second.first)*precision))<int(round(simp.second.second*precision));
+						std::cout<<"\n"<<utils::vectors_distance(v,simp.second.first)<<"<"<<simp.second.second<<val1<<"\n";
+						if(int(round(utils::vectors_distance(v,simp.second.first)*precision))<int(round(simp.second.second*precision))){
 							val = false;
 							break;	
 						}
@@ -490,10 +496,10 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
 				}
 				
 			}
-		std::cin>>k;
+	//	std::cin>>k;
 		tovalidate.clear();
 		tovalidate.insert(remaining.begin(), remaining.end());
-		std::cin>>k;
+//		std::cin>>k;
 		for(auto x:simp.first)
 			accountedpoints.insert(x);
 		}
@@ -509,9 +515,10 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
 
 
 std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::generatePartitionFromIsolatedPoints(dwaytreenode* root,std::set<std::vector<double>,lexical_compare_points> isolatedpoints,int homologydim){
-
+        std::set<std::set<std::vector<double>,lexical_compare_points>> validones;
+        if(isolatedpoints.size()<homologydim+1)
+           return std::make_pair(validones,isolatedpoints);
         auto simplices = generateCombinations(isolatedpoints,homologydim);
-		std::set<std::set<std::vector<double>,lexical_compare_points>> validones;
 		std::set<std::vector<double>,lexical_compare_points> accountedpoints;
 		std::set<std::vector<double>,lexical_compare_points> remaningpoints;
         for(auto x:simplices){
@@ -540,21 +547,19 @@ std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pai
 		int i=0;
 		for(auto x:allmeshes){
 			auto facetsa = generateCombinationsall(x,k);
-			if(k==0){
-				for(auto v:newpartition.second){
-					std::set<std::vector<double>,lexical_compare_points> faa;
-					faa.insert(v);
-					facetsa.insert(faa);
-				}
-			}
+			auto face = generateCombinations(newpartition.second,k);
+			for(auto v:face)
+				facetsa.insert(v);
+				
 			std::set<std::set<std::vector<double>,lexical_compare_points>> facetsb;
-			if(otherk==0){
+	/*		if(otherk==0){
 				for(auto v:newpartition.second){
 					std::set<std::vector<double>,lexical_compare_points> fbb;
 					fbb.insert(v);
 					facetsb.insert(fbb);
 				}
 			}
+	*/ 
 			for(int g=0;g<allmeshes.size();g++){
 				if(i!=g){
 					auto y = allmeshes[g];
@@ -584,22 +589,84 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
     std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>> propermeshestomerge;
     //Collect All the Isolated Points accross all partitions
     for(auto x:meshestomerge){
+		std::cout<<"Isolated Points";
 		for(auto y :x.second){
 			isolatedpoints1.insert(y);
+			std::cout<<y[0]<<" "<<y[1];
 		}
-		propermeshestomerge.push_back(x.first);
+		if(x.first.size()>0){
+			std::cout<<"Meshes";
+			for(auto t:x.first){
+			   for(auto k : t){
+			      for(auto p:k){
+			        std::cout<<p<<" ";
+				}
+				std::cout<<"\n";
+			}
+			std::cout<<"\n";
+		}
+			propermeshestomerge.push_back(x.first);
+			std::cout<<"\n\n\n";
+		}
 	}
+	std::cout<<"\n Meshes to merege"<<propermeshestomerge.size()<<"\n";
 	//Create a third partition of these Isolated Points by validating any simplex in there
 	auto newpartition = generatePartitionFromIsolatedPoints(root,isolatedpoints1,homologydim);
+	if(propermeshestomerge.size()<=0){
+		std::cout<<"Returned Mesh \n";
+		for(auto t:newpartition.first){
+			   for(auto k : t){
+			      for(auto p:k){
+			        std::cout<<p<<" ";
+				}
+				std::cout<<"\n";
+			}
+			std::cout<<"\n";
+		}
+	   std::cout<<"Isolated Points\n";
+
+		for(auto t:newpartition.second){
+			std::cout<<t[0]<<" "<<t[1];
+
+		}
+		
+		return newpartition;
+	}
 	auto propersimplices = generateAllSimplicestoCheck1(root,propermeshestomerge,newpartition,homologydim);
 	auto validatedsimplices = validatesimplices(root,propersimplices,beta);	
+	//if(validatedsimplices.first.size()<=0)
+	//	validatedsimplices.second = newpartition.second;
+	std::vector<std::vector<double>> tp(validatedsimplices.second.begin(),validatedsimplices.second.end());
+
+	
 	for(auto x:meshestomerge){
-		for(auto y:x.first)
+		for(auto y:x.first){
 			validatedsimplices.first.insert(y);
+			for(auto t:y)
+				tp.erase(std::remove(tp.begin(), tp.end(), t), tp.end());
+		}
 	}
+	std::set<std::vector<double>,lexical_compare_points> isolatedpointsnew(tp.begin(),tp.end());
+	validatedsimplices.second = isolatedpointsnew;
 	for(auto x:newpartition.first)
 		validatedsimplices.first.insert(x);
+		std::cout<<"Returned Mesh \n";
+		for(auto t:validatedsimplices.first){
+			   for(auto k : t){
+			      for(auto p:k){
+			        std::cout<<p<<" ";
+				}
+				std::cout<<"\n";
+			}
+			std::cout<<"\n";
+		}
+	   std::cout<<"Isolated Points\n";
 
+		for(auto t:validatedsimplices.second){
+			std::cout<<t[0]<<" "<<t[1];
+
+		}
+		
     return validatedsimplices;
 	/*
 	auto propersimplices = generateAllSimplicestoCheck(meshestomerge,homologydim);
@@ -741,7 +808,7 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
 std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::meshGeneration(dwaytreenode* mainroot,dwaytreenode* root, double beta, int homologydim){
 	std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> mesh;		
     if (root == nullptr){
-		std::cout<<"Null";
+	//	std::cout<<"Null";
         return mesh;
 	}
     if(root->children.size()<=0){
@@ -776,7 +843,7 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
 	}
 }
 int k;
-std::cin>>k;
+//std::cin>>k;
 	return mergedmesh(mainroot,meshestomerge,beta,homologydim);
 
 }
