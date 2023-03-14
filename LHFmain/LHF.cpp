@@ -368,6 +368,18 @@ std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processParallel(std::map<std
 		}
 	}
 
+	"""
+	@brief Merge partitions and compute PH on original centroid dataset, then report results
+	@param args The command line arguments passed to the program
+	@param iterwD An iterator used to access and modify the data throughout the computation
+	@param partBettiTable The betti tables for each partition
+	@param nprocs The number of processors used
+	@param id The id of the current processor
+	@param stats The statistics of the computation
+	@param runLogs The run logs of the computation
+	@return The final merged betti table for this iteration
+	"""
+
 	//5. Merge partitions, compute PH on original centroid dataset, and report results
 
 	//		Merge partitioned betti tables together
@@ -402,6 +414,25 @@ std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processParallel(std::map<std
 	return mergedBettiTable;
 }
 
+"""
+@brief Process the parallel wrapper for the LHF algorithm.
+
+	This function is called when the number of points in a partition are greater than the point threshold. It partitions the source point cloud into separate datasets accordingly.
+
+	If the number of points in the new partitions are under the point threshold, continue. If the number of points in any new partition is above the point threshold, recurse.
+
+	We may also want to limit the number of recursions for bigger data sets.
+
+@tparam nodeType The type of the node in the LHF algorithm.
+
+@param args The arguments for the LHF algorithm.
+
+@param wD The pipeline packet for the LHF algorithm.
+
+@param runPartition Flag for running the partition.
+
+@return std::vector<bettiBoundaryTableEntry> The final merged betti table for this iteration.
+"""
 
 template<typename nodeType>
 std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processParallelWrapper(std::map<std::string, std::string> args, pipePacket<nodeType>&wD, bool runPartition){
@@ -452,6 +483,17 @@ std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processParallelWrapper(std::
 	return processParallel(args, wD.centroidLabels, partitionedData, wD.inputData);
 }
 
+"""
+@brief Wrapper function to perform distributed processing for LHF
+
+@tparam nodeType The datatype of the input data (eg. float or double)
+
+@param args The arguments passed to the LHF algorithm
+
+@param wD The input data and other information passed through a pipe packet
+
+@return std::vector<bettiBoundaryTableEntry> The final merged betti table of all the partitions
+"""
 
 template<typename nodeType>
 std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processDistributedWrapper(std::map<std::string, std::string> args, pipePacket<nodeType>&wD){
@@ -622,7 +664,28 @@ std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processDistributedWrapper(st
 		std::cout << "partitionsize:";
 		utils::print1DVector(partitionsize);
 	}
-
+	"""
+	This function broadcasts all the required information by slaves.
+	@param dimension the dimension of the data points.
+	@param partitionsize_size the total number of partitions.
+	@param partitionsize an array containing the size of each partition.
+	@param originalLabels_size the total number of labels.
+	@param originalLabels an array containing the original labels.
+	@param firstk the index of the first slave process that receives an additional partition.
+	@param minPartitions the minimum number of partitions assigned to each process.
+	@param maxsize the maximum buffer size required for data points.
+	@param maxsizelabel the maximum buffer size required for labels.
+	@param scounts an array containing the number of data points to be sent to each process.
+	@param scountslabel an array containing the number of labels to be sent to each process.
+	@param nprocs the number of processes.
+	@param id the id of the current process.
+	@param sdata an array containing the data points.
+	@param sdatalabel an array containing the labels.
+	@param displs an array containing the offset for each process to read the data points.
+	@param displslabel an array containing the offset for each process to read the labels.
+	@param args the arguments to the processParallel function.
+	@param wD the workingData structure.
+	"""
 	//	broadcasting all the required information by slaves.
 
 	MPI_Bcast(&dimension, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);			//Data dimension
@@ -666,6 +729,31 @@ std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processDistributedWrapper(st
 	// scatter label information
 	MPI_Scatterv(&sdatalabel[0], scountslabel, displslabel, MPI_UNSIGNED, receivedDataLabel, maxsizelabel, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
 
+	"""
+	@brief This function partitions the received data and labels into partitions for each process, performs local computation on each partition, and then serializes the computed betti table to send to the master process for merging.
+
+	@param minPartitions The minimum number of partitions to divide the data and labels into.
+
+	@param id The id of the current process.
+
+	@param firstk The index of the first process which gets one more partition than the others.
+
+	@param partitionsize An array storing the number of elements in each partition.
+
+	@param dimension The dimension of the input data.
+
+	@param receivedData An array storing the received data.
+
+	@param receivedDataLabel An array storing the received data labels.
+
+	@param args Arguments passed to the TDA computation function.
+
+	@param originalLabels The original labels of the input data.
+
+	@param wD The work data containing the input data.
+
+	@return Returns nothing.
+	"""
 	if (minPartitions > 0){
 
 		int displacement = 0; // offset for each processes to read partitions
@@ -744,41 +832,91 @@ std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processDistributedWrapper(st
 	std::vector<unsigned> recvbuffboundaries_size(totalsize);
 
 	//gether each process table sizes
+
+	"""
+	@brief Gathers bettie table size information from all MPI processes and stores them in a vector.
+	@param nprocs Number of MPI processes
+	@return std::vector<int> Vector containing bettie table size information for all MPI processes
+	"""
 	std::vector<int> betties_table_size(nprocs);
 	MPI_Gather(&bettiTableSize, 1, MPI_INT, &betties_table_size[0], 1, MPI_INT, 0, MPI_COMM_WORLD);
 
+	"""
+	@brief Creates a vector to store displacements and initializes the first value to 0
+	"""
 	std::vector<int> displsg(nprocs);
 	displsg[0] = 0;
 
 	// Calculate offsets
+	"""
+	@brief Calculates offsets for each MPI process
+	"""
 	for (int i = 1; i <= nprocs; i++)
 		displsg[i] = displsg[i - 1] + betties_table_size[i - 1];
 
 	// Gather betties info
+	"""
+	@brief Gathers information about betties and stores it in vectors to be passed to the master process.
+	"""
 	MPI_Gatherv(&betti_dim[0], bettiTableSize, MPI_UNSIGNED, &recvbuffdim[0], &betties_table_size[0], &displsg[0], MPI_UNSIGNED, 0, MPI_COMM_WORLD);
 	MPI_Gatherv(&betti_birth[0], bettiTableSize, MPI_DOUBLE, &recvbuffbirth[0], &betties_table_size[0], &displsg[0], MPI_DOUBLE, 0, MPI_COMM_WORLD);
 	MPI_Gatherv(&betti_death[0], bettiTableSize, MPI_DOUBLE, &recvbuffdeath[0], &betties_table_size[0], &displsg[0], MPI_DOUBLE, 0, MPI_COMM_WORLD);
 	MPI_Gatherv(&betti_boundarysize[0], bettiTableSize, MPI_UNSIGNED, &recvbuffboundaries_size[0], &betties_table_size[0], &displsg[0], MPI_UNSIGNED, 0, MPI_COMM_WORLD);
 
+	"""
+	@brief Sums the boundary sizes from all MPI processes and returns the total.
+	"""
 	int totalboundarysize = 0;
 	MPI_Reduce(&boundary_size, &totalboundarysize, 1, MPI_UNSIGNED, MPI_SUM, 0, MPI_COMM_WORLD);
 
 	//Gather boundary size information
+	"""
+	@brief Gathers boundary size information from all MPI processes and stores them in a vector.
+	"""
 	std::vector<int> betties_table_boundary_size(nprocs);
 	MPI_Gather(&boundary_size, 1, MPI_UNSIGNED, &betties_table_boundary_size[0], 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
 
+	"""
+	@brief Creates a vector to store displacements for boundary sizes and initializes the first value to 0
+	"""
 	std::vector<int> displsgb(nprocs);
 	displsgb[0] = 0;
 
 	//Calculate offsets
+	"""
+	@brief Calculates offsets for each MPI process' boundary size vector.
+	"""
 	for (int i = 1; i <= nprocs; i++){
 		displsgb[i] = displsgb[i - 1] + betties_table_boundary_size[i - 1];
 	}
 
+	"""
+	@brief Create a vector to store the received boundary information.
+	@param totalboundarysize The size of the received boundary information vector.
+	@return std::vector<unsigned> The vector to store the received boundary information
+	"""
 	std::vector<unsigned> recvbuffboundaries(totalboundarysize);
 	//Gather Boundary information
+	"""
+	@brief Gather boundary information from all processes to rank 0 process.
+	@param betti_boundaries The input boundary information array.
+	@param boundary_size The size of the input boundary information array.
+	@param MPI_UNSIGNED MPI data type for unsigned integers.
+	@param recvbuffboundaries The vector to store the received boundary information.
+	@param betties_table_boundary_size The size of each boundary information in the input array.
+	@param displsgb The displacement values of each boundary information in the input array.
+	@param 0 The rank of the root process.
+	@param MPI_COMM_WORLD MPI communicator for all processes.
+	"""
 	MPI_Gatherv(&betti_boundaries[0], boundary_size, MPI_UNSIGNED, &recvbuffboundaries[0], &betties_table_boundary_size[0], &displsgb[0], MPI_UNSIGNED, 0, MPI_COMM_WORLD);
 
+	"""
+	@brief Prune out duplicates in the received boundary information and store the final result in a vector.
+
+	@param id The rank of the current process.
+
+	@return std::vector<bettiBoundaryTableEntry> The final merged betti boundary table
+	"""
 	if (id == 0){
 		//master prune out the duplicates across slaves.
 
@@ -808,7 +946,15 @@ std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processDistributedWrapper(st
 }
 
 
+"""
+@brief Decode the arguments and the input data.
 
+@param argc The number of command line arguments.
+
+@param argv The command line arguments.
+
+@param pointCloud The input point cloud data.
+"""
 
 
 extern "C"{
@@ -905,6 +1051,21 @@ extern "C"{
 
 		return;
 	}
+	"""
+	This function is a wrapper for the LHF C++ library, which is called from Python.
+
+	It converts the input arguments from char* to map and decodes the data. It also determines which pipeline to run,
+
+	runs LHF, and creates the return structure.
+
+	@param argc int argument count
+
+	@param argv char* argument vector
+
+	@param pointCloud const double* point cloud array
+
+	@return BRET* retStruct containing betti numbers, birth and death times, and input data as a 1D array
+	"""
 
 	PRAP *pyRunWrapper2(int argc, char *argv, const double *pointCloud){
 
@@ -964,6 +1125,27 @@ extern "C"{
 		argParser::setPipeline(args);
 
 		//If data was found in the inputFile
+		"""
+		This function runs the LHF algorithm on the input data based on the provided arguments.
+
+		If the input data is non-empty or the pipeline is "slidingwindow" or "naivewindow" or the mode is "mpi",
+
+		the algorithm is executed. If the mode is "reduced", "iterUpscale", or "iter", the algorithm is executed in parallel,
+
+		and the bettiTable is sorted. Otherwise, the preprocessor and pipeline are run.
+
+		If the debug mode is on and the bettiTable is non-empty, the bettiTable is printed to the console.
+
+		The complex object is deleted and the execution time is printed to the console.
+
+		The bettiTable is converted to a BRET struct and returned.
+
+		@param args The arguments provided to the LHF algorithm.
+
+		@param wD The work data used by the LHF algorithm.
+
+		@return A BRET struct representing the bettiTable.
+		"""
 		if (wD.inputData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
 
 			if(args["mode"] == "reduced" || args["mode"] == "iterUpscale" || args["mode"] == "iter"){	
@@ -1022,6 +1204,21 @@ extern "C"{
 		// std::cout << "workDatasize-> " << wD.workData.size() << std::endl;
 		// std::cout << "size[0]-> " << wD.distMatrix[0].size() << std::endl;
 
+		"""
+		@brief Allocate memory and copy data from a WorkData object into C-style arrays to be returned by the function.
+		@param wD The WorkData object to copy data from.
+		@param distMatrix_retStruct Pointer to a C-style array to store the distance matrix data.
+		@param centroidLabels_retStruct Pointer to a C-style array to store the centroid labels data.
+		@param workData_retStruct Pointer to a C-style array to store the work data.
+		@return None.
+		This function allocates memory for the distMatrix_retStruct, centroidLabels_retStruct, and workData_retStruct arrays,
+		and copies the corresponding data from the WorkData object passed as input into these arrays.
+		The size of the distMatrix_retStruct array is computed as the product of the size of the distance matrix in the WorkData object.
+		The size of the centroidLabels_retStruct array is computed as the size of the centroid labels vector in the WorkData object.
+		The size of the workData_retStruct array is computed as the product of the size of the work data matrix in the WorkData object.
+		Note that the input WorkData object should not be modified by this function.
+		"""
+
 		double *distMatrix_retStruct = (double *)malloc(sizeof(double) * (wD.distMatrix.size() * wD.distMatrix.size()));
 
 		sizof = 0;
@@ -1068,6 +1265,14 @@ extern "C"{
 
 		// std::cout << wD.stats << std::endl;
 
+		"""
+		@brief This function converts various data members of a C++ struct into corresponding char arrays in a C-style struct.
+
+		@param wD A C++ struct whose members will be converted to char arrays in a C-style struct.
+
+		@return A pointer to a C-style struct containing the converted data members of the C++ struct.
+		"""
+
 		char *stats_retStruct = (char *)malloc(sizeof(char) * wD.stats.length());
 
 		int n = wD.stats.length();
@@ -1104,6 +1309,15 @@ extern "C"{
 				runLog_retStruct[i] = runLog_char_array[i];
 			}
 		}
+	"""
+	This function takes in the WrappedData struct and returns a PRAP struct.
+
+	The PRAP struct contains the output data in a format that is usable in Python.
+
+	@param wD - the WrappedData struct that contains the input data and the computed output data.
+
+	@return a PRAP struct containing the output data in a usable format in Python.
+	"""
 
 		char *ident_retStruct = (char *)malloc(sizeof(char) * wD.ident.length());
 		if (wD.ident.empty()){
