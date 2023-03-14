@@ -23,7 +23,7 @@
 
 // basePipe constructor
 
-/*
+/**
 @brief kMeansPlusPlus class constructor
 
 Initializes the kMeansPlusPlus class instance.
@@ -38,7 +38,7 @@ kMeansPlusPlus<nodeType>::kMeansPlusPlus(){
 
 // runPipe -> Run the configured functions of this pipeline segment
 
-/*
+/**
 @brief Runs the configured functions of this pipeline segment
 @param inData Input data to be processed by the preprocessor
 */
@@ -169,7 +169,7 @@ void kMeansPlusPlus<nodeType>::runPreprocessor(pipePacket<nodeType>& inData){
 }
 
 // configPipe -> configure the function settings of this pipeline segment
-/*
+/**
 Cluster the input data using k-means++ algorithm.
 
 @param inData The input data to be clustered.
