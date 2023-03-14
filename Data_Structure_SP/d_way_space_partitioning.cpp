@@ -66,9 +66,12 @@ int main(){
 	dwaytreenode *tree; 
     tree = tree->buildDwayTree(data,-1,"nary",2);
     //tree->printTree(tree);
-   	tree->printLevelOrder(tree,tree);
-   	auto mesh = tree->meshGeneration(tree,tree,1,2);
-    std::cout<<"simplices::\n";
+   	//tree->printLevelOrder(tree,tree);
+   	int hdim;
+   	std::cout<<"Enter Homology Dimension";
+   	std::cin>>hdim;
+   	auto mesh = tree->meshGeneration(tree,tree,1,hdim);
+/*    std::cout<<"simplices::\n";
     for(auto x:mesh.first){
 		for(auto y:x){
 			std::cout<<" ";
@@ -86,6 +89,7 @@ int main(){
 		}
 		std::cout<<std::endl;
 	}
+*/
 	/*
 	std::cout<<tree->checkPointInBall(tree,{0,0} ,1.1,{data[0]});
 	auto temp=tree->pointInBall(tree,{0,0},1.1);
