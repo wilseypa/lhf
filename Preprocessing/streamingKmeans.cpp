@@ -18,25 +18,25 @@
 #include "streamingUtils.hpp"
 #include "utils.hpp"
 
-"""
+/*
 	@class streamingKmeans
 	@brief A class for implementing the streaming k-means algorithm
 	@tparam nodeType The type of data points to cluster
-"""
+*/
 // overall goal: get weighted representation of streaming data, then perform k means on that .... Shindler 11
 
 // basePipe constructor
 
-"""
+/*
 	@brief The overall goal of this code is to get the weighted representation of streaming data and then perform k-means on it.
 	@tparam nodeType A template parameter representing the node type of the streaming data.
-"""
+*/
 
 template<typename nodeType>
-"""
+/*
 	@brief Construct a new streamingKmeans object and set the processor name.
 	@tparam nodeType A template parameter representing the node type of the streaming data.
-"""
+*/
 streamingKmeans<nodeType>::streamingKmeans(){
 	this->procName = "streamingKmeans";
 	return;
@@ -45,18 +45,18 @@ streamingKmeans<nodeType>::streamingKmeans(){
 
 
 // runPipe -> Run the configured functions of this pipeline segment
-"""
+/*
 	@brief Run the configured functions of this pipeline segment.
 
 	@tparam nodeType A template parameter representing the node type of the streaming data.
 
 	@param inData A reference to the input data.
-"""
+*/
 template<typename nodeType>
-"""
+/*
 	@brief Run the configured functions of this pipeline segment.
 	@param inData A reference to the input data.
-"""
+*/
 void streamingKmeans<nodeType>::runPreprocessor(pipePacket<nodeType> &inData){
 	
 	if(!this->configured){
@@ -93,72 +93,33 @@ for(int d = 0; d<inData.workData[0].size(); d++){
 	omega[d] = randDouble();  // initializing omega (vector that is randomly projected on )
 }
 
-"""
-	@brief Output the values of omega[0] and omega[1]
-"""
+
 //std:: cout<< omega[0] << omega[1] << "  <-omega\n";
-"""
-	@brief Vector containing the approximate facilities
-"""
+
 std::vector<double> approxFacilities(0);
-"""
-	@brief Vector of vectors containing the k-hat centers
-"""
+
 std::vector<double> approxFacilitiesHat(0);
  std::vector<std::vector<double>> kHat;
 
-"""
-	@brief The facility cost
-	@details The facility cost f = 1/(k(1+log n)) where k is the number of clusters, n is the number of points, and empty set K
-"""
+
 double f = 1/(numClusters*(1 + log(size))); //facility cost f = 1/(k(1+log n))  k clusters, n points, empty set K  //facility==centroid 
 
-"""
-	@brief A vector storing the sum of clusters.
-	@param numClusters The number of clusters.
-	@param 0 The initial value of the vector elements.
-"""
+
 std::vector<double> summedClusters(numClusters, 0);
 
-"""
-	@brief A vector storing the count of facilities.
-	@param maxFacilities The maximum number of facilities.
-	@param 0 The initial value of the vector elements.
-"""
 std::vector<double> counts(maxFacilities, 0);
-"""
-	@brief A vector storing the count of facilities.
-	@param maxFacilities The maximum number of facilities.
-	@param 0 The initial value of the vector elements.
-"""
-std::vector<int> tempCounts(maxFacilities, 0);
 
-"""
-	@brief A vector storing the current labels.
-"""
+std::vector<int> tempCounts(maxFacilities, 0);
 std::vector<unsigned> curLabels;
-"""
-	@brief A vector storing the sorted approximate facilities.
-"""
 std::vector< std::pair<double, int>> sortedApproxFacils;
-"""
-	@brief A vector storing the sorted approximate facilities hat.
-"""
 std::vector< std::pair<double, int>> sortedApproxFacilsHat;
-"""
-	@brief A vector storing the clustered facilities.
-"""
+
 std::vector< std::pair<std::vector<double>, int>> clustered;
-"""
-	@brief A vector storing the k-hat clustered facilities.
-"""
 std::vector< std::pair<std::vector<double>, int>> kHatClustered;
 
 
 //adding first values to everything so the approximate vectors project correctly
-"""
-	@brief Adding the first values to everything so the approximate vectors project correctly.
-"""
+
 for(unsigned i = 0; i<(numClusters/2); i++){
 	facilities.push_back(inData.workData[i]);
 	approxFacilities.push_back(dotProd(inData.workData[i], omega));
@@ -167,25 +128,13 @@ for(unsigned i = 0; i<(numClusters/2); i++){
 	clustered.push_back(std::make_pair(inData.workData[i], i));
 	counts[i] ++;
 }
-"""
-	@brief The size of the sorted approximate facilities vector.
-"""
+
 int approxSize = sortedApproxFacils.size();
-"""
-	@brief The number of facilities.
-"""
+
 int numFacilities = facilities.size();
-"""
-	@brief The tracker variable.
-"""
+
 int tracker  = 0;
 
-"""
- @brief A vector storing the summed centroid vectors.
- @param numClusters The number of clusters.
- @param inData.workData[0].size() The size of the vector elements.
- @param 0 The initial value of the vector elements.
-"""
 std::vector<std::vector<double>> summedCentroidVectors(numClusters, std::vector<double>(inData.workData[0].size(), 0)); 
 
 
