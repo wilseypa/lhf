@@ -16,18 +16,18 @@
 #include "kMeansPlusPlus.hpp"
 #include "utils.hpp"
 
-"""
+/*
 @brief Base class for building pipeline functions to execute
 @tparam nodeType Type of the data element being processed in pipeline
-"""
+*/
 
 // basePipe constructor
 
-"""
+/**
 @brief kMeansPlusPlus class constructor
 
 Initializes the kMeansPlusPlus class instance.
-"""
+*/
 template<typename nodeType>
 kMeansPlusPlus<nodeType>::kMeansPlusPlus(){
 	this->procName = "k-means++";
@@ -38,10 +38,10 @@ kMeansPlusPlus<nodeType>::kMeansPlusPlus(){
 
 // runPipe -> Run the configured functions of this pipeline segment
 
-"""
+/**
 @brief Runs the configured functions of this pipeline segment
 @param inData Input data to be processed by the preprocessor
-"""
+*/
 template<typename nodeType>
 void kMeansPlusPlus<nodeType>::runPreprocessor(pipePacket<nodeType>& inData){
 	if(!this->configured){
@@ -169,13 +169,13 @@ void kMeansPlusPlus<nodeType>::runPreprocessor(pipePacket<nodeType>& inData){
 }
 
 // configPipe -> configure the function settings of this pipeline segment
-"""
+/**
 Cluster the input data using k-means++ algorithm.
 
 @param inData The input data to be clustered.
 
 @return The clustered data in a pipePacket.
-"""
+*/
 template<typename nodeType>
 bool kMeansPlusPlus<nodeType>::configPreprocessor(std::map<std::string, std::string>& configMap){
 	std::string strDebug;
