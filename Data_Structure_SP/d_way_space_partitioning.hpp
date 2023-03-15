@@ -37,12 +37,19 @@
 #include "../Utils/utils.hpp"
 #include "../Utils/readInput.hpp"
 
+
+#include <chrono>
+using namespace std::chrono;
+    
 #define MAXRADIUS 9999
 
 double precision = 10000;
 std::vector<std::vector<double>> referenceHypertetrhedron;
 int dim;
-
+std::vector<double> time4;
+std::vector<double> time1;
+std::vector<double> time2;
+std::vector<double> time3;
 void makeCombiUtil(std::vector<std::vector<int> >& ans,std::vector<int>& tmp, int n, int left, int k);
 std::vector<std::vector<int> > makeCombi(int n, int k);
 
@@ -95,19 +102,24 @@ public:
 	std::vector<std::vector<double>>  findCellBoundingPolytope(dwaytreenode* root, dwaytreenode* node);
 	dwaytreenode*  findNearestNeighbor(dwaytreenode* root, std::vector<double>);
 	bool checkPointInBall(dwaytreenode* root, std::vector<double>,double,std::vector<std::vector<double>>);
-	std::vector<std::vector<double>> pointInBall(dwaytreenode* root, std::vector<double>,double);
-	std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> meshGeneration(dwaytreenode* mainroot,dwaytreenode* root, double beta, int homologydim);
-	std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> mergedmesh(dwaytreenode* root, std::vector<std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>>> meshstomerge, double beta, int homologydim);
+	std::set<std::vector<double>> pointInBall(dwaytreenode* root, std::vector<double>,double);
+	std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> meshGeneration(dwaytreenode* mainroot,dwaytreenode* root, double beta, int homologydim,double epsilon);
+	std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> mergedmesh(dwaytreenode* root, std::vector<std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>>> meshestomerge, double beta, int homologydim,double epsilon);
 	std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> filterValidSimplices(dwaytreenode* root,std::set<std::set<std::vector<double>,lexical_compare_points>> simplicestocheck,double beta);
 	std::set<std::set<std::vector<double>,lexical_compare_points>> generateNewSimplices(std::set<std::set<std::vector<double>,lexical_compare_points>> simplices, std::set<std::vector<double>,lexical_compare_points> points);
 	std::set<std::vector<double>,lexical_compare_points> generatePoints(std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> partition);
 	std::set<std::set<std::vector<double>,lexical_compare_points>> generateCombinations(std::set<std::vector<double>,lexical_compare_points> isolatedpoints,double homologydim);
 	std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> generateAllSimplicestoCheck(std::vector<std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>>> meshestoMerge,int homologydim);
 	std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> validatesimplices(dwaytreenode* root,std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> tovalidate,double beta);
-	std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> generatePartitionFromIsolatedPoints(dwaytreenode* root,std::set<std::vector<double>,lexical_compare_points> isolatedpoints,int homologydim);
+	std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> generatePartitionFromIsolatedPoints(dwaytreenode* root,std::set<std::vector<double>,lexical_compare_points> isolatedpoints,int homologydim,double epsilon);
 	std::pair<bool,std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>> validatesimplex(dwaytreenode* root,std::set<std::vector<double>,lexical_compare_points> simplex,int homologydim);
 	std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> generateAllSimplicestoCheck1(dwaytreenode* root,std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>> propermeshestomerge,std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> newpartition,int homologydim);
 	std::set<std::set<std::vector<double>,lexical_compare_points>> generateCombinationsall(std::set<std::set<std::vector<double>,lexical_compare_points>> allsimplices,double homologydim);
+	std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> stichMesh(dwaytreenode* mainroot,dwaytreenode* root, std::vector<std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>>> meshestomerge,double beta, int homologydim,double epsilon);
+	std::vector<std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>>> computeSpaceFabricNeighbourhood(dwaytreenode* root,std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>> ,double epsilon,int);
+	std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> generateSimplicesToConsider(dwaytreenode* root,std::vector<std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>>> stichNeighboorhood,std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>> propermeshestomerge,std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> newpartition,int homologydim,double epsilon);
+	std::set<std::set<std::vector<double>,lexical_compare_points>> generateKSimplices(std::vector<std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>>> stichNeighboorhood,int k);
+	std::set<std::set<std::vector<double>,lexical_compare_points>> generateKSimplices(std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>> stichNeighboorhood,int k,int homologydim);
 };
 
 void dwaytreenode:: printLevelOrder(dwaytreenode* originalroot,dwaytreenode* root){
@@ -435,12 +447,21 @@ std::pair<bool,std::pair<std::set<std::vector<double>,lexical_compare_points>,st
 			j++;
 		}
 		i++;
-	} 
+	}
+	 auto start1 = high_resolution_clock::now();
 	auto cc =  utils::circumCenter(repsimplex,simpl);
+	 auto stop1 = high_resolution_clock::now();
+    auto duration1 = duration_cast<microseconds>(stop1 - start1);
+    time1.push_back(duration1.count());
+   
 	//auto radius = sqrt(utils::circumRadius(repsimplex,&distMatrix));
 	auto radius = utils::vectors_distance(simpl[0],cc);
-
-	if(!checkPointInBall(root, cc,radius, simpl)){
+	auto start4 = high_resolution_clock::now();
+    bool val = checkPointInBall(root, cc,radius, simpl); 
+	auto stop4 = high_resolution_clock::now();
+	auto duration4 = duration_cast<microseconds>(stop4 - start4);
+	time4.push_back(duration4.count());
+	if(!val){
 			return std::make_pair(true,std::make_pair(simplex,std::make_pair(cc,radius)));			 
 
 	}
@@ -459,7 +480,13 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
 	    auto simp = *(tovalidate.begin());
 	    std::vector<std::vector<double>> simpl(simp.first.begin(), simp.first.end());
 		tovalidate.erase(tovalidate.begin());
-   		if(!checkPointInBall(root, simp.second.first,simp.second.second, simpl)){
+		auto start4 = high_resolution_clock::now();
+		bool val = checkPointInBall(root, simp.second.first,simp.second.second, simpl); 
+		auto stop4 = high_resolution_clock::now();
+		auto duration4 = duration_cast<microseconds>(stop4 - start4);
+		time4.push_back(duration4.count());
+	
+   		if(!val){
 			validatedSimplices.insert(simp.first);
 		    std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> remaining;
 			for(auto p: tovalidate){
@@ -499,7 +526,7 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
 }
 
 
-std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::generatePartitionFromIsolatedPoints(dwaytreenode* root,std::set<std::vector<double>,lexical_compare_points> isolatedpoints,int homologydim){
+std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::generatePartitionFromIsolatedPoints(dwaytreenode* root,std::set<std::vector<double>,lexical_compare_points> isolatedpoints,int homologydim,double epsilon){
         std::set<std::set<std::vector<double>,lexical_compare_points>> validones;
         if(isolatedpoints.size()<homologydim+1)
            return std::make_pair(validones,isolatedpoints);
@@ -507,11 +534,21 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
 		std::set<std::vector<double>,lexical_compare_points> accountedpoints;
 		std::set<std::vector<double>,lexical_compare_points> remaningpoints;
         for(auto x:simplices){
-			auto vali = validatesimplex(root,x,homologydim);
-			if(vali.first){
-			   validones.insert(x);
-			   for(auto z: x)
-					accountedpoints.insert(z);
+			double weight = 0;
+			for(auto y:x){
+				for(auto z:x){
+					double dist = utils::vectors_distance(y,z);
+					if(dist>weight)
+					   weight = dist;
+				}
+			}
+			if(weight <epsilon){
+				auto vali = validatesimplex(root,x,homologydim);
+				if(vali.first){
+				validones.insert(x);
+				for(auto z: x)
+						accountedpoints.insert(z);
+				}
 			}
 		}
 		std::vector<std::vector<double>> tp(isolatedpoints.begin(),isolatedpoints.end());
@@ -598,7 +635,7 @@ std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pai
 			
 	return candidateSimplices;
 }
-std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::mergedmesh(dwaytreenode* root, std::vector<std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>>> meshestomerge,double beta, int homologydim){
+std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::mergedmesh(dwaytreenode* root, std::vector<std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>>> meshestomerge,double beta, int homologydim,double epsilon){
 	
 	// Coding now only for binary tree, which is suffucient in most practical applications
     std::set<std::vector<double>,lexical_compare_points> isolatedpoints1;
@@ -613,12 +650,23 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
 		}
 	}
 	//Create a third partition of these Isolated Points by validating any simplex in there
-	auto newpartition = generatePartitionFromIsolatedPoints(root,isolatedpoints1,homologydim);
-	if(propermeshestomerge.size()<=0){
+	auto newpartition = generatePartitionFromIsolatedPoints(root,isolatedpoints1,homologydim,epsilon);
+	
+    if(propermeshestomerge.size()<=0){
 		return newpartition;
 	}
+	 
+	auto start2 = high_resolution_clock::now();
 	auto propersimplices = generateAllSimplicestoCheck1(root,propermeshestomerge,newpartition,homologydim);
+    auto stop2 = high_resolution_clock::now();
+    auto duration2 = duration_cast<microseconds>(stop2 - start2);
+    time2.push_back(duration2.count());
+    
+	auto start3 = high_resolution_clock::now();
 	auto validatedsimplices = validatesimplices(root,propersimplices,beta);	
+    auto stop3 = high_resolution_clock::now();
+    auto duration3 = duration_cast<microseconds>(stop3 - start3);
+    time3.push_back(duration3.count());
 	std::vector<std::vector<double>> tp(validatedsimplices.second.begin(),validatedsimplices.second.end());
 
 	
@@ -770,9 +818,192 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
 	return std::make_pair(fvl,newisolateupdated);
 	*/
 }
+std::vector<std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>>> dwaytreenode::computeSpaceFabricNeighbourhood(dwaytreenode* root,std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>> properMeshes,double epsilon,int homologydim){
+       
+    std::vector<std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>>> filteredSimplices;
+    int i=0;
+    for(auto mesh: properMeshes){
+		int j=0;
+		double d = 0;
+		for(auto x:root->coordinates)
+			d -=x*root->directionVectors[i][j++];
+    
+		std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>> allSimplices(homologydim+1);
+		for(auto properMesh : mesh){
+			for(auto x : properMesh){
+				int k=0;
+				std::set<std::vector<double>,lexical_compare_points> filteredpts;
+				double distancefromSplittingPlane = utils::distanceFromHyperplane(x,root->directionVectors[i], d);
+					if(distancefromSplittingPlane<epsilon){
+						k++;
+						filteredpts.insert(x);
+					}
+				if(k>0)	
+					allSimplices[k-1].insert(filteredpts);
+			}
+		}
+		filteredSimplices.push_back(allSimplices);
+		i++;	
+	}		
+    return filteredSimplices;
+}
+
+std::set<std::set<std::vector<double>,lexical_compare_points>> dwaytreenode:: generateKSimplices(std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>> stichNeighboorhood,int k,int homologydim){
+    std::set<std::set<std::vector<double>,lexical_compare_points>> Ksimplices(stichNeighboorhood[k].begin(),stichNeighboorhood[k].end());
+    
+    for(int i=k+1;i<homologydim;i++){
+	     auto ksim = generateCombinationsall(stichNeighboorhood[i],k);
+	     for(auto g : ksim)
+	          Ksimplices.insert(g);
+	}
+	
+	return Ksimplices;
+}
 
 
-std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::meshGeneration(dwaytreenode* mainroot,dwaytreenode* root, double beta, int homologydim){
+std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> dwaytreenode:: generateSimplicesToConsider(dwaytreenode* root,std::vector<std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>>> stichNeighboorhood,std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>> propermeshestomerge,std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> newpartition,int homologydim,double epsilon){
+	std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> simpliceToConsider;
+	for(int k = 0;k<homologydim;k++){
+		int otherk = homologydim-k-1;
+		for(int i = 0;i<stichNeighboorhood.size();i++){
+			auto ksimplices = generateKSimplices(stichNeighboorhood[i],k,homologydim); 
+			auto face = generateCombinations(newpartition.second,k);
+			for(auto v:face)
+				ksimplices.insert(v);	
+            for(auto ksim : ksimplices){
+				for(int g = 0;g<stichNeighboorhood.size();g++){
+					if(i!=g){
+						std::set<std::vector<double>> intersectionregion;
+						bool first = true;
+						for(auto pt :ksim){
+							if(first)
+								intersectionregion = pointInBall(root,pt,epsilon);
+							else{
+								auto intersectionregionnext =  pointInBall(root,pt,epsilon); //find regionofinterestinotherpartion
+								for(auto d: intersectionregionnext)
+									intersectionregion.erase(d);
+							}
+						      first = false;
+						}
+						auto otherksimplices = generateKSimplices(stichNeighboorhood[g],otherk,homologydim); 
+						for(auto otherksim : otherksimplices){
+							int count =0;
+							for(auto othsim : otherksim){
+								if(intersectionregion.find(othsim) !=intersectionregion.end())
+								   count++;
+								}
+							if(count==otherksim.size()){
+								// Mergetobecheckedforvalidsimplices
+								std::set<std::vector<double>,lexical_compare_points> newsimplex;
+								std::set_union(ksim.begin(), ksim.end(),otherksim.begin(), otherksim.end(),std::inserter(newsimplex, newsimplex.begin()));
+								auto simple = validatesimplex(root,newsimplex,homologydim);
+								simpliceToConsider.insert(simple.second);
+
+								}
+						}
+					}
+				}
+			}
+		}
+	}
+	std::set<std::set<std::vector<double>,lexical_compare_points>> simpliceToConsider1;
+	for(int k = 0;k<homologydim-1;k++){
+		int otherk = homologydim-k-2;
+		for(int i = 0;i<stichNeighboorhood.size();i++){
+			auto ksimplices = generateKSimplices(stichNeighboorhood[i],k,homologydim); 
+	        for(auto ksim : ksimplices){
+				for(int g = 0;g<stichNeighboorhood.size();g++){
+					if(i!=g){
+						std::set<std::vector<double>> intersectionregion;
+						bool first = true;
+						for(auto pt :ksim){
+							if(first)
+								intersectionregion = pointInBall(root,pt,epsilon);
+							else{
+								auto intersectionregionnext =  pointInBall(root,pt,epsilon); //find regionofinterestinotherpartion
+								for(auto d: intersectionregionnext)
+									intersectionregion.erase(d);
+							}
+						      first = false;
+						}
+						auto otherksimplices = generateKSimplices(stichNeighboorhood[g],otherk,homologydim); 
+						for(auto otherksim : otherksimplices){
+							int count =0;
+							for(auto othsim : otherksim){
+								if(intersectionregion.find(othsim) !=intersectionregion.end())
+								   count++;
+								}
+							if(count==otherksim.size()){
+								// Mergetobecheckedforvalidsimplices
+								std::set<std::vector<double>,lexical_compare_points> newsimplex;
+								std::set_union(ksim.begin(), ksim.end(),otherksim.begin(), otherksim.end(),std::inserter(newsimplex, newsimplex.begin()));
+								simpliceToConsider1.insert(newsimplex);
+
+								}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+		
+	
+		
+	for(auto v:newpartition.second)
+	  for(auto tr : simpliceToConsider1){
+	  		std::set<std::vector<double>,lexical_compare_points> newsimplex(tr.begin(),tr.end());
+			newsimplex.insert(v);
+			auto simple = validatesimplex(root,newsimplex,homologydim);
+			simpliceToConsider.insert(simple.second);
+		}
+		
+	return simpliceToConsider;
+}
+
+std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::stichMesh(dwaytreenode* mainroot,dwaytreenode* root, std::vector<std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>>> meshestomerge,double beta, int homologydim,double epsilon){
+	
+	
+	// Coding now only for binary tree, which is suffucient in most practical applications
+    std::set<std::vector<double>,lexical_compare_points> isolatedpoints1;
+    std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>> propermeshestomerge;
+    //Collect All the Isolated Points accross all partitions
+    for(auto x:meshestomerge){
+		for(auto y :x.second){
+			isolatedpoints1.insert(y);
+		}
+		if(x.first.size()>0){
+			propermeshestomerge.push_back(x.first);
+		}
+	}
+	//Create a third partition of these Isolated Points by validating any simplex in there
+	auto newpartition = generatePartitionFromIsolatedPoints(mainroot,isolatedpoints1,homologydim,epsilon);
+    if(propermeshestomerge.size()<=0){
+		return newpartition;
+	}
+	if(newpartition.first.size()>0)
+		propermeshestomerge.push_back(newpartition.first);
+	auto stichNeighboorhood = computeSpaceFabricNeighbourhood(root,propermeshestomerge,epsilon,homologydim);		
+    auto properSimplices = generateSimplicesToConsider(root,stichNeighboorhood,propermeshestomerge,newpartition,homologydim,epsilon);
+    auto validatedsimplices = validatesimplices(mainroot,properSimplices,beta);	
+	std::vector<std::vector<double>> tp(validatedsimplices.second.begin(),validatedsimplices.second.end());
+
+	for(auto x:meshestomerge){
+		for(auto y:x.first){
+			validatedsimplices.first.insert(y);
+			for(auto t:y)
+				tp.erase(std::remove(tp.begin(), tp.end(), t), tp.end());
+		}
+	}
+	std::set<std::vector<double>,lexical_compare_points> isolatedpointsnew(tp.begin(),tp.end());
+	validatedsimplices.second = isolatedpointsnew;
+	for(auto x:newpartition.first)
+		validatedsimplices.first.insert(x);
+		
+    return validatedsimplices;
+}
+
+std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::meshGeneration(dwaytreenode* mainroot,dwaytreenode* root, double beta, int homologydim, double epsilon){
 	std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> mesh;		
     if (root == nullptr){
         return mesh;
@@ -785,9 +1016,11 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
     
     
     for(auto child:root->children){
-		meshestomerge.push_back(meshGeneration(mainroot,child,beta,homologydim));
+		meshestomerge.push_back(meshGeneration(mainroot,child,beta,homologydim,epsilon));
 	}
-	return mergedmesh(mainroot,meshestomerge,beta,homologydim);
+	return stichMesh(mainroot,root,meshestomerge,beta,homologydim,epsilon);
+
+//	return mergedmesh(mainroot,meshestomerge,beta,homologydim,epsilon);
 
 }
 
@@ -1007,9 +1240,9 @@ dwaytreenode* dwaytreenode:: findNearestNeighbor(dwaytreenode* root, std::vector
 	return best;
 	
 }
-
+	
 bool dwaytreenode::checkPointInBall(dwaytreenode* root, std::vector<double> pt,double radius, std::vector<std::vector<double>> omissions)
-{
+{   
 	if(root->children.size()==0)
 		if(utils::vectors_distance(pt,root->coordinates) < radius)
 			return std::find(omissions.begin(),omissions.end(),root->coordinates)==omissions.end() ? true : false;
@@ -1020,18 +1253,18 @@ bool dwaytreenode::checkPointInBall(dwaytreenode* root, std::vector<double> pt,d
 	return false;
 }
 
-std::vector<std::vector<double>> dwaytreenode::pointInBall(dwaytreenode* root, std::vector<double> pt,double radius)
+std::set<std::vector<double>> dwaytreenode::pointInBall(dwaytreenode* root, std::vector<double> pt,double radius)
 {
-	std::vector<std::vector<double>> point_in_Ball;
+	std::set<std::vector<double>> point_in_Ball;
 	if(root->children.size()==0)
 	{
 		if(utils::vectors_distance(pt,root->coordinates) < radius)
-			point_in_Ball.push_back(root->coordinates);
+			point_in_Ball.insert(root->coordinates);
 		return point_in_Ball;
 	}
 	for(auto child_node : root->children)
 		if(utils::vectors_distance(pt,child_node->coordinates)<(radius+child_node->radius))
 			for(auto point:pointInBall(child_node, pt, radius))
-				point_in_Ball.push_back(point);
+				point_in_Ball.insert(point);
 	return point_in_Ball;
 }

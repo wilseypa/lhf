@@ -9,6 +9,9 @@
 #include <cstdlib>
 #include <ctime>
 #include <chrono>
+#include <fstream>
+
+
 using namespace std::chrono;
 void fill_row(std::vector<double> & row)
 {
@@ -70,18 +73,56 @@ int main(){
    	int hdim;
    	std::cout<<"Enter Homology Dimension";
    	std::cin>>hdim;
-   	auto mesh = tree->meshGeneration(tree,tree,1,hdim);
-/*    std::cout<<"simplices::\n";
+   	double epsilon;
+   	std::cout<<"Enter Homology Epsilon";
+   	std::cin>>epsilon;
+   	double beta;
+   	std::cout<<"Enter Sparsification Factor Beta";
+   	std::cin>>beta;
+   	auto mesh = tree->meshGeneration(tree,tree,1,hdim,epsilon);
+    double total = 0;
+   	for(auto t1 :time1){
+	//	std::cout<<t1/1000000<<" ";
+		total += t1/1000000;
+	} 
+	std::cout<<" Total::"<<total<<"\n";
+	total = 0;
+	for(auto t1 :time2){
+	//	std::cout<<t1/1000000<<" ";
+		total += t1/1000000;
+	} 
+	std::cout<<" Total::"<<total<<"\n";
+	total = 0;
+	std::cout<<"\n";
+	for(auto t1 :time3){
+	//	std::cout<<t1/1000000<<" ";
+		total += t1/1000000;
+	} 
+	std::cout<<" Total::"<<total<<"\n";
+	total = 0;
+	std::cout<<"\n";
+	for(auto t1 :time4){
+	//	std::cout<<t1/1000000<<" ";
+		total += t1/1000000;
+	} 
+	std::cout<<" Total::"<<total<<"\n";
+	    std::cout<<"simplices::\n";
+	std::ofstream myfile;
+    myfile.open ("simplices.txt");
     for(auto x:mesh.first){
 		for(auto y:x){
-			std::cout<<" ";
+			bool v = true;
 			for(auto z:y){
-				std::cout<<" "<<z;
+				if(v)
+				 myfile<<z;
+				else
+				 myfile<<" "<<z;
+			  v = false;
 			}
-			std::cout<<std::endl;
+			myfile<<"\n";
 		}
-		std::cout<<std::endl;
 	}
+	myfile.close();
 	std::cout<<"Points\n";
 	for(auto x:mesh.second){
 		for(auto y:x){
@@ -89,7 +130,7 @@ int main(){
 		}
 		std::cout<<std::endl;
 	}
-*/
+
 	/*
 	std::cout<<tree->checkPointInBall(tree,{0,0} ,1.1,{data[0]});
 	auto temp=tree->pointInBall(tree,{0,0},1.1);
