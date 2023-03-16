@@ -161,11 +161,11 @@ std::pair<std::vector<std::vector<double>>,std::vector<unsigned>> utils :: kmean
 				}
 			}
 		}
-		
+		lastLabels = curLabels;
+
 		//Check for convergence
 		if(centroids == centroidsprev) break;
 		
-			lastLabels = curLabels;
 			centroidsprev = centroids;
 		
 	}
@@ -1679,3 +1679,4 @@ std::pair<std::vector<std::vector<double>>,std::vector<double>> utils::calculate
 		}
 		return std::make_pair(betacenters,betaradii);
 }
+
