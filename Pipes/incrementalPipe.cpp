@@ -5,72 +5,80 @@
 #include <omp.h>
 #include <unistd.h>
 
-const double tolerance = 1;
+const double tolerance = 0.99999;
 
-template <typename nodeType>
-double incrementalPipe<nodeType>::circumRadius(std::set<unsigned> simp, unsigned new_point)
+std::vector<double> operator-(const std::vector<double>& a, const std::vector<double>& b) {
+    if (a.size() != b.size()) {
+        throw std::invalid_argument("Vectors must have the same size.");
+    }
+    std::vector<double> c(a.size());
+    for (int i = 0; i < a.size(); ++i)
+        c[i] = a[i] - b[i];
+    return c;
+}
+
+template<typename T>
+std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
 {
-	simp.insert(new_point);
-	return sqrt(utils::circumRadius(simp, this->distMatrix));
+    std::cout << "[ ";
+    for (const auto& elem : v) {
+        std::cout << elem << " ";
+    }
+    std::cout<< "]";
+    return os;
+}
+
+template <typename T>
+std::set<T> operator+(std::set<T> a, T b) {
+	a.insert(b);
+    return a;
+}
+
+double dot(const std::vector<double>& a, const std::vector<double>& b) {
+    double c=0;
+    for (int i = 0; i < a.size(); ++i)
+        c += a[i] * b[i];
+    return c;
 }
 
 template <typename nodeType>
 int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::set<unsigned> simp, unsigned omission)
 {
+	std::vector<double> p1=utils::circumCenter(simp, this->inputData);
+	std::vector<double> normal=utils::circumCenter(simp+omission, this->inputData)-p1;
+	bool direction=dot(normal,inputData[omission]-p1)>0;
 	double rad_vector[this->inputData.size()];
-	double largest_radius = -100, smallest_radius = 1e+308, ring_radius;
-	int partitioning_point = -1, triangulation_point = -1;
+	double smallest_radius = 1e+308, ring_radius;
+	int triangulation_point = -1;
 	for (auto new_point : this->search_space)
 	{
-		if (simp.find(new_point) != simp.end())
+		if (simp.find(new_point) != simp.end() || new_point == omission || (direction^(dot(normal,this->inputData[new_point]-p1)<0)))
 			continue;
-		rad_vector[new_point] = circumRadius(simp, new_point);
-		if (largest_radius < rad_vector[new_point])
+		rad_vector[new_point] = sqrt(utils::circumRadius(simp+new_point,this->distMatrix));
+		if (smallest_radius > rad_vector[new_point])
 		{
-			largest_radius = rad_vector[new_point];
-			partitioning_point = new_point;
+			smallest_radius = rad_vector[new_point];
+			triangulation_point = new_point;
 		}
 	}
-	simp.insert(partitioning_point);
-	std::vector<double> largest_circle_center = utils::circumCenter(simp, this->inputData);
-	simp.erase(partitioning_point);
-	if (largest_radius > utils::vectors_distance(largest_circle_center, this->inputData[omission])) // prior point lied inside the circle new_triangulation will be outside the largest_circle
-	{
-		for (auto new_point : this->search_space)
-		{
-			if (simp.find(new_point) == simp.end() && new_point != omission && smallest_radius > rad_vector[new_point] && largest_radius < tolerance * utils::vectors_distance(largest_circle_center, this->inputData[new_point]))
-			{
-				smallest_radius = rad_vector[new_point];
-				triangulation_point = new_point;
-			}
-		}
-	}
-	else
-	{
-		for (auto new_point : this->search_space)
-		{
-			if (simp.find(new_point) == simp.end() && new_point != omission && smallest_radius > rad_vector[new_point] && largest_radius * tolerance > utils::vectors_distance(largest_circle_center, this->inputData[new_point]))
-			{
-				smallest_radius = rad_vector[new_point];
-				triangulation_point = new_point;
-			}
-		}
-	}
+	//std::cout<<inputData[triangulation_point] << triangulation_point <<std::endl;
 	if (triangulation_point != -1)
 	{
-		simp.insert(triangulation_point);
-		std::vector<double> smallest_circle_center = utils::circumCenter(simp, this->inputData);
+		std::vector<double> smallest_circle_center = utils::circumCenter(simp+(unsigned)triangulation_point, this->inputData);
 		ring_radius = smallest_radius;
 		for (auto new_point : this->search_space)
 		{
-			if (simp.find(new_point) == simp.end() && new_point != omission && smallest_radius < rad_vector[new_point] && ring_radius * 0.99999999 > utils::vectors_distance(smallest_circle_center, this->inputData[new_point]))
+			if (simp.find(new_point) == simp.end() && new_point != omission && smallest_radius < rad_vector[new_point] && ring_radius > utils::vectors_distance(smallest_circle_center, this->inputData[new_point]))
 			{
 				smallest_radius = rad_vector[new_point];
-				triangulation_point = (int)new_point;
+				triangulation_point = new_point;
 			}
 		}
+/* 		std::cout<<dot(normal,inputData[omission]-p1)<<" ";
+		std::cout<<dot(normal,inputData[triangulation_point]-p1)<<" "; */
 	}
 	return triangulation_point;
+
 }
 
 // basePipe constructor
@@ -122,7 +130,7 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 			{
 				std::cout << i << " ";
 			}
-			std::cout <<iter.second<< ";";
+			std::cout <<iter.second<< ";"; 
 			for (auto i : new_simplex)
 			{
 				std::cout << i << " ";
