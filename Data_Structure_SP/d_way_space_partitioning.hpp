@@ -461,7 +461,7 @@ std::pair<bool,std::pair<std::set<std::vector<double>,lexical_compare_points>,st
 	auto start4 = high_resolution_clock::now();
 	std::string mode = "betaHighCircle"; //betaHighLune
 	bool val = checkInsertSubDsimplex(repsimplex,simpl,distMatrix,beta,root,mode);
-	if(!val){
+	if(val){
 			return std::make_pair(true,std::make_pair(simplex,std::make_pair(cc,radius)));			 
 
 	}
