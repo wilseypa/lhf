@@ -69,7 +69,7 @@ int main(){
 	dwaytreenode *tree; 
     tree = tree->buildDwayTree(data,-1,"nary",2);
     //tree->printTree(tree);
-   	//tree->printLevelOrder(tree,tree);
+   	tree->printLevelOrder(tree,tree);
    	int hdim;
    	std::cout<<"Enter Homology Dimension";
    	std::cin>>hdim;
@@ -79,7 +79,7 @@ int main(){
    	double beta;
    	std::cout<<"Enter Sparsification Factor Beta";
    	std::cin>>beta;
-   	auto mesh = tree->meshGeneration(tree,tree,1,hdim,epsilon);
+   	auto mesh = tree->meshGeneration(tree,tree,beta,hdim,epsilon);
     double total = 0;
    	for(auto t1 :time1){
 	//	std::cout<<t1/1000000<<" ";
@@ -109,9 +109,12 @@ int main(){
 	    std::cout<<"simplices::\n";
 	std::ofstream myfile;
     myfile.open ("simplices.txt");
+    int size =0;
     for(auto x:mesh.first){
+		int size =0;
 		for(auto y:x){
 			bool v = true;
+			size++;
 			for(auto z:y){
 				if(v)
 				 myfile<<z;
@@ -121,6 +124,7 @@ int main(){
 			}
 			myfile<<"\n";
 		}
+		myfile<<"\nsize "<<size<<"\n";
 	}
 	myfile.close();
 	std::cout<<"Points\n";

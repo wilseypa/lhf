@@ -819,44 +819,56 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
 	*/
 }
 std::vector<std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>>> dwaytreenode::computeSpaceFabricNeighbourhood(dwaytreenode* root,std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>> properMeshes,double epsilon,int homologydim){
-       
+ 	
     std::vector<std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>>> filteredSimplices;
     int i=0;
     for(auto mesh: properMeshes){
 		int j=0;
 		double d = 0;
-		for(auto x:root->coordinates)
-			d -=x*root->directionVectors[i][j++];
+		int vec1;
+		 if(i>=root->directionVectors.size())
+			vec1 = 0;
+	    else 
+ 	        vec1 = i;
+ 		for(auto x:root->coordinates)
+			d -=x*root->directionVectors[vec1][j++];
     
 		std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>> allSimplices(homologydim+1);
 		for(auto properMesh : mesh){
+			int k=0;
+			std::set<std::vector<double>,lexical_compare_points> filteredpts;
 			for(auto x : properMesh){
-				int k=0;
-				std::set<std::vector<double>,lexical_compare_points> filteredpts;
-				double distancefromSplittingPlane = utils::distanceFromHyperplane(x,root->directionVectors[i], d);
+				    int vec;
+				    if(i>=root->directionVectors.size())
+				       vec = 0;
+				    else 
+				       vec = i;
+					double distancefromSplittingPlane = utils::distanceFromHyperplane(x,root->directionVectors[vec], d);
 					if(distancefromSplittingPlane<epsilon){
 						k++;
 						filteredpts.insert(x);
+
 					}
-				if(k>0)	
-					allSimplices[k-1].insert(filteredpts);
 			}
+			if(k>0)	
+				allSimplices[k-1].insert(filteredpts);
 		}
 		filteredSimplices.push_back(allSimplices);
 		i++;	
-	}		
+	}	
+	
     return filteredSimplices;
 }
 
 std::set<std::set<std::vector<double>,lexical_compare_points>> dwaytreenode:: generateKSimplices(std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>> stichNeighboorhood,int k,int homologydim){
     std::set<std::set<std::vector<double>,lexical_compare_points>> Ksimplices(stichNeighboorhood[k].begin(),stichNeighboorhood[k].end());
     
-    for(int i=k+1;i<homologydim;i++){
+    for(int i=k+1;i<homologydim+1;i++){
 	     auto ksim = generateCombinationsall(stichNeighboorhood[i],k);
 	     for(auto g : ksim)
 	          Ksimplices.insert(g);
 	}
-	
+  
 	return Ksimplices;
 }
 
@@ -871,6 +883,7 @@ std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pai
 			for(auto v:face)
 				ksimplices.insert(v);	
             for(auto ksim : ksimplices){
+		
 				for(int g = 0;g<stichNeighboorhood.size();g++){
 					if(i!=g){
 						std::set<std::vector<double>> intersectionregion;
@@ -881,7 +894,8 @@ std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pai
 							else{
 								auto intersectionregionnext =  pointInBall(root,pt,epsilon); //find regionofinterestinotherpartion
 								for(auto d: intersectionregionnext)
-									intersectionregion.erase(d);
+									if(intersectionregion.find(d)==intersectionregion.end())
+										intersectionregion.erase(d);
 							}
 						      first = false;
 						}
@@ -922,7 +936,8 @@ std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pai
 							else{
 								auto intersectionregionnext =  pointInBall(root,pt,epsilon); //find regionofinterestinotherpartion
 								for(auto d: intersectionregionnext)
-									intersectionregion.erase(d);
+									if(intersectionregion.find(d)==intersectionregion.end())
+										intersectionregion.erase(d);
 							}
 						      first = false;
 						}
@@ -947,7 +962,17 @@ std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pai
 		}
 	}
 	
-		
+	if(stichNeighboorhood.size()==1){
+		auto ksimplices = generateKSimplices(stichNeighboorhood[0],homologydim-1,homologydim);
+		for(auto pt :newpartition.second){
+			for(auto subsim :ksimplices){
+				std::set<std::vector<double>,lexical_compare_points> newsimplex(subsim.begin(),subsim.end());
+				newsimplex.insert(pt);
+				auto simple = validatesimplex(root,newsimplex,homologydim);
+				simpliceToConsider.insert(simple.second);
+			}
+		}
+	}	
 	
 		
 	for(auto v:newpartition.second)
@@ -966,26 +991,50 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
 	
 	// Coding now only for binary tree, which is suffucient in most practical applications
     std::set<std::vector<double>,lexical_compare_points> isolatedpoints1;
+    std::set<std::vector<double>,lexical_compare_points> isolatedpointsnotinrange;
+    std::set<std::vector<double>,lexical_compare_points> isolatedpointsinrange;
+
     std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>> propermeshestomerge;
+    
     //Collect All the Isolated Points accross all partitions
+    int i=0;
     for(auto x:meshestomerge){
+		int j=0;
+		double d = 0;
+		for(auto x:root->coordinates)
+			d -=x*root->directionVectors[i][j++];
 		for(auto y :x.second){
 			isolatedpoints1.insert(y);
+			if(utils::distanceFromHyperplane(y,root->directionVectors[i], d)<epsilon)
+				isolatedpointsinrange.insert(y);
+			else
+				isolatedpointsnotinrange.insert(y);
 		}
 		if(x.first.size()>0){
 			propermeshestomerge.push_back(x.first);
 		}
+		i++;
 	}
+
 	//Create a third partition of these Isolated Points by validating any simplex in there
-	auto newpartition = generatePartitionFromIsolatedPoints(mainroot,isolatedpoints1,homologydim,epsilon);
+	
+	auto newpartition = generatePartitionFromIsolatedPoints(mainroot,isolatedpointsinrange,homologydim,epsilon);
+	for(auto x:isolatedpointsnotinrange){
+		newpartition.second.insert(x);
+	}
     if(propermeshestomerge.size()<=0){
 		return newpartition;
 	}
+
 	if(newpartition.first.size()>0)
 		propermeshestomerge.push_back(newpartition.first);
-	auto stichNeighboorhood = computeSpaceFabricNeighbourhood(root,propermeshestomerge,epsilon,homologydim);		
+
+	auto stichNeighboorhood = computeSpaceFabricNeighbourhood(root,propermeshestomerge,epsilon,homologydim);	
+			
     auto properSimplices = generateSimplicesToConsider(root,stichNeighboorhood,propermeshestomerge,newpartition,homologydim,epsilon);
+    
     auto validatedsimplices = validatesimplices(mainroot,properSimplices,beta);	
+
 	std::vector<std::vector<double>> tp(validatedsimplices.second.begin(),validatedsimplices.second.end());
 
 	for(auto x:meshestomerge){
