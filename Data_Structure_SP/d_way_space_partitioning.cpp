@@ -69,7 +69,7 @@ int main(){
 	dwaytreenode *tree; 
     tree = tree->buildDwayTree(data,-1,"nary",2);
     //tree->printTree(tree);
-   	tree->printLevelOrder(tree,tree);
+   	//tree->printLevelOrder(tree,tree);
    	int hdim;
    	std::cout<<"Enter Homology Dimension";
    	std::cin>>hdim;
@@ -124,7 +124,6 @@ int main(){
 			}
 			myfile<<"\n";
 		}
-		myfile<<"\nsize "<<size<<"\n";
 	}
 	myfile.close();
 	std::cout<<"Points\n";
