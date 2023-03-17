@@ -6,52 +6,43 @@
 #include <unistd.h>
 
 template <typename T>
-std::vector<T> operator-(const std::vector<T>& a, const std::vector<T>& b) {
-    std::vector<T> c(a.size());
-    for (int i = 0; i < a.size(); ++i)
-        c[i] = a[i] - b[i];
-    return c;
-}
-
-template<typename T>
-std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
+std::vector<T> operator-(const std::vector<T> &a, const std::vector<T> &b)
 {
-    std::cout << "[";
-    for (typename std::vector<T>::const_iterator it = v.begin(); it != v.end(); ++it) {
-        std::cout << *it;
-        if (it != v.end() - 1) 
-            std::cout << ", ";
-    }
-    std::cout << "]";
-    return os;
+	std::vector<T> c(a.size());
+	for (int i = 0; i < a.size(); ++i)
+		c[i] = a[i] - b[i];
+	return c;
 }
 
 template <typename T>
-std::set<T> operator+(std::set<T> a, T b) {
+std::set<T> operator+(std::set<T> a, T b)
+{
 	a.insert(b);
-    return a;
+	return a;
 }
 
-double dot(const std::vector<double>& a, const std::vector<double>& b) {
-    double c=0;
-    for (int i = 0; i < a.size(); ++i)
-        c += a[i] * b[i];
-    return c;
+double dot(const std::vector<double> &a, const std::vector<double> &b)
+{
+	double c = 0;
+	for (int i = 0; i < a.size(); ++i)
+		c += a[i] * b[i];
+	return c;
 }
+
 template <typename nodeType>
 int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::set<unsigned> simp, unsigned omission)
 {
-	auto p1=utils::circumCenter(simp, this->inputData);
-	auto normal=utils::circumCenter(simp+omission, this->inputData)-p1;
-	auto direction=dot(normal,this->inputData[omission]-p1)>0;
+	auto p1 = utils::circumCenter(simp, this->inputData);
+	auto normal = utils::circumCenter(simp + omission, this->inputData) - p1;
+	auto direction = dot(normal, this->inputData[omission] - p1) > 0;
 	double rad_vector[this->inputData.size()];
 	double smallest_radius = 1e+308, ring_radius;
 	int triangulation_point = -1;
 	for (auto new_point : this->search_space)
 	{
-		if (simp.find(new_point) != simp.end() || new_point == omission || (direction^(dot(normal,this->inputData[new_point]-p1)<0)))
+		if (simp.find(new_point) != simp.end() || new_point == omission || (direction ^ (dot(normal, this->inputData[new_point] - p1) < 0)))
 			continue;
-		rad_vector[new_point] = sqrt(utils::circumRadius(simp+new_point,this->distMatrix));
+		rad_vector[new_point] = sqrt(utils::circumRadius(simp + new_point, this->distMatrix));
 		if (smallest_radius > rad_vector[new_point])
 		{
 			smallest_radius = rad_vector[new_point];
@@ -60,9 +51,9 @@ int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::set<unsigned> simp,
 	}
 	if (triangulation_point != -1)
 	{
-		auto smallest_circle_center = utils::circumCenter(simp+(unsigned)triangulation_point, this->inputData);
+		auto smallest_circle_center = utils::circumCenter(simp + (unsigned)triangulation_point, this->inputData);
 		ring_radius = smallest_radius;
-		for (const auto& new_point : this->search_space)
+		for (const auto &new_point : this->search_space)
 		{
 			if (simp.find(new_point) == simp.end() && new_point != omission && smallest_radius < rad_vector[new_point] && ring_radius > utils::vectors_distance(smallest_circle_center, this->inputData[new_point]))
 			{
@@ -92,13 +83,12 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	for (unsigned i = 0; i < this->inputData.size(); i++)
 		this->search_space.push_back(i);
 	this->distMatrix = (((alphaComplex<alphaNode> *)inData.complex)->distMatrix);
-	std::set<std::set<unsigned>> dsimplexes;
+	std::set<std::set<unsigned>> dsimplexes = {{41, 138, 142, 309, 444, 464}};
 	std::map<std::set<unsigned>, unsigned> inner_d_1_shell;
+	std::set<std::set<unsigned>> outer_dsimplexes;
 	std::map<std::set<unsigned>, unsigned> outer_d_1_shell;
-	std::set<std::set<unsigned>> simplex = {{2, 37, 73, 77, 168, 190}};
-	for (auto new_simplex : simplex)
+	for (auto new_simplex : dsimplexes)
 	{
-		dsimplexes.insert(new_simplex);
 		for (auto i : new_simplex)
 		{
 			std::set<unsigned> key = new_simplex;
@@ -112,31 +102,27 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		for (auto iter : inner_d_1_shell)
 		{
 			new_point = expand_d_minus_1_simplex(iter.first, iter.second);
-			if (new_point == -1)
-				continue;
-			auto new_simplex = iter.first;
-			new_simplex=new_simplex+(unsigned)new_point;
-			auto x = dsimplexes.insert(new_simplex);
-			if (x.second == false)
-				continue;
-			for (auto i : new_simplex)
-			{
-				std::set<unsigned> key = new_simplex;
-				key.erase(i);
-				if (outer_d_1_shell.find(key) != outer_d_1_shell.end())
+			if (new_point != -1)
+				outer_dsimplexes.insert(iter.first + (unsigned)new_point);
+		}
+		for (auto new_simplex : outer_dsimplexes)
+		{
+			if (dsimplexes.insert(new_simplex).second) // If new simplex
+				for (auto i : new_simplex)
 				{
-					outer_d_1_shell.erase(key);
-					continue;
+					std::set<unsigned> key = new_simplex;
+					key.erase(i);
+					if (!outer_d_1_shell.emplace(key, i).second) // Insert into outer face shell
+						outer_d_1_shell.erase(key);				 // Remove collided faces max only 2 can occur.
 				}
-				outer_d_1_shell[key] = i;
-			}
 		}
 		for (auto simp : inner_d_1_shell)
-			outer_d_1_shell.erase(simp.first);
+			outer_d_1_shell.erase(simp.first); // Remove faces from previous iteration
 		inner_d_1_shell = outer_d_1_shell;
 		outer_d_1_shell.clear();
+		outer_dsimplexes.clear();
 	}
-	std::cout<<dsimplexes.size();
+	std::cout << dsimplexes.size();
 	return;
 }
 
