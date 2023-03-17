@@ -5,13 +5,9 @@
 #include <omp.h>
 #include <unistd.h>
 
-const double tolerance = 0.99999;
-
-std::vector<double> operator-(const std::vector<double>& a, const std::vector<double>& b) {
-    if (a.size() != b.size()) {
-        throw std::invalid_argument("Vectors must have the same size.");
-    }
-    std::vector<double> c(a.size());
+template <typename T>
+std::vector<T> operator-(const std::vector<T>& a, const std::vector<T>& b) {
+    std::vector<T> c(a.size());
     for (int i = 0; i < a.size(); ++i)
         c[i] = a[i] - b[i];
     return c;
@@ -20,11 +16,13 @@ std::vector<double> operator-(const std::vector<double>& a, const std::vector<do
 template<typename T>
 std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
 {
-    std::cout << "[ ";
-    for (const auto& elem : v) {
-        std::cout << elem << " ";
+    std::cout << "[";
+    for (typename std::vector<T>::const_iterator it = v.begin(); it != v.end(); ++it) {
+        std::cout << *it;
+        if (it != v.end() - 1) 
+            std::cout << ", ";
     }
-    std::cout<< "]";
+    std::cout << "]";
     return os;
 }
 
@@ -40,13 +38,12 @@ double dot(const std::vector<double>& a, const std::vector<double>& b) {
         c += a[i] * b[i];
     return c;
 }
-
 template <typename nodeType>
 int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::set<unsigned> simp, unsigned omission)
 {
-	std::vector<double> p1=utils::circumCenter(simp, this->inputData);
-	std::vector<double> normal=utils::circumCenter(simp+omission, this->inputData)-p1;
-	bool direction=dot(normal,inputData[omission]-p1)>0;
+	auto p1=utils::circumCenter(simp, this->inputData);
+	auto normal=utils::circumCenter(simp+omission, this->inputData)-p1;
+	auto direction=dot(normal,this->inputData[omission]-p1)>0;
 	double rad_vector[this->inputData.size()];
 	double smallest_radius = 1e+308, ring_radius;
 	int triangulation_point = -1;
@@ -61,12 +58,11 @@ int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::set<unsigned> simp,
 			triangulation_point = new_point;
 		}
 	}
-	//std::cout<<inputData[triangulation_point] << triangulation_point <<std::endl;
 	if (triangulation_point != -1)
 	{
-		std::vector<double> smallest_circle_center = utils::circumCenter(simp+(unsigned)triangulation_point, this->inputData);
+		auto smallest_circle_center = utils::circumCenter(simp+(unsigned)triangulation_point, this->inputData);
 		ring_radius = smallest_radius;
-		for (auto new_point : this->search_space)
+		for (const auto& new_point : this->search_space)
 		{
 			if (simp.find(new_point) == simp.end() && new_point != omission && smallest_radius < rad_vector[new_point] && ring_radius > utils::vectors_distance(smallest_circle_center, this->inputData[new_point]))
 			{
@@ -74,11 +70,8 @@ int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::set<unsigned> simp,
 				triangulation_point = new_point;
 			}
 		}
-/* 		std::cout<<dot(normal,inputData[omission]-p1)<<" ";
-		std::cout<<dot(normal,inputData[triangulation_point]-p1)<<" "; */
 	}
 	return triangulation_point;
-
 }
 
 // basePipe constructor
@@ -102,7 +95,7 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	std::set<std::set<unsigned>> dsimplexes;
 	std::map<std::set<unsigned>, unsigned> inner_d_1_shell;
 	std::map<std::set<unsigned>, unsigned> outer_d_1_shell;
-	std::set<std::set<unsigned>> simplex = {{116, 128, 167}};
+	std::set<std::set<unsigned>> simplex = {{2, 37, 73, 77, 168, 190}};
 	for (auto new_simplex : simplex)
 	{
 		dsimplexes.insert(new_simplex);
@@ -121,21 +114,11 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 			new_point = expand_d_minus_1_simplex(iter.first, iter.second);
 			if (new_point == -1)
 				continue;
-			std::set<unsigned> new_simplex = iter.first;
-			new_simplex.insert(new_point);
+			auto new_simplex = iter.first;
+			new_simplex=new_simplex+(unsigned)new_point;
 			auto x = dsimplexes.insert(new_simplex);
 			if (x.second == false)
 				continue;
-			for (auto i : iter.first)
-			{
-				std::cout << i << " ";
-			}
-			std::cout <<iter.second<< ";"; 
-			for (auto i : new_simplex)
-			{
-				std::cout << i << " ";
-			}
-			std::cout << std::endl;
 			for (auto i : new_simplex)
 			{
 				std::set<unsigned> key = new_simplex;
@@ -149,21 +132,11 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 			}
 		}
 		for (auto simp : inner_d_1_shell)
-		{
 			outer_d_1_shell.erase(simp.first);
-		}
-
 		inner_d_1_shell = outer_d_1_shell;
 		outer_d_1_shell.clear();
 	}
-	/* 	for (auto simp : dsimplexes)
-		{
-			for (auto i : simp)
-			{
-				std::cout << i << " ";
-			}
-			std::cout << std::endl;
-		} */
+	std::cout<<dsimplexes.size();
 	return;
 }
 
