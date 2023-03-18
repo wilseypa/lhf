@@ -460,6 +460,8 @@ std::pair<bool,std::pair<std::set<std::vector<double>,lexical_compare_points>,st
 	auto radius = utils::vectors_distance(simpl[0],cc);
 	auto start4 = high_resolution_clock::now();
 	std::string mode = "betaHighCircle"; //betaHighLune
+//	bool val = checkPointInBall(root, cc,radius, simpl); 
+
 	bool val = checkInsertSubDsimplex(repsimplex,simpl,distMatrix,beta,root,mode);
 	if(val){
 			return std::make_pair(true,std::make_pair(simplex,std::make_pair(cc,radius)));			 
@@ -479,14 +481,32 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
    while(tovalidate.size()>0){
 	    auto simp = *(tovalidate.begin());
 	    std::vector<std::vector<double>> simpl(simp.first.begin(), simp.first.end());
+	    
+	    std::vector<std::vector<double>> distMatrix(simpl.size(),std::vector<double>(simpl.size()));
+		std::set<unsigned> repsimplex;
+		for(int i=0;i<simpl.size();i++)
+			repsimplex.insert(i);
+		int i= 0;
+		int j= 0;
+		for(auto y:simpl){
+			j=0;
+			for(auto z:simpl){
+				distMatrix[i][j] = utils::vectors_distance(y,z);
+				j++;
+			}
+			i++;
+		}
+		
 		tovalidate.erase(tovalidate.begin());
 		auto start4 = high_resolution_clock::now();
-		bool val = checkPointInBall(root, simp.second.first,simp.second.second, simpl); 
+		std::string mode = "betaHighCircle";
+		bool val = checkInsertSubDsimplex(repsimplex,simpl,distMatrix,beta,root,mode);
+//		bool val = checkPointInBall(root, simp.second.first,simp.second.second, simpl); 
 		auto stop4 = high_resolution_clock::now();
 		auto duration4 = duration_cast<microseconds>(stop4 - start4);
 		time4.push_back(duration4.count());
 	
-   		if(!val){
+   		if(val){
 			validatedSimplices.insert(simp.first);
 		    std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> remaining;
 			for(auto p: tovalidate){
@@ -542,13 +562,14 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
 					   weight = dist;
 				}
 			}
+	//		std::cout<<"weight::"<<weight<<"Epsilon::"<<epsilon<<"\n";
 			if(weight <epsilon){
-				auto vali = validatesimplex(root,x,homologydim,beta);
-				if(vali.first){
+				//auto vali = validatesimplex(root,x,homologydim,beta);
+				//if(vali.first){
 				validones.insert(x);
 				for(auto z: x)
 						accountedpoints.insert(z);
-				}
+				//}
 			}
 		}
 		std::vector<std::vector<double>> tp(isolatedpoints.begin(),isolatedpoints.end());
@@ -1012,20 +1033,54 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
 			d -=x*root->directionVectors[i][j++];
 		for(auto y :x.second){
 			isolatedpoints1.insert(y);
-			if(utils::distanceFromHyperplane(y,root->directionVectors[i], d)<epsilon)
+			if(utils::distanceFromHyperplane(y,root->directionVectors[i], d)<epsilon){
 				isolatedpointsinrange.insert(y);
+			//	std::cout<<"\nIn Range:: ";
+			}
 			else
 				isolatedpointsnotinrange.insert(y);
+		//	for(auto p:y)
+		//	    std::cout<<p<<" ";
+		//	std::cout<<"\n";
 		}
 		if(x.first.size()>0){
 			propermeshestomerge.push_back(x.first);
+	/*		for(auto p : x.first){
+				for(auto t:p){
+					for(auto l:t)
+						std::cout<<l<<" ";
+					std::cout<<"\n";
+				}
+				std::cout<<"\n";
+			}
+			std::cout<<"\n";	
+			*/	 
 		}
 		i++;
 	}
-
+//	int l;
+ //   std::cin>>l;
 	//Create a third partition of these Isolated Points by validating any simplex in there
 	
 	auto newpartition = generatePartitionFromIsolatedPoints(mainroot,isolatedpointsinrange,homologydim,epsilon,beta);
+/*	std::cout<<"Isolated Points::\n";
+	for(auto x:newpartition.second){
+		for(auto p:x)
+			    std::cout<<p<<" ";
+			std::cout<<"\n";
+	}
+	std::cout<<"Mesh::\n";
+		for(auto p:newpartition.first){
+				for(auto t:p){
+					for(auto l:t)
+						std::cout<<l<<" ";
+					std::cout<<"\n";
+				}
+				std::cout<<"\n";
+			}
+	
+    std::cin>>l;
+    * */
 	for(auto x:isolatedpointsnotinrange){
 		newpartition.second.insert(x);
 	}
@@ -1037,6 +1092,23 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
 		propermeshestomerge.push_back(newpartition.first);
 
 	auto stichNeighboorhood = computeSpaceFabricNeighbourhood(root,propermeshestomerge,epsilon,homologydim);	
+	/*
+	std::cout<<"To consider Neighborhood ::\n";
+		for(auto p:stichNeighboorhood){
+				for(auto t:p){
+					for(auto l:t){
+						for(auto m:l){
+							for(auto n:m)
+								std::cout<<n<<" ";
+							std::cout<<"\n";
+							}
+						}
+					std::cout<<"\n";
+				}
+				std::cout<<"\n";
+			}
+	  std::cin>>l;
+		*/
 			
     auto properSimplices = generateSimplicesToConsider(root,stichNeighboorhood,propermeshestomerge,newpartition,homologydim,epsilon,beta);
     

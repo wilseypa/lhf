@@ -68,8 +68,9 @@ int main(){
 	*/
 	dwaytreenode *tree; 
     tree = tree->buildDwayTree(data,-1,"nary",2);
-    //tree->printTree(tree);
+	//tree->printTree(tree);
    	//tree->printLevelOrder(tree,tree);
+   	
    	int hdim;
    	std::cout<<"Enter Homology Dimension";
    	std::cin>>hdim;
@@ -79,7 +80,41 @@ int main(){
    	double beta;
    	std::cout<<"Enter Sparsification Factor Beta";
    	std::cin>>beta;
+   	double betavalues[1] = {beta};
+	double epsilonvalues[1] = {epsilon};
+    
+	for(auto epsilon:epsilonvalues){
+		   	for(auto beta:betavalues){
+   	std::string filename = "simplices";
+   	filename.append("E");
+   	filename.append(std::to_string(epsilon));
+   	filename.append("B");
+   	filename.append(std::to_string(beta));
+   	filename.append(".txt");
+   	std::cout<<filename<<std::flush;
    	auto mesh = tree->meshGeneration(tree,tree,beta,hdim,epsilon);
+   	std::ofstream myfile;
+    myfile.open(filename);
+    int size =0;
+    for(auto x:mesh.first){
+		int size =0;
+		for(auto y:x){
+			bool v = true;
+			size++;
+			for(auto z:y){
+				if(v)
+				 myfile<<z;
+				else
+				 myfile<<" "<<z;
+			  v = false;
+			}
+			myfile<<"\n";
+		}
+	}
+	myfile.close();
+}
+}
+ /*
     double total = 0;
    	for(auto t1 :time1){
 	//	std::cout<<t1/1000000<<" ";
@@ -104,28 +139,10 @@ int main(){
 	for(auto t1 :time4){
 	//	std::cout<<t1/1000000<<" ";
 		total += t1/1000000;
-	} 
+	}
+	 
 	std::cout<<" Total::"<<total<<"\n";
 	    std::cout<<"simplices::\n";
-	std::ofstream myfile;
-    myfile.open ("simplices.txt");
-    int size =0;
-    for(auto x:mesh.first){
-		int size =0;
-		for(auto y:x){
-			bool v = true;
-			size++;
-			for(auto z:y){
-				if(v)
-				 myfile<<z;
-				else
-				 myfile<<" "<<z;
-			  v = false;
-			}
-			myfile<<"\n";
-		}
-	}
-	myfile.close();
 	std::cout<<"Points\n";
 	for(auto x:mesh.second){
 		for(auto y:x){
@@ -133,7 +150,7 @@ int main(){
 		}
 		std::cout<<std::endl;
 	}
-
+*/
 	/*
 	std::cout<<tree->checkPointInBall(tree,{0,0} ,1.1,{data[0]});
 	auto temp=tree->pointInBall(tree,{0,0},1.1);
