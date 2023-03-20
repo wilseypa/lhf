@@ -69,7 +69,7 @@ int main(){
 	dwaytreenode *tree; 
     tree = tree->buildDwayTree(data,-1,"nary",2);
 	//tree->printTree(tree);
-   	//tree->printLevelOrder(tree,tree);
+   	tree->printLevelOrder(tree,tree);
    	
    	int hdim;
    	std::cout<<"Enter Homology Dimension";
@@ -92,10 +92,11 @@ int main(){
    	filename.append(std::to_string(beta));
    	filename.append(".txt");
    	std::cout<<filename<<std::flush;
-   	auto mesh = tree->meshGeneration(tree,tree,beta,hdim,epsilon);
    	std::ofstream myfile;
     myfile.open(filename);
+   	auto mesh = tree->meshGeneration(tree,tree,beta,hdim,epsilon,myfile);
     int size =0;
+    myfile<<"Mesh::\n";
     for(auto x:mesh.first){
 		int size =0;
 		for(auto y:x){
@@ -110,6 +111,7 @@ int main(){
 			}
 			myfile<<"\n";
 		}
+		myfile<<"\n";
 	}
 	myfile.close();
 }
