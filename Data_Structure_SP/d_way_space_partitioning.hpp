@@ -101,6 +101,7 @@ public:
     void pathToCell(std::vector<dwaytreenode*> &path,dwaytreenode* root,dwaytreenode* node);
 	std::vector<std::vector<double>>  findCellBoundingPolytope(dwaytreenode* root, dwaytreenode* node);
 	dwaytreenode*  findNearestNeighbor(dwaytreenode* root, std::vector<double>);
+	std::set<std::vector<double>,lexical_compare_points> pointsWithInEpsilonPartitionBuffer(dwaytreenode*,std::vector<double>);
 	bool checkPointInBall(dwaytreenode* root, std::vector<double>,double,std::vector<std::vector<double>>);
 	std::set<std::vector<double>> pointInBall(dwaytreenode* root, std::vector<double>,double);
 	std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> meshGeneration(dwaytreenode* mainroot,dwaytreenode* root, double beta, int homologydim,double epsilon,std::ofstream& myfile);
@@ -117,10 +118,12 @@ public:
 	std::set<std::set<std::vector<double>,lexical_compare_points>> generateCombinationsall(std::set<std::set<std::vector<double>,lexical_compare_points>> allsimplices,double homologydim);
 	std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> stichMesh(dwaytreenode* mainroot,dwaytreenode* root, std::vector<std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>>> meshestomerge,double beta, int homologydim,double epsilon,std::ofstream& myfile);
 	std::vector<std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>>> computeSpaceFabricNeighbourhood(dwaytreenode* root,std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>> ,double epsilon,int);
-	std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> generateSimplicesToConsider(dwaytreenode* root,std::vector<std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>>> stichNeighboorhood,std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>> propermeshestomerge,std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> newpartition,int homologydim,double epsilon,double beta);
-	std::set<std::set<std::vector<double>,lexical_compare_points>> generateKSimplices(std::vector<std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>>> stichNeighboorhood,int k);
 	std::set<std::set<std::vector<double>,lexical_compare_points>> generateKSimplices(std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>> stichNeighboorhood,int k,int homologydim);
 	bool checkInsertSubDsimplex(std::set<unsigned> dsimplex,std::vector<std::vector<double>> data,std::vector<std::vector<double>> distMatrix,double beta,dwaytreenode* tree,std::string tp);
+	std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> generateSimplicesToConsider(dwaytreenode* root,std::vector<std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>>> stichNeighboorhood,std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>> propermeshestomerge,std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> newpartition,int homologydim,double epsilon,double beta);
+	std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> generateSimplicesToConsiderGeneralized(dwaytreenode* root,int homologydim,double epsilon,double beta);
+	std::vector<std::set<std::vector<double>,lexical_compare_points>> computeEpsilonNeighbourhood(dwaytreenode* root,double epsilon,int homologydim);
+	std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> stichGeneralizedMesh(dwaytreenode* mainroot,dwaytreenode* root, std::vector<std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>>> meshestomerge,double beta, int homologydim,double epsilon,std::ofstream& myfile);
 
 };
 
@@ -839,6 +842,7 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
 	return std::make_pair(fvl,newisolateupdated);
 	*/
 }
+
 std::vector<std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>>> dwaytreenode::computeSpaceFabricNeighbourhood(dwaytreenode* root,std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>> properMeshes,double epsilon,int homologydim){
  	
     std::vector<std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>>> filteredSimplices;
@@ -865,7 +869,7 @@ std::vector<std::vector<std::set<std::set<std::vector<double>,lexical_compare_po
 				    else 
 				       vec = i;
 					double distancefromSplittingPlane = utils::distanceFromHyperplane(x,root->directionVectors[vec], d);
-					if(distancefromSplittingPlane<2*epsilon){
+					if(distancefromSplittingPlane<epsilon){
 						k++;
 						filteredpts.insert(x);
 
@@ -880,6 +884,51 @@ std::vector<std::vector<std::set<std::set<std::vector<double>,lexical_compare_po
 	
     return filteredSimplices;
 }
+
+std::set<std::vector<double>,lexical_compare_points> dwaytreenode::pointsWithInEpsilonPartitionBuffer(dwaytreenode* partition,std::vector<double> from){
+	std::set<std::vector<double>,lexical_compare_points> pts;
+/*
+    	std::set<std::vector<double>,lexical_compare_points> filteredpts;
+		for(auto points : epsilonRange){
+			for(auto x : properMesh){
+				    int vec;
+				    if(i>=root->directionVectors.size())
+				       vec = 0;
+				    else 
+				       vec = i;
+					double distancefromSplittingPlane = utils::distanceFromHyperplane(x,root->directionVectors[vec], d);
+					if(distancefromSplittingPlane<epsilon){
+						filteredpts.insert(x);
+
+					}
+			}
+		}
+		* */
+		return pts;
+	
+}
+std::vector<std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::computeEpsilonNeighbourhood(dwaytreenode* root,double epsilon,int homologydim){
+ 	
+    std::vector<std::set<std::vector<double>,lexical_compare_points>> filteredptspartitions;
+    int i=0;
+    for(auto partition: root->children){
+		int j=0;
+		double d = 0;
+		int vec1;
+		 if(i>=root->directionVectors.size())
+			vec1 = 0;
+	    else 
+ 	        vec1 = i;
+ 		for(auto x:root->coordinates)
+			d -=x*root->directionVectors[vec1][j++];
+		auto epsilonRange = pointsWithInEpsilonPartitionBuffer(partition,root->coordinates);
+    	filteredptspartitions.push_back(epsilonRange);
+		i++;	
+	}	
+	
+    return filteredptspartitions;
+}
+
 
 std::set<std::set<std::vector<double>,lexical_compare_points>> dwaytreenode:: generateKSimplices(std::vector<std::set<std::set<std::vector<double>,lexical_compare_points>>> stichNeighboorhood,int k,int homologydim){
     std::set<std::set<std::vector<double>,lexical_compare_points>> Ksimplices(stichNeighboorhood[k].begin(),stichNeighboorhood[k].end());
@@ -1182,6 +1231,69 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
     return validatedsimplices;
 }
 
+
+std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> dwaytreenode:: generateSimplicesToConsiderGeneralized(dwaytreenode* root,int homologydim,double epsilon,double beta){
+	std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> simpliceToConsider;
+	auto epsilonRangePartitions = computeEpsilonNeighbourhood(root,epsilon,homologydim);
+	int i=0;
+	for(auto partition : epsilonRangePartitions){
+		for(auto pt : partition){
+			auto EpsilonBallpts = pointInBall(root,pt,epsilon);
+			std::set<std::vector<double>,lexical_compare_points> homePartition;
+			std::set_intersection(EpsilonBallpts.begin(), EpsilonBallpts.end(),partition.begin(), partition.end(),std::inserter(homePartition, homePartition.begin()));	
+			std::set<std::vector<double>,lexical_compare_points> otherPartiotion;
+			auto EpsilonBallHomepts = pointInBall(root->children[i],pt,epsilon);
+			std::set_difference(EpsilonBallpts.begin(), EpsilonBallpts.end(),EpsilonBallHomepts.begin(), EpsilonBallHomepts.end(),std::inserter(otherPartiotion, otherPartiotion.begin()));	
+			for(int k = 0;k<homologydim-1;k++){
+				int otherk = homologydim-k-2;
+				auto ksimplices = generateCombinations(homePartition,k);
+				auto otherksimplices = generateCombinations(otherPartiotion,otherk);
+				for(auto ksimp:ksimplices){
+					for(auto otherksimp :otherksimplices){
+						std::set<std::vector<double>,lexical_compare_points> newsimplex;
+						newsimplex.insert(pt);
+						newsimplex.insert(ksimp.begin(),ksimp.end());
+						newsimplex.insert(otherksimp.begin(),ksimp.end());
+						auto simple = validatesimplex(root,newsimplex,homologydim,beta);
+						simpliceToConsider.insert(simple.second);
+					}
+				}
+			}
+		}
+	i++;
+	}
+	
+	
+	return simpliceToConsider;
+}
+
+
+
+std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::stichGeneralizedMesh(dwaytreenode* mainroot,dwaytreenode* root, std::vector<std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>>> meshestomerge,double beta, int homologydim,double epsilon,std::ofstream& myfile){
+   
+    auto properSimplices = generateSimplicesToConsiderGeneralized(root,homologydim,epsilon,beta);
+	
+	auto validatedsimplices = validatesimplices(mainroot,properSimplices,beta);	
+
+	std::vector<std::vector<double>> tp(validatedsimplices.second.begin(),validatedsimplices.second.end());
+
+	for(auto x:meshestomerge){
+		for(auto y:x.first){
+			validatedsimplices.first.insert(y);
+			for(auto t:y)
+				tp.erase(std::remove(tp.begin(), tp.end(), t), tp.end());
+		}
+	}
+	std::set<std::vector<double>,lexical_compare_points> isolatedpointsnew(tp.begin(),tp.end());
+	validatedsimplices.second = isolatedpointsnew;
+	for(auto newpartition: meshestomerge){
+		for(auto x:newpartition.first)
+			validatedsimplices.first.insert(x);
+	}
+	return validatedsimplices;
+}
+
+
 std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::meshGeneration(dwaytreenode* mainroot,dwaytreenode* root, double beta, int homologydim, double epsilon,std::ofstream& myfile){
 	std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> mesh;		
     if (root == nullptr){
@@ -1197,8 +1309,8 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
     for(auto child:root->children){
 		meshestomerge.push_back(meshGeneration(mainroot,child,beta,homologydim,epsilon,myfile));
 	}
-	return stichMesh(mainroot,root,meshestomerge,beta,homologydim,epsilon,myfile);
-
+//	return stichMesh(mainroot,root,meshestomerge,beta,homologydim,epsilon,myfile);
+	return stichGeneralizedMesh(mainroot,root,meshestomerge,beta,homologydim,epsilon,myfile);
 //	return mergedmesh(mainroot,meshestomerge,beta,homologydim,epsilon);
 
 }
