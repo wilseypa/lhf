@@ -18,7 +18,7 @@
 #include "streamingUtils.hpp"
 #include "utils.hpp"
 
-/*
+/**
 	@class streamingKmeans
 	@brief A class for implementing the streaming k-means algorithm
 	@tparam nodeType The type of data points to cluster
@@ -27,13 +27,13 @@
 
 // basePipe constructor
 
-/*
+/**
 	@brief The overall goal of this code is to get the weighted representation of streaming data and then perform k-means on it.
 	@tparam nodeType A template parameter representing the node type of the streaming data.
 */
 
 template<typename nodeType>
-/*
+/**
 	@brief Construct a new streamingKmeans object and set the processor name.
 	@tparam nodeType A template parameter representing the node type of the streaming data.
 */
