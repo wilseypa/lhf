@@ -45,15 +45,15 @@ streamingKmeans<nodeType>::streamingKmeans(){
 
 
 // runPipe -> Run the configured functions of this pipeline segment
-/*
+/**
 	@brief Run the configured functions of this pipeline segment.
 
-	@tparam nodeType A template parameter representing the node type of the streaming data.
+	@param nodeType A template parameter representing the node type of the streaming data.
 
 	@param inData A reference to the input data.
 */
 template<typename nodeType>
-/*
+/**
 	@brief Run the configured functions of this pipeline segment.
 	@param inData A reference to the input data.
 */
