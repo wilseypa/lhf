@@ -68,8 +68,17 @@ int main(){
 	*/
 	dwaytreenode *tree; 
     tree = tree->buildDwayTree(data,-1,"nary",2);
+    /*
+    std::vector<double> normal = {1,2,3};
+    auto pts = tree->pointsWithInEpsilonPartitionBuffer(tree,normal,35,5);
+	for(auto x:pts){
+		for(auto k:x)
+			std::cout<<k;
+	std::cout<<"\n";
+	}
+	*/
 	//tree->printTree(tree);
-   	tree->printLevelOrder(tree,tree);
+   	//tree->printLevelOrder(tree,tree);
    	
    	int hdim;
    	std::cout<<"Enter Homology Dimension";

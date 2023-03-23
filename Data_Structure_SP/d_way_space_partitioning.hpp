@@ -101,7 +101,8 @@ public:
     void pathToCell(std::vector<dwaytreenode*> &path,dwaytreenode* root,dwaytreenode* node);
 	std::vector<std::vector<double>>  findCellBoundingPolytope(dwaytreenode* root, dwaytreenode* node);
 	dwaytreenode*  findNearestNeighbor(dwaytreenode* root, std::vector<double>);
-	std::set<std::vector<double>,lexical_compare_points> pointsWithInEpsilonPartitionBuffer(dwaytreenode*,std::vector<double>);
+	std::set<std::vector<double>,lexical_compare_points> pointsWithInEpsilonPartitionBuffer(dwaytreenode* partition,std::vector<double> from,double d,double epsilon);
+	//std::set<std::vector<double>,lexical_compare_points> pointsWithInEpsilonPartitionBuffer(dwaytreenode*,std::vector<double>);
 	bool checkPointInBall(dwaytreenode* root, std::vector<double>,double,std::vector<std::vector<double>>);
 	std::set<std::vector<double>> pointInBall(dwaytreenode* root, std::vector<double>,double);
 	std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> meshGeneration(dwaytreenode* mainroot,dwaytreenode* root, double beta, int homologydim,double epsilon,std::ofstream& myfile);
@@ -508,9 +509,10 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
 		auto stop4 = high_resolution_clock::now();
 		auto duration4 = duration_cast<microseconds>(stop4 - start4);
 		time4.push_back(duration4.count());
-	
+		
    		if(val){
 			validatedSimplices.insert(simp.first);
+			/*
 		    std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> remaining;
 			for(auto p: tovalidate){
 				bool val = true;
@@ -537,9 +539,11 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
 			}
 		tovalidate.clear();
 		tovalidate.insert(remaining.begin(), remaining.end());
+		*/
 		for(auto x:simp.first)
 			accountedpoints.insert(x);
 		}
+		
    }
    std::vector<std::vector<double>> tp(totalpoints.begin(),totalpoints.end());
 	for(auto x : accountedpoints)
@@ -885,28 +889,6 @@ std::vector<std::vector<std::set<std::set<std::vector<double>,lexical_compare_po
     return filteredSimplices;
 }
 
-std::set<std::vector<double>,lexical_compare_points> dwaytreenode::pointsWithInEpsilonPartitionBuffer(dwaytreenode* partition,std::vector<double> from){
-	std::set<std::vector<double>,lexical_compare_points> pts;
-/*
-    	std::set<std::vector<double>,lexical_compare_points> filteredpts;
-		for(auto points : epsilonRange){
-			for(auto x : properMesh){
-				    int vec;
-				    if(i>=root->directionVectors.size())
-				       vec = 0;
-				    else 
-				       vec = i;
-					double distancefromSplittingPlane = utils::distanceFromHyperplane(x,root->directionVectors[vec], d);
-					if(distancefromSplittingPlane<epsilon){
-						filteredpts.insert(x);
-
-					}
-			}
-		}
-		* */
-		return pts;
-	
-}
 std::vector<std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::computeEpsilonNeighbourhood(dwaytreenode* root,double epsilon,int homologydim){
  	
     std::vector<std::set<std::vector<double>,lexical_compare_points>> filteredptspartitions;
@@ -919,12 +901,17 @@ std::vector<std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::
 			vec1 = 0;
 	    else 
  	        vec1 = i;
- 		for(auto x:root->coordinates)
-			d -=x*root->directionVectors[vec1][j++];
-		auto epsilonRange = pointsWithInEpsilonPartitionBuffer(partition,root->coordinates);
+ 	    std::vector<double> from;
+ 		for(auto x:root->coordinates){
+			auto temp  = root->coordinates[j]-root->directionVectors[vec1][j];
+			from.push_back(temp);
+			d -=x*temp;
+			j++;
+		}
+		auto epsilonRange = pointsWithInEpsilonPartitionBuffer(partition,from,d,epsilon);
     	filteredptspartitions.push_back(epsilonRange);
 		i++;	
-	}	
+	}
 	
     return filteredptspartitions;
 }
@@ -1236,6 +1223,7 @@ std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pai
 	std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> simpliceToConsider;
 	auto epsilonRangePartitions = computeEpsilonNeighbourhood(root,epsilon,homologydim);
 	int i=0;
+	
 	for(auto partition : epsilonRangePartitions){
 		for(auto pt : partition){
 			auto EpsilonBallpts = pointInBall(root,pt,epsilon);
@@ -1245,15 +1233,15 @@ std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pai
 			auto EpsilonBallHomepts = pointInBall(root->children[i],pt,epsilon);
 			std::set_difference(EpsilonBallpts.begin(), EpsilonBallpts.end(),EpsilonBallHomepts.begin(), EpsilonBallHomepts.end(),std::inserter(otherPartiotion, otherPartiotion.begin()));	
 			for(int k = 0;k<homologydim-1;k++){
-				int otherk = homologydim-k-2;
-				auto ksimplices = generateCombinations(homePartition,k);
+				int otherk = homologydim-k-1;
+				auto ksimplices = generateCombinations(homePartition,k-1);
 				auto otherksimplices = generateCombinations(otherPartiotion,otherk);
 				for(auto ksimp:ksimplices){
 					for(auto otherksimp :otherksimplices){
 						std::set<std::vector<double>,lexical_compare_points> newsimplex;
 						newsimplex.insert(pt);
 						newsimplex.insert(ksimp.begin(),ksimp.end());
-						newsimplex.insert(otherksimp.begin(),ksimp.end());
+						newsimplex.insert(otherksimp.begin(),otherksimp.end());
 						auto simple = validatesimplex(root,newsimplex,homologydim,beta);
 						simpliceToConsider.insert(simple.second);
 					}
@@ -1262,7 +1250,6 @@ std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pai
 		}
 	i++;
 	}
-	
 	
 	return simpliceToConsider;
 }
@@ -1544,6 +1531,24 @@ bool dwaytreenode::checkPointInBall(dwaytreenode* root, std::vector<double> pt,d
 	return false;
 }
 
+std::set<std::vector<double>,lexical_compare_points> dwaytreenode::pointsWithInEpsilonPartitionBuffer(dwaytreenode* root,std::vector<double> from,double d,double epsilon){
+	std::set<std::vector<double>,lexical_compare_points> pts_in_epsilon_range;
+	if(root->children.size()==0)
+	{	
+		double distancefromSplittingPlane = utils::distanceFromHyperplane(root->coordinates,from, d);
+		if(distancefromSplittingPlane<epsilon)
+			pts_in_epsilon_range.insert(root->coordinates);
+		return pts_in_epsilon_range;
+	}
+	for(auto child_node : root->children){
+		double distancefromSplittingPlane = utils::distanceFromHyperplane(root->coordinates,from, d);
+		if(distancefromSplittingPlane<(epsilon+child_node->radius))
+			for(auto point:pointsWithInEpsilonPartitionBuffer(child_node, from, d,epsilon))
+				pts_in_epsilon_range.insert(point);
+	}
+	return pts_in_epsilon_range;	
+}
+
 std::set<std::vector<double>> dwaytreenode::pointInBall(dwaytreenode* root, std::vector<double> pt,double radius)
 {
 	std::set<std::vector<double>> point_in_Ball;
@@ -1564,7 +1569,6 @@ std::set<std::vector<double>> dwaytreenode::pointInBall(dwaytreenode* root, std:
 bool dwaytreenode:: checkInsertSubDsimplex(std::set<unsigned> dsimplex,std::vector<std::vector<double>> data,std::vector<std::vector<double>> distMatrix,double beta,dwaytreenode* tree,std::string mode){
 	std::vector<std::vector<double>> neighborsfinalLune;
 	std::vector<std::vector<double>> neighborsfinalCircle;
-        
 	bool intersectionCircle= false;
 	bool intersectionLune = false;
 	bool unionCircle= false;
@@ -1621,6 +1625,7 @@ bool dwaytreenode:: checkInsertSubDsimplex(std::set<unsigned> dsimplex,std::vect
 		
 		refbetaCenters = utils::computePCAInverse(mat,refbetaCenters,hpcoff.second);
 		double betaRadius = utils::vectors_distance(refbetaCenters[0], data[0]);
+	
         std::set<std::vector<double>> neighbors1 = pointInBall(tree,refbetaCenters[0], betaRadius); //All neighbors in epsilon-ball
 		for(auto t :data)
 			neighbors1.erase(t);
@@ -1696,11 +1701,11 @@ bool dwaytreenode:: checkInsertSubDsimplex(std::set<unsigned> dsimplex,std::vect
 			first= false;
 		}
 	}
-	if(mode == "betaHighLune" && neighborsfinalLune.size() == 0)
+	if(mode == "betaHighLune" && neighborsfinalLune.size() == 0){
 		return true;
+	}
 	if(mode == "betaHighCircle" && neighborsfinalCircle.size() == 0){
 		return true;
-		
 	}
 return false;
 }
