@@ -107,6 +107,31 @@ std::vector<double> approxFacilities(0);
 std::vector<double> approxFacilitiesHat(0);
  std::vector<std::vector<double>> kHat;
 
+/**
+
+	
+/**
+
+	@brief Loop through points in a data stream and assign them to clusters, based on delta/f probability.
+
+	@details The method first adds the initial points to the facility set, then loops through the rest of the points
+
+	in the stream, assigning them to the closest cluster. If a point is close enough to none of the existing clusters,
+
+	it is added as a new cluster.
+
+	@param inData The input data to be clustered.
+
+	@param numClusters The number of desired clusters.
+
+	@param maxFacilities The maximum number of facilities that can be added.
+
+	@param omega The random projection matrix.
+
+	@return None.
+
+	@note This method is specific to the kmeans++ algorithm and the data structure used here.
+*/
 
 double f = 1/(numClusters*(1 + log(size))); //facility cost f = 1/(k(1+log n))  k clusters, n points, empty set K  //facility==centroid 
 
