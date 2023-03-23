@@ -57,6 +57,12 @@ template<typename nodeType>
 	@brief Run the configured functions of this pipeline segment.
 	@param inData A reference to the input data.
 */
+
+/**
+	@brief Runs the preprocessor on input data
+	@tparam nodeType The datatype of the nodes in the data
+	@param inData The input data
+ */
 void streamingKmeans<nodeType>::runPreprocessor(pipePacket<nodeType> &inData){
 	
 	if(!this->configured){
