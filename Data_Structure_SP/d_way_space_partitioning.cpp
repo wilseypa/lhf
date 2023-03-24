@@ -105,7 +105,7 @@ int main(){
     myfile.open(filename);
    	auto mesh = tree->meshGeneration(tree,tree,beta,hdim,epsilon,myfile);
     int size =0;
-    myfile<<"Mesh::\n";
+    //myfile<<"Mesh::\n";
     for(auto x:mesh.first){
 		int size =0;
 		for(auto y:x){

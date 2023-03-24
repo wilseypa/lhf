@@ -512,21 +512,23 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
 		
    		if(val){
 			validatedSimplices.insert(simp.first);
-			/*
-		    std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> remaining;
+			std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> remaining;
 			for(auto p: tovalidate){
 				bool val = true;
+				double radiustocheck = p.second.second*(1-sqrt(pow(beta,2)-1))-0.0001;
 				for(auto v:simp.first){
-					bool val1 = int(round(utils::vectors_distance(v,p.second.first)*precision))<int(round(p.second.second*precision));
-				     if(int(round(utils::vectors_distance(v,p.second.first)*precision))<int(round(p.second.second*precision))){
+					bool val1 = utils::vectors_distance(v,p.second.first)<radiustocheck;
+				     //if(int(round(utils::vectors_distance(v,p.second.first)*precision))<int(round(p.second.second*precision))){
+						if(val1){
 						val = false;
 						break;	
 					}
 				}
 				if(val){
+					double radiustocheck = simp.second.second*(1-sqrt(pow(beta,2)-1))-0.0001 ;
 					for(auto v:p.first){
-						bool val1 = int(round(utils::vectors_distance(v,simp.second.first)*precision))<int(round(simp.second.second*precision));
-						if(int(round(utils::vectors_distance(v,simp.second.first)*precision))<int(round(simp.second.second*precision))){
+						bool val1 = utils::vectors_distance(v,simp.second.first)<radiustocheck;
+						if(val1){
 							val = false;
 							break;	
 						}
@@ -535,11 +537,9 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
 			   if(val){
 				remaining.insert(p);
 				}
-				
 			}
 		tovalidate.clear();
 		tovalidate.insert(remaining.begin(), remaining.end());
-		*/
 		for(auto x:simp.first)
 			accountedpoints.insert(x);
 		}
@@ -1254,9 +1254,9 @@ int total2=0;
 std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::stichGeneralizedMesh(dwaytreenode* mainroot,dwaytreenode* root, std::vector<std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>>> meshestomerge,double beta, int homologydim,double epsilon,std::ofstream& myfile){
    
     auto properSimplices = generateSimplicesToConsiderGeneralized(root,homologydim,epsilon,beta);
-	
+	std::cout<<properSimplices.size()<<std::flush<<"\n";
 	auto validatedsimplices = validatesimplices(mainroot,properSimplices,beta);	
-	std::cout<<properSimplices.size()<<" "<<validatedsimplices.first.size()<<"\n";
+	std::cout<<validatedsimplices.first.size()<<std::flush<<"\n";
 	total1 += properSimplices.size();
 	total2 += validatedsimplices.first.size();
 	std::cout<<total1<<" "<<total2<<"\n";
