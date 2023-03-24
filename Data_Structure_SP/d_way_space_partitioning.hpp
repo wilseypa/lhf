@@ -890,27 +890,21 @@ std::vector<std::vector<std::set<std::set<std::vector<double>,lexical_compare_po
 }
 
 std::vector<std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::computeEpsilonNeighbourhood(dwaytreenode* root,double epsilon,int homologydim){
- 	
     std::vector<std::set<std::vector<double>,lexical_compare_points>> filteredptspartitions;
-    int i=0;
+    //For two partitions right now
+    int j=0;
+	double d = 0;
+	std::vector<double> from;
+ 	for(auto x:root->coordinates){
+		auto temp  = root->children[0]->coordinates[j]-root->children[1]->coordinates[j];
+		from.push_back(temp);
+		d -=x*temp;
+		j++;
+	}
+		
     for(auto partition: root->children){
-		int j=0;
-		double d = 0;
-		int vec1;
-		 if(i>=root->directionVectors.size())
-			vec1 = 0;
-	    else 
- 	        vec1 = i;
- 	    std::vector<double> from;
- 		for(auto x:root->coordinates){
-			auto temp  = root->coordinates[j]-root->directionVectors[vec1][j];
-			from.push_back(temp);
-			d -=x*temp;
-			j++;
-		}
 		auto epsilonRange = pointsWithInEpsilonPartitionBuffer(partition,from,d,epsilon);
     	filteredptspartitions.push_back(epsilonRange);
-		i++;	
 	}
 	
     return filteredptspartitions;
@@ -1254,13 +1248,18 @@ std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pai
 	return simpliceToConsider;
 }
 
-
+int total1=0;
+int total2=0;
 
 std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::stichGeneralizedMesh(dwaytreenode* mainroot,dwaytreenode* root, std::vector<std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::set<std::vector<double>,lexical_compare_points>>> meshestomerge,double beta, int homologydim,double epsilon,std::ofstream& myfile){
    
     auto properSimplices = generateSimplicesToConsiderGeneralized(root,homologydim,epsilon,beta);
 	
 	auto validatedsimplices = validatesimplices(mainroot,properSimplices,beta);	
+	std::cout<<properSimplices.size()<<" "<<validatedsimplices.first.size()<<"\n";
+	total1 += properSimplices.size();
+	total2 += validatedsimplices.first.size();
+	std::cout<<total1<<" "<<total2<<"\n";
 
 	std::vector<std::vector<double>> tp(validatedsimplices.second.begin(),validatedsimplices.second.end());
 
