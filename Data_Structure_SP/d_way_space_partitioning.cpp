@@ -102,8 +102,54 @@ int main(){
    	filename.append(".txt");
    	std::cout<<filename<<std::flush;
    	std::ofstream myfile;
-    myfile.open(filename);
    	auto mesh = tree->meshGeneration(tree,tree,beta,hdim,epsilon,myfile);
+   	std::cout<<"Remove to Smooth"<<removeToSmooth.size()<<" ";
+   	for(auto x: removeToSmooth)
+		data.erase(std::remove(data.begin(), data.end(), x), data.end());
+	myfile.open(filename);
+    //myfile<<"Mesh::\n";
+    for(auto x:mesh.first){
+		for(auto y:x){
+			bool v = true;
+			for(auto z:y){
+				if(v)
+				 myfile<<z;
+				else
+				 myfile<<" "<<z;
+			  v = false;
+			}
+			myfile<<"\n";
+		}
+		myfile<<"\n";
+	}
+	myfile.close();
+	//int pk;
+	//std::cin>>pk;
+	/*
+	dwaytreenode *tree1; 
+    tree1 = tree1->buildDwayTree(data,-1,"nary",2);
+    mesh = tree1->meshGeneration(tree1,tree1,beta,hdim,epsilon,myfile);
+    for(auto y :validatedSimplicesGreater)
+		mesh.first.insert(y);
+	myfile.open(filename);
+	//myfile<<"Mesh::\n";
+    for(auto x:mesh.first){
+		for(auto y:x){
+			bool v = true;
+			for(auto z:y){
+				if(v)
+				 myfile<<z;
+				else
+				 myfile<<" "<<z;
+			  v = false;
+			}
+			myfile<<"\n";
+		}
+		myfile<<"\n";
+	}
+	myfile.close();
+
+	
     int size =0;
     //myfile<<"Mesh::\n";
     for(auto x:mesh.first){
@@ -123,6 +169,7 @@ int main(){
 		myfile<<"\n";
 	}
 	myfile.close();
+	*/
 }
 }
  /*
