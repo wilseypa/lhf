@@ -947,31 +947,57 @@ std::vector<std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::
 			j++;
 		}
 		auto axisToCheck = orientedDirections2D(from);
-		std::cout<<"\nAxis to Check::\n";
+	/*	std::cout<<"\nAxis to Check::\n";
 		for(auto x: axisToCheck){
 			for(auto y:x)
 				std::cout<<y<<" ";
 			std::cout<<"\n";
 		}
-		std::cout<<"\nNormal Vector"<<from[0]<<" "<<from[1]<<"\n";
+	*/
+		std::cout<<"\nHyperPlane Equation :: "<<from[0]<<"x +"<<from[1]<<"y ="<<from[0]*root->coordinates[0]+from[1]*root->coordinates[1]<<"\n";
+		std::cout<<"\nHyperPlane Equation :: "<<"x = 50 "<<"y ="<<((from[0]*root->coordinates[0]+from[1]*root->coordinates[1])-(from[0]*50))/from[1]<<"\n";
+		std::cout<<"\nHyperPlane Equation :: "<<"x = -50 "<<"y ="<<((from[0]*root->coordinates[0]+from[1]*root->coordinates[1])-(from[0]*(-50)))/from[1]<<"\n";
 
 		std::set<std::vector<double>,lexical_compare_points> partitionExposed;
 		for(auto pt:partition){
 			double distancefromSplittingPlane = utils::distanceFromHyperplane(pt,from, d);
-			std::cout<<"\nPoint::"<<pt[0]<<" "<<pt[1];
-			std::cout<<"distance ::"<<distancefromSplittingPlane<<"\n";
+			std::vector<double> ptcenter;
+			double dotproduct=0;
+			double NormalizingConstant=0;
+
+			int i=0;
+			for(auto xx:pt){
+				 dotproduct += from[i]*(xx-root->coordinates[i]);
+				 NormalizingConstant += from[i]*from[i]; 
+				 i++;
+			}
+			i=0;
+			for(auto xx:pt){
+				ptcenter.push_back(xx-(from[i]*(dotproduct/NormalizingConstant)));
+				i++;
+			}
+			std::vector<double> center;
+			i=0;
+			for(auto xx:ptcenter){
+				center.push_back((xx+pt[i])/2);
+				i++;
+			}
 			bool exposed = true;
 			std::set<int> partitionAssigned;
-			auto pointsball = pointInBall(root,pt,distancefromSplittingPlane);
+			//std::cout<<"Point:: ("<<partitionCenter[0]<<" "<<partitionCenter[1]<<")\n";
+			//std::cout<<"Point:: ("<<ptcenter[0]<<" "<<ptcenter[1]<<")\n";
+			//std::cout<<"Point:: ("<<pt[0]<<" "<<pt[1]<<")\n";
+			std::cout<<center[0]<<" "<<center[1]<<" "<<distancefromSplittingPlane/2<<"\n";
+			
+			auto pointsball = pointInBall(root,center,distancefromSplittingPlane/2);
 			for(auto A : pointsball){
-				if(utils::distanceFromHyperplane(A,from, d)<distancefromSplittingPlane){
+				//if(utils::distanceFromHyperplane(A,from, d)<distancefromSplittingPlane){
 				std::vector<double> A_vec;
 				int k =0;
 				for(auto a:A){
 					A_vec.push_back(a-pt[k]);
 					k++;
 				}
-				std::cout<<A_vec[0]<<" "<<A_vec[1]<<"\n";
 				int direction = -1;
 				int assignedpartion = 0;
 				int maxvalue = 0;
@@ -984,17 +1010,12 @@ std::vector<std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::
 						assignedpartion = direction;
 					}
 				}
-				std::cout<<from.size()<<"Directions Found outside\n";
-				for(auto tr:partitionAssigned)
-					std::cout<<tr<<" ";
-				std::cout<<"Size of From "<<from.size()<<" "<<partitionAssigned.size()<<"\n";
 				partitionAssigned.insert(assignedpartion);
 				if(partitionAssigned.size()==from.size()){
-					std::cout<<from.size()<<"Directions Found\n";
 					exposed = false;
 					break;
 				}
-				}
+			//	}
 			}
 			if(exposed == true)
 				partitionExposed.insert(pt);
@@ -1335,8 +1356,13 @@ std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pai
 	std::cout<<"\nEpsilon::\n";
 	for(auto x:epsilonRangePartitions){
 		for(auto y:x){
+			bool v = true;
 			for(auto z:y){
-				std::cout<<z<<" ";
+				if(v)
+				 std::cout<<z;
+				else
+				 std::cout<<","<<z;
+			  v = false;
 			}
 			std::cout<<"\n";
 		}
@@ -1346,8 +1372,13 @@ std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pai
 	std::cout<<"\nBeta::\n";
 	for(auto x:afterFilterationUsingBeta){
 		for(auto y:x){
+			bool v = true;
 			for(auto z:y){
-				std::cout<<z<<" ";
+				if(v)
+				 std::cout<<z;
+				else
+				 std::cout<<","<<z;
+			  v = false;
 			}
 			std::cout<<"\n";
 		}
@@ -1356,16 +1387,17 @@ std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pai
 	int k;
 	
 	//std::cin>>k;
-	for(auto partition : epsilonRangePartitions){
+	for(auto partition : afterFilterationUsingBeta){
 		for(auto pt : partition){
 			auto EpsilonBallpts = pointInBall(root,pt,epsilon);
-			std::set<std::vector<double>,lexical_compare_points> homePartition;
-			std::set_intersection(EpsilonBallpts.begin(), EpsilonBallpts.end(),partition.begin(), partition.end(),std::inserter(homePartition, homePartition.begin()));	
-			std::set<std::vector<double>,lexical_compare_points> otherPartiotion;
-			auto EpsilonBallHomepts = pointInBall(root->children[i],pt,epsilon);
-			std::set_difference(EpsilonBallpts.begin(), EpsilonBallpts.end(),EpsilonBallHomepts.begin(), EpsilonBallHomepts.end(),std::inserter(otherPartiotion, otherPartiotion.begin()));	
+			std::set<std::vector<double>,lexical_compare_points> otherPartiotion(EpsilonBallpts.begin(),EpsilonBallpts.end());
+			for(auto xx:partition)
+				otherPartiotion.erase(xx);
+			std::set<std::vector<double>,lexical_compare_points> homePartition(EpsilonBallpts.begin(),EpsilonBallpts.end());
+			for(auto pt :otherPartiotion) 	
+				homePartition.erase(pt);
 			for(int otherk = 0;otherk<=homologydim-1;otherk++){
-				int k = homologydim-k-1;
+				int k = homologydim-otherk-1;
 				auto otherksimplices = generateCombinations(otherPartiotion,otherk);
 				if(k-1>=0){
 					auto ksimplices = generateCombinations(homePartition,k-1);
@@ -1375,8 +1407,17 @@ std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pai
 							newsimplex.insert(pt);
 							newsimplex.insert(ksimp.begin(),ksimp.end());
 							newsimplex.insert(otherksimp.begin(),otherksimp.end());
-							auto simple = validatesimplex(root,newsimplex,homologydim,beta);
-							simpliceToConsider.insert(simple.second);
+							if(newsimplex.size()==homologydim+1){
+							/*	for(auto y:newsimplex){
+									for(auto z:y){
+										std::cout<<z<<" ";
+									}
+									std::cout<<"\n"<<std::flush;
+								}
+							*/
+								auto simple = validatesimplex(root,newsimplex,homologydim,beta);
+								simpliceToConsider.insert(simple.second);
+							}
 						}
 					}
 				}
@@ -1385,8 +1426,10 @@ std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pai
 						std::set<std::vector<double>,lexical_compare_points> newsimplex;
 						newsimplex.insert(pt);
 						newsimplex.insert(otherksimp.begin(),otherksimp.end());
-						auto simple = validatesimplex(root,newsimplex,homologydim,beta);
-						simpliceToConsider.insert(simple.second);
+						if(newsimplex.size()==homologydim+1){
+							auto simple = validatesimplex(root,newsimplex,homologydim,beta);
+							simpliceToConsider.insert(simple.second);
+						}
 					}
 				}
 			}
