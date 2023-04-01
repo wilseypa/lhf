@@ -497,10 +497,17 @@ std::pair<bool,std::pair<std::set<std::vector<double>,lexical_compare_points>,st
 	auto radius = utils::vectors_distance(simpl[0],cc);
 	auto start4 = high_resolution_clock::now();
 	std::string mode = "betaHighCircle"; //betaHighLune
-//	bool val = checkPointInBall(root, cc,radius, simpl); 
-
-	auto val = checkInsertSubDsimplex(repsimplex,simpl,distMatrix,beta,root,mode);
-	if(val.first){
+	std::pair<bool,std::vector<std::vector<double>>> result;
+	bool val;
+	if(beta==1){
+		val = checkPointInBall(root, cc,radius, simpl); 
+		val = !val;
+	}
+	else{
+		result = checkInsertSubDsimplex(repsimplex,simpl,distMatrix,beta,root,mode);
+		val = result.first;
+	}
+	if(val){
 			return std::make_pair(true,std::make_pair(simplex,std::make_pair(cc,radius)));			 
 
 	}
@@ -539,13 +546,21 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
 		tovalidate.erase(tovalidate.begin());
 		auto start4 = high_resolution_clock::now();
 		std::string mode = "betaHighCircle";
-		auto val = checkInsertSubDsimplex(repsimplex,simpl,distMatrix,beta,root,mode);
-//		bool val = checkPointInBall(root, simp.second.first,simp.second.second, simpl); 
+		bool val;
+		std::pair<bool,std::vector<std::vector<double>>> result;
+		if(beta==1){
+			val = checkPointInBall(root, simp.second.first,simp.second.second, simpl); 
+			val = !val;
+		}
+		else{
+			result = checkInsertSubDsimplex(repsimplex,simpl,distMatrix,beta,root,mode);
+			val = result.first;
+		}
 		auto stop4 = high_resolution_clock::now();
 		auto duration4 = duration_cast<microseconds>(stop4 - start4);
 		time4.push_back(duration4.count());
 		
-   		if(val.first){
+   		if(val){
 			validatedSimplices.insert(simp.first);
 			std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pair<std::vector<double>,double>>,comp_by_radius> remaining;
 			for(auto p: tovalidate){
@@ -578,11 +593,11 @@ std::pair<std::set<std::set<std::vector<double>,lexical_compare_points>>,std::se
 		for(auto x:simp.first)
 			accountedpoints.insert(x);
 		}
-		else{
-			for(auto x: val.second)
-				removeToSmooth.insert(x);
-			validatedSimplicesGreater.insert(simp.first);
-		}
+		//else{
+		//	for(auto x: val.second)
+		//		removeToSmooth.insert(x);
+		//	validatedSimplicesGreater.insert(simp.first);
+		//}
 		
    }
    std::vector<std::vector<double>> tp(totalpoints.begin(),totalpoints.end());
