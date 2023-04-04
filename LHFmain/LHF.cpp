@@ -53,7 +53,7 @@ void LHF<nodeType>::outputBettis(std::map<std::string, std::string> args, pipePa
 	}
 }
 
-/*
+/**
 @brief Runs the pipeline with the specified arguments and data packet.
 
 The pipeline consists of a sequence of components connected by pipes
