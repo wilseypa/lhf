@@ -9,8 +9,8 @@ add_library(basePipe "basePipe.cpp" "basePipe.hpp")
 add_library(distMatrixPipe "distMatrixPipe.cpp" "distMatrixPipe.hpp")
 add_library(neighGraphPipe "neighGraphPipe.cpp" "neighGraphPipe.hpp")
 add_library(ripsPipe "ripsPipe.cpp" "ripsPipe.hpp")
-#add_library(betaSkeletonBasedComplex "betaSkeletonBasedComplex.cpp" "betaSkeletonBasedComplex.hpp")
-#add_library(betaSubSkeletonComplex "betaSubSkeletonComplex.cpp" "betaSubSkeletonComplex.hpp")
+add_library(betaSkeletonBasedComplex "betaSkeletonBasedComplex.cpp" "betaSkeletonBasedComplex.hpp")
+add_library(betaSubSkeletonComplex "betaSubSkeletonComplex.cpp" "betaSubSkeletonComplex.hpp")
 add_library(upscalePipe "upscalePipe.cpp" "upscalePipe.hpp")
 add_library(slidingWindow "slidingWindow.cpp" "slidingWindow.hpp")
 add_library(fastPersistence "fastPersistence.cpp" "fastPersistence.hpp")
@@ -35,28 +35,28 @@ link_directories(${PROJECT_SOURCE_DIR}/Utils)
 # Use external project for qhull integration
 include(FetchContent)
 
-#FetchContent_Declare(qhullext
-#    GIT_REPOSITORY "https://github.com/qhull/qhull.git"
+FetchContent_Declare(qhullext
+    GIT_REPOSITORY "https://github.com/qhull/qhull.git"
     #BUILD_STATIC_LIBS OFF
     #BUILD_SHARED_LIBS ON
-#)
+)
 
-#if(${CMAKE_VERSION} VERSION_LESS 3.14)
-#    FetchContent_GetProperties(qhullext)
-#    if(NOT qhullext_POPULATED)
-#        FetchContent_Populate(qhullext)
-#        add_subdirectory(${qhullext_SOURCE_DIR} ${qhullext_BINARY_DIR})
-#    endif()
-#else()
-#    FetchContent_MakeAvailable(qhullext)
-#endif()
+if(${CMAKE_VERSION} VERSION_LESS 3.14)
+    FetchContent_GetProperties(qhullext)
+    if(NOT qhullext_POPULATED)
+        FetchContent_Populate(qhullext)
+        add_subdirectory(${qhullext_SOURCE_DIR} ${qhullext_BINARY_DIR})
+    endif()
+else()
+    FetchContent_MakeAvailable(qhullext)
+endif()
     
     
-#include_directories(${PROJECT_SOURCE_DIR}/_deps/qhullext-src/src/)
-#link_directories(${PROJECT_SOURCE_DIR}/_deps/qhullext-build/)
+include_directories(${PROJECT_SOURCE_DIR}/_deps/qhullext-src/src/)
+link_directories(${PROJECT_SOURCE_DIR}/_deps/qhullext-build/)
 
 #target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe incrementalPersistence fastPersistence ripsPipe naiveWindow betaSkeletonBasedComplex betaSubSkeletonComplex upscalePipe qhullcpp qhull_r qhullPipe slidingWindow)
-target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe incrementalPersistence fastPersistence ripsPipe naiveWindow upscalePipe slidingWindow)
+target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe incrementalPersistence fastPersistence ripsPipe naiveWindow upscalePipe slidingWindow betaSkeletonBasedComplex betaSubSkeletonComplex)
 
 INSTALL (TARGETS basePipe
 	LIBRARY DESTINATION lib
