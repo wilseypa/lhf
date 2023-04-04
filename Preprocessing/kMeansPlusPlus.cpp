@@ -16,12 +16,12 @@
 #include "kMeansPlusPlus.hpp"
 #include "utils.hpp"
 
-/*
-@brief Base class for building pipeline functions to execute
-@tparam nodeType Type of the data element being processed in pipeline
+/**
+	@class kMeansPlusPlus
+	@brief A class for implementing the k-means++ algorithm
+	@tparam nodeType The type of data points to cluster
 */
 
-// basePipe constructor
 
 /**
 @brief kMeansPlusPlus class constructor
