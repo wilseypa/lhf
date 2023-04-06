@@ -8,6 +8,7 @@
 #include "simplexArrayList.hpp"
 #include "alphaComplex.hpp"
 #include "witnessComplex.hpp"
+#include "betaComplex.hpp"
 
 template<typename nodeType>
 simplexBase<nodeType>::simplexBase(){return;}
@@ -93,6 +94,10 @@ simplexBase<nodeType>* simplexBase<nodeType>::newSimplex(const std::string &simp
 		return t;
 	} else if (simplexT == "witnessComplex"){
 		auto t = new witnessComplex<nodeType>(0, 0);
+		t->setConfig(configMap);
+		return t;
+	} else if (simplexT == "betaComplex"){
+		auto t = new betaComplex<nodeType>(0, 0);
 		t->setConfig(configMap);
 		return t;
 	}
