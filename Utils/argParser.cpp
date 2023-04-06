@@ -200,7 +200,7 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 		args["nodeType"] = "alphaNode";
 		args["mode"] = "weightedAlpha";
 		args["complexType"] = "alphaComplex";
-		args["pipeline"] = "qhull.incrementalPersistence";
+		args["pipeline"] = "distMatrix.qhull.incrementalPersistence";
 			
 		if(args["upscale"] == "true")
 			args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence.upscale";

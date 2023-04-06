@@ -50,20 +50,26 @@ void qhullPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
     qh.runQhull(pts->comment().c_str(),pts->dimension(),pts->count(),&*pts->coordinates(),"d o");
     std::vector<std::vector<unsigned>> dsimplexes = qdelaunay_o(qh);    
     
-    if(inData.complex->simplexType == "alphaComplex"){
+    std::cout << "MODE: " << this->mode << std::endl;
+    
+    
+    if(this->mode == "alpha"){
 		//Alpha complex uses gabriel filtration (circumradius at most alpha)
 		((alphaComplex<alphaNode> *)inData.complex)->dsimplexmesh=dsimplexes;
 		((alphaComplex<nodeType>*)inData.complex)->buildAlphaComplex(dsimplexes,inData.inputData.size(),inData.inputData);
     
-    } else if(inData.complex->simplexType == "betaComplex"){
+    } else if(this->mode == "beta"){
 		//Beta complex uses sparsification filter for B < 1 and B > 1
 		//((betaComplex<nodeType>*)inData.complex)->buildBetaComplexFilteration(dsimplexes, inData.inputData.size(),inData.inputData, tree);
 		//((betaComplex<nodeType>*)inData.complex)->buildBetaComplex(dsimplexes, inData.inputData.size(),inData.inputData,1,"highDim");
-		//TODO: Implement
+		std::cout << "TODO: Beta-sparsified Complex" << std::endl;
     
-    } else if(inData.complex->simplexType == "simplexArrayList"){
+    } else if(this->mode == "weightedAlpha"){
 		
-		std::cout << "TOODO" << std::endl;
+		std::cout << "TODO: Weighted Alpha Complex" << std::endl;
+		
+		((alphaComplex<alphaNode> *)inData.complex)->dsimplexmesh=dsimplexes;
+		((alphaComplex<nodeType>*)inData.complex)->buildWeightedAlphaComplex(dsimplexes,inData.inputData.size(),inData.inputData);
 	}
 
 	this->ut.writeDebug("qhullPipe", "\tSuccessfully Executed pipe");
@@ -129,8 +135,6 @@ bool qhullPipe<nodeType>::configPipe(std::map<std::string, std::string> &configM
 	pipe = configMap.find("mode");
 	if(pipe != configMap.end())
 		this->mode = configMap["mode"].c_str();
-		
-		
 
 	this->ut = utils(strDebug, this->outputFile);
 

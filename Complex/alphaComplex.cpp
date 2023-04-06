@@ -228,19 +228,95 @@ bool  alphaComplex<nodeType>::checkGabriel(std::vector<double> point, std::vecto
 		return false;
 }
 
- 
+
+template<>
+void alphaComplex<alphaNode>::buildWeightedAlphaComplex(std::vector<std::vector<unsigned>> dsmiplexmesh, int npts, std::vector<std::vector<double>> inputData){
+	/**
+		buildWeightedAlphaComplex(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData)
+		
+		Maintained by Nick for comparing to ECC
+		
+		@brief Build the alpha complex from delaunay triangulation
+		@tparam nodeType The data type of the simplex node.
+		@param dsimplexmesh the set of d-triangles for the simplex mesh
+		@param npts 
+	*/
+	unsigned maxDimension = dsimplexmesh[0].size()-1;
+	this->bin = binomialTable(npts, this->maxDimension+1);
+	
+	for(int i=0; i <= maxDimension+1; i++)
+		this->simplexList.push_back({});
+
+	for (int i = 0; i < dsimplexmesh.size(); ++i)
+	{
+		auto simplex = dsimplexmesh[i];
+		sort(simplex.begin(), simplex.end());
+		
+		unsigned int pow_set_size = pow(2, simplex.size());
+		std::set<unsigned> gensimp;
+		
+		for (int counter = 1; counter < pow_set_size; counter++)
+		{
+			double weight = 0;
+			for (int j = 0; j < simplex.size(); j++)
+			{
+				if (counter & (1 << j))
+				{
+					unsigned indnew = simplex[j];
+					for (auto x : gensimp)
+					{
+						if (weight < (*(this->distMatrix))[x][indnew])
+							weight = (*(this->distMatrix))[x][indnew];
+					}
+					gensimp.insert(indnew);
+				}
+			}
+			std::shared_ptr<alphaNode> tot = std::make_shared<alphaNode>(alphaNode(gensimp, weight));
+			
+			if(gensimp.size()==1)
+				tot->hash = *(gensimp.begin());
+			        
+			else
+				tot->hash = this->simplexHash(gensimp);
+
+			this->simplexList[gensimp.size()-1].insert(tot);
+			
+			gensimp.clear();
+		}
+	}
+
+	int di=0;
+	for( auto x : this->simplexList)
+		std::cout<<"Count of "<<di++<<"-simplex ::"<<x.size()<<"\n";
+	return;
+}
+
 template<typename nodeType>
-void alphaComplex<nodeType>::buildAlphaComplex(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData){
+void alphaComplex<nodeType>::buildWeightedAlphaComplex(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData){
 	std::cout<< "Not Implemented" << std::endl;
 	return;
 }
 
 
+
 //Anurag
 template<>
 void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData){
+	/**
+		buildAlphaComplex(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData)
+		
+		Maintained by Anurag
+		
+		@brief Build the alpha complex from delaunay triangulation
+		@tparam nodeType The data type of the simplex node.
+		@param dsimplexmesh the set of d-triangles for the simplex mesh
+		@param npts 
+	*/
+	
+	
 	unsigned maxDimension = dsimplexmesh[0].size()-1;
 	this->bin = binomialTable(npts, this->maxDimension+1);
+	
 	for(int i=0; i <= this->maxDimension; i++)
 		this->simplexList.push_back({});
 
@@ -249,8 +325,10 @@ void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<unsigned
 	{
 		auto simplex = dsimplexmesh[i];
 		sort(simplex.begin(), simplex.end());
+		
 		unsigned int pow_set_size = pow(2, simplex.size());
 		std::set<unsigned> gensimp;
+		
 		for (int counter = 1; counter < pow_set_size; counter++)
 		{
 			if (__builtin_popcount(counter)>this->maxDimension+1)
@@ -270,6 +348,7 @@ void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<unsigned
 				}
 			}
 			std::shared_ptr<alphaNode> tot = std::make_shared<alphaNode>(alphaNode(gensimp, weight));
+			
 			if (this->simplexList[gensimp.size() - 1].find(tot) == this->simplexList[gensimp.size() - 1].end())
 			{
 				if (gensimp.size() > 2)
@@ -311,6 +390,13 @@ void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<unsigned
 	return;
 }
 
+
+ 
+template<typename nodeType>
+void alphaComplex<nodeType>::buildAlphaComplex(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData){
+	std::cout<< "Not Implemented" << std::endl;
+	return;
+}
 
 //Explicit Template Class Instantiation
 template class alphaComplex<simplexNode>;

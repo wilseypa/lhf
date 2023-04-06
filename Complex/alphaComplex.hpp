@@ -43,5 +43,10 @@ class alphaComplex : public simplexArrayList<nodeType>{
 		std::vector<templateNode_P> expanddelaunayDimension(int);
 		std::set<templateNode_P, cmpByWeight<templateNode_P>> getdelaunayDimEdges(int);
 		
+		
+		
+		//Nick
+		
+		void buildWeightedAlphaComplex(std::vector<std::vector<unsigned>> dsmiplexmesh, int npts, std::vector<std::vector<double>> inputData);
 
 };
