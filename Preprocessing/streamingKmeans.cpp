@@ -567,7 +567,6 @@ return low;
 
 }
 
-!
 /**
 
 	@brief Takes dot product of facilities centroids and omega, where omega is d dimensions large uniformly distributed between 0,1. When new points arrive, dot product is calculated, and 2 centroids x dot omega is between to find nearest facilities faster than calculating nearest neighbor.
@@ -610,7 +609,6 @@ double streamingKmeans<nodeType>::randDouble(){    // random double between 0 an
 } 
 
 /**
-
 	@brief Determines whether an event should happen given a certain probability
 	@tparam nodeType
 	@param f double representing the probability of an event occurring
@@ -623,22 +621,18 @@ bool streamingKmeans<nodeType>::prob(double f){
 	return streamingKmeans<nodeType>::randDouble() < f;
 }
 
-/**
 
-	@brief Generates a random integer between low and high, inclusive.
-
-	@tparam nodeType The data type of the node.
-
-	@param low The lower limit of the range for the random number.
-
-	@param high The upper limit of the range for the random number.
-
-	@return A random integer between low and high, inclusive.
-
-*/
 
 template<typename nodeType>
 int streamingKmeans<nodeType>::random(int low, int high){
+	/**
+		@brief Generates a random integer between low and high, inclusive.
+		@tparam nodeType The data type of the node.
+		@param low The lower limit of the range for the random number.
+		@param high The upper limit of the range for the random number.
+		@return A random integer between low and high, inclusive.
+	*/
+	
 	return low + ( rand() % (high - low) );
 }
 

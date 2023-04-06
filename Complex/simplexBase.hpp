@@ -94,6 +94,8 @@ class simplexBase {
 	virtual void prepareCofacets(int);
 	virtual void prepareFacets(int);
 
+
+
 	virtual std::vector<templateNode_P> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<templateNode_P, templateNode_P>&, bool);
 	virtual std::vector<nodeType*> getAllCofacets(templateNode_P, const std::unordered_map<long long, templateNode_P>&, bool);
 	virtual std::vector<nodeType*> getAllCofacets(templateNode_P);

@@ -55,7 +55,9 @@ std::vector<simplexNodePointer> incrementalPersistence<nodeType>::incrementalByD
 		if(it == pivots.end() || (*it)->hash != simplex->hash){
 
 			//Get all cofacets using emergent pair optimization
-			std::vector<nodeType *> faceList = (mode == "homology" ? complex->getAllFacets(simplex, saveVertices, dimension) : (inData.complex->simplexType == "alphaComplex" ? inData.complex->getAllDelaunayCofacets_basePointer(simplex) : complex->getAllCofacets(simplex, pivotPairs, true, saveVertices, dimension)));
+			std::vector<nodeType *> faceList = (mode == "homology" ? complex->getAllFacets(simplex, saveVertices, dimension) \
+			: (inData.complex->simplexType == "alphaComplex" ? inData.complex->getAllDelaunayCofacets_basePointer(simplex) \
+			: complex->getAllCofacets(simplex, pivotPairs, true, saveVertices, dimension))); 
 
 			std::vector<simplexNodePointer> columnV;	//Reduction column of matrix V
 			columnV.push_back(simplex); //Initially V=I -> 1's along diagonal
