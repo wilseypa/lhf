@@ -40,6 +40,7 @@ using orgQhull::Coordinates;
 template <typename nodeType>
 class qhullPipe : public basePipe<nodeType> {
   private:
+	std::string mode;
   public:
     qhullPipe();
     void runPipe(pipePacket<nodeType>& inData);

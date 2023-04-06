@@ -17,6 +17,9 @@ alphaComplex<nodeType>::alphaComplex(double maxE, double maxD) : simplexArrayLis
 		@param maxE The max epsilon limit for complex construction.
 		@param maxD The max dimension limit for complex construction.
 	*/
+	
+	std::cout << "Constructed Alpha Complex!" << std::endl;
+	
 	this->simplexType = "alphaComplex";
 	this->maxEpsilon = maxE;
 	this->maxDimension = maxD;
@@ -44,6 +47,7 @@ std::set<std::shared_ptr<nodeType>, cmpByWeight<std::shared_ptr<nodeType>>> alph
 		@brief Get Delaunay Dimensional Edges
 		@tparam nodeType The data type of the simplex node (Alpha only).
 		@param dim tbd
+		@return tbd
 	*/
 	if(dim==0)
 	for(int i=0; i <= this->maxDimension; i++)
@@ -100,6 +104,7 @@ std::vector<std::shared_ptr<nodeType>> alphaComplex<nodeType>::expanddelaunayDim
 		@brief Expand and get next dimension of edges
 		@tparam nodeType The data type of the simplex node.
 		@param dim tbd
+		@return tbd
 	*/
 	this->simplexList[dim-1].clear();
 	std::set<std::shared_ptr<nodeType>, cmpByWeight<std::shared_ptr<nodeType>>> set_simplexes=getdelaunayDimEdges(dim);
@@ -116,6 +121,7 @@ std::vector<std::shared_ptr<nodeType>> alphaComplex<nodeType>::getAllDelaunayCof
 		@brief For each pivot, get column of the pivot
 		@tparam nodeType The data type of the simplex node.
 		@param dim tbd
+		@return tbd
 	*/
 
 	std::vector<std::shared_ptr<nodeType>> ret;
@@ -143,7 +149,15 @@ std::vector<std::shared_ptr<nodeType>> alphaComplex<nodeType>::getAllDelaunayCof
 
 template<typename nodeType>
 std::vector<std::shared_ptr<nodeType>> alphaComplex<nodeType>::getAllDelaunayCofacets(std::shared_ptr<nodeType> simp){
-	
+	/**
+		getAllDelaunayCofacets(std::shared_ptr<nodeType> simp)
+		
+		
+		@brief Get Delaunay Cofacets
+		@tparam nodeType The data type of the simplex node.
+		@param simp tbd
+		@return tbd
+	*/
 	std::vector<std::shared_ptr<nodeType>> ret;
 	unsigned dimension  = simp->simplex.size();
 	for(auto iter = this->simplexList[dimension].rbegin();iter!=this->simplexList[dimension].rend();++iter){
@@ -214,6 +228,12 @@ bool  alphaComplex<nodeType>::checkGabriel(std::vector<double> point, std::vecto
 		return false;
 }
 
+ 
+template<typename nodeType>
+void alphaComplex<nodeType>::buildAlphaComplex(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData){
+	std::cout<< "Not Implemented" << std::endl;
+	return;
+}
 
 
 //Anurag

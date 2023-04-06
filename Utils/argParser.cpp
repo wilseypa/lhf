@@ -106,78 +106,112 @@ void argParser::printArguments(std::map<std::string,std::string> args){
 }
 
 void argParser::setPipeline(std::map<std::string, std::string>& args){
-	//Configure the base pipeline from the complex storage type
-	std::string basePipeline;
 
 
 	// Handle iterative / involuted and upscaling flags
 	if(args["mode"] == "iterUpscale" || args["involutedUpscale"] == "true"){
 		args["upscale"] = "true";
 	}
-
-	
-	// Handle complexType and corresponding simplexType	
-	if(args["complexType"] == "simplexArrayList"){
-		if(args["upscale"] == "true")
-			basePipeline = "distMatrix.neighGraph.incrementalPersistence.upscale";
-		else
-			basePipeline = "distMatrix.neighGraph.incrementalPersistence";
-
-	} else if (args["complexType"] == "simplexTree"){
-		if(args["upscale"] == "true")
-			basePipeline = "distMatrix.neighGraph.rips.fast.upscale";
-		else
-			basePipeline = "distMatrix.neighGraph.rips.fast";
-			
-	} else if(args["complexType"] == "alpha"){
-		basePipeline = "distMatrix.alpha.fastPersistence";
-		args["complexType"] = "alphaComplex";
-		args["nodeType"] = "alphaNode";
-		args["mode"] = "alpha";   
-		args["pipeline"] = basePipeline;
-		return;
-	}else if(args["complexType"] == "graphInducedComplex" || args["complexType"] == "beta" || args["complexType"] == "betaGeneral" || args["complexType"] == "betaExtended"){
-		args["nodeType"] = "alphaNode";
-		args["mode"] = "alpha";
-		if(args["complexType"] == "beta")
-			basePipeline = "distMatrix.neighGraph.rips.fastPersistence";
-		else if(args["complexType"] == "betaGeneral")
-			basePipeline = "distMatrix.betaSkeletonBasedComplex.neighGraph.rips.fastPersistence";
-		else if(args["complexType"] == "betaExtended")
-			basePipeline = "distMatrix.betaSubSkeletonComplex.neighGraph.rips.fastPersistence";
 		
-		args["pipeline"] = basePipeline;
-		args["complexType"] = "alphaComplex";
-		return;
-    } else if(args["complexType"] == "witness"){
-		
+	//Handle witness complexes
+    if(args["complexType"] == "witness" || args["complexType"] == "witnessComplex"){
 		args["complexType"] = "witnessComplex";
 		args["nodeType"] = "witnessNode";
-		if(args["upscale"] == "true")
-			basePipeline = "distMatrix.neighGraph.incrementalPersistence.upscale";
-		else
-			basePipeline = "distMatrix.neighGraph.incrementalPersistence";
-			
-    }
+    } 
         
-        
-        
-        
+    /**
+     * MPI MODE:
+     *  VR with preprocessor, partitions farmed to MPI nodes
+     */
     if(args["mode"] == "mpi"){
+		args["mpi"] = 1;
+		
 		//Set up MPI pipeline ; requires setting pipeline, any complex storage
-		if(args["pipeline"] == "")
-			args["pipeline"] = basePipeline;
-
+		if(args["pipeline"] == ""){
+			args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";
+			
+			if(args["upscale"] == "true")
+				args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence.upscale";
+		}
+		
 		//Requires preprocessor
 		if(args["preprocessor"] == "")
 			args["preprocessor"] = "kmeans++";
+	}
 
-	}else if(args["mode"] == "standard"){
+	/**
+     * STANDARD MODE: 
+     * 	VR with incremental
+     */
+	else if(args["mode"] == "standard"){
 		//Set up standard mode;
-		if(args["pipeline"] == "")
-			args["pipeline"] = basePipeline;
-
-	}else if(args["mode"] == "reduced"){
+		if(args["pipeline"] == ""){
+			args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";
+			
+			if(args["upscale"] == "true")
+				args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence.upscale";
+		}
+	}	
+	
+	/**
+     * ALPHA MODE: 
+     * 	Triangulation with Alpha (gabriel) filtration
+     */
+	else if(args["mode"] == "alpha" || args["complexType"] == "alpha" || args["complexType"] == "alphaComplex"){
+		
+		//TODO: Nick come check these are still correct after splitting betaComplex
+		args["nodeType"] = "alphaNode";
+		args["mode"] = "alpha";
+		args["complexType"] = "alphaComplex";
+		args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";
+			
+		if(args["upscale"] == "true")
+			args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence.upscale";
+	}
+	
+	
+	
+	/**
+     * BETA MODE: 
+     * 	Triangulation with Beta-sparsification
+     */
+	else if(args["mode"] == "beta" || args["complexType"] == "graphInducedComplex" || args["complexType"] == "betaGeneral" || args["complexType"] == "betaExtended"){
+		args["nodeType"] = "alphaNode";
+		args["mode"] = "beta";
+		
+		if(args["complexType"] == "betaGeneral")
+			args["pipeline"] = "distMatrix.betaSkeletonBasedComplex.neighGraph.rips.fastPersistence";
+		else if(args["complexType"] == "betaExtended")
+			args["pipeline"] = "distMatrix.betaSubSkeletonComplex.neighGraph.rips.fastPersistence";
+		
+		
+		args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
+		args["complexType"] = "betaComplex";
+	}
+	
+	
+	/**
+     * WEIGHTED DELAUNAY MODE: 
+     * 	Triangulation with Alpha (gabriel) filtration
+     */
+	else if(args["mode"] == "wd"){
+		
+		//TODO: Nick come check these are still correct after splitting betaComplex
+		args["nodeType"] = "alphaNode";
+		args["mode"] = "weightedAlpha";
+		args["complexType"] = "alphaComplex";
+		args["pipeline"] = "qhull.incrementalPersistence";
+			
+		if(args["upscale"] == "true")
+			args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence.upscale";
+	}
+	
+			
+	/**
+     * REDUCED MODE: 
+     * 	VR with preprocessor
+     */
+	else if(args["mode"] == "reduced"){
 		//Set up reduced pipeline for centroid approximation
 
 		//Requires preprocessor
@@ -185,47 +219,76 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 			args["preprocessor"] = "kmeans++";
 
 		if(args["pipeline"] == "")
-			args["pipeline"] = basePipeline;
+			args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";
 
+
+	/**
+     * UPSCALE MODE: 
+     * 	VR with preprocessor, upscaling
+     */
 	} else if(args["mode"] == "upscale"){
 
-		//Check if upscale was set or not, should be set in this mode
-		if(args["upscale"] != "true"){
-			args["upscale"] = "true";
-			basePipeline += ".upscale";
-		}
+		args["upscale"] = "true";
 
 		//Requires preprocessor
 		if(args["preprocessor"] == "")
 			args["preprocessor"] = "kmeans++";
+			
 		if(args["pipeline"] == "")
-			args["pipeline"] = basePipeline;
+			args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence.upscale";
 
-	} else if(args["mode"] == "stream"){
+	} 
+	
+	/**
+     * STREAM MODE: 
+     * 	Streaming VR with preprocessor
+     */
+	else if(args["mode"] == "stream"){
 		if(args["preprocessor"] == "")
 			args["preprocessor"] = "streamingkmeans";
 		if(args["pipeline"] == "")
-			args["pipeline"] = basePipeline;
+			args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";;
 
-	} else if(args["mode"] == "sw" || args["mode"] == "slidingwindow"){
+	} 
+	
+	/**
+     * SLIDING WINDOW MODE:
+     * 	VR with decision-based sliding window
+     */
+	else if(args["mode"] == "sw" || args["mode"] == "slidingwindow"){
 		args["preprocessor"] = "";
 		args["pipeline"] = "slidingwindow";
 		args["complexType"] = "simplexTree";
 
-	} else if(args["mode"] == "fast"){
-		//Fast mode; uses the fast pipe regardless of simplexType
-
+	} 
+	
+	
+	/**
+     * FAST MODE: 
+     * 	VR without fast cofacet indexing
+     */
+	else if(args["mode"] == "fast"){
 		if(args["upscale"] == "true") {
 			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence.upscale";
 		} else {
 			args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
 		}
+	}
 
-	} else if(args["mode"] == "naive" || args["mode"] == "naivewindow"){
+	/**
+     * NAIVE WINDOW MODE: 
+     * 	Simple sliding window VR
+     */
+	else if(args["mode"] == "naive" || args["mode"] == "naivewindow"){
 		args["preprocessor"] = "";
 		args["pipeline"] = "naivewindow";
-
-	} else if(args["mode"] == "iterUpscale" || args["mode"] == "iter"){
+	} 
+	
+	/**
+     * ITERATIVE UPSCALING MODE: 
+     * 	VR with preprocessor, iterative upscaling
+     */
+	else if(args["mode"] == "iterUpscale" || args["mode"] == "iter"){
 		//Iterative upscaling pipe; requires preprocessor and uses basePipeline
 
 		//Requires preprocessor
@@ -233,9 +296,15 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 			args["preprocessor"] = "kmeans++";
 
 		if(args["pipeline"] == "")
-			args["pipeline"] = basePipeline;
+			args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence.upscale";
 
-	} else if(args["mode"] == "inc" || args["mode"] == "incremental"){
+	} 
+	
+	/**
+     * INCREMENTAL MODE: 
+     * 	VR, same as standard mode
+     */
+	else if(args["mode"] == "inc" || args["mode"] == "incremental"){
 		//Incremental Mode; uses the incremental pipe regardless of simplexType
 
 		if(args["complexType"] != "simplexArrayList")

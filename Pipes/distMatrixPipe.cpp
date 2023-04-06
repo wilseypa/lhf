@@ -28,25 +28,37 @@ distMatrixPipe<nodeType>::distMatrixPipe(){
 // runPipe -> Run the configured functions of this pipeline segment
 template<typename nodeType>
 void distMatrixPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
-	//Store our distance matrix
-	if(inData.distMatrix.size() > 0) inData.distMatrix.clear();
+	/**
+	    runPipe(pipePacket<nodeType> &inData)
+	 
+		@brief Constructs the distance matrix from the point cloud
+		@tparam nodeType The data type of the simplex node.
+		@param maxE The max epsilon limit for complex construction.
+		@param maxD The max dimension limit for complex construction.
+	*/
+	
+	if(inData.distMatrix.size() > 0) 
+		inData.distMatrix.clear();
 	inData.distMatrix.resize(inData.workData.size(), std::vector<double>(inData.workData.size(),0));
-	//Iterate through each vector, create lower
+	
 	for(unsigned i = 0; i < inData.workData.size(); i++){
-		//Grab a second vector to compare to 
 		for(unsigned j = i+1; j < inData.workData.size(); j++){
-			//Calculate vector distance 
+			//Vector distance between i, j
 			inData.distMatrix[i][j] = this->ut.vectors_distance(inData.workData[i],inData.workData[j]);
 		}
 	}
 
 	for(unsigned i = 0; i < inData.workData.size(); i++){
 		double r_i = 0;
-		for(unsigned j = 0; j < inData.workData.size(); j++) r_i = std::max(r_i, inData.distMatrix[std::min(i, j)][std::max(i, j)]);
+		
+		for(unsigned j = 0; j < inData.workData.size(); j++) 
+			r_i = std::max(r_i, inData.distMatrix[std::min(i, j)][std::max(i, j)]);
+			
 		enclosingRadius = std::min(enclosingRadius, r_i);
 	}
-	if(inData.complex->complexType == "alphaComplex" && (this->betaMode == "lune" || this->betaMode == "circle"))
-				inData.incidenceMatrix = this->ut.betaNeighbors(inData.inputData,beta,betaMode);
+	
+	if(inData.complex->complexType == "betaComplex" && (this->betaMode == "lune" || this->betaMode == "circle"))
+		inData.incidenceMatrix = this->ut.betaNeighbors(inData.inputData,beta,betaMode);
 
 	inData.complex->setDistanceMatrix(&inData.distMatrix);
 	inData.complex->setEnclosingRadius(enclosingRadius);
