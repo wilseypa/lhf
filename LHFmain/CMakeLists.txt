@@ -50,7 +50,6 @@ set_target_properties(LHFlib PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(LHFlib PROPERTIES SOVERSION 1)
 set_target_properties(LHFlib PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-#target_link_libraries(LHFlib pipePacket utils readInput writeOutput simplexBase basePipe preprocessor OpenMP::OpenMP_CXX MPI::MPI_CXX qhullcpp qhull_r delaunayPipe)
 target_link_libraries(LHFlib pipePacket utils readInput writeOutput simplexBase basePipe preprocessor OpenMP::OpenMP_CXX MPI::MPI_CXX qhullcpp qhull_r)
 
 INSTALL (TARGETS LHFlib
