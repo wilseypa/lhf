@@ -906,10 +906,10 @@ extern "C"{
 		return;
 	}
 
+
 	PRAP *pyRunWrapper2(int argc, char *argv, const double *pointCloud){
 
-		//std::cout << std::endl << "argc: " << argc << std::endl;
-		//First we need to convert arguments from char* to map
+		/*******     1. Read Arguments          *********/
 		std::map<std::string, std::string> args;
 		std::vector<std::string> rawArgs;
 
@@ -930,7 +930,7 @@ extern "C"{
 			args[rawArgs[i]] = rawArgs[i + 1];
 		}
 
-		//Next, decode the data
+		/*******     2. Decode Data          *********/
 		int dataSize = std::atoi(args["datasize"].c_str());
 		int dataDim = std::atoi(args["datadim"].c_str());
 
@@ -942,26 +942,23 @@ extern "C"{
 			}
 		}
 
-		//C interface for python to call into LHF
-		auto lhflib = LHF<simplexNode>();
-		double start = omp_get_wtime();
-
-		//Create a pipePacket<simplexNode>(datatype) to store the complex and pass between engines
-		auto wD = pipePacket<simplexNode>(args, args["complexType"]); //wD (workingData)
-
-		wD.inputData = data;
-		wD.workData = wD.inputData;
 		
-		//auto rs = readInput();
-		//if(args["pipeline"] != "slidingwindow" && args["pipeline"] != "naivewindow" && args["mode"] != "mpi"){
-			//Read data from inputFile CSV
-		//	wD.inputData = rs.readCSV(args["inputFile"]);
-		//	wD.workData = wD.inputData;
-		//}
+		/*******     3. Split here based on node type          *********/
+		if(args["nodeType"] == "alphaNode"){
+			auto lhflib = LHF<alphaNode>();
+			double start = omp_get_wtime();
+			
+			auto wD = pipePacket<alphaNode>(args, args["complexType"]);
+		
+			wD.inputData = data;
+			wD.workData = wD.inputData;
 
+			//Determine what pipe we will be running
+			argParser::setPipeline(args);
 
-		//Determine what pipe we will be running
-		argParser::setPipeline(args);
+///////////////////////////////////////////
+// TODO: Nick, split this into functions //
+///////////////////////////////////////////
 
 		//If data was found in the inputFile
 		if (wD.inputData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
@@ -1177,6 +1174,472 @@ extern "C"{
 
 		std::cout << "Finished on the c++ side -> " << wD.bettiTable.size() << std::endl;
 		return b;
+
+		} else if(args["nodeType"] == "witnessNode"){
+			auto lhflib = LHF<witnessNode>();
+			double start = omp_get_wtime();
+			
+			auto wD = pipePacket<witnessNode>(args, args["complexType"]);
+		
+			wD.inputData = data;
+			wD.workData = wD.inputData;
+			
+			//Determine what pipe we will be running
+			argParser::setPipeline(args);
+
+///////////////////////////////////////////
+// TODO: Nick, split this into functions //
+///////////////////////////////////////////
+
+		//If data was found in the inputFile
+		if (wD.inputData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
+
+			if(args["mode"] == "reduced" || args["mode"] == "iterUpscale" || args["mode"] == "iter"){	
+				wD.bettiTable = lhflib.processParallelWrapper(args,wD);
+				sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
+			}
+			else{
+				lhflib.runPreprocessor(args, wD);
+				lhflib.runPipeline(args, wD);
+			}
+		}
+		else{
+			argParser::printUsage();
+		}
+
+		if ((args["debug"] == "1" || args["debug"] == "true") && wD.bettiTable.size() > 0){
+			std::cout << std::endl
+					  << "_______Merged BETTIS_______" << std::endl;
+
+			for (auto a : wD.bettiTable){
+				std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
+				utils::print1DVector(a.boundaryPoints);
+			}
+		}
+
+		delete wD.complex;
+
+		double end = omp_get_wtime();
+		std::cout << "Total LHF execution time (s): " << end - start << std::endl;
+
+		BRET *retStruct = (BRET *)malloc(sizeof(BRET) * wD.bettiTable.size()); // = new testStruct(wD.bettiTable.size());
+
+		//PRET *retStruct2 = (PRET*)malloc(sizeof(PRET) * wD.size());
+
+		for (auto i = 0; i < wD.bettiTable.size(); i++){
+			retStruct[i].dim = wD.bettiTable[i].bettiDim;
+			retStruct[i].birth = wD.bettiTable[i].birth;
+			retStruct[i].death = wD.bettiTable[i].death;
+		}
+
+		///////////////////////////////////////////////////////////////////////////////////////////
+		double *inputData_retStruct = (double *)malloc(sizeof(double) * (wD.inputData.size() * wD.inputData[0].size()));
+
+		int sizof = 0;
+		for (int i = 0; i < wD.inputData.size(); i++){
+			for (int j = 0; j < wD.inputData[i].size(); j++){
+				// std::cout << sizof << " = " << wD.inputData[i][j] << std::endl;
+				inputData_retStruct[sizof] = wD.inputData[i][j];
+				sizof++;
+			}
+		}
+
+		// std::cout << "distsize-> " << wD.distMatrix.size() << std::endl;
+		// std::cout << "inputsize-> " << wD.inputData.size() << std::endl;
+		// std::cout << "centroidLabelssize-> " << wD.centroidLabels.size() << std::endl;
+		// std::cout << "workDatasize-> " << wD.workData.size() << std::endl;
+		// std::cout << "size[0]-> " << wD.distMatrix[0].size() << std::endl;
+
+		double *distMatrix_retStruct = (double *)malloc(sizeof(double) * (wD.distMatrix.size() * wD.distMatrix.size()));
+
+		sizof = 0;
+		for (int i = 0; i < wD.distMatrix.size(); i++){
+			for (int j = 0; j < wD.distMatrix[i].size(); j++){
+				// if(sizof % 100 == 0){
+				// 	std::cout << sizof << " = " << wD.distMatrix[i][j] << std::endl;
+				// }
+				// if(sizof < 100){
+				// 	std::cout << sizof << " = " << wD.distMatrix[i][j] << std::endl;
+				// }
+				distMatrix_retStruct[sizof] = wD.distMatrix[i][j];
+				sizof++;
+			}
+		}
+
+		// std::cout << "size-> " << wD.centroidLabels.size() << std::endl;
+		// std::cout << "size[0]-> " << wD.centroidLabels[0].size() << std::endl;
+
+		unsigned *centroidLabels_retStruct = (unsigned *)malloc(sizeof(unsigned) * (wD.centroidLabels.size()));
+
+		sizof = 0;
+		// std::cout << wD.centroidLabels.size() << std::endl;
+		for (int i = 0; i < wD.centroidLabels.size(); i++){
+			// std::cout << sizof << " = " << wD.centroidLabels[i] << std::endl;
+			centroidLabels_retStruct[sizof] = wD.centroidLabels[i];
+			sizof++;
+		}
+
+		// std::cout << "size-> " << wD.workData.size() << std::endl;
+
+		double *workData_retStruct = (double *)malloc(sizeof(double) * (wD.workData.size() * wD.workData[0].size()));
+
+		sizof = 0;
+		for (int i = 0; i < wD.workData.size(); i++){
+			// std::cout << "size() = "  << wD.workData[i].size() << std::endl;
+			for (int j = 0; j < wD.workData[i].size(); j++){
+				// std::cout << sizof << " = " << wD.workData[i][j] << std::endl;
+				workData_retStruct[sizof] = wD.workData[i][j];
+				// std::cout << sizof << " = " << workData_retStruct[sizof] << std::endl;
+				sizof++;
+			}
+		}
+
+		// std::cout << wD.stats << std::endl;
+
+		char *stats_retStruct = (char *)malloc(sizeof(char) * wD.stats.length());
+
+		int n = wD.stats.length();
+
+		if (wD.stats.empty()){
+		}
+		else{
+			// std::cout << wD.stats << std::endl;
+			char stats_char_array[n + 1];
+
+			strcpy(stats_char_array, wD.stats.c_str());
+
+			for (int i = 0; i < n; i++){
+				// std::cout << stats_char_array[i];
+				stats_retStruct[i] = stats_char_array[i];
+			}
+		}
+		////////////////////////////////////////////
+
+		char *runLog_retStruct = (char *)malloc(sizeof(char) * wD.runLog.length());
+
+		if (wD.runLog.empty()){
+		}
+		else{
+			// std::cout << wD.runLog << std::endl;
+			n = wD.runLog.length();
+
+			char runLog_char_array[n + 1];
+
+			strcpy(runLog_char_array, wD.runLog.c_str());
+
+			for (int i = 0; i < n; i++){
+				// std::cout << runLog_char_array[i];
+				runLog_retStruct[i] = runLog_char_array[i];
+			}
+		}
+
+		char *ident_retStruct = (char *)malloc(sizeof(char) * wD.ident.length());
+		if (wD.ident.empty()){
+		}
+		else{
+			std::cout << wD.ident << std::endl;
+
+			char *ident_retStruct = (char *)malloc(sizeof(char) * wD.ident.length());
+
+			n = wD.ident.length();
+
+			char ident_char_array[n + 1];
+
+			strcpy(ident_char_array, wD.ident.c_str());
+
+			for (int i = 0; i < n; i++){
+				// std::cout << ident_char_array[i];
+				ident_retStruct[i] = ident_char_array[i];
+			}
+		}
+		///////////////////////////////////////////////////////////////////////////////////////////
+		//Wrap the structure in the size...
+
+		// std::cout << wD.inputData << std::endl;
+
+		BRAP *a = (BRAP *)malloc(sizeof(int) + (sizeof(BRET) * wD.bettiTable.size()));
+		PRAP *b = (PRAP *)malloc(sizeof(int) + (sizeof(BRET) * (wD.bettiTable.size()))); //* (wD.inputData.size() * wD.inputData[0].size()) * wD.bettiTable.size())));
+		//PRAP* b;
+		a->size = wD.bettiTable.size();
+		a->ret = retStruct;
+
+		// std::cout << "bettisize = " << wD.bettiTable.size() << std::endl;
+		b->size_betti = wD.bettiTable.size();
+		// std::cout << "bettisize = " << wD.bettiTable.size() << std::endl;
+		b->BettiTable = retStruct;
+
+		b->LHF_size = wD.inputData.size();
+		b->LHF_dim = wD.inputData[0].size();
+		b->workData_size = wD.workData.size();
+		b->inputData = inputData_retStruct;
+		b->distMatrix = distMatrix_retStruct;
+		if (wD.centroidLabels.size() == 0){
+			// centroidLabels_retStruct = ;
+			b->centroidLabels = centroidLabels_retStruct;
+		}
+		else{
+			b->centroidLabels = centroidLabels_retStruct;
+		}
+		b->workData = workData_retStruct;
+		if (wD.stats.empty()){
+		}
+		else{
+			b->stats = stats_retStruct;
+		}
+		if (wD.runLog.empty()){
+		}
+		else{
+			b->runLog = runLog_retStruct;
+		}
+		if (wD.ident.empty()){
+		}
+		else{
+			b->ident = ident_retStruct;
+		}
+		// std::cout << "inputData_size-> " << wD.inputData.size() << std::endl;
+		// std::cout << "inputData_size[1]-> " << wD.inputData[0].size() << std::endl;
+
+		//b->ident = wD.ident;
+		// b->stats = wD.stats;
+		// b->runLog = wD.runLog;
+
+		std::cout << "Finished on the c++ side -> " << wD.bettiTable.size() << std::endl;
+		return b;
+
+		} else {
+			auto lhflib = LHF<alphaNode>();
+			double start = omp_get_wtime();
+			
+			auto wD = pipePacket<alphaNode>(args, args["complexType"]);
+		
+			wD.inputData = data;
+			wD.workData = wD.inputData;
+
+			//Determine what pipe we will be running
+			argParser::setPipeline(args);
+
+///////////////////////////////////////////
+// TODO: Nick, split this into functions //
+///////////////////////////////////////////
+
+		//If data was found in the inputFile
+		if (wD.inputData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
+
+			if(args["mode"] == "reduced" || args["mode"] == "iterUpscale" || args["mode"] == "iter"){	
+				wD.bettiTable = lhflib.processParallelWrapper(args,wD);
+				sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
+			}
+			else{
+				lhflib.runPreprocessor(args, wD);
+				lhflib.runPipeline(args, wD);
+			}
+		}
+		else{
+			argParser::printUsage();
+		}
+
+		if ((args["debug"] == "1" || args["debug"] == "true") && wD.bettiTable.size() > 0){
+			std::cout << std::endl
+					  << "_______Merged BETTIS_______" << std::endl;
+
+			for (auto a : wD.bettiTable){
+				std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
+				utils::print1DVector(a.boundaryPoints);
+			}
+		}
+
+		delete wD.complex;
+
+		double end = omp_get_wtime();
+		std::cout << "Total LHF execution time (s): " << end - start << std::endl;
+
+		BRET *retStruct = (BRET *)malloc(sizeof(BRET) * wD.bettiTable.size()); // = new testStruct(wD.bettiTable.size());
+
+		//PRET *retStruct2 = (PRET*)malloc(sizeof(PRET) * wD.size());
+
+		for (auto i = 0; i < wD.bettiTable.size(); i++){
+			retStruct[i].dim = wD.bettiTable[i].bettiDim;
+			retStruct[i].birth = wD.bettiTable[i].birth;
+			retStruct[i].death = wD.bettiTable[i].death;
+		}
+
+		///////////////////////////////////////////////////////////////////////////////////////////
+		double *inputData_retStruct = (double *)malloc(sizeof(double) * (wD.inputData.size() * wD.inputData[0].size()));
+
+		int sizof = 0;
+		for (int i = 0; i < wD.inputData.size(); i++){
+			for (int j = 0; j < wD.inputData[i].size(); j++){
+				// std::cout << sizof << " = " << wD.inputData[i][j] << std::endl;
+				inputData_retStruct[sizof] = wD.inputData[i][j];
+				sizof++;
+			}
+		}
+
+		// std::cout << "distsize-> " << wD.distMatrix.size() << std::endl;
+		// std::cout << "inputsize-> " << wD.inputData.size() << std::endl;
+		// std::cout << "centroidLabelssize-> " << wD.centroidLabels.size() << std::endl;
+		// std::cout << "workDatasize-> " << wD.workData.size() << std::endl;
+		// std::cout << "size[0]-> " << wD.distMatrix[0].size() << std::endl;
+
+		double *distMatrix_retStruct = (double *)malloc(sizeof(double) * (wD.distMatrix.size() * wD.distMatrix.size()));
+
+		sizof = 0;
+		for (int i = 0; i < wD.distMatrix.size(); i++){
+			for (int j = 0; j < wD.distMatrix[i].size(); j++){
+				// if(sizof % 100 == 0){
+				// 	std::cout << sizof << " = " << wD.distMatrix[i][j] << std::endl;
+				// }
+				// if(sizof < 100){
+				// 	std::cout << sizof << " = " << wD.distMatrix[i][j] << std::endl;
+				// }
+				distMatrix_retStruct[sizof] = wD.distMatrix[i][j];
+				sizof++;
+			}
+		}
+
+		// std::cout << "size-> " << wD.centroidLabels.size() << std::endl;
+		// std::cout << "size[0]-> " << wD.centroidLabels[0].size() << std::endl;
+
+		unsigned *centroidLabels_retStruct = (unsigned *)malloc(sizeof(unsigned) * (wD.centroidLabels.size()));
+
+		sizof = 0;
+		// std::cout << wD.centroidLabels.size() << std::endl;
+		for (int i = 0; i < wD.centroidLabels.size(); i++){
+			// std::cout << sizof << " = " << wD.centroidLabels[i] << std::endl;
+			centroidLabels_retStruct[sizof] = wD.centroidLabels[i];
+			sizof++;
+		}
+
+		// std::cout << "size-> " << wD.workData.size() << std::endl;
+
+		double *workData_retStruct = (double *)malloc(sizeof(double) * (wD.workData.size() * wD.workData[0].size()));
+
+		sizof = 0;
+		for (int i = 0; i < wD.workData.size(); i++){
+			// std::cout << "size() = "  << wD.workData[i].size() << std::endl;
+			for (int j = 0; j < wD.workData[i].size(); j++){
+				// std::cout << sizof << " = " << wD.workData[i][j] << std::endl;
+				workData_retStruct[sizof] = wD.workData[i][j];
+				// std::cout << sizof << " = " << workData_retStruct[sizof] << std::endl;
+				sizof++;
+			}
+		}
+
+		// std::cout << wD.stats << std::endl;
+
+		char *stats_retStruct = (char *)malloc(sizeof(char) * wD.stats.length());
+
+		int n = wD.stats.length();
+
+		if (wD.stats.empty()){
+		}
+		else{
+			// std::cout << wD.stats << std::endl;
+			char stats_char_array[n + 1];
+
+			strcpy(stats_char_array, wD.stats.c_str());
+
+			for (int i = 0; i < n; i++){
+				// std::cout << stats_char_array[i];
+				stats_retStruct[i] = stats_char_array[i];
+			}
+		}
+		////////////////////////////////////////////
+
+		char *runLog_retStruct = (char *)malloc(sizeof(char) * wD.runLog.length());
+
+		if (wD.runLog.empty()){
+		}
+		else{
+			// std::cout << wD.runLog << std::endl;
+			n = wD.runLog.length();
+
+			char runLog_char_array[n + 1];
+
+			strcpy(runLog_char_array, wD.runLog.c_str());
+
+			for (int i = 0; i < n; i++){
+				// std::cout << runLog_char_array[i];
+				runLog_retStruct[i] = runLog_char_array[i];
+			}
+		}
+
+		char *ident_retStruct = (char *)malloc(sizeof(char) * wD.ident.length());
+		if (wD.ident.empty()){
+		}
+		else{
+			std::cout << wD.ident << std::endl;
+
+			char *ident_retStruct = (char *)malloc(sizeof(char) * wD.ident.length());
+
+			n = wD.ident.length();
+
+			char ident_char_array[n + 1];
+
+			strcpy(ident_char_array, wD.ident.c_str());
+
+			for (int i = 0; i < n; i++){
+				// std::cout << ident_char_array[i];
+				ident_retStruct[i] = ident_char_array[i];
+			}
+		}
+		///////////////////////////////////////////////////////////////////////////////////////////
+		//Wrap the structure in the size...
+
+		// std::cout << wD.inputData << std::endl;
+
+		BRAP *a = (BRAP *)malloc(sizeof(int) + (sizeof(BRET) * wD.bettiTable.size()));
+		PRAP *b = (PRAP *)malloc(sizeof(int) + (sizeof(BRET) * (wD.bettiTable.size()))); //* (wD.inputData.size() * wD.inputData[0].size()) * wD.bettiTable.size())));
+		//PRAP* b;
+		a->size = wD.bettiTable.size();
+		a->ret = retStruct;
+
+		// std::cout << "bettisize = " << wD.bettiTable.size() << std::endl;
+		b->size_betti = wD.bettiTable.size();
+		// std::cout << "bettisize = " << wD.bettiTable.size() << std::endl;
+		b->BettiTable = retStruct;
+
+		b->LHF_size = wD.inputData.size();
+		b->LHF_dim = wD.inputData[0].size();
+		b->workData_size = wD.workData.size();
+		b->inputData = inputData_retStruct;
+		b->distMatrix = distMatrix_retStruct;
+		if (wD.centroidLabels.size() == 0){
+			// centroidLabels_retStruct = ;
+			b->centroidLabels = centroidLabels_retStruct;
+		}
+		else{
+			b->centroidLabels = centroidLabels_retStruct;
+		}
+		b->workData = workData_retStruct;
+		if (wD.stats.empty()){
+		}
+		else{
+			b->stats = stats_retStruct;
+		}
+		if (wD.runLog.empty()){
+		}
+		else{
+			b->runLog = runLog_retStruct;
+		}
+		if (wD.ident.empty()){
+		}
+		else{
+			b->ident = ident_retStruct;
+		}
+		// std::cout << "inputData_size-> " << wD.inputData.size() << std::endl;
+		// std::cout << "inputData_size[1]-> " << wD.inputData[0].size() << std::endl;
+
+		//b->ident = wD.ident;
+		// b->stats = wD.stats;
+		// b->runLog = wD.runLog;
+
+		std::cout << "Finished on the c++ side -> " << wD.bettiTable.size() << std::endl;
+
+
+		return b;
+
+		}
 	}
 }
 

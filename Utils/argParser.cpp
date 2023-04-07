@@ -203,7 +203,7 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
 		args["pipeline"] = "distMatrix.qhull.incrementalPersistence";
 			
 		if(args["upscale"] == "true")
-			args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence.upscale";
+			args["pipeline"] = "distMatrix.qhull.incrementalPersistence.upscale";
 	}
 	
 			
