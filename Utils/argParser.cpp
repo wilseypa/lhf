@@ -194,7 +194,7 @@ void argParser::setPipeline(std::map<std::string, std::string>& args){
      * WEIGHTED DELAUNAY MODE: 
      * 	Triangulation with Alpha (gabriel) filtration
      */
-	else if(args["mode"] == "wd"){
+	else if(args["mode"] == "wd" || args["mode"] == "weightedAlpha"){
 		
 		//TODO: Nick come check these are still correct after splitting betaComplex
 		args["nodeType"] = "alphaNode";
