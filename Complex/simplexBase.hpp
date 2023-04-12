@@ -99,10 +99,12 @@ class simplexBase {
 	virtual std::vector<templateNode_P> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<templateNode_P, templateNode_P>&, bool);
 	virtual std::vector<nodeType*> getAllCofacets(templateNode_P, const std::unordered_map<long long, templateNode_P>&, bool);
 	virtual std::vector<nodeType*> getAllCofacets(templateNode_P);
+    virtual std::vector<templateNode_P> getAllCofacets(const std::set<unsigned>&);
+
 	virtual std::vector<templateNode_P> getAllDelaunayCofacets(templateNode_P);
 	virtual std::vector<nodeType*> getAllDelaunayCofacets_basePointer(templateNode_P);
 	virtual std::vector<templateNode_P> getAllDelaunayCofacets(templateNode_P simp, std::unordered_map<templateNode_P,templateNode_P> pivotPairs,bool emergent);
-	virtual std::vector<templateNode_P> getAllCofacets(const std::set<unsigned>&);
+	
 	virtual std::vector<nodeType*> getAllFacets(nodeType*);
 	virtual std::vector<nodeType*> getAllFacets(templateNode_P);
 	virtual std::vector<templateNode_P> getAllFacets_P(templateNode_P);

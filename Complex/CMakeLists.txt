@@ -9,7 +9,7 @@ add_library(simplexArrayList "simplexArrayList.cpp" "simplexArrayList.hpp")
 add_library(alphaComplex "alphaComplex.cpp" "alphaComplex.hpp")
 add_library(witnessComplex "witnessComplex.cpp" "witnessComplex.hpp")
 add_library(betaComplex "betaComplex.cpp" "betaComplex.hpp")
-#add_library(simplexTree "simplexTree.cpp" "simplexTree.hpp")
+add_library(simplexTree "simplexTree.cpp" "simplexTree.hpp")
 
 include_directories(${PROJECT_SOURCE_DIR}/Utils)
 link_directories(${PROJECT_SOURCE_DIR}/Utils)
@@ -18,7 +18,7 @@ include_directories(../Preprocessing)
 link_directories(../Preprocessing)
 
 # target_link_libraries(LHF PipeFunctions)
-target_link_libraries(simplexBase utils pipePacket simplexArrayList alphaComplex witnessComplex betaComplex) #simplexTree)
+target_link_libraries(simplexBase utils pipePacket simplexArrayList alphaComplex witnessComplex betaComplex simplexTree)
 
 find_package(OpenMP)
 target_link_libraries(alphaComplex OpenMP::OpenMP_CXX)
