@@ -70,15 +70,16 @@ void simplexTree<nodeType>::recurseInsertDsimplex(simplexTreeNode_P node, std::v
 		        circumCenter = R;
        }else
    	   circumCenter = inputData[*(simplex.begin())];
- 		simplexTreeNode_P insNode = new simplexTreeNode<nodeType>(simplex, circumRadius);
-    		insNode->simpNode->circumCenter = circumCenter;	
-    		insNode->simpNode->circumRadius = circumRadius;	
+ 		simplexTreeNode_P insNode = std::make_shared<simplexTreeNode<nodeType>>(simplex, circumRadius);
+    		//TODO: dependent on alpha node
+            //insNode->simpNode->circumCenter = circumCenter;	
+    		//insNode->simpNode->circumRadius = circumRadius;	
        		insNode->simpNode->index = x;
 		insNode->simpNode->hash = this->nodeCount;
 		this->nodeCount++;
      		if(root == nullptr){
-			root = new simplexTreeNode<nodeType>();
-			insNode->parent = root;
+			root = std::make_shared<simplexTreeNode<nodeType>>();
+			insNode->parent = root.get();
 			root->child = insNode;
 			if(subsimplex.size() > 0)
 				recurseInsertDsimplex(root->child,subsimplex,inputData);
@@ -86,7 +87,7 @@ void simplexTree<nodeType>::recurseInsertDsimplex(simplexTreeNode_P node, std::v
 			bool found = false;
 			if(node==nullptr){
 				node = root;
-				insNode->parent = node;
+				insNode->parent = node.get();
 				insNode->sibling = node->child;
 				node->child = insNode;
 				if(subsimplex.size() > 0)
@@ -102,7 +103,7 @@ void simplexTree<nodeType>::recurseInsertDsimplex(simplexTreeNode_P node, std::v
 					}
 					if(!found){	
 	                			if(node->child == nullptr){
-	                				node->child = insNode.get();
+	                				node->child = insNode;
 	                				insNode->parent = node.get();
                 				}else{
 							insNode->parent = node.get();
@@ -171,7 +172,7 @@ void simplexTree<nodeType>::recurseInsert(simplexTreeNode<nodeType>* node, unsig
 
 		//Check if the node has children already...
 		if(node->child == nullptr){
-			node->child = insNode.get();
+			node->child = insNode;
 			insNode->parent = node;
 			//node->children.insert(insNode);
 
@@ -180,16 +181,16 @@ void simplexTree<nodeType>::recurseInsert(simplexTreeNode<nodeType>* node, unsig
 			//Add new node as the first child. Shift existing children to left.
 			insNode->parent = node;
 			insNode->sibling = node->child;
-			node->child = insNode.get();
+			node->child = insNode;
 			//node->children.insert(insNode);
 
-			temp = insNode->sibling;
+			temp = insNode->sibling.get();
 
 			//Have to check the children now...
 			if(simp.size() <= this->maxDimension){
 				do {
 					recurseInsert(temp, curIndex, depth + 1, maxE, simp);
-				} while((temp = temp->sibling) != nullptr);
+				} while((temp = temp->sibling.get()) != nullptr);
 			}
 		}
 	}
@@ -254,7 +255,7 @@ void simplexTree<nodeType>::printTree(simplexTreeNode_P headPointer){
 
 	std::cout << "[index , address, sibling, child, parent]" << std::endl << std::endl;
 
-	for(auto simplexIter = headPointer.get(); simplexIter != nullptr; simplexIter = simplexIter->sibling){
+	for(auto simplexIter = headPointer; simplexIter != nullptr; simplexIter = simplexIter->sibling){
 		std::cout << simplexIter->simpNode->index << "\t";
 		std::cout << simplexIter << "\t" ;
 		std::cout << simplexIter->sibling << "\t" ;
@@ -399,13 +400,13 @@ void simplexTree<nodeType>::deleteIndexRecurse(int vectorIndex) {
     // Since child index is always higher than parent index, no "top node" between root->child and vectorIndex
     // can contain a subtree that has a node->index =  vectorIndex. Therefore, skip to the top node whose sibling
     // has vectorIndex.
-    simplexTreeNode<nodeType>* curNode = root->child;
+    simplexTreeNode<nodeType>* curNode = root->child.get();
 
     if(curNode->sibling != nullptr)
     {
         while(curNode->sibling->simpNode->index > vectorIndex)
         {
-            curNode = curNode->sibling;
+            curNode = curNode->sibling.get();
         }
     }
 
@@ -425,7 +426,7 @@ void simplexTree<nodeType>::deleteIndexRecurse(int vectorIndex, simplexTreeNode<
 	if(curNode->sibling != nullptr && curNode->sibling->simpNode->index == vectorIndex){   // Current node's sibling is to be deleted
 
 		//Map the current node's sibling to the node following the node for deletion
-		simplexTreeNode<nodeType>* tempNode = curNode->sibling;
+		simplexTreeNode<nodeType>* tempNode = curNode->sibling.get();
 		curNode->sibling = curNode->sibling->sibling;
 
 		//Delete the orphaned node now that sibling remapping is handled
@@ -434,7 +435,7 @@ void simplexTree<nodeType>::deleteIndexRecurse(int vectorIndex, simplexTreeNode<
 
 	} else if(curNode->sibling != nullptr){
 		//Recurse to the next sibling and check for deletion
-		deleteIndexRecurse(vectorIndex, curNode->sibling);
+		deleteIndexRecurse(vectorIndex, curNode->sibling.get());
 	}
 
 
@@ -442,7 +443,7 @@ void simplexTree<nodeType>::deleteIndexRecurse(int vectorIndex, simplexTreeNode<
 	//	Assume all children / sibling pointers have been alleviated in calling function
 	if(curNode->simpNode->index == vectorIndex){
 		//Ensure we aren't the first node of the tree
-		if(curNode == root->child){
+		if(curNode == root->child.get()){
 			root->child = curNode->sibling;
 		}
 
@@ -455,7 +456,7 @@ void simplexTree<nodeType>::deleteIndexRecurse(int vectorIndex, simplexTreeNode<
 	//If this isn't the vectorIndex, need to look at children and remove or recurse
 	//	Only need to recurse if the vector could be a member of tree (i.e. < vectorIndex)
 	} else if (curNode->child != nullptr && curNode->child->simpNode->index == vectorIndex){
-		simplexTreeNode<nodeType>* tempNode = curNode->child;
+		simplexTreeNode<nodeType>* tempNode = curNode->child.get();
 		curNode->child = curNode->child->sibling;
 
 //		for(auto d : simplexList){
@@ -468,7 +469,7 @@ void simplexTree<nodeType>::deleteIndexRecurse(int vectorIndex, simplexTreeNode<
 
 	} else if( curNode->child != nullptr && curNode->child->simpNode->index > vectorIndex ) {
 	    // If curNode->child->index < vectorIndex, the subtree rooted at curNode->child cannot contain vectorIndex.
-		deleteIndexRecurse(vectorIndex, curNode->child);
+		deleteIndexRecurse(vectorIndex, curNode->child.get());
 
 	}
 
@@ -485,7 +486,8 @@ void simplexTree<nodeType>::insert() {
 	}
 	
 	//Create our new node to insert (Ref Count = 1)
-	simplexTreeNode_P insNode = std::make_shared<simplexTreeNode<nodeType>>((unsigned)this->indexCounter, 0); 	
+    std::set<unsigned> simp({(unsigned)this->indexCounter});;
+	simplexTreeNode_P insNode = std::make_shared<simplexTreeNode<nodeType>>(simp, 0); 	
 	insNode->simpNode->index = this->indexCounter;
 
 	//Track this index in our current window (for sliding window)
@@ -496,8 +498,7 @@ void simplexTree<nodeType>::insert() {
 	if(root == nullptr){
 		root = std::make_shared<simplexTreeNode<nodeType>>();
 		insNode->parent = root.get();
-		root->child = insNode.get();
-		//root->children.insert(insNode);
+		root->child = insNode;
 		this->indexCounter++;
 		this->runningVectorCount++;
 		this->nodeCount++;
@@ -521,31 +522,17 @@ void simplexTree<nodeType>::insert() {
 	//d2 --> | 2 | 3 |     | 4 | 5 |
 	//
 
-
-	//Now let's do it the new way - incremental VR;
-	//	Start at the first dimension (d0);
-	//		if e (d0, dn) < eps
-	//			recurse down tree
-	//				recurse
-	//			insert to current
-	//	iterate to d0->sibling
-
 	this->runningVectorCount++;
-
-	for(auto it = root->child; it != nullptr; it = it->sibling){
+	for(auto it = root->child.get(); it != nullptr; it = it->sibling.get()){
 		recurseInsert(it, this->indexCounter, 0, 0, {(unsigned)this->indexCounter});
 	}
 
 	//Insert into the right of the tree
-	//Child points to last child, and sibling points backwards
+	// Child points to last child, and sibling points backwards
 	insNode->parent = root.get();
 	insNode->sibling = root->child;
-	root->child = insNode.get();
-	//root->children.insert(insNode);
+	root->child = insNode;
 
-	//simplexList[0].insert(insNode);
-
-	// runningVectorCount++;
 	insNode->simpNode->hash = this->nodeCount;
 	this->nodeCount++;
 	this->indexCounter++;
@@ -593,12 +580,18 @@ double simplexTree<nodeType>::getSize(){
 
 template<typename nodeType>
 simplexTree<nodeType>::simplexTreeNode<nodeType>* simplexTree<nodeType>::find(std::set<unsigned>::iterator begin, std::set<unsigned>::iterator end, std::shared_ptr<simplexTreeNode<nodeType>> curNode){
+	auto a = curNode.get();
+    return find(begin, end, a);
+}
+
+template<typename nodeType>
+simplexTree<nodeType>::simplexTreeNode<nodeType>* simplexTree<nodeType>::find(std::set<unsigned>::iterator begin, std::set<unsigned>::iterator end, simplexTreeNode<nodeType>* curNode){
 	auto it = begin;
     simplexTreeNode<nodeType>* ret;
 
 	while(it != end){
 		simplexTreeNode<nodeType>* ptr;
-		for(ptr = curNode->child; ptr != nullptr; ptr = ptr->sibling){
+		for(ptr = curNode->child.get(); ptr != nullptr; ptr = ptr->sibling.get()){
 			if(ptr->simpNode->index == (*it)){
 				++it;
 				ret = ptr;
@@ -685,11 +678,10 @@ std::vector<std::shared_ptr<nodeType>> simplexTree<nodeType>::getAllCofacets(con
 template<typename nodeType>
 std::vector<nodeType*> simplexTree<nodeType>::getAllFacets(std::shared_ptr<nodeType> simp){
 	std::vector<nodeType*> ret;
-	simplexTreeNode_P parNode = find(simp->simplex.begin(), simp->simplex.end(), root);
-	auto parentNode = parNode.get();
+	simplexTreeNode<nodeType>* parentNode = find(simp->simplex.begin(), simp->simplex.end(), root);
 	if(parentNode == nullptr) return ret; //Simplex isn't in the simplex tree
 
-	simplexTreeNode_P tempNode;
+	simplexTreeNode<nodeType>* tempNode;
 	auto it = simp->simplex.end();
 
 	while(true){
@@ -710,16 +702,15 @@ std::vector<nodeType*> simplexTree<nodeType>::getAllFacets(std::shared_ptr<nodeT
 template<typename nodeType>
 std::vector<std::shared_ptr<nodeType>> simplexTree<nodeType>::getAllFacets_P(std::shared_ptr<nodeType> simp){
 	std::vector<templateNode_P> ret;
-	simplexTreeNode_P parNode = find(simp->simplex.begin(), simp->simplex.end(), root);
-	auto parentNode = parNode.get();
+	simplexTreeNode<nodeType>* parentNode = find(simp->simplex.begin(), simp->simplex.end(), root);
 	if(parentNode == nullptr) return ret; //Simplex isn't in the simplex tree
 
-	simplexTreeNode_P tempNode;
+	simplexTreeNode<nodeType>* tempNode;
 	auto it = simp->simplex.end();
 
 	while(true){
 		--it;
-		if(parentNode != root) parentNode = parentNode->parent;
+		if(parentNode != root.get()) parentNode = parentNode->parent;
 		else break;
 
 		//Insert all of the children in reverse lexicographic order
@@ -1029,7 +1020,7 @@ void simplexTree<nodeType>::clear(){
 }
 
 //Explicit Template Class Instantiation
-//template class simplexTree<simplexNode>;
+template class simplexTree<simplexNode>;
 //template class simplexTree<alphaNode>;
 //template class simplexTree<witnessNode>;
 

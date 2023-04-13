@@ -33,9 +33,9 @@ class simplexTree : public simplexBase<nodeType> {
       };
             
       std::shared_ptr<simplexTreeNode<nodeType>> child = nullptr;
-      simplexTreeNode* sibling = nullptr;
+      std::shared_ptr<simplexTreeNode<nodeType>> sibling = nullptr;
       simplexTreeNode* parent = nullptr;
-      std::set<simplexTreeNode*, cmpByIndex> children;
+      std::set<simplexTreeNode*, cmpByIndex> children; 
       bool valid= true;	
           
       simplexTreeNode(){simpNode = std::make_shared<simplexNode>(simplexNode());}
@@ -52,7 +52,8 @@ class simplexTree : public simplexBase<nodeType> {
   
   
     //Presumably private functions (Not implemented in simplexBase)
-	simplexTreeNode<nodeType>* find(std::set<unsigned>::iterator, std::set<unsigned>::iterator, simplexTreeNode_P);
+	struct simplexTreeNode<nodeType>* find(std::set<unsigned>::iterator, std::set<unsigned>::iterator, simplexTreeNode_P);
+	struct simplexTreeNode<nodeType>* find(std::set<unsigned>::iterator, std::set<unsigned>::iterator, simplexTreeNode<nodeType>*);
   
     
     //Commenting out for now - not sure if the first argument type is what we want to use
