@@ -18,11 +18,10 @@ class simplexTree : public simplexBase<nodeType> {
   public:
   
     //SimplexTreeNode wraps a simplexNode and tree pointers; these are internal to the construction
-    //  The child holds the shared pointer. Free children to clear the tree.
+    //  The child holds the shared pointer. Free children and siblings to clear the tree.
     template<typename nodetype>
     struct simplexTreeNode{
-      std::shared_ptr<nodeType> simpNode;
-        
+
       struct cmpByIndex{
          bool operator()(const simplexTreeNode* lhs, const simplexTreeNode* rhs) const{
              return lhs->simpNode->index < rhs->simpNode->index;
@@ -31,15 +30,35 @@ class simplexTree : public simplexBase<nodeType> {
              return lhs.simpNode->index < rhs.simpNode->index;
          }
       };
-            
-      std::shared_ptr<simplexTreeNode<nodeType>> child = nullptr;
-      std::shared_ptr<simplexTreeNode<nodeType>> sibling = nullptr;
+      
+      std::shared_ptr<nodeType> simpNode;                               //SharedPtr to the nodeType
+      std::shared_ptr<simplexTreeNode<nodeType>> child = nullptr;       //SharedPtr to child
+      std::shared_ptr<simplexTreeNode<nodeType>> sibling = nullptr;     //SharedPtr to sibling
       simplexTreeNode* parent = nullptr;
       std::set<simplexTreeNode*, cmpByIndex> children; 
       bool valid= true;	
           
-      simplexTreeNode(){simpNode = std::make_shared<simplexNode>(simplexNode());}
+      //SimplexNode Constructor Passthrough
+      template<typename U = nodeType, typename std::enable_if<std::is_same<U, simplexNode>::value, int>::type = 0>
+      simplexTreeNode(){simpNode = std::make_shared<nodeType>(simplexNode());}
+      
+      template<typename U = nodeType, typename std::enable_if<std::is_same<U, simplexNode>::value, int>::type = 0>
       simplexTreeNode(std::set<unsigned> simp, double wt){simpNode = std::make_shared<simplexNode>(simplexNode(simp, wt));}
+      
+      //AlphaNode Constructor Passthrough
+      template<typename U = nodeType, typename std::enable_if<std::is_same<U, alphaNode>::value, int>::type = 0>
+      simplexTreeNode(){simpNode = std::make_shared<alphaNode>(alphaNode());}
+      
+      template<typename U = nodeType, typename std::enable_if<std::is_same<U, alphaNode>::value, int>::type = 0>
+      simplexTreeNode(std::set<unsigned> simp, double wt){simpNode = std::make_shared<alphaNode>(alphaNode(simp, wt));}
+      
+      //WitnessNode Constructor Passthrough
+      template<typename U = nodeType, typename std::enable_if<std::is_same<U, witnessNode>::value, int>::type = 0>
+      simplexTreeNode(){simpNode = std::make_shared<witnessNode>(witnessNode());}
+      
+      template<typename U = nodeType, typename std::enable_if<std::is_same<U, witnessNode>::value, int>::type = 0>
+      simplexTreeNode(std::set<unsigned> simp, double wt){simpNode = std::make_shared<witnessNode>(witnessNode(simp, wt));}
+      
     };
         
         

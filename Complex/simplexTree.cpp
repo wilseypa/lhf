@@ -1021,6 +1021,6 @@ void simplexTree<nodeType>::clear(){
 
 //Explicit Template Class Instantiation
 template class simplexTree<simplexNode>;
-//template class simplexTree<alphaNode>;
-//template class simplexTree<witnessNode>;
+template class simplexTree<alphaNode>;
+template class simplexTree<witnessNode>;
 
