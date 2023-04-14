@@ -158,7 +158,7 @@ class LHF:
     # lib = ctypes.CDLL("./env/lib/python3.8/site-packages/libLHF/libLHFlib.so", mode=1)
     lib = ctypes.CDLL(filename, mode=1)
     args = {}
-    default = {"threads": "30", "mpi": "0", "mode": "standard", "dimensions": "2", "outputFile": "output", "epsilon": "5", "debug": "0", "complexType": "simplexArrayList", "preprocessor": "", "upscale": "false"}
+    default = {"threads": "30", "mpi": "0", "dimensions": "2", "outputFile": "output", "epsilon": "5", "debug": "0", "complexType": "simplexArrayList", "preprocessor": "", "upscale": "false"}
     data = []
 
     # Some notes here:

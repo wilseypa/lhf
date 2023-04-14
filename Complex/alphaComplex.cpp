@@ -232,7 +232,7 @@ bool  alphaComplex<nodeType>::checkGabriel(std::vector<double> point, std::vecto
 template<>
 void alphaComplex<alphaNode>::buildWeightedAlphaComplex(std::vector<std::vector<unsigned>> dsmiplexmesh, int npts, std::vector<std::vector<double>> inputData){
 	/**
-		buildWeightedAlphaComplex(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData)
+		(alphaNode) buildWeightedAlphaComplex(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData)
 		
 		Maintained by Nick for comparing to ECC
 		
@@ -293,17 +293,24 @@ void alphaComplex<alphaNode>::buildWeightedAlphaComplex(std::vector<std::vector<
 
 template<typename nodeType>
 void alphaComplex<nodeType>::buildWeightedAlphaComplex(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData){
-	std::cout<< "Not Implemented" << std::endl;
+	/**
+		(witnessNode/simplexNode) buildWeightedAlphaComplex(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData)
+		
+		Maintained by Nick for comparing to ECC
+		
+		@brief Build the alpha complex from delaunay triangulation; currently a stub for witnessNode/simplexNode
+		@tparam nodeType The data type of the simplex node.
+		@param dsimplexmesh the set of d-triangles for the simplex mesh
+		@param npts 
+	*/
+    std::cout<< "alphaComplex<witnessNode, simplexNode>::buildWeightedAlphaComplex Not Implemented" << std::endl;
 	return;
 }
 
-
-
-//Anurag
 template<>
 void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData){
 	/**
-		buildAlphaComplex(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData)
+		(alphaNode) buildAlphaComplex(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData)
 		
 		Maintained by Anurag
 		
@@ -316,7 +323,7 @@ void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<unsigned
 	
 	unsigned maxDimension = dsimplexmesh[0].size()-1;
 	this->bin = binomialTable(npts, this->maxDimension+1);
-	
+    
 	for(int i=0; i <= this->maxDimension; i++)
 		this->simplexList.push_back({});
 
@@ -325,7 +332,7 @@ void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<unsigned
 	{
 		auto simplex = dsimplexmesh[i];
 		sort(simplex.begin(), simplex.end());
-		
+        
 		unsigned int pow_set_size = pow(2, simplex.size());
 		std::set<unsigned> gensimp;
 		
@@ -394,7 +401,15 @@ void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<unsigned
  
 template<typename nodeType>
 void alphaComplex<nodeType>::buildAlphaComplex(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData){
-	std::cout<< "Not Implemented" << std::endl;
+    /**
+		(witnessNode/simplexNode) buildAlphaComplex(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData)
+		
+		@brief Build the alpha complex; currently a stub for witnessNode/simplexNode
+		@tparam nodeType The data type of the simplex node.
+		@param dsimplexmesh the set of d-triangles for the simplex mesh
+		@param npts 
+	*/
+	std::cout<< "alphaComplex<witnessNode, simplexNode>::buildAlphaComplex() Not Implemented" << std::endl;
 	return;
 }
 

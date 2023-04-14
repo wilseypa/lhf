@@ -81,18 +81,29 @@ class simplexBase {
 	void setStreamEvaluator(bool (*f) (std::vector<double>&, std::vector<std::vector<double>>&));
 
 	//virtual interface functions
+	virtual ~simplexBase();
 	virtual double getSize();
-	virtual bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&);
-	virtual bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&, int&, int&);
-	virtual void deleteIterative(int);
-	virtual void deleteIndexRecurse(int);  				// A wrapper for the actual deleteIndexRecurse method.
-	virtual void insert();
-	virtual bool find(std::vector<unsigned>);
-	virtual bool find(std::set<unsigned>);
 	virtual int simplexCount();
 	virtual int vertexCount();
+	virtual void outputComplex();
+
+	virtual void insert();
+	virtual bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&);
+	virtual bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&, int&, int&);
+
+	virtual bool find(std::vector<unsigned>);
+	virtual bool find(std::set<unsigned>);
+
+	virtual void deleteIterative(int);
+	virtual void deleteIndexRecurse(int);  				// A wrapper for the actual deleteIndexRecurse method.
+
 	virtual void prepareCofacets(int);
 	virtual void prepareFacets(int);
+
+	virtual void expandDimensions(int);
+	virtual std::vector<templateNode_P> expandDimension(std::vector<templateNode_P> edges);
+
+	//virtual void reduceComplex();
 
 
 
@@ -113,11 +124,6 @@ class simplexBase {
 	virtual std::set<templateNode_P, cmpByWeight<templateNode_P>> getDimEdges(int);
 	virtual std::set<templateNode_P, cmpByWeight<templateNode_P>> getdelaunayDimEdges(int);
 	virtual std::vector<std::set<templateNode_P, cmpByWeight<templateNode_P>>> getAllEdges();
-	virtual std::vector<templateNode_P> expandDimension(std::vector<templateNode_P> edges);
 	virtual std::vector<templateNode_P> expanddelaunayDimension(int);
 
-	virtual void expandDimensions(int);
-	//virtual void reduceComplex();
-	virtual ~simplexBase();
-	virtual void outputComplex();
 };
