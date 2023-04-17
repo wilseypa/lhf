@@ -3,6 +3,11 @@
  * pipeline functions to execute
  *
  */
+
+/**
+ * @file streamingUtils.hpp
+ * @brief Header file for the StreamingUtils class.
+ */
 #include <algorithm>
 #include <cstdlib>
 #include <limits>
@@ -16,12 +21,36 @@
 #include "streamingUtils.hpp"
 #include "utils.hpp"
 ////// use these as post processing step for StreamKM on very large data sets 
+/**
+ * @brief The streamingUtils class is a utility class designed for use with StreamKM algorithm.
+ * It contains post-processing steps for StreamKM on very large data sets.
+ *
+ * @tparam nodeType The data type of the elements stored in the streamingUtils class.
+ */
+
+/**
+ * @brief Default constructor for the streamingUtils class.
+ * Initializes an empty streamingUtils object.
+ *
+ * @tparam nodeType The data type of the elements stored in the streamingUtils class.
+ */
 
 // basePipe constructor
 template <typename nodeType>
 streamingUtils<nodeType>::streamingUtils(){
   
 }
+
+/**
+ * @brief Performs k-means clustering on a dataset.
+ *
+ * This class member function takes in a dataset and performs k-means clustering
+ * using a specified number of clusters and iterations.
+ *
+ * @tparam nodeType Template parameter for the data type of elements in the dataset.
+ * @param kHat Input dataset, a vector of vector of doubles representing data points.
+ * @return A vector of vector of doubles representing the centroids of the clusters.
+ */
 
 template <typename nodeType>
 std::vector<std::vector<double>> streamingUtils<nodeType>::kMeans(std::vector<std::vector<double>>& kHat){ //"batch"/ normal kmeans clustering to be performed on data
@@ -101,6 +130,16 @@ std::vector<std::vector<double>> streamingUtils<nodeType>::kMeans(std::vector<st
 }
 
 
+/**
+ * @brief Performs ball k-means clustering on a dataset.
+ *
+ * This class member function takes in a dataset and performs ball k-means clustering
+ * using a specified number of clusters, radius and centroids.
+ *
+ * @tparam nodeType Template parameter for the data type of elements in the dataset.
+ * @param clusters Input dataset, a vector of vector of doubles representing data points.
+ * @return A vector of vector of doubles representing the centroids of the clusters.
+ */
 
 template <typename nodeType>
 std::vector<std::vector<double>> streamingUtils<nodeType>::ballKmeans(std::vector<std::vector<double>>& clusters){
