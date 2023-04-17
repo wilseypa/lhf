@@ -23,9 +23,6 @@ add_library(delaunayPipe "delaunayPipe.cpp" "delaunayPipe.hpp")
 include_directories(${PROJECT_SOURCE_DIR}/Complex)
 link_directories(${PROJECT_SOURCE_DIR}/Complex)
 
-include_directories(${PROJECT_SOURCE_DIR}/Pipes)
-link_directories(${PROJECT_SOURCE_DIR}/Pipes)
-
 include_directories(${PROJECT_SOURCE_DIR}/Preprocessing)
 link_directories(${PROJECT_SOURCE_DIR}/Preprocessing)
 
@@ -78,9 +75,10 @@ find_package(CGAL REQUIRED)
 find_package(OpenMP)
 find_package(Eigen3)
 include_directories(${EIGEN3_INCLUDE_DIR})
+target_link_libraries(qhullPipe qhullcpp qhull_r)
 
 #target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe incrementalPersistence fastPersistence ripsPipe naiveWindow betaSkeletonBasedComplex betaSubSkeletonComplex upscalePipe qhullcpp qhull_r qhullPipe slidingWindow)
-target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe incrementalPersistence fastPersistence ripsPipe naiveWindow upscalePipe slidingWindow betaSkeletonBasedComplex betaSubSkeletonComplex qhullcpp qhull_r qhullPipe delaunayPipe CGAL::CGAL OpenMP::OpenMP_CXX)
+target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe incrementalPersistence fastPersistence ripsPipe naiveWindow upscalePipe slidingWindow betaSkeletonBasedComplex betaSubSkeletonComplex delaunayPipe CGAL::CGAL OpenMP::OpenMP_CXX qhullPipe)
 
 INSTALL (TARGETS basePipe
 	LIBRARY DESTINATION lib

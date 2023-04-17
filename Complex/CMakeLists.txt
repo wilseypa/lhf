@@ -17,7 +17,6 @@ link_directories(${PROJECT_SOURCE_DIR}/Utils)
 include_directories(../Preprocessing)
 link_directories(../Preprocessing)
 
-# target_link_libraries(LHF PipeFunctions)
 target_link_libraries(simplexBase utils pipePacket simplexArrayList alphaComplex witnessComplex betaComplex simplexTree)
 
 find_package(OpenMP)
