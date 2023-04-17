@@ -5,6 +5,11 @@
  *
  */
 
+/**
+ * @file argParser.hpp
+ * @brief Defines the argParser class for parsing command-line arguments.
+ */
+
 #include <string>
 #include <iostream>
 #include "argParser.hpp"
@@ -12,11 +17,27 @@
 std::map<std::string, std::string> argMap = {{"betaMesh","bmesh"},{"betaMode","bm"},{"beta","b"},{"alphaFilterationValue","afv"},{"nodeType","n"},{"reductionPercentage","rp"},{"maxSize","ms"},{"threads","t"},{"threshold","th"},{"scalar","s"},{"mpi","a"},{"mode","m"},{"dimensions","d"},{"iterations","r"},{"pipeline","p"},{"inputFile","i"},{"outputFile","o"},{"epsilon","e"},{"lambda","l"},{"debug","x"},{"complexType","c"},{"clusters","k"},{"preprocessor","pre"},{"upscale","u"},{"twist","w"},{"collapse","z"},{"seed","q"},{"involutedUpscale","iu"}, {"involuted","inv"}};
 std::map<std::string, std::string> defaultMap = {{"betaMesh","null.csv"},{"betaMode","noMode"},{"beta","1"},{"alphaFilterationValue","50000"},{"nodeType","simplexNode"},{"reductionPercentage","10"},{"maxSize","2000"},{"threads","30"},{"threshold","250"},{"scalar","0.5"},{"mpi", "0"},{"mode", "standard"},{"dimensions","1"},{"iterations","250"},{"pipeline",""},{"inputFile","None"},{"outputFile","output"},{"epsilon","5"},{"lambda",".25"},{"debug","0"},{"complexType","simplexArrayList"},{"clusters","20"},{"preprocessor",""},{"upscale","false"},{"seed","-1"},{"twist","false"},{"collapse","false"},{"involutedUpscale","false"},{"involuted","false"}};
 // argParse constructor, currently no needed information for the class constructor
+/**
+ * @brief argParser constructor.
+ *
+ * Currently, no additional information is needed for the class constructor.
+ */
 argParser::argParser(){
 
 }
 
 // argParser::defaultArguments ->
+
+/**
+ * @brief Sets the default values for command-line arguments.
+ *
+ * This function loops through each pair in argMap (maps shorthand arguments),
+ * replacing the short argument if it exists, or mapping the default argument
+ * if the long argument doesn't exist.
+ *
+ * @param map The map of argument names and their values to be modified.
+ */
+
 void argParser::defaultArguments(std::map<std::string, std::string>  &map){
 
 	//Loop through each pair in argMap (maps shorthand arguments)
@@ -36,6 +57,12 @@ void argParser::defaultArguments(std::map<std::string, std::string>  &map){
 	}
 }
 
+/**
+ * @brief Prints the usage information for the program.
+ *
+ * This function displays the command-line usage and available options
+ * for the program, including their default values if applicable.
+ */
 
 void argParser::printUsage(){
 	std::cout << "Usage: " << std::endl;
@@ -74,6 +101,19 @@ void argParser::printUsage(){
 //		-argc - argument count from Main()
 //		-argv - array of arguments from Main()
 //
+
+/**
+ * @brief Parses the command-line arguments and returns a map of arguments.
+ *
+ * This function takes the argument count and array of arguments from the
+ * main function, processes the arguments, and returns a map (dictionary)
+ * containing the parsed arguments along with their default values.
+ *
+ * @param argc Argument count from the main function.
+ * @param argv Array of arguments from the main function.
+ * @return A map containing the parsed arguments and their values.
+ */
+
 std::map<std::string, std::string> argParser::parse(int argc, char** argv){
 	std::map<std::string,std::string> retVal;
 	//Remove and map the initial arguments (may be led with -- or -)
@@ -94,6 +134,24 @@ std::map<std::string, std::string> argParser::parse(int argc, char** argv){
 	return retVal;
 }
 
+/**
+ * @brief Prints the provided arguments to the console.
+ *
+ * This function takes a map (dictionary) of arguments and their values,
+ * and prints them to the console in a user-friendly format.
+ *
+ * @param args A map containing the parsed arguments and their values.
+ */
+
+/**
+ * @brief Prints the provided arguments to the console.
+ *
+ * This function takes a map (dictionary) of arguments and their values,
+ * and prints them to the console in a user-friendly format.
+ *
+ * @param args A map containing the parsed arguments and their values.
+ */
+
 void argParser::printArguments(std::map<std::string,std::string> args){
 
 	//Print the argument set
@@ -104,6 +162,16 @@ void argParser::printArguments(std::map<std::string,std::string> args){
 	std::cout << std::endl;
 	return;
 }
+
+/**
+ * @brief Sets the pipeline for the given set of arguments.
+ *
+ * This function configures the pipeline for various modes and complex types
+ * based on the provided arguments. It modifies the input map (dictionary) of
+ * arguments to include the appropriate pipeline settings.
+ *
+ * @param args A map containing the parsed arguments and their values.
+ */
 
 void argParser::setPipeline(std::map<std::string, std::string>& args){
 	//Configure the base pipeline from the complex storage type
