@@ -80,7 +80,7 @@ find_package(Eigen3)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 #target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe incrementalPersistence fastPersistence ripsPipe naiveWindow betaSkeletonBasedComplex betaSubSkeletonComplex upscalePipe qhullcpp qhull_r qhullPipe slidingWindow)
-target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe incrementalPersistence fastPersistence ripsPipe naiveWindow upscalePipe slidingWindow betaSkeletonBasedComplex betaSubSkeletonComplex delaunayPipe qhullcpp qhull_r qhullPipe delaunayPipe CGAL::CGAL OpenMP::OpenMP_CXX)
+target_link_libraries(basePipe utils simplexBase pipePacket distMatrixPipe neighGraphPipe incrementalPersistence fastPersistence ripsPipe naiveWindow upscalePipe slidingWindow betaSkeletonBasedComplex betaSubSkeletonComplex qhullcpp qhull_r qhullPipe delaunayPipe CGAL::CGAL OpenMP::OpenMP_CXX)
 
 INSTALL (TARGETS basePipe
 	LIBRARY DESTINATION lib
@@ -90,5 +90,3 @@ INSTALL (TARGETS basePipe
 
 MESSAGE (STATUS "CMAKE_INCLUDE_PATH: " ${CMAKE_INCLUDE_PATH})
 MESSAGE (STATUS "FLAGS: " ${CMAKE_CXX_FLAGS})
-
-

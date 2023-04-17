@@ -21,12 +21,7 @@ link_directories(../Pipes)
 include_directories(../Utils)
 link_directories(../Utils)
 
-target_link_libraries(preprocessor kMeansPlusPlus)
-target_link_libraries(preprocessor streamingKmeans)
-target_link_libraries(preprocessor streamingUtils)
-target_link_libraries(preprocessor denStream)
-target_link_libraries(preprocessor dbscan)
-target_link_libraries(preprocessor kdTree)
+target_link_libraries(preprocessor kMeansPlusPlus streamingKmeans streamingUtils denStream dbscan kdTree)
 
 INSTALL (TARGETS preprocessor
 	LIBRARY DESTINATION lib
