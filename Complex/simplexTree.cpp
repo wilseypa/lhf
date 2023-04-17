@@ -484,6 +484,7 @@ void simplexTree<nodeType>::insert() {
 		this->ut.writeDebug("simplexTree","Distance matrix is empty, skipping insertion");
 		return;
 	}
+    std::cout << "insert" << std::endl;
 	
 	//Create our new node to insert (Ref Count = 1)
     std::set<unsigned> simp({(unsigned)this->indexCounter});;
@@ -604,18 +605,16 @@ simplexTree<nodeType>::simplexTreeNode<nodeType>* simplexTree<nodeType>::find(st
 	return ret;
 }
 
-/*  See header, commenting out for now
 template<typename nodeType>
-std::vector<std::set<simplexNode_P, cmpByWeight>> simplexTree<nodeType>::getAllEdges(){
-	std::vector<std::set<simplexNode_P, cmpByWeight>> ret(maxDimension + 1, std::set<simplexNode_P, cmpByWeight>());
+std::vector<std::set<std::shared_ptr<nodeType>, cmpByWeight<std::shared_ptr<nodeType>>>> simplexTree<nodeType>::getAllEdges(){
+	std::vector<std::set<std::shared_ptr<nodeType>, cmpByWeight<std::shared_ptr<nodeType>>>> ret(this->maxDimension + 1, std::set<std::shared_ptr<nodeType>, cmpByWeight<std::shared_ptr<nodeType>>>());
 	if(root != nullptr)
-		recurseGetEdges(ret, root, 0, maxDimension);
+		recurseGetEdges(ret, root, 0, this->maxDimension);
 	return ret;
-}*/
+}
 
-/*  See header, commenting out for now
 template<typename nodeType>
-void simplexTree<nodeType>::recurseGetEdges(std::vector<std::set<simplexNode_P, cmpByWeight>> &edgeList, simplexTreeNode* current, int depth, int maxDepth){
+void simplexTree<nodeType>::recurseGetEdges(std::vector<std::set<std::shared_ptr<nodeType>, cmpByWeight<std::shared_ptr<nodeType>>>> &edgeList, std::shared_ptr<simplexTreeNode<nodeType>> current, int depth, int maxDepth){
 	for(auto ptr = current->child; ptr != nullptr; ptr = ptr->sibling){
 		if(ptr->valid)
 			edgeList[depth].insert(ptr->simpNode);
@@ -625,7 +624,7 @@ void simplexTree<nodeType>::recurseGetEdges(std::vector<std::set<simplexNode_P, 
 	
 	}
 	return;
-}*/
+}
 
 template<typename nodeType>
 std::vector<nodeType*> simplexTree<nodeType>::getAllCofacets(std::shared_ptr<nodeType> simp){
@@ -729,7 +728,9 @@ std::vector<std::shared_ptr<nodeType>> simplexTree<nodeType>::getAllCofacets(con
 	auto parentNode = find(simplex.begin(), simplex.end(), root);
 	//auto parentNode = parNode.get();
 	if(parentNode == nullptr) return ret; //Simplex isn't in the simplex tree
-     	simplexTreeNode_P tempNode;
+    
+    simplexTreeNode<nodeType>* tempNode;
+    std::cout << "simplexTree getAllCofacets" << std::endl;
 	auto it = simplex.end();
 	while(true){
 		//Insert all of the children in reverse lexicographic order
@@ -739,7 +740,7 @@ std::vector<std::shared_ptr<nodeType>> simplexTree<nodeType>::getAllCofacets(con
 			} else {
 				
                 //TODO: Reimplement
-                //tempNode = find(it, simplex.end(), ptr); //See if cofacet is in the tree
+                tempNode = find(it, simplex.end(), ptr); //See if cofacet is in the tree
 				if(tempNode != nullptr){
 						ret.push_back(tempNode->simpNode);
 					

@@ -74,9 +74,9 @@ class simplexTree : public simplexBase<nodeType> {
 	struct simplexTreeNode<nodeType>* find(std::set<unsigned>::iterator, std::set<unsigned>::iterator, simplexTreeNode_P);
 	struct simplexTreeNode<nodeType>* find(std::set<unsigned>::iterator, std::set<unsigned>::iterator, simplexTreeNode<nodeType>*);
   
-    
-    //Commenting out for now - not sure if the first argument type is what we want to use
-	//void recurseGetEdges(std::vector<std::set<simplexTreeNode_P, cmpByWeight>> &, simplexTreeNode_P, int, int);
+  
+	std::vector<std::set<templateNode_P, cmpByWeight<templateNode_P>>> getAllEdges();
+	void recurseGetEdges(std::vector<std::set<templateNode_P, cmpByWeight<templateNode_P>>> &, simplexTreeNode_P, int, int);
   
     
 	//Constructors
@@ -93,7 +93,7 @@ class simplexTree : public simplexBase<nodeType> {
 
 
 	//virtual interface functions
-    ~simplexTree();
+    ~simplexTree(){};
 	double getSize();
 	int simplexCount();
 	int vertexCount();
@@ -113,23 +113,24 @@ class simplexTree : public simplexBase<nodeType> {
 	void prepareFacets(int){return;}
     
 	void expandDimensions(int){return;};
-	virtual std::vector<templateNode_P> expandDimension(std::vector<templateNode_P> edges);
+	std::vector<templateNode_P> expandDimension(std::vector<templateNode_P> edges){return std::vector<templateNode_P>();};
     
 	//void reduceComplex();
     
     
     std::vector<templateNode_P> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<templateNode_P, templateNode_P>&, bool);
-	std::vector<nodeType*> getAllCofacets(templateNode_P, const std::unordered_map<long long, templateNode_P>&, bool);
+	std::vector<nodeType*> getAllCofacets(templateNode_P, const std::unordered_map<long long, templateNode_P>&, bool){return std::vector<nodeType*>();};
 	std::vector<nodeType*> getAllCofacets(templateNode_P);
-    std::vector<templateNode_P> getAllCofacets(const std::set<unsigned>&);
+    std::vector<templateNode_P> getAllCofacets(const std::set<unsigned>&){return std::vector<templateNode_P>();};
     
 	std::vector<templateNode_P> getAllDelaunayCofacets(templateNode_P){return std::vector<templateNode_P>();};
     
-    std::vector<nodeType*> getAllFacets(nodeType*);
+    std::vector<nodeType*> getAllFacets(nodeType*){return std::vector<nodeType*>();};
 	std::vector<nodeType*> getAllFacets(templateNode_P);
 	std::vector<templateNode_P> getAllFacets_P(templateNode_P);
 	
     //Commenting out for now - not sure if the first argument type is what we want to use
+    
 	//std::vector<std::set<simplexNode_P, cmpByWeight>> getAllEdges();
 	
     void recurseInsertDsimplex(simplexTreeNode_P node, std::vector<int> simp,std::vector<std::vector<double>> inputData);
