@@ -18,25 +18,27 @@
 #include "distMatrixPipe.hpp"
 #include "utils.hpp"
 
-// basePipe constructor
 template<typename nodeType>
 distMatrixPipe<nodeType>::distMatrixPipe(){
+    /**
+	    distMatrixPipe()
+	 
+		@brief Class constructor
+		@tparam nodeType The data type of the simplex node.
+	*/
 	this->pipeType = "DistMatrix";
 	return;
 }
 
-// runPipe -> Run the configured functions of this pipeline segment
 template<typename nodeType>
 void distMatrixPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
 	/**
 	    runPipe(pipePacket<nodeType> &inData)
 	 
-		@brief Constructs the distance matrix from the point cloud
+		@brief Constructs the distance matrix from the point cloud. Uses parameters set in respective configPipe.
 		@tparam nodeType The data type of the simplex node.
-		@param maxE The max epsilon limit for complex construction.
-		@param maxD The max dimension limit for complex construction.
+		@param inData The pipePacket data being used in the pipeline.
 	*/
-	
 	if(inData.distMatrix.size() > 0) 
 		inData.distMatrix.clear();
 	inData.distMatrix.resize(inData.workData.size(), std::vector<double>(inData.workData.size(),0));
@@ -72,6 +74,14 @@ void distMatrixPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
 // configPipe -> configure the function settings of this pipeline segment
 template<typename nodeType>
 bool distMatrixPipe<nodeType>::configPipe(std::map<std::string, std::string> &configMap){
+	/**
+	    configPipe(std::map<std::string, std::string> &configMap)
+	 
+		@brief Configures the pipe and sets arguments based on the configMap passed. Called before execution (runPipe). If required values not found or configuration is invalid, returns false. 
+		@tparam nodeType The data type of the simplex node.
+		@param configMap The configuration map for this pipeline
+        @return boolean
+	*/
 	std::string strDebug;
 	
 	auto pipe = configMap.find("debug");
@@ -104,9 +114,15 @@ bool distMatrixPipe<nodeType>::configPipe(std::map<std::string, std::string> &co
 	return true;
 }
 
-// outputData -> used for tracking each stage of the pipeline's data output without runtime
 template<typename nodeType>
 void distMatrixPipe<nodeType>::outputData(pipePacket<nodeType> &inData){
+    /**
+	    outputData(pipePacket<nodeType> &inData)
+	 
+		@brief Outputs distance matrix to a file if debug mode is true. 
+		@tparam nodeType The data type of the simplex node.
+		@param inData The pipePacket data being used in the pipeline.
+	*/
 	std::ofstream file;
 	file.open("output/" + this->pipeType + "_output.csv");
 	

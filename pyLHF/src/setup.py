@@ -16,7 +16,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name='lhf',
-    version='1.2.5',    
+    version='1.2.8',    
     description='Light Weight Homology Framework',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -30,6 +30,6 @@ setup(
     ],
     packages=setuptools.find_packages(),
     package_data={'': ['./libLHFlib.so']},
-    install_requires=['numpy','scipy','sklearn','kneed'],
+    install_requires=['numpy','scipy','scikit-learn','kneed'],
     include_package_data=True,
 )
