@@ -46,5 +46,5 @@ class qhullPipe : public basePipe<nodeType> {
     void runPipe(pipePacket<nodeType>& inData);
     bool configPipe(std::map<std::string, std::string> &configMap);
     void outputData(pipePacket<nodeType>&);
-    std::vector<std::vector<unsigned>> qdelaunay_o(const Qhull &qhull);
+    void qdelaunay_o(const Qhull&, std::vector<std::vector<unsigned>> &);
 };

@@ -48,15 +48,16 @@ void qhullPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
     PointCoordinates *pts = new PointCoordinates(qh,inData.inputData[0].size(),"UCI Data Sets");
     pts->append(sdata);
     qh.runQhull(pts->comment().c_str(),pts->dimension(),pts->count(),&*pts->coordinates(),"d o");
-    std::vector<std::vector<unsigned>> dsimplexes = qdelaunay_o(qh);    
+    qdelaunay_o(qh, inData.complex->dsimplexmesh);    
     
     std::cout << "MODE: " << this->mode << std::endl;
     
+    for (auto i : inData.complex->dsimplexmesh)
+        this->ut.print1DVector(i);
     
     if(this->mode == "alpha"){
 		//Alpha complex uses gabriel filtration (circumradius at most alpha)
-		((alphaComplex<alphaNode> *)inData.complex)->dsimplexmesh=dsimplexes;
-		((alphaComplex<nodeType>*)inData.complex)->buildAlphaComplex(dsimplexes,inData.inputData.size(),inData.inputData);
+		((alphaComplex<nodeType>*)inData.complex)->buildAlphaComplex(inData.complex->dsimplexmesh,inData.inputData.size(),inData.inputData);
     
     } else if(this->mode == "beta"){
 		//Beta complex uses sparsification filter for B < 1 and B > 1
@@ -68,8 +69,7 @@ void qhullPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
 		
 		std::cout << "TODO: Weighted Alpha Complex" << std::endl;
 		
-		((alphaComplex<alphaNode> *)inData.complex)->dsimplexmesh=dsimplexes;
-		((alphaComplex<nodeType>*)inData.complex)->buildWeightedAlphaComplex(dsimplexes,inData.inputData.size(),inData.inputData);
+		((alphaComplex<nodeType>*)inData.complex)->buildWeightedAlphaComplex(inData.complex->dsimplexmesh,inData.inputData.size(),inData.inputData);
 	}
 
 	this->ut.writeDebug("qhullPipe", "\tSuccessfully Executed pipe");
@@ -77,7 +77,15 @@ void qhullPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
 }
 
 template <typename nodeType>
-std::vector<std::vector<unsigned>>  qhullPipe<nodeType>::qdelaunay_o(const Qhull &qhull){
+void qhullPipe<nodeType>::qdelaunay_o(const Qhull &qhull, std::vector<std::vector<unsigned>> &regions){
+    /**
+		qdelaunay_o(const Qhull &qhull, std::vector<std::vector<unsigned>> &regions)
+		
+		@brief Wrapper to call qhull and store simplex mesh into the complex
+		@tparam nodeType The data type of the simplex node.
+		@param qhull The qhull class after executing runQhull
+        @param regions Pointer to the complex simplexMesh for output
+	*/
 	int hullDimension = qhull.hullDimension();
     std::vector<std::vector<double> > inputSites;
 	QhullPoints points = qhull.points();
@@ -91,7 +99,6 @@ std::vector<std::vector<unsigned>>  qhullPipe<nodeType>::qdelaunay_o(const Qhull
 	int numFacets = facets.count();
 	size_t numRidges = numFacets*hullDimension/2;
 
-	std::vector<std::vector<unsigned>> regions;
 	QhullFacetListIterator k(facets);
 	while(k.hasNext()){
 		QhullFacet f = k.next();
@@ -114,7 +121,7 @@ std::vector<std::vector<unsigned>>  qhullPipe<nodeType>::qdelaunay_o(const Qhull
 			regions.push_back(vertices);
 		}
 	}
-    return regions;
+    return;
 }
 
 
@@ -149,8 +156,15 @@ template <typename nodeType>
 void qhullPipe<nodeType>::outputData(pipePacket<nodeType> &inData){
 	std::ofstream file;
 	file.open("output/" + this->pipeType + "_output.csv");
-
-
+        
+    for(auto a : inData.complex->dsimplexmesh){
+		for(auto d : a){
+			file << d << ",";
+            std::cout << d << ",";
+		}
+		file << "\n";
+        std::cout << "\n";
+	}
 
 	file.close();
 	return;
