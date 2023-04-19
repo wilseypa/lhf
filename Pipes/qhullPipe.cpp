@@ -18,6 +18,12 @@
 
 template <typename nodeType>
 qhullPipe<nodeType>::qhullPipe(){
+    /**
+	    qhullPipe()
+	 
+		@brief Class constructor
+		@tparam nodeType The data type of the simplex node.
+	*/
 	this->pipeType = "qhullPipe";
 	return;
 }
@@ -36,7 +42,8 @@ void qhullPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
     Qhull qh;
     
     //TODO: Is this kdtree below required for all 3 of these complexes? I assume not...
-    kdTree tree(inData.inputData, inData.inputData.size()); //KDTree for efficient nearest neighbor search
+    //kdTree tree(inData.inputData, inData.inputData.size()); //KDTree for efficient nearest neighbor search
+   
     std::vector<double> sdata;
     
     //serializing all the data
@@ -49,8 +56,6 @@ void qhullPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
     pts->append(sdata);
     qh.runQhull(pts->comment().c_str(),pts->dimension(),pts->count(),&*pts->coordinates(),"d o");
     qdelaunay_o(qh, inData.complex->dsimplexmesh);    
-    
-    std::cout << "MODE: " << this->mode << std::endl;
     
     for (auto i : inData.complex->dsimplexmesh)
         this->ut.print1DVector(i);
@@ -66,11 +71,12 @@ void qhullPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
 		std::cout << "TODO: Beta-sparsified Complex" << std::endl;
     
     } else if(this->mode == "weightedAlpha"){
-		
-		std::cout << "TODO: Weighted Alpha Complex" << std::endl;
-		
 		((alphaComplex<nodeType>*)inData.complex)->buildWeightedAlphaComplex(inData.complex->dsimplexmesh,inData.inputData.size(),inData.inputData);
 	}
+
+    //If we are not in debug mode, clear the simplex mesh here; in debug mode, output and then clear.
+    if(this->debug == 0)
+        inData.complex->dsimplexmesh = std::vector<std::vector<unsigned>>();
 
 	this->ut.writeDebug("qhullPipe", "\tSuccessfully Executed pipe");
 	return;
@@ -128,6 +134,14 @@ void qhullPipe<nodeType>::qdelaunay_o(const Qhull &qhull, std::vector<std::vecto
 // configPipe -> configure the function settings of this pipeline segment
 template <typename nodeType>
 bool qhullPipe<nodeType>::configPipe(std::map<std::string, std::string> &configMap){
+    /**
+	    configPipe(std::map<std::string, std::string> &configMap)
+	 
+		@brief Configures the pipe and sets arguments based on the configMap passed. Called before execution (runPipe). If required values not found or configuration is invalid, returns false. 
+		@tparam nodeType The data type of the simplex node.
+		@param configMap The configuration map for this pipeline
+        @return boolean
+	*/
 	std::string strDebug;
 
 	auto pipe = configMap.find("debug");
@@ -154,6 +168,13 @@ bool qhullPipe<nodeType>::configPipe(std::map<std::string, std::string> &configM
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
 template <typename nodeType>
 void qhullPipe<nodeType>::outputData(pipePacket<nodeType> &inData){
+    /**
+	    outputData(pipePacket<nodeType> &inData)
+	 
+		@brief Outputs dsimplexmesh to a file if debug mode is true. 
+		@tparam nodeType The data type of the simplex node.
+		@param inData The pipePacket data being used in the pipeline.
+	*/
 	std::ofstream file;
 	file.open("output/" + this->pipeType + "_output.csv");
         
@@ -167,6 +188,10 @@ void qhullPipe<nodeType>::outputData(pipePacket<nodeType> &inData){
 	}
 
 	file.close();
+    
+    //Clear the dsimplexmesh
+    inData.complex->dsimplexmesh = std::vector<std::vector<unsigned>>();
+    
 	return;
 }
 
