@@ -1,3 +1,9 @@
+/**
+ * @file utils.hpp
+ *
+ * @brief Contains utility functions for the LFH system (https://github.com/wilseypa/LFH).
+ */
+
 #include <string>
 #include <cmath>
 #include <algorithm>
@@ -8,19 +14,70 @@
 #include "utils.hpp"
 #include <time.h>
 
+/**
+ * @brief Contains utility functions for the LFH system (https://github.com/wilseypa/LFH).
+ */
+
+ /**
+     * @brief Extracts boundary points from a vector of simplex nodes.
+     *
+     * @tparam T The type of the simplex nodes.
+     * @param nodes The vector of simplex nodes.
+     * @return A set of indices corresponding to the boundary points.
+     */
+
 template std::set<unsigned int, std::less<unsigned int>, std::allocator<unsigned int> > utils::extractBoundaryPoints<simplexNode>(std::vector<std::shared_ptr<simplexNode>, std::allocator<std::shared_ptr<simplexNode> > >);
 template std::set<unsigned int, std::less<unsigned int>, std::allocator<unsigned int> > utils::extractBoundaryPoints<alphaNode>(std::vector<std::shared_ptr<alphaNode>, std::allocator<std::shared_ptr<alphaNode> > >);
 template std::set<unsigned int, std::less<unsigned int>, std::allocator<unsigned int> > utils::extractBoundaryPoints<witnessNode>(std::vector<std::shared_ptr<witnessNode>, std::allocator<std::shared_ptr<witnessNode> > >);
 
+/**
+ * @brief Initializes a Union-Find data structure.
+ *
+ * @param n The number of elements in the Union-Find data structure.
+ */
+
 unionFind::unionFind(int n) : rank(n, 0), parent(n, 0) {
 	for(int i=0; i<n; i++) parent[i]=i;
 }
+
+/**
+  @file utils.hpp
+ 
+  @brief Contains utility functions for the LFH system (https://github.com/wilseypa/LFH).
+ */
+
+/**
+  @brief Contains utility functions for the LFH system (https://github.com/wilseypa/LFH).
+ */
+
+/**
+      @brief Extracts boundary points from a vector of simplex nodes.
+     
+      @tparam T The type of the simplex nodes.
+      @param nodes The vector of simplex nodes.
+      @return A set of indices corresponding to the boundary points.
+     */
+
+	/**
+  @brief Finds the root of the component that contains the given element.
+ 
+  @param i The index of the element.
+  @return The index of the root of the component.
+ */
 
 int unionFind::find(int i){
 	if(i == parent[i]) return i; //Found name of the component
 	parent[i] = find(parent[i]); //Path Compression
 	return parent[i];
 }
+
+/**
+  @brief Joins two components together.
+ 
+  @param x The index of an element in one component.
+  @param y The index of an element in another component.
+  @return True if the two components were joined, false otherwise.
+ */
 
 bool unionFind::join(int x, int y){ //Union by rank
 	x = find(x);
@@ -37,19 +94,75 @@ bool unionFind::join(int x, int y){ //Union by rank
 	return true;
 }
 
+/**
+  @brief Contains utility functions for the LFH system (https://github.com/wilseypa/LFH).
+ */
+
+/**
+      @brief Determines whether A is a subset of B.
+     
+      @param A The vector to be tested for being a subset.
+      @param B The vector that A is being tested against.
+      @return True if A is a subset of B, false otherwise.
+     */
+
 bool utils:: isSubset(std::vector<unsigned> A,std::vector<unsigned> B){
 	std::sort(A.begin(),A.end());
 	std::sort(B.begin(),B.end());
 	return std::includes(A.begin(),A.end(),B.begin(),B.end());
 }
 
+  /**
+      @brief Constructs a new instance of the utils class.
+     */
+
 // utils constructor, currently no needed information for the class constructor
 utils::utils(){}
+
+/**
+      @brief Constructs a new instance of the utils class.
+     
+      @param _debug The debug level.
+      @param _outputFile The output file.
+	 */
 
 utils::utils(std::string _debug, std::string _outputFile){
 	debug = _debug;
 	outputFile = _outputFile;
 }
+
+/**
+      @brief Calculates the average of a vector of doubles.
+     
+      @param v The vector of doubles.
+      @return The average of the vector of doubles.
+     */
+
+/**
+  @brief Determines whether A is a subset of B.
+ 
+  @param A The vector to be tested for being a subset.
+  @param B The vector that A is being tested against.
+  @return True if A is a subset of B, false otherwise.
+ */
+
+/**
+  @brief Constructs a new instance of the utils class.
+ */
+
+/**
+  @brief Constructs a new instance of the utils class.
+ 
+  @param _debug The debug level.
+  @param _outputFile The output file.
+ */
+
+/**
+  @brief Calculates the average of a vector of doubles.
+ 
+  @param v The vector of doubles.
+  @return The average of the vector of doubles.
+ */
 
 double  utils :: getAverage(std::vector<double> &v) {
     if (v.empty()) {
