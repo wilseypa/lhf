@@ -4,6 +4,7 @@ from scipy.spatial import Delaunay
 from scipy.spatial import ConvexHull
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
+from matplotlib.patches import Polygon
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from itertools import combinations
 import pypoman.duality as polyfun
@@ -17,8 +18,10 @@ from matplotlib.patches import Circle
 from matplotlib.collections import PatchCollection
 from matplotlib import cm
 from numpy.linalg import norm
-
-
+import sys
+sys.path.insert(0, '/home/rohit/Desktop/lhfModified/lhf/python_tests/Polytopal_Development')
+from FinalPolytopalImplementation import iterativeconvexization,optimalconvexization,mergeneighbors,neighbours,incidenceindexreturn,setincidenceindex,intersection,union,computedistancematrix,plotpolytop
+ 
 def define_circle(p1, p2, p3):
     """
     Returns the center and radius of the circle passing the given 3 points.
@@ -92,7 +95,7 @@ def intersection(lst1, lst2):
 	"""
 	return intersection of two lists
 	"""
-    return list(set(lst1) & set(lst2))
+	return list(set(lst1) & set(lst2))
 
 def PCAprojection(pts):
 	"""
@@ -202,14 +205,14 @@ def plt_sphere(list_center, list_radius):
 	"""
 	Plot Spheres
 	"""
-  for c, r in zip(list_center, list_radius):
-    #ax = fig.gca(projection='3d')
-    # draw sphere
-    u, v = np.mgrid[0:2*np.pi:50j, 0:np.pi:50j]
-    x = r*np.cos(u)*np.sin(v)
-    y = r*np.sin(u)*np.sin(v)
-    z = r*np.cos(v)
-    ax.plot_surface(x+c[0], y+c[1], z+c[2], color='red', alpha=0.2)
+	for c, r in zip(list_center, list_radius):
+		#ax = fig.gca(projection='3d')
+		# draw sphere
+		u, v = np.mgrid[0:2*np.pi:50j, 0:np.pi:50j]
+		x = r*np.cos(u)*np.sin(v)
+		y = r*np.sin(u)*np.sin(v)
+		z = r*np.cos(v)
+		ax.plot_surface(x+c[0], y+c[1], z+c[2], color='red', alpha=0.2)
 
 def checkplotsimplices(simplices,inputpoints):
 	"""
@@ -228,7 +231,7 @@ def shift_Sphere_to_Orthogal_Axis(Points_on_Sphere,cc,cr):
 	Orient Sphere to d-axis for convexization operations
 	"""
 	new_Sphere = []
-	for x in point_on_sphere:
+	for x in Points_on_Sphere:
 		newpoint = []
 		for y in range(len(cc)-1):
 			newpoint.append(x[y]-cc[y])
@@ -251,22 +254,33 @@ def closestAxis(point,diags):
 		i = i+1
 	return assignedpartion
 	
-def rescalePoints(pts1,newpoints,diagnoal):
+def rescalePoints(pts1,newpoints,diagnoal,chebR):
 	"""
 	Scale points of Steriographic Projection as if Peeling an Orange
 	"""
 	rescaledPoints = []
+	radius = []
 	for i in range(len(pts1)):
 		axis = closestAxis(pts1[i],diagnoal)
 		projectedPoint = [newpoints[i][j] for j in range(d-1)]
 		cosine =  np.arccos(np.dot(projectedPoint,diagnoal[axis])/(norm(projectedPoint)*norm(diagnoal[axis])))
 		prjectedRadius = norm(projectedPoint)
-		distance = norm(pts1[i])
-		rescaledAngle = (prjectedRadius*cosine)/distance
+		arlength = (cosine*(2*np.pi*prjectedRadius))/360
+		print(arlength)
+		distance1 = norm(newpoints[i])
+		center = [0 for j in range(d-1)]
+		base = [0 for j in range(d)]
+		center.append(chebR)
+		center = np.array(center)
+		base = np.array(base)
+		theta = np.degrees(np.arccos(np.dot(base-center,newpoints[i]-center)/(norm(base-center)*norm(newpoints[i]-center))))
+		distance = (theta*(2*np.pi*chebR))/360
+		difference = distance - norm(newpoints[i])
+		rescaledAngle = (prjectedRadius*cosine)/distance1
 		pntsUI = []
 		pntsUI.append([0 for j in range(d-1)])
 		pntsUI.append(pts1[i])
-		y = project_on_Sphere([diagnoal[axis]],[0 for j in range(d-1)],distance)
+		y = project_on_Sphere([diagnoal[axis]],[0 for j in range(d-1)],distance1)
 		pntsUI.append(y[0])
 		mean = (pntsUI[0]+pntsUI[1]+pntsUI[2])/3
 		updatedpoints,pca = PCAprojectiondim(pntsUI,2)
@@ -294,9 +308,78 @@ def rescalePoints(pts1,newpoints,diagnoal):
 		for x in newupdatedpoints:
 			updatedpoints.append(x+shift)
 		data_original = np.dot(updatedpoints, pca.components_) +  mean # inverse_transform
+		print(data_original)
+		input()
 		rescaledPoints.append(data_original[3])
-	return np.array(rescaledPoints)
+		radius.append(difference)
+	return np.array(rescaledPoints),np.array(radius)
+
+def plotpolytop1(polyparts,d,inputpoints,name,radius):
+	if(d==2):
+		newpolyparts = set()
+		edges = set()
+		for x in polyparts:
+			for t in ConvexHull([inputpoints[i] for i in x],qhull_options="QJ").simplices:
+				t = [x[i] for i in t]
+				edges.add(tuple(sorted(t)))
+				if(sorted(t) not in list(newpolyparts)):
+					newpolyparts.add(tuple(sorted(t)))
+		polyparts = newpolyparts
+		hull = polyparts#ConvexHull(points).simplices
+		fig, ax = plt.subplots()
+	if(d==3):
+		newpolyparts = []
+		for x in polyparts:
+			#x=x[0]
+			for t in ConvexHull([inputpoints[i] for i in x],qhull_options="QJ").simplices:
+				t = [x[i] for i in t]
+				if(sorted(t) not in newpolyparts):
+					newpolyparts.append(sorted(t))
+		polyparts = newpolyparts
+		hull = polyparts#ConvexHull(points).simplices
+		fig = plt.figure()
+		ax = Axes3D(fig, auto_add_to_figure=False)
+		fig.add_axes(ax)
+	for x in hull:
+		if(d==3):
+			pts = [inputpoints[x1] for x1 in x]
+			ptrans = np.transpose(pts)
+			verts = [list(zip(ptrans[0],ptrans[1],ptrans[2]))]
+			ax.scatter3D(ptrans[0],ptrans[1],ptrans[2],s=5,color = 'red')
+			ax.add_collection3d(Poly3DCollection(verts,facecolors='b', edgecolor = 'black', linewidths=0.1, alpha=0.05))
+		else:
+			edges = [list(x)]
+			for edge in edges:
+				plt.plot([inputpoints[edge[0]][0],inputpoints[edge[1]][0]],[inputpoints[edge[0]][1],inputpoints[edge[1]][1]],color='blue',linestyle='solid',linewidth=1)
+			ptrans = np.transpose(inputpoints)
+			patches = []
+			for c,r in zip(inputpoints,radius):
+				circle = Circle(c, r)
+				patches.append(circle)
+  
+			# add these circles to a collection
+			p = PatchCollection(patches)
+			ax.add_collection(p)
+			ax.scatter(ptrans[0],ptrans[1],s=5,color = 'red')	
+	plt.savefig(name+".pdf", bbox_inches = 'tight',pad_inches = 0)
+	plt.show()
 	
+def plotpolygon(polygons,dim,inputdata,name):
+	fig, ax = plt.subplots(1,1)
+	ax.set_xlim(-50,60)
+	ax.set_ylim(-40,50)
+	color1 = ['red','blue','green','yellow','cyan','pink']
+	i=0
+	for poly in polygons:
+		if(len(poly)>10):
+			simplices = Delaunay([inputdata[i] for i in poly]).simplices
+			for s in simplices:
+				polygon1 = Polygon([inputdata[poly[s[0]]],inputdata[poly[s[1]]],inputdata[poly[s[2]]]],color = color1[i%6],alpha=1)
+				ax.add_patch(polygon1)
+			i = i+1
+	plt.savefig(name+".pdf", bbox_inches = 'tight',pad_inches = 0)
+	plt.show()
+
 def reduceDimension(points):
 	"""
 	Remove Last Coorindate as they are already projected on Plane
@@ -306,45 +389,207 @@ def reduceDimension(points):
 		pts.append([x[i] for i in range(len(x)-1)])
 	return np.array(pts)
 	
-fig = plt.figure()
-ax = Axes3D(fig, auto_add_to_figure=False)
-fig.add_axes(ax)	
+def transformingConvexPolytopeForConvexDecomposition(dsphere):
+	#******************Compute Chebshev Sphere *********************
+	chebXc,chebR = computeChebshev_Sphere(dsphere)
+	list_center = [(chebXc)]
+	list_radius = [chebR]
+	#*******************Project points on Sphere********************
+	point_on_sphere = project_on_Sphere(dsphere,chebXc,chebR)
 
-dsphere = np.array(fiblat.sphere_lattice(3,200))
-#dsphere = tadasets.dsphere(n=200, d=2, r=1)
+	#*******************Shift Sphere to orthogonal axis and touching the origin for Further Operations****************
+	OrthoSphere = shift_Sphere_to_Orthogal_Axis(point_on_sphere,chebXc,chebR)
+	#ax.scatter3D(OrtoSphere[:,0],OrtoSphere[:,1],OrtoSphere[:,2],s=10,color="blue")
+
+	#*********** Choose two Projection Points across orthogonal axis with one being the origin and second being on the opposite side **************
+	pp1 = np.array([0 for i in range(d)])
+	pp2 = np.array([0 if i < (d-1) else chebR*2 for i in range(d)])
+	pp1[0] = -0.001
+	return OrthoSphere, pp1,pp2
+
+def pointsToSimplicesEpsilon(OrtoSphere,center,d):
+	
+	newpoints = []
+	diagnoal = simplexDiagonalWithCenter(0.0001,d)
+	for pt in OrtoSphere:
+		mat = rotation(pt-center,-center)
+		for point in diagnoal:
+			newpoints.append(mat.dot(point-center))
+	newpoints = np.array(newpoints)
+	return newpoints
+
+def rotateSphere180deg(points,center):
+	rotatedPoints = []
+	mat = rotation(-center,center)
+	for pt in points:
+		rotatedPoints.append(mat.dot(pt))
+	return np.array(rotatedPoints)
+
+def equidistantFromObserver(points,r):
+	azumutalFromOrigin = []
+	for pt in points:
+		length = 2*r*np.arctan(norm(pt)/(2*r))
+		azumutalFromOrigin.append(((pt)*length)/norm(pt))
+	return np.array(azumutalFromOrigin)
+	
+def LunicScaling(axis,azimPoint,origin,arcLen):
+	pntsUI = np.array([origin,azimPoint,axis])
+	mean = (pntsUI[0]+pntsUI[1]+pntsUI[2])/3
+	updatedpoints, pca = PCAprojectiondim(pntsUI,2)
+	newupdatedpoints = []
+	shift = updatedpoints[0]
+	for x in updatedpoints:
+		newupdatedpoints.append(x-updatedpoints[0])
+	mat = rotation(np.array([1,0]),newupdatedpoints[2])
+	mat2 = rotation(newupdatedpoints[2],np.array([1,0]))
+	updatedpoints = []
+	for x in newupdatedpoints:
+		updatedpoints.append(mat.dot(x))
+	negative = False
+	if(updatedpoints[1][1]<0):
+		negative = True
+	distance = norm(np.array(azimPoint))
+	rescaledAngle = arcLen/distance
+	x = distance*math.cos(rescaledAngle)
+	y = distance*math.sin(rescaledAngle)
+	if(negative):
+		y = y*(-1)
+	updatedpoints.append([x,y])
+	newupdatedpoints = []
+	for x in updatedpoints:
+		newupdatedpoints.append(mat2.dot(x))
+	updatedpoints = []
+	for x in newupdatedpoints:
+		updatedpoints.append(x+shift)
+	data_original = np.dot(updatedpoints, pca.components_) +  mean # inverse_transform
+	return data_original[3]
+		
+	
+def equidistantFromObserverAxis(points,originalPoints,axis):
+	lunePoints = []
+	origin = np.array([0 for i in range(len(points[0]))])
+	for i in range(len(points)):
+		projectedPoint = np.array([originalPoints[i][j] for j in range(len(points[0]))])
+		radius = norm(projectedPoint)
+		theta = np.arccos(np.dot(axis,projectedPoint)/(norm(axis)*norm(projectedPoint)))
+		arcLen = radius*theta
+		projectionAxis = (axis*norm(points[i]))/norm(axis)
+		recaledPoint = LunicScaling(projectionAxis,points[i],origin,arcLen)
+		lunePoints.append(recaledPoint)
+	return np.array(lunePoints)
+		
+def cylindricalProjection(points,center):
+	#Project on Cylinder
+	radius = norm(center)
+	origin = np.array([0 for i in center])
+	orthogonalPoint = np.array([i for i in center])
+	orthogonalPoint[0] = radius
+	cylinricalprojection= []
+	cylinricalprojectiononPlane = []
+	proj = []
+	for i in range(len(points)):
+		projectedPoint = [points[i][j] for j in range(len(points[0])-1)]
+		projectedPoint.append(radius)
+		projectedPoint = np.array(projectedPoint)
+		proj.append(projectedPoint)
+		projectionOnSphere = (((projectedPoint-center)*radius)/math.dist(center,projectedPoint))+center
+		theta = np.arccos(np.dot(points[i],projectedPoint)/(norm(points[i])*norm(projectedPoint)))
+		radialAngle =  np.arccos(np.dot(orthogonalPoint,projectedPoint)/(norm(orthogonalPoint)*norm(projectedPoint)))
+		radialDist = radius*theta
+		r = radius/np.cos(theta)
+		pointOnCylinder  = (((points[i]-center)*r)/math.dist(center,points[i]))+center
+		if(r<radius):
+			print(impossible)
+			input()
+		if(points[i][2]>radius):
+			print(theta)
+			print(r)
+			print(radius)
+			print(radius/r)
+			print(pointOnCylinder)
+			print(points[i])
+			input()
+		vectorOnCilindricalSurface = pointOnCylinder-projectionOnSphere
+		cylinricalprojection.append(pointOnCylinder)
+		if(points[i][0]<0):
+			radialDist = -radialDist
+		vectorOnplane = [x for x in vectorOnCilindricalSurface]
+		vectorOnplane[0] = radialDist
+		cylinricalprojectiononPlane.append(vectorOnplane)
+	return np.array(proj),np.array(cylinricalprojection),np.array(cylinricalprojectiononPlane),PCAprojection(cylinricalprojectiononPlane)
+		
+def generateConvexFaces(hull,newpoints,pp1,pp2):
+	convexFaces = []
+	d = len(newpoints[0])-1
+	radius = [0 for i in range(len(newpoints))]
+	'''
+	#*****************First Step Compute StereoGraphic Projection********************
+	sterographicProjection = reduceDimension(projectonplane(pp1,pp2,newpoints))
+	convexpartssorted,delaunayparts,weights = iterativeconvexization(hull,d,sterographicProjection)
+	convexFaces.append([convexpartssorted,delaunayparts,weights])
+	plotpolytop1(convexpartssorted,len(sterographicProjection[0]),sterographicProjection,"name1",radius)
+	#*****************Second Step Compute Azimutal Projection*********************
+	azimuthalProjection = equidistantFromObserver(sterographicProjection,norm(pp2/2))
+	convexpartssorted,delaunayparts,weights = iterativeconvexization(hull,d,azimuthalProjection)
+	convexFaces.append([convexpartssorted,delaunayparts,weights])
+	plotpolytop1(convexpartssorted,len(azimuthalProjection[0]),azimuthalProjection,"name2",radius)
+	#*****************Projection on Lune with central Axis ***************************
+	diagonal = simplexDiagonals(1,d+1)
+	i=0
+	for axis in diagonal:
+		luneProjection = equidistantFromObserverAxis(azimuthalProjection,newpoints,axis)
+		convexpartssorted,delaunayparts,weights = iterativeconvexization(hull,d,luneProjection)
+		convexFaces.append([convexpartssorted,delaunayparts,weights])
+		plotpolytop1(convexpartssorted,len(luneProjection[0]),luneProjection,"name3"+str(i),radius)
+		i = i+1
+	#*************** Finally Compute the Cylindrical projection on to Plane***************
+	'''
+	proj,c3d,points3d, cProjection = cylindricalProjection(newpoints,pp2/2)
+	convexpartssorted,delaunayparts,weights = iterativeconvexization(hull,d,cProjection)
+	convexFaces.append([convexpartssorted,delaunayparts,weights])
+	#plotpolytop1(convexpartssorted,len(cProjection[0]),cProjection,"name4"+str(i),radius)
+	fig = plt.figure()
+	ax = Axes3D(fig, auto_add_to_figure=False)
+	fig.add_axes(ax)	
+	ax.scatter3D(newpoints[:,0],newpoints[:,1],newpoints[:,2],color = "blue")
+	ax.scatter3D(c3d[:,0],c3d[:,1],c3d[:,2],color = "green")
+	#ax.scatter3D(points3d[:,0],points3d[:,1],points3d[:,2],color = "red")
+	ax.scatter3D(proj[:,0],proj[:,1],proj[:,2],color = "cyan")
+	plt.show()
+	
+
+#**************** Input******************
+
+#dsphere = np.array(fiblat.sphere_lattice(3,50))
+#dsphere = tadasets.dsphere(n=50, d=2, r=1)
 d=3
+#dsphere = np.loadtxt("input3dim4size100noise0",delimiter = ",")
 #dsphere = np.loadtxt("Tetrahedron.txt",delimiter = ",")
-dsphere = np.loadtxt("input0dim3size500noise1.txt",delimiter = ",")
-triangulation =  Delaunay(dsphere).simplices
-hull = hullfromtriangulation(triangulation)
-chebXc,chebR = computeChebshev_Sphere(dsphere)
-list_center = [(chebXc)]
-list_radius = [chebR]
-#checkplotsimplices(hull,dsphere)
-point_on_sphere = project_on_Sphere(dsphere,chebXc,chebR)
-#ax.scatter3D(point_on_sphere[:,0],point_on_sphere[:,1],point_on_sphere[:,2],s=10,color="red")
-OrtoSphere = shift_Sphere_to_Orthogal_Axis(point_on_sphere,chebXc,chebR)
-ax.scatter3D(OrtoSphere[:,0],OrtoSphere[:,1],OrtoSphere[:,2],s=10,color="blue")
+dsphere = np.loadtxt("input3dim3size150noise1",delimiter = ",")
+computedistancematrix(dsphere)
 
-#ProjectionPoints
-pp1 = np.array([0 for i in range(d)])
-pp2 = np.array([0 if i < (d-1) else chebR*2 for i in range(d)])
-pp1[0] = -0.001
-'''
-newpoints = []
-diagnoal = simplexDiagonalWithCenter(0.0001,d)
-for pt in OrtoSphere:
-	mat = rotation(pt-pp2/2,-pp2/2)
-	for point in diagnoal:
-		newpoints.append((mat.dot(point-pp2/2))+pp2/2)
-newpoints = np.array(newpoints)
-'''
-newpoints = OrtoSphere
-ax.scatter3D(newpoints[:,0],newpoints[:,1],newpoints[:,2],s=10,color="green")
+#******************Compute Delaunay Triangulation***************
+triangulation =  Delaunay(dsphere).simplices
+
+#******************Compute Hull from Delaunay Triangulation***********
+hull = hullfromtriangulation(triangulation)
+
+newpoints, pp1, pp2 = transformingConvexPolytopeForConvexDecomposition(dsphere)
+
+convexFaces1 = generateConvexFaces(hull,newpoints,pp1,pp2)
+rotatedPoints = rotateSphere180deg(newpoints,pp2/2)
+convexFaces2 = generateConvexFaces(hull,rotatedPoints,pp1,pp2)
+
 #pts2 = reduceDimension(projectonplane(pp1,pp2,newpoints))
 pts1 = reduceDimension(projectonplane(pp1,pp2,newpoints))
-
-plt.show()	
+convexpartssorted,delaunayparts,weights = iterativeconvexization(hull,len(pts1[0]),pts1)
+radius = [0 for i in range(len(pts1))]
+plotpolytop1(convexpartssorted,len(pts1[0]),pts1,"name3",radius)
+print(convexpartssorted[0])
+print(convexpartssorted[1])
+print(convexpartssorted)
+print(delaunayparts)
+print(weights)
 #print(pp2)
 #print(pp1)
 diagnoal = simplexDiagonals(1,d)
@@ -361,23 +606,40 @@ diagonal2 = []
 for x in diagnoal:
 	diagonal2.append(mat.dot(x))
 
-scaledPoints = rescalePoints(pts1,newpoints,diagnoal)
-scaledPoints2 = rescalePoints(pts1,newpoints,diagonal2)
+scaledPoints,radius1 = rescalePoints(pts1,newpoints,diagnoal,chebR)
+scaledPoints2,radius2 = rescalePoints(pts1,newpoints,diagonal2,chebR)
+convexpartssorted,delaunayparts,weights = iterativeconvexization(hull,len(scaledPoints[0]),scaledPoints)
+plotpolytop1(convexpartssorted,len(pts1[0]),scaledPoints,"name1",radius1)
+convexpartssorted,delaunayparts,weights = iterativeconvexization(hull,len(scaledPoints2[0]),scaledPoints2)
+plotpolytop1(convexpartssorted,len(pts1[0]),scaledPoints2,"name2",radius2)
 
 plt.show()
-phi = np.linspace(0, 2*np.pi, 456)
+phi = np.linspace(0, 2*np.pi, len(dsphere))
 rgb_cycle = (np.stack((np.cos(phi          ), # Three sinusoids,
                        np.cos(phi+2*np.pi/3), # 120° phase shifted,
                        np.cos(phi-2*np.pi/3)
                       )).T # Shape = (60,3)
              + 1)*0.5                         # scaled to [0,1].
              
-fig, ax = plt.subplots()
+fig = plt.figure()
+ax = Axes3D(fig, auto_add_to_figure=False)
+fig.add_axes(ax)	
 pts = pts1
+#ax.scatter3D(pts[:,0],pts[:,1],pts[:,2],s=10,color="green")
 ax.scatter(pts[:,0],pts[:,1],color='green',s=10)
+plt.show()
+fig = plt.figure()
+ax = Axes3D(fig, auto_add_to_figure=False)
+fig.add_axes(ax)	
+#ax.scatter3D(scaledPoints[:,0],scaledPoints[:,1],scaledPoints[:,2],s=10,color=rgb_cycle)
 ax.scatter(scaledPoints[:,0],scaledPoints[:,1],color=rgb_cycle,s=5)
+plt.show()
+fig = plt.figure()
+ax = Axes3D(fig, auto_add_to_figure=False)
+fig.add_axes(ax)	
+#ax.scatter3D(scaledPoints2[:,0],scaledPoints2[:,1],scaledPoints2[:,2],s=10,color=rgb_cycle)
 ax.scatter(scaledPoints2[:,0],scaledPoints2[:,1],color=rgb_cycle,s=5)
-
+plt.show()
 # Change major ticks to show every 0.2.
 ax.xaxis.set_major_locator(MultipleLocator(5))
 ax.yaxis.set_major_locator(MultipleLocator(5))
