@@ -71,7 +71,7 @@ void qhullPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
             ((alphaComplex<nodeType>*)inData.complex)->buildAlphaComplex(inData.complex->dsimplexmesh,inData.inputData.size(),inData.inputData);
         }
     } else if(this->mode == "weightedAlpha"){
-		qh.runQhull(pts->comment().c_str(),pts->dimension(),pts->count(),&*pts->coordinates(),"Qt");
+		qh.runQhull(pts->comment().c_str(),pts->dimension(),pts->count(),&*pts->coordinates(),"d Qt");
         qdelaunay_o(qh, inData.complex->dsimplexmesh);    
         
         ((alphaComplex<nodeType>*)inData.complex)->buildWeightedAlphaComplex(inData.complex->dsimplexmesh,inData.inputData.size(),inData.inputData);
@@ -100,6 +100,8 @@ void qhullPipe<nodeType>::qdelaunay_o(const Qhull &qhull, std::vector<std::vecto
 	int hullDimension = qhull.hullDimension();
     std::vector<std::vector<double> > inputSites;
 	QhullPoints points = qhull.points();
+    
+    
     
 	QhullPointsIterator j(points);
 	while(j.hasNext()){
