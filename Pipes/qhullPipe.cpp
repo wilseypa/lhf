@@ -54,25 +54,30 @@ void qhullPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
  	//PointCoordinates data type defined in ...
     PointCoordinates *pts = new PointCoordinates(qh,inData.inputData[0].size(),"UCI Data Sets");
     pts->append(sdata);
-    qh.runQhull(pts->comment().c_str(),pts->dimension(),pts->count(),&*pts->coordinates(),"d o");
-    qdelaunay_o(qh, inData.complex->dsimplexmesh);    
     
-    for (auto i : inData.complex->dsimplexmesh)
-        this->ut.print1DVector(i);
     
-    if(this->mode == "alpha"){
-		//Alpha complex uses gabriel filtration (circumradius at most alpha)
-		((alphaComplex<nodeType>*)inData.complex)->buildAlphaComplex(inData.complex->dsimplexmesh,inData.inputData.size(),inData.inputData);
+    if(this->mode == "alpha" || this->mode == "beta"){
     
-    } else if(this->mode == "beta"){
-		//Beta complex uses sparsification filter for B < 1 and B > 1
-		//((betaComplex<nodeType>*)inData.complex)->buildBetaComplexFilteration(dsimplexes, inData.inputData.size(),inData.inputData, tree);
-		//((betaComplex<nodeType>*)inData.complex)->buildBetaComplex(dsimplexes, inData.inputData.size(),inData.inputData,1,"highDim");
-		std::cout << "TODO: Beta-sparsified Complex" << std::endl;
-    
+        qh.runQhull(pts->comment().c_str(),pts->dimension(),pts->count(),&*pts->coordinates(),"d o");
+        qdelaunay_o(qh, inData.complex->dsimplexmesh);    
+            
+        if(this->mode == "beta"){
+            //Beta complex uses sparsification filter for B < 1 and B > 1
+            //((betaComplex<nodeType>*)inData.complex)->buildBetaComplexFilteration(dsimplexes, inData.inputData.size(),inData.inputData, tree);
+            //((betaComplex<nodeType>*)inData.complex)->buildBetaComplex(dsimplexes, inData.inputData.size(),inData.inputData,1,"highDim");
+            std::cout << "TODO: Beta-sparsified Complex" << std::endl;
+        }else { //alpha
+            //Alpha complex uses gabriel filtration (circumradius at most alpha)
+            ((alphaComplex<nodeType>*)inData.complex)->buildAlphaComplex(inData.complex->dsimplexmesh,inData.inputData.size(),inData.inputData);
+        }
     } else if(this->mode == "weightedAlpha"){
-		((alphaComplex<nodeType>*)inData.complex)->buildWeightedAlphaComplex(inData.complex->dsimplexmesh,inData.inputData.size(),inData.inputData);
+		qh.runQhull(pts->comment().c_str(),pts->dimension(),pts->count(),&*pts->coordinates(),"Qt");
+        qdelaunay_o(qh, inData.complex->dsimplexmesh);    
+        
+        ((alphaComplex<nodeType>*)inData.complex)->buildWeightedAlphaComplex(inData.complex->dsimplexmesh,inData.inputData.size(),inData.inputData);
 	}
+
+
 
     //If we are not in debug mode, clear the simplex mesh here; in debug mode, output and then clear.
     if(this->debug == 0)
@@ -95,7 +100,7 @@ void qhullPipe<nodeType>::qdelaunay_o(const Qhull &qhull, std::vector<std::vecto
 	int hullDimension = qhull.hullDimension();
     std::vector<std::vector<double> > inputSites;
 	QhullPoints points = qhull.points();
-
+    
 	QhullPointsIterator j(points);
 	while(j.hasNext()){
 		QhullPoint point = j.next();
