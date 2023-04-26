@@ -77,8 +77,6 @@ void qhullPipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
         ((alphaComplex<nodeType>*)inData.complex)->buildWeightedAlphaComplex(inData.complex->dsimplexmesh,inData.inputData.size(),inData.inputData);
 	}
 
-
-
     //If we are not in debug mode, clear the simplex mesh here; in debug mode, output and then clear.
     if(this->debug == 0)
         inData.complex->dsimplexmesh = std::vector<std::vector<unsigned>>();
@@ -188,16 +186,28 @@ void qhullPipe<nodeType>::outputData(pipePacket<nodeType> &inData){
     for(auto a : inData.complex->dsimplexmesh){
 		for(auto d : a){
 			file << d << ",";
-            std::cout << d << ",";
 		}
 		file << "\n";
-        std::cout << "\n";
 	}
 
 	file.close();
     
     //Clear the dsimplexmesh
     inData.complex->dsimplexmesh = std::vector<std::vector<unsigned>>();
+    
+	file.open("output/" + inData.complex->complexType + "_output.csv");
+        
+    for(auto a : inData.complex->simplexList){
+		for(auto d : a){
+			file << d->weight << ",[ ";
+            for (auto ind : d->simplex){
+                file << ind << " ";
+            }
+            file << "]\n";
+		}
+	}
+
+	file.close();
     
 	return;
 }

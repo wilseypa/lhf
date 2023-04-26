@@ -941,7 +941,10 @@ extern "C"{
 				data[row][dim] = pointCloud[row*dataDim + dim];
 			}
 		}
-
+        
+        
+        //Determine what pipe we will be running
+        argParser::setPipeline(args);
 		
 		/*******     3. Split here based on node type          *********/
 		if(args["nodeType"] == "alphaNode"){
@@ -953,8 +956,6 @@ extern "C"{
 			wD.inputData = data;
 			wD.workData = wD.inputData;
 
-			//Determine what pipe we will be running
-			argParser::setPipeline(args);
 
 ///////////////////////////////////////////
 // TODO: Nick, split this into functions //
@@ -1184,8 +1185,6 @@ extern "C"{
 			wD.inputData = data;
 			wD.workData = wD.inputData;
 			
-			//Determine what pipe we will be running
-			argParser::setPipeline(args);
 
 ///////////////////////////////////////////
 // TODO: Nick, split this into functions //
@@ -1415,8 +1414,6 @@ extern "C"{
 			wD.inputData = data;
 			wD.workData = wD.inputData;
 
-			//Determine what pipe we will be running
-			argParser::setPipeline(args);
 
 ///////////////////////////////////////////
 // TODO: Nick, split this into functions //
