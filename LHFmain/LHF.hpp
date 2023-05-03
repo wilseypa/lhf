@@ -43,6 +43,7 @@ template class LHF<witnessNode>;
 
 extern "C" {
     
+    /******************************** NEW INTERFACE *****************************/
     typedef struct retBettiTable{
 	/**
      * @brief BettiTable return structure for the python interface; encodes resultant PIs and generators.
@@ -76,13 +77,10 @@ extern "C" {
 		double* distMatrix;             // Pointer to distance matrix
 		double* workData;               // Pointer to working data
 		unsigned* centroidLabels;       // Pointer to centroidLabels
-		char* stats;                    // Pointer to string stats
-		char* runLog;                   // Pointer to string runLog
-		char* ident;                    // Pointer to string identity
+		const char* stats;                    // Pointer to string stats
+		const char* runLog;                   // Pointer to string runLog
+		const char* ident;                    // Pointer to string identity
     } pipeWrap;
-        
-        
-    
         
     void free_bettiWrap(bettiTableWrap *b){
 	/**
@@ -103,6 +101,8 @@ extern "C" {
         free(p); 
         return; 
     }
+    
+    pipeWrap* pyLHFWrapper(int, char *, const double *);
         
         
         
@@ -151,6 +151,5 @@ extern "C" {
 	void pyRunWrapper(const int, char*, const double *);
 	PRAP* pyRunWrapper2(int, char *, const double *);
     
-    pipeWrap* pyLHFWrapper(int, char *, const double *);
     
 }

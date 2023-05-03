@@ -12,6 +12,7 @@
 #include <typeinfo>
 #include <thread>
 #include <string>
+#include <numeric>
 
 
 
@@ -970,7 +971,7 @@ extern "C"{
 	pipeWrap *pyLHFWrapper(int argc, char *argv, const double *pointCloud){
         pipeWrap *ret;
         
-        /*******     1. Read Arguments          *********/
+        /*******     1. Read Arguments      *********/
 		std::map<std::string, std::string> args;
 		std::vector<std::string> rawArgs;
 
@@ -1005,28 +1006,82 @@ extern "C"{
 				data[row][dim] = pointCloud[row*dataDim + dim];
 			}
 		}
+        
+        
+		/*******     3. Run LHF             *********/
         void* ret2;
         
         if(args["nodeType"] == "alphaNode"){
             ret2 = processpyLHFWrapper<alphaNode>(args, data);
-            
         } else if (args["nodeType"] == "witnessNode"){
-            
             ret2 = processpyLHFWrapper<witnessNode>(args, data);
-            
-            
         } else {
-            
             ret2 = processpyLHFWrapper<simplexNode>(args, data);
-            
-            
         }
         
         
         std::cout << ((pipePacket<simplexNode>*)ret2)->runLog << std::endl;
         
-        //auto ret2 = processpyLHFWrapper(args, data);
-        return ret;
+        auto wD = (pipePacket<simplexNode>*)ret2;
+        
+        retPipePacket* retStruct = (retPipePacket *) malloc (sizeof(retPipePacket));
+        
+        
+        
+        //Calculate the size of the betti table
+        int generators = 0;
+        for(auto i = 0; i < wD->bettiTable.size(); i++){
+            generators += wD->bettiTable[i].boundaryPoints.size();
+        }
+        
+        //Allocate and populate the serialized betti table
+		retBettiTable *bettiTable = (retBettiTable *)malloc(sizeof(retBettiTable) * wD->bettiTable.size() + sizeof(unsigned) * generators); // = new testStruct(wD.bettiTable.size());
+
+		for (auto i = 0; i < wD->bettiTable.size(); i++){
+			bettiTable[i].dim = wD->bettiTable[i].bettiDim;
+			bettiTable[i].birth = wD->bettiTable[i].birth;
+			bettiTable[i].death = wD->bettiTable[i].death;
+            bettiTable[i].boundarySize = wD->bettiTable[i].boundaryPoints.size();
+            
+            int jdx = 0;
+            for (auto generator: wD->bettiTable[i].boundaryPoints){
+                bettiTable[i].boundaryEntries[jdx] = generator;
+                jdx++;
+            }
+            
+		}
+        
+        retStruct->size_betti = wD->bettiTable.size();
+        retStruct->LHF_size = dataSize;
+        retStruct->LHF_dim = dataDim;
+        retStruct->workData_size = wD->workData.size();
+        retStruct->bettiTable = bettiTable;
+        retStruct->stats = wD->stats.c_str();
+        retStruct->runLog = wD->runLog.c_str();
+        retStruct->ident = wD->ident.c_str();
+        
+        double *inputData_retStruct = (double *)malloc(sizeof(double) * (wD->inputData.size() * wD->inputData[0].size()));
+        double *distMatrix_retStruct = (double *)malloc(sizeof(double) * (wD->distMatrix.size() * wD->distMatrix.size()));
+        double *workData_retStruct = (double *)malloc(sizeof(double) * (wD->workData.size() * wD->workData.size()));
+        unsigned *centroidLabels_retStruct = (unsigned *)malloc(sizeof(unsigned) * (wD->centroidLabels.size()));
+		//char *stats_retStruct = (char *)malloc(sizeof(char) * wD.stats.length());
+		//char *runLog_retStruct = (char *)malloc(sizeof(char) * wD.runLog.length());
+		//char *ident_retStruct = (char *)malloc(sizeof(char) * wD.ident.length());
+        
+        inputData_retStruct = &std::accumulate(wD->inputData.begin(), wD->inputData.end(), decltype(wD->inputData)::value_type{}, [](auto &x, auto &y){x.insert(x.end(), y.begin(), y.end()); return x;})[0];
+        distMatrix_retStruct = &std::accumulate(wD->distMatrix.begin(), wD->distMatrix.end(), decltype(wD->distMatrix)::value_type{}, [](auto &x, auto &y){x.insert(x.end(), y.begin(), y.end()); return x;})[0];
+        workData_retStruct = &std::accumulate(wD->workData.begin(), wD->workData.end(), decltype(wD->workData)::value_type{}, [](auto &x, auto &y){x.insert(x.end(), y.begin(), y.end()); return x;})[0];
+        centroidLabels_retStruct = &(wD->centroidLabels.begin())[0];
+        
+        retStruct->inputData = inputData_retStruct;
+        retStruct->distMatrix = distMatrix_retStruct;
+        retStruct->centroidLabels = centroidLabels_retStruct;
+        retStruct->workData = workData_retStruct;
+
+		std::cout << "Finished on the c++ side -> " << wD->bettiTable.size() << std::endl;
+
+        
+        return retStruct;
     }
 
 
