@@ -814,7 +814,7 @@ std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processDistributedWrapper(st
 }
 
 template<typename nodeType>
-void* processpyLHFWrapper(std::map<std::string, std::string> &args, std::vector<std::vector<double>> &pointCloud){
+pipePacket<nodeType> *processpyLHFWrapper(std::map<std::string, std::string> &args, std::vector<std::vector<double>> &pointCloud){
     
     //Determine what pipe we will be running; this involves creating a temporary LHF
     //  object and using a void pointer to reassign the correct complex type
@@ -860,7 +860,7 @@ void* processpyLHFWrapper(std::map<std::string, std::string> &args, std::vector<
     
     
     
-    return (void*)wD;
+    return wD;
     
     
     
@@ -1009,76 +1009,127 @@ extern "C"{
         
         
 		/*******     3. Run LHF             *********/
-        void* ret2;
+        //Local pointers for different nodeTypes
+        std::vector<bettiBoundaryTableEntry>* l_bettiTable;
+        std::string *l_ident;
+        std::string *l_stats;
+        std::string *l_runLog;
+        std::vector<std::vector<double>> *l_workData;
+        std::vector<unsigned> *l_centroidLabels;
+        std::vector<std::vector<double>> *l_inputData;
+        std::vector<std::vector<double>> *l_distMatrix;
+        std::vector<std::vector<bool>> *l_incidenceMatrix;
+        std::vector<std::set<unsigned>> *l_boundaries;
+        
+        
+        
         
         if(args["nodeType"] == "alphaNode"){
-            ret2 = processpyLHFWrapper<alphaNode>(args, data);
+            auto ret = processpyLHFWrapper<alphaNode>(args, data);
+            l_bettiTable = &ret->bettiTable;
+            l_ident = &ret->ident;
+            l_stats = &ret->stats;
+            l_runLog = &ret->runLog;
+            l_workData = &ret->workData;
+            l_centroidLabels = &ret->centroidLabels;
+            l_inputData = &ret->inputData;
+            l_distMatrix = &ret->distMatrix;
+            l_incidenceMatrix = &ret->incidenceMatrix;
+            l_boundaries = &ret->boundaries;
+            
         } else if (args["nodeType"] == "witnessNode"){
-            ret2 = processpyLHFWrapper<witnessNode>(args, data);
+            auto ret = processpyLHFWrapper<witnessNode>(args, data);
+            l_bettiTable = &ret->bettiTable;
+            l_ident = &ret->ident;
+            l_stats = &ret->stats;
+            l_runLog = &ret->runLog;
+            l_workData = &ret->workData;
+            l_centroidLabels = &ret->centroidLabels;
+            l_inputData = &ret->inputData;
+            l_distMatrix = &ret->distMatrix;
+            l_incidenceMatrix = &ret->incidenceMatrix;
+            l_boundaries = &ret->boundaries;
         } else {
-            ret2 = processpyLHFWrapper<simplexNode>(args, data);
+            auto ret = processpyLHFWrapper<simplexNode>(args, data);
+            l_bettiTable = &ret->bettiTable;
+            l_ident = &ret->ident;
+            l_stats = &ret->stats;
+            l_runLog = &ret->runLog;
+            l_workData = &ret->workData;
+            l_centroidLabels = &ret->centroidLabels;
+            l_inputData = &ret->inputData;
+            l_distMatrix = &ret->distMatrix;
+            l_incidenceMatrix = &ret->incidenceMatrix;
+            l_boundaries = &ret->boundaries;
         }
         
         
-        std::cout << ((pipePacket<simplexNode>*)ret2)->runLog << std::endl;
-        
-        auto wD = (pipePacket<simplexNode>*)ret2;
+        std::cout << "Finished LHF, moving to data encoding" << std::endl;
         
         retPipePacket* retStruct = (retPipePacket *) malloc (sizeof(retPipePacket));
         
         
-        
-        //Calculate the size of the betti table
+        std::cout << "Betti Size" << std::endl;
+        //Calculate the size of the betti table with total generator entries
         int generators = 0;
-        for(auto i = 0; i < wD->bettiTable.size(); i++){
-            generators += wD->bettiTable[i].boundaryPoints.size();
+        for(auto i = 0; i < (*l_bettiTable).size(); i++){
+            generators += (*l_bettiTable)[i].boundaryPoints.size();
         }
         
-        //Allocate and populate the serialized betti table
-		retBettiTable *bettiTable = (retBettiTable *)malloc(sizeof(retBettiTable) * wD->bettiTable.size() + sizeof(unsigned) * generators); // = new testStruct(wD.bettiTable.size());
+        
+        std::cout << "Malloc Size" << std::endl;
+        
+        //Allocate and populate the serialized betti table; size is number of entries plus the total number of generators
+		retBettiTable *bettiTable = (retBettiTable *)malloc(sizeof(retBettiTable) * (*l_bettiTable).size() + sizeof(unsigned) * generators); 
 
-		for (auto i = 0; i < wD->bettiTable.size(); i++){
-			bettiTable[i].dim = wD->bettiTable[i].bettiDim;
-			bettiTable[i].birth = wD->bettiTable[i].birth;
-			bettiTable[i].death = wD->bettiTable[i].death;
-            bettiTable[i].boundarySize = wD->bettiTable[i].boundaryPoints.size();
+        std::cout << "Populate Bettis" << std::endl;
+		for (auto i = 0; i < (*l_bettiTable).size(); i++){
+			bettiTable[i].dim = (*l_bettiTable)[i].bettiDim;
+			bettiTable[i].birth = (*l_bettiTable)[i].birth;
+			bettiTable[i].death = (*l_bettiTable)[i].death;
+            bettiTable[i].boundarySize = (*l_bettiTable)[i].boundaryPoints.size();
+            
+            bettiTable[i].boundaryEntries = (unsigned*)malloc(sizeof(unsigned) * bettiTable[i].boundarySize);
             
             int jdx = 0;
-            for (auto generator: wD->bettiTable[i].boundaryPoints){
+            for (auto generator: (*l_bettiTable)[i].boundaryPoints){
                 bettiTable[i].boundaryEntries[jdx] = generator;
                 jdx++;
             }
             
 		}
         
-        retStruct->size_betti = wD->bettiTable.size();
+        std::cout << "Set Pointers" << std::endl;
+        retStruct->size_betti = (*l_bettiTable).size();
         retStruct->LHF_size = dataSize;
         retStruct->LHF_dim = dataDim;
-        retStruct->workData_size = wD->workData.size();
-        retStruct->bettiTable = bettiTable;
-        retStruct->stats = wD->stats.c_str();
-        retStruct->runLog = wD->runLog.c_str();
-        retStruct->ident = wD->ident.c_str();
+        retStruct->workData_size = (*l_workData).size();
+        retStruct->bettiTable = bettiTable;                 
+        retStruct->stats = (*l_stats).c_str();               
+        retStruct->runLog = (*l_runLog).c_str();
+        retStruct->ident = (*l_ident).c_str();
         
-        double *inputData_retStruct = (double *)malloc(sizeof(double) * (wD->inputData.size() * wD->inputData[0].size()));
-        double *distMatrix_retStruct = (double *)malloc(sizeof(double) * (wD->distMatrix.size() * wD->distMatrix.size()));
-        double *workData_retStruct = (double *)malloc(sizeof(double) * (wD->workData.size() * wD->workData.size()));
-        unsigned *centroidLabels_retStruct = (unsigned *)malloc(sizeof(unsigned) * (wD->centroidLabels.size()));
+        double *inputData_retStruct = (double *)malloc(sizeof(double) * ((*l_inputData).size() * (*l_inputData)[0].size()));
+        double *distMatrix_retStruct = (double *)malloc(sizeof(double) * ((*l_distMatrix).size() * (*l_distMatrix).size()));
+        double *workData_retStruct = (double *)malloc(sizeof(double) * ((*l_workData).size() * (*l_workData).size()));
+        unsigned *centroidLabels_retStruct = (unsigned *)malloc(sizeof(unsigned) * ((*l_centroidLabels).size()));
 		//char *stats_retStruct = (char *)malloc(sizeof(char) * wD.stats.length());
 		//char *runLog_retStruct = (char *)malloc(sizeof(char) * wD.runLog.length());
 		//char *ident_retStruct = (char *)malloc(sizeof(char) * wD.ident.length());
         
-        inputData_retStruct = &std::accumulate(wD->inputData.begin(), wD->inputData.end(), decltype(wD->inputData)::value_type{}, [](auto &x, auto &y){x.insert(x.end(), y.begin(), y.end()); return x;})[0];
-        distMatrix_retStruct = &std::accumulate(wD->distMatrix.begin(), wD->distMatrix.end(), decltype(wD->distMatrix)::value_type{}, [](auto &x, auto &y){x.insert(x.end(), y.begin(), y.end()); return x;})[0];
-        workData_retStruct = &std::accumulate(wD->workData.begin(), wD->workData.end(), decltype(wD->workData)::value_type{}, [](auto &x, auto &y){x.insert(x.end(), y.begin(), y.end()); return x;})[0];
-        centroidLabels_retStruct = &(wD->centroidLabels.begin())[0];
+		auto wD = pipePacket<simplexNode>(args, args["complexType"]); //wD (workingData)
+        
+        inputData_retStruct = &std::accumulate((*l_inputData).begin(), (*l_inputData).end(), decltype(wD.inputData)::value_type{}, [](auto &x, auto &y){x.insert(x.end(), y.begin(), y.end()); return x;})[0];
+        distMatrix_retStruct = &std::accumulate((*l_distMatrix).begin(), (*l_distMatrix).end(), decltype(wD.distMatrix)::value_type{}, [](auto &x, auto &y){x.insert(x.end(), y.begin(), y.end()); return x;})[0];
+        workData_retStruct = &std::accumulate((*l_workData).begin(), (*l_workData).end(), decltype(wD.workData)::value_type{}, [](auto &x, auto &y){x.insert(x.end(), y.begin(), y.end()); return x;})[0];
+        centroidLabels_retStruct = &((*l_centroidLabels).begin())[0];
         
         retStruct->inputData = inputData_retStruct;
         retStruct->distMatrix = distMatrix_retStruct;
         retStruct->centroidLabels = centroidLabels_retStruct;
         retStruct->workData = workData_retStruct;
 
-		std::cout << "Finished on the c++ side -> " << wD->bettiTable.size() << std::endl;
+		std::cout << "Finished on the c++ side -> " << (*l_bettiTable).size() << std::endl;
 
         
         return retStruct;

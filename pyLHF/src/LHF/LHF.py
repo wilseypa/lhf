@@ -2,45 +2,52 @@ import ctypes
 import numpy as np
 import os
 
-
-
-class pipePacket:
+        
+        
+class bettiTable(ctypes.Structure):
+    
     """
-    PipePacket
-
-    Class that contains information about the pipeline's output data
-
-    Attributes:
-    ----------
-    betti : np.array
-        The betti numbers.
-    inputData : np.array
-        The input data.
-    distMatrix : np.array
-        The distance matrix.
-    workData : np.array
-        The centroids.
-    centroidLabels : np.array
-        The labels of the centroids.
-    stats : str
-        The statistics of the computation.
-    runLog : str
-        The log of the computation.
-    ident : str
-        The identity of the pipeline.
+    This structure mirrors the definition of retBettiTable in LHF.hpp
+    
+    """       
+    _fields_ = [
+        ("dim", ctypes.c_int),                      # int dim
+        ("birth", ctypes.c_double),                 # double birth
+        ("death", ctypes.c_double),                 # double death
+        ("boundarySize", ctypes.c_double),          # int boundarySize
+        ("boundaryEntries", ctypes.POINTER(ctypes.c_uint))    # unsigned* boundaryEntries
+        ]
+    
+    
+        
+        
+        
+class pipePacket(ctypes.Structure):
     """
-    def __init__(self,arr1,inputData,distMatrix,workData,centroidLabels,stats,runLog,ident):
-        self.betti = arr1
-        self.inputData = inputData
-        self.distMatrix = distMatrix
-        self.workData = workData
-        self.centroidLabels = centroidLabels
-        self.stats = stats
-        self.runLog = runLog
-        self.ident =  ident
-        #######coming soon
-        #bettidim 
-        #???
+    This structure mirrors the definition of retPipePacket in LHF.hpp
+    
+    
+    """        
+    _fields_ = [  
+        ("size_betti", ctypes.c_int),                       # int size_betti
+        ("LHF_size", ctypes.c_int),                         # int LHF_size
+        ("LHF_dim", ctypes.c_int),                          # int LHF_dim
+        ("workData_size", ctypes.c_int),                    # int workData_size
+        ("bettiTable", ctypes.POINTER(bettiTable)),         # BRET* BettiTable
+        ("inputData", ctypes.POINTER(ctypes.c_double)),     # double* inputData
+        ("distMatrix", ctypes.POINTER(ctypes.c_double)),    # double* distMatrix
+        ("workData", ctypes.POINTER(ctypes.c_double)),      # double* workData
+        ("centroidLabels", ctypes.POINTER(ctypes.c_uint)),  # unsigned* centroidLabels
+        ("stats", ctypes.c_char_p),                         # char* stats
+        ("runLog", ctypes.c_char_p),                        # char* runLog
+        ("ident", ctypes.c_char_p)                          # char* ident
+        ]
+        
+        
+
+
+
+
 
 class BettiTable:
     """
@@ -104,9 +111,9 @@ class pipePacketAtt(ctypes.Structure):
     size : int
         The size of the pipe packet.
     LHF_size : int
-        The size of the LHF.
+        The size of the LHF data.
     LHF_dim : int
-        The dimension of the LHF.
+        The dimension of the LHF data.
     workData_size : int
         The size of the work data.
     bettiTable : ctypes.c_void_p
@@ -195,6 +202,11 @@ class LHF:
 
         self.lib.pyRunWrapper2.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.POINTER(ctypes.c_double)]
         self.lib.pyRunWrapper2.restype = ctypes.c_void_p
+        
+        
+        self.lib.pyLHFWrapper.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.POINTER(ctypes.c_double)]
+        self.lib.pyLHFWrapper.restype = ctypes.c_void_p
+        
 
     def mergeArgs(self):
         """
@@ -299,8 +311,55 @@ class LHF:
         
         return a
         
+    def runPH2(self, data):
+        """
+        Runs the persistent homology computation using the LHF shared object library and returns the pipepacket result.
+
+        Args:
+            data (numpy.ndarray): A 2-dimensional array of data points.
+
+        Returns:
+            numpy.ndarray: An array of computed persistent homology data.
+        """
+
+        print("Calling C++ LHF shared library...")
+        #Get data sizes to pass to C
+        self.args["datasize"] = len(data)
+        self.args["datadim"] = len(data[0])
         
-    def decodeReturn(self,retPH):
+        self.mergeArgs()
+        
+        temp = self.args2string(self.args)
+        
+        na = ctypes.c_char_p(temp)
+        
+        self.data = data.flatten().tolist()
+        #self.data = ctypes.cast(self.data, ctypes.POINTER(ctypes.c_double))
+        
+        self.data = (ctypes.c_double * len(self.data))(*self.data)
+        
+        retAddr = self.lib.pyLHFWrapper(len(temp), na, self.data)
+        
+        print("Finished from LHF, deocoding data")
+        
+        
+        retPH = pipePacket.from_address(retAddr)
+        
+        print(dir(retPH))
+        ##for i in retPH.bettiTable:
+        #    print("PH:", i, dir(i))
+        #retPH.bettiTable = bettiTable.from_address(retPH.bettiTable)
+        
+        a = self.decodeReturn(retPH.size_betti, retPH.bettiTable)
+        #self.lib.freeWrapper(retAddr)
+        
+        print("RETURNED:", dir(retPH), retPH.workData_size, retPH.ident)
+        print("\n",dir(retPH.bettiTable))
+        
+        return a, retPH
+        
+        
+    def decodeReturn(self,s_betti, bettis):
         """
         Decodes the computed persistent homology data returned by the PyBind library.
 
@@ -310,17 +369,20 @@ class LHF:
         Returns:
             numpy.ndarray: An array of decoded persistent homology data.
         """
-        print("Total Boundaries", retPH.size)
-        bettiBoundaryTableEntries = type("array", (ctypes.Structure, ), {
+        print("Total Boundaries", s_betti)
+        ##bettiBoundaryTableEntries = type("array", (ctypes.Structure, ), {
             # data members
-            "_fields_": [("arr", bettiBoundaryTableEntry * retPH.size)]
-        })
+        ##    "_fields_": [("arr", bettiBoundaryTableEntry * retPH.size)]
+        #})
 
-        retBounds = bettiBoundaryTableEntries.from_address(retPH.bettiTable)
+        #retBounds = bettiBoundaryTableEntries.from_address(retPH.bettiTable)
         
         piResults = []
-        for i in range(retPH.size):
-            piResults.append([retBounds.arr[i].dim,retBounds.arr[i].birth,retBounds.arr[i].death])
+        for idx in range(s_betti):
+            print(bettis[idx])
+            piResults.append([bettis[idx].dim,bettis[idx].birth,bettis[idx].death])
+        
+        print(piResults)
         
         return np.array(piResults)
         
