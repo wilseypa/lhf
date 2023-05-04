@@ -68,18 +68,18 @@ extern "C" {
      *      to the pyLHF wrapper. These structures must match the ctypes definitions in LHF.py.
      * 
      */
-    	int size_betti;                 // # of entries (vectors) in the betti table
-		int LHF_size;                   // # of entries (vectors) in the LHF data set
-		int LHF_dim;                    // Dimension of entries (vectors) in the LHF data set
-		int workData_size;              // # of entries (vectors) in the working data set
-		bettiTableWrap* bettiTable;     // Pointer to the betti table structure
-		double* inputData;              // Pointer to serialized input data
-		double* distMatrix;             // Pointer to distance matrix
-		double* workData;               // Pointer to working data
-		unsigned* centroidLabels;       // Pointer to centroidLabels
-		const char* stats;                    // Pointer to string stats
-		const char* runLog;                   // Pointer to string runLog
-		const char* ident;                    // Pointer to string identity
+    	int size_betti;                             // # of entries (vectors) in the betti table
+		int LHF_size;                               // # of entries (vectors) in the LHF data set
+		int LHF_dim;                                // Dimension of entries (vectors) in the LHF data set
+		int workData_size;                          // # of entries (vectors) in the working data set
+		bettiTableWrap* bettiTable  = nullptr;      // Pointer to the betti table structure
+		double* inputData           = nullptr;      // Pointer to serialized input data
+		double* distMatrix          = nullptr;      // Pointer to distance matrix
+		double* workData            = nullptr;      // Pointer to working data
+		unsigned* centroidLabels    = nullptr;      // Pointer to centroidLabels
+		const char* stats;                          // Pointer to string stats
+		const char* runLog;                         // Pointer to string runLog
+		const char* ident;                          // Pointer to string identity
     } pipeWrap;
         
     void free_bettiWrap(bettiTableWrap *b){
@@ -95,61 +95,14 @@ extern "C" {
      * @brief Free the pipepacket structure after enumerating the data in pyLHF; if the bettiTable
      *      has not been previously freed this function will also call free_bettiWrap.
      */
-        if(p->bettiTable != nullptr){
+        if(p->size_betti > 0){
             free_bettiWrap(p->bettiTable);
         }
-        free(p); 
+        delete(p); 
         return; 
     }
     
     pipeWrap* pyLHFWrapper(int, char *, const double *);
-        
-        
-        
-        
-    /******************************** OLD *****************************/
-        
-	//Handle Betti Return Structure allocation	
-	typedef struct bRetStructure {
-		int dim;
-		double birth,death;
-	} BRET;
-	
-	
-	void free_bRet(BRET *b){
-		free(b);
-	}
-	
-	typedef struct bWrapStructure{
-		int size;
-		BRET* ret;
-	} BRAP;
-
-	//### pipepacket ###//
-
-	// void free_pRet(PRET *b){
-	// 	free(b);
-	// }
-
-	typedef struct pipeWrapStructure{
-		int size_betti; //multiple sizes?
-		int LHF_size;
-		int LHF_dim;
-		int workData_size;
-		BRET* BettiTable;
-		double* inputData;
-		double* distMatrix;
-		double* workData;
-		unsigned* centroidLabels;
-		char* stats;
-		char* runLog;
-		char* ident;
-	} PRAP;
-
-	//##################//
-	void testFunc(int num1, char* st) { std::cout << "Test: " << num1 << std::endl; std::cout << "\t" << st << std::endl;};
-	void pyRunWrapper(const int, char*, const double *);
-	PRAP* pyRunWrapper2(int, char *, const double *);
-    
+       
     
 }
