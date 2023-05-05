@@ -49,7 +49,7 @@ void  polytopalComplex :: populateDistanceMatrix(vector<vector<double>> &inputDa
 		}
 	}
 }
-std::vector<std::vector<unsigned>> generatesimplexfacets(std::vector<unsigned> c, unsigned k){
+std::vector<std::vector<unsigned>> polytopalComplex ::generatesimplexfacets(std::vector<unsigned> c, unsigned k){
 	std::vector<std::vector<unsigned>> combinations;
 	unsigned long n = c.size();
     unsigned long combo = (1 << k) - 1;    
@@ -70,6 +70,7 @@ std::vector<std::vector<unsigned>> generatesimplexfacets(std::vector<unsigned> c
     }
     return combinations;
 }
+
 template <typename T>
 bool contains(std::vector<T> first, std::vector<T> second)
 {
@@ -77,7 +78,8 @@ bool contains(std::vector<T> first, std::vector<T> second)
     std::sort(second.begin(), second.end());
     return std::includes(first.begin(), first.end(), second.begin(), second.end());
 } 
-std::vector<std::vector<unsigned>> hullfromtriangulation(std::vector<std::vector<unsigned>> simplices){
+
+std::vector<std::vector<unsigned>> polytopalComplex ::hullfromtriangulation(std::vector<std::vector<unsigned>> simplices){
 	std::vector<std::vector<unsigned>> hull;
 	for (auto x : simplices){
 		auto facets = generatesimplexfacets(x,x.size()-1);
@@ -109,8 +111,261 @@ std::vector<std::vector<unsigned>> hullfromtriangulation(std::vector<std::vector
 	return hull;
 }
 
+vector<unsigned> polytopalComplex ::intersection(vector<unsigned> polytop,vector<unsigned> simplex){
+ vector<unsigned> inter;
+ for(auto y:simplex){
+	 for(auto x:polytop){
+		 if(y==x){
+			inter.push_back(x);
+			break;
+		 }
+	 }
+ }
+ return inter;
+}
 
-vector<vector<double>> projectpointsOnUnitdSphere(vector<vector<double>> &inputData,vector<double> &center){
+pair<vector<vector<unsigned>>,vector<vector<unsigned>>> polytopalComplex ::neighbours(vector<unsigned>  polytop,std::vector<std::vector<unsigned>> simplices,int dim1,vector<vector<unsigned>> delaunaypart){   //report all the neighbouring polytopes that shares a face with polytope
+	vector<vector<unsigned>> adjacency;
+	for (auto y : simplices){
+		if(polytop != y){
+			if((intersection(polytop,y)).size()==dim1)
+				adjacency.push_back(y);
+			if((intersection(polytop,y)).size()==dim1+1){
+				bool present = false;
+				for(auto x:delaunaypart)
+					if(y ==x){
+						present = true;
+						break;
+					}
+					if(!present)
+						delaunaypart.push_back(y);
+				}
+			}
+	}
+	return make_pair(adjacency,delaunaypart);
+}
+
+pair<pair<vector<unsigned>,vector<vector<unsigned>>>,double> polytopalComplex ::mergeneighbors(vector<unsigned> polytop,std::vector<std::vector<unsigned>> simplices,vector<vector<double>>pointscoord,vector<vector<unsigned>> delaunaypart,set<unsigned> points){ //   merge neigbours simplices that results in maximum convex polytop with neighbors
+	auto neighborAndDelaunayParts = neighbours(polytop,simplices,pointscoord[0].size(),delaunaypart);
+	auto neighbors = neighborAndDelaunayParts.first;
+	delaunaypart = neighborAndDelaunayParts.second;	
+	vector<unsigned> pts(points.begin(),points.end());
+	double maxweightedge = 0;
+	for(auto x : neighbors){
+		auto y = polytop;
+		for(auto a:x)
+			y.push_back(a);
+		vector<vector<double>> coords;
+		for(auto i : y){
+			auto it = find(pts.begin(), pts.end(), i);
+			int index = it - pts.begin();
+			coords.push_back(pointscoord[index]);
+		}
+		auto simplices = qdelaunay_o(coords);
+		auto hull = hullfromtriangulation(simplices);
+		set<unsigned> points12;
+		for(auto z : hull) 
+			for(auto x : z) 
+				points12.insert(x); 
+		if(points12.size()==y.size()){
+			polytop =y;
+			if(maxweightedge<getweight(x))
+				maxweightedge = getweight(x);
+			delaunaypart.push_back(x);
+		}
+	}				
+	return make_pair(make_pair(polytop,delaunaypart),maxweightedge);
+}
+
+pair<vector<unsigned>,set<unsigned>> polytopalComplex ::getnextsimplex(std::vector<std::vector<unsigned>> simplices,pair<vector<unsigned>,set<unsigned>> cSimpAddressedpoints){
+	
+	set<unsigned> addresspoints = cSimpAddressedpoints.second;
+	for(auto a : cSimpAddressedpoints.first)
+		addresspoints.insert(a);
+	vector<unsigned> addresspoint(addresspoints.begin(),addresspoints.end());
+	std::vector<unsigned> x;
+	for(auto y : simplices){
+		x=y;
+		if((intersection(y,addresspoint)).size() != y.size())
+			break;
+		}
+	return make_pair(x,addresspoints);
+}
+pair<pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>>,pair<vector<int>,vector<double>>> polytopalComplex ::optimalconvexization(std::vector<std::vector<unsigned>> simplices,vector<vector<double>> pointscoord,set<unsigned> originalpoints){   //Repeate the Maximum convexization for each simplex and returned the sorted list of convex polytopes by weight and vertices
+	vector<vector<unsigned>> convexparts;
+	vector<double> maxdist;
+	set<unsigned> totalpoints;
+	for (auto k :simplices){
+		for(auto i : k){
+			totalpoints.insert(i);
+		}
+	}
+	vector<unsigned> origpts(originalpoints.begin(),originalpoints.end());
+	vector<vector<vector<unsigned>>> delaunayparts;
+	vector<int> sizecd;
+	auto updatedsimplices = simplices;
+	pair<vector<unsigned>,set<unsigned>> cSimpAddressedpoints;
+	for(int i =0;i<simplices.size();i++){
+		cSimpAddressedpoints = getnextsimplex(simplices,cSimpAddressedpoints);
+		auto x = cSimpAddressedpoints.first;
+		sort(x.begin(), x.end());
+		vector<vector<unsigned>> delaunaypart;
+		delaunaypart.push_back(x);
+		double distance =0;
+		double maxweight = getweight(x);
+		double maxval = 0;
+		while(true){
+			auto x1delaunaypartw = mergeneighbors(x,simplices,pointscoord,delaunaypart,originalpoints);
+			if(maxweight<x1delaunaypartw.second)
+				maxweight = x1delaunaypartw.second;
+			if(x1delaunaypartw.first.first==x)
+				break;
+			x = x1delaunaypartw.first.first;
+			delaunaypart = x1delaunaypartw.first.second;
+			}
+		bool present = false;
+		for(auto y :convexparts)
+			if(x==y){
+				present = true;
+				break;
+			}
+			
+		if(!present){
+			double maxval=0;
+			double distance = 0;
+			convexparts.push_back(x);
+			maxdist.push_back(maxweight);
+			delaunayparts.push_back(delaunaypart);
+			vector<vector<double>> coords;
+			for(auto i : x){
+				auto it = find(origpts.begin(), origpts.end(), i);
+				int index = it - origpts.begin();
+				coords.push_back(pointscoord[index]);
+			}
+			auto simplices = qdelaunay_o(coords);
+			auto hull = hullfromtriangulation(simplices);
+			for(auto p : hull){
+				auto it = find(origpts.begin(), origpts.end(), x[p[0]]);
+				int index1 = it - origpts.begin();
+				it = find(origpts.begin(), origpts.end(), x[p[1]]);
+				int index2 = it - origpts.begin();
+				double d = utils::vectors_distance(pointscoord[index1],pointscoord[index2]);
+				distance = distance + d;
+				if(maxval < d)
+					maxval = d;
+			}
+			maxdist.push_back(maxval);
+			sizecd.push_back(x.size());
+		}
+		set<unsigned> k;
+		for (auto tp : convexparts)
+			for(auto lm : tp)
+				k.insert(lm);
+		if(k.size()==totalpoints.size())
+			break;
+	}
+	//df = pd.DataFrame(list(zip(convexparts,delaunayparts,maxdist,averagedist,sizecd,maxdist)),columns =['convexpart','delaunayparts','maxdist','averagedist','sizecd','weight'])
+	//df = df.sort_values(by = 'sizecd',ascending = False)
+	//df = df.sort_values(by = 'maxdist',ascending = True)
+	return make_pair(make_pair(convexparts,delaunayparts),make_pair(sizecd,maxdist));
+}
+
+pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> polytopalComplex :: iterativeconvexization(std::vector<std::vector<unsigned>> simplices,int dim,vector<vector<double>> pointscoord){ //   Keep convex decomposition that minimizes convex polytopes required and minimizes maximum weight edge
+	vector<int> valid;
+	vector<vector<unsigned>> convexpartsunion;
+	vector<vector<vector<unsigned>>> delaunaypartsfinal;
+	set<unsigned> originalpoints;
+	for (auto k :simplices){
+		for(auto i : k){
+			originalpoints.insert(i);
+		}
+	}
+	vector<double> weights;
+	vector<vector<vector<unsigned>>> delaunayparts;
+	auto remainingsimplices = simplices;
+	int premaining = 0;
+	while(true){
+		auto df = optimalconvexization(remainingsimplices,pointscoord,originalpoints);
+		unsigned i=0;
+		vector<unsigned> pointsaddressed;
+		for(unsigned i=0;i<df.first.first.size();i++){
+			auto x = df.first.first[i];
+			auto y = df.first.second[i];
+			auto weight = df.second.second[i];
+			int check = 1;
+			for( auto t : convexpartsunion)
+				if((intersection(t,x)).size() > dim)
+					check = 0;
+			if(check==1){
+				valid.push_back(i);
+				convexpartsunion.push_back(x);
+				delaunayparts.push_back(y);
+				weights.push_back(weight);
+				delaunaypartsfinal.push_back(y);
+			}
+			i = i+1;
+		}
+		std::vector<std::vector<unsigned>> remainingsimplices;
+		int remaining = 0;
+		for(auto i : simplices){
+			bool present = false;
+			for(auto x : convexpartsunion)
+				if ((intersection(x,i)).size()>=i.size()){
+					present = true;
+					break;
+				}
+			if(!present){
+				remaining = remaining+1;
+				remainingsimplices.push_back(i);
+			}
+		}	
+		if(remaining==premaining){
+			if(remaining !=0)
+				for (auto r : remainingsimplices){
+					convexpartsunion.push_back(r);
+					weights.push_back(getweight(r));
+					vector<vector<unsigned>> rr;
+					rr.push_back(r);
+					delaunayparts.push_back(rr);
+					delaunaypartsfinal.push_back(rr);
+				}
+			break;
+		}
+		premaining = remaining;
+	}
+	vector<vector<unsigned>>  convexpartssorted;
+	for(auto x : convexpartsunion){
+		sort(x.begin(),x.end());
+		convexpartssorted.push_back(x);
+	}
+	return make_pair(convexpartsunion,delaunayparts);
+}		
+
+vector<vector<unsigned>>  polytopalComplex ::generateConvexFaces(vector<vector<unsigned>> convexFaces,std::vector<std::vector<unsigned>> hull, pair<vector<vector<double>>,vector<vector<double>>> &projectionData,vector<unsigned> projectionfacet,vector<double> pp){
+	int d = projectionData.first[0].size()-1;
+	
+	auto sterographicProjection = projectOnSimplexPlane(projectionData,projectionfacet,pp);
+	auto convexPolytopes = iterativeconvexization(hull,d,sterographicProjection);
+	/*
+	convexFaces = pruneMaximalParts(convexFaces,convexPolytopes.first,convexPolytopes.second,d,sterographicProjection);
+
+	azimuthalProjection = equidistantFromObserver(sterographicProjection,norm(pp2/2))
+	newHull = pruneHull(hull,azimuthalProjection,newpoints,pp1,pp2)
+	convexpartssorted,delaunayparts,weights = iterativeconvexization(hull,d,azimuthalProjection)
+	convexFaces = pruneMaximalParts(convexFaces,convexpartssorted,delaunayparts,weights,d,azimuthalProjection)
+
+	diagonal = simplexDiagonals(1,d+1)
+	i=0
+	for axis in diagonal:
+		luneProjection = equidistantFromObserverAxis(sterographicProjection,newpoints,axis)
+		convexpartssorted,delaunayparts,weights = iterativeconvexization(hull,d,luneProjection)
+		convexFaces = pruneMaximalParts(convexFaces,convexpartssorted,delaunayparts,weights,d,luneProjection)
+		i = i+1
+	*/ 
+	return convexFaces;
+	
+}
+vector<vector<double>> polytopalComplex ::projectpointsOnUnitdSphere(vector<vector<double>> &inputData,vector<double> &center){
 	vector<vector<double>> updatedCoordinates;
 	for(auto x : inputData){
 		vector<double> point;
@@ -124,7 +379,7 @@ vector<vector<double>> projectpointsOnUnitdSphere(vector<vector<double>> &inputD
 }
 
 
-pair<vector<unsigned>,unsigned> findOppositeSimplex(pair<vector<vector<double>>,vector<vector<double>>> projectionData,vector<vector<unsigned>> hull){
+pair<vector<unsigned>,unsigned> polytopalComplex ::findOppositeSimplex(pair<vector<vector<double>>,vector<vector<double>>> projectionData,vector<vector<unsigned>> hull){
 	vector<double> point1 = projectionData.second[0];
 	vector<double> point2 = projectionData.second[1];
 	double minweight1 = 9999;
@@ -156,9 +411,10 @@ pair<vector<unsigned>,unsigned> findOppositeSimplex(pair<vector<vector<double>>,
 	return make_pair(hull[projectionSimplex2],1);
 }
 
-pair<vector<vector<double>>,vector<vector<double>>> transformingConvexPolytopeForConvexDecomposition(vector<vector<double>> &inputData,vector<unsigned> projectionSimplex){
+pair<vector<vector<double>>,vector<vector<double>>> polytopalComplex ::transformingConvexPolytopeForConvexDecomposition(vector<vector<double>> &inputData,vector<unsigned> projectionSimplex){
 	std::vector<std::vector<double>> pts;
-	std::vector<std::vector<double>> pp;
+	std::vector<std::vector<double>> pp;	
+
 	vector<double> center(inputData[0].size(),0.0);
 	bool found = false;
 	for( auto b : projectionSimplex){
@@ -185,34 +441,9 @@ pair<vector<vector<double>>,vector<vector<double>>> transformingConvexPolytopeFo
 	pp.push_back(center);
 	return make_pair(trasformedData,pp);
 }
-/*
-def projectonplane(p1,p2,points1):
-	cofficient = p1 - p2
-	constant  = 0
-	point_on_plane = p1
-	for a,b in zip(point_on_plane,cofficient):
-		constant = constant+a*b
-	constant = (-1)*constant 
-	
-	pts1 = []
-	for pt in points1:
-		diff = pt-p2
-		constterm =0;
-		diffterm = 0;
-		for x in range(0,len(cofficient)):
-			constterm+= p2[x]*cofficient[x]
-			diffterm+= diff[x]*cofficient[x]
-		if((diffterm!=0).all()):
-			t = ((-1)*constant - constterm)/diffterm
-			pnt = t*(pt-p2)+p2
-			pts1.append(pnt)
-		else:
-			pts1.append(pt)
-	pts1 = np.array(pts1)
-	return pts1
-*/
 
-vector<vector<double>> projectOnSimplexPlane(pair<vector<vector<double>>,vector<vector<double>>> projectionData,vector<unsigned> hull,vector<double> ppoint){
+
+vector<vector<double>> polytopalComplex ::projectOnSimplexPlane(pair<vector<vector<double>>,vector<vector<double>>> projectionData,vector<unsigned> hull,vector<double> ppoint){
 	double scaledown = 100000;
 	vector<double> pp;
 	double d=utils::vectors_distance(ppoint,projectionData.second[2]);
@@ -269,7 +500,6 @@ polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
 	else
 		pp1 = projectionData1.second[0];
 
-	auto projectedonPlane1 = projectOnSimplexPlane(projectionData1,hull[0],pp1);
 	//cout<<hull[0][0]<<" "<<hull[0][1]<<" "<<hull[0][2]<<"\n";
 	//cout<<oppositeSimplex[0]<<" "<<oppositeSimplex[1]<<" "<<oppositeSimplex[2];
 	
@@ -280,7 +510,17 @@ polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
 		pp2 = projectionData2.second[1];
 	else
 		pp2 = projectionData2.second[0];
-	auto projectedonPlane2 = projectOnSimplexPlane(projectionData2,oppositeSimplex.first,pp2);
+		
+	vector<vector<unsigned>> convexFaces; 
+	convexFaces = generateConvexFaces(convexFaces,hull,projectionData1,hull[0],pp1);
+	convexFaces = generateConvexFaces(convexFaces,hull,projectionData2,oppositeSimplex.first,pp2);
+
+
+
+
+
+/*
+
 
 	bool first = true;
 	for(int i=0;i<projectionData1.first.size();i++){
@@ -340,6 +580,7 @@ polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
 		first = true;
 
 	}
+	*/
 	/*
 	for(int i=0;i<hull.size();i++){
 		for(int j =0;j<hull[i].size();j++){
