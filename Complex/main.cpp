@@ -8,8 +8,9 @@ int main(){
 	
 	auto rs = readInput();
 	std::vector<std::vector<double>> data;
-	std::string filename = "inputfile.txt";
-	//std::getline (std::cin,filename);
+	std::string filename;
+	cout<<"Enter File Name::";
+	std::getline (std::cin,filename);
 	data = rs.readCSV(filename);
 	
 	polytopalComplex polyComplex(data);
