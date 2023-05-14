@@ -8,11 +8,18 @@ int main(){
 	
 	auto rs = readInput();
 	std::vector<std::vector<double>> data;
-	std::string filename;
-	cout<<"Enter File Name::";
-	std::getline (std::cin,filename);
+	std::string filename = "inputfile.txt";
+	//cout<<"Enter File Name::";
+	//std::getline (std::cin,filename);
 	data = rs.readCSV(filename);
 	
 	polytopalComplex polyComplex(data);
+	polyComplex.persistence();
+	
+	for(auto x: polyComplex.getbettiTable()){
+		for(auto y:x)
+			cout<<y<<",";
+		cout<<"\n";
+	}
 	return 0;
 }
