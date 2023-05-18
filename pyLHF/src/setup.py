@@ -16,12 +16,13 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name='lhf',
-    version='1.2.8',    
+    version='1.3.3',    
     description='Light Weight Homology Framework',
     long_description=long_description,
     long_description_content_type="text/markdown",
     project_urls={
         "LHF": "https://github.com/wilseypa/lhf",
+        "pyLHF": "https://pypi.org/project/lhf",
     },
     classifiers=[
         "Programming Language :: Python :: 3",

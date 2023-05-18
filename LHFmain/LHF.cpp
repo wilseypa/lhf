@@ -184,24 +184,21 @@ std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processParallel(std::map<std
         @return std::vector<bettiBoundaryTableEntry> The merged betti table for all partitions
     */
 
-	//		Parameters
+	//		Parameters used for each thread
 	auto threshold = std::atoi(args["threshold"].c_str());
 	auto maxEpsilon = std::atof(args["epsilon"].c_str());
 	auto threads = std::atoi(args["threads"].c_str());
 	auto clusters = std::atoi(args["clusters"].c_str());
 
-	//		Local Storage
+	//		Local Storage for each thread
 	std::vector<bettiBoundaryTableEntry> mergedBettiTable;
 	std::vector<bettiBoundaryTableEntry> partBettiTable[threads];
 	std::string runLogs[threads];
 	std::string stats[threads];
-
-	//		Initalize a copy of the pipePacket
 	auto iterwD = pipePacket<nodeType>(args, args["complexType"]);
 
 	//		Process fuzzy partitions in order of size
 	std::vector<std::pair<unsigned, unsigned>> sortpartitions;
-
 	for (int i = 0; i < partitionedData.second.size(); i++){
 		sortpartitions.push_back(std::make_pair(partitionedData.second[i].size(), i));
 	}
@@ -889,7 +886,10 @@ extern "C"{
 			args[rawArgs[i]] = rawArgs[i + 1];
 		}
         
+        
+        
         //Get args from pipeline mode
+        argParser::defaultArguments(args);
         argParser::setPipeline(args);
 
 		/*******     2. Decode Data          *********/
