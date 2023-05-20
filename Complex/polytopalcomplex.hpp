@@ -7,6 +7,8 @@
 #include <bits/stdc++.h>
 #include<omp.h>
 #include <unordered_map>
+#include <setoper.h>
+#include <cdd.h>
 
 using namespace std;
 
@@ -20,17 +22,17 @@ struct polytope{
     {
         return polytopeIndices == p.polytopeIndices && weight == p.weight;
     }
-    bool operator < (const  polytope&p) const {
+    bool operator > (const  polytope&p) const {
 		if(weight==p.weight)
 			return polytopeIndices <p.polytopeIndices;
 		
-        return weight<p.weight;
+        return weight>p.weight;
     }
-    bool operator >(const polytope&p) const {
+    bool operator <(const polytope&p) const {
 		if(weight==p.weight)
 			return polytopeIndices >p.polytopeIndices;
 		
-        return weight>p.weight;
+        return weight<p.weight;
     }
 };
 struct cmp {
@@ -98,4 +100,8 @@ class polytopalComplex{
 		void persistence();
 		std::vector<polytope> persistenceByDim(std::vector<polytope> pivots,int d);
 		std::vector<polytope> getCofacet(set<unsigned> cofaceIndices,int codim);
+		set<polytope> generateFaces(int d);
+		std::vector<polytope> getCofacetModified(set<unsigned> cofaceIndices,int codim);
+		vector<vector<double>> inverseStereoGraphicProjection(vector<vector<double>> &);
+		vector<vector<double>> rescaledataandcenteraroundorigin(vector<vector<double>> &data);
 };

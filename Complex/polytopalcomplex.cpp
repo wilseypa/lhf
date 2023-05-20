@@ -20,6 +20,15 @@ double polytopalComplex :: getweight(vector<unsigned> simplex){
 	}
 	return weight;
 }
+void printData(vector<vector<double>> data){
+    std::cout<<"\n\nData\n\n"<<flush;
+	for(auto x: data){
+		for(auto y:x){
+			std::cout<<y<<","<<flush;
+		}
+	 std::cout<<"\n"<<flush;
+	}
+}
 bool polytopalComplex :: checkCC_Simplex_Inclusion (std::vector<unsigned> simplex,std::vector<std::vector<double> >  &inputData,	std::vector<double> circumCenter){
 	 int i = 0;
 	 std::vector<std::vector<double>> matT;
@@ -261,6 +270,7 @@ pair<pair<vector<unsigned>,vector<vector<unsigned>>>,double> polytopalComplex ::
 	auto neighbors = neighborAndDelaunayParts.first;
 	delaunaypart = neighborAndDelaunayParts.second;	
 	vector<unsigned> pts(points.begin(),points.end());
+	
 	double maxweightedge = 0;
 	for(auto x : neighbors){
 		set<unsigned> y(polytop.begin(),polytop.end());
@@ -540,7 +550,30 @@ pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> polytopalComplex
 		sort(x.begin(),x.end());
 		convexpartssorted.push_back(x);
 	}
-
+/*
+	cout<<"\n";
+	for(auto data : pointscoord){
+		for(auto coord:data)
+			cout<<coord<<",";
+		cout<<"0\n";
+	}
+	for(auto y : delaunayparts){
+		for(auto x : y){
+			bool t = true;
+			for(auto yy:x)
+				if(t){
+					std::cout<<yy<<flush;
+					t = false;
+				}
+				else
+					std::cout<<","<<yy<<flush;
+			std::cout<<"\n";
+			}
+		std::cout<<"0,0,0\n"<<flush;
+	}
+	int kk;
+	cin>>kk;
+*/
 	return make_pair(convexpartssorted,delaunayparts);
 }
 		
@@ -608,7 +641,7 @@ pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>>  polytopalComple
     pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> UPCF = convexFaces;
 	int count=0;
 	for(auto face : convexFaces.second){
-		if(face.size()>2){
+		if(face.size()>=1){
 			vector<double> centeroid(d+1,0.0);
 			for( auto b : convexFaces.first[count]){
 				for(int i=0;i<d+1;i++){
@@ -630,8 +663,7 @@ pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>>  polytopalComple
 			pair<vector<vector<double>>,vector<vector<double>>> ModifiedprojectionData;
 			ModifiedprojectionData.first = projectionData.first;
 			ModifiedprojectionData.second =pp;
-			auto sterographicProjection = projectOnSimplexPlane(ModifiedprojectionData,pp2,1);
-
+			auto sterographicProjection = projectOnSimplexPlane(ModifiedprojectionData,pp2,100000);
 			auto convexPolytopes = iterativeconvexization(hull,d,sterographicProjection);
 			UPCF = pruneMaximalParts(UPCF,convexPolytopes);
 
@@ -665,7 +697,7 @@ pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>>  polytopalComple
 }
 pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>>  polytopalComplex ::generateConvexFaces(pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> &convexFaces,std::vector<std::vector<unsigned>> hull, pair<vector<vector<double>>,vector<vector<double>>> &projectionData,vector<unsigned> projectionfacet,vector<double> pp){
 	int d = projectionData.first[0].size()-1;
-	auto sterographicProjection = projectOnSimplexPlane(projectionData,pp,1000);
+	auto sterographicProjection = projectOnSimplexPlane(projectionData,pp,100000);
 	auto convexPolytopes = iterativeconvexization(hull,d,sterographicProjection);
 	return 	pruneMaximalParts(convexFaces,convexPolytopes);
 ;
@@ -804,8 +836,9 @@ std::vector<std::vector<unsigned>> polytopalComplex ::  transformhull(std::vecto
 	for(auto x: polytopeIndices){
 		for(int i=0;i<newhull.size();i++){
 			for(int j=0;j<newhull[i].size();j++)
-				if(newhull[i][j] == x)
+				if(newhull[i][j] == x){
 					newhull[i][j] = index;
+				}
 		}
 		index++;
 	}
@@ -813,19 +846,21 @@ std::vector<std::vector<unsigned>> polytopalComplex ::  transformhull(std::vecto
 }
 pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> polytopalComplex ::  transformCF(pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> convexFaces,set<unsigned> polytopeIndices){ // local to global Indices
 	pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> newcf= convexFaces;
-	int index=0;
-	for(auto x: polytopeIndices){
+	int index=polytopeIndices.size()-1;
+	for(auto x= polytopeIndices.rbegin();x!=polytopeIndices.rend();x++){
 		for(int i=0;i<newcf.first.size();i++){
 			for(int j=0;j<newcf.first[i].size();j++)
-				if(newcf.first[i][j] == index)
-					newcf.first[i][j] = x;
+				if(newcf.first[i][j] == index){
+					newcf.first[i][j] = *x;
+				}
 			
 			for(int k=0;k<newcf.second[i].size();k++)
 				for(int l=0;l<newcf.second[i][k].size();l++)
-					if(newcf.second[i][k][l] == index)
-						newcf.second[i][k][l] = x;
+					if(newcf.second[i][k][l] == index){
+						newcf.second[i][k][l] = *x;
+					}
 		}
-		index++;
+		index--;
 	}
 	return newcf;
 }
@@ -842,158 +877,173 @@ polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
 	dim = inputData[0].size();
 	dataSize =inputData.size();
 	auto simplices = qdelaunay_o(inputData);
-	for(auto p:	simplices){
-		cout<<"\n";
-		for(auto yy :p)
-		std::cout<<yy<<","<<flush;
+	auto mdata = inverseStereoGraphicProjection(inputData);
+	std::cout<<"Simplice Size ::"<<simplices.size()<<"\n";
+	for(auto y : simplices){
+		bool t = true;
+			for(auto yy:y)
+				if(t){
+					std::cout<<yy<<flush;
+					t = false;
+				}
+				else
+					std::cout<<","<<yy<<flush;
+		std::cout<<"\n0,0,0\n"<<flush;
 	}
-    auto convexPolytopes = iterativeconvexization(simplices,inputData[0].size(),inputData);
+	auto convexPolytopes1 = iterativeconvexization(simplices,inputData[0].size(),inputData);
+	std::cout<<"convexPoly  Size ::"<<convexPolytopes1.second.size()<<"\n";
+	for(auto poly :convexPolytopes1.second){
+		for(auto y : poly){
+			bool t = true;
+			for(auto yy:y)
+				if(t){
+					std::cout<<yy<<flush;
+					t = false;
+				}
+				else
+					std::cout<<","<<yy<<flush;
+			std::cout<<"\n"<<flush;
+		}
+		std::cout<<"\n0,0,0\n"<<flush;
+	}
+	
+	
 	set<polytope,cmp> polys;
+	polytope temp;
+	set<unsigned> p;
+	for(int i=0;i<inputData.size();i++)
+		p.insert(i);
+	temp.polytopeIndices = p;
+	temp.coordinates = mdata;
+	temp.Deltriangulation = simplices;
+	polys.insert(temp);
+	int i =0;
 	int level = 0;
-	int i=0;
-	for(auto poly :convexPolytopes.first){
-		polytope temp;
-		set<unsigned> p(poly.begin(),poly.end());
-		temp.polytopeIndices = p;
-		vector<vector<double>> coords;
-		for(auto x:temp.polytopeIndices)
-			coords.push_back(inputData[x]);
-		temp.coordinates = coords;
-		temp.Deltriangulation = convexPolytopes.second[i];
-		temp.weight = getmaxWeight(convexPolytopes.second[i]);
-		polys.insert(temp);
-		i++;
-	}	
-	i =0;
 	polytopalArrayList.push_back(polys);
 	while(true){
 		set<polytope,cmp> polys;
 		unsigned cofaceI=0;
+		cout<<"\nConvex Parts Size  :: Level ::"<<level<<" has "<<polytopalArrayList[level].size()<<" Size \n"<<flush;
 		for(auto poly:polytopalArrayList[level]){
-			std::cout<<poly.polytopeIndices.size()<<" level "<<level<<"\n"<<flush;
-			auto originalhull = hullfromtriangulation(poly.Deltriangulation); //Original Indices
-			for(auto yy :poly.polytopeIndices)
-				std::cout<<yy<<","<<flush;
-			for(auto p:	originalhull){
-					cout<<"\n";
-					for(auto yy :p)
-						std::cout<<yy<<","<<flush;
-			}
-			auto hull = transformhull(originalhull,poly.polytopeIndices); // local Indices
-			cout<<"\nNew Hull\n";
-			for(auto p:	hull){
-				cout<<"\n";
-				for(auto yy :p)
-					std::cout<<yy<<","<<flush;
-			}
-			auto weight1 = getweight(hull[0]);
-			auto projectionData1 = transformingConvexPolytopeForConvexDecomposition(poly.coordinates,hull[0]);
-			auto oppositeSimplex = findOppositeSimplex(projectionData1,hull);
-			vector<double> pp1,pp2;
-			if(oppositeSimplex.second==0)
-				pp1 = projectionData1.second[1];
-			else
-				pp1 = projectionData1.second[0];
-
-			auto weight2 = getweight(hull[oppositeSimplex.second]);
-			auto projectionData2 = transformingConvexPolytopeForConvexDecomposition(poly.coordinates,oppositeSimplex.first);
-			if(utils::vectors_distance(pp1,projectionData2.second[0])<utils::vectors_distance(pp1,projectionData2.second[1]))
-				pp2 = projectionData2.second[1];
-			else
-				pp2 = projectionData2.second[0];
-			pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> convexFaces; 
-			convexFaces = generateConvexFaces(convexFaces,hull,projectionData1,hull[0],pp1);
-			convexFaces = generateConvexFaces(convexFaces,hull,projectionData2,oppositeSimplex.first,pp2);
-			auto projectionData = projectonCenteroidSphere(poly.coordinates);
-			convexFaces = informedConvexization(convexFaces, hull,projectionData);
-			int ii=0;
-			cout<<"\nPrevious Convex Faces\n";
-			for(auto poly:convexFaces.first){
-				for(auto yy :poly)
-					std::cout<<yy<<","<<flush;
-				for(auto p:	convexFaces.second[ii]){
-					cout<<"\n";
-					for(auto yy :p)
-						std::cout<<yy<<","<<flush;
-				}
-				ii++;
-			}
-			convexFaces = transformCF(convexFaces,poly.polytopeIndices); // local Indices
-			cout<<"\nNew Convex Faces\n";
-			ii=0;
-			for(auto poly:convexFaces.first){
-				for(auto yy :poly)
-					std::cout<<yy<<","<<flush;
-				for(auto p:	convexFaces.second[ii]){
-					cout<<"\n";
-					for(auto yy :p)
-						std::cout<<yy<<","<<flush;
-				}
-				ii++;
-			}
-			int k;
-			std::cin>>k;
-			int i=0;
-			for(auto poly :convexFaces.first){
-				polytope temp;
-				std::cout<<"Del PArts Count"<<convexFaces.second[i].size()<<"\n"<<flush;
-				set<unsigned> p(poly.begin(),poly.end());
-				temp.polytopeIndices = p;
-				vector<vector<double>> coords;
-				for(auto x:temp.polytopeIndices)
-					coords.push_back(inputData[x]);
-				for(auto yy :p)
-					std::cout<<yy<<","<<flush;
-				for(auto p:	convexFaces.second[i]){
-					cout<<"\n";
-					for(auto yy :p)
-						std::cout<<yy<<","<<flush;
+			std::cout<<poly.polytopeIndices.size()<<","<<flush;
+			if(poly.polytopeIndices.size()>poly.coordinates[0].size()+1){
+				auto originalhull = poly.Deltriangulation; //Original Indices
+				auto hull = transformhull(originalhull,poly.polytopeIndices); // local Indices
+				auto weight1 = getweight(hull[0]);
+				auto projectionData1 = transformingConvexPolytopeForConvexDecomposition(poly.coordinates,hull[0]);
+				auto oppositeSimplex = findOppositeSimplex(projectionData1,hull);
+				vector<double> pp1,pp2;
+				if(oppositeSimplex.second==0)
+					pp1 = projectionData1.second[1];
+				else
+					pp1 = projectionData1.second[0];
+				auto weight2 = getweight(hull[oppositeSimplex.second]);
+				auto projectionData2 = transformingConvexPolytopeForConvexDecomposition(poly.coordinates,oppositeSimplex.first);
+				if(utils::vectors_distance(pp1,projectionData2.second[0])<utils::vectors_distance(pp1,projectionData2.second[1]))
+					pp2 = projectionData2.second[1];
+				else
+					pp2 = projectionData2.second[0];
+				pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> convexFaces; 
+				convexFaces = generateConvexFaces(convexFaces,hull,projectionData1,hull[0],pp1);
+				convexFaces = generateConvexFaces(convexFaces,hull,projectionData2,oppositeSimplex.first,pp2);
+				auto projectionData = projectonCenteroidSphere(poly.coordinates);
+				convexFaces = informedConvexization(convexFaces, hull,projectionData);
+				convexFaces = transformCF(convexFaces,poly.polytopeIndices); // local Indices
+				int i=0;
+				for(auto poly :convexFaces.first){
+					polytope temp;
+					set<unsigned> p(poly.begin(),poly.end());
+					temp.polytopeIndices = p;
+					vector<vector<double>> coords;
+					for(auto x:temp.polytopeIndices)
+						coords.push_back(inputData[x]);
+					temp.coordinates = utils:: computePCA(coords,coords[0].size()-1).first;
+					for(auto x :temp.polytopeIndices)
+					   std::cout<<x<<" ";
+					  std::cout<<"\n";
+					for(auto y : temp.coordinates){
+						bool t = true;
+						for(auto yy : y)
+						if(t){
+							 t = false;
+							std::cout<<yy<<flush;
+							}
+						else
+							std::cout<<yy<<","<<flush;
+						cout<<"\n";
 					}
-				std::cout<<"polytop::"<<p.size()<<flush;
-				temp.coordinates = utils:: computePCA(coords,coords[0].size()-1).first;
-				std::cout<<"polytop2::"<<p.size()<<flush;
-				temp.Deltriangulation = convexFaces.second[i];
-				temp.weight = getmaxWeight(convexFaces.second[i]);
-				temp.cofaceIndices.insert(cofaceI);
-				std::cout<<"MaxWeight"<<temp.weight<<"\n"<<flush;
-				std::cout<<"Del PArts Count"<<convexFaces.second[i].size()<<"\n"<<flush;
-				if(convexFaces.second[i].size()==1){
-					if(convexFaces.second[i][0].size()>1){
-					int t;
-					std::cout<<"Rohit"<<flush;	
-					std::cout<<"Simplex = "<<convexFaces.second[i][0][0]<<" "<<convexFaces.second[i][0][1]<<"\n"<<flush;
-					std::cout<<"Weight = "<<getweight(convexFaces.second[i][0])<<"\n"<<flush;
-					std::cin>>t;
+					cout<<"0,0,0\n";
+					temp.Deltriangulation = hullfromtriangulation(convexFaces.second[i]);
+					cout<<"\n";
+					for(auto y : hullfromtriangulation(convexFaces.second[i])){
+						bool t = true;
+						for(auto yy : y)
+						 if(t){
+							 t = false;
+							std::cout<<yy<<flush;
+							}
+						else
+							std::cout<<","<<yy<<flush;
+						cout<<"\n";
+					}
+					cout<<"0,0,0\n";
+
+				
+					temp.weight = getmaxWeight(convexFaces.second[i]);
+					temp.cofaceIndices.insert(cofaceI);
+					auto pos = polys.find(temp);
+					if (pos == polys.end())
+						polys.insert(temp);
+					else{
+						auto it = next(polys.begin(), distance(polys.begin(), pos));
+						auto polyupdate = *it;
+						polyupdate.cofaceIndices.insert(cofaceI);
+						polys.erase(it);
+						polys.insert(polyupdate);
+					}
+					i++;
 				}
+			}
+			else{
+				//Do for simplices
+				int i=0;
+				vector<unsigned> pp(poly.polytopeIndices.begin(),poly.polytopeIndices.end());
+				for(auto poly :generatesimplexfacets(pp,poly.polytopeIndices.size()-1)){
+					polytope temp;
+					set<unsigned> p(poly.begin(),poly.end());
+					temp.polytopeIndices = p;
+					temp.weight = getweight(poly);
+					temp.cofaceIndices.insert(cofaceI);
+					auto pos = polys.find(temp);
+					if (pos == polys.end())
+						polys.insert(temp);
+					else{
+						auto it = next(polys.begin(), distance(polys.begin(), pos));
+						auto polyupdate = *it;
+						polyupdate.cofaceIndices.insert(cofaceI);
+						polys.erase(it);
+						polys.insert(polyupdate);
+					}
+					i++;
 				}
-				auto pos = polys.find(temp);
-				if (pos == polys.end())
-					polys.insert(temp);
-				else{
-					 auto it = next(polys.begin(), distance(polys.begin(), pos));
-					 auto polyupdate = *it;
-					 polyupdate.cofaceIndices.insert(cofaceI);
-					 polys.erase(it);
-					 polys.insert(polyupdate);
-				}
-				i++;
 			}
 			cofaceI++;
 		}
 		polytopalArrayList.push_back(polys);
 		level++;
-		if(level == dim-2)
+		if(level == dim-1)
 			break;
 	}
 	set<polytope,cmp> polysE;
 	unsigned cofaceI =0;
 	for(auto poly:polytopalArrayList[level]){
-		for(auto p : hullfromtriangulation(poly.Deltriangulation)){
+		for(auto p : poly.Deltriangulation){
 			polytope temp;
 			set<unsigned> pp(p.begin(),p.end());
 			temp.polytopeIndices = pp;
 			temp.Deltriangulation.push_back(p);
 			temp.weight = getweight(p);
+			temp.cofaceIndices.insert(cofaceI);
 			auto pos = polysE.find(temp);
 			if (pos == polysE.end())
 				polysE.insert(temp);
@@ -1015,7 +1065,9 @@ polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
 		for(auto p : poly.polytopeIndices){
 			polytope temp;
 			temp.polytopeIndices.insert(p);
+			temp.cofaceIndices.insert(cofaceI);
 			temp.weight = 0.0;
+					temp.cofaceIndices.insert(cofaceI);
 			auto pos = polysV.find(temp);
 			if (pos == polysV.end())
 				polysV.insert(temp);
@@ -1032,21 +1084,27 @@ polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
 	polytopalArrayList.push_back(polysV);
 	int l=0;
 	for(auto xLevel:polytopalArrayList){
-		std::cout<<"Level "<<l++<<"\n[";
+		std::cout<<"\nLevel "<<l++<<"has Size "<<xLevel.size()<<"\n["<<flush;
 		for(auto poly :xLevel){
-			std::cout<<"[[";
+			std::cout<<"[["<<flush;
 			for(auto y : poly.polytopeIndices)
-				std::cout<<y<<",";
-			std::cout<<"]";
-			std::cout<<"[";
+				std::cout<<y<<","<<flush;
+			std::cout<<"]"<<flush;
+			std::cout<<"["<<flush;
 			for(auto y : poly.cofaceIndices)
-				std::cout<<y<<",";
-			std::cout<<"]";
-			std::cout<<poly.weight<<"]->";
+				std::cout<<y<<","<<flush;
+			std::cout<<"]["<<flush;
+			for(auto y : poly.Deltriangulation){
+				cout<<"(";
+				for(auto yy : y)
+					std::cout<<yy<<","<<flush;
+				}
+			std::cout<<")"<<poly.weight<<"]]->"<<flush;
 		}	
 	}
 	int row=0;
 	int col=0;
+	/*
 	for(auto x: distanceMatrix){
 		std::cout<<"\n";
 		col = 0;
@@ -1056,7 +1114,39 @@ polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
 			}
 		row++;
 		}
+	*/
 }
+std::vector<polytope> polytopalComplex :: getCofacetModified(set<unsigned> cofaceIndices,int codim){
+	std::set<polytope> cofaces;
+	auto cofacesdim = polytopalArrayList[codim];
+	int cofaceI =0;
+	for(auto x:cofaceIndices){
+		auto it = next(cofacesdim.begin(), x);
+		auto polytop = (*it);
+		for(auto del : polytop.Deltriangulation){
+			polytope temp;
+			set<unsigned> pp(del.begin(),del.end());
+			temp.polytopeIndices = pp;
+			temp.Deltriangulation.push_back(del);
+			temp.weight = getweight(del);
+			temp.cofaceIndices.insert(cofaceI);
+			auto pos = cofaces.find(temp);
+			if (pos == cofaces.end())
+				cofaces.insert(temp);
+			else{
+				 auto it = next(cofaces.begin(), distance(cofaces.begin(), pos));
+				 auto polyupdate = *it;
+				 polyupdate.cofaceIndices.insert(cofaceI);
+				 cofaces.erase(it);
+				 cofaces.insert(polyupdate);
+			}		
+		}
+		cofaceI++;
+	}
+	vector<polytope> cof(cofaces.begin(),cofaces.end());
+	return cof	;
+}
+
 std::vector<polytope> polytopalComplex :: getCofacet(set<unsigned> cofaceIndices,int codim){
 	std::vector<polytope> cofaces;
 	auto cofacesdim = polytopalArrayList[codim];
@@ -1067,6 +1157,195 @@ std::vector<polytope> polytopalComplex :: getCofacet(set<unsigned> cofaceIndices
 	return cofaces;
 }
 
+set<polytope>  polytopalComplex :: generateFaces(int d){
+	set<polytope> faces;
+	int cofaceI = 0;
+	for(auto poly = polytopalArrayList[d].rbegin(); poly != polytopalArrayList[d].rend(); poly++){
+		auto polytop = (*poly);
+		for(auto del : polytop.Deltriangulation){
+			polytope temp;
+			set<unsigned> pp(del.begin(),del.end());
+			temp.polytopeIndices = pp;
+			temp.Deltriangulation.push_back(del);
+			temp.weight = getweight(del);
+			temp.cofaceIndices.insert(cofaceI);
+			auto pos = faces.find(temp);
+			if (pos == faces.end())
+				faces.insert(temp);
+			else{
+				 auto it = next(faces.begin(), distance(faces.begin(), pos));
+				 auto polyupdate = *it;
+				 polyupdate.cofaceIndices.insert(cofaceI);
+				 faces.erase(it);
+				 faces.insert(polyupdate);
+			}		
+		}
+		cofaceI++;
+	}	
+	return faces;
+
+}
+/*
+std::vector<polytope> polytopalComplex :: persistenceByDim(std::vector<polytope> pivots,int d){
+	typename std::vector<polytope>::iterator it = pivots.begin();
+
+	std::vector<polytope> nextPivots;	 	//Pivots for the next dimension
+	std::unordered_map<polytope, std::vector<polytope>,MyHashFunction> v;	//Store only the reduction matrix V and compute R implicity
+	std::unordered_map<polytope, polytope,MyHashFunction> pivotPairs;	//For each pivot, which column has that pivot
+	//Iterate over columns to reduce in reverse order
+	for(auto columnIndexIter = polytopalArrayList[dim-d].rbegin(); columnIndexIter != polytopalArrayList[dim-d].rend(); columnIndexIter++){
+
+		polytope poly = (*columnIndexIter);	//The current simplex
+
+		//Not a pivot -> need to reduce
+		if(it == pivots.end() || (*it).weight != poly.weight || (*it).polytopeIndices != poly.polytopeIndices){
+			std::vector<polytope> faceList = getCofacetModified(poly.cofaceIndices,dim-d-1);
+			std::vector<polytope> columnV;	
+			columnV.push_back(poly); 
+			std::make_heap(faceList.begin(), faceList.end());
+
+			while(true){
+				polytope pivot;
+				while(!faceList.empty()){		
+					pivot = faceList.front();
+					//Rotate the heap
+					std::pop_heap(faceList.begin(), faceList.end());
+					faceList.pop_back();
+					if(!faceList.empty() && pivot.polytopeIndices == faceList.front().polytopeIndices){ //Coface is in twice -> evaluates to 0 mod 2
+						//Rotate the heap
+						std::pop_heap(faceList.begin(), faceList.end());
+						faceList.pop_back();
+					} else{
+						faceList.push_back(pivot);
+						std::push_heap(faceList.begin(), faceList.end());
+						break;
+					}		
+				}
+				if(faceList.empty()){ //Column completely reduced
+					break;
+				} else if(pivotPairs.find(pivot) == pivotPairs.end()){ //Column cannot be reduced
+					pivotPairs.insert({pivot, poly});
+					nextPivots.push_back(pivot);		
+					std::sort(columnV.begin(), columnV.end());
+					auto it = columnV.begin();
+					while(it != columnV.end()){
+						if((it+1) != columnV.end() && (*it)==*(it+1)) ++it;
+						else v[poly].push_back(*it);
+						++it;
+					}
+
+					if(poly.weight != pivot.weight){
+						vector<double> des = {d, std::min(pivot.weight, poly.weight), std::max(pivot.weight, poly.weight)};
+						bettiTable.push_back(des);
+					}
+
+					break;
+				} else{ 
+			
+					for(polytope p : v[pivotPairs[pivot]]){
+						columnV.push_back(p);
+						std::vector<polytope> faces = getCofacetModified(p.cofaceIndices,dim-d-1);
+						faceList.insert(faceList.end(), faces.begin(), faces.end());
+					}
+					std::make_heap(faceList.begin(), faceList.end());
+				}
+			}
+		} else ++it;
+	}
+
+	return nextPivots;
+}
+*/
+vector<vector<double>> polytopalComplex :: rescaledataandcenteraroundorigin(vector<vector<double>> &data){
+	double maxvalue = 99999;
+	vector<vector<double>> newdata;
+	vector<double> maxim(data[0].size(),0.0);
+	vector<double> minim(data[0].size(),maxvalue);
+	for(auto y :data){
+		for(int j=0;j<data[0].size();j++){
+			if(maxim[j] < y[j]){
+				maxim[j] = y[j];
+			}
+			if(minim[j] > y[j]){
+				minim[j] = y[j];
+			}
+		}
+	}
+	for(auto y :data){
+		vector<double> temp;
+		for(int j=0;j<data[0].size();j++){
+			temp.push_back(((y[j] -minim[j])/(maxim[j]-minim[j])) -0.5);
+		}
+		newdata.push_back(temp);
+	}
+	
+	return newdata;
+}
+vector<vector<double>> polytopalComplex :: inverseStereoGraphicProjection(vector<vector<double>> &data){
+	vector<vector<double>> newdata;
+	auto updateddata = rescaledataandcenteraroundorigin(data);
+	double radius = 0.1;
+	vector<double> origin(data[0].size(),0.0);
+	vector<double> center(data[0].size(),0.0);
+	vector<double> projection(data[0].size(),0.0);
+    center.push_back(radius);
+    projection.push_back(2*radius);
+    origin.push_back(0);
+		
+	for(auto pt : data){
+		pt.push_back(0);
+		double scaler = (0.1/utils::vectors_distance(center,pt));
+		vector<double> temp;
+		for(int j=0;j<=data[0].size();j++){
+			double coord = (center[j])*(1-scaler) + pt[j]*scaler;
+			temp.push_back(coord);
+			cout<<coord<<" ";
+		}
+		cout<<"\n";
+		newdata.push_back(temp);
+	}
+    return newdata;
+}
+/*
+void polytopalComplex :: persistence(){
+	//Get all edges for the simplexArrayList or simplexTree
+	auto edges = polytopalArrayList[dim-1];
+
+	if(edges.size() <= 1) return;
+	std::unordered_map<unsigned, unsigned> mappedIndices;	
+	std::vector<polytope> pivots; 
+	unsigned mstSize = 0;
+	unionFind uf(dataSize);
+	for(auto edgeIter = edges.rbegin(); edgeIter != edges.rend(); edgeIter++){
+		std::set<unsigned>::iterator it = (*edgeIter).polytopeIndices.begin();
+		if( mappedIndices.size() == 0 || mappedIndices.find(*it) == mappedIndices.end() ) mappedIndices.insert( std::make_pair(*it, mappedIndices.size()) );
+		int c1 = uf.find(mappedIndices.find(*it)->second);
+		it++;
+		if( mappedIndices.find(*it) == mappedIndices.end() ) mappedIndices.insert( std::make_pair(*it, mappedIndices.size()) );
+		int c2 = uf.find(mappedIndices.find(*it)->second);
+		if(c1 != c2){
+			uf.join(c1, c2);
+			mstSize++;
+			pivots.push_back((*edgeIter));
+			vector<double> des = { 0, 0, (*edgeIter).weight};
+			bettiTable.push_back(des);
+		}
+		if(mstSize >= edges.size()-1) break;
+	}
+
+	for(int i=0; i<dataSize; i++){
+		if(uf.find(i) == i){ //i is the name of a connected component
+			vector<double> des = { 0, 0, 1000};
+			bettiTable.push_back(des);
+		}
+	}
+	for(unsigned d = 1; d < dim && d < polytopalArrayList.size()-1; d++){
+		pivots = persistenceByDim(pivots, d);
+	}
+	return;
+}
+
+*/
 
 std::vector<polytope> polytopalComplex :: persistenceByDim(std::vector<polytope> pivots,int d){
 	typename std::vector<polytope>::iterator it = pivots.begin();
@@ -1137,6 +1416,7 @@ std::vector<polytope> polytopalComplex :: persistenceByDim(std::vector<polytope>
 
 	return nextPivots;
 }
+
 void polytopalComplex :: persistence(){
 	//Get all edges for the simplexArrayList or simplexTree
 	auto edges = polytopalArrayList[dim-1];
@@ -1174,4 +1454,5 @@ void polytopalComplex :: persistence(){
 	}
 	return;
 }
+
 

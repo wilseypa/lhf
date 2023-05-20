@@ -15,7 +15,7 @@ int main(){
 	
 	polytopalComplex polyComplex(data);
 	polyComplex.persistence();
-	
+	std::cout<<polyComplex.getbettiTable().size()<<" => betti Table Size\n";
 	for(auto x: polyComplex.getbettiTable()){
 		for(auto y:x)
 			cout<<y<<",";
