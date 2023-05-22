@@ -892,7 +892,11 @@ polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
 	}
 	auto convexPolytopes1 = iterativeconvexization(simplices,inputData[0].size(),inputData);
 	std::cout<<"convexPoly  Size ::"<<convexPolytopes1.second.size()<<"\n";
+	int i=0;
 	for(auto poly :convexPolytopes1.second){
+		for(auto x : convexPolytopes1.first[i++])
+			std::cout<<x<<" ";
+		std::cout<<"\n";
 		for(auto y : poly){
 			bool t = true;
 			for(auto yy:y)
@@ -917,7 +921,7 @@ polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
 	temp.coordinates = mdata;
 	temp.Deltriangulation = simplices;
 	polys.insert(temp);
-	int i =0;
+	i =0;
 	int level = 0;
 	polytopalArrayList.push_back(polys);
 	while(true){
@@ -943,11 +947,13 @@ polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
 					pp2 = projectionData2.second[1];
 				else
 					pp2 = projectionData2.second[0];
-				pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> convexFaces; 
+				pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> convexFaces;
 				convexFaces = generateConvexFaces(convexFaces,hull,projectionData1,hull[0],pp1);
 				convexFaces = generateConvexFaces(convexFaces,hull,projectionData2,oppositeSimplex.first,pp2);
-				auto projectionData = projectonCenteroidSphere(poly.coordinates);
 				convexFaces = informedConvexization(convexFaces, hull,projectionData);
+				if(level ==0)
+					convexFaces= pruneMaximalParts(convexFaces,convexPolytopes1);
+				auto projectionData = projectonCenteroidSphere(poly.coordinates);
 				convexFaces = transformCF(convexFaces,poly.polytopeIndices); // local Indices
 				int i=0;
 				for(auto poly :convexFaces.first){
