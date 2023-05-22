@@ -25,7 +25,7 @@ link_directories(${PROJECT_SOURCE_DIR}/Complex)
 include_directories(${PROJECT_SOURCE_DIR}/Utils)
 link_directories(${PROJECT_SOURCE_DIR}/Utils)
 
-target_link_libraries(preprocessor kMeansPlusPlus streamingKmeans streamingUtils denStream dbscan kdTree)
+target_link_libraries(preprocessor kMeansPlusPlus streamingKmeans streamingUtils denStream dbscan kdTree utils)
 
 INSTALL (TARGETS preprocessor
 	LIBRARY DESTINATION lib
