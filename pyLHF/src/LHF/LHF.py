@@ -1,4 +1,5 @@
 import ctypes
+from time import process_time
 import numpy as np
 import os
 
@@ -57,26 +58,12 @@ class LHF:
     # Use RTLD_LAZY mode due to undefined symbols
     script_dir = os.path.dirname(__file__)
     filename = os.path.join(script_dir, "libLHFlib.so")
-    # print(package_dir)
-    # lib = ctypes.CDLL("./env/lib/python3.8/site-packages/libLHF/libLHFlib.so", mode=1)
     lib = ctypes.CDLL(filename, mode=1)
     args = {}
     default = {"threads": "30", "mpi": "0", "dimensions": "2", "outputFile": "output", "epsilon": "5", "debug": "0", "complexType": "simplexArrayList", "preprocessor": "", "upscale": "false"}
     data = []
 
-    # Some notes here:
-    ##
-    # These are returned by C++ in a C function; need to be wrapped into a C structure in LHF
-    # This indicates we can return only necessary (C-format) entries - TBD
-    ##
-    # Some entries have known sizes (based on LHF class):
-    # bettiBoundaryTable = (? x 4) - betti boundary struct
-    # workData = ((? <= LHF.size) x LHF.dim) - centroids
-    # centroidLabels = (LHF.size x 1) - centroid labels
-    # inputData = (LHF.size x LHF.dim) - original data
-    # distMatrix = (LHF.size x LHF.size) - distance matrix
-    ##
-    ##
+
 
     def __init__(self):
         """
@@ -141,14 +128,16 @@ class LHF:
         self.data = data.flatten().tolist()
         self.data = (ctypes.c_double * len(self.data))(*self.data)
         
+        start = process_time()
         retAddr = self.lib.pyLHFWrapper(len(temp), na, self.data)
+        elapsed = (process_time() - start)
         
         retPH = pipePacket.from_address(retAddr)
         
         bettiTable = self.decodeReturn(retPH.size_betti, retPH.bettiTable)
         self.lib.free_pipeWrap(retAddr)
         
-        return bettiTable, retPH
+        return bettiTable, retPH, elapsed
         
         
     def decodeReturn(self,s_betti, bettis):
