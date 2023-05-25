@@ -16,7 +16,7 @@ to call the LHF library on data and retrieve the entire pipepacket object used b
   
 ## Installing:
 
-$ pip install lhf
+`pip install lhf`
 
 ---
  
@@ -25,7 +25,7 @@ $ pip install lhf
 LHF docs are included with the source repository and built with doxygen. To build and view the docs, clone the 
 [LHF github repository](http//github.com/wilseypa/lhf). Build the documentation from the root folder using:
 
-$   doxygen
+`doxygen`
     
 Doxygen creates both HTML and Latex documentation in the *lhf/docs* folder. For HTML, navigate to index.html and open in a web browser
 to view the class documentation of both the python interface and the LHF cpp library. 
@@ -37,67 +37,71 @@ to view the class documentation of both the python interface and the LHF cpp lib
 
 ### Run PH on input data
 
-$   from LHF import LHF
-$   import tadasets
-$
-$   data = tadasets.dsphere(n=50, d=5, r=1, noise=0.1) 
-$   pyLHF = LHF.LHF()
-$
-$   #Set LHF args
-$   pyLHF.args["epsilon"] = 1.0
-$   pyLHF.args["dimensions"] = 3
-$
-$   boundaryPis, pipePacket = pyLHF.runPH(data)
+```from LHF import LHF
+   import tadasets
+
+   data = tadasets.dsphere(n=50, d=5, r=1, noise=0.1) 
+   pyLHF = LHF.LHF()
+
+   #Set LHF args
+   pyLHF.args["epsilon"] = 1.0
+   pyLHF.args["dimensions"] = 3
+
+   boundaryPis, pipePacket, elapsed = pyLHF.runPH(data)
+```
 
 ### Plot the output in several ways
 
-$   from LHF import LHF
-$   from LHF.OutputAnalysis import persistenceDiagram, barcodeDiagram, bettiCurve
-$   import tadasets
-$   import numpy as np
-$
-$   data = tadasets.dsphere(n=50, d=5, r=1, noise=0.1) 
-$   pyLHF = LHF.LHF()
-$
-$   boundaryPis, pipePacket = pyLHF.runPH(data)
-$
-$   #Remove boundary labels from the PIs
-$   pis = np.array([[z[0], z[1], z[2]] for z in boundaryPis])
-$
-$   persistenceDiagram(pis)
-$   barcodeDiagrams(pis)
-$   bettiCurve(pis)
+```from LHF import LHF
+   from LHF.OutputAnalysis import persistenceDiagram, barcodeDiagram, bettiCurve
+   import tadasets
+   import numpy as np
+
+   data = tadasets.dsphere(n=50, d=5, r=1, noise=0.1) 
+   pyLHF = LHF.LHF()
+
+   boundaryPis, pipePacket, elapsed = pyLHF.runPH(data)
+
+   #Remove boundary labels from the PIs
+   pis = np.array([[z[0], z[1], z[2]] for z in boundaryPis])
+
+   persistenceDiagram(pis)
+   barcodeDiagrams(pis)
+   bettiCurve(pis)
+```
 
 ### Run Partitioned Persistent Homology
 
-$   from LHF import LHF
-$   import tadasets
-$
-$   data = tadasets.dsphere(n=50, d=5, r=1, noise=0.1) 
-$   pyLHF = LHF.LHF()
-$
-$   #Set LHF args
-$   pyLHF.args["epsilon"] = 1.0
-$   pyLHF.args["dimensions"] = 3
-$   pyLHF.args["mode"] = "iterUpscale"
-$   pyLHF.args["preprocessor"] = "kmeans++"
-$   pyLHF.args["clusters"] = 20
-$
-$   boundaryPis, pipePacket = pyLHF.runPH(data)
+```from LHF import LHF
+   import tadasets
+
+   data = tadasets.dsphere(n=50, d=5, r=1, noise=0.1) 
+   pyLHF = LHF.LHF()
+
+   #Set LHF args
+   pyLHF.args["epsilon"] = 1.0
+   pyLHF.args["dimensions"] = 3
+   pyLHF.args["mode"] = "iterUpscale"
+   pyLHF.args["preprocessor"] = "kmeans++"
+   pyLHF.args["clusters"] = 20
+
+   boundaryPis, pipePacket, elapsed = pyLHF.runPH(data)
+```
 
 ### Run PH on Weighted Alpha Complex
 
-$   from LHF import LHF
-$   import tadasets
-$
-$   data = tadasets.dsphere(n=50, d=5, r=1, noise=0.1) 
-$   pyLHF = LHF.LHF()
-$
-$   #Set LHF args
-$   pyLHF.args["epsilon"] = 1.0
-$   pyLHF.args["dimensions"] = 3
-$   pyLHF.args["mode"] = "weightedAlpha"
-$
-$   boundaryPis, pipePacket = pyLHF.runPH(data)
+```from LHF import LHF
+   import tadasets
+
+   data = tadasets.dsphere(n=50, d=5, r=1, noise=0.1) 
+   pyLHF = LHF.LHF()
+
+   #Set LHF args
+   pyLHF.args["epsilon"] = 1.0
+   pyLHF.args["dimensions"] = 3
+   pyLHF.args["mode"] = "weightedAlpha"
+
+   boundaryPis, pipePacket, elapsed = pyLHF.runPH(data)
+```
 
 ---
