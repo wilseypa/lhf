@@ -1,34 +1,34 @@
 
 #include "utils.hpp"
+#include "readInput.hpp"
 #include <fstream>
 #include <unistd.h>
-#include "readInput.hpp"
 #include <limits>
 #include <omp.h>
 #include <incrementalPipe.hpp>
 
 template <typename T>
-std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec)
+std::ostream &operator<<(std::ostream &os, const std::vector<T> &vec)
 {
-    os << "[ ";
-    for (const auto& elem : vec)
-    {
-        os << elem << ", ";
-    }
-    os << "]";
-    return os;
+	os << "[ ";
+	for (const auto &elem : vec)
+	{
+		os << elem << ", ";
+	}
+	os << "]";
+	return os;
 }
 
 template <typename T>
-std::ostream& operator<<(std::ostream& os, const std::set<T>& set)
+std::ostream &operator<<(std::ostream &os, const std::set<T> &set)
 {
-    os << "{ ";
-    for (const auto& elem : set)
-    {
-        os << elem << ",";
-    }
-    os << "}";
-    return os;
+	os << "{ ";
+	for (const auto &elem : set)
+	{
+		os << elem << ",";
+	}
+	os << "}";
+	return os;
 }
 
 template <typename T>
@@ -51,43 +51,42 @@ template <typename T>
 T dot(const std::vector<T> &a, const std::vector<T> &b)
 {
 	std::vector<T> temp;
-	std::transform(a.begin(), a.end(), b.begin(), std::back_inserter(temp), [](T e1, T e2) { return (e1 * e2); });
+	std::transform(a.begin(), a.end(), b.begin(), std::back_inserter(temp), [](T e1, T e2)
+				   { return (e1 * e2); });
 	return std::accumulate(temp.begin(), temp.end(), 0.0);
 }
 
-template <typename T>
-void printVector(const std::vector<T> &vec)
+int validate(std::vector<short> simp, std::vector<std::vector<double>> &inputData)
 {
-	std::cout << "[ ";
-	for (const auto &elem : vec)
+	std::set<unsigned> simplex(simp.begin(), simp.end());
+	double radius = 0;
+	std::vector<double> center;
+	center = utils::circumCenter(simplex, inputData);
+	radius = utils::vectors_distance(center, inputData[*simp.begin()]);
+	unsigned point;
+	for (point = 0; point < inputData.size(); point++)
 	{
-		std::cout << elem << ",";
+		if (simplex.find(point) == simplex.end() && utils::vectors_distance(center, inputData[point]) < radius)
+		{
+			std::cout << "Invalid";
+			break;
+		}
 	}
-	std::cout << "]\n";
+	return (point == inputData.size()) ? 1 : 0;
 }
 
-template <typename T>
-void printVector(const std::set<T> &vec)
-{
-	std::cout << "[ ";
-	for (const auto &elem : vec)
-	{
-		std::cout << elem << ",";
-	}
-	std::cout << "]\n";
-}
-
-std::vector<unsigned> first_simplex(std::vector<std::vector<double>> &inputData, std::vector<std::vector<double>> &distMatrix)
+std::vector<short> first_simplex(std::vector<std::vector<double>> &inputData, std::vector<std::vector<double>> &distMatrix)
 {
 	unsigned dim = inputData[0].size();
 	unsigned n_pts = inputData.size();
-	std::vector<unsigned> simplex;
-	if (n_pts < dim + 2) return simplex;
+	std::vector<short> simplex;
+	if (n_pts < dim + 2)
+		return simplex;
 	simplex.push_back(0);
 	while (simplex.size() != dim + 2)
 	{
 		double curr_min_dist = std::numeric_limits<double>::max();
-		unsigned min_dist_idx = 0;
+		short min_dist_idx = 0;
 		for (unsigned i = 1; i < n_pts; i++)
 		{
 			if (std::find(simplex.begin(), simplex.end(), i) != simplex.end())
@@ -101,46 +100,52 @@ std::vector<unsigned> first_simplex(std::vector<std::vector<double>> &inputData,
 		}
 		simplex.push_back(min_dist_idx);
 	}
+	sort(simplex.begin(), simplex.end());
 	unsigned int pow_set_size = pow(2, simplex.size());
 	std::vector<unsigned> gensimp;
-	double radius = 0;
-	std::vector<double> center;
-	for (int counter = pow(2, dim); counter < pow_set_size; counter++)
+	for (int counter = 1; counter < pow_set_size; counter++)
 	{
 		if (__builtin_popcount(counter) != dim)
 			continue;
 		for (int j = 0; j < simplex.size(); j++)
-			if (counter & (1 << j))	gensimp.push_back(simplex[j]);
+		{
+			if (counter & (1 << j))
+			{
+				gensimp.push_back(simplex[j]);
+			}
+		}
+		double radius = 0;
+		std::vector<double> center;
 		std::set<unsigned> simplex_set(gensimp.begin(), gensimp.end());
-		for (unsigned i = 0; i < n_pts; i++)
+		for (unsigned i = 0; i < inputData.size(); i++)
 		{
 			if (simplex_set.find(i) != simplex_set.end())
 				continue;
 			simplex_set.insert(i);
 			center = utils::circumCenter(simplex_set, inputData);
 			radius = utils::vectors_distance(center, inputData[i]);
-			unsigned point;
-			for (point = 0; point < n_pts; point++)
+			for (unsigned point = 0; point < inputData.size(); point++)
 			{
-				if (simplex_set.find(point) != simplex_set.end()) continue;
-				if (utils::vectors_distance(center, inputData[point]) < radius) break;
-			}
-			if (point == n_pts)
-			{
-				printVector(simplex_set);
-				std::vector<unsigned> temp(simplex_set.begin(), simplex_set.end());
-				return temp;
+				if (simplex_set.find(point) != simplex_set.end())
+					continue;
+				if (utils::vectors_distance(center, inputData[point]) < radius)
+					break;
+				else if (point == inputData.size() - 1)
+				{
+					std::cout << simplex_set << std::endl;
+					std::vector<short> temp(simplex_set.begin(), simplex_set.end());
+					return temp;
+				}
 			}
 			simplex_set.erase(i);
 		}
 		gensimp.clear();
 	}
 	simplex.clear();
-	std::cout<<"Failed initialization";
 	return simplex;
 }
 
-int expand_d_minus_1_simplex(std::vector<unsigned> &simp_vector, unsigned &omission, std::vector<std::vector<double>> &inputData, std::vector<unsigned> &search_space, std::vector<std::vector<double>> &distMatrix)
+int expand_d_minus_1_simplex(std::vector<short> &simp_vector, short &omission, std::vector<std::vector<double>> &inputData, std::vector<unsigned> &search_space, std::vector<std::vector<double>> &distMatrix)
 {
 	std::set<unsigned> simp(simp_vector.begin(), simp_vector.end());
 	auto p1 = utils::circumCenter(simp, inputData);
@@ -148,7 +153,7 @@ int expand_d_minus_1_simplex(std::vector<unsigned> &simp_vector, unsigned &omiss
 	auto normal = utils::circumCenter(simp, inputData) - p1;
 	simp.erase(omission);
 	auto direction = (dot(normal, inputData[omission] - p1) > 0);
-	double smallest_radius = std::numeric_limits<double>::max(), largest_radius = 0, ring_radius = utils::vectors_distance(p1, inputData[*(simp.begin())]);
+	double smallest_radius = std::numeric_limits<double>::max(), largest_radius = 0, ring_radius = utils::vectors_distance(p1, inputData[simp_vector[0]]);
 	double curr_radius = 0;
 	int triangulation_point = -1;
 	bool flag = true;
@@ -184,24 +189,32 @@ int expand_d_minus_1_simplex(std::vector<unsigned> &simp_vector, unsigned &omiss
 	return triangulation_point;
 }
 
-void reduce(std::vector<std::vector<unsigned>> &outer_dsimplexes, std::vector<std::pair<std::vector<unsigned>, unsigned>> &inner_d_1_shell)
+void reduce(std::set<std::vector<short>> &outer_dsimplexes, std::vector<std::vector<short>> &inner_d_1_shell, std::vector<std::vector<short>> &dsimplexes)
 {
-	std::map<std::vector<unsigned>, unsigned> outer_d_1_shell;
+	std::map<std::vector<short>, short> outer_d_1_shell;
 	for (auto &new_simplex : outer_dsimplexes)
 	{
+		// dsimplexes.push_back(new_simplex);
 		for (auto &i : new_simplex)
 		{
-			std::vector<unsigned> key = new_simplex;
+			std::vector<short> key = new_simplex;
 			key.erase(std::find(key.begin(), key.end(), i));
 			if (!outer_d_1_shell.emplace(key, i).second)
 				outer_d_1_shell.erase(key); // Create new shell and remove collided faces max only 2 can occur.
 		}
 	}
 	for (auto &simp : inner_d_1_shell)
-		outer_d_1_shell.erase(simp.first); // Remove faces from previous iteration
+	{
+		simp.pop_back();
+		outer_d_1_shell.erase(simp); // Remove faces from previous iteration
+	}
 	inner_d_1_shell.clear();
 	for (auto &simp : outer_d_1_shell)
-		inner_d_1_shell.push_back(simp); // Remove faces from previous iteration
+	{
+		auto temp = simp.first;
+		temp.push_back(simp.second);
+		inner_d_1_shell.push_back(temp); // Remove faces from previous iteration
+	}
 	outer_dsimplexes.clear();
 	return;
 }
@@ -210,8 +223,8 @@ void reduce(std::vector<std::vector<unsigned>> &outer_dsimplexes, std::vector<st
 template <typename nodeType>
 incrementalPipe<nodeType>::incrementalPipe()
 {
-  this->pipeType = "incrementalPipe";
-  return;
+	this->pipeType = "incrementalPipe";
+	return;
 }
 
 // runPipe -> Run the configured functions of this pipeline segment
@@ -225,44 +238,40 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	for (unsigned i = 0; i < inputData.size(); i++)
 		search_space.push_back(i);
 	std::vector<std::vector<double>> distMatrix = inData.distMatrix;
-	std::vector<std::vector<unsigned>> dsimplexes = {first_simplex(inputData, distMatrix)}; // Get initial delaunay triangle
-	std::vector<std::pair<std::vector<unsigned>, unsigned>> inner_d_1_shell;
-	std::vector<std::vector<unsigned>> outer_dsimplexes;
+	std::vector<std::vector<short>> dsimplexes = {first_simplex(inputData, distMatrix)};
+	std::vector<std::vector<short>> inner_d_1_shell;
+	std::set<std::vector<short>> outer_dsimplexes;
 	for (auto &new_simplex : dsimplexes)
 	{
 		for (auto &i : new_simplex)
 		{
-			std::vector<unsigned> key = new_simplex;
+			std::vector<short> key = new_simplex;
 			key.erase(std::find(key.begin(), key.end(), i));
-			inner_d_1_shell.push_back(std::make_pair(key, i));
+			key.push_back(i);
+			inner_d_1_shell.push_back(key);
 		}
 	}
 	int new_point;
 	while (inner_d_1_shell.size() != 0)
 	{
-		std::cout << dsimplexes.size() << std::endl;
 #pragma omp parallel for
 		for (int i = 0; i < inner_d_1_shell.size(); i++)
 		{
 			auto iter = inner_d_1_shell[i];
-			new_point = expand_d_minus_1_simplex(iter.first, iter.second, inputData, search_space, distMatrix);
+			short omission = iter.back();
+			iter.pop_back();
+			new_point = expand_d_minus_1_simplex(iter, omission, inputData, search_space, distMatrix);
 			if (new_point == -1)
 				continue;
-			iter.first.push_back(new_point);
-			std::sort(iter.first.begin(), iter.first.end());
+			iter.push_back(new_point);
+			std::sort(iter.begin(), iter.end());
+			if (outer_dsimplexes.find(iter) == outer_dsimplexes.end() && validate(iter, inputData) == 1)
 #pragma omp critical
-			{
-				if (std::find(dsimplexes.begin(), dsimplexes.end(), iter.first) == dsimplexes.end())
-				{
-					outer_dsimplexes.push_back(iter.first);
-					dsimplexes.push_back(iter.first);
-				}
-			}
+				outer_dsimplexes.insert(iter);
 		}
-		reduce(outer_dsimplexes, inner_d_1_shell);
+		std::cout << "New simplexes found " << outer_dsimplexes.size() << std::endl;
+		reduce(outer_dsimplexes, inner_d_1_shell, dsimplexes);
 	}
-	std::cout << dsimplexes.size();
-	return;
 }
 
 // configPipe -> configure the function settings of this pipeline segment
