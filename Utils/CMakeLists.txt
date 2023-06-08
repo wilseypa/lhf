@@ -15,6 +15,9 @@ link_directories(../Pipes)
 include_directories(../Complex)
 link_directories(../Complex)
 
+find_package(Eigen3)
+include_directories(${EIGEN3_INCLUDE_DIR})
+
 # target_link_libraries(LHF PipeFunctions)
 target_link_libraries(utils argParser readInput writeOutput)
 

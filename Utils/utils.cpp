@@ -7,6 +7,7 @@
 #include <fstream>
 #include "utils.hpp"
 #include <time.h>
+#include <Eigen/Dense>
 
 template std::set<unsigned int, std::less<unsigned int>, std::allocator<unsigned int> > utils::extractBoundaryPoints<simplexNode>(std::vector<std::shared_ptr<simplexNode>, std::allocator<std::shared_ptr<simplexNode> > >);
 template std::set<unsigned int, std::less<unsigned int>, std::allocator<unsigned int> > utils::extractBoundaryPoints<alphaNode>(std::vector<std::shared_ptr<alphaNode>, std::allocator<std::shared_ptr<alphaNode> > >);
@@ -374,79 +375,94 @@ std::pair<std::vector<double>,std::vector<std::vector<double>>> utils :: nullSpa
 
   return std::make_pair(matns,outputPCA.second);
 }
-std::vector<double> utils :: circumCenter(std::set<unsigned> simplex,std::vector<std::vector<double>> inputData){
-// Soluiton  = inv(matA) * matC
-   std::vector<std::vector<double>>  matA(simplex.size());
-	 std::vector<std::vector<double>>  invmatA;
-	 std::vector<std::vector<double>>  matC(simplex.size());
-	 std::vector<std::vector<double>> rawCircumCenter;
-	 std::vector<double> circumCenter;
-	 std::set<unsigned> simplexcopy = simplex;
+std::vector<double> utils::circumCenter(std::set<unsigned> &simplex, std::vector<std::vector<double>> &inputData)
+{
+	const int n = inputData[0].size();
+	const int m = simplex.size();
 
-	 auto it = simplex.end();
-	 it--;
-	 int ii =0;
-   unsigned Sn = *(it);
-	 simplex.erase(Sn);
-	 for(auto i : simplex){
-	 		for(auto j : simplex){
-				  std::vector<double> d1,d2;
-					double dotProduct=0;
-					std::transform(inputData[i].begin(), inputData[i].end(), inputData[Sn].begin(), std::back_inserter(d1),[](double e1,double e2){return (e1-e2);});
-					std::transform(inputData[j].begin(), inputData[j].end(), inputData[Sn].begin(), std::back_inserter(d2),[](double e1,double e2){return (e1-e2);});
-					for (int k = 0; k < inputData[0].size(); k++){
-              dotProduct = dotProduct + d1[k] * d2[k];
-						}
-					matA[ii].push_back(dotProduct);
-				 if(i==j)
-				 	matC[ii].push_back(dotProduct/2);
+	Eigen::MatrixXd matA(m, m);
+	Eigen::VectorXd matC(m, 1);
+	std::vector<double> circumCenter(n, 0.0);
+
+	std::set<unsigned> simplexcopy = simplex;
+
+	auto it = simplexcopy.end();
+	it--;
+	const unsigned Sn = *(it);
+	simplexcopy.erase(Sn);
+
+	int ii = 0;
+	for (auto i : simplexcopy)
+	{
+		int temp = ii;
+		const Eigen::VectorXd d1 = Eigen::Map<Eigen::VectorXd>(inputData[i].data(), n) - Eigen::Map<Eigen::VectorXd>(inputData[Sn].data(), n);
+		for (auto j : simplexcopy)
+		{
+			if (i <= j)
+			{
+				const Eigen::VectorXd d2 = Eigen::Map<Eigen::VectorXd>(inputData[j].data(), n) - Eigen::Map<Eigen::VectorXd>(inputData[Sn].data(), n);
+				const double dotProduct = d1.dot(d2);
+				matA(ii, temp) = dotProduct;
+				matA(temp, ii) = dotProduct;
+
+				if (i == j)
+					matC(ii) = dotProduct / 2.0;
+
+				temp++;
 			}
-			matA[ii].push_back(0);
-			ii++;
 		}
-		for(int i =0;i<simplex.size()+1;i++)
-			matA[simplex.size()].push_back(1);
-		matC[simplex.size()].push_back(1);
-		invmatA = inverseOfMatrix(matA,matA[0].size());
-		rawCircumCenter = matrixMultiplication(invmatA,matC);
-		for(int i = 0; i < inputData[0].size(); i++){
-       double coordinate = 0;
-			 std::set<unsigned> ::iterator index = simplexcopy.begin();
-			for(int j =0;j<rawCircumCenter.size();j++){
-				coordinate += rawCircumCenter[j][0]*inputData[(*index)][i];
-				index++;
-			}
-			circumCenter.push_back(coordinate);
-		}
-
-
-
-		return circumCenter;
-
-}
-double utils :: circumRadius(std::set<unsigned> simplex,std::vector<std::vector<double>>* distMatrix){
-    std::vector<std::vector<double>>  matA(simplex.size());
-		std::vector<std::vector<double>>  matACap(simplex.size()+1);
-		int ii=0;
-	  for(auto i : simplex){
-			matACap[ii+1].push_back(1);
-			for(auto j :simplex){
-				if((*distMatrix)[i][j]!=0){
-		   	matA[ii].push_back(pow(((*distMatrix)[i][j]),2));
-				matACap[ii+1].push_back(pow(((*distMatrix)[i][j]),2));
-			}
-			else{
-				matA[ii].push_back(pow(((*distMatrix)[j][i]),2));
-		  	matACap[ii+1].push_back(pow(((*distMatrix)[j][i]),2));
-			}
-	  }
+		matA(ii, m - 1) = 0;
 		ii++;
 	}
-	matACap[0].push_back(0);
-	for(auto i : simplex)
-    matACap[0].push_back(1);
 
-	return -(determinantOfMatrix(matA,simplex.size())/(2*determinantOfMatrix(matACap,simplex.size()+1)));
+	matA.row(ii).setConstant(1);
+	matC(ii) = 1;
+
+	// Solve the linear system
+	Eigen::VectorXd rawCircumCenter = matA.inverse() * matC;
+
+	for (int i = 0; i < n; i++)
+	{
+		double coordinate = 0;
+		auto index = simplex.begin();
+		for (int j = 0; j < m; j++, ++index)
+		{
+			circumCenter[i] += rawCircumCenter(j) * inputData[*index][i];
+		}
+	}
+
+	return circumCenter;
+}
+double utils::circumRadius(std::set<unsigned> &simplex, std::vector<std::vector<double>> *distMatrix)
+{
+	unsigned n = simplex.size();
+	Eigen::MatrixXd matA(n, n);
+	Eigen::MatrixXd matACap(n + 1, n + 1);
+	unsigned ii = 0;
+	for (auto i : simplex)
+	{
+		matACap.row(ii + 1).col(0).setConstant(1); // Set column 0 of matACap to 1
+		unsigned temp = 0;
+		for (auto j : simplex)
+		{
+			double distSquared;
+			if ((*distMatrix)[i][j] != 0)
+			{
+				distSquared = pow((*distMatrix)[i][j], 2);
+			}
+			else
+			{
+				distSquared = pow((*distMatrix)[j][i], 2);
+			}
+			matA(ii, temp) = distSquared;
+			matACap(ii + 1, temp + 1) = distSquared;
+			temp++;
+		}
+		ii++;
+	}
+	matACap.row(0).setConstant(1);
+	matACap(0, 0) = 0;
+	return (-matA.determinant() / (2 * matACap.determinant()));
 }
 double utils :: simplexVolume(std::set<unsigned> simplex,std::vector<std::vector<double>>* distMatrix,int dd){
 		std::vector<std::vector<double>>  matACap(simplex.size()+1);
