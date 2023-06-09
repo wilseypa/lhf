@@ -50,10 +50,10 @@ T dot(const std::vector<T> &a, const std::vector<T> &b)
 	return std::accumulate(temp.begin(), temp.end(), 0.0);
 }
 
-int bruteforce(std::set<unsigned> simplex, std::vector<std::vector<double>> &inputData){
+int bruteforce(std::set<unsigned> simplex, std::vector<std::vector<double>> &inputData, short& omission){
 	for (unsigned i = 0; i < inputData.size(); i++)
 		{
-			if (simplex.find(i) != simplex.end())
+			if (simplex.find(i) != simplex.end() || i==omission)
 				continue;
 			simplex.insert(i);
 			auto center = utils::circumCenter(simplex, inputData);
@@ -92,7 +92,7 @@ std::vector<double> solvePlaneEquation(const std::vector<short> &points, const s
 	return std::vector<double>(coefficients.data(), coefficients.data() + coefficients.size());
 }
 
-int validate(std::vector<short>& simp, std::vector<std::vector<double>> &inputData, unsigned triangulation_point)
+int validate(std::vector<short>& simp, std::vector<std::vector<double>> &inputData, int& triangulation_point,short& omission)
 {
 	std::set<unsigned> simplex(simp.begin(), simp.end());
 	std::vector<double> center = utils::circumCenter(simplex, inputData);
@@ -104,14 +104,16 @@ int validate(std::vector<short>& simp, std::vector<std::vector<double>> &inputDa
 		if (simplex.find(point) == simplex.end() && utils::vectors_distance(center, inputData[point]) < radius)
 		{
 			simplex.erase(triangulation_point);
+			temp = bruteforce(simplex,inputData, omission);
+			std::cout<<temp<<std::endl;
+			if(temp==-1) return 0;
 			simp.erase(std::find(simp.begin(),simp.end(),triangulation_point));
-			temp = bruteforce(simplex,inputData);
 			simp.push_back(temp);
 			std::sort(simp.begin(), simp.end());
-			break;
+			return 0;
 		}
 	}
-	return (point == inputData.size()) ? 1 : ((temp!=-1) ? 1 : 0);
+	return (point == inputData.size()) ? 1 : 0;
 }
 
 std::vector<short> first_simplex(std::vector<std::vector<double>> &inputData, std::vector<std::vector<double>> &distMatrix)
@@ -302,7 +304,7 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 				continue;
 			iter.push_back(new_point);
 			std::sort(iter.begin(), iter.end());
-			if (outer_dsimplexes.find(iter) == outer_dsimplexes.end() && validate(iter, inputData, new_point))
+			if (outer_dsimplexes.find(iter) == outer_dsimplexes.end() && validate(iter, inputData, new_point, omission)==1)
 #pragma omp critical
 				outer_dsimplexes.insert(iter);
 			}
