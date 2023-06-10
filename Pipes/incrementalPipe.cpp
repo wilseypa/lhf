@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <limits>
 #include <omp.h>
+#include <random>
 
 template <typename T>
 std::ostream &operator<<(std::ostream &os, const std::vector<T> &vec)
@@ -50,25 +51,26 @@ T dot(const std::vector<T> &a, const std::vector<T> &b)
 	return std::accumulate(temp.begin(), temp.end(), 0.0);
 }
 
-int bruteforce(std::set<unsigned> simplex, std::vector<std::vector<double>> &inputData, short& omission){
+int bruteforce(std::set<unsigned> simplex, std::vector<std::vector<double>> &inputData, short &omission)
+{
 	for (unsigned i = 0; i < inputData.size(); i++)
+	{
+		if (simplex.find(i) != simplex.end() || i == omission)
+			continue;
+		simplex.insert(i);
+		auto center = utils::circumCenter(simplex, inputData);
+		auto radius = utils::vectors_distance(center, inputData[i]);
+		for (unsigned point = 0; point < inputData.size(); point++)
 		{
-			if (simplex.find(i) != simplex.end() || i==omission)
+			if (simplex.find(point) != simplex.end())
 				continue;
-			simplex.insert(i);
-			auto center = utils::circumCenter(simplex, inputData);
-			auto radius = utils::vectors_distance(center, inputData[i]);
-			for (unsigned point = 0; point < inputData.size(); point++)
-			{
-				if (simplex.find(point) != simplex.end())
-					continue;
-				if (utils::vectors_distance(center, inputData[point]) < radius)
-					break;
-				else if (point == inputData.size() - 1)
-					return i;
-			}
-			simplex.erase(i);
+			if (utils::vectors_distance(center, inputData[point]) < radius)
+				break;
+			else if (point == inputData.size() - 1)
+				return i;
 		}
+		simplex.erase(i);
+	}
 	return -1;
 }
 
@@ -92,7 +94,7 @@ std::vector<double> solvePlaneEquation(const std::vector<short> &points, const s
 	return std::vector<double>(coefficients.data(), coefficients.data() + coefficients.size());
 }
 
-int validate(std::vector<short>& simp, std::vector<std::vector<double>> &inputData, int& triangulation_point,short& omission)
+int validate(std::vector<short> &simp, std::vector<std::vector<double>> &inputData, int &triangulation_point, short &omission)
 {
 	std::set<unsigned> simplex(simp.begin(), simp.end());
 	std::vector<double> center = utils::circumCenter(simplex, inputData);
@@ -104,10 +106,11 @@ int validate(std::vector<short>& simp, std::vector<std::vector<double>> &inputDa
 		if (simplex.find(point) == simplex.end() && utils::vectors_distance(center, inputData[point]) < radius)
 		{
 			simplex.erase(triangulation_point);
-			temp = bruteforce(simplex,inputData, omission);
-			std::cout<<temp<<std::endl;
-			if(temp==-1) return 0;
-			simp.erase(std::find(simp.begin(),simp.end(),triangulation_point));
+			temp = bruteforce(simplex, inputData, omission);
+			std::cout << temp << std::endl;
+			if (temp == -1)
+				return 0;
+			simp.erase(std::find(simp.begin(), simp.end(), triangulation_point));
 			simp.push_back(temp);
 			std::sort(simp.begin(), simp.end());
 			return 0;
@@ -123,66 +126,68 @@ std::vector<short> first_simplex(std::vector<std::vector<double>> &inputData, st
 	std::vector<short> simplex;
 	if (n_pts < dim + 2)
 		return simplex;
-	simplex.push_back(0);
-	while (simplex.size() != dim + 2)
+	while (simplex.size() != dim)
 	{
-		double curr_min_dist = std::numeric_limits<double>::max();
-		short min_dist_idx = 0;
-		for (unsigned i = 1; i < n_pts; i++)
+		double curr_min_x = std::numeric_limits<double>::max();
+		short min_x_idx = std::numeric_limits<short>::max();
+		for (unsigned i = 0; i < n_pts; i++)
 		{
 			if (std::find(simplex.begin(), simplex.end(), i) != simplex.end())
 				continue;
-			double dist = distMatrix[0][i];
-			if (dist < curr_min_dist)
+			double x = inputData[i][0];
+			if (x < curr_min_x)
 			{
-				curr_min_dist = dist;
-				min_dist_idx = i;
+				curr_min_x = x;
+				min_x_idx = i;
 			}
 		}
-		simplex.push_back(min_dist_idx);
+		simplex.push_back(min_x_idx);
 	}
-	sort(simplex.begin(), simplex.end());
-	unsigned int pow_set_size = pow(2, simplex.size());
-	std::vector<unsigned> gensimp;
-	for (int counter = 1; counter < pow_set_size; counter++)
+	std::vector<short> outer_points;
+	auto equation = solvePlaneEquation(simplex, inputData);
+	for (unsigned i = 0; i < n_pts; i++)
+		if (std::find(simplex.begin(), simplex.end(), i) == simplex.end() && dot(inputData[i], equation) > 1)
+			outer_points.push_back(i);
+	auto rng = std::default_random_engine{};
+	while (outer_points.size() != 0)
 	{
-		if (__builtin_popcount(counter) != dim)
-			continue;
-		for (int j = 0; j < simplex.size(); j++)
-		{
-			if (counter & (1 << j))
-			{
-				gensimp.push_back(simplex[j]);
-			}
-		}
-		double radius = 0;
-		std::vector<double> center;
-		std::set<unsigned> simplex_set(gensimp.begin(), gensimp.end());
-		for (unsigned i = 0; i < inputData.size(); i++)
-		{
-			if (simplex_set.find(i) != simplex_set.end())
-				continue;
-			simplex_set.insert(i);
-			center = utils::circumCenter(simplex_set, inputData);
-			radius = utils::vectors_distance(center, inputData[i]);
-			for (unsigned point = 0; point < inputData.size(); point++)
-			{
-				if (simplex_set.find(point) != simplex_set.end())
-					continue;
-				if (utils::vectors_distance(center, inputData[point]) < radius)
-					break;
-				else if (point == inputData.size() - 1)
-				{
-					std::cout << simplex_set << std::endl;
-					std::vector<short> temp(simplex_set.begin(), simplex_set.end());
-					return temp;
-				}
-			}
-			simplex_set.erase(i);
-		}
-		gensimp.clear();
+		for (auto i : outer_points)
+			simplex.push_back(i);
+		std::shuffle(simplex.begin(), simplex.end(), rng);
+		outer_points.clear();
+		while (simplex.size() != dim)
+			simplex.pop_back();
+		auto equation = solvePlaneEquation(simplex, inputData);
+		for (unsigned i = 0; i < n_pts; i++)
+			if (std::find(simplex.begin(), simplex.end(), i) == simplex.end() && dot(inputData[i], equation) > 1)
+				outer_points.push_back(i);
 	}
-	simplex.clear();
+	double radius = 0;
+	std::vector<double> center;
+	std::set<unsigned> simplex_set(simplex.begin(), simplex.end());
+	for (unsigned i = 0; i < inputData.size(); i++)
+	{
+		if (simplex_set.find(i) != simplex_set.end())
+			continue;
+		simplex_set.insert(i);
+		center = utils::circumCenter(simplex_set, inputData);
+		radius = utils::vectors_distance(center, inputData[i]);
+		unsigned point;
+		for (point = 0; point < inputData.size(); point++)
+		{
+			if (simplex_set.find(point) != simplex_set.end())
+				continue;
+			if (utils::vectors_distance(center, inputData[point]) < radius)
+				break;
+		}
+		if (point == inputData.size())
+		{
+			simplex_set.clear();
+			simplex.push_back(i);
+			return simplex;
+		}
+		simplex_set.erase(i);
+	}
 	return simplex;
 }
 
@@ -304,10 +309,10 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 				continue;
 			iter.push_back(new_point);
 			std::sort(iter.begin(), iter.end());
-			if (outer_dsimplexes.find(iter) == outer_dsimplexes.end() && validate(iter, inputData, new_point, omission)==1)
+			if (outer_dsimplexes.find(iter) == outer_dsimplexes.end() && validate(iter, inputData, new_point, omission) == 1)
 #pragma omp critical
 				outer_dsimplexes.insert(iter);
-			}
+		}
 		std::cout << "Intermediate dsimplex size " << outer_dsimplexes.size() << std::endl;
 		reduce(outer_dsimplexes, inner_d_1_shell, dsimplexes);
 	}
