@@ -5,6 +5,30 @@
 #include <random>
 
 template <typename T>
+std::ostream &operator<<(std::ostream &os, const std::vector<T> &vec)
+{
+	os << "[ ";
+	for (const auto &elem : vec)
+	{
+		os << elem << ", ";
+	}
+	os << "]";
+	return os;
+}
+
+template <typename T>
+std::ostream &operator<<(std::ostream &os, const std::set<T> &set)
+{
+	os << "{ ";
+	for (const auto &elem : set)
+	{
+		os << elem << ",";
+	}
+	os << "}";
+	return os;
+}
+
+template <typename T>
 std::vector<T> operator-(const std::vector<T> &a, const std::vector<T> &b)
 {
 	std::vector<T> temp;
@@ -84,7 +108,7 @@ int validate(std::vector<short> &simp, std::vector<std::vector<double>> &inputDa
 			simp.erase(std::find(simp.begin(), simp.end(), triangulation_point));
 			simp.push_back(temp);
 			std::sort(simp.begin(), simp.end());
-			return 0;
+			return 1;
 		}
 	}
 	return (point == inputData.size()) ? 1 : 0;
@@ -268,7 +292,7 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	int new_point;
 	while (inner_d_1_shell.size() != 0)
 	{
-#pragma omp parallel for
+#pragma omp parallel for private(new_point)
 		for (int i = 0; i < inner_d_1_shell.size(); i++)
 		{
 			auto iter = inner_d_1_shell[i];
