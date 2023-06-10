@@ -56,11 +56,11 @@ jobs:
       
     - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
       if:   contains(matrix.os,'macos') && contains(matrix.mpi,'openmpi')
-      run:  brew install openmpi libomp eigen
+      run:  brew install openmpi libomp eigen cgal
       
     - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
       if:   contains(matrix.os,'macos') && contains(matrix.mpi,'mpich')
-      run:  brew install mpich libomp eigen
+      run:  brew install mpich libomp eigen cgal
                
     - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
       if:   contains(matrix.os,'windows-latest') && contains(matrix.mpi,'openmpi')
