@@ -1,37 +1,8 @@
-
-#include "utils.hpp"
-#include "readInput.hpp"
 #include <incrementalPipe.hpp>
 #include <Eigen/Dense>
-#include <fstream>
-#include <unistd.h>
 #include <limits>
 #include <omp.h>
 #include <random>
-
-template <typename T>
-std::ostream &operator<<(std::ostream &os, const std::vector<T> &vec)
-{
-	os << "[ ";
-	for (const auto &elem : vec)
-	{
-		os << elem << ", ";
-	}
-	os << "]";
-	return os;
-}
-
-template <typename T>
-std::ostream &operator<<(std::ostream &os, const std::set<T> &set)
-{
-	os << "{ ";
-	for (const auto &elem : set)
-	{
-		os << elem << ",";
-	}
-	os << "}";
-	return os;
-}
 
 template <typename T>
 std::vector<T> operator-(const std::vector<T> &a, const std::vector<T> &b)
@@ -184,7 +155,7 @@ std::vector<short> first_simplex(std::vector<std::vector<double>> &inputData, st
 		{
 			simplex_set.clear();
 			simplex.push_back(i);
-			return simplex;
+			break;
 		}
 		simplex_set.erase(i);
 	}
@@ -197,8 +168,7 @@ int expand_d_minus_1_simplex(std::vector<short> &simp_vector, short &omission, s
 	auto normal = solvePlaneEquation(simp_vector, inputData);
 	auto p1 = utils::circumCenter(simp, inputData);
 	auto direction = (dot(normal, inputData[omission]) > 1);
-	double smallest_radius = std::numeric_limits<double>::max(), largest_radius = 0, ring_radius = utils::vectors_distance(p1, inputData[simp_vector[0]]);
-	double curr_radius = 0;
+	double largest_radius = 0, curr_radius = 0, smallest_radius = std::numeric_limits<double>::max(), ring_radius = utils::vectors_distance(p1, inputData[simp_vector[0]]);
 	int triangulation_point = -1;
 	bool flag = true;
 	for (auto &new_point : search_space)

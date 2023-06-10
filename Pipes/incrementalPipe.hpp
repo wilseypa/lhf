@@ -2,6 +2,7 @@
 
 #include "basePipe.hpp"
 #include "utils.hpp"
+#include "readInput.hpp"
 
 // basePipe constructor
 template <typename nodeType> 
