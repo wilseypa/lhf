@@ -5,30 +5,6 @@
 #include <random>
 
 template <typename T>
-std::ostream &operator<<(std::ostream &os, const std::vector<T> &vec)
-{
-	os << "[ ";
-	for (const auto &elem : vec)
-	{
-		os << elem << ", ";
-	}
-	os << "]";
-	return os;
-}
-
-template <typename T>
-std::ostream &operator<<(std::ostream &os, const std::set<T> &set)
-{
-	os << "{ ";
-	for (const auto &elem : set)
-	{
-		os << elem << ",";
-	}
-	os << "}";
-	return os;
-}
-
-template <typename T>
 std::vector<T> operator-(const std::vector<T> &a, const std::vector<T> &b)
 {
 	std::vector<T> temp;
@@ -103,7 +79,6 @@ short validate(std::vector<short> &simp, std::vector<std::vector<double>> &input
 		{
 			simplex.erase(triangulation_point);
 			temp = bruteforce(simplex, inputData, omission);
-			std::cout << temp << std::endl;
 			if (temp == -1)
 				return -1;
 			simp.erase(std::find(simp.begin(), simp.end(), triangulation_point));
@@ -225,36 +200,6 @@ int expand_d_minus_1_simplex(std::vector<short> &simp_vector, short &omission, s
 		}
 	}
 	return triangulation_point;
-}
-
-void reduce(std::set<std::vector<short>> &outer_dsimplexes, std::vector<std::vector<short>> &inner_d_1_shell, std::vector<std::vector<short>> &dsimplexes)
-{
-	std::map<std::vector<short>, short> outer_d_1_shell;
-	for (auto &new_simplex : outer_dsimplexes)
-	{
-		// dsimplexes.push_back(new_simplex);
-		for (auto &i : new_simplex)
-		{
-			std::vector<short> key = new_simplex;
-			key.erase(std::find(key.begin(), key.end(), i));
-			if (!outer_d_1_shell.emplace(key, i).second)
-				outer_d_1_shell.erase(key); // Create new shell and remove collided faces max only 2 can occur.
-		}
-	}
-	for (auto &simp : inner_d_1_shell)
-	{
-		simp.pop_back();
-		outer_d_1_shell.erase(simp); // Remove faces from previous iteration
-	}
-	inner_d_1_shell.clear();
-	for (auto &simp : outer_d_1_shell)
-	{
-		auto temp = simp.first;
-		temp.push_back(simp.second);
-		inner_d_1_shell.push_back(temp); // Remove faces from previous iteration
-	}
-	outer_dsimplexes.clear();
-	return;
 }
 
 // basePipe constructor
