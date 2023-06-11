@@ -89,8 +89,9 @@ std::vector<double> solvePlaneEquation(const std::vector<short> &points, const s
 	return std::vector<double>(coefficients.data(), coefficients.data() + coefficients.size());
 }
 
-int validate(std::vector<short> &simp, std::vector<std::vector<double>> &inputData, int &triangulation_point, short &omission)
+short validate(std::vector<short> &simp, std::vector<std::vector<double>> &inputData, short &triangulation_point, short &omission)
 {
+	simp.push_back(triangulation_point);
 	std::set<unsigned> simplex(simp.begin(), simp.end());
 	std::vector<double> center = utils::circumCenter(simplex, inputData);
 	double radius = utils::vectors_distance(center, inputData[*simp.begin()]);
@@ -104,14 +105,13 @@ int validate(std::vector<short> &simp, std::vector<std::vector<double>> &inputDa
 			temp = bruteforce(simplex, inputData, omission);
 			std::cout << temp << std::endl;
 			if (temp == -1)
-				return 0;
+				return -1;
 			simp.erase(std::find(simp.begin(), simp.end(), triangulation_point));
 			simp.push_back(temp);
-			std::sort(simp.begin(), simp.end());
-			return 1;
+			return temp;
 		}
 	}
-	return (point == inputData.size()) ? 1 : 0;
+	return triangulation_point;
 }
 
 std::vector<short> first_simplex(std::vector<std::vector<double>> &inputData, std::vector<std::vector<double>> &distMatrix)
@@ -277,39 +277,42 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		search_space.push_back(i);
 	std::vector<std::vector<double>> distMatrix = inData.distMatrix;
 	std::vector<std::vector<short>> dsimplexes = {first_simplex(inputData, distMatrix)};
-	std::vector<std::vector<short>> inner_d_1_shell;
-	std::set<std::vector<short>> outer_dsimplexes;
+	std::map<std::vector<short>, short> inner_d_1_shell;
 	for (auto &new_simplex : dsimplexes)
 	{
 		for (auto &i : new_simplex)
 		{
 			std::vector<short> key = new_simplex;
 			key.erase(std::find(key.begin(), key.end(), i));
-			key.push_back(i);
-			inner_d_1_shell.push_back(key);
+			std::sort(key.begin(), key.end());
+			inner_d_1_shell.emplace(key,i);
 		}
 	}
-	int new_point;
+	short new_point;
 	while (inner_d_1_shell.size() != 0)
 	{
-#pragma omp parallel for private(new_point)
-		for (int i = 0; i < inner_d_1_shell.size(); i++)
+		auto iter = *(inner_d_1_shell.begin());
+		std::vector<short> first_vector = iter.first;
+		inner_d_1_shell.erase(inner_d_1_shell.begin());
+		new_point = expand_d_minus_1_simplex(first_vector, iter.second, inputData, search_space, distMatrix);
+		if (new_point == -1)
+			continue;
+		new_point =	validate(first_vector, inputData, new_point, iter.second);
+		if (new_point == -1)
+			continue;
+		std::sort(first_vector.begin(), first_vector.end());
+		dsimplexes.push_back(first_vector);
+		for (auto i=first_vector.begin();i!=first_vector.end();i++)
 		{
-			auto iter = inner_d_1_shell[i];
-			short omission = iter.back();
-			iter.pop_back();
-			new_point = expand_d_minus_1_simplex(iter, omission, inputData, search_space, distMatrix);
-			if (new_point == -1)
-				continue;
-			iter.push_back(new_point);
-			std::sort(iter.begin(), iter.end());
-			if (outer_dsimplexes.find(iter) == outer_dsimplexes.end() && validate(iter, inputData, new_point, omission) == 1)
-#pragma omp critical
-				outer_dsimplexes.insert(iter);
+			if(*i==new_point) continue;
+			std::vector<short> key = first_vector;
+			key.erase(std::find(key.begin(), key.end(), *i));
+			if (!inner_d_1_shell.emplace(key, *i).second)
+				inner_d_1_shell.erase(key); // Create new shell and remove collided faces max only 2 can occur.
 		}
-		std::cout << "Intermediate dsimplex size " << outer_dsimplexes.size() << std::endl;
-		reduce(outer_dsimplexes, inner_d_1_shell, dsimplexes);
 	}
+	std::cout<<dsimplexes.size()<<std::endl;
+	return;
 }
 
 // configPipe -> configure the function settings of this pipeline segment
