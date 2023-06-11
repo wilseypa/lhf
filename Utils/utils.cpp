@@ -5,7 +5,7 @@
 #include <numeric>
 #include <iostream>
 #include <fstream>
-#include "utils.hpp"
+#include "../Utils/utils.hpp"
 #include <time.h>
 #include <cstdlib>
 #include <limits>
@@ -171,6 +171,41 @@ std::pair<std::vector<std::vector<double>>,std::vector<unsigned>> utils :: kmean
 	}
     return std::make_pair(centroids,lastLabels);
 }
+double utils ::  magnitudeVector(std::vector<double> a){
+	double result=0;
+	for(auto x:a)
+		result += x*x;
+	return std::sqrt(result);
+}
+std::vector<double>  utils ::sumVector(std::vector<double> a, std::vector<double> b){
+	std::vector<double> result;
+	for(int i=0;i<a.size();i++){
+	     result.push_back(a[i]+b[i]);
+	    // std::cout<<a[i]+b[i]<<" ";
+	 }
+	return result;
+	
+}
+std::vector<double>  utils ::diffVector(std::vector<double> a, std::vector<double> b){
+	std::vector<double> result;
+	for(int i=0;i<a.size();i++){
+	     result.push_back(a[i]-b[i]);
+	 }
+	return result;
+	
+}
+
+double utils ::  vectorDotProduct(std::vector<double> a,std::vector<double> b){
+	double dot=0;
+	if(a.size()!=b.size()){
+		std::cout<<"Incompatible ";
+		return -1;
+	}
+	for(int i=0;i<a.size();i++)
+		dot += a[i]*b[i];
+	return dot;
+}
+
 std::vector<std::vector<double>> utils :: projectHSphere(std::vector<std::vector<double>> data,std::vector<double> centroid){
 	std::vector<std::vector<double>> pntonHSphere;
 	for(auto pnt : data){

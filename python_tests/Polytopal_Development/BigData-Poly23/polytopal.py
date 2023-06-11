@@ -314,6 +314,7 @@ def rescalePoints(pts1,newpoints,diagnoal,chebR):
 		radius.append(difference)
 	return np.array(rescaledPoints),np.array(radius)
 
+
 def plotpolytop1(polyparts,d,inputpoints,name,radius):
 	if(d==2):
 		'''
@@ -355,7 +356,10 @@ def plotpolytop1(polyparts,d,inputpoints,name,radius):
 		fig = plt.figure()
 		ax = Axes3D(fig, auto_add_to_figure=False)
 		fig.add_axes(ax)
+	cmap = plt.cm.get_cmap('hsv', len(hull))
+	i = -1
 	for y in hull:
+		i = 	i+1
 		if(d==3):
 			if(len(y)>1):
 				#fig = plt.figure()
@@ -368,12 +372,12 @@ def plotpolytop1(polyparts,d,inputpoints,name,radius):
 					ptrans = np.transpose(pts)
 					verts = [list(zip(ptrans[0],ptrans[1],ptrans[2]))]
 					#ax.scatter3D(ptrans[0],ptrans[1],ptrans[2],s=5,color = 'red')
-					ax.add_collection3d(Poly3DCollection(verts,facecolors=col,edgecolors = col, alpha=1))
+					ax.add_collection3d(Poly3DCollection(verts,facecolors=cmap(i),edgecolors = cmap(i), alpha=1))
 				#plt.show()
 		else:
 			edges = [list(y)]
 			for edge in edges:
-				plt.plot([inputpoints[edge[0]][0],inputpoints[edge[1]][0]],[inputpoints[edge[0]][1],inputpoints[edge[1]][1]],color='blue',linestyle='solid',linewidth=1)
+				plt.plot([inputpoints[edge[0]][0],inputpoints[edge[1]][0]],[inputpoints[edge[0]][1],inputpoints[edge[1]][1]],color=cmap(i),linestyle='solid',linewidth=1)
 			ptrans = np.transpose(inputpoints)
 			patches = []
 			for c,r in zip(inputpoints,radius):
@@ -708,7 +712,6 @@ ax.scatter(cProjection[:,0],cProjection[:,1],color = "red")
 plt.show()
 
 #plt.show()
-input()
 #pts2 = reduceDimension(projectonplane(pp1,pp2,newpoints))
 pts1 = reduceDimension(projectonplane(pp1,pp2,newpoints))
 convexpartssorted,delaunayparts,weights = iterativeconvexization(hull,len(pts1[0]),pts1)

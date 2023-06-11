@@ -28,7 +28,7 @@ int main(){
 	std::vector<std::vector<double>> data;
 	//std::cout<<"Enter Input File Name :: ";
 	//std::string filename = "filenew.txt";
-	std::string filename = "inputfile.txt";
+	std::string filename = "lungDataReduced10000.txt";
 	//std::getline (std::cin,filename);
 	data = rs.readCSV(filename);
 	int count, dimension;
@@ -94,7 +94,7 @@ int main(){
     
 	for(auto epsilon:epsilonvalues){
 		   	for(auto beta:betavalues){
-   	std::string filename = "simplices";
+   	std::string filename = "simplices10000";
    	filename.append("E");
    	filename.append(std::to_string(epsilon));
    	filename.append("B");

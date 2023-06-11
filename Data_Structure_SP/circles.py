@@ -4,29 +4,30 @@ import matplotlib.pyplot as plt
 import numpy as np
 from random import randint
  
-for epsilon in ["0.150000"]:#,"0.600000"]:#,"0.200000","0.300000","0.400000"]:
-	for beta in ["1.050000"]:#,"1.000000","1.500000","3.000000"]:#,"0.050000","0.100000","0.200000","0.300000","0.400000","0.500000","0.600000","0.700000","0.800000","0.900000","1.000000","1.100000","1.200000","1.300000","1.400000","1.500000",]:
-		filename = "simplicesE"+epsilon+"B"+ beta+".txt";
+for epsilon in ["0.750000"]:#,"0.600000"]:#,"0.200000","0.300000","0.400000"]:
+	for beta in ["1.000000"]:#,"1.000000","1.500000","3.000000"]:#,"0.050000","0.100000","0.200000","0.300000","0.400000","0.500000","0.600000","0.700000","0.800000","0.900000","1.000000","1.100000","1.200000","1.300000","1.400000","1.500000",]:
+		filename = "simplices10000E"+epsilon+"B"+ beta+".txt";
 		#filename = "simple.txt"
 		fig = plt.figure()
 		ax = fig.add_subplot(111, projection='3d')
 		a = np.loadtxt(filename,delimiter = " ")
-		data = np.loadtxt("inputfile.txt",delimiter = ",")
-		ax.scatter(data[:,0],data[:,1],data[:,2],s=1,marker='o',c="black")
+		data = np.loadtxt("lungDataReduced10000.txt",delimiter = ",")
+		ax.scatter(data[:,0],data[:,1],data[:,2],s=0.5,marker='o',c="black")
 
-		ax.scatter(a[:,0],a[:,1],a[:,2],s=0.01,marker='o',c="black")
+		#ax.scatter(a[:,0],a[:,1],a[:,2],s=0.01,marker='o',c="black")
+		#ax.scatter(a[:,0],a[:,1],a[:,2],s=0.01,marker='o',c="black")
 
 		a = np.reshape(a, (-1, 9))
 		fc = ['#%06X' % randint(0, 0xFFFFFF) for i in range(a.shape[0])]
 
 		poly3d = [[ a[i, j*3:j*3+3] for j in range(3)  ] for i in range(a.shape[0])]
 
-		ax.add_collection3d(Poly3DCollection(poly3d, facecolors=fc, edgecolor = fc,linewidths=0.01,alpha = 0.51))
+		ax.add_collection3d(Poly3DCollection(poly3d, facecolors=fc, edgecolor = fc,linewidths=0.01,alpha = 1))
 		plt.title(str(a.shape[0])+"-Simplices")
-		ax.set_xlim(-1,1)
-		ax.set_ylim(-1,1)
-		ax.set_zlim(-1,1)
-		ax.view_init(elev=-107, azim=25)
+		#ax.set_xlim(-1,1)
+		#ax.set_ylim(-1,1)
+		#ax.set_zlim(-1,1)
+		ax.view_init(elev=27, azim=79)
 		#plt.axis('off')
 		plt.savefig("plot"+filename+".pdf",bbox_inches='tight',pad_inches = 0)
 		plt.show()

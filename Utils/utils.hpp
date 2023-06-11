@@ -161,5 +161,10 @@ class utils {
     static 	std::pair<std::vector<std::vector<double>>,std::vector<unsigned>> computeDirectionVectors(std::vector<std::vector<double>> ,std::vector<double> centroid, int clusters);
     static std::vector<std::vector<double>> projectHSphere(std::vector<std::vector<double>> data,std::vector<double> centroid);
     static 	std::pair<std::vector<std::vector<double>>,std::vector<unsigned>> kmeansplusplus(std::vector<std::vector<double>> data,int, int);
+    static double magnitudeVector(std::vector<double> a);
+    static double vectorDotProduct(std::vector<double> a,std::vector<double> b);
+    static std::vector<double> sumVector(std::vector<double>, std::vector<double>);
+    static std::vector<double> diffVector(std::vector<double>, std::vector<double>);
+
 };
 
