@@ -26,12 +26,14 @@ void fill_matrix(std::vector<std::vector<double>> & mat)
 int main(){
 	auto rs = readInput();
 	std::vector<std::vector<double>> data;
-	//std::cout<<"Enter Input File Name :: ";
-	//std::string filename = "filenew.txt";
-	std::string filename = "lungDataReduced10000.txt";
-	//std::getline (std::cin,filename);
-	data = rs.readCSV(filename);
+	std::cout<<"Enter Input File Name :: ";
+	std::string filename1;
+	//std::string filename = "lungDataReduced10000.txt";
+	std::getline (std::cin,filename1);
+	std::cout<<filename1;
+	data = rs.readCSV(filename1);
 	int count, dimension;
+	std::cout<<"Rohit"<<std::flush;
     //std::cout<<"Enter Size and Dimension of Original Data"<<std::endl;
     //std::cout<<"Size ::";
     //std::cin>>count;
@@ -94,7 +96,7 @@ int main(){
     
 	for(auto epsilon:epsilonvalues){
 		   	for(auto beta:betavalues){
-   	std::string filename = "simplices10000";
+   	std::string filename = filename1.append("simplices10000");
    	filename.append("E");
    	filename.append(std::to_string(epsilon));
    	filename.append("B");
