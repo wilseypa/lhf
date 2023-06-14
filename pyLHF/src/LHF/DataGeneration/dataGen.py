@@ -1,5 +1,8 @@
 
 import numpy as np
+from datetime import datetime
+import math
+import random
 from scipy.stats import qmc
 from scipy.stats import ortho_group
 
@@ -120,3 +123,195 @@ def rotate(data, rotation='random') :
     else :
         errStr = 'Unknown rotation request: {}'.format(rotation)
         sys.exit(errStr)
+
+
+
+def sparseEnough(points, current, sparseSphereR):
+    """
+    Check if the new point is sparse enough - i.e. if it's outside of other points with a sphere around them of radius sparseSphereR
+
+    Parameters
+    ----------
+    points : numpy.array(l, m)
+        The input points to test for sparse
+    current : numpy.array(n, m)
+        The currently generated data
+    sparseSpherR : float
+        dispersion factor for moving around the mainfold surface
+    
+    Returns
+    -------
+    bool
+        True if the point is valid (sparse), False if the point is too close to another point (dist < sparseSphereR)
+    """
+    
+    for x in points:
+        if(math.dist(x, current) < sparseSphereR):
+            return False
+    return True
+
+def normal(current, eps, seed = datetime.now().timestamp()):
+    """
+    ...
+    
+    Parameters
+    ----------
+    current : numpy.array(n, m)
+        The currently generated data
+    eps : float
+        Dilation parameter - smaller values for closer to surface, larger values for rough surface
+    seed : random.seed()
+        Seed parameter for controlling the function
+    
+    Returns
+    -------
+    bool
+        True if the point is valid (sparse), False if the point is too close to another point (dist < sparseSphereR)
+    """
+    random.seed(seed)
+    val = np.random.normal(loc=current, scale=eps, size=None)
+    
+    if(val<5 and val>-5):
+        return val
+    else:
+        return current
+        
+def actFunction(x, disp):
+    return 1-math.sqrt(1-x**disp)
+
+
+def validation(a, current, eps, disp):
+    """
+    ...
+    
+    Parameters
+    ----------
+    a : ...
+        TBD...
+    current : numpy.array(n, m)
+        The currently generated data
+    eps : float
+        Dilation parameter - smaller values for closer to surface, larger values for rough surface
+    disp : float
+        dispersion factor for moving around the mainfold surface
+    
+    Returns
+    -------
+    bool
+        True if the point is valid (sparse), False if the point is too close to another point (dist < sparseSphereR)
+    """
+    x = np.array(current)
+    dilationVector = (x * eps) / np.linalg.norm(x)
+    
+    mag1 = a(x + dilationVector)
+    mag2 = a(x - dilationVector)
+    
+    if(mag1 * mag2 > 0):
+        return False
+    else:
+        if mag1 < 0: mag1 *=-1
+        if mag2 < 0: mag2 *=-1
+        if mag2 > mag1:
+            x = mag1 / mag2
+        else:
+            x = mag2 / mag1
+            
+        acceptProb = actFunction(x, disp)
+        
+        ##Need to seed here....
+        random.seed(datetime.now().timestamp())
+        
+        if(np.random.uniform(0,1) > acceptProb):
+            return True
+        else:
+            return False
+
+
+def gibbsSampling(n, d, a, disp, eps, neigh, maxJump, sparseSphereR = 0.01):
+    """
+    Perform gibbs sampling from a manifold:
+        .Sample data from a parametric equation wth dilation (noise) epsilon
+        .Works well for higher dimensional spaces
+        .Crawl the surface of the manifold in epsilon-vicinity
+        .Minimize potential to crawl away from parametric equation
+
+    Parameters
+    ----------
+    n : int
+        The number of points to generate
+    d : int
+        The dimension of data to generate
+    a : ...
+        TBD...
+    disp : float
+        dispersion factor for moving around the mainfold surface
+    eps : float
+        Dilation parameter - smaller values for closer to surface, larger values for rough surface
+    neigh: float
+        Size of jump in neighborhood - smaller values result in localized exploring, larger may lead to more rejections
+    maxJump: float
+        Maximum size of a jump when walking the manifold
+    
+    
+    Returns
+    -------
+    numpy.array(n, m)
+        numpy matrix of generated data.
+    ?? float
+        n/i (number of points over iterations)
+    """
+    
+    outData = []
+    
+    #Initialize to a random state
+    current = [0 for i in range(d)]
+    
+    alternate = len(current)
+    onManifold = False
+    heatCount = 0
+    origNeigh = neigh
+    i = 0
+    
+    while(True):
+        newCurrent = current.copy()
+        newCurrent[ i % alternate ] = normal(newCurrent[ i % alternate ], neigh)
+        accepted = validation(a, newCurrent, eps, disp)
+        
+        if(accepted):
+            if(sparseEnough(outData, newCurrent, sparseSphereR)):
+                outData.append(newCurrent)
+                current = newCurrent
+                onManifold = True
+                heatcount = 0
+                neigh = origNeigh
+            else:
+                pass
+        
+        else:
+            heatCount += 1
+            
+            if heatCount > 1000 and neigh < maxJump:
+                neigh = neigh*2
+                heatCount = 0
+            else:
+                pass
+                
+            if not onManifold:
+                current = newCurrent
+            else:
+                pass
+        
+        if(len(outData) == n):
+            break;
+        
+        i = i+1
+        
+    return outData, n/i
+        
+    
+    
+    
+    
+    
+
+

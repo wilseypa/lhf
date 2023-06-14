@@ -14,6 +14,9 @@ pis = []
 
 
 
+def fish(param):
+	a= 1
+	return (param[0]**2+param[1]**2)**2 - a*param[0]*(param[0]**2 - param[1]**2) 
 
 def plot(pointCloud) :
 
@@ -38,13 +41,18 @@ for i in range(0, 1):
     pyLHF.args["dimensions"] = 2
     
     #Generate a square of points and make cuts using new dataGen library
-    square = dg.genFilledCube(dim=2)
+    #square = dg.genFilledCube(dim=2)
     
-    d = dg.buildObj('(_x[0]**2) + _x[1]**2 <= 0.8', square)
-    d = dg.buildObj('\
-    _x[0] < -0.25 or \
-    (_x[0]+0.25)**2 + (_x[1]-0.25)**2 > 0.6**2\
-    ', d)
+    #d = dg.buildObj('(_x[0]**2) + _x[1]**2 <= 0.8', square)
+    #d = dg.buildObj('\
+    #_x[0] < -0.25 or \
+    #(_x[0]+0.25)**2 + (_x[1]-0.25)**2 > 0.6**2\
+    #', d)
+    
+    
+    d,ar = dg.gibbsSampling(1000,2,fish,2,0.1,0.5,2.5)
+    
+    d = np.array(d)
     
     plot(d)
     
