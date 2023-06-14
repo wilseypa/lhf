@@ -21,7 +21,7 @@ import datetime
 from ..utilities import run_trials
 
 
-def dSphere_uniformRandom(dimension=3, numPoints=1000, r1=1.0, r2=1.0, trials=16, selection='max') :
+def dSphere_uniformRandom(dimension=3, numPoints=20000, r1=1.0, r2=1.0, trials=8, selection='min') :
     """
     Generate an optimized point cloud for the boundary of a dSphere that is populated with uniformly distributed points between
     two radii (r1 < r2). 
@@ -33,7 +33,7 @@ def dSphere_uniformRandom(dimension=3, numPoints=1000, r1=1.0, r2=1.0, trials=16
     r1 < r2 of a d-sphere.  This is function takes multiple trials for a dSphere and selects the trial that optimizes one of three
     values of the generated point cloud.  The optimization method is based on nearest neighbor distances for the points.  There
     are three options for the optimization method, namely: 'mean' (default), maximize the mean of the nearest neighbor distances;
-    'var', minimize the variance of the mean nearest neighbor distance; and 'min', maximize the minimum nearest neighbor distance.
+    'stdev', minimize the variance of the mean nearest neighbor distance; and 'min', maximize the minimum nearest neighbor distance.
 
     While a d-sphere is technically an n-dimensional manifold that can be embedded in euclidean (d+1)-space, we will use the term
     dimension here to refer to the euclidean space as that is the more commonly used interpretation outside of the math-head
@@ -47,34 +47,27 @@ def dSphere_uniformRandom(dimension=3, numPoints=1000, r1=1.0, r2=1.0, trials=16
     dimension : int 
         The number of dimensions for the desired d-sphere (default 3)
     numPoints : int 
-        The number of points desired in the output point cloud (default 1000)
+        The number of points desired in the output point cloud (default 20000)
     r1 : float 
         The inner radius bounds of the point cloud (default 1.0)
     r2 : float 
         The outer radius bounds of the point cloud (default 1.0)
     trials: int 
-        The number of trials used to optimize the distribution of points in the dSphere (default: 16)
+        The number of trials used to optimize the distribution of points in the dSphere (default: 8)
     selection: str (min, max, mean, var)
         The selection criteria to select between two candidate point clouds:
             'min' : maximize the minimum nearest neighbor distance of the points
-            'max' (default): minmimize the maximum nearest neighbor distance of the points
             'mean' : maximize the mean of the nearest neighbor distances.
             'stdev' : minimize the standard deviation of the nearest neighbors
 
     Returns
     -------
-    dShere: dict
-
-        dsphere['ptCldObject'] = 'd-Sphere'
-        dsphere['date'] = datetime.datetime.now()
-        dsphere['origin'] = (0, 0, ...) : record the expected origin of this point cloud
-        dsphere['radius'] = (r1, r2) : the inner and outer radii of the point cloud boundary
-        dsphere['points'] = randomPoints : the point cloud
+    dShere: [numPoints x dimension] random points on the dSphere
 
     Notes:
     ------
     1. While it may seem that optimizing the stdev or min 1-NN distance would be the best approach, from the standpoint of getting
-       the earliest birth time, selecting the minimum max 1-NN distance will actually produce the best result.
+       the earliest birth time, maximizing the 1-NN distance will actually produce the best result.
     2. Experimental testing shows that the sobol sequence generator provides the best results to minimize the max 1-NN distance
        between points. 
     """
@@ -113,24 +106,13 @@ def dSphere_uniformRandom(dimension=3, numPoints=1000, r1=1.0, r2=1.0, trials=16
     #### --------------------------------------------------------------------------------
 
     sample_func = lambda: get_dSphere(dimension, numPoints, r1, r2)
-    dsphere = run_trials(sample_func, trials, selection)
+    return run_trials(sample_func, trials, selection)
 
-    retVal = dict()
-    retVal['ptCldObject'] = 'd-Sphere'
-    # in isolation, these next four definitions appear redundant, however, when embedding objects in another point cloud, they become important
-    retVal['date'] = datetime.datetime.now()
-    retVal['origin'] = np.zeros(dimension)
-    retVal['radius'] = (r1, r2)
-    retVal['points'] = dsphere
-
-    # other than the trial of the selected point cloud captured, this data is already captured in other fields
-    #dsphere['profile'] = dsphereProfile
-    return retVal
-
-def dSphere_product(dimensions=[2,2], numPoints=1000, r1=1.0, r2=1.0, trials=16, selection='max') :
-    """
-    Generates a point cloud for the Cartesian product of spheres of specified dimension. This creates
-    point clouds with interesting features in multiple dimensions, as described by https://topospaces.subwiki.org/wiki/Homology_of_product_of_spheres.
+def dSphere_product(dimensions=[2,2], numPoints=20000, r1=1.0, r2=1.0, trials=8, selection='min') :
+    '''
+    Generates a point cloud for the Cartesian product of spheres of specified dimension. This creates point clouds with
+    interesting features in multiple dimensions, as described by
+    https://topospaces.subwiki.org/wiki/Homology_of_product_of_spheres.  
     The true Betti numbers are returned by the function and are calculated using the Poincare polynomial of the
     product of the spheres. This generalizes the flat torus. The torus with intrinsic dimension n embedded in 
     Rn can be created using dSphere_product([2 for _ in range(n)])
@@ -140,37 +122,30 @@ def dSphere_product(dimensions=[2,2], numPoints=1000, r1=1.0, r2=1.0, trials=16,
     dimensions : list of ints 
         The number of dimensions for the spheres in the product (default [2, 2])
     numPoints : int 
-        The number of points desired in the output point cloud (default 1000)
+        The number of points desired in the output point cloud (default 20000)
     r1 : float 
         The inner radius bounds of the point cloud (default 1.0)
     r2 : float 
         The outer radius bounds of the point cloud (default 1.0)
     trials: int 
-        The number of trials used to optimize the distribution of points in the dSphere (default: 16)
+        The number of trials used to optimize the distribution of points in the dSphere (default: 8)
     selection: str (min, max, mean, var)
         The selection criteria to select between two candidate point clouds:
             'min' : maximize the minimum nearest neighbor distance of the points
-            'max' (default): minmimize the maximum nearest neighbor distance of the points
             'mean' : maximize the mean of the nearest neighbor distances.
             'stdev' : minimize the standard deviation of the nearest neighbors
 
     Returns
     -------
-    product: dict
+    product: [numPoints x dimensions points
+    '''
 
-        product['ptCldObject'] = 'd-Sphere Product'
-        product['date'] = datetime.datetime.now()
-        product['origin'] = (0, 0, ...) : record the expected origin of this point cloud
-        product['radius'] = (r1, r2) : the inner and outer radii of the point cloud boundary
-        product['points'] = points : the point cloud
-        product['trueBettis'] = {0: b0, 1: b1, ...} : the true Betti numbers for the point cloud in each dimension
-        product['points'] = points : the point cloud
-        product['dimensions'] = dimensions
-    """
     generateSphere = lambda dimension: dSphere_uniformRandom(dimension, numPoints, r1, r2, trials, selection)
-    dSpheres = tuple(generateSphere(dimension)['points'] for dimension in dimensions)
-    points = np.concatenate(dSpheres, axis = 1)
+    dSpheres = tuple(generateSphere(dimension) for dimension in dimensions)
+    return np.concatenate(dSpheres, axis = 1)
 
+    #### I am preserving this code as it computes the true Betti's; keeping in case we end up wanting this value for some of our testing
+    '''  
     polynomials = []
     for dimension in dimensions:
         polynomials.append([0 for _ in range(dimension)])
@@ -187,6 +162,4 @@ def dSphere_product(dimensions=[2,2], numPoints=1000, r1=1.0, r2=1.0, trials=16,
     product['points'] = points
     product['trueBettis'] = trueBettis
     product['dimensions'] = dimensions
-
-
-    return product
+    '''
