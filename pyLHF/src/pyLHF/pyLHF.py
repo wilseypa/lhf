@@ -52,14 +52,14 @@ for i in range(0, 1):
     
     #Fish example
     fish = '(_x[0]**2 + _x[1]**2)**2 - ((1) * _x[0] * (_x[0]**2 - _x[1]**2))'
-    d,ar = dg.gibbsSampling(1000,2,fish,2,0.1,0.5,2.5)
+    d = dg.gibbsSampling(1000,2,fish,2,0.1,0.5,2.5)
     d = np.array(d)
     plot(d)
     
     
     #Infinity Example
     infty = '(_x[0]**2 + _x[1]**2)**2 - ((1) * (_x[0]**2 - _x[1]**2))'
-    d,ar = dg.gibbsSampling(1000,2,infty,2,0.1,0.5,2.5)
+    d = dg.gibbsSampling(1000,2,infty,2,0.1,0.5,2.5)
     d = np.array(d)
     plot(d)
     

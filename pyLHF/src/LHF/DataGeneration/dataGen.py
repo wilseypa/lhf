@@ -233,7 +233,7 @@ def validation(a, current, eps, disp, seed=datetime.now().timestamp()):
             return False
 
 
-def gibbsSampling(n, d, a, disp, eps, neigh, maxJump, sparseSphereR = 0.01):
+def gibbsSampling(n, d, a, disp, eps, step, maxStep = 2.5, maxHeat = 1000, sparseSphereR = 0.01):
     """
     Perform gibbs sampling from a manifold:
         .Sample data from a parametric equation wth dilation (noise) epsilon
@@ -269,18 +269,17 @@ def gibbsSampling(n, d, a, disp, eps, neigh, maxJump, sparseSphereR = 0.01):
     
     outData = []
     
-    #Initialize to a random state
+    #Initialize to a random point from R^{dim}
     current = [0 for i in range(d)]
     
-    alternate = len(current)
     onManifold = False
-    heatCount = 0
-    origNeigh = neigh
-    i = 0
+    heat = 0
+    stepS = step
+    indx = 0
     
     while(True):
         newCurrent = current.copy()
-        newCurrent[ i % alternate ] = normal(newCurrent[ i % alternate ], neigh)
+        newCurrent[indx] = normal(newCurrent[indx], stepS)
         accepted = validation(a, newCurrent, eps, disp)
         
         if(accepted):
@@ -288,17 +287,17 @@ def gibbsSampling(n, d, a, disp, eps, neigh, maxJump, sparseSphereR = 0.01):
                 outData.append(newCurrent)
                 current = newCurrent
                 onManifold = True
-                heatcount = 0
-                neigh = origNeigh
+                heat = 0
+                stepS = step
             else:
                 pass
         
         else:
-            heatCount += 1
+            heat += 1
             
-            if heatCount > 1000 and neigh < maxJump:
-                neigh = neigh*2
-                heatCount = 0
+            if heat > maxHeat and stepS < maxStep:
+                stepS = stepS * 2
+                heat = 0
             else:
                 pass
                 
@@ -310,9 +309,9 @@ def gibbsSampling(n, d, a, disp, eps, neigh, maxJump, sparseSphereR = 0.01):
         if(len(outData) == n):
             break;
         
-        i = i+1
+        indx = (indx+1) % d
         
-    return outData, n/i
+    return outData
         
     
     
