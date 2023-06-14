@@ -9,6 +9,7 @@ from LHF import LHF
 from LHF.OutputAnalysis import persistenceDiagram, heatmap, barcodeDiagram, bettiCurve
 
 from LHF.DataGeneration import dataGen as dg
+from LHF.DataGeneration import objGen as og
 
 pis = []
 
@@ -51,19 +52,9 @@ for i in range(0, 1):
     
     
     #Fish example
-    fish = '(_x[0]**2 + _x[1]**2)**2 - ((1) * _x[0] * (_x[0]**2 - _x[1]**2))'
-    d = dg.gibbsSampling(1000,2,fish,2,0.1,0.5,2.5)
-    d = np.array(d)
+    d = og.fish(5000, 3)
     plot(d)
-    
-    
-    #Infinity Example
-    infty = '(_x[0]**2 + _x[1]**2)**2 - ((1) * (_x[0]**2 - _x[1]**2))'
-    d = dg.gibbsSampling(1000,2,infty,2,0.1,0.5,2.5)
-    d = np.array(d)
-    plot(d)
-    
-    
+    np.savetxt('./pointCloud.csv',d,delimiter=',')
     
     #Run PH and get the full bettiTable, pipePacket object
     boundpis, ppkt, elapsed = pyLHF.runPH(d)

@@ -185,7 +185,7 @@ def funcEval(a, x):
     return eval(a)
     
 
-def validation(a, current, eps, disp, seed=datetime.now().timestamp()):
+def validation1(a, current, eps, disp, seed=datetime.now().timestamp()):
     """
     ...
     
@@ -203,7 +203,7 @@ def validation(a, current, eps, disp, seed=datetime.now().timestamp()):
     Returns
     -------
     bool
-        True if the point is valid (sparse), False if the point is too close to another point (dist < sparseSphereR)
+        True if the point is valid, False otherwise
     """
     x = np.array(current)
     dilationVector = (x * eps) / np.linalg.norm(x)
@@ -227,11 +227,53 @@ def validation(a, current, eps, disp, seed=datetime.now().timestamp()):
         acceptProb = actFunction(x, disp)
         
         random.seed(seed)
-        if(np.random.uniform(0,1) > acceptProb):
+        if(np.random.uniform(0,1) < acceptProb):
             return True
         else:
             return False
-
+            
+def validation2(a, current, eps, disp, seed=datetime.now().timestamp()):
+    """
+    ...
+    
+    Parameters
+    ----------
+    a : ...
+        TBD...
+    current : numpy.array(n, m)
+        The currently generated data
+    eps : float
+        Dilation parameter - smaller values for closer to surface, larger values for rough surface
+    disp : float
+        dispersion factor for moving around the mainfold surface
+    
+    Returns
+    -------
+    bool
+        True if the point is valid, False otherwise
+    """
+    x = np.array(current)
+    res = funcEval(a, x)
+    
+    if(abs(res) > eps):
+        return False
+    else:
+        
+        x = 0
+        if res > 0:
+            x = 1-(res/eps)
+        else:
+            x = 1+(res/eps)
+        
+        acceptProb = actFunction(x, disp)
+        
+        random.seed(seed)
+        if(np.random.uniform(0,1) < acceptProb):
+            return True
+        else:
+            return False
+            
+        
 
 def gibbsSampling(n, d, a, disp, eps, step, maxStep = 2.5, maxHeat = 1000, sparseSphereR = 0.01):
     """
@@ -280,17 +322,15 @@ def gibbsSampling(n, d, a, disp, eps, step, maxStep = 2.5, maxHeat = 1000, spars
     while(True):
         newCurrent = current.copy()
         newCurrent[indx] = normal(newCurrent[indx], stepS)
-        accepted = validation(a, newCurrent, eps, disp)
+        a1 = validation1(a, newCurrent, eps, disp)
+        a2 = validation2(a, newCurrent, eps, disp)
         
-        if(accepted):
-            if(sparseEnough(outData, newCurrent, sparseSphereR)):
-                outData.append(newCurrent)
-                current = newCurrent
-                onManifold = True
-                heat = 0
-                stepS = step
-            else:
-                pass
+        if((a1 or a2) and sparseEnough(outData, newCurrent, sparseSphereR)):
+            outData.append(newCurrent)
+            current = newCurrent
+            onManifold = True
+            heat = 0
+            stepS = step
         
         else:
             heat += 1
