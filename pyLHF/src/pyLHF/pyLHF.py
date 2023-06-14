@@ -14,9 +14,9 @@ pis = []
 
 
 
-def fish(param):
-	a= 1
-	return (param[0]**2+param[1]**2)**2 - a*param[0]*(param[0]**2 - param[1]**2) 
+#def fish(param):
+#	a= 1
+#	return (param[0]**2+param[1]**2)**2 - a*param[0]*(param[0]**2 - param[1]**2) 
 
 def plot(pointCloud) :
 
@@ -50,11 +50,20 @@ for i in range(0, 1):
     #', d)
     
     
+    #Fish example
+    fish = '(_x[0]**2 + _x[1]**2)**2 - ((1) * _x[0] * (_x[0]**2 - _x[1]**2))'
     d,ar = dg.gibbsSampling(1000,2,fish,2,0.1,0.5,2.5)
-    
     d = np.array(d)
-    
     plot(d)
+    
+    
+    #Infinity Example
+    infty = '(_x[0]**2 + _x[1]**2)**2 - ((1) * (_x[0]**2 - _x[1]**2))'
+    d,ar = dg.gibbsSampling(1000,2,infty,2,0.1,0.5,2.5)
+    d = np.array(d)
+    plot(d)
+    
+    
     
     #Run PH and get the full bettiTable, pipePacket object
     boundpis, ppkt, elapsed = pyLHF.runPH(d)

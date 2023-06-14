@@ -180,7 +180,12 @@ def actFunction(x, disp):
     return 1-math.sqrt(1-x**disp)
 
 
-def validation(a, current, eps, disp):
+def funcEval(a, x):
+    _x = x    
+    return eval(a)
+    
+
+def validation(a, current, eps, disp, seed=datetime.now().timestamp()):
     """
     ...
     
@@ -203,8 +208,11 @@ def validation(a, current, eps, disp):
     x = np.array(current)
     dilationVector = (x * eps) / np.linalg.norm(x)
     
-    mag1 = a(x + dilationVector)
-    mag2 = a(x - dilationVector)
+    x1 = x + dilationVector
+    x2 = x - dilationVector
+    
+    mag1 = funcEval(a, x + dilationVector)
+    mag2 = funcEval(a, x - dilationVector)
     
     if(mag1 * mag2 > 0):
         return False
@@ -218,9 +226,7 @@ def validation(a, current, eps, disp):
             
         acceptProb = actFunction(x, disp)
         
-        ##Need to seed here....
-        random.seed(datetime.now().timestamp())
-        
+        random.seed(seed)
         if(np.random.uniform(0,1) > acceptProb):
             return True
         else:
