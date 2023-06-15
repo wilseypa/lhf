@@ -52,9 +52,9 @@ for i in range(0, 1):
     
     
     #Fish example
-    d = og.fish(5000, 3)
-    plot(d)
+    d = og.butterflyCurve(3000, 2)
     np.savetxt('./pointCloud.csv',d,delimiter=',')
+    plot(d)
     
     #Run PH and get the full bettiTable, pipePacket object
     boundpis, ppkt, elapsed = pyLHF.runPH(d)
