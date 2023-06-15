@@ -462,7 +462,9 @@ double utils::circumRadius(std::set<unsigned> &simplex, std::vector<std::vector<
 	}
 	matACap.row(0).setConstant(1);
 	matACap(0, 0) = 0;
-	return (-matA.determinant() / (2 * matACap.determinant()));
+	double result=(-matA.determinant() / (2 * matACap.determinant()));
+	if (result<0) result=std::numeric_limits<double>::max();
+	return result;
 }
 double utils :: simplexVolume(std::set<unsigned> simplex,std::vector<std::vector<double>>* distMatrix,int dd){
 		std::vector<std::vector<double>>  matACap(simplex.size()+1);
