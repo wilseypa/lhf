@@ -1504,6 +1504,7 @@ std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pai
 				auto otherksimplices = generateCombinations(otherPartiotion,otherk);
 				if(k-1>=0){
 					auto ksimplices = generateCombinations(homePartition,k-1);
+#pragma omp parallel collapse(2)
 					for(auto ksimp:ksimplices){
 						for(auto otherksimp :otherksimplices){
 							std::set<std::vector<double>,lexical_compare_points> newsimplex;
@@ -1519,18 +1520,21 @@ std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pai
 								}
 							*/
 								auto simple = validatesimplex(root,newsimplex,homologydim,beta);
+#pragma omp critical
 								simpliceToConsider.insert(simple.second);
 							}
 						}
 					}
 				}
 				else{
+					#pragma omp parallel
 					for(auto otherksimp :otherksimplices){
 						std::set<std::vector<double>,lexical_compare_points> newsimplex;
 						newsimplex.insert(pt);
 						newsimplex.insert(otherksimp.begin(),otherksimp.end());
 						if(newsimplex.size()==homologydim+1){
 							auto simple = validatesimplex(root,newsimplex,homologydim,beta);
+						#pragma omp critical
 							simpliceToConsider.insert(simple.second);
 						}
 					}

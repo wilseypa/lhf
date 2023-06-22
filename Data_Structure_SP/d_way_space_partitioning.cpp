@@ -101,6 +101,8 @@ int main(){
    	filename.append(std::to_string(epsilon));
    	filename.append("B");
    	filename.append(std::to_string(beta));
+   	filename.append("homologydim");
+   	filename.append(std::to_string(hdim));
    	filename.append(".txt");
    	std::cout<<filename<<std::flush;
    	std::ofstream myfile;
