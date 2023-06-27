@@ -28,7 +28,22 @@ maxepsilon = 2
 mindist = 0.0001
 distancematrix = []	  #initializae distance matrix
 delaunayincidence = []
-	
+polytopaltree  = []
+dim = 2
+datasize = 0
+bettieTable = []
+inputpoints = []
+def letter_cmp(a, b):
+    if a.weight > b.weight:
+        return -1
+    elif a.weight == b.weight:
+        if a.polytop > b.polytop:
+            return 1
+        else:
+            return -1
+    else:
+        return 1   
+letter_cmp_key = cmp_to_key(letter_cmp)    #comparison function
 
 def computedistancematrix(points):    #compute Distance Matrix
 	global distancematrix    #initializae distance matrix
@@ -1257,16 +1272,7 @@ class orderedarraylistnodeorig(object):
 			return NotImplemented
 		return self.polytop == other.polytop and self.weight == other.weight
         			
-def letter_cmp(a, b):
-    if a.weight > b.weight:
-        return -1
-    elif a.weight == b.weight:
-        if a.polytop > b.polytop:
-            return 1
-        else:
-            return -1
-    else:
-        return 1   
+
 '''
 def earcliptriangulate(inputpoints,coordinates):
 	points = []
@@ -1388,6 +1394,7 @@ def minimumspanningtree(edges1):
 	res = 0
 	pivots = []
 	mstSize = 0
+	print(datasize)
 	ds = DisjointSet(datasize)
 	for x in reversed(edges1):
 		if ds.find(x.polytop[0]) != ds.find(x.polytop[1]):
@@ -1396,11 +1403,13 @@ def minimumspanningtree(edges1):
 			mstSize +=1
 			pivots.append(x)
 			bettitableentry = [0,0,x.weight]
+			print(bettitableentry)
 			bettieTable.append(tuple(bettitableentry))
 			if(mstSize >= len(inputpoints)-1):
 				for i in range(0,len(inputpoints)):
 					if(ds.find(i) == i):
 						bettitableentry = [0,0,maxepsilon]
+						print(bettitableentry)
 						bettieTable.append(tuple(bettitableentry))
 				return pivots
 	return pivots
@@ -1499,6 +1508,7 @@ def persistenceByDimension( edges, pivots, dimension):
 							k+=1
 					if(e.weight < pivot.weight):
 						bettitableentry = [dimension,min(pivot.weight, e.weight),max(pivot.weight, e.weight)]
+						print(bettitableentry)
 						bettieTable.append(tuple(bettitableentry))
 					break
 				else:
@@ -1519,11 +1529,12 @@ def fastpersistance(polytopalcomplex):
 	#print(len(edges))
 	#input()
 	pivots  = minimumspanningtree(edges)
-	
-	for d  in range(1,dim):
+	print("MST H0 Done")
+	for d  in range(1,2):
 		if(d != 1):
 			 edges = getDimEdges(d)
 		pivots = persistenceByDimension(edges, pivots, d)
+		print("MST H",d," Done")
 	return
 class DisjointSet:
     def __init__(self, n):
@@ -1899,11 +1910,13 @@ def getstarted(datatype,dimension,datasize,noiseper):
 			writer = csv.writer(f)
 			writer.writerows(unitsphere)
 	return unitsphere,filenameoutput
+	'''
 ptspermutahedron = []
 datatype = [1,2,3,4,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4]
 dimension = [3,3,3,3,3,3,3,3,3,4,4,4,4,5,5,5,5,3,3,3,3,4,4,4,4,5,5,5,5,3,3,3,3,4,4,4,4,5,5,5,5,3,3,3,3,4,4,4,4,5,5,5,5,3,3,3,3,4,4,4,4,5,5,5,5]
 datasize = [50,100,100,100,100,250,250,250,250,300,300,300,300,400,400,400,400,200,200,200,200,300,300,300,300,400,400,400,400,200,200,200,200,300,300,300,300,400,400,400,400,200,200,200,200,300,300,300,300,400,400,400,400,200,200,200,200,300,300,300,300,400,400,400,400]
 noiseper = [0,0,0,0,0,0,0,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100]
+
 for d,dim,s,n in zip(datatype,dimension,datasize,noiseper):
 	#print(" Type:: ",d, " Dimension :: ",dim," Size :: ",s," Noise:: ",n)
 	#inputpoints,outputfilename = getstarted(str(d),str(dim),str(s),str(n))
@@ -1912,14 +1925,14 @@ for d,dim,s,n in zip(datatype,dimension,datasize,noiseper):
 	dim=len(inputpoints[0])
 	print(datasize)
 	print(dim)
-	''':
+	
 	ax = plt.axes(projection='3d')
 	zdata = [item[0] for item in inputpoints]
 	xdata = [item[1] for item in inputpoints]
 	ydata = [item[2] for item in inputpoints]
 	ax.scatter3D(xdata, ydata, zdata)
 	plt.show()
-	'''
+	
 	letter_cmp_key = cmp_to_key(letter_cmp)    #comparison function
 	polytopaltree = createpolytopaltree(inputpoints)
 	polytopaltree = assignweights(polytopaltree)
@@ -1943,28 +1956,165 @@ for d,dim,s,n in zip(datatype,dimension,datasize,noiseper):
 		totalsimplices = totalsimplices + len(x)
 		y=y-1
 	print("Total simplices ::--------", totalsimplices)
+	
+def disintegrate(polytopaltree):
+	orderedpolytoparraylist = []
+	for dimensionlist in polytopaltree:
+		dimensionwiseorderedpolytopes = set()
+		for polytope in dimensionlist:
+			for part in polytope.polytopparts:
+				node = orderedarraylistnodeorig(part[0],part[1])
+				dimensionwiseorderedpolytopes.add(node)
+		sorted_list = list(dimensionwiseorderedpolytopes)
+		sorted_list.sort(key = letter_cmp_key)
+		orderedpolytoparraylist.append(sorted_list)
+	return orderedpolytoparraylist
+'''	
 
-
-	triangulation =  Delaunay(inputpoints).simplices
-	print("Delaunay Simplices")
-
+def computeComplexPH(fil,filename):#,weight):
+	global inputpoints
+	inputpoints = []
+	with open(fil, "r") as f:
+			reader = csv.reader(f)
+			for line in reader:
+				k=[]
+				for x in line:
+					k.append(float(x))
+				inputpoints.append(k)
+	global datasize
+	datasize = len(inputpoints)
+	print("Input point Counts ", len(inputpoints))		
+	'''
+	triangulation =  Delaunay(inputpoints).simplices	
+	
+	'''
+	
+	triangulation =  [] #Delaunay(inputpoints).simplices
+	
+	with open(filename, "r") as f:
+			reader = csv.reader(f,delimiter=',')
+			for line in reader:
+				k=[]
+				for x in line:
+					k.append(int(float(x)))
+				triangulation.append(k)
+	print("Triangulation Read ::", len(triangulation))						
+	
+	computedistancematrix(inputpoints)
+	
+	print("Distance Matrix Done")		
+	for x in triangulation:
+		setincidenceindex(x[0],x[1])
+		setincidenceindex(x[0],x[2])
+		setincidenceindex(x[1],x[2])
+	'''	
+	for w in [20]:#0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,20]:
+		kk=0	
+		tottri = set()
+		totedges = set()
+		#tottetra = set()
+		for t in triangulation:
+			if(simplexweight(t)<=w):
+				kk = kk+1
+			facets = generatesimplexfacets(t,len(t)-1)
+			for x in facets:
+				if(simplexweight(x)<=w):
+					tottri.add(tuple(x))
+				subfacets = generatesimplexfacets(x,len(x)-1)
+				for xx in subfacets:
+					if(simplexweight(xx)<=w):
+						totedges.add(tuple(xx))
+					#subsubfacets = generatesimplexfacets(xx,len(xx)-1)
+					#for xxx in subsubfacets:
+					#	if(simplexweight(xxx)<=w):
+					#		tottetra.add(tuple(xxx))
+		print(w,1000,len(totedges),len(tottri),kk)
+	return
+	'''
+	global polytopaltree
+	polytopaltree1 = []
+	triangulation = np.array(triangulation)
+	'''
+	print("beta_s Simplices " , len(triangulation))
+	dim = 2
 	totalsimplices = 0
 	print("simplices of dimension ::", dim,"  ::", len(triangulation))
 	ynew = triangulation
 	di = dim
+	
+	dimensionwiseorderedpolytopes = set()
+	for t in ynew:
+		node = orderedarraylistnodeorig(t,simplexweight(t))
+		dimensionwiseorderedpolytopes.add(node)
+	sorted_list = list(dimensionwiseorderedpolytopes)
+	sorted_list.sort(key = letter_cmp_key)
+	polytopaltree.append(sorted_list)
+	totalsimplices = totalsimplices + len(ynew)
 	while(not di ==0):
 		di= di -1
 		y = ynew
-		totalsimplices = totalsimplices + len(ynew)
 		ynew = []
+		temp = set()
+		gen = []
+		dimensionwiseorderedpolytopes = set()
 		for x in y:
 			facets = generatesimplexfacets(x,len(x)-1)
 			for t in facets:
 				if t not in ynew:
+					if(simplexweight(t)<=weight):
+						node = orderedarraylistnodeorig(t,simplexweight(t))
+						dimensionwiseorderedpolytopes.add(node)
+					node1 = orderedarraylistnodeorig(t,simplexweight(t))
+					temp.add(node1)
 					ynew.append(t)
-		print("simplices of dimension ::", di,"  ::", len(ynew))
+		sorted_list = list(dimensionwiseorderedpolytopes)
+		sorted_list.sort(key = letter_cmp_key)
+		polytopaltree.append(sorted_list)
+		#print("simplices of dimension ::list::", di,"  ::", len(gen))
+		print("simplices of dimension unrepeated::", di,"  ::", len(temp))
+		print("simplices of dimension epsilon::list::", di,"  ::", len(ynew))
+		print("simplices of dimension unrepeted::", di,"  ::", len(sorted_list))
+		totalsimplices = totalsimplices + len(ynew)
 	print("Total simplices  ::", totalsimplices)
+	'''
+	vertices = [[i] for i in range(len(inputpoints))]
+	dimensionwiseorderedpolytopes = set()
+	for t in vertices:
+		node = orderedarraylistnodeorig(t,simplexweight(t))
+		dimensionwiseorderedpolytopes.add(node)
+	sorted_list = list(dimensionwiseorderedpolytopes)
+	sorted_list.sort(key = letter_cmp_key)
+	polytopaltree1.append(sorted_list)
 	
+	for dim in [1,2]:
+		face = []
+		dimensionwiseorderedpolytopes = set()
+		for xx in vertices:
+			for y in range(xx[-1]+1,11033):
+				x = []
+				for xxx in xx:
+					x.append(xxx)
+				x.append(y)
+				facets = generatesimplexfacets(x,len(x))
+				valid = False
+				for yy in facets:
+					if(incidenceindexreturn(yy[0],yy[1])==0):
+						valid = False
+						break
+					else:
+						valid = True
+				if(valid):
+					node = orderedarraylistnodeorig(t,simplexweight(t))
+					dimensionwiseorderedpolytopes.add(node)
+					face.append(x)
+		sorted_list = list(dimensionwiseorderedpolytopes)
+		sorted_list.sort(key = letter_cmp_key)
+		polytopaltree1.append(sorted_list)
+		vertices = face
+	
+	for i in range(len(polytopaltree1)):
+		polytopaltree.append(polytopaltree1[len(polytopaltree1)-i-1])
+	global bettieTable
 	bettieTable = []
 	fastpersistance(polytopaltree)
 	dimcount=[0 for i in range(0,dim)]
@@ -1974,13 +2124,33 @@ for d,dim,s,n in zip(datatype,dimension,datasize,noiseper):
 		dimcount[x[0]]= dimcount[x[0]]+1
 	for i in range(0,dim):
 		print("Dimemnsion ",i," Betti Count ::",dimcount[i])
-	writebetties(table,outputfilename)
-	break
-	
-
-
-
-
+	writebetties(table,filename+"outputbetties1new.txt")
+	#break
+weight = [20,20,20]#,0.7,0.8,0.9,1.0]
+#filenames = ["teratope500.txtsimplices10000E0.100000B1.000000homologydim3.txtsimplicesindex.txt","teratope500.txtsimplices10000E0.200000B1.000000homologydim3.txtsimplicesindex.txt","teratope500.txtsimplices10000E0.300000B1.000000homologydim3.txtsimplicesindex.txt","teratope500.txtsimplices10000E0.400000B1.000000homologydim3.txtsimplicesindex.txt","teratope500.txtsimplices10000E0.500000B1.000000homologydim3.txtsimplicesindex.txt","teratope500.txtsimplices10000E0.600000B1.000000homologydim3.txtsimplicesindex.txt"]
+filenames = ["camel1000.csvsimplices10000E0.100000B1.000000homologydim2.txtcamel1000simplicesindex.txt","lion1000.csvsimplices10000E0.100000B1.000000homologydim2.txtlion1000simplicesindex.txt","torus3d1000.csvsimplices10000E1.000000B1.000000homologydim2.txttorus3d1000simplicesindex.txt"]
+files = ["camel1000.csv","lion1000.csv","torus3d1000.csv"]
+#for i in range(3): 
+	#computeComplexPH(files[int(i)],filenames[int(i)],weight[int(i)])
+computeComplexPH("lungDataReduced10000.txt","simplicesindex.txt")
+'''
+with open("outputbetties1.txt", "r") as f:
+	reader = csv.reader(f)
+	for line in reader:
+		k=[]
+		k0=1
+		for x in line:
+			if(k0==1):
+				k.append(int(x))
+			else:
+				k.append(float(x))
+			k0=0
+		#if(k[0]>0):
+		#	if(k[2]/k[1]>1.5):
+		#		bettieTable.append(tuple(k))
+		#else:
+		bettieTable.append(tuple(k))
+print("betti Table Count::",len(bettieTable))
 dimcount=[0 for i in range(0,dim)]
 
 table = [[] for i in range(0,dim)]
@@ -1991,7 +2161,7 @@ for x in bettieTable:
 for i in range(0,dim):
 	print("Dimemnsion ",i," Betti Count ::",dimcount[i])
 
-colors = ["Orange","yellow","Green",'Blue','Red','Black',"pink"]
+colors = ["red","green","Green",'Blue','Red','Black',"pink"]
 
 for d in range(0,dim):
 	birth = [x[1] for x in table[d]]
@@ -2012,6 +2182,7 @@ for d in range(0,dim):
 	[counter.append(j+i) for j in range(0,len(table[d]))]
 	i=i+len(table[d])
 	plt.plot([df["birth"], df["death"]], [counter, counter],color=colors[d],linestyle='solid',linewidth=1)
+plt.ylim(0,15000)
+plt.savefig("outputPIpolytopalalpha.pdf", bbox_inches = 'tight',pad_inches = 0)
 plt.show()
-plt.savefig("outputPIpolytopal.pdf", bbox_inches = 'tight',pad_inches = 0)
-	
+'''
