@@ -950,10 +950,10 @@ polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
 				pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> convexFaces;
 				convexFaces = generateConvexFaces(convexFaces,hull,projectionData1,hull[0],pp1);
 				convexFaces = generateConvexFaces(convexFaces,hull,projectionData2,oppositeSimplex.first,pp2);
+				auto projectionData = projectonCenteroidSphere(poly.coordinates);
 				convexFaces = informedConvexization(convexFaces, hull,projectionData);
 				if(level ==0)
 					convexFaces= pruneMaximalParts(convexFaces,convexPolytopes1);
-				auto projectionData = projectonCenteroidSphere(poly.coordinates);
 				convexFaces = transformCF(convexFaces,poly.polytopeIndices); // local Indices
 				int i=0;
 				for(auto poly :convexFaces.first){
