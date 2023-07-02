@@ -75,7 +75,7 @@ short validate(std::vector<short> &simp, std::vector<std::vector<double>> &input
 	int temp;
 	for (point = 0; point < inputData.size(); point++)
 	{
-		if (simplex.find(point) == simplex.end() && utils::vectors_distance(center, inputData[point]) < radius)
+		if (simplex.find(point) == simplex.end() && utils::vectors_distance(center, inputData[point]) < 0.99999 * radius)
 		{
 			simplex.erase(triangulation_point);
 			temp = bruteforce(simplex, inputData, omission);
@@ -158,6 +158,7 @@ std::vector<short> first_simplex(std::vector<std::vector<double>> &inputData, st
 		}
 		simplex_set.erase(i);
 	}
+	std::sort(simplex.begin(),simplex.end());
 	return simplex;
 }
 
@@ -167,6 +168,7 @@ int expand_d_minus_1_simplex(std::vector<short> &simp_vector, short &omission, s
 	auto normal = solvePlaneEquation(simp_vector, inputData);
 	auto p1 = utils::circumCenter(simp, inputData);
 	auto direction = (dot(normal, inputData[omission]) > 1);
+	std::vector<double> radius_vec=std::vector<double>(inputData.size(),0);
 	double largest_radius = 0, curr_radius = 0, smallest_radius = std::numeric_limits<double>::max(), ring_radius = utils::vectors_distance(p1, inputData[simp_vector[0]]);
 	int triangulation_point = -1;
 	bool flag = true;
@@ -178,6 +180,7 @@ int expand_d_minus_1_simplex(std::vector<short> &simp_vector, short &omission, s
 			{
 				simp.insert(new_point);
 				curr_radius = sqrt(utils::circumRadius(simp, &distMatrix));
+				radius_vec[new_point]=curr_radius;
 				simp.erase(new_point);
 				if (largest_radius < curr_radius)
 				{
@@ -190,6 +193,7 @@ int expand_d_minus_1_simplex(std::vector<short> &simp_vector, short &omission, s
 			{
 				simp.insert(new_point);
 				curr_radius = sqrt(utils::circumRadius(simp, &distMatrix));
+				radius_vec[new_point]=curr_radius;
 				simp.erase(new_point);
 				if (smallest_radius > curr_radius)
 				{
@@ -198,6 +202,12 @@ int expand_d_minus_1_simplex(std::vector<short> &simp_vector, short &omission, s
 				}
 			}
 		}
+	}
+	int count=0;
+	if (triangulation_point != -1) {
+    	double triangulation_radius = radius_vec[triangulation_point];
+    	count = std::count_if(radius_vec.begin(), radius_vec.end(), [triangulation_radius](double val) {return std::abs(1 - val / triangulation_radius) <= 0.0000000001;});
+		if (count!=1) return -1;
 	}
 	return triangulation_point;
 }
@@ -214,13 +224,13 @@ incrementalPipe<nodeType>::incrementalPipe()
 template <typename nodeType>
 void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 {
-	std::vector<std::vector<double>> inputData = inData.inputData;
+	std::vector<std::vector<double>>& inputData = inData.inputData;
 	unsigned dim = inputData[0].size();
 	unsigned data_set_size = inputData.size();
 	std::vector<unsigned> search_space;
 	for (unsigned i = 0; i < inputData.size(); i++)
 		search_space.push_back(i);
-	std::vector<std::vector<double>> distMatrix = inData.distMatrix;
+	std::vector<std::vector<double>>& distMatrix = inData.distMatrix;
 	std::vector<std::vector<short>> dsimplexes = {first_simplex(inputData, distMatrix)};
 	std::map<std::vector<short>, short> inner_d_1_shell;
 	for (auto &new_simplex : dsimplexes)
@@ -229,7 +239,6 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		{
 			std::vector<short> key = new_simplex;
 			key.erase(std::find(key.begin(), key.end(), i));
-			std::sort(key.begin(), key.end());
 			inner_d_1_shell.emplace(key,i);
 		}
 	}
