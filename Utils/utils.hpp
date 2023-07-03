@@ -130,6 +130,8 @@ class utils {
 	static double determinantOfMatrix(std::vector<std::vector<double>> mat, int n);
 	static double circumRadius(std::set<unsigned>& simplex,std::vector<std::vector<double>>* distMatrix);
 	static std::vector<double> circumCenter(std::set<unsigned>& simplex,std::vector<std::vector<double>>& inputData);
+	static double circumRadius(std::vector<short>& simplex,std::vector<std::vector<double>>* distMatrix);
+	static std::vector<double> circumCenter(std::vector<short>& simplex,std::vector<std::vector<double>>& inputData);
 	static std::vector<std::vector<double>> inverseOfMatrix(std::vector<std::vector<double>> mat, int n);
 	static std::vector<std::vector<double>> matrixMultiplication(std::vector<std::vector<double>> matA, std::vector<std::vector<double>> matB);
     static std::pair<std::vector<double>,std::vector<std::vector<double>>> nullSpaceOfMatrix(std::set<unsigned> simplex, std::vector<std::vector<double>> inputdata,std::vector<double> &cc, double radius,bool lowerdimension=false);

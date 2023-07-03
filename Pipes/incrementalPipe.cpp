@@ -45,20 +45,17 @@ int bruteforce(std::set<unsigned> simplex, std::vector<std::vector<double>> &inp
 	return -1;
 }
 
-std::vector<double> solvePlaneEquation(const std::vector<short> &points, const std::vector<std::vector<double>> &inputData)
+template <typename nodeType>
+std::vector<double> incrementalPipe<nodeType>::solvePlaneEquation(const std::vector<short> &points)
 {
 	int numPoints = points.size();
-	int numDimensions = inputData[0].size();
-	Eigen::MatrixXd A(numPoints, numDimensions + 1);
+	Eigen::MatrixXd A(numPoints, this->dim + 1);
 	Eigen::VectorXd B(numPoints);
-
 	for (int i = 0; i < numPoints; i++)
 	{
-		for (int j = 0; j < numDimensions; j++)
-		{
-			A(i, j) = inputData[points[i]][j];
-		}
-		A(i, numDimensions) = 0;
+		for (int j = 0; j < this->dim; j++)
+			A(i, j) = this->inputData[points[i]][j];
+		A(i, this->dim) = 0;
 		B(i) = 1;
 	}
 	Eigen::VectorXd coefficients = A.completeOrthogonalDecomposition().solve(B);
@@ -89,125 +86,97 @@ short validate(std::vector<short> &simp, std::vector<std::vector<double>> &input
 	return triangulation_point;
 }
 
-std::vector<short> first_simplex(std::vector<std::vector<double>> &inputData, std::vector<std::vector<double>> &distMatrix)
+template <typename nodeType>
+std::vector<short> incrementalPipe<nodeType>::first_simplex(std::vector<std::vector<double>> &inputData, std::vector<std::vector<double>> &distMatrix)
 {
-	unsigned dim = inputData[0].size();
-	unsigned n_pts = inputData.size();
 	std::vector<short> simplex;
-	if (n_pts < dim + 2)
+	if (this->data_set_size < this->dim + 2)
 		return simplex;
-	while (simplex.size() != dim)
-	{
-		double curr_min_x = std::numeric_limits<double>::max();
-		short min_x_idx = std::numeric_limits<short>::max();
-		for (unsigned i = 0; i < n_pts; i++)
-		{
-			if (std::find(simplex.begin(), simplex.end(), i) != simplex.end())
-				continue;
-			double x = inputData[i][0];
-			if (x < curr_min_x)
-			{
-				curr_min_x = x;
-				min_x_idx = i;
-			}
-		}
-		simplex.push_back(min_x_idx);
-	}
+	for(short i=0;i < this->dim;i++)
+		simplex.push_back(i);
 	std::vector<short> outer_points;
-	auto equation = solvePlaneEquation(simplex, inputData);
-	for (unsigned i = 0; i < n_pts; i++)
-		if (std::find(simplex.begin(), simplex.end(), i) == simplex.end() && dot(inputData[i], equation) > 1)
-			outer_points.push_back(i);
 	auto rng = std::default_random_engine{};
-	while (outer_points.size() != 0)
+	do
 	{
 		for (auto i : outer_points)
 			simplex.push_back(i);
 		std::shuffle(simplex.begin(), simplex.end(), rng);
 		outer_points.clear();
-		while (simplex.size() != dim)
+		while (simplex.size() != this->dim)
 			simplex.pop_back();
-		auto equation = solvePlaneEquation(simplex, inputData);
-		for (unsigned i = 0; i < n_pts; i++)
+		auto equation = solvePlaneEquation(simplex);
+		for (unsigned i = 0; i < this->data_set_size; i++)
 			if (std::find(simplex.begin(), simplex.end(), i) == simplex.end() && dot(inputData[i], equation) > 1)
 				outer_points.push_back(i);
-	}
+	} while (!outer_points.empty());
 	double radius = 0;
 	std::vector<double> center;
-	std::set<unsigned> simplex_set(simplex.begin(), simplex.end());
-	for (unsigned i = 0; i < inputData.size(); i++)
+	for (short i = 0; i < inputData.size(); i++)
 	{
-		if (simplex_set.find(i) != simplex_set.end())
+		if (std::find(simplex.begin(), simplex.end(), i) != simplex.end())
 			continue;
-		simplex_set.insert(i);
-		center = utils::circumCenter(simplex_set, inputData);
+		simplex.push_back(i);
+		center = utils::circumCenter(simplex, inputData);
 		radius = utils::vectors_distance(center, inputData[i]);
 		unsigned point;
 		for (point = 0; point < inputData.size(); point++)
 		{
-			if (simplex_set.find(point) != simplex_set.end())
-				continue;
-			if (utils::vectors_distance(center, inputData[point]) < radius)
+			if (std::find(simplex.begin(), simplex.end(), point) == simplex.end() && utils::vectors_distance(center, inputData[point]) < radius)
 				break;
 		}
 		if (point == inputData.size())
-		{
-			simplex_set.clear();
-			simplex.push_back(i);
 			break;
-		}
-		simplex_set.erase(i);
+		simplex.pop_back();
 	}
-	std::sort(simplex.begin(),simplex.end());
+	std::sort(simplex.begin(), simplex.end());
 	return simplex;
 }
 
-int expand_d_minus_1_simplex(std::vector<short> &simp_vector, short &omission, std::vector<std::vector<double>> &inputData, std::vector<unsigned> &search_space, std::vector<std::vector<double>> &distMatrix)
+template <typename nodeType>
+int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, short &omission)
 {
-	std::set<unsigned> simp(simp_vector.begin(), simp_vector.end());
-	auto normal = solvePlaneEquation(simp_vector, inputData);
-	auto p1 = utils::circumCenter(simp, inputData);
-	auto direction = (dot(normal, inputData[omission]) > 1);
-	std::vector<double> radius_vec=std::vector<double>(inputData.size(),0);
-	double largest_radius = 0, curr_radius = 0, smallest_radius = std::numeric_limits<double>::max(), ring_radius = utils::vectors_distance(p1, inputData[simp_vector[0]]);
+	auto normal = solvePlaneEquation(simp);
+	auto p1 = utils::circumCenter(simp, this->inputData);
+	bool direction = (dot(normal, this->inputData[omission]) > 1);
+	std::vector<double> radius_vec(this->data_set_size, 0);
+	double largest_radius = 0, smallest_radius = std::numeric_limits<double>::max(), ring_radius = utils::vectors_distance(p1, inputData[simp[0]]);
 	int triangulation_point = -1;
 	bool flag = true;
-	for (auto &new_point : search_space)
+	for (auto &new_point : this->search_space)
 	{
-		if (simp.find(new_point) == simp.end() && new_point != omission && (direction ^ dot(normal, inputData[new_point]) > 1))
+		if (std::find(simp.begin(), simp.end(), new_point) == simp.end() && new_point != omission && (direction ^ dot(normal, inputData[new_point]) > 1))
 		{
+			simp.push_back(new_point);
 			if (ring_radius > utils::vectors_distance(p1, inputData[new_point]))
 			{
-				simp.insert(new_point);
-				curr_radius = sqrt(utils::circumRadius(simp, &distMatrix));
-				radius_vec[new_point]=curr_radius;
-				simp.erase(new_point);
-				if (largest_radius < curr_radius)
+				radius_vec[new_point] = sqrt(utils::circumRadius(simp, &(this->distMatrix)));
+				if (largest_radius < radius_vec[new_point])
 				{
-					largest_radius = curr_radius;
+					largest_radius = radius_vec[new_point];
 					triangulation_point = new_point;
 					flag = false;
 				}
 			}
 			else if (flag)
 			{
-				simp.insert(new_point);
-				curr_radius = sqrt(utils::circumRadius(simp, &distMatrix));
-				radius_vec[new_point]=curr_radius;
-				simp.erase(new_point);
-				if (smallest_radius > curr_radius)
+				radius_vec[new_point] = sqrt(utils::circumRadius(simp, &(this->distMatrix)));
+				if (smallest_radius > radius_vec[new_point])
 				{
-					smallest_radius = curr_radius;
+					smallest_radius = radius_vec[new_point];
 					triangulation_point = new_point;
 				}
 			}
+			simp.pop_back();
 		}
 	}
-	int count=0;
-	if (triangulation_point != -1) {
-    	double triangulation_radius = radius_vec[triangulation_point];
-    	count = std::count_if(radius_vec.begin(), radius_vec.end(), [triangulation_radius](double val) {return std::abs(1 - val / triangulation_radius) <= 0.0000000001;});
-		if (count!=1) return -1;
+	int count = 0;
+	if (triangulation_point != -1)
+	{
+		double triangulation_radius = radius_vec[triangulation_point];
+		count = std::count_if(radius_vec.begin(), radius_vec.end(), [triangulation_radius](double val)
+							  { return std::abs(1 - val / triangulation_radius) <= 0.0000000001; });
+		if (count != 1)
+			return -1;
 	}
 	return triangulation_point;
 }
@@ -224,48 +193,48 @@ incrementalPipe<nodeType>::incrementalPipe()
 template <typename nodeType>
 void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 {
-	std::vector<std::vector<double>>& inputData = inData.inputData;
-	unsigned dim = inputData[0].size();
-	unsigned data_set_size = inputData.size();
-	std::vector<unsigned> search_space;
+	this->inputData = inData.inputData;
+	this->distMatrix = inData.distMatrix;
+	this->dim = inputData[0].size();
+	this->data_set_size = inputData.size();
 	for (unsigned i = 0; i < inputData.size(); i++)
-		search_space.push_back(i);
-	std::vector<std::vector<double>>& distMatrix = inData.distMatrix;
+		this->search_space.push_back(i);
 	std::vector<std::vector<short>> dsimplexes = {first_simplex(inputData, distMatrix)};
-	std::map<std::vector<short>, short> inner_d_1_shell;
 	for (auto &new_simplex : dsimplexes)
 	{
 		for (auto &i : new_simplex)
 		{
 			std::vector<short> key = new_simplex;
 			key.erase(std::find(key.begin(), key.end(), i));
-			inner_d_1_shell.emplace(key,i);
+			this->inner_d_1_shell.emplace(key, i);
 		}
 	}
 	short new_point;
-	while (inner_d_1_shell.size() != 0)
+	while (!this->inner_d_1_shell.empty())
 	{
-		auto iter = *(inner_d_1_shell.begin());
-		std::vector<short> first_vector = iter.first;
-		inner_d_1_shell.erase(inner_d_1_shell.begin());
-		new_point = expand_d_minus_1_simplex(first_vector, iter.second, inputData, search_space, distMatrix);
+		auto iter = this->inner_d_1_shell.begin();
+		std::vector<short> first_vector = iter->first;
+		short omission = iter->second;
+		this->inner_d_1_shell.erase(iter);
+		new_point = expand_d_minus_1_simplex(first_vector, omission);
 		if (new_point == -1)
 			continue;
-		new_point =	validate(first_vector, inputData, new_point, iter.second);
+		new_point = validate(first_vector, this->inputData, new_point, omission);
 		if (new_point == -1)
 			continue;
 		std::sort(first_vector.begin(), first_vector.end());
 		dsimplexes.push_back(first_vector);
-		for (auto i=first_vector.begin();i!=first_vector.end();i++)
+		for (auto i = first_vector.begin(); i != first_vector.end(); i++)
 		{
-			if(*i==new_point) continue;
+			if (*i == new_point)
+				continue;
 			std::vector<short> key = first_vector;
 			key.erase(std::find(key.begin(), key.end(), *i));
-			if (!inner_d_1_shell.emplace(key, *i).second)
-				inner_d_1_shell.erase(key); // Create new shell and remove collided faces max only 2 can occur.
+			if (!this->inner_d_1_shell.emplace(key, *i).second)
+				this->inner_d_1_shell.erase(key); // Create new shell and remove collided faces max only 2 can occur.
 		}
 	}
-	std::cout<<dsimplexes.size()<<std::endl;
+	std::cout << dsimplexes.size() << std::endl;
 	return;
 }
 
