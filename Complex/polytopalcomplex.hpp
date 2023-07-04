@@ -1,14 +1,14 @@
-#include<iostream>
+#include <iostream>
 #include <CGAL/config.h>
 #include <CGAL/Epick_d.h>
 #include <CGAL/Delaunay_triangulation.h>
 #include "../Utils/utils.hpp"
 #include "../Utils/readInput.hpp"
 #include <bits/stdc++.h>
-#include<omp.h>
+#include <omp.h>
 #include <unordered_map>
-#include <setoper.h>
-#include <cdd.h>
+#include <cddlib/setoper.h>
+#include <cddlib/cdd.h>
 
 using namespace std;
 
@@ -104,4 +104,7 @@ class polytopalComplex{
 		std::vector<polytope> getCofacetModified(set<unsigned> cofaceIndices,int codim);
 		vector<vector<double>> inverseStereoGraphicProjection(vector<vector<double>> &);
 		vector<vector<double>> rescaledataandcenteraroundorigin(vector<vector<double>> &data);
+		vector<vector<double>> HyperplaneToVertexRepresentation(std::vector<std::vector<double>>& A,std::vector<double> &B);
+		template <typename T>
+		dd_MatrixPtr dd_PolyFile2Matrix_2(std::vector<std::vector<T>> A, std::vector<T> B, dd_ErrorType *Error);
 };

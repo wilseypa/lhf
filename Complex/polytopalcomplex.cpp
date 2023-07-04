@@ -1,5 +1,7 @@
-#include<iostream>
+#include <iostream>
+#include <numeric>
 #include "polytopalcomplex.hpp"
+
 
 using namespace std;
 
@@ -872,12 +874,128 @@ double polytopalComplex :: getmaxWeight(vector<vector<unsigned>> &delparts){
 			maxWeight = getweight(x);
 	return maxWeight;
 }
+
+double average(std::vector<double> const& v){
+    if(v.empty()){
+        return 0;
+    }
+
+    auto const count = static_cast<double>(v.size());
+    return std::reduce(v.begin(), v.end()) / count;
+}
+template <typename T>
+dd_MatrixPtr polytopalComplex :: dd_PolyFile2Matrix_2(std::vector<std::vector<T>> A, std::vector<T> B, dd_ErrorType *Error)
+{
+  (*Error) = dd_NoError;
+  dd_MatrixPtr M = NULL;
+  long m_input, i;
+  long d_input, j;
+  dd_RepresentationType rep;
+  mytype value;
+  int newformat = dd_FALSE, successful = dd_FALSE, linearity = dd_FALSE;
+  char comsave[dd_linelenmax], numbtype[dd_wordlenmax];
+  dd_NumberType NT;
+
+  dd_init(value);
+  rep = dd_Inequality;
+  newformat = dd_TRUE;
+  linearity = dd_TRUE;
+
+  // numbtype from typedata
+  strcpy(numbtype, "integer");
+  NT = dd_GetNumberType(numbtype);
+  if (NT == dd_Unknown)
+  {
+    (*Error) = dd_ImproperInputFormat;
+    goto _L99;
+  }
+  m_input = A.size();
+  d_input = A[0].size() + 1;
+  M = dd_CreateMatrix(m_input, d_input);
+  M->representation = rep;
+  M->numbtype = NT;
+
+  for (i = 0; i < m_input; i++)
+  {
+    dd_set_d(value, B[i]);
+    dd_set(M->matrix[i][0], value);
+    for (j = 1; j < d_input; j++)
+    {
+      dd_set_d(value, A[i][j - 1]);
+      dd_set(M->matrix[i][j], value);
+    }
+  }
+  //dd_WriteMatrix(stdout, M);
+  successful = dd_TRUE;
+  strcpy(comsave, "linearity 1 3");
+  
+_L99:;
+  dd_clear(value);
+  return M;
+}
+
+vector<vector<double>> polytopalComplex :: HyperplaneToVertexRepresentation(std::vector<std::vector<double>> &AA,std::vector<double>& BB){
+  std::vector<std::vector<double>> v;
+  dd_ErrorType err = dd_NoError;
+  dd_MatrixPtr M = NULL;
+  dd_set_global_constants();
+
+  /* Read data from stdin */
+  M = dd_PolyFile2Matrix_2(AA, BB, &err);
+
+  dd_PolyhedraPtr poly;
+  dd_MatrixPtr A;
+  /* compute the second representation */
+  poly = dd_DDMatrix2Poly(M, &err);
+
+  switch (poly->representation)
+  {
+  case dd_Inequality:
+    A = dd_CopyGenerators(poly);
+    for (int i = 0; i < A->rowsize; i++)
+    {
+      std::vector<double> temp;
+      for (int j = 0; j < A->colsize; j++)
+        temp.push_back(*(A->matrix[i][j]));
+      v.push_back(temp);
+    }
+    // dd_WriteMatrix(stdout,A);
+    dd_FreeMatrix(A);
+    break;
+
+  case dd_Generator:
+    fprintf(stdout, "The second representation:\n");
+    A = dd_CopyInequalities(poly);
+    dd_WriteMatrix(stdout, A);
+    dd_FreeMatrix(A);
+    break;
+
+  default:
+    break;
+  }
+
+  return v;
+}
+
 polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
+   std::vector<std::vector<double>> A = {{1.235, 0.235, 0.3246}, {0.235, 1.125, 0.678}, {0.124124, 0.1252346, 1.657}, {-1.01, -1.231, -1.234523}, {-1.3426, -1.125, 0.658}, {0.568, -1.12321, -1.235423}, {-1.2365, 0.345423, -1.568}, {-1.124, -1.34562, -1.24}};
+   std::vector<double> B = {0.26, 0.1243, 0.346, 1.124, 1.123, 1.6758, 1.123, 2.325};
+   auto v = HyperplaneToVertexRepresentation(A,B);
+
+	for (int i = 0; i < v.size(); i++)
+	{
+		for (int j = 0; j < v[0].size(); j++)
+			std::cout<<v[i][j]<<" ";
+		std::cout<<std::endl;
+	}
+	std::cout<<std::endl;
+
+	auto simplices = qdelaunay_o(inputData);
+	auto mdata = inverseStereoGraphicProjection(inputData);
 	populateDistanceMatrix(inputData);
 	dim = inputData[0].size();
 	dataSize =inputData.size();
-	auto simplices = qdelaunay_o(inputData);
-	auto mdata = inverseStereoGraphicProjection(inputData);
+	/*
 	std::cout<<"Simplice Size ::"<<simplices.size()<<"\n";
 	for(auto y : simplices){
 		bool t = true;
@@ -890,13 +1008,24 @@ polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
 					std::cout<<","<<yy<<flush;
 		std::cout<<"\n0,0,0\n"<<flush;
 	}
+	*/
 	auto convexPolytopes1 = iterativeconvexization(simplices,inputData[0].size(),inputData);
 	std::cout<<"convexPoly  Size ::"<<convexPolytopes1.second.size()<<"\n";
 	int i=0;
+	/*
 	for(auto poly :convexPolytopes1.second){
-		for(auto x : convexPolytopes1.first[i++])
+		std::vector<std::vector<double>> facetData;
+		for(auto x : convexPolytopes1.first[i]){
 			std::cout<<x<<" ";
-		std::cout<<"\n";
+		}
+		std::cout<<"\n\n\n";
+		for(auto x : convexPolytopes1.first[i]){
+			facetData.push_back(mdata[x]);
+			for(auto kk : mdata[x])
+				std::cout<<kk<<",";
+			std::cout<<"\n";
+		}
+		std::cout<<"\n\n\n";
 		for(auto y : poly){
 			bool t = true;
 			for(auto yy:y)
@@ -908,9 +1037,25 @@ polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
 					std::cout<<","<<yy<<flush;
 			std::cout<<"\n"<<flush;
 		}
+		auto HP = utils::computePCA(facetData,3);
+		std::cout<<"\n\n\n";
+		for(auto x : HP.first){
+			for(auto kk : x)
+				std::cout<<kk<<",";
+			std::cout<<"\n";
+		}
+		std::cout<<"\n\n\n";
+		for(auto x : HP.second){
+			for(auto kk : x)
+				std::cout<<kk<<",";
+			std::cout<<"\n";
+		}
+		int kkk;
+		std::cin>>kkk;
 		std::cout<<"\n0,0,0\n"<<flush;
+		i++;
 	}
-	
+	*/
 	
 	set<polytope,cmp> polys;
 	polytope temp;
@@ -962,8 +1107,19 @@ polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
 					temp.polytopeIndices = p;
 					vector<vector<double>> coords;
 					for(auto x:temp.polytopeIndices)
-						coords.push_back(inputData[x]);
-					temp.coordinates = utils:: computePCA(coords,coords[0].size()-1).first;
+						coords.push_back(mdata[x]);
+					auto pca = utils:: computePCA(coords,coords[0].size());
+					temp.coordinates = pca.first;
+					std::cout<<"\nEigen Vectors::\n";
+					for(auto xy : pca.second){
+						for(auto kk : xy)
+							std::cout<<kk<<",";
+						std::cout<<"\n";
+					}
+					std::cout<<"\nMean::\n";
+					for(auto xxx: utils::transpose(coords))
+						std::cout<<average(xxx)<<",";
+					std::cout<<"\n";
 					for(auto x :temp.polytopeIndices)
 					   std::cout<<x<<" ";
 					  std::cout<<"\n";
@@ -994,7 +1150,6 @@ polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
 					}
 					cout<<"0,0,0\n";
 
-				
 					temp.weight = getmaxWeight(convexFaces.second[i]);
 					temp.cofaceIndices.insert(cofaceI);
 					auto pos = polys.find(temp);
