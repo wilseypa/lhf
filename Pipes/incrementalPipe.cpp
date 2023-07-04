@@ -5,7 +5,7 @@
 #include <random>
 
 template <typename T>
-std::vector<T> operator-(const std::vector<T> &a, const std::vector<T> &b)
+std::vector<T> operator-(const std::vector<T> &a, const std::vector<T> &b) // Vector Subtraction
 {
 	std::vector<T> temp;
 	std::transform(a.begin(), a.end(), b.begin(), std::back_inserter(temp), [](double e1, double e2)
@@ -14,7 +14,7 @@ std::vector<T> operator-(const std::vector<T> &a, const std::vector<T> &b)
 }
 
 template <typename T>
-T dot(const std::vector<T> &a, const std::vector<T> &b)
+T dot(const std::vector<T> &a, const std::vector<T> &b) //Vector Dot Product
 {
 	std::vector<T> temp;
 	std::transform(a.begin(), a.end(), b.begin(), std::back_inserter(temp), [](T e1, T e2)
@@ -22,8 +22,9 @@ T dot(const std::vector<T> &a, const std::vector<T> &b)
 	return std::accumulate(temp.begin(), temp.end(), 0.0);
 }
 
-int bruteforce(std::set<unsigned> simplex, std::vector<std::vector<double>> &inputData, short &omission)
+int bruteforce(std::vector<short> simp, std::vector<std::vector<double>> &inputData, short &omission)
 {
+	std::set<unsigned> simplex(simp.begin(),simp.end());
 	for (unsigned i = 0; i < inputData.size(); i++)
 	{
 		if (simplex.find(i) != simplex.end() || i == omission)
@@ -31,18 +32,34 @@ int bruteforce(std::set<unsigned> simplex, std::vector<std::vector<double>> &inp
 		simplex.insert(i);
 		auto center = utils::circumCenter(simplex, inputData);
 		auto radius = utils::vectors_distance(center, inputData[i]);
-		for (unsigned point = 0; point < inputData.size(); point++)
+		unsigned point;
+		for (point = 0; point < inputData.size(); point++)
 		{
-			if (simplex.find(point) != simplex.end())
-				continue;
-			if (utils::vectors_distance(center, inputData[point]) < radius)
+			if (simplex.find(point) == simplex.end() && utils::vectors_distance(center, inputData[point]) < radius)
 				break;
-			else if (point == inputData.size() - 1)
-				return i;
 		}
+		if (point == inputData.size())	return i;
 		simplex.erase(i);
 	}
 	return -1;
+}
+
+template <typename nodeType>
+short incrementalPipe<nodeType>::validate(std::vector<short>& simp, short &triangulation_point, short &omission)
+{
+	simp.push_back(triangulation_point);
+	std::vector<double> center = utils::circumCenter(simp, this->inputData);
+	double radius = utils::vectors_distance(center, this->inputData[*simp.begin()]);	
+	for (short point = 0; point < this->data_set_size; point++)
+	{
+		if (std::find(simp.begin(), simp.end(), point) == simp.end() && utils::vectors_distance(center, this->inputData[point]) < 0.99999 * radius)
+		{
+			simp.pop_back();
+			return bruteforce(simp, this->inputData, omission);
+		}
+	}
+	simp.pop_back();
+	return triangulation_point;
 }
 
 template <typename nodeType>
@@ -62,38 +79,14 @@ std::vector<double> incrementalPipe<nodeType>::solvePlaneEquation(const std::vec
 	return std::vector<double>(coefficients.data(), coefficients.data() + coefficients.size());
 }
 
-short validate(std::vector<short> &simp, std::vector<std::vector<double>> &inputData, short &triangulation_point, short &omission)
-{
-	simp.push_back(triangulation_point);
-	std::set<unsigned> simplex(simp.begin(), simp.end());
-	std::vector<double> center = utils::circumCenter(simplex, inputData);
-	double radius = utils::vectors_distance(center, inputData[*simp.begin()]);
-	unsigned point;
-	int temp;
-	for (point = 0; point < inputData.size(); point++)
-	{
-		if (simplex.find(point) == simplex.end() && utils::vectors_distance(center, inputData[point]) < 0.99999 * radius)
-		{
-			simplex.erase(triangulation_point);
-			temp = bruteforce(simplex, inputData, omission);
-			if (temp == -1)
-				return -1;
-			simp.erase(std::find(simp.begin(), simp.end(), triangulation_point));
-			simp.push_back(temp);
-			return temp;
-		}
-	}
-	return triangulation_point;
-}
-
 template <typename nodeType>
-std::vector<short> incrementalPipe<nodeType>::first_simplex(std::vector<std::vector<double>> &inputData, std::vector<std::vector<double>> &distMatrix)
+std::vector<short> incrementalPipe<nodeType>::first_simplex()
 {
 	std::vector<short> simplex;
 	if (this->data_set_size < this->dim + 2)
-		return simplex;
+		return simplex; //Not enough points
 	for(short i=0;i < this->dim;i++)
-		simplex.push_back(i);
+		simplex.push_back(i); //Pseudo Random initialization of Splitting Hyperplane
 	std::vector<short> outer_points;
 	auto rng = std::default_random_engine{};
 	do
@@ -106,27 +99,32 @@ std::vector<short> incrementalPipe<nodeType>::first_simplex(std::vector<std::vec
 			simplex.pop_back();
 		auto equation = solvePlaneEquation(simplex);
 		for (unsigned i = 0; i < this->data_set_size; i++)
-			if (std::find(simplex.begin(), simplex.end(), i) == simplex.end() && dot(inputData[i], equation) > 1)
+			if (std::find(simplex.begin(), simplex.end(), i) == simplex.end() && dot(this->inputData[i], equation) > 1)
 				outer_points.push_back(i);
-	} while (!outer_points.empty());
+	} while (!outer_points.empty()); //Converge Hyperplane to Convex Hull
 	double radius = 0;
 	std::vector<double> center;
-	for (short i = 0; i < inputData.size(); i++)
+	std::set<unsigned> simplex_set(simplex.begin(), simplex.end());
+	for (unsigned i = 0; i < this->data_set_size; i++) //BruteForce to Find last point for construction of simplex.
 	{
-		if (std::find(simplex.begin(), simplex.end(), i) != simplex.end())
+		if (simplex_set.find(i) != simplex_set.end())
 			continue;
-		simplex.push_back(i);
-		center = utils::circumCenter(simplex, inputData);
-		radius = utils::vectors_distance(center, inputData[i]);
+		simplex_set.insert(i);
+		center = utils::circumCenter(simplex_set, this->inputData);
+		radius = utils::vectors_distance(center, this->inputData[i]);
 		unsigned point;
-		for (point = 0; point < inputData.size(); point++)
+		for (point = 0; point < this->data_set_size; point++)
 		{
-			if (std::find(simplex.begin(), simplex.end(), point) == simplex.end() && utils::vectors_distance(center, inputData[point]) < radius)
+			if (simplex_set.find(point) == simplex_set.end() && utils::vectors_distance(center, this->inputData[point]) < radius)
 				break;
 		}
-		if (point == inputData.size())
+		if (point == this->data_set_size)
+		{
+			simplex_set.clear();
+			simplex.push_back(i);
 			break;
-		simplex.pop_back();
+		}
+		simplex_set.erase(i);
 	}
 	std::sort(simplex.begin(), simplex.end());
 	return simplex;
@@ -149,7 +147,7 @@ int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp
 			simp.push_back(new_point);
 			if (ring_radius > utils::vectors_distance(p1, inputData[new_point]))
 			{
-				radius_vec[new_point] = sqrt(utils::circumRadius(simp, &(this->distMatrix)));
+				radius_vec[new_point] = sqrt(utils::circumRadius(simp, this->distMatrix));
 				if (largest_radius < radius_vec[new_point])
 				{
 					largest_radius = radius_vec[new_point];
@@ -159,7 +157,7 @@ int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp
 			}
 			else if (flag)
 			{
-				radius_vec[new_point] = sqrt(utils::circumRadius(simp, &(this->distMatrix)));
+				radius_vec[new_point] = sqrt(utils::circumRadius(simp, this->distMatrix));
 				if (smallest_radius > radius_vec[new_point])
 				{
 					smallest_radius = radius_vec[new_point];
@@ -199,7 +197,7 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	this->data_set_size = inputData.size();
 	for (unsigned i = 0; i < inputData.size(); i++)
 		this->search_space.push_back(i);
-	std::vector<std::vector<short>> dsimplexes = {first_simplex(inputData, distMatrix)};
+	std::vector<std::vector<short>> dsimplexes = {first_simplex()};
 	for (auto &new_simplex : dsimplexes)
 	{
 		for (auto &i : new_simplex)
@@ -219,9 +217,10 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		new_point = expand_d_minus_1_simplex(first_vector, omission);
 		if (new_point == -1)
 			continue;
-		new_point = validate(first_vector, this->inputData, new_point, omission);
+ 		new_point = validate(first_vector, new_point, omission);
 		if (new_point == -1)
-			continue;
+			continue; 
+		first_vector.push_back(new_point);
 		std::sort(first_vector.begin(), first_vector.end());
 		dsimplexes.push_back(first_vector);
 		for (auto i = first_vector.begin(); i != first_vector.end(); i++)
