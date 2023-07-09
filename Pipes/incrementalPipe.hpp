@@ -8,8 +8,8 @@
 template <typename nodeType> 
 class incrementalPipe : public basePipe<nodeType> {
   private:
-  	std::vector<std::vector<double>> inputData;
-    std::vector<std::vector<double>> distMatrix;
+  	std::vector<std::vector<double>>& inputData;
+    std::vector<std::vector<double>>& distMatrix;
     std::map<std::vector<short>, short> inner_d_1_shell;
     std::vector<short> search_space;
     unsigned dim;
