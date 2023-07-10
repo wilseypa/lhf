@@ -3,6 +3,7 @@
 #include <limits>
 #include <omp.h>
 #include <random>
+#include <chrono>
 
 template <typename T>
 std::vector<T> operator-(const std::vector<T> &a, const std::vector<T> &b) // Vector Subtraction
@@ -89,7 +90,8 @@ std::vector<short> incrementalPipe<nodeType>::first_simplex()
 	for(short i=0;i < this->dim;i++)
 		simplex.push_back(i); //Pseudo Random initialization of Splitting Hyperplane
 	std::vector<short> outer_points;
-	auto rng = std::default_random_engine{};
+	auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+	auto rng = std::default_random_engine{seed};
 	do
 	{
 		for (auto i : outer_points)
@@ -176,10 +178,11 @@ int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp
 	{
 		double triangulation_radius = radius_vec[triangulation_point];
 		count = std::count_if(radius_vec.begin(), radius_vec.end(), [triangulation_radius](double val)
-							  { return std::abs(1 - val / triangulation_radius) <= 0.000000001; });
+							  { return std::abs(1 - (val / triangulation_radius)) <= 0.000000000001; });
 		if (count != 1){
-		std::cout<< "Coplaner" << triangulation_point;
-			return -1;}
+		std::cout<< "Cospherical " << simp << " " << triangulation_point << " with "<< count << "no of points awith radius of " << triangulation_radius <<std::endl;
+		return -1;
+		}
 	}
 	return triangulation_point;
 }
@@ -202,7 +205,7 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	this->data_set_size = inputData.size();
 	for (unsigned i = 0; i < inputData.size(); i++)
 		this->search_space.push_back(i);
-	std::set<std::vector<short>> dsimplexes = {first_simplex()};
+	std::vector<std::vector<short>> dsimplexes = {first_simplex()};
 	for (auto &new_simplex : dsimplexes)
 	{
 		for (auto &i : new_simplex)
@@ -227,7 +230,7 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 			continue;  
 		first_vector.push_back(new_point);
 		std::sort(first_vector.begin(), first_vector.end());
-		dsimplexes.insert(first_vector);
+		dsimplexes.push_back(first_vector);
 		for (auto& i: first_vector)
 		{
 			if (i == new_point)

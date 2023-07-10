@@ -523,8 +523,8 @@ double utils::circumRadius(std::vector<short> &simplex, std::vector<std::vector<
 	matACap.col(0).setConstant(1);
     matACap.row(0).setConstant(1);
     matACap(0, 0) = 0;
- 	double result = matACap.determinant();
-	result = (result > 0) ? (-matA.determinant() / (2 * result)) : std::numeric_limits<double>::max(); //Fallback to circumcenter and vectors distance method 
+ 	double result = -matA.determinant() / (2 * matACap.determinant());
+	if(result<0){ std::numeric_limits<double>::max();}
     return result;
 }
 
