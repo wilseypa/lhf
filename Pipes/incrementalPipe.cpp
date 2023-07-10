@@ -6,30 +6,6 @@
 #include <chrono>
 
 template <typename T>
-std::ostream &operator<<(std::ostream &os, const std::vector<T> &vec)
-{
-	os << "[ ";
-	for (const auto &elem : vec)
-	{
-		os << elem << ", ";
-	}
-	os << "]";
-	return os;
-}
-
-template <typename T>
-std::ostream &operator<<(std::ostream &os, const std::set<T> &set)
-{
-	os << "{ ";
-	for (const auto &elem : set)
-	{
-		os << elem << ",";
-	}
-	os << "}";
-	return os;
-}
-
-template <typename T>
 std::vector<T> operator-(const std::vector<T> &a, const std::vector<T> &b) // Vector Subtraction
 {
 	std::vector<T> temp;
