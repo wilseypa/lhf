@@ -6,6 +6,30 @@
 #include <chrono>
 
 template <typename T>
+std::ostream &operator<<(std::ostream &os, const std::vector<T> &vec)
+{
+	os << "[ ";
+	for (const auto &elem : vec)
+	{
+		os << elem << ", ";
+	}
+	os << "]";
+	return os;
+}
+
+template <typename T>
+std::ostream &operator<<(std::ostream &os, const std::set<T> &set)
+{
+	os << "{ ";
+	for (const auto &elem : set)
+	{
+		os << elem << ",";
+	}
+	os << "}";
+	return os;
+}
+
+template <typename T>
 std::vector<T> operator-(const std::vector<T> &a, const std::vector<T> &b) // Vector Subtraction
 {
 	std::vector<T> temp;
@@ -91,7 +115,7 @@ std::vector<short> incrementalPipe<nodeType>::first_simplex()
 		simplex.push_back(i); //Pseudo Random initialization of Splitting Hyperplane
 	std::vector<short> outer_points;
 	auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-	auto rng = std::default_random_engine{seed};
+	auto rng = std::default_random_engine{static_cast<std::default_random_engine::result_type>(seed)};
 	do
 	{
 		for (auto i : outer_points)
@@ -180,7 +204,7 @@ int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp
 		count = std::count_if(radius_vec.begin(), radius_vec.end(), [triangulation_radius](double val)
 							  { return std::abs(1 - (val / triangulation_radius)) <= 0.000000000001; });
 		if (count != 1){
-		std::cout<< "Cospherical " << simp << " " << triangulation_point << " with "<< count << "no of points awith radius of " << triangulation_radius <<std::endl;
+		std::cout<<"Cospherical region found"<<std::endl;
 		return -1;
 		}
 	}
