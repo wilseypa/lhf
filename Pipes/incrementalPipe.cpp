@@ -134,7 +134,7 @@ std::vector<short> incrementalPipe<nodeType>::first_simplex()
 }
 
 template <typename nodeType>
-int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, short &omission)
+int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, short &omission, std::vector<std::vector<double>>& distMatrix)
 {
 	auto normal = solvePlaneEquation(simp);
 	auto p1 = utils::circumCenter(simp, this->inputData);
@@ -153,7 +153,7 @@ int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp
 			auto temp=utils::vectors_distance(p1, inputData[new_point]);
 			if (ring_radius > temp)
 			{
-				radius_vec[new_point] = sqrt(utils::circumRadius(simp, this->distMatrix));
+				radius_vec[new_point] = sqrt(utils::circumRadius(simp, distMatrix));
 				if (largest_radius < radius_vec[new_point])
 				{
 					largest_radius = radius_vec[new_point];
@@ -163,7 +163,7 @@ int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp
 			}
 			else if (flag && 2*smallest_radius > temp) //reduce search space
 			{
-				radius_vec[new_point] = sqrt(utils::circumRadius(simp, this->distMatrix));
+				radius_vec[new_point] = sqrt(utils::circumRadius(simp, distMatrix));
 				if (smallest_radius > radius_vec[new_point])
 				{
 					smallest_radius = radius_vec[new_point];
@@ -189,7 +189,7 @@ int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp
 
 // basePipe constructor
 template <typename nodeType>
-incrementalPipe<nodeType>::incrementalPipe()  : inputData(*(new std::vector<std::vector<double>>())), distMatrix(*(new std::vector<std::vector<double>>()))
+incrementalPipe<nodeType>::incrementalPipe()  : inputData(*(new std::vector<std::vector<double>>()))
 {
 	this->pipeType = "incrementalPipe";
 	return;
@@ -200,7 +200,6 @@ template <typename nodeType>
 void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 {
 	this->inputData = inData.inputData;
-	this->distMatrix = inData.distMatrix;
 	this->dim = inputData[0].size();
 	this->data_set_size = inputData.size();
 	for (unsigned i = 0; i < inputData.size(); i++)
@@ -222,7 +221,7 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		std::vector<short> first_vector = iter->first;
 		short omission = iter->second;
 		this->inner_d_1_shell.erase(iter);
-		new_point = expand_d_minus_1_simplex(first_vector, omission);
+		new_point = expand_d_minus_1_simplex(first_vector, omission, inData.distMatrix);
 		if (new_point == -1)
 			continue;
   		new_point = validate(first_vector, new_point, omission);
