@@ -6,6 +6,31 @@
 #include <chrono>
 
 template <typename T>
+std::ostream &operator<<(std::ostream &os, const std::vector<T> &vec)
+{
+	os << "[ ";
+	for (const auto &elem : vec)
+	{
+		os << elem << ", ";
+	}
+	os << "]";
+	return os;
+}
+
+template <typename T>
+std::ostream &operator<<(std::ostream &os, const std::set<T> &set)
+{
+	os << "{ ";
+	for (const auto &elem : set)
+	{
+		os << elem << ",";
+	}
+	os << "}";
+	return os;
+}
+
+
+template <typename T>
 std::vector<T> operator-(const std::vector<T> &a, const std::vector<T> &b) // Vector Subtraction
 {
 	std::vector<T> temp;
@@ -91,7 +116,7 @@ std::vector<short> incrementalPipe<nodeType>::first_simplex()
 		simplex.push_back(i); //Pseudo Random initialization of Splitting Hyperplane
 	std::vector<short> outer_points;
 	auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-	auto rng = std::default_random_engine{static_cast<std::default_random_engine::result_type>(seed)};
+	auto rng = std::default_random_engine{};
 	do
 	{
 		for (auto i : outer_points)
@@ -131,6 +156,25 @@ std::vector<short> incrementalPipe<nodeType>::first_simplex()
 	}
 	std::sort(simplex.begin(), simplex.end());
 	return simplex;
+}
+
+template <typename nodeType>
+void incrementalPipe<nodeType>::cospherical_handler(std::vector<short> &simp, int &tp, short &omission, std::vector<std::vector<double>>& distMatrix){
+	short triangulation_point=tp;
+	auto temp=simp;
+	temp.push_back(triangulation_point);
+	std::sort(temp.begin(),temp.end());
+	for(auto i : temp)
+	{
+		if(i==omission || i==triangulation_point) continue;
+		auto new_face=temp;
+		new_face.erase(std::find(new_face.begin(),new_face.end(),i));
+		auto new_point = expand_d_minus_1_simplex(new_face,i,distMatrix);
+		if(new_point == -1) continue;
+		new_face.push_back(new_point);
+		std::sort(new_face.begin(),new_face.end());
+		this->dsimplexes.push_back(new_face);
+	}
 }
 
 template <typename nodeType>
@@ -178,10 +222,11 @@ int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp
 	{
 		double triangulation_radius = radius_vec[triangulation_point];
 		count = std::count_if(radius_vec.begin(), radius_vec.end(), [triangulation_radius](double val)
-							  { return std::abs(1 - (val / triangulation_radius)) <= 0.000000000001; });
+							  { return std::abs(1 - (val / triangulation_radius)) <= 0.0000000001; });
 		if (count != 1){
+		cospherical_handler(simp,triangulation_point,omission,distMatrix);
 		std::cout<<"Cospherical region found"<<std::endl;
-		return -1;
+		return triangulation_point;
 		}
 	}
 	return triangulation_point;
@@ -204,7 +249,7 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	this->data_set_size = inputData.size();
 	for (unsigned i = 0; i < inputData.size(); i++)
 		this->search_space.push_back(i);
-	std::vector<std::vector<short>> dsimplexes = {first_simplex()};
+	this->dsimplexes = {first_simplex()};
 	for (auto &new_simplex : dsimplexes)
 	{
 		for (auto &i : new_simplex)
@@ -229,7 +274,7 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 			continue;  
 		first_vector.push_back(new_point);
 		std::sort(first_vector.begin(), first_vector.end());
-		dsimplexes.push_back(first_vector);
+		this->dsimplexes.push_back(first_vector);
 		for (auto& i: first_vector)
 		{
 			if (i == new_point)
@@ -240,6 +285,7 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 				this->inner_d_1_shell.erase(key); // Create new shell and remove collided faces max only 2 can occur.
 		}
 	}
+	std::cout<<dsimplexes<<std::endl;
 	std::cout << dsimplexes.size() << std::endl;
 	return;
 }
