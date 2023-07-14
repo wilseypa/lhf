@@ -160,15 +160,16 @@ std::vector<short> incrementalPipe<nodeType>::first_simplex()
 
 template <typename nodeType>
 void incrementalPipe<nodeType>::cospherical_handler(std::vector<short> &simp, int &tp, short &omission, std::vector<std::vector<double>>& distMatrix){
-	short triangulation_point=tp;
+	auto triangulation_point = tp;
 	auto temp=simp;
 	temp.push_back(triangulation_point);
 	std::sort(temp.begin(),temp.end());
+	this->dsimplexes.push_back(temp);
 	for(auto i : temp)
 	{
-		if(i==omission || i==triangulation_point) continue;
 		auto new_face=temp;
 		new_face.erase(std::find(new_face.begin(),new_face.end(),i));
+		if(simp==new_face) continue;
 		auto new_point = expand_d_minus_1_simplex(new_face,i,distMatrix);
 		if(new_point == -1) continue;
 		new_face.push_back(new_point);
@@ -224,9 +225,8 @@ int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp
 		count = std::count_if(radius_vec.begin(), radius_vec.end(), [triangulation_radius](double val)
 							  { return std::abs(1 - (val / triangulation_radius)) <= 0.0000000001; });
 		if (count != 1){
-		cospherical_handler(simp,triangulation_point,omission,distMatrix);
-		std::cout<<"Cospherical region found"<<std::endl;
-		return triangulation_point;
+			cospherical_handler(simp,triangulation_point,omission,distMatrix);
+			return -1;
 		}
 	}
 	return triangulation_point;
@@ -269,9 +269,9 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		new_point = expand_d_minus_1_simplex(first_vector, omission, inData.distMatrix);
 		if (new_point == -1)
 			continue;
-  		new_point = validate(first_vector, new_point, omission);
+	   	new_point = validate(first_vector, new_point, omission);
 		if (new_point == -1)
-			continue;  
+			continue;   
 		first_vector.push_back(new_point);
 		std::sort(first_vector.begin(), first_vector.end());
 		this->dsimplexes.push_back(first_vector);
@@ -285,7 +285,6 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 				this->inner_d_1_shell.erase(key); // Create new shell and remove collided faces max only 2 can occur.
 		}
 	}
-	std::cout<<dsimplexes<<std::endl;
 	std::cout << dsimplexes.size() << std::endl;
 	return;
 }
