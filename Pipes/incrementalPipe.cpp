@@ -282,11 +282,11 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 			if (!temp.second)
 				this->inner_d_1_shell.erase(temp.first); // Create new shell and remove collided faces max only 2 can occur.
 		}
- 	if (this->inner_d_1_shell.size() > 2000000) {
+/*  	if (this->inner_d_1_shell.size() > 2000000) {
 		std::cout << "Flushing at " << dsimplexes.size() << std::endl;
 		auto eraseStart = std::next(this->inner_d_1_shell.begin(),  2000000*0.10);
 		this->inner_d_1_shell.erase(eraseStart, this->inner_d_1_shell.end());
-	}
+	} */
 	}
 	std::cout << dsimplexes.size() << std::endl;
 	return;
