@@ -164,7 +164,7 @@ void incrementalPipe<nodeType>::cospherical_handler(std::vector<short> &simp, in
 	auto temp=simp;
 	temp.push_back(triangulation_point);
 	std::sort(temp.begin(),temp.end());
-	this->dsimplexes.push_back(temp);
+	this->dsimplexes.insert(temp);
 	for(auto i : temp)
 	{
 		auto new_face=temp;
@@ -174,7 +174,7 @@ void incrementalPipe<nodeType>::cospherical_handler(std::vector<short> &simp, in
 		if(new_point == -1) continue;
 		new_face.push_back(new_point);
 		std::sort(new_face.begin(),new_face.end());
-		this->dsimplexes.push_back(new_face);
+		this->dsimplexes.insert(new_face);
 	}
 }
 
@@ -223,9 +223,9 @@ int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp
 	{
 		double triangulation_radius = radius_vec[triangulation_point];
 		count = std::count_if(radius_vec.begin(), radius_vec.end(), [triangulation_radius](double val)
-							  { return std::abs(1 - (val / triangulation_radius)) <= 0.0000000001; });
+							  { return std::abs(1 - (val / triangulation_radius)) <= 0.000000000001; });
 		if (count != 1){
-			cospherical_handler(simp,triangulation_point,omission,distMatrix);
+			//cospherical_handler(simp,triangulation_point,omission,distMatrix);
 			return -1;
 		}
 	}
@@ -269,21 +269,24 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		new_point = expand_d_minus_1_simplex(first_vector, omission, inData.distMatrix);
 		if (new_point == -1)
 			continue;
-	   	new_point = validate(first_vector, new_point, omission);
-		if (new_point == -1)
-			continue;   
 		first_vector.push_back(new_point);
 		std::sort(first_vector.begin(), first_vector.end());
-		this->dsimplexes.push_back(first_vector);
+		if(!this->dsimplexes.insert(first_vector).second) continue;
 		for (auto& i: first_vector)
 		{
 			if (i == new_point)
 				continue;
 			std::vector<short> key = first_vector;
 			key.erase(std::find(key.begin(), key.end(), i));
-			if (!this->inner_d_1_shell.emplace(key, i).second)
-				this->inner_d_1_shell.erase(key); // Create new shell and remove collided faces max only 2 can occur.
+			auto temp=this->inner_d_1_shell.emplace(key, i);
+			if (!temp.second)
+				this->inner_d_1_shell.erase(temp.first); // Create new shell and remove collided faces max only 2 can occur.
 		}
+ 	if (this->inner_d_1_shell.size() > 2000000) {
+		std::cout << "Flushing at " << dsimplexes.size() << std::endl;
+		auto eraseStart = std::next(this->inner_d_1_shell.begin(),  2000000*0.10);
+		this->inner_d_1_shell.erase(eraseStart, this->inner_d_1_shell.end());
+	}
 	}
 	std::cout << dsimplexes.size() << std::endl;
 	return;
