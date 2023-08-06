@@ -702,8 +702,6 @@ pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>>  polytopalComple
 	auto sterographicProjection = projectOnSimplexPlane(projectionData,pp,100000);
 	auto convexPolytopes = iterativeconvexization(hull,d,sterographicProjection);
 	return 	pruneMaximalParts(convexFaces,convexPolytopes);
-;
-	
 }
 vector<vector<double>> polytopalComplex ::projectpointsOnUnitdSphere(vector<vector<double>> &inputData,vector<double> &center){
 	vector<vector<double>> updatedCoordinates;
@@ -973,12 +971,52 @@ vector<vector<double>> polytopalComplex :: HyperplaneToVertexRepresentation(std:
   default:
     break;
   }
-
-  return v;
+    std::vector<std::vector<double>> vv;
+	for (int i = 0; i < v.size(); i++)
+	{   std::vector<double> v1;
+		for (int j = 1; j < v[0].size(); j++)
+			v1.push_back(-1*v[i][j]);
+		vv.push_back(v1);
+	}
+  return vv;
 }
 
+set<polytope,cmp> polytopalComplex :: approxDecomposition(set<polytope,cmp> poly){
+	int k;
+	std::cout<<"ConvexFaces1::"<<"\n";
+	for(auto x:poly){
+		int iii=0;
+		cout<<"[";
+		for(auto y: x.Deltriangulation){
+			cout<<"[";
+			int ii =0;
+			for(auto k:y){
+				if(ii==0)
+					std::cout<<k;
+				else
+					std::cout<<","<<k;
+				ii =1;
+			}
+			if(iii==x.Deltriangulation.size()-1)
+				std::cout<<"]";
+			else
+				std::cout<<"],";
+			iii =iii+1;
+		}
+		std::cout<<"]\n";
+	}
+	std::cout<<"\n";
+	std::cin>>k;
+	
+	if(poly.size()<=1)
+		return poly;
+	
+	return poly;
+}
+
+
 polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
-   std::vector<std::vector<double>> A = {{1.235, 0.235, 0.3246}, {0.235, 1.125, 0.678}, {0.124124, 0.1252346, 1.657}, {-1.01, -1.231, -1.234523}, {-1.3426, -1.125, 0.658}, {0.568, -1.12321, -1.235423}, {-1.2365, 0.345423, -1.568}, {-1.124, -1.34562, -1.24}};
+   /*std::vector<std::vector<double>> A = {{1.235, 0.235, 0.3246}, {0.235, 1.125, 0.678}, {0.124124, 0.1252346, 1.657}, {-1.01, -1.231, -1.234523}, {-1.3426, -1.125, 0.658}, {0.568, -1.12321, -1.235423}, {-1.2365, 0.345423, -1.568}, {-1.124, -1.34562, -1.24}};
    std::vector<double> B = {0.26, 0.1243, 0.346, 1.124, 1.123, 1.6758, 1.123, 2.325};
    auto v = HyperplaneToVertexRepresentation(A,B);
 
@@ -988,12 +1026,14 @@ polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
 			std::cout<<v[i][j]<<" ";
 		std::cout<<std::endl;
 	}
+	int k;
 	std::cout<<std::endl;
-
+    std::cin>>k;
+    */
 	auto simplices = qdelaunay_o(inputData);
 	auto mdata = inverseStereoGraphicProjection(inputData);
 	populateDistanceMatrix(inputData);
-	dim = inputData[0].size();
+	dim = inputData[0].size()+1;
 	dataSize =inputData.size();
 	/*
 	std::cout<<"Simplice Size ::"<<simplices.size()<<"\n";
@@ -1073,7 +1113,9 @@ polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
 		set<polytope,cmp> polys;
 		unsigned cofaceI=0;
 		cout<<"\nConvex Parts Size  :: Level ::"<<level<<" has "<<polytopalArrayList[level].size()<<" Size \n"<<flush;
-		for(auto poly:polytopalArrayList[level]){
+		auto aproxDecomp = approxDecomposition(polytopalArrayList[level]);
+		for(auto poly:aproxDecomp){
+		//for(auto poly:polytopalArrayList[level]){
 			std::cout<<poly.polytopeIndices.size()<<","<<flush;
 			if(poly.polytopeIndices.size()>poly.coordinates[0].size()+1){
 				auto originalhull = poly.Deltriangulation; //Original Indices
@@ -1095,10 +1137,13 @@ polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
 				pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> convexFaces;
 				convexFaces = generateConvexFaces(convexFaces,hull,projectionData1,hull[0],pp1);
 				convexFaces = generateConvexFaces(convexFaces,hull,projectionData2,oppositeSimplex.first,pp2);
+		
 				auto projectionData = projectonCenteroidSphere(poly.coordinates);
 				convexFaces = informedConvexization(convexFaces, hull,projectionData);
+				
 				if(level ==0)
 					convexFaces= pruneMaximalParts(convexFaces,convexPolytopes1);
+				
 				convexFaces = transformCF(convexFaces,poly.polytopeIndices); // local Indices
 				int i=0;
 				for(auto poly :convexFaces.first){

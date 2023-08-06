@@ -107,4 +107,6 @@ class polytopalComplex{
 		vector<vector<double>> HyperplaneToVertexRepresentation(std::vector<std::vector<double>>& A,std::vector<double> &B);
 		template <typename T>
 		dd_MatrixPtr dd_PolyFile2Matrix_2(std::vector<std::vector<T>> A, std::vector<T> B, dd_ErrorType *Error);
+		
+		set<polytope,cmp> approxDecomposition(set<polytope,cmp> poly);
 };
