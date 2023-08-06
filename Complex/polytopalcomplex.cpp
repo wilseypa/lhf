@@ -981,13 +981,55 @@ vector<vector<double>> polytopalComplex :: HyperplaneToVertexRepresentation(std:
   return vv;
 }
 
-set<polytope,cmp> polytopalComplex :: approxDecomposition(set<polytope,cmp> poly){
+pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> polytopalComplex :: approxDecomposition(pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> faces,vector<vector<double>> coords){
 	int k;
-	std::cout<<"ConvexFaces1::"<<"\n";
-	for(auto x:poly){
+	double approxscale=0.05;
+	
+	vector<pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>>> approxFaces1;
+	pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> processedFaces;
+	pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> unprocessedFaces=faces;
+	pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> approxFaces;
+
+	if(faces.first.size()<=1)
+		return faces;
+	int i=0;
+	while(unprocessedFaces.first.size()>0){
+		auto x = unprocessedFaces.first[0];
+		pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> Neighbors;
+		int j=0;
+		for(auto y:unprocessedFaces.first){
+			if(x!=y){
+			   if(intersection(x,y).size()>=1){
+			      Neighbors.first.push_back(y);
+			      Neighbors.second.push_back(unprocessedFaces.second[j]);
+			   }
+			}
+			j++;
+		}
+		auto mergeResults = mergeApprox(make_pair(x,unprocessedFaces.second[0]),Neighbors,approxscale,coords);
+		processedFaces.first.push_back(x);
+		processedFaces.second.push_back(unprocessedFaces.second[0]);
+		int k=0;
+		for(auto p: mergeResults.first){
+			processedFaces.first.push_back(p);
+			processedFaces.second.push_back(mergeResults.second[k]);
+			k++;
+		}
+		cout<<"Rohit"<<flush;
+		mergeResults.first.push_back(x);
+		mergeResults.second.push_back(unprocessedFaces.second[0]); 
+		approxFaces1.push_back(mergeResults);
+	    i++;
+	    cout<<"Rohit2"<<flush;
+	    unprocessedFaces = updateUnprocessed(unprocessedFaces,processedFaces);
+	}
+	for(auto poly:approxFaces1){
+	std::cout<<"ConvexFaces::"<<"\n";
+	i=0;
+	for(auto x:poly.first){
 		int iii=0;
 		cout<<"[";
-		for(auto y: x.Deltriangulation){
+		for(auto y: poly.second[i]){
 			cout<<"[";
 			int ii =0;
 			for(auto k:y){
@@ -997,21 +1039,83 @@ set<polytope,cmp> polytopalComplex :: approxDecomposition(set<polytope,cmp> poly
 					std::cout<<","<<k;
 				ii =1;
 			}
-			if(iii==x.Deltriangulation.size()-1)
+			if(iii==poly.second[i].size()-1)
 				std::cout<<"]";
 			else
 				std::cout<<"],";
 			iii =iii+1;
 		}
 		std::cout<<"]\n";
+		i++;
+	}
 	}
 	std::cout<<"\n";
 	std::cin>>k;
 	
-	if(poly.size()<=1)
-		return poly;
 	
-	return poly;
+	return approxFaces;
+}
+
+pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> polytopalComplex ::updateUnprocessed(pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> unprocessed, pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> processed){
+	pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> updatedunprocessed;
+	
+	for(int i=0;i<unprocessed.first.size();i++){
+		bool present = false;
+		for(auto k=0;k<processed.first.size();k++){
+		    if(unprocessed.first[i]==processed.first[k]){
+				present = true;
+				break;
+			}
+		}
+		if(!present){
+			updatedunprocessed.first.push_back(unprocessed.first[i]);
+			updatedunprocessed.second.push_back(unprocessed.second[i]);
+		}
+	}
+	return updatedunprocessed;
+}
+
+pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> polytopalComplex :: mergeApprox(pair<vector<unsigned>,vector<vector<unsigned>>> x,pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> Neighbors,double approxscale,vector<vector<double>> coords){
+	
+	pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> approxMerged;
+	for(auto y:x.first)
+		cout<<y<<",";
+	
+	cout<<"\n Neighbors \n";
+	for(auto k:Neighbors.first){
+		for(auto t:k){
+			cout<<t<<",";
+		}
+		cout<<"\n";
+	}
+	cout<<"\nMerge \n";
+	int i=0;
+	for(auto k:Neighbors.first){
+		auto yy = intersection(x.first,k);
+		bool merge = true;
+		for(auto y:yy){
+			for(auto t:k){
+				if(utils::vectors_distance(coords[y],coords[t])>approxscale){
+				    merge = false;
+				    break;
+				}
+			}
+		  if(!merge)
+		     break;
+		}
+		if(merge){
+		  approxMerged.first.push_back(k);
+		  approxMerged.second.push_back(Neighbors.second[i]);
+		  for(auto kk:k)
+			cout<<kk<<",";
+		}
+		cout<<"\n";
+		i++;
+	}
+	
+	int k;
+	cin>>k;
+	return approxMerged;
 }
 
 
@@ -1113,8 +1217,7 @@ polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
 		set<polytope,cmp> polys;
 		unsigned cofaceI=0;
 		cout<<"\nConvex Parts Size  :: Level ::"<<level<<" has "<<polytopalArrayList[level].size()<<" Size \n"<<flush;
-		auto aproxDecomp = approxDecomposition(polytopalArrayList[level]);
-		for(auto poly:aproxDecomp){
+		for(auto poly:polytopalArrayList[level]){
 		//for(auto poly:polytopalArrayList[level]){
 			std::cout<<poly.polytopeIndices.size()<<","<<flush;
 			if(poly.polytopeIndices.size()>poly.coordinates[0].size()+1){
@@ -1146,6 +1249,7 @@ polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
 				
 				convexFaces = transformCF(convexFaces,poly.polytopeIndices); // local Indices
 				int i=0;
+				convexFaces = approxDecomposition(convexFaces,poly.coordinates);
 				for(auto poly :convexFaces.first){
 					polytope temp;
 					set<unsigned> p(poly.begin(),poly.end());

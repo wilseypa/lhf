@@ -108,5 +108,8 @@ class polytopalComplex{
 		template <typename T>
 		dd_MatrixPtr dd_PolyFile2Matrix_2(std::vector<std::vector<T>> A, std::vector<T> B, dd_ErrorType *Error);
 		
-		set<polytope,cmp> approxDecomposition(set<polytope,cmp> poly);
+		pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> approxDecomposition(pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> Faces,vector<vector<double>> coordinates);
+		pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> mergeApprox(pair<vector<unsigned>,vector<vector<unsigned>>> x,pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> Neighbors,double approxscale,vector<vector<double>>);
+		pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> updateUnprocessed(pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> unprocessed, pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> processed);
+
 };
