@@ -980,19 +980,42 @@ vector<vector<double>> polytopalComplex :: HyperplaneToVertexRepresentation(std:
 	}
   return vv;
 }
-
+pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> polytopalComplex :: postprocess(std::vector<pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>>> toprocess){
+	pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> processedFaces;
+	vector<vector<unsigned>> polytopes;
+	vector<vector<vector<unsigned>>> polydelparts;
+	for(auto x: toprocess){
+		set<unsigned> indices;
+		vector<vector<unsigned>> delparts;
+		for(auto xx : x.first){
+			for(auto ind :xx)
+				indices.insert(ind);
+		}
+		for(auto xx : x.second){
+			for(auto delpa :xx)
+				delparts.push_back(delpa);
+		}
+		vector<unsigned> inde(indices.begin(),indices.end());
+		polytopes.push_back(inde);
+		polydelparts.push_back(delparts);
+	}
+	
+	return make_pair(polytopes,polydelparts);
+}
 pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> polytopalComplex :: approxDecomposition(pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> faces,vector<vector<double>> coords){
 	int k;
-	double approxscale=0.05;
+	double approxscale=0.25;
 	
-	vector<pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>>> approxFaces1;
-	pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> processedFaces;
-	pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> unprocessedFaces=faces;
+	pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> unprocessedFaces=sortFaces(faces);
 	pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> approxFaces;
 
 	if(faces.first.size()<=1)
 		return faces;
 	int i=0;
+	while(true){
+	i=0;
+	pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> processedFaces;
+	vector<pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>>> approxFaces1;
 	while(unprocessedFaces.first.size()>0){
 		auto x = unprocessedFaces.first[0];
 		pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> Neighbors;
@@ -1022,14 +1045,25 @@ pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> polytopalComplex
 	    i++;
 	    cout<<"Rohit2"<<flush;
 	    unprocessedFaces = updateUnprocessed(unprocessedFaces,processedFaces);
+	    approxFaces = postprocess(approxFaces1);
+
 	}
-	for(auto poly:approxFaces1){
+	int l;
+	std::cout<<"\n"<<processedFaces.first.size()<<" "<<approxFaces.first.size()<<"\n";
+	std::cin>>l;
+	if(processedFaces.first.size() == approxFaces.first.size())
+	   break;
+	else{
+		unprocessedFaces = sortFaces(approxFaces);
+	}
+	}
+	
 	std::cout<<"ConvexFaces::"<<"\n";
 	i=0;
-	for(auto x:poly.first){
+	for(auto x:approxFaces.first){
 		int iii=0;
 		cout<<"[";
-		for(auto y: poly.second[i]){
+		for(auto y: approxFaces.second[i]){
 			cout<<"[";
 			int ii =0;
 			for(auto k:y){
@@ -1039,7 +1073,7 @@ pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> polytopalComplex
 					std::cout<<","<<k;
 				ii =1;
 			}
-			if(iii==poly.second[i].size()-1)
+			if(iii==approxFaces.second[i].size()-1)
 				std::cout<<"]";
 			else
 				std::cout<<"],";
@@ -1047,7 +1081,6 @@ pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> polytopalComplex
 		}
 		std::cout<<"]\n";
 		i++;
-	}
 	}
 	std::cout<<"\n";
 	std::cin>>k;
@@ -1093,17 +1126,32 @@ pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> polytopalComplex
 	for(auto k:Neighbors.first){
 		auto yy = intersection(x.first,k);
 		bool merge = true;
-		for(auto y:yy){
-			for(auto t:k){
-				if(utils::vectors_distance(coords[y],coords[t])>approxscale){
-				    merge = false;
+		std::cout<<"\n"<<yy.size()<<" "<<k.size()<<" Intersection"<<"\n";
+		for(auto t:k){
+			    bool atleastone = false;
+				for(auto y:yy){
+				std::cout<<"\nDistance : "<<utils::vectors_distance(coords[y],coords[t])<<"\n Polytop\n";
+				for(auto l:coords[y]){
+					cout<<l<<",";
+				}
+				cout<<"\n Neighbor";
+				for(auto l:coords[t]){
+					cout<<l<<",";
+				}
+				cout<<"\n";
+				
+				if(utils::vectors_distance(coords[y],coords[t])<approxscale){
+				    atleastone = true;
 				    break;
 				}
 			}
-		  if(!merge)
-		     break;
+			if(!atleastone){
+				merge = false;
+				break;
+			}
 		}
 		if(merge){
+		std::cout<<"\nValid::";
 		  approxMerged.first.push_back(k);
 		  approxMerged.second.push_back(Neighbors.second[i]);
 		  for(auto kk:k)
@@ -1114,7 +1162,7 @@ pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> polytopalComplex
 	}
 	
 	int k;
-	cin>>k;
+	//cin>>k;
 	return approxMerged;
 }
 
@@ -1249,7 +1297,7 @@ polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
 				
 				convexFaces = transformCF(convexFaces,poly.polytopeIndices); // local Indices
 				int i=0;
-				convexFaces = approxDecomposition(convexFaces,poly.coordinates);
+				convexFaces = approxDecomposition(convexFaces,inputData);
 				for(auto poly :convexFaces.first){
 					polytope temp;
 					set<unsigned> p(poly.begin(),poly.end());

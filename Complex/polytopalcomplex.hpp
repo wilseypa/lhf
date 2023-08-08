@@ -111,5 +111,6 @@ class polytopalComplex{
 		pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> approxDecomposition(pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> Faces,vector<vector<double>> coordinates);
 		pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> mergeApprox(pair<vector<unsigned>,vector<vector<unsigned>>> x,pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> Neighbors,double approxscale,vector<vector<double>>);
 		pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> updateUnprocessed(pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> unprocessed, pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> processed);
+		pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> postprocess(std::vector<pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>>> toprocess);
 
 };
