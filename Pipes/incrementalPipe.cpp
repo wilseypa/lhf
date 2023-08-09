@@ -63,27 +63,22 @@ std::vector<short> incrementalPipe<nodeType>::first_simplex()
 	} while (!outer_points.empty()); // Converge Hyperplane to Convex Hull
 	double radius = 0;
 	std::vector<double> center;
-	std::set<unsigned> simplex_set(simplex.begin(), simplex.end());
-	for (unsigned i = 0; i < this->data_set_size; i++) // BruteForce to Find last point for construction of simplex.
+	for (short i = 0; i < this->data_set_size; i++) // BruteForce to Find last point for construction of simplex.
 	{
-		if (simplex_set.find(i) != simplex_set.end())
+		if (std::find(simplex.begin(),simplex.end(),i)!=simplex.end())
 			continue;
-		simplex_set.insert(i);
-		center = utils::circumCenter(simplex_set, this->inputData);
+		simplex.push_back(i);
+		center = utils::circumCenter(simplex, this->inputData);
 		radius = utils::vectors_distance(center, this->inputData[i]);
-		unsigned point;
+		short point;
 		for (point = 0; point < this->data_set_size; point++)
 		{
-			if (simplex_set.find(point) == simplex_set.end() && utils::vectors_distance(center, this->inputData[point]) < radius)
+			if (std::find(simplex.begin(),simplex.end(),point)==simplex.end() && utils::vectors_distance(center, this->inputData[point]) < radius)
 				break;
 		}
 		if (point == this->data_set_size)
-		{
-			simplex_set.clear();
-			simplex.push_back(i);
 			break;
-		}
-		simplex_set.erase(i);
+		simplex.pop_back();
 	}
 	std::sort(simplex.begin(), simplex.end());
 	return simplex;
