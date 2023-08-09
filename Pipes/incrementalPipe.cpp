@@ -6,39 +6,22 @@
 #include <chrono>
 
 template <typename T>
-std::vector<T> operator-(const std::vector<T> &a, const std::vector<T> &b) // Vector Subtraction
-{
-	std::vector<T> temp;
-	std::transform(a.begin(), a.end(), b.begin(), std::back_inserter(temp), [](double e1, double e2)
-				   { return (e1 - e2); });
-	return temp;
-}
+T dot(const std::vector<T> &a, const std::vector<T> &b) { return std::inner_product(a.begin(), a.end(), b.begin(), static_cast<T>(0)); } // Dot product of two vectors
 
-template <typename T>
-T dot(const std::vector<T> &a, const std::vector<T> &b) // Vector Dot Product
-{
-	std::vector<T> temp;
-	std::transform(a.begin(), a.end(), b.begin(), std::back_inserter(temp), [](T e1, T e2)
-				   { return (e1 * e2); });
-	return std::accumulate(temp.begin(), temp.end(), 0.0);
-}
-
+// Solution to equation of a hyperplane
 template <typename nodeType>
-std::vector<double> incrementalPipe<nodeType>::solvePlaneEquation(const std::vector<short> &points) // Solution to equation of a hyperplane
+std::vector<double> incrementalPipe<nodeType>::solvePlaneEquation(const std::vector<short> &points)
 {
 	int numPoints = points.size();
-	Eigen::MatrixXd A(numPoints, this->dim + 1);
-	;
+	Eigen::MatrixXd A(numPoints, numPoints);
 	for (int i = 0; i < numPoints; i++)
-	{
-		for (int j = 0; j < this->dim; j++)
-			A(i, j) = this->inputData[points[i]][j];
-	}
-	A.col(this->dim).setConstant(0);
+		for (int j = 0; j < numPoints; j++)
+			A(i, j) = inputData[points[i]][j];
 	Eigen::VectorXd coefficients = A.completeOrthogonalDecomposition().solve(Eigen::VectorXd::Ones(numPoints));
 	return std::vector<double>(coefficients.data(), coefficients.data() + coefficients.size());
 }
 
+// Compute the seed simplex for initialization of algorithm
 template <typename nodeType>
 std::vector<short> incrementalPipe<nodeType>::first_simplex()
 {
@@ -65,7 +48,7 @@ std::vector<short> incrementalPipe<nodeType>::first_simplex()
 	std::vector<double> center;
 	for (short i = 0; i < this->data_set_size; i++) // BruteForce to Find last point for construction of simplex.
 	{
-		if (std::find(simplex.begin(),simplex.end(),i)!=simplex.end())
+		if (std::find(simplex.begin(), simplex.end(), i) != simplex.end())
 			continue;
 		simplex.push_back(i);
 		center = utils::circumCenter(simplex, this->inputData);
@@ -73,7 +56,7 @@ std::vector<short> incrementalPipe<nodeType>::first_simplex()
 		short point;
 		for (point = 0; point < this->data_set_size; point++)
 		{
-			if (std::find(simplex.begin(),simplex.end(),point)==simplex.end() && utils::vectors_distance(center, this->inputData[point]) < radius)
+			if (std::find(simplex.begin(), simplex.end(), point) == simplex.end() && utils::vectors_distance(center, this->inputData[point]) < radius)
 				break;
 		}
 		if (point == this->data_set_size)
@@ -84,6 +67,7 @@ std::vector<short> incrementalPipe<nodeType>::first_simplex()
 	return simplex;
 }
 
+// Perform DFS walk on the cospherical region
 template <typename nodeType>
 void incrementalPipe<nodeType>::cospherical_handler(std::vector<short> &simp, int &tp, short &omission, std::vector<std::vector<double>> &distMatrix)
 {
@@ -107,6 +91,7 @@ void incrementalPipe<nodeType>::cospherical_handler(std::vector<short> &simp, in
 	}
 }
 
+// Compute the P_newpoint for provided Facet, P_context Pair
 template <typename nodeType>
 int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, short &omission, std::vector<std::vector<double>> &distMatrix)
 {
@@ -162,14 +147,6 @@ int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp
 	return triangulation_point;
 }
 
-// basePipe constructor
-template <typename nodeType>
-incrementalPipe<nodeType>::incrementalPipe() : inputData(*(new std::vector<std::vector<double>>()))
-{
-	this->pipeType = "incrementalPipe";
-	return;
-}
-
 // runPipe -> Run the configured functions of this pipeline segment
 template <typename nodeType>
 void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
@@ -215,6 +192,14 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		}
 	}
 	std::cout << dsimplexes.size() << std::endl;
+	return;
+}
+
+// basePipe constructor
+template <typename nodeType>
+incrementalPipe<nodeType>::incrementalPipe() : inputData(*(new std::vector<std::vector<double>>()))
+{
+	this->pipeType = "incrementalPipe";
 	return;
 }
 
