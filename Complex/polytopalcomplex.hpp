@@ -69,7 +69,7 @@ class polytopalComplex{
 		vector<vector<double>> getbettiTable(){
 			return bettiTable;
 		}
-		polytopalComplex(vector<vector<double>> &);
+		polytopalComplex(vector<vector<double>> &,double);
 		std::vector<std::vector<unsigned>> qdelaunay_o(std::vector<std::vector<double>> &);
 		void populateDistanceMatrix(std::vector<std::vector<double>> &);
 		double getweight(vector<unsigned>);
@@ -108,9 +108,10 @@ class polytopalComplex{
 		template <typename T>
 		dd_MatrixPtr dd_PolyFile2Matrix_2(std::vector<std::vector<T>> A, std::vector<T> B, dd_ErrorType *Error);
 		
-		pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> approxDecomposition(pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> Faces,vector<vector<double>> coordinates);
+		pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> approxDecomposition(pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> Faces,vector<vector<double>> coordinates,int,double);
 		pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> mergeApprox(pair<vector<unsigned>,vector<vector<unsigned>>> x,pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> Neighbors,double approxscale,vector<vector<double>>);
 		pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> updateUnprocessed(pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> unprocessed, pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> processed);
 		pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> postprocess(std::vector<pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>>> toprocess);
-
+		pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> flattened(pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> faces,vector<vector<double>> coords,int dim);
+		void persistenceMatrix();
 };

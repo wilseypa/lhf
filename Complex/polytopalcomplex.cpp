@@ -962,7 +962,7 @@ vector<vector<double>> polytopalComplex :: HyperplaneToVertexRepresentation(std:
     break;
 
   case dd_Generator:
-    fprintf(stdout, "The second representation:\n");
+    //fprintf(stdout, "The second representation:\n");
     A = dd_CopyInequalities(poly);
     dd_WriteMatrix(stdout, A);
     dd_FreeMatrix(A);
@@ -1002,10 +1002,83 @@ pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> polytopalComplex
 	
 	return make_pair(polytopes,polydelparts);
 }
-pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> polytopalComplex :: approxDecomposition(pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> faces,vector<vector<double>> coords){
-	int k;
-	double approxscale=0.25;
+
+
+pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> polytopalComplex ::  flattened(pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> faces,vector<vector<double>> coords,int dim){
+	pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> flatten;
+    vector<vector<unsigned>> minimal_facets;
+    
+    
+	for(auto x: faces.first){
+		for(auto y:x){
+				cout<<y<<",";
+		}
+		cout<<"\n";
+	}
 	
+    set<unsigned> vertices;	
+    int i=0,j=0;
+	for( auto x :faces.first){
+		set<unsigned> boundary;	
+		cout<<"\nnextface::\n";		
+		for(auto xx : x){
+			vector<int> count;
+			cout<<"\nxx::"<<xx;
+			for(int j=i+1; j <faces.first.size();j++){
+				for(auto yk : faces.second[j])
+					for(auto yy : yk){
+						if(xx==yy){
+							count.push_back(j);
+					}
+				}
+			}
+			cout<<count.size()<<"ROhit\n";
+			if(count.size() ==1){
+				boundary.insert(xx);
+				vertices.insert(xx);
+			}
+			if(count.size()>=2){
+			   set<int> unique;
+			   for(auto x:count)
+					unique.insert(x);
+				if(unique.size()>=2)
+				{
+					boundary.insert(xx);
+					vertices.insert(xx);
+				}
+			}
+		}
+		vector<unsigned> bound(boundary.begin(),boundary.end());
+		minimal_facets.push_back(bound);
+	}
+	vector<unsigned> vert(vertices.begin(),vertices.end());
+	vector<vector<double>> data;
+	for(auto x: vert)
+		data.push_back(coords[x]);
+    auto simplices = qdelaunay_o(data);
+	set<unsigned> hull;
+	for(auto x:simplices){
+		for(auto k:x){
+			hull.insert(vert[k]);
+		}
+	}
+	vector<unsigned> hullbound(hull.begin(),hull.end());
+	minimal_facets.push_back(hullbound);
+
+	for(auto x: minimal_facets){
+		for(auto y:x){
+			cout<<y<<" ";
+		}
+		cout<<"\n";
+	}
+	int k;
+	cin>>k;
+	return flatten;
+}
+
+
+pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> polytopalComplex :: approxDecomposition(pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> faces,vector<vector<double>> coords,int dim, double approxscale){
+	int k;
 	pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> unprocessedFaces=sortFaces(faces);
 	pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> approxFaces;
 
@@ -1022,7 +1095,7 @@ pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> polytopalComplex
 		int j=0;
 		for(auto y:unprocessedFaces.first){
 			if(x!=y){
-			   if(intersection(x,y).size()>=1){
+			   if(intersection(x,y).size()>=dim){
 			      Neighbors.first.push_back(y);
 			      Neighbors.second.push_back(unprocessedFaces.second[j]);
 			   }
@@ -1038,21 +1111,18 @@ pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> polytopalComplex
 			processedFaces.second.push_back(mergeResults.second[k]);
 			k++;
 		}
-		cout<<"Rohit"<<flush;
 		mergeResults.first.push_back(x);
 		mergeResults.second.push_back(unprocessedFaces.second[0]); 
 		approxFaces1.push_back(mergeResults);
 	    i++;
-	    cout<<"Rohit2"<<flush;
 	    unprocessedFaces = updateUnprocessed(unprocessedFaces,processedFaces);
 	    approxFaces = postprocess(approxFaces1);
 
 	}
-	int l;
-	std::cout<<"\n"<<processedFaces.first.size()<<" "<<approxFaces.first.size()<<"\n";
-	std::cin>>l;
-	if(processedFaces.first.size() == approxFaces.first.size())
+	if(processedFaces.first.size() == approxFaces.first.size()){
+	   std::cout<<"Reduction:: "<<approxFaces.first.size()<<"\n";
 	   break;
+   }
 	else{
 		unprocessedFaces = sortFaces(approxFaces);
 	}
@@ -1086,7 +1156,9 @@ pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> polytopalComplex
 	std::cin>>k;
 	
 	
+	//return flattened(approxFaces,coords,dim);
 	return approxFaces;
+
 }
 
 pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> polytopalComplex ::updateUnprocessed(pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> unprocessed, pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> processed){
@@ -1167,7 +1239,7 @@ pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> polytopalComplex
 }
 
 
-polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
+polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData,double approxfactor){
    /*std::vector<std::vector<double>> A = {{1.235, 0.235, 0.3246}, {0.235, 1.125, 0.678}, {0.124124, 0.1252346, 1.657}, {-1.01, -1.231, -1.234523}, {-1.3426, -1.125, 0.658}, {0.568, -1.12321, -1.235423}, {-1.2365, 0.345423, -1.568}, {-1.124, -1.34562, -1.24}};
    std::vector<double> B = {0.26, 0.1243, 0.346, 1.124, 1.123, 1.6758, 1.123, 2.325};
    auto v = HyperplaneToVertexRepresentation(A,B);
@@ -1183,6 +1255,7 @@ polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
     std::cin>>k;
     */
 	auto simplices = qdelaunay_o(inputData);
+	std::cout<<"Delaunay  Size ::"<<simplices.size()<<"\n";
 	auto mdata = inverseStereoGraphicProjection(inputData);
 	populateDistanceMatrix(inputData);
 	dim = inputData[0].size()+1;
@@ -1297,7 +1370,7 @@ polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
 				
 				convexFaces = transformCF(convexFaces,poly.polytopeIndices); // local Indices
 				int i=0;
-				convexFaces = approxDecomposition(convexFaces,inputData);
+				convexFaces = approxDecomposition(convexFaces,inputData,dim-level-1,approxfactor);
 				for(auto poly :convexFaces.first){
 					polytope temp;
 					set<unsigned> p(poly.begin(),poly.end());
@@ -1389,7 +1462,7 @@ polytopalComplex :: polytopalComplex(vector<vector<double>> &inputData){
 		}
 		polytopalArrayList.push_back(polys);
 		level++;
-		if(level == dim-1)
+		if(level+1 == dim-1)
 			break;
 	}
 	set<polytope,cmp> polysE;
@@ -1543,6 +1616,66 @@ set<polytope>  polytopalComplex :: generateFaces(int d){
 	return faces;
 
 }
+
+
+void polytopalComplex :: persistenceMatrix(){
+	
+	for(auto level = 3;level>=0;level--){
+	     cout<<"\n"<<polytopalArrayList[level].size()<<"\n";
+	}
+	int level = 3;
+	for(int i=0;i<2;i++){
+		vector<vector<int>> matrix(polytopalArrayList[level-i].size(), vector<int>(polytopalArrayList[level-1-i].size(),0));
+		int k=polytopalArrayList[level-i].size()-1;
+		for(auto x : polytopalArrayList[level-i]){
+			for(auto y :x.cofaceIndices)
+				matrix[k][y] = 1;
+			k--;	
+		}
+		for(int k =0; k<polytopalArrayList[level-1-i].size();k++){
+repeat:
+			int pivot = 0;
+			for(int c = 0;c<matrix.size();c++)
+				if(matrix[c][k]==1)
+				   pivot = c;
+			for(int kk = k-1; kk>=0;kk--){
+				bool reduce = false;
+				if(matrix[pivot][kk]==1){
+					reduce = true;
+					for(int p = pivot+1;p<matrix.size();p++)
+					    if(matrix[p][kk]==1){
+							reduce =false;
+							break;
+						}
+				}
+				if(reduce){
+					for(int pp = 0;pp<matrix.size();pp++){
+						matrix[pp][k] = (matrix[pp][k] + matrix[pp][kk])%2;
+					}
+				goto repeat;
+				}
+			}
+		}
+		cout<<"here"<<flush;
+		int pr=0,pc=0;
+		for(pc = 0;pc<matrix[0].size();pc++){
+			int row = -1;
+			for(pr =0; pr<matrix.size();pr++)
+				if(matrix[pr][pc]==1)
+					row = pr;
+			if(row != -1){
+				 auto it1 = next(polytopalArrayList[level-i].begin(), matrix.size()-row-1);
+				 auto it2 = next(polytopalArrayList[level-i-1].begin(), matrix[0].size()-pc-1);
+				if((*it2).weight != (*it1).weight){
+					cout<<"\nbetties "<<(*it1).weight <<" "<<(*it2).weight;
+				}
+			}	 
+		}
+		
+	}
+}
+
+
 /*
 std::vector<polytope> polytopalComplex :: persistenceByDim(std::vector<polytope> pivots,int d){
 	typename std::vector<polytope>::iterator it = pivots.begin();
