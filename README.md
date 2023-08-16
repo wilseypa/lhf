@@ -14,13 +14,6 @@ Additional pipelines have been created for preprocessing, approximations of the 
 
 - OpenMPI (if build / run for distributed)
 
-- libeigen3-dev
-
-- libgmp-dev
-
-- libmpfr-dev
-
-- libboost-dev
 ---
 			  
 ### COMPILING 
