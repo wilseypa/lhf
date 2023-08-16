@@ -13,8 +13,8 @@ class pipePacket {
   public:
 	std::vector<bettiBoundaryTableEntry> bettiTable;
 	std::string ident;
-	pipePacket<nodeType>(const std::string &, const double, const int);
-	pipePacket<nodeType>(std::map<std::string, std::string>, const std::string&);
+	pipePacket(const std::string &, const double, const int);
+	pipePacket(std::map<std::string, std::string>, const std::string&);
 	std::string stats;
 	std::string runLog;
   

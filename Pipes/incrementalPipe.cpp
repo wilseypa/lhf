@@ -4,6 +4,8 @@
 #include <omp.h>
 #include <random>
 #include <chrono>
+#include <execution>
+//#define PARALLEL
 
 template <typename T>
 T dot(const std::vector<T> &a, const std::vector<T> &b) { return std::inner_product(a.begin(), a.end(), b.begin(), static_cast<T>(0)); } // Dot product of two vectors
@@ -147,6 +149,30 @@ int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp
 	return triangulation_point;
 }
 
+void reduce(std::set<std::vector<short>> &outer_dsimplexes, std::vector<std::pair<std::vector<short>, short>> &inner_d_1_shell, std::set<std::vector<short>> &dsimplexes)
+{
+	std::map<std::vector<short>, short> outer_d_1_shell;
+	for (auto &new_simplex : outer_dsimplexes)
+	{
+		// dsimplexes.insert(new_simplex);
+		for (short i = 0; i < new_simplex.size(); i++)
+		{
+			std::vector<short> key = new_simplex;
+			key.erase(key.begin() + i);
+			auto it = outer_d_1_shell.try_emplace(std::move(key), new_simplex[i]);
+			if (!it.second)
+				outer_d_1_shell.erase(it.first); // Create new shell and remove collided faces max only 2 can occur.
+		}
+	}
+	outer_dsimplexes.clear();
+	std::for_each(std::execution::par_unseq, inner_d_1_shell.begin(), inner_d_1_shell.end(), [&](const auto &simp)
+				  { outer_d_1_shell.erase(simp.first); }); // Remove faces from previous iteration
+	inner_d_1_shell.clear();
+	inner_d_1_shell.reserve(outer_d_1_shell.size());
+	std::move(outer_d_1_shell.begin(), outer_d_1_shell.end(), std::back_inserter(inner_d_1_shell));
+	return;
+}
+
 // runPipe -> Run the configured functions of this pipeline segment
 template <typename nodeType>
 void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
@@ -157,40 +183,76 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	for (unsigned i = 0; i < inputData.size(); i++)
 		this->search_space.push_back(i);
 	this->dsimplexes = {first_simplex()};
-	for (auto &new_simplex : dsimplexes)
-	{
-		for (auto &i : new_simplex)
-		{
-			std::vector<short> key = new_simplex;
-			key.erase(std::find(key.begin(), key.end(), i));
-			this->inner_d_1_shell.emplace(key, i);
-		}
-	}
 	short new_point;
-	while (!this->inner_d_1_shell.empty())
+#ifdef PARALLEL
 	{
-		auto iter = this->inner_d_1_shell.begin();
-		std::vector<short> first_vector = iter->first;
-		short omission = iter->second;
-		this->inner_d_1_shell.erase(iter);
-		new_point = expand_d_minus_1_simplex(first_vector, omission, inData.distMatrix);
-		if (new_point == -1)
-			continue;
-		first_vector.push_back(new_point);
-		std::sort(first_vector.begin(), first_vector.end());
-		if (!this->dsimplexes.insert(first_vector).second)
-			continue;
-		for (auto &i : first_vector)
+		std::vector<std::pair<std::vector<short>, short>> inner_d_1_shell;
+		std::set<std::vector<short>> outer_dsimplexes;
+		for (auto &new_simplex : dsimplexes)
 		{
-			if (i == new_point)
-				continue;
-			std::vector<short> key = first_vector;
-			key.erase(std::find(key.begin(), key.end(), i));
-			auto temp = this->inner_d_1_shell.emplace(key, i);
-			if (!temp.second)
-				this->inner_d_1_shell.erase(temp.first); // Create new shell and remove collided faces max only 2 can occur.
+			for (auto &i : new_simplex)
+			{
+				std::vector<short> key = new_simplex;
+				key.erase(std::find(key.begin(), key.end(), i));
+				inner_d_1_shell.push_back(std::make_pair(key, i));
+			}
+		}
+		while (inner_d_1_shell.size() != 0)
+		{
+#pragma omp parallel for private(new_point)
+			for (int i = 0; i < inner_d_1_shell.size(); i++)
+			{
+				auto iter = inner_d_1_shell[i];
+				new_point = expand_d_minus_1_simplex(iter.first, iter.second, inData.distMatrix);
+				if (new_point == -1)
+					continue;
+				iter.first.push_back(new_point);
+				std::sort(iter.first.begin(), iter.first.end());
+				if (outer_dsimplexes.find(iter.first) == outer_dsimplexes.end())
+#pragma omp critical
+					outer_dsimplexes.insert(iter.first);
+			}
+			std::cout << "Intermediate dsimplex size " << outer_dsimplexes.size() << std::endl;
+			reduce(outer_dsimplexes, inner_d_1_shell, this->dsimplexes);
 		}
 	}
+#else
+	{
+		for (auto &new_simplex : dsimplexes)
+		{
+			for (auto &i : new_simplex)
+			{
+				std::vector<short> key = new_simplex;
+				key.erase(std::find(key.begin(), key.end(), i));
+				this->inner_d_1_shell.emplace(key, i);
+			}
+		}
+		while (!this->inner_d_1_shell.empty())
+		{
+			auto iter = this->inner_d_1_shell.begin();
+			std::vector<short> first_vector = iter->first;
+			short omission = iter->second;
+			this->inner_d_1_shell.erase(iter);
+			new_point = expand_d_minus_1_simplex(first_vector, omission, inData.distMatrix);
+			if (new_point == -1)
+				continue;
+			first_vector.push_back(new_point);
+			std::sort(first_vector.begin(), first_vector.end());
+			if (!this->dsimplexes.insert(first_vector).second)
+				continue;
+			for (auto &i : first_vector)
+			{
+				if (i == new_point)
+					continue;
+				std::vector<short> key = first_vector;
+				key.erase(std::find(key.begin(), key.end(), i));
+				auto temp = this->inner_d_1_shell.emplace(key, i);
+				if (!temp.second)
+					this->inner_d_1_shell.erase(temp.first); // Create new shell and remove collided faces max only 2 can occur.
+			}
+		}
+	}
+#endif
 	std::cout << dsimplexes.size() << std::endl;
 	return;
 }
