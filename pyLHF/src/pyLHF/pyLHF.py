@@ -5,13 +5,12 @@ import persim
 import numpy as np
 import matplotlib.pyplot as plt
 
-from LHF import LHF
-from LHF.OutputAnalysis import persistenceDiagram, heatmap, barcodeDiagram, bettiCurve
 
-from LHF.DataGeneration import dataGen as dg
-from LHF.DataGeneration import objGen as og
+import LHF
 
 pis = []
+
+
 
 
 
@@ -33,16 +32,57 @@ for i in range(0, 1):
 
 
     #Initialize the LHF Library  
-    pyLHF = LHF.LHF()
+    pyLHF = LHF.pipeline()
 
     #Set debug mode to true, configure other arguments (optional)
-    pyLHF.args["debug"] = "1"
-    pyLHF.args["mode"] = "reduced"
-    pyLHF.args["clusters"] = 200
-    pyLHF.args["dimensions"] = 2
+    pyLHF.config["debug"] = "1"
+    pyLHF.config["mode"] = "reduced"
+    pyLHF.config["clusters"] = 200
+    pyLHF.config["dimensions"] = 2
     
     #Generate a square of points and make cuts using new dataGen library
-    #square = dg.genFilledCube(dim=2)
+    cube = LHF.DataGeneration.genFilledCube(dim=3)
+    
+    #Cut into a filled sphere
+    #d = dg.buildObj('_x[0]**2 + _x[1]**2 + _x[2]**2 <= 1', cube)
+    
+    #Spiral Example
+    #d = dg.buildObj('_x[0]**2 + _x[1]**2 + _x[2]**2 <= 1', cube)
+    #d = dg.buildObj('(_x[0]-0.7*math.cos(_x[2]/.25))**2 + (_x[1]-0.7*math.sin(_x[2]/.25))**2 <= 0.9', d)
+    #d = dg.buildObj('(_x[0]**2)+(_x[1]**2) >= 0.1', d)
+    
+    #Square Spiral Example
+    #d = dg.buildObj('(_x[0]-0.7*math.cos(_x[2]/.25))**2 + (_x[1]-0.7*math.sin(_x[2]/.25))**2 <= 0.9', cube)
+    #d = dg.buildObj('(_x[0]**2)+(_x[1]**2) >= 0.1', d)
+    
+    #Half bowl with sphere
+    #d = dg.buildObj('(_x[2] < 0 and ( _x[0]**2 + _x[1]**2 + (_x[2]+.25)**2 <= 1 and _x[0]**2 + _x[1]**2 + (_x[2]+.25)**2 >= 0.55)) or \
+    #                (_x[0]**2 + _x[1]**2 + (_x[2]-.5)**2 <=0.35 and _x[0]**2 + _x[1]**2 + (_x[2]-.5)**2 >=0.15)', cube)
+    
+    
+    #Mushroom/stamp
+    #d = dg.buildObj('(_x[2] <= 0.05 and ( _x[0]**2 + _x[1]**2 + (_x[2]+.25)**2 <= 1 and (_x[0]**2 + _x[1]**2 + (_x[2]+.25)**2 >= 0.55 or (abs(_x[2]) <=0.05 and _x[0]**2 + _x[1]**2 <= 1)))) or \
+    #                (_x[0]**2 + _x[1]**2 + (_x[2]-.5)**2 <=0.35 and _x[0]**2 + _x[1]**2 + (_x[2]-.5)**2 >=0.15)', cube)
+    
+    #Spiral tube
+    d = LHF.DataGeneration.dataGen.buildObj('(_x[0]-.5*math.cos(_x[2]/.2))**2 + (_x[1]-.5*math.sin(_x[2]/.15))**2 <= 1.0 and \
+                    (_x[0]-.5*math.cos(_x[2]/.2))**2 + (_x[1]-.5*math.sin(_x[2]/.15))**2 >= 0.1', cube)
+    
+    #Cut a torus
+    #d = dg.buildObj('(_x[0]**2 + _x[1]**2)**.5 + _x[2]**2 <= 0.5', cube)
+    
+    #Cut a half hole through the center of the sphere
+    #d = dg.buildObj('_x[0] > 0 or _x[1]**2 + _x[2]**2 >= 0.05', d)
+    
+    #Cut a void in the sphere
+    #d = dg.buildObj('_x[0]**2 +_x[1]**2 + _x[2]**2 >=0.7 or (abs(_x[0]) < 0.05)', d)
+    
+    
+    #Attempt to cut a spiral
+    #d = dg.buildObj('(_x[0]-0.5*math.cos(_x[2]/.25))**2 + (_x[1]-0.5*math.sin(_x[2]/.25))**2 <= 0.9 and \
+    #                (_x[0]-0.5*math.cos(_x[2]/.05))**2 + (_x[1]-0.5*math.sin(_x[2]/.05))**2 >= 0.6', d)
+    
+    
     
     #d = dg.buildObj('(_x[0]**2) + _x[1]**2 <= 0.8', square)
     #d = dg.buildObj('\
@@ -52,9 +92,11 @@ for i in range(0, 1):
     
     
     #Fish example
-    d = og.butterflyCurve(3000, 2)
+    #d = og.butterflyCurve(3000, 2)
     np.savetxt('./pointCloud.csv',d,delimiter=',')
-    plot(d)
+    #plot(d)
+    
+    exit(0)
     
     #Run PH and get the full bettiTable, pipePacket object
     boundpis, ppkt, elapsed = pyLHF.runPH(d)
