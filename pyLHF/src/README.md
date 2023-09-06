@@ -37,7 +37,8 @@ to view the class documentation of both the python interface and the LHF cpp lib
 
 ### Run PH on input data
 
-```import lhf
+```
+   import lhf
    import tadasets
 
    data = tadasets.dsphere(n=50, d=5, r=1, noise=0.1) 
@@ -52,7 +53,8 @@ to view the class documentation of both the python interface and the LHF cpp lib
 
 ### Plot the output in several ways
 
-```import lhf
+```
+   import lhf
    import tadasets
    import numpy as np
 
@@ -71,7 +73,8 @@ to view the class documentation of both the python interface and the LHF cpp lib
 
 ### Run Partitioned Persistent Homology
 
-```mport lhf
+```
+   import lhf
    import tadasets
 
    data = tadasets.dsphere(n=50, d=5, r=1, noise=0.1) 
@@ -89,7 +92,8 @@ to view the class documentation of both the python interface and the LHF cpp lib
 
 ### Run PH on Weighted Alpha Complex
 
-```import lhf
+```
+   import lhf
    import tadasets
 
    data = tadasets.dsphere(n=50, d=5, r=1, noise=0.1) 
