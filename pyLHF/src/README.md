@@ -41,7 +41,7 @@ to view the class documentation of both the python interface and the LHF cpp lib
    import tadasets
 
    data = tadasets.dsphere(n=50, d=5, r=1, noise=0.1) 
-   pyLHF = lhf.pipeline()
+   pyLHF = lhf.createPipeline()
 
    #Set LHF args
    pyLHF.config["epsilon"] = 1.0
@@ -57,7 +57,7 @@ to view the class documentation of both the python interface and the LHF cpp lib
    import numpy as np
 
    data = tadasets.dsphere(n=50, d=5, r=1, noise=0.1) 
-   pyLHF = lhf.pipeline()
+   pyLHF = lhf.createPipeline()
 
    boundaryPis, pipePacket, elapsed = pyLHF.runPH(data)
 
@@ -75,7 +75,7 @@ to view the class documentation of both the python interface and the LHF cpp lib
    import tadasets
 
    data = tadasets.dsphere(n=50, d=5, r=1, noise=0.1) 
-   pyLHF = lhf.pipeline()
+   pyLHF = lhf.createPipeline()
 
    #Set LHF args
    pyLHF.config["epsilon"] = 1.0
@@ -93,7 +93,7 @@ to view the class documentation of both the python interface and the LHF cpp lib
    import tadasets
 
    data = tadasets.dsphere(n=50, d=5, r=1, noise=0.1) 
-   pyLHF = lhf.pipeline()
+   pyLHF = lhf.createPipeline()
 
    #Set LHF args
    pyLHF.config["epsilon"] = 1.0

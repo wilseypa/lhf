@@ -51,7 +51,7 @@ class pipePacket(ctypes.Structure):
         ("ident", ctypes.c_char_p)                          # char* ident
         ]
 
-class pipeline:
+class createPipeline:
     """
     This class represents building a pipeline using the LHF library.
 

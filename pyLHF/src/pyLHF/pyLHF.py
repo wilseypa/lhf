@@ -32,7 +32,7 @@ for i in range(0, 1):
 
 
     #Initialize the LHF Library  
-    pyLHF = lhf.pipeline()
+    pyLHF = lhf.createPipeline()
 
     #Set debug mode to true, configure other arguments (optional)
     pyLHF.config["debug"] = "1"
