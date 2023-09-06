@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-import LHF
+import lhf
 
 pis = []
 
@@ -32,7 +32,7 @@ for i in range(0, 1):
 
 
     #Initialize the LHF Library  
-    pyLHF = LHF.pipeline()
+    pyLHF = lhf.pipeline()
 
     #Set debug mode to true, configure other arguments (optional)
     pyLHF.config["debug"] = "1"
@@ -41,7 +41,7 @@ for i in range(0, 1):
     pyLHF.config["dimensions"] = 2
     
     #Generate a square of points and make cuts using new dataGen library
-    cube = LHF.DataGeneration.genFilledCube(dim=3)
+    cube = lhf.DataGeneration.genFilledCube(dim=3)
     
     #Cut into a filled sphere
     #d = dg.buildObj('_x[0]**2 + _x[1]**2 + _x[2]**2 <= 1', cube)
@@ -65,7 +65,7 @@ for i in range(0, 1):
     #                (_x[0]**2 + _x[1]**2 + (_x[2]-.5)**2 <=0.35 and _x[0]**2 + _x[1]**2 + (_x[2]-.5)**2 >=0.15)', cube)
     
     #Spiral tube
-    d = LHF.DataGeneration.dataGen.buildObj('(_x[0]-.5*math.cos(_x[2]/.2))**2 + (_x[1]-.5*math.sin(_x[2]/.15))**2 <= 1.0 and \
+    d = lhf.DataGeneration.buildObj('(_x[0]-.5*math.cos(_x[2]/.2))**2 + (_x[1]-.5*math.sin(_x[2]/.15))**2 <= 1.0 and \
                     (_x[0]-.5*math.cos(_x[2]/.2))**2 + (_x[1]-.5*math.sin(_x[2]/.15))**2 >= 0.1', cube)
     
     #Cut a torus

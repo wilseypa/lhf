@@ -37,11 +37,11 @@ to view the class documentation of both the python interface and the LHF cpp lib
 
 ### Run PH on input data
 
-```import LHF
+```import lhf
    import tadasets
 
    data = tadasets.dsphere(n=50, d=5, r=1, noise=0.1) 
-   pyLHF = LHF.pipeline()
+   pyLHF = lhf.pipeline()
 
    #Set LHF args
    pyLHF.config["epsilon"] = 1.0
@@ -52,12 +52,12 @@ to view the class documentation of both the python interface and the LHF cpp lib
 
 ### Plot the output in several ways
 
-```import LHF
+```import lhf
    import tadasets
    import numpy as np
 
    data = tadasets.dsphere(n=50, d=5, r=1, noise=0.1) 
-   pyLHF = LHF.pipeline()
+   pyLHF = lhf.pipeline()
 
    boundaryPis, pipePacket, elapsed = pyLHF.runPH(data)
 
@@ -71,11 +71,11 @@ to view the class documentation of both the python interface and the LHF cpp lib
 
 ### Run Partitioned Persistent Homology
 
-```mport LHF
+```mport lhf
    import tadasets
 
    data = tadasets.dsphere(n=50, d=5, r=1, noise=0.1) 
-   pyLHF = LHF.pipeline()
+   pyLHF = lhf.pipeline()
 
    #Set LHF args
    pyLHF.config["epsilon"] = 1.0
@@ -89,11 +89,11 @@ to view the class documentation of both the python interface and the LHF cpp lib
 
 ### Run PH on Weighted Alpha Complex
 
-```import LHF
+```import lhf
    import tadasets
 
    data = tadasets.dsphere(n=50, d=5, r=1, noise=0.1) 
-   pyLHF = LHF.pipeline()
+   pyLHF = lhf.pipeline()
 
    #Set LHF args
    pyLHF.config["epsilon"] = 1.0
