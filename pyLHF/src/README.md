@@ -37,69 +37,68 @@ to view the class documentation of both the python interface and the LHF cpp lib
 
 ### Run PH on input data
 
-```from LHF import LHF
+```import LHF
    import tadasets
 
    data = tadasets.dsphere(n=50, d=5, r=1, noise=0.1) 
-   pyLHF = LHF.LHF()
+   pyLHF = LHF.pipeline()
 
    #Set LHF args
-   pyLHF.args["epsilon"] = 1.0
-   pyLHF.args["dimensions"] = 3
+   pyLHF.config["epsilon"] = 1.0
+   pyLHF.config["dimensions"] = 3
 
    boundaryPis, pipePacket, elapsed = pyLHF.runPH(data)
 ```
 
 ### Plot the output in several ways
 
-```from LHF import LHF
-   from LHF.OutputAnalysis import persistenceDiagram, barcodeDiagram, bettiCurve
+```import LHF
    import tadasets
    import numpy as np
 
    data = tadasets.dsphere(n=50, d=5, r=1, noise=0.1) 
-   pyLHF = LHF.LHF()
+   pyLHF = LHF.pipeline()
 
    boundaryPis, pipePacket, elapsed = pyLHF.runPH(data)
 
    #Remove boundary labels from the PIs
    pis = np.array([[z[0], z[1], z[2]] for z in boundaryPis])
 
-   persistenceDiagram(pis)
-   barcodeDiagrams(pis)
-   bettiCurve(pis)
+   LHF.OutputAnalysis.persistenceDiagram(pis)
+   LHF.OutputAnalysis.barcodeDiagrams(pis)
+   LHF.OutputAnalysis.bettiCurve(pis)
 ```
 
 ### Run Partitioned Persistent Homology
 
-```from LHF import LHF
+```mport LHF
    import tadasets
 
    data = tadasets.dsphere(n=50, d=5, r=1, noise=0.1) 
-   pyLHF = LHF.LHF()
+   pyLHF = LHF.pipeline()
 
    #Set LHF args
-   pyLHF.args["epsilon"] = 1.0
-   pyLHF.args["dimensions"] = 3
-   pyLHF.args["mode"] = "iterUpscale"
-   pyLHF.args["preprocessor"] = "kmeans++"
-   pyLHF.args["clusters"] = 20
+   pyLHF.config["epsilon"] = 1.0
+   pyLHF.config["dimensions"] = 3
+   pyLHF.config["mode"] = "iterUpscale"
+   pyLHF.config["preprocessor"] = "kmeans++"
+   pyLHF.config["clusters"] = 20
 
    boundaryPis, pipePacket, elapsed = pyLHF.runPH(data)
 ```
 
 ### Run PH on Weighted Alpha Complex
 
-```from LHF import LHF
+```import LHF
    import tadasets
 
    data = tadasets.dsphere(n=50, d=5, r=1, noise=0.1) 
-   pyLHF = LHF.LHF()
+   pyLHF = LHF.pipeline()
 
    #Set LHF args
-   pyLHF.args["epsilon"] = 1.0
-   pyLHF.args["dimensions"] = 3
-   pyLHF.args["mode"] = "weightedAlpha"
+   pyLHF.config["epsilon"] = 1.0
+   pyLHF.config["dimensions"] = 3
+   pyLHF.config["mode"] = "weightedAlpha"
 
    boundaryPis, pipePacket, elapsed = pyLHF.runPH(data)
 ```
