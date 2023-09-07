@@ -1,4 +1,4 @@
-#include <incrementalPipe.hpp>
+#include <helixPipe.hpp>
 #include <Eigen/Dense>
 #include <limits>
 #include <omp.h>
@@ -12,7 +12,7 @@ T dot(const std::vector<T> &a, const std::vector<T> &b) { return std::inner_prod
 
 // Solution to equation of a hyperplane
 template <typename nodeType>
-std::vector<double> incrementalPipe<nodeType>::solvePlaneEquation(const std::vector<short> &points)
+std::vector<double> helixPipe<nodeType>::solvePlaneEquation(const std::vector<short> &points)
 {
 	int numPoints = points.size();
 	Eigen::MatrixXd A(numPoints, numPoints);
@@ -25,7 +25,7 @@ std::vector<double> incrementalPipe<nodeType>::solvePlaneEquation(const std::vec
 
 // Compute the seed simplex for initialization of algorithm
 template <typename nodeType>
-std::vector<short> incrementalPipe<nodeType>::first_simplex()
+std::vector<short> helixPipe<nodeType>::first_simplex()
 {
 	std::vector<short> simplex;
 	if (this->data_set_size < this->dim + 2)
@@ -71,7 +71,7 @@ std::vector<short> incrementalPipe<nodeType>::first_simplex()
 
 // Perform DFS walk on the cospherical region
 template <typename nodeType>
-void incrementalPipe<nodeType>::cospherical_handler(std::vector<short> &simp, int &tp, short &omission, std::vector<std::vector<double>> &distMatrix)
+void helixPipe<nodeType>::cospherical_handler(std::vector<short> &simp, int &tp, short &omission, std::vector<std::vector<double>> &distMatrix)
 {
 	auto triangulation_point = tp;
 	auto temp = simp;
@@ -95,7 +95,7 @@ void incrementalPipe<nodeType>::cospherical_handler(std::vector<short> &simp, in
 
 // Compute the P_newpoint for provided Facet, P_context Pair
 template <typename nodeType>
-int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, short &omission, std::vector<std::vector<double>> &distMatrix)
+int helixPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, short &omission, std::vector<std::vector<double>> &distMatrix)
 {
 	auto normal = solvePlaneEquation(simp);
 	auto p1 = utils::circumCenter(simp, this->inputData);
@@ -175,7 +175,7 @@ void reduce(std::set<std::vector<short>> &outer_dsimplexes, std::vector<std::pai
 
 // runPipe -> Run the configured functions of this pipeline segment
 template <typename nodeType>
-void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
+void helixPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 {
 	this->inputData = inData.inputData;
 	this->dim = inputData[0].size();
@@ -259,15 +259,15 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 
 // basePipe constructor
 template <typename nodeType>
-incrementalPipe<nodeType>::incrementalPipe() : inputData(*(new std::vector<std::vector<double>>()))
+helixPipe<nodeType>::helixPipe() : inputData(*(new std::vector<std::vector<double>>()))
 {
-	this->pipeType = "incrementalPipe";
+	this->pipeType = "helixPipe";
 	return;
 }
 
 // configPipe -> configure the function settings of this pipeline segment
 template <typename nodeType>
-bool incrementalPipe<nodeType>::configPipe(std::map<std::string, std::string> &configMap)
+bool helixPipe<nodeType>::configPipe(std::map<std::string, std::string> &configMap)
 {
 	std::string strDebug;
 
@@ -284,13 +284,13 @@ bool incrementalPipe<nodeType>::configPipe(std::map<std::string, std::string> &c
 	this->ut = utils(strDebug, this->outputFile);
 
 	this->configured = true;
-	this->ut.writeDebug("incrementalPipe", "Configured with parameters { eps: " + configMap["epsilon"] + " , debug: " + strDebug + ", outputFile: " + this->outputFile + " }");
+	this->ut.writeDebug("helixPipe", "Configured with parameters { eps: " + configMap["epsilon"] + " , debug: " + strDebug + ", outputFile: " + this->outputFile + " }");
 
 	return true;
 }
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
 template <typename nodeType>
-void incrementalPipe<nodeType>::outputData(pipePacket<nodeType> &inData)
+void helixPipe<nodeType>::outputData(pipePacket<nodeType> &inData)
 {
 	std::ofstream file;
 	file.open("output/" + this->pipeType + "_output.csv");
@@ -300,6 +300,6 @@ void incrementalPipe<nodeType>::outputData(pipePacket<nodeType> &inData)
 	return;
 }
 
-template class incrementalPipe<simplexNode>;
-template class incrementalPipe<alphaNode>;
-template class incrementalPipe<witnessNode>;
+template class helixPipe<simplexNode>;
+template class helixPipe<alphaNode>;
+template class helixPipe<witnessNode>;

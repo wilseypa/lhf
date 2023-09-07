@@ -22,7 +22,7 @@
 #include "qhullPipe.hpp"
 #include "slidingWindow.hpp"
 #include "delaunayPipe.hpp"
-#include "incrementalPipe.hpp"
+#include "helixPipe.hpp"
 
 template<typename nodeType>
 basePipe<nodeType>* basePipe<nodeType>::newPipe(const std::string &pipeType, const std::string &complexType){
@@ -54,8 +54,8 @@ basePipe<nodeType>* basePipe<nodeType>::newPipe(const std::string &pipeType, con
 		return new slidingWindow<nodeType>();
 	} else if (pipeType == "delaunayPipe"){
 		return new delaunayPipe<nodeType>();
-	} else if (pipeType == "incrementalPipe"){
-		return new incrementalPipe<nodeType>();
+	} else if (pipeType == "helixPipe"){
+		return new helixPipe<nodeType>();
 	}
 
 	return 0;
