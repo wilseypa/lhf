@@ -114,7 +114,8 @@ int helixPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, shor
 			auto temp = utils::vectors_distance(p1, inputData[new_point]);
 			if (ring_radius > temp)
 			{
-				radius_vec[new_point] = sqrt(utils::circumRadius(simp, distMatrix));
+				auto temp_radius = utils::circumRadius(simp, distMatrix);
+				radius_vec[new_point] = (temp_radius >= 0) ? sqrt(temp_radius) : utils::vectors_distance(utils::circumCenter(simp, this->inputData), inputData[new_point]);
 				if (largest_radius < radius_vec[new_point])
 				{
 					largest_radius = radius_vec[new_point];
@@ -124,7 +125,8 @@ int helixPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, shor
 			}
 			else if (flag && 2 * smallest_radius > temp) // reduce search space
 			{
-				radius_vec[new_point] = sqrt(utils::circumRadius(simp, distMatrix));
+				auto temp_radius = utils::circumRadius(simp, distMatrix);
+				radius_vec[new_point] = (temp_radius >= 0) ? sqrt(temp_radius) : utils::vectors_distance(utils::circumCenter(simp, this->inputData), inputData[new_point]);
 				if (smallest_radius > radius_vec[new_point])
 				{
 					smallest_radius = radius_vec[new_point];
@@ -142,7 +144,19 @@ int helixPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, shor
 							  { return std::abs(1 - (val / triangulation_radius)) <= 0.000000000001; });
 		if (count != 1)
 		{
+#ifdef PARALLEL
+			{
+				std::cout << "Triangulation radius is " << triangulation_radius << std::endl;
+#pragma omp critical
+				{
+					// cospherical_handler(simp,triangulation_point,omission,distMatrix);
+				}
+			}
+#else
+			{
 			// cospherical_handler(simp,triangulation_point,omission,distMatrix);
+			}
+#endif
 			return -1;
 		}
 	}

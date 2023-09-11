@@ -524,7 +524,6 @@ double utils::circumRadius(std::vector<short> &simplex, std::vector<std::vector<
     matACap.row(0).setConstant(1);
     matACap(0, 0) = 0;
  	double result = -matA.determinant() / (2 * matACap.determinant());
-	if(result<0){ std::numeric_limits<double>::max();}
     return result;
 }
 
