@@ -1072,7 +1072,7 @@ pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> polytopalComplex
 		cout<<"\n";
 	}
 	int k;
-	cin>>k;
+	//cin>>k;
 	return flatten;
 }
 
@@ -1153,7 +1153,7 @@ pair<vector<vector<unsigned>>,vector<vector<vector<unsigned>>>> polytopalComplex
 		i++;
 	}
 	std::cout<<"\n";
-	std::cin>>k;
+	//std::cin>>k;
 	
 	
 	//return flattened(approxFaces,coords,dim);
@@ -1620,11 +1620,11 @@ set<polytope>  polytopalComplex :: generateFaces(int d){
 
 void polytopalComplex :: persistenceMatrix(){
 	
-	for(auto level = 3;level>=0;level--){
+	for(auto level = 4;level>=0;level--){
 	     cout<<"\n"<<polytopalArrayList[level].size()<<"\n";
 	}
-	int level = 3;
-	for(int i=0;i<2;i++){
+	int level = 4;
+	for(int i=0;i<3;i++){
 		vector<vector<int>> matrix(polytopalArrayList[level-i].size(), vector<int>(polytopalArrayList[level-1-i].size(),0));
 		int k=polytopalArrayList[level-i].size()-1;
 		for(auto x : polytopalArrayList[level-i]){
