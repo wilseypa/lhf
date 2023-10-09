@@ -993,7 +993,7 @@ std::vector<std::vector<std::set<std::set<std::vector<double>,lexical_compare_po
 }
 std::vector<std::set<std::vector<double>,lexical_compare_points>> dwaytreenode:: computeBetaExposedNeighbourhood(dwaytreenode* root,std::vector<std::set<std::vector<double>,lexical_compare_points>> epsilonRangePartitions,double beta){
 	std::vector<std::set<std::vector<double>,lexical_compare_points>> afterbetaExposedFilteredPtspartitions;
-	std::cout<<"\nCenter Coordinate"<<root->coordinates[0]<<" "<<root->coordinates[1]<<" "<<root->coordinates[2]<<"\n";
+//	std::cout<<"\nCenter Coordinate"<<root->coordinates[0]<<" "<<root->coordinates[1]<<" "<<root->coordinates[2]<<"\n";
 	int childcount = -1;
 	std::vector<double> partitionCenter;
 	for(int i =0;i<root->coordinates.size();i++)
@@ -1006,13 +1006,13 @@ std::vector<std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::
 		for(auto x:root->coordinates){
 			auto temp  = root->children[childcount]->coordinates[j]-partitionCenter[j];
 			from.push_back(temp);
-			std::cout<<temp<<" ";
+//			std::cout<<temp<<" ";
 			d -=x*temp;
 			j++;
 		}
 	
-		std::cout<<"\nHyperPlane Equation :: "<<from[0]<<"x +"<<from[1]<<"y +"<<from[2]<<"z ="<<from[0]*root->coordinates[0]+from[1]*root->coordinates[1]+from[2]*root->coordinates[2]<<"\n";
-		std::cout<<"\nHyperPlane Equation :: "<<from[0]<<"x +"<<from[1]<<"y +"<<from[2]<<"z ="<<d<<"\n";
+//		std::cout<<"\nHyperPlane Equation :: "<<from[0]<<"x +"<<from[1]<<"y +"<<from[2]<<"z ="<<from[0]*root->coordinates[0]+from[1]*root->coordinates[1]+from[2]*root->coordinates[2]<<"\n";
+//		std::cout<<"\nHyperPlane Equation :: "<<from[0]<<"x +"<<from[1]<<"y +"<<from[2]<<"z ="<<d<<"\n";
 //		std::cout<<"\nHyperPlane Equation :: "<<"x = 50 "<<"y ="<<((from[0]*root->coordinates[0]+from[1]*root->coordinates[1])-(from[0]*50))/from[1]<<"\n";
 //		std::cout<<"\nHyperPlane Equation :: "<<"x = -50 "<<"y ="<<((from[0]*root->coordinates[0]+from[1]*root->coordinates[1])-(from[0]*(-50)))/from[1]<<"\n";
         int pk;
@@ -1081,7 +1081,7 @@ std::vector<std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::
 			//	for(auto xx:pt){
 			//		std::cout<<xx<<" ";
 			//	}
-			std::cout<<"Points in Ball:: " <<pointsball.size()<<" ";
+//			std::cout<<"Points in Ball:: " <<pointsball.size()<<" ";
 			for(auto A : pointsball){
 				//if(utils::distanceFromHyperplane(A,from, d)<distancefromSplittingPlane){
 				std::vector<double> A_vec;
@@ -1104,10 +1104,10 @@ std::vector<std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::
 						assignedpartion = direction;
 					}
 				}
-				std::cout<<assignedpartion<<" ";
+//				std::cout<<assignedpartion<<" ";
 				partitionAssigned.insert(assignedpartion);
 				if(partitionAssigned.size()==from.size()){
-					std::cout<<" ** ";
+//					std::cout<<" ** ";
 					exposed = false;
 					break;
 				}
@@ -1116,7 +1116,7 @@ std::vector<std::set<std::vector<double>,lexical_compare_points>> dwaytreenode::
 		}	
 			if(exposed == true){
 				partitionExposed.insert(pt);
-				std::cout<<" * ";
+//				std::cout<<" * ";
 			}
 		}
 	afterbetaExposedFilteredPtspartitions.push_back(partitionExposed);
@@ -1469,8 +1469,8 @@ std::set<std::pair<std::set<std::vector<double>,lexical_compare_points>,std::pai
 	*/
 	
 	auto afterFilterationUsingBeta = computeBetaExposedNeighbourhood(root,epsilonRangePartitions,beta);
-	std::cout<<"\n\n\nEpsilon::\n"<<epsilonRangePartitions[0].size()<<" "<<epsilonRangePartitions[1].size()<<"\n";
-	std::cout<<"\n\n\nBeta::\n"<<afterFilterationUsingBeta[0].size()<<" "<<afterFilterationUsingBeta[1].size()<<"\n";
+//	std::cout<<"\n\n\nEpsilon::\n"<<epsilonRangePartitions[0].size()<<" "<<epsilonRangePartitions[1].size()<<"\n";
+//	std::cout<<"\n\n\nBeta::\n"<<afterFilterationUsingBeta[0].size()<<" "<<afterFilterationUsingBeta[1].size()<<"\n";
 /*	 for(auto x:epsilonRangePartitions){
 	for(auto x:afterFilterationUsingBeta){
 		for(auto y:x){

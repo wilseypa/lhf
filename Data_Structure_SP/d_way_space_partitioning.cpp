@@ -104,9 +104,15 @@ int main(){
    	filename.append("homologydim");
    	filename.append(std::to_string(hdim));
    	filename.append(".txt");
-   	std::cout<<filename<<std::flush;
+   	//std::cout<<filename<<std::flush;
    	std::ofstream myfile;
+   	std::cout<<"\nStart"<<std::endl;
+   	auto start = high_resolution_clock::now();
    	auto mesh = tree->meshGeneration(tree,tree,beta,hdim,epsilon,myfile);
+   	auto stop = high_resolution_clock::now();
+	auto duration = duration_cast<microseconds>(stop - start);
+	std::cout<<"\n"<<duration.count()<<"\n";
+	std::cout<<"\n Simplices::"<<mesh.first.size()<<"\n";
    	std::cout<<"Remove to Smooth"<<removeToSmooth.size()<<" ";
    	for(auto x: removeToSmooth)
 		data.erase(std::remove(data.begin(), data.end(), x), data.end());
@@ -116,15 +122,21 @@ int main(){
 		for(auto y:x){
 			bool v = true;
 			for(auto z:y){
-				if(v)
+				if(v){
 				 myfile<<z;
-				else
+				// std::cout<<z;
+				}
+				else{
 				 myfile<<" "<<z;
+				 //std::cout<<" "<<z;
+				}
 			  v = false;
 			}
 			myfile<<"\n";
+//			std::cout<<"\n";
 		}
 		myfile<<"\n";
+	//	std::cout<<"\n";
 	}
 	myfile.close();
 	//int pk;

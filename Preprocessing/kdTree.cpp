@@ -18,7 +18,7 @@
 #include <queue>
 
 #include "kdTree.hpp"
-#include "utils.hpp"
+#include "../Utils/utils.hpp"
 
 kdTree::kdTree(){
  //   procName = "kdTree";
