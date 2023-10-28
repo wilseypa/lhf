@@ -5,7 +5,7 @@
 #include <random>
 #include <chrono>
 #include <execution>
-//#define PARALLEL
+#define PARALLEL
 
 template <typename T>
 T dot(const std::vector<T> &a, const std::vector<T> &b) { return std::inner_product(a.begin(), a.end(), b.begin(), static_cast<T>(0)); } // Dot product of two vectors
@@ -77,7 +77,7 @@ void helixPipe<nodeType>::cospherical_handler(std::vector<short> &simp, int &tp,
 	auto temp = simp;
 	temp.push_back(triangulation_point);
 	std::sort(temp.begin(), temp.end());
-	this->dsimplexes.insert(temp);
+	this->spherical_dsimplexes.insert(temp);
 	for (auto i : temp)
 	{
 		auto new_face = temp;
@@ -89,7 +89,7 @@ void helixPipe<nodeType>::cospherical_handler(std::vector<short> &simp, int &tp,
 			continue;
 		new_face.push_back(new_point);
 		std::sort(new_face.begin(), new_face.end());
-		this->dsimplexes.insert(new_face);
+		this->spherical_dsimplexes.insert(new_face);
 	}
 }
 
@@ -163,7 +163,7 @@ int helixPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, shor
 	return triangulation_point;
 }
 
-void reduce(std::set<std::vector<short>> &outer_dsimplexes, std::vector<std::pair<std::vector<short>, short>> &inner_d_1_shell, std::set<std::vector<short>> &dsimplexes)
+void reduce(std::set<std::vector<short>> &outer_dsimplexes, std::vector<std::pair<std::vector<short>, short>> &inner_d_1_shell, std::vector<std::vector<short>> &dsimplexes)
 {
 	std::map<std::vector<short>, short> outer_d_1_shell;
 	for (auto &new_simplex : outer_dsimplexes)
@@ -232,7 +232,7 @@ void helixPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	}
 #else
 	{
-		for (auto &new_simplex : dsimplexes)
+		for (auto &new_simplex : this->dsimplexes)
 		{
 			for (auto &i : new_simplex)
 			{
@@ -252,8 +252,7 @@ void helixPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 				continue;
 			first_vector.push_back(new_point);
 			std::sort(first_vector.begin(), first_vector.end());
-			if (!this->dsimplexes.insert(first_vector).second)
-				continue;
+			this->dsimplexes.push_back(first_vector);
 			for (auto &i : first_vector)
 			{
 				if (i == new_point)
