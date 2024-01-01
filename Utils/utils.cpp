@@ -469,62 +469,46 @@ double utils::circumRadius(std::set<unsigned> &simplex, std::vector<std::vector<
 
 std::vector<double> utils::circumCenter(std::vector<short> &simplex, std::vector<std::vector<double>> &inputData)
 {
-    const int n = inputData[0].size();
-    const int m = simplex.size();
-    Eigen::MatrixXd matA(m, m);
-    Eigen::VectorXd matC(m, 1);
-    std::vector<double> circumCenter(n, 0.0);
-	const Eigen::VectorXd& Sn =Eigen::Map<Eigen::VectorXd>(inputData[simplex.back()].data(), n);
-    int ii = 0;
-    for (auto i=simplex.begin();i!=simplex.end()-1;++i)
-    {
-        int temp = ii;
-        const Eigen::VectorXd& d1 = Eigen::Map<Eigen::VectorXd>(inputData[*i].data(), n) - Sn;
-        for (auto j=i;j!=simplex.end()-1;++j,++temp)
-        {
-			const double dotProduct = d1.dot(Eigen::Map<Eigen::VectorXd>(inputData[*j].data(), n) - Sn);
-			matA(ii, temp) = dotProduct;
-			matA(temp, ii) = dotProduct;
-			if (i == j)
-				matC(ii) = dotProduct / 2.0;
-        }
-        matA(ii, m - 1) = 0;
-        ii++;
-    }
-    matA.row(ii).setConstant(1);
-    matC(ii) = 1;
-    // Solve the linear 
+	const int n = inputData[0].size();
+	const int m = simplex.size();
+	Eigen::MatrixXd matA(m, m);
+	Eigen::VectorXd matC(m, 1);
+	std::vector<double> circumCenter(n, 0.0);
+	const Eigen::VectorXd &Sn = Eigen::Map<Eigen::VectorXd>(inputData[simplex.back()].data(), n);
+	for (int i = 0; i < m - 1; ++i)
+	{
+		const Eigen::VectorXd &d1 = Eigen::Map<Eigen::VectorXd>(inputData[simplex[i]].data(), n) - Sn;
+		for (int j = i; j < m - 1; ++j)
+		{
+			const double dotProduct = d1.dot(Eigen::Map<Eigen::VectorXd>(inputData[simplex[j]].data(), n) - Sn);
+			matA(i, j) = dotProduct;
+			matA(j, i) = dotProduct;
+		}
+	}
+	matA.col(m - 1).setZero();
+	matA.row(m - 1).setOnes();
+	matC = matA.diagonal() / 2;
+	matC(m - 1) = 1;
 	Eigen::VectorXd rawCircumCenter = matA.inverse() * matC;
-    for (int i = 0; i < n; i++)
-    {
-        auto index = simplex.begin();
-        for (int j = 0; j < m; ++j,++index)
-            circumCenter[i] += rawCircumCenter(j) * inputData[*index][i];
-    }
-    return circumCenter;
+	for (int i = 0; i < m; ++i)
+		for (int j = 0; j < n; ++j)
+			circumCenter[j] += rawCircumCenter(i) * inputData[simplex[i]][j];
+	return circumCenter;
 }
 
 double utils::circumRadius(std::vector<short> &simplex, std::vector<std::vector<double>> &distMatrix)
 {
-    unsigned n = simplex.size();
-    Eigen::MatrixXd matA(n, n);
-    Eigen::MatrixXd matACap(n + 1, n + 1);
-	unsigned ii=0;
-	for (auto i : simplex)
-	{
-		unsigned temp = 0;
-		for (auto j : simplex)
-		{
-			matA(ii, temp++) = (i<=j) ? distMatrix[i][j] * distMatrix[i][j]: distMatrix[j][i] * distMatrix[j][i];
-		}
-		ii++;
-	}
+	const unsigned n = simplex.size();
+	Eigen::MatrixXd matA(n, n);
+	Eigen::MatrixXd matACap(n + 1, n + 1);
+	for (unsigned i = 0; i < n; ++i)
+	for (unsigned j = 0; j < n; ++j)
+		matA(i, j) = simplex[i] <= simplex[j] ? distMatrix[simplex[i]][simplex[j]] : distMatrix[simplex[j]][simplex[i]];
 	matACap.block(1, 1, n, n) = matA;
 	matACap.col(0).setConstant(1);
-    matACap.row(0).setConstant(1);
-    matACap(0, 0) = 0;
- 	double result = -matA.determinant() / (2 * matACap.determinant());
-    return result;
+	matACap.row(0).setConstant(1);
+	matACap(0, 0) = 0;
+	return (-matA.determinant() / (2 * matACap.determinant()));
 }
 
 

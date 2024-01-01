@@ -8,6 +8,9 @@ add_library(argParser argParser.cpp argParser.hpp)
 add_library(readInput readInput.cpp readInput.hpp)
 add_library(writeOutput writeOutput.cpp writeOutput.hpp)
 add_library(utils utils.cpp utils.hpp)
+add_library(multifileops utils.cpp multifileops.hpp)
+add_library(fileops INTERFACE fileops.hpp)
+
 
 include_directories(../Pipes)
 link_directories(../Pipes)
