@@ -1,7 +1,6 @@
 #pragma once
 #include "simplexBase.hpp"
 #include <set>
-#include "utils.hpp"
 
 // Header file for pipePacket class - see pipePacket.cpp for descriptions
 

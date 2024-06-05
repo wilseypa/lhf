@@ -3,7 +3,7 @@
 // Header file for betaSubSkeletonComplexPipe class - see betaSubSkeletonComplexPipe.cpp for descriptions
 #include <map>
 #include "basePipe.hpp"
-#include "../Preprocessing/kdTree.hpp"
+#include "kdTree.hpp"
 
 template <typename nodeType>
 class betaSubSkeletonComplex : public basePipe<nodeType> {

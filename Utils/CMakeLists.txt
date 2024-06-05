@@ -4,22 +4,23 @@
 
 cmake_minimum_required(VERSION 3.5)
 
-add_library(argParser argParser.cpp argParser.hpp)
-add_library(readInput readInput.cpp readInput.hpp)
-add_library(writeOutput writeOutput.cpp writeOutput.hpp)
-add_library(utils utils.cpp utils.hpp)
+# Find required packages
+find_package(Eigen3 REQUIRED)
+find_package(OpenMP REQUIRED)
 
-include_directories(../Pipes)
-link_directories(../Pipes)
+add_library(utils STATIC utils.cpp utils.hpp)
+target_link_libraries(utils PUBLIC kdTree Eigen3::Eigen OpenMP::OpenMP_CXX)
+target_include_directories(utils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${EIGEN3_INCLUDE_DIRS} ${OpenMP_CXX_INCLUDE_DIRS})
 
-include_directories(../Complex)
-link_directories(../Complex)
+add_library(readInput STATIC readInput.cpp readInput.hpp)
+target_include_directories(readInput PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-find_package(Eigen3)
-include_directories(${EIGEN3_INCLUDE_DIR})
+add_library(argParser STATIC argParser.cpp argParser.hpp)
+target_include_directories(argParser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-# target_link_libraries(LHF PipeFunctions)
-target_link_libraries(utils argParser readInput writeOutput)
+add_library(writeOutput STATIC writeOutput.cpp writeOutput.hpp)
+target_link_libraries(writeOutput PUBLIC utils)
+target_include_directories(writeOutput PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 INSTALL (TARGETS utils
 	LIBRARY DESTINATION lib

@@ -3,7 +3,7 @@
 // Header file for betaSkeletonBasedComplexPipe class - see betaSkeletonBasedComplexPipe.cpp for descriptions
 #include <map>
 #include "basePipe.hpp"
-#include "../Preprocessing/kdTree.hpp"
+#include "kdTree.hpp"
 
 
 #include "libqhullcpp/RboxPoints.h"

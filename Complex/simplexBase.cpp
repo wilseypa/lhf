@@ -3,6 +3,7 @@
 #include <cmath>
 #include <numeric>
 #include <typeinfo>
+#include <functional>
 #include "simplexBase.hpp"
 //#include "simplexTree.hpp"
 #include "simplexArrayList.hpp"
@@ -296,7 +297,8 @@ bool simplexBase<nodeType>::streamEvaluator(std::vector<double>& vector, std::ve
 	double mean = sum / reps.size();
 
 	std::vector<double> diff(reps.size());
-	std::transform(reps.begin(), reps.end(), diff.begin(),std::bind2nd(std::minus<double>(), mean));
+	//std::transform(reps.begin(), reps.end(), diff.begin(),std::bind2nd(std::minus<double>(), mean)); Depreicated Function
+	std::transform(reps.begin(), reps.end(), diff.begin(), [mean](double x) { return x - mean; });
 	double sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
 	double stdev = std::sqrt(sq_sum / reps.size());
 
@@ -314,7 +316,8 @@ bool simplexBase<nodeType>::streamEvaluator(std::vector<double>& vector, std::ve
 	double mean_NN = sum_NN / kNN.size();
 
 	std::vector<double> diff_NN(kNN.size());
-	std::transform(kNN.begin(), kNN.end(), diff_NN.begin(),std::bind2nd(std::minus<double>(), mean_NN));
+	// std::transform(kNN.begin(), kNN.end(), diff_NN.begin(),std::bind2nd(std::minus<double>(), mean_NN)); Depreciated Function
+	std::transform(kNN.begin(), kNN.end(), diff_NN.begin(), [mean_NN](double x) { return x - mean_NN; });
 	double sq_sum_NN = std::inner_product(diff_NN.begin(), diff_NN.end(), diff_NN.begin(), 0.0);
 	double stdev_NN = std::sqrt(sq_sum_NN / kNN.size());
 
