@@ -16,7 +16,6 @@
 #include <unordered_map>
 #include <queue>
 #include "fastPersistence.hpp"
-#include "utils.hpp"
 
 // basePipe constructor
 template<typename nodeType>

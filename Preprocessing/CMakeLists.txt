@@ -4,29 +4,33 @@
 
 cmake_minimum_required(VERSION 3.5)
 
-add_library(preprocessor "preprocessor.cpp" "preprocessor.hpp")
-add_library(kMeansPlusPlus "kMeansPlusPlus.cpp" "kMeansPlusPlus.hpp")
-add_library(streamingKmeans "streamingKmeans.cpp" "streamingKmeans.hpp")
-add_library(streamingUtils "streamingUtils.cpp" "streamingUtils.hpp")
-add_library(denStream "denStream.cpp" "denStream.hpp")
-add_library(dbscan "dbscan.cpp" "dbscan.hpp")
-add_library(kdTree "kdTree.cpp" "kdTree.hpp")
+add_library(preprocessor STATIC preprocessor.cpp preprocessor.hpp)
+target_link_libraries(preprocessor PUBLIC kMeansPlusPlus pipePacket)
+target_include_directories(preprocessor PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-include_directories(../Complex)
-link_directories(../Complex)
+add_library(kMeansPlusPlus STATIC kMeansPlusPlus.cpp kMeansPlusPlus.hpp)
+target_link_libraries(kMeansPlusPlus PUBLIC utils preprocessor)
+target_include_directories(kMeansPlusPlus PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-include_directories(../Pipes)
-link_directories(../Pipes)
+add_library(streamingKmeans STATIC streamingKmeans.cpp streamingKmeans.hpp)
+target_link_libraries(streamingKmeans PUBLIC utils streamingUtils preprocessor)
+target_include_directories(streamingKmeans PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-include_directories(../Utils)
-link_directories(../Utils)
+add_library(streamingUtils STATIC streamingUtils.cpp streamingUtils.hpp)
+target_link_libraries(streamingUtils PUBLIC utils preprocessor)
+target_include_directories(streamingUtils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(preprocessor kMeansPlusPlus)
-target_link_libraries(preprocessor streamingKmeans)
-target_link_libraries(preprocessor streamingUtils)
-target_link_libraries(preprocessor denStream)
-target_link_libraries(preprocessor dbscan)
-target_link_libraries(preprocessor kdTree)
+add_library(denStream STATIC denStream.cpp denStream.hpp)
+target_link_libraries(denStream PUBLIC utils dbscan preprocessor)
+target_include_directories(denStream PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_library(dbscan STATIC dbscan.cpp dbscan.hpp)
+target_link_libraries(dbscan PUBLIC utils kdTree kDTree)
+target_include_directories(dbscan PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_library(kdTree STATIC kdTree.cpp kdTree.hpp)
+target_link_libraries(kdTree PUBLIC utils)
+target_include_directories(kdTree PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 INSTALL (TARGETS preprocessor
 	LIBRARY DESTINATION lib

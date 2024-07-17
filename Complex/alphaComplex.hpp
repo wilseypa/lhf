@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include "simplexArrayList.hpp" 
 #include "utils.hpp"
+#include "kdTree.hpp"
 
 template <typename nodeType>
 class alphaComplex : public simplexArrayList<nodeType>{

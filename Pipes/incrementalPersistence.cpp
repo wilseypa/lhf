@@ -17,7 +17,6 @@
 #include <queue>
 #include "incrementalPersistence.hpp"
 #include "simplexArrayList.hpp"
-#include "utils.hpp"
 
 // basePipe constructor
 template<typename nodeType>

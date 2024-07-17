@@ -19,24 +19,20 @@ jobs:
         mpi:
           - mpich
           - openmpi
-          - msmpi
+          - msmpi # Only builds for Windows
         os:
           - ubuntu-latest
           - macos-latest
-          - windows-latest
+          #- windows-latest
         exclude:
           - os: ubuntu-latest
-            mpi: msmpi
+            mpi: msmpi #MSMPI only exists on windows
           - os: macos-latest
-            mpi: msmpi
-          - os: macos-latest
-            mpi: mpich
+            mpi: msmpi #MSMPI only exists on windows
           - os: windows-latest
-            mpi: mpich
+            mpi: openmpi #OpenMPI discontinued on windows
           - os: windows-latest
-            mpi: msmpi
-          - os: windows-latest
-            mpi: openmpi
+            mpi: mpich #MPICH redirects to MSMPI
             ##TODO: Test with windows-latest and msmpi
     
     steps:
@@ -54,38 +50,31 @@ jobs:
       if:   contains(matrix.os,'ubuntu') && contains(matrix.mpi,'mpich')
       run:  sudo apt-get install -y mpich cppcheck libeigen3-dev libcgal-dev
       
-    - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
+    - name: Get MacOS OpenMPI dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
       if:   contains(matrix.os,'macos') && contains(matrix.mpi,'openmpi')
-      run:  brew install openmpi libomp eigen cgal
+      run:  brew install gcc openmpi libomp eigen cgal
       
-    - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
+    - name: Get MacOS MPICH dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
       if:   contains(matrix.os,'macos') && contains(matrix.mpi,'mpich')
-      run:  brew install mpich libomp eigen cgal
-               
-    - name: Get dependencies (${{ matrix.os }} , ${{ matrix.mpi }})
-      if:   contains(matrix.os,'windows-latest') && contains(matrix.mpi,'openmpi')
-      run:  wget https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.2.tar.gz
-      
-    - name: Windows extract-openmpi 
-      if:   contains(matrix.os,'windows-latest') && contains(matrix.mpi,'openmpi')
-      run:  tar -xvf ./openmpi-4.0.2.tar.gz
-      
-    - name: Windows configure-openmpi
-      if:   contains(matrix.os,'windows-latest') && contains(matrix.mpi,'openmpi')
-      run:  ./openmpi-4.0.2/configure --prefix="/home/${USER}/.openmpi"
-      
-    - name: Windows install-openmpi
-      if:  contains(matrix.os,'windows-latest') && contains(matrix.mpi,'openmpi')
-      run: |
-          make -j
-          sudo make install
-          
+      run:  brew install gcc mpich libomp eigen cgal
+
+    - name: Windows install CGAL 
+      if:   contains(matrix.os,'windows-latest')
+      run:  vcpkg update && vcpkg install cgal eigen3 msmpi
+
     # Checkout v2 : https://github.com/actions/checkout
     - uses: actions/checkout@v2
       
     # Check CMake Version 
     - name: Check CMake (${{ matrix.mpi }})
       run: cmake --version
+
+    - name: Set MacOS Compilers
+      if:   contains(matrix.os,'macos')
+      env:
+        CC: /usr/bin/gcc
+        CXX: /usr/bin/g++
+      run:  echo "Using CC=${CC} and CXX=${CXX}"
       
     # Make the project
     - name: cmake

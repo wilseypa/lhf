@@ -5,6 +5,7 @@
 #include <numeric>
 #include <iostream>
 #include <fstream>
+#include <iterator>
 #include "utils.hpp"
 #include <time.h>
 #include <Eigen/Dense>
