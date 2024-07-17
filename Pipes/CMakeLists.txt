@@ -26,6 +26,7 @@ endif()
 find_package(CGAL REQUIRED)
 find_package(OpenMP REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(TBB)
 
 add_library(pipePacket STATIC "pipePacket.cpp" "pipePacket.hpp")
 target_link_libraries(pipePacket PUBLIC simplexBase)
@@ -90,8 +91,13 @@ target_include_directories(delaunayPipe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 if(APPLE)
     add_compile_definitions(NO_PARALLEL_ALGORITHMS=1)
 endif()
+
 add_library(incrementalPipe STATIC "incrementalPipe.cpp" "incrementalPipe.hpp")
+if(TBB_FOUND)
+target_link_libraries(incrementalPipe PUBLIC basePipe utils OpenMP::OpenMP_CXX TBB:tbb)
+else()
 target_link_libraries(incrementalPipe PUBLIC basePipe utils OpenMP::OpenMP_CXX)
+endif()
 target_include_directories(incrementalPipe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${EIGEN3_INCLUDE_DIR})
 
 INSTALL (TARGETS basePipe
