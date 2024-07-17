@@ -10,6 +10,7 @@ class upscalePipe : public basePipe<nodeType> {
   public:
 	std::map<std::string, std::string> subConfigMap;
 	int dim;
+    int maxSize;
 	double scalarV;
     upscalePipe();
 	void runSubPipeline(pipePacket<nodeType>&);

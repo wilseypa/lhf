@@ -128,6 +128,7 @@ class utils {
 	static std::vector<std::vector<unsigned>> getSubsets(std::vector<unsigned> set);
 
 	static double determinantOfMatrix(std::vector<std::vector<double>> mat, int n);
+	//Alpha (delaunay)
 	static double circumRadius(std::set<unsigned>& simplex,std::vector<std::vector<double>>* distMatrix);
 	static std::vector<double> circumCenter(std::set<unsigned>& simplex,std::vector<std::vector<double>>& inputData);
 	static double circumRadius(std::vector<short>& simplex,std::vector<std::vector<double>>& distMatrix);

@@ -5,7 +5,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 add_library(simplexBase STATIC simplexBase.cpp simplexBase.hpp)
-target_link_libraries(simplexBase PUBLIC utils pipePacket simplexArrayList alphaComplex witnessComplex)
+target_link_libraries(simplexBase PUBLIC utils pipePacket simplexArrayList alphaComplex witnessComplex betaComplex)
 target_include_directories(simplexBase PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/Utils)
 
 add_library(simplexArrayList STATIC simplexArrayList.cpp simplexArrayList.hpp)

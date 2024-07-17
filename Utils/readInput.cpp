@@ -8,10 +8,25 @@
  * 
  */
 
+/**
+  @file readInput.hpp
+  @brief Defines a class for reading input into the LFH system (https://github.com/wilseypa/LFH).
+ */
+
 #include "readInput.hpp"
 
+/**
+      @brief Constructor for readInput class.
+     */
 
 // readInput constructor, currently no needed information for the class constructor
+
+/**
+  @brief Constructor for readInput class.
+ 
+  Currently no needed information for the class constructor.
+ */
+
 readInput::readInput(){
 
 }
@@ -27,6 +42,25 @@ readInput::readInput(){
 //
 // TODO: Check for invalid vector lengths (i.e. <3,3,3> and <4,4,4,4> should not exist)
 // TODO: Handle if there is a comma at the end of the line (i.e. "5,5,5," should be <5,5,5>)
+
+/**
+  @brief Reads in a csv formatted file from file input.
+ 
+  @param filename The complete filename and relative path (if needed) for reading.
+  @return A vector array of doubles.
+ 
+  The file format is:
+  @code
+  1.0423, 1.0244, 1.032 \n
+  @endcode
+  By default, double conversion (std::stod) will handle 'E' and 'e' for scientific notation.
+ 
+  Strips whitespace characters where appropriate to create a vector array of doubles.
+ 
+  @todo Check for invalid vector lengths (i.e. <3,3,3> and <4,4,4,4> should not exist).
+  @todo Handle if there is a comma at the end of the line (i.e. "5,5,5," should be <5,5,5>).
+ */
+
 std::vector<std::vector<double>> readInput::readCSV(std::string filename){
 	std::vector<std::vector<double>> result;
 	
@@ -51,6 +85,13 @@ std::vector<std::vector<double>> readInput::readCSV(std::string filename){
 	return result;
 }
 
+/**
+  @brief Parses a double vector from a given line of text.
+ 
+  @param line The line of text to parse.
+  @param row A reference to the output vector array of doubles.
+  @return True if the vector was parsed successfully, false otherwise.
+ */
 
 bool readInput::parseDoubleVector(std::string line, std::vector<double> &row){
 	std::size_t pos = std::string::npos;
@@ -93,6 +134,28 @@ bool readInput::parseDoubleVector(std::string line, std::vector<double> &row){
 // Strips whitespace characters where appropriate to create a vector array of doubles
 //
 // TODO: A lot
+
+/**
+  @brief Reads in a mat formatted file from file input.
+ 
+  @param filename The complete filename and relative path (if needed) for reading.
+  @return A vector array of doubles.
+ 
+  The file format is:
+  @code
+  15		(# of vectors)
+  20		(# of dimensions)
+  1.023	(value of [0,0])
+  4.234	(value of [0,1])
+  ...	(subsequent values of [i, j])
+  @endcode
+  By default, double conversion (std::stod) will handle 'E' and 'e' for scientific notation.
+ 
+  Strips whitespace characters where appropriate to create a vector array of doubles.
+ 
+  @todo A lot.
+ */
+
 std::vector<std::vector<double>> readInput::readMAT(std::string filename){
 	std::vector<std::vector<double>> result;
 	int vectors = 0;
@@ -139,6 +202,12 @@ std::vector<std::vector<double>> readInput::readMAT(std::string filename){
 	return result;
 }
 
+/**
+  @brief Initializes the input stream for reading from a file.
+ 
+  @param filename The complete filename and relative path (if needed) for reading.
+  @return True if the stream was initialized successfully, false otherwise.
+ */
 
 bool readInput::streamInit(std::string filename){
 	pFile = fopen(filename.c_str(), "r");
@@ -150,6 +219,12 @@ bool readInput::streamInit(std::string filename){
 }
 
 
+/**
+  @brief Reads the next row of data from the input stream.
+ 
+  @param row A reference to the output vector array of doubles.
+  @return True if the row was read successfully, false otherwise.
+ */
 
 bool readInput::streamRead(std::vector<double> &row){
 	if(pFile == NULL)

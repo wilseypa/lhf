@@ -37,6 +37,5 @@ INSTALL (TARGETS preprocessor
 	ARCHIVE DESTINATION lib)
 
 # TODO: Add tests and install targets if needed.
-
 MESSAGE (STATUS "CMAKE_INCLUDE_PATH: " ${CMAKE_INCLUDE_PATH})
 MESSAGE (STATUS "FLAGS: " ${CMAKE_CXX_FLAGS})
