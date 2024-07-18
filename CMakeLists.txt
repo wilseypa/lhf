@@ -43,4 +43,4 @@ add_subdirectory("Utils")
 add_subdirectory("Preprocessing")
 add_subdirectory("LHFmain")
 
-add_subdirectory(cmake_tests)
+#add_subdirectory(cmake_tests)

@@ -23,7 +23,7 @@ target_link_libraries(writeOutput PUBLIC utils)
 target_include_directories(writeOutput PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(cluster STATIC cluster.cpp cluster.hpp)
-target_link_libraries(cluster PUBLIC utils)
+target_link_libraries(cluster PUBLIC utils kMeansPlusPlus)
 target_include_directories(writeOutput PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 INSTALL (TARGETS utils

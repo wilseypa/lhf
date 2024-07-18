@@ -4,7 +4,7 @@
 #include <math.h>
 #include <algorithm>
 #include "alphaComplex.hpp"
-#include <fstream>
+#include "omp.h"
 
 
 template<typename nodeType>

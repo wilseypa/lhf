@@ -893,8 +893,8 @@ extern "C"{
         argParser::setPipeline(args);
 
 		/*******     2. Decode Data          *********/
-		int dataSize = std::atoi(args["datasize"].c_str());
-		int dataDim = std::atoi(args["datadim"].c_str());
+		int dataSize = std::stoi(args["datasize"]);
+		int dataDim = std::stoi(args["datadim"]);
 
 		std::vector<std::vector<double>> data(dataSize, std::vector<double>(dataDim));
 
@@ -1004,10 +1004,10 @@ extern "C"{
         
 		auto wD = pipePacket<simplexNode>(args, args["complexType"]); //wD (workingData)
         
-        inputData_retStruct = &std::accumulate((*l_inputData).begin(), (*l_inputData).end(), decltype(wD.inputData)::value_type{}, [](auto &x, auto &y){x.insert(x.end(), y.begin(), y.end()); return x;})[0];
-        distMatrix_retStruct = &std::accumulate((*l_distMatrix).begin(), (*l_distMatrix).end(), decltype(wD.distMatrix)::value_type{}, [](auto &x, auto &y){x.insert(x.end(), y.begin(), y.end()); return x;})[0];
-        workData_retStruct = &std::accumulate((*l_workData).begin(), (*l_workData).end(), decltype(wD.workData)::value_type{}, [](auto &x, auto &y){x.insert(x.end(), y.begin(), y.end()); return x;})[0];
-        centroidLabels_retStruct = &((*l_centroidLabels).begin())[0];
+		std::for_each(l_inputData->begin(), l_inputData->end(), [inputData_retStruct](const auto& row) mutable {inputData_retStruct = std::copy(row.begin(), row.end(), inputData_retStruct);});
+		std::for_each(l_distMatrix->begin(), l_distMatrix->end(), [distMatrix_retStruct](const auto& row) mutable {distMatrix_retStruct = std::copy(row.begin(), row.end(), distMatrix_retStruct);});
+		std::for_each(l_workData->begin(), l_workData->end(), [workData_retStruct](const auto& row) mutable {workData_retStruct = std::copy(row.begin(), row.end(), workData_retStruct);});
+        centroidLabels_retStruct = l_centroidLabels->data();
         
         retStruct->inputData = inputData_retStruct;
         retStruct->distMatrix = distMatrix_retStruct;

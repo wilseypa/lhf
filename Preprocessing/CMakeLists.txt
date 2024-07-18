@@ -9,7 +9,7 @@ target_link_libraries(preprocessor PUBLIC kMeansPlusPlus pipePacket)
 target_include_directories(preprocessor PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(kMeansPlusPlus STATIC kMeansPlusPlus.cpp kMeansPlusPlus.hpp)
-target_link_libraries(kMeansPlusPlus PUBLIC utils preprocessor)
+target_link_libraries(kMeansPlusPlus PUBLIC utils preprocessor cluster)
 target_include_directories(kMeansPlusPlus PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(streamingKmeans STATIC streamingKmeans.cpp streamingKmeans.hpp)
