@@ -8,25 +8,33 @@ Additional pipelines have been created for preprocessing, approximations of the 
 
 ### REQUIREMENTS 
 
-- C++14
+- C++23
   
 - CMake
 
-- OpenMPI (if build / run for distributed)
+- OpenMP
+
+- Eigen3
+
+- MPI (MPICH, OpenMPI)
+
+- CGAL
 
 ---
 			  
 ### COMPILING 
 
-	##    cmake .
-	##    make
+	mkdir build
+	cd build
+	cmake .. -DCMAKE_BUILD_TYPE=Release
+	make
 
 ---
 
 ###  RUNNING 
 
-	##    cd LHFmain
-	##    ./LHF <args>
+	cd LHFmain
+	./LHF <args>
 
 ---
 
