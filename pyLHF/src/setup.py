@@ -16,12 +16,13 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name='lhf',
-    version='1.0.4',    
-    description='Light Weight Homology Framework',
+    version='2.0.1',    
+    description='Light Weight Homology Framework (lhf)',
     long_description=long_description,
     long_description_content_type="text/markdown",
     project_urls={
-        "LHF": "https://github.com/wilseypa/lhf",
+        "LHF (cpp) on GitHub": "https://github.com/wilseypa/lhf",
+        "pyLHF on PyPi": "https://pypi.org/project/lhf",
     },
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -29,8 +30,7 @@ setup(
         "Operating System :: OS Independent",
     ],
     packages=setuptools.find_packages(),
-    package_data={'libLHF': ['libLHFlib.so',
-                          'libLHFlib.so.1',
-                          'libLHFlib.so.1.0.0']},
+    package_data={'': ['./libLHFlib.so']},
+    install_requires=['numpy==1.26.4','scipy==1.13.1','scikit-learn==1.3.2','kneed==0.8.5','matplotlib==3.7.1'],
     include_package_data=True,
 )

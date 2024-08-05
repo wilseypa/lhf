@@ -15,6 +15,8 @@
 #include <set>
 #include "upscalePipe.hpp"
 #include "utils.hpp"
+#include "pipePacket.hpp"
+#include "cluster.hpp"
 
 // basePipe constructor
 template <typename nodeType>
@@ -114,6 +116,8 @@ void upscalePipe<nodeType>::runPipe(pipePacket<nodeType> &inData){
 			
 			std::cout << "Gathered " << curwD.workData.size() << " original points" << std::endl;
 			
+            
+            
 			runSubPipeline(curwD);
 			
 			std::cout << std::endl << "_____UPSCALE BETTIS_______" << std::endl;
@@ -143,6 +147,29 @@ void upscalePipe<nodeType>::runSubPipeline(pipePacket<nodeType>& wrData){
         return;
 
     this->outputData(wrData);
+    
+    std::cout << "STARTING UPSCALE ROUTINE WITH CLUSTER SIZE: " << wrData.workData.size() << "\t" << this->maxSize << std::endl;
+
+    if(wrData.workData.size() > this->maxSize){
+        //Start with the preprocessing function, if enabled
+        
+        auto clusters = this->maxSize;
+        
+        auto algo = kmeansplusplus();
+        algo.clusterData(wrData.workData, wrData.workData, wrData.centroidLabels, clusters, 100, -1);
+        
+        
+        auto sv = subConfigMap.find("scalarV");
+        if(sv == subConfigMap.end()){
+            auto scalar = std::atof(subConfigMap["scalar"].c_str());
+            subConfigMap["scalarV"] = std::to_string(scalar * utils::computeMaxRadius(clusters, wrData.workData, wrData.inputData, wrData.centroidLabels));
+            std::cout << "Using scalarV: " << subConfigMap["scalarV"] << std::endl;
+        }
+        
+        
+        
+    }
+
 
 	std::string pipeFuncts = "distMatrix.neighGraph.incrementalPersistence";
     auto lim = count(pipeFuncts.begin(), pipeFuncts.end(), '.') + 1;
@@ -185,6 +212,10 @@ bool upscalePipe<nodeType>::configPipe(std::map<std::string, std::string> &confi
 	pipe = configMap.find("outputFile");
 	if(pipe != configMap.end())
 		this->outputFile = configMap["outputFile"].c_str();
+        
+	pipe = configMap.find("maxSize");
+	if(pipe != configMap.end())
+		this->maxSize = std::atoi(configMap["maxSize"].c_str());
 	
 	pipe = configMap.find("dimensions");
 	if(pipe != configMap.end()){

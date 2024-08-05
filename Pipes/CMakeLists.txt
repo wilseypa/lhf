@@ -23,7 +23,29 @@ else()
     FetchContent_MakeAvailable(qhullext)
 endif()
 
-find_package(CGAL REQUIRED)
+find_package(CGAL)
+#Integrating with CGAL library
+if(NOT CGAL_FOUND)
+    FetchContent_Declare(cgalext
+        GIT_REPOSITORY "https://github.com/CGAL/cgal.git"
+        GIT_TAG "v5.6.1"
+        #BUILD_STATIC_LIBS OFF
+        #BUILD_SHARED_LIBS ON
+    )
+
+    if(${CMAKE_VERSION} VERSION_LESS 3.14)
+        FetchContent_GetProperties(cgalext)
+        if(NOT cgalext_POPULATED)
+            FetchContent_Populate(cgalext)
+            add_subdirectory(${cgalext_SOURCE_DIR} ${cgalext_BINARY_DIR})
+        endif()
+    else()
+        FetchContent_MakeAvailable(cgalext)
+    endif()
+    set(CGAL_DIR ${cgalext_BINARY_DIR})
+    find_package(CGAL REQUIRED)
+endif()
+
 find_package(OpenMP REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(TBB)
@@ -94,7 +116,7 @@ endif()
 
 add_library(incrementalPipe STATIC "incrementalPipe.cpp" "incrementalPipe.hpp")
 if(TBB_FOUND)
-target_link_libraries(incrementalPipe PUBLIC basePipe utils OpenMP::OpenMP_CXX TBB:tbb)
+target_link_libraries(incrementalPipe PUBLIC basePipe utils OpenMP::OpenMP_CXX TBB::tbb)
 else()
 target_link_libraries(incrementalPipe PUBLIC basePipe utils OpenMP::OpenMP_CXX)
 endif()

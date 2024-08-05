@@ -17,10 +17,26 @@
 #include "streamingKmeans.hpp"
 #include "streamingUtils.hpp"
 #include "utils.hpp"
+
+/**
+	@class streamingKmeans
+	@brief A class for implementing the streaming k-means algorithm
+	@tparam nodeType The type of data points to cluster
+*/
 // overall goal: get weighted representation of streaming data, then perform k means on that .... Shindler 11
 
 // basePipe constructor
+
+/**
+	@brief The overall goal of this code is to get the weighted representation of streaming data and then perform k-means on it.
+	@tparam nodeType A template parameter representing the node type of the streaming data.
+*/
+
 template<typename nodeType>
+/**
+	@brief Construct a new streamingKmeans object and set the processor name.
+	@tparam nodeType A template parameter representing the node type of the streaming data.
+*/
 streamingKmeans<nodeType>::streamingKmeans(){
 	this->procName = "streamingKmeans";
 	return;
@@ -29,7 +45,24 @@ streamingKmeans<nodeType>::streamingKmeans(){
 
 
 // runPipe -> Run the configured functions of this pipeline segment
+/**
+	@brief Run the configured functions of this pipeline segment.
+
+	@param nodeType A template parameter representing the node type of the streaming data.
+
+	@param inData A reference to the input data.
+*/
 template<typename nodeType>
+/**
+	@brief Run the configured functions of this pipeline segment.
+	@param inData A reference to the input data.
+*/
+
+/**
+	@brief Runs the preprocessor on input data
+	@tparam nodeType The datatype of the nodes in the data
+	@param inData The input data
+ */
 void streamingKmeans<nodeType>::runPreprocessor(pipePacket<nodeType> &inData){
 	
 	if(!this->configured){
@@ -65,20 +98,53 @@ void streamingKmeans<nodeType>::runPreprocessor(pipePacket<nodeType> &inData){
 for(int d = 0; d<inData.workData[0].size(); d++){  
 	omega[d] = randDouble();  // initializing omega (vector that is randomly projected on )
 }
+
+
 //std:: cout<< omega[0] << omega[1] << "  <-omega\n";
+
 std::vector<double> approxFacilities(0);
+
 std::vector<double> approxFacilitiesHat(0);
  std::vector<std::vector<double>> kHat;
 
+/**
+
+	
+/**
+
+	@brief Loop through points in a data stream and assign them to clusters, based on delta/f probability.
+
+	@details The method first adds the initial points to the facility set, then loops through the rest of the points
+
+	in the stream, assigning them to the closest cluster. If a point is close enough to none of the existing clusters,
+
+	it is added as a new cluster.
+
+	@param inData The input data to be clustered.
+
+	@param numClusters The number of desired clusters.
+
+	@param maxFacilities The maximum number of facilities that can be added.
+
+	@param omega The random projection matrix.
+
+	@return None.
+
+	@note This method is specific to the kmeans++ algorithm and the data structure used here.
+*/
+
 double f = 1/(numClusters*(1 + log(size))); //facility cost f = 1/(k(1+log n))  k clusters, n points, empty set K  //facility==centroid 
+
 
 std::vector<double> summedClusters(numClusters, 0);
 
 std::vector<double> counts(maxFacilities, 0);
+
 std::vector<int> tempCounts(maxFacilities, 0);
 std::vector<unsigned> curLabels;
 std::vector< std::pair<double, int>> sortedApproxFacils;
 std::vector< std::pair<double, int>> sortedApproxFacilsHat;
+
 std::vector< std::pair<std::vector<double>, int>> clustered;
 std::vector< std::pair<std::vector<double>, int>> kHatClustered;
 
@@ -93,9 +159,13 @@ for(unsigned i = 0; i<(numClusters/2); i++){
 	clustered.push_back(std::make_pair(inData.workData[i], i));
 	counts[i] ++;
 }
+
 int approxSize = sortedApproxFacils.size();
+
 int numFacilities = facilities.size();
+
 int tracker  = 0;
+
 std::vector<std::vector<double>> summedCentroidVectors(numClusters, std::vector<double>(inData.workData[0].size(), 0)); 
 
 
@@ -297,7 +367,16 @@ std::vector<std::vector<double>> summedCentroidVectors(numClusters, std::vector<
 }
 
 
+/**
 
+	@brief Configures the function settings of this pipeline segment.
+
+	@tparam nodeType The data type of the input nodes.
+
+	@param configMap A map containing the configuration parameters and their values.
+
+	@return A boolean value indicating whether the configuration was successful or not.
+*/
 
 // configPipe -> configure the function settings of this pipeline segment
 template<typename nodeType>
@@ -331,6 +410,26 @@ bool streamingKmeans<nodeType>::configPreprocessor(std::map<std::string, std::st
 	return true;
 }
 
+/**
+
+	@brief Finds the approximate nearest neighbor for a given data point using the given facilities and projection vector.
+
+	@tparam nodeType The data type of the input nodes.
+
+	@param facilities A vector containing the facilities/centroids.
+
+	@param sortedApproxFacils A vector of pairs containing the inner product of each facility with the projection vector and its index in the facilities vector, sorted in ascending order by the inner product.
+
+	@param omega The projection vector.
+
+	@param x The index of the data point being examined.
+
+	@param size The number of facilities/centroids.
+
+	@param inData The input data packet.
+
+	@return A vector containing the approximate nearest neighbor.
+*/
 
 template<typename nodeType>
 std::vector<double> streamingKmeans<nodeType>::approxNearestNeighbor(std::vector<std::vector<double>>& facilities, std::vector<std::pair <double, int>>& sortedApproxFacils, std::vector<double> omega, int x, int size, pipePacket<nodeType>(inData)){
@@ -418,7 +517,24 @@ std::vector<double> streamingKmeans<nodeType>::approxHat(std::vector<std::vector
 	
 }
 
+/**
 
+	This method approximates the closest centroid or facility to a given data point using a random projection-based algorithm.
+
+	@tparam nodeType The data type of each centroid/facility.
+
+	@param summedCentroidVectors A vector of vectors that holds the summed data points for each centroid/facility.
+
+	@param sortedApproxFacilsHat A vector of pairs that holds the inner product of each centroid/facility with a random projection vector and its index in the summedCentroidVectors vector, sorted by the inner product.
+
+	@param omega A vector that holds the random projection vector.
+
+	@param xHat The index of the data point to find the closest centroid/facility to.
+
+	@param size The number of centroids/facilities.
+
+	@return A vector that holds the data point of the closest centroid/facility to the given data point.
+*/
 
 template<typename nodeType>
 int streamingKmeans<nodeType>::binarySearch(std::vector<std::pair <double, int>>& sorted, std::vector<double> omega, int n, double projection){ //dotProd is target
@@ -451,7 +567,14 @@ return low;
 
 }
 
+/**
 
+	@brief Takes dot product of facilities centroids and omega, where omega is d dimensions large uniformly distributed between 0,1. When new points arrive, dot product is calculated, and 2 centroids x dot omega is between to find nearest facilities faster than calculating nearest neighbor.
+	@tparam nodeType
+	@param a std::vector of doubles representing the centroid or facility
+	@param b std::vector of doubles representing the weight or omega
+	@return double representing the dot product
+*/
 
 template<typename nodeType>
 double streamingKmeans<nodeType>::dotProd(const std::vector<double>& a, const std::vector<double>& b){
@@ -463,6 +586,13 @@ double streamingKmeans<nodeType>::dotProd(const std::vector<double>& a, const st
   
   return std::accumulate(temp.begin(), temp.end(), 0.0);
 }
+
+/**
+
+	@brief Generates a random double between 0 and 1 using the implementation from stack overflow
+	@tparam nodeType
+	@return double representing the random number generated
+*/
 
 template<typename nodeType>
 double streamingKmeans<nodeType>::randDouble(){    // random double between 0 and 1  (stack overflow implementation)
@@ -478,14 +608,31 @@ double streamingKmeans<nodeType>::randDouble(){    // random double between 0 an
     return currentRandomNumber;
 } 
 
+/**
+	@brief Determines whether an event should happen given a certain probability
+	@tparam nodeType
+	@param f double representing the probability of an event occurring
+	@return true if event should happen, false otherwise
+*/
+
 template<typename nodeType>
 bool streamingKmeans<nodeType>::prob(double f){
 	// returns true with f's probability.
 	return streamingKmeans<nodeType>::randDouble() < f;
 }
 
+
+
 template<typename nodeType>
 int streamingKmeans<nodeType>::random(int low, int high){
+	/**
+		@brief Generates a random integer between low and high, inclusive.
+		@tparam nodeType The data type of the node.
+		@param low The lower limit of the range for the random number.
+		@param high The upper limit of the range for the random number.
+		@return A random integer between low and high, inclusive.
+	*/
+	
 	return low + ( rand() % (high - low) );
 }
 

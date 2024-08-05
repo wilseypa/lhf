@@ -1,3 +1,8 @@
+/*
+@file LHF.hpp
+@brief Definition of LHF class, which runs the pipeline and outputs betti numbers.
+
+*/
 #include "mpi.h"
 #include "LHF.hpp"
 #include "omp.h"
@@ -7,9 +12,22 @@
 #include <typeinfo>
 #include <thread>
 #include <string>
+#include <numeric>
+
+
 
 template<typename nodeType>
 void LHF<nodeType>::outputBettis(std::map<std::string, std::string> args, pipePacket<nodeType> &wD){
+    /**
+        @brief Output betti numbers to a file or the console using the writeOutput library.
+
+        @tparam nodeType The type of node in the data set.
+
+        @param args A map containing the arguments for the pipeline.
+
+        @param wD A pipePacket containing the output of the pipeline.
+    */
+    
 	//Output the data using writeOutput library
 	auto pipe = args.find("outputFile");
 	if (pipe != args.end()){
@@ -37,8 +55,25 @@ void LHF<nodeType>::outputBettis(std::map<std::string, std::string> args, pipePa
 	}
 }
 
+
 template<typename nodeType>
 void LHF<nodeType>::runPipeline(std::map<std::string, std::string> args, pipePacket<nodeType>&wD){
+    /**
+        @brief Runs the pipeline with the specified arguments and data packet.
+
+        The pipeline consists of a sequence of components connected by pipes
+
+        that process the data packet in a specific order.
+
+        The pipeline function names are separated by dots and passed as an argument.
+
+        @tparam nodeType The data type of the nodes in the pipeline.
+
+        @param args A map of arguments to configure the pipeline components.
+
+        @param wD The input and output data packet for the pipeline.
+    */
+    
 	// Begin processing parts of the pipeline
 	// DataInput -> A -> B -> ... -> DataOutput
 	// Parsed by "." -> i.e. A.B.C.D
@@ -97,6 +132,16 @@ void LHF<nodeType>::runPipeline(std::map<std::string, std::string> args, pipePac
 
 template<typename nodeType>
 void LHF<nodeType>::runPreprocessor(std::map<std::string, std::string>& args, pipePacket<nodeType>&wD){
+    /**
+        @brief Runs the preprocessor function, if enabled.
+
+        @tparam nodeType The type of node being processed.
+
+        @param args The arguments to be used for preprocessor configuration.
+
+        @param wD The pipeline packet to process.
+    */
+    
 	//Start with the preprocessing function, if enabled
 	auto pre = args["preprocessor"];
 	if (pre != ""){	
@@ -121,24 +166,39 @@ void LHF<nodeType>::runPreprocessor(std::map<std::string, std::string>& args, pi
 
 template<typename nodeType>
 std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processParallel(std::map<std::string, std::string> args, std::vector<unsigned> &centroidLabels, std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> &partitionedData, std::vector<std::vector<double>> &inputData, int displacement){
-	//		Parameters
+    /**
+        @brief Processes partitions in parallel and returns a merged betti table
+
+        @tparam nodeType The node type for the pipeline
+
+        @param args A map of arguments for pipeline configuration
+
+        @param centroidLabels The centroid labels for each point in the data
+
+        @param partitionedData A pair containing partition labels and partitioned data
+
+        @param inputData The input data
+
+        @param displacement The displacement of the first partition in the full dataset
+
+        @return std::vector<bettiBoundaryTableEntry> The merged betti table for all partitions
+    */
+
+	//		Parameters used for each thread
 	auto threshold = std::atoi(args["threshold"].c_str());
 	auto maxEpsilon = std::atof(args["epsilon"].c_str());
 	auto threads = std::atoi(args["threads"].c_str());
 	auto clusters = std::atoi(args["clusters"].c_str());
 
-	//		Local Storage
+	//		Local Storage for each thread
 	std::vector<bettiBoundaryTableEntry> mergedBettiTable;
 	std::vector<bettiBoundaryTableEntry> partBettiTable[threads];
 	std::string runLogs[threads];
 	std::string stats[threads];
-
-	//		Initalize a copy of the pipePacket
 	auto iterwD = pipePacket<nodeType>(args, args["complexType"]);
 
 	//		Process fuzzy partitions in order of size
 	std::vector<std::pair<unsigned, unsigned>> sortpartitions;
-
 	for (int i = 0; i < partitionedData.second.size(); i++){
 		sortpartitions.push_back(std::make_pair(partitionedData.second[i].size(), i));
 	}
@@ -750,16 +810,62 @@ std::vector<bettiBoundaryTableEntry> LHF<nodeType>::processDistributedWrapper(st
 	return finalMergedBettiTable;
 }
 
+template<typename nodeType>
+pipePacket<nodeType> *processpyLHFWrapper(std::map<std::string, std::string> &args, std::vector<std::vector<double>> &pointCloud){
+    
+    //Determine what pipe we will be running; this involves creating a temporary LHF
+    //  object and using a void pointer to reassign the correct complex type
+    auto lhflib = LHF<nodeType>();
+    
+    auto wD = new pipePacket<nodeType>(args, args["complexType"]);
 
+    wD->inputData = pointCloud;
+    wD->workData = wD->inputData;
+    
+    double start = omp_get_wtime();
+    
+    if (wD->inputData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
+
+        if(args["mode"] == "reduced" || args["mode"] == "iterUpscale" || args["mode"] == "iter"){	
+            wD->bettiTable = lhflib.processParallelWrapper(args,*wD);
+            sort(wD->bettiTable.begin(), wD->bettiTable.end(), sortBettis());
+        }
+        else{
+            lhflib.runPreprocessor(args, *wD);
+            lhflib.runPipeline(args, *wD);
+        }
+    }
+    else{
+        argParser::printUsage();
+    }
+
+    if ((args["debug"] == "1" || args["debug"] == "true") && wD->bettiTable.size() > 0){
+        std::cout << std::endl
+                  << "_______Merged BETTIS_______" << std::endl;
+
+        for (auto a : wD->bettiTable){
+            std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
+            utils::print1DVector(a.boundaryPoints);
+        }
+    }
+
+    delete wD->complex;
+
+    double end = omp_get_wtime();
+    std::cout << "Total LHF execution time (s): " << end - start << std::endl;
+    
+    return wD;
+}
 
 
 
 extern "C"{
-
-	void pyRunWrapper(const int argc, char *argv, const double *pointCloud){
-
-		//std::cout << std::endl << "argc: " << argc << std::endl;
-		//First we need to convert arguments from char* to map
+	
+    
+	pipeWrap *pyLHFWrapper(int argc, char *argv, const double *pointCloud){
+        pipeWrap *ret;
+        
+        /*******     1. Read Arguments      *********/
 		std::map<std::string, std::string> args;
 		std::vector<std::string> rawArgs;
 
@@ -776,325 +882,144 @@ extern "C"{
 		}
 
 		//Split argument list into map
-		for (auto i = 0; i < rawArgs.size(); i += 2)
+		for (auto i = 0; i < rawArgs.size(); i += 2){
 			args[rawArgs[i]] = rawArgs[i + 1];
+		}
+        
+        
+        
+        //Get args from pipeline mode
+        argParser::defaultArguments(args);
+        argParser::setPipeline(args);
 
-		//Next, decode the data
-		int dataSize = std::atoi(args["datasize"].c_str());
-		int dataDim = std::atoi(args["datadim"].c_str());
+		/*******     2. Decode Data          *********/
+		int dataSize = std::stoi(args["datasize"]);
+		int dataDim = std::stoi(args["datadim"]);
 
 		std::vector<std::vector<double>> data(dataSize, std::vector<double>(dataDim));
 
 		for (auto row = 0; row < dataSize; row++){
-
 			for (auto dim = 0; dim < dataDim; dim++){
-
-				data[row][dim] = pointCloud[row * dim + dim];
+				data[row][dim] = pointCloud[row*dataDim + dim];
 			}
 		}
+        
+        
+		/*******     3. Run LHF             *********/
+        //Local pointers for different nodeTypes
+        std::vector<bettiBoundaryTableEntry>* l_bettiTable;
+        std::string *l_ident;
+        std::string *l_stats;
+        std::string *l_runLog;
+        std::vector<std::vector<double>> *l_workData;
+        std::vector<unsigned> *l_centroidLabels;
+        std::vector<std::vector<double>> *l_inputData;
+        std::vector<std::vector<double>> *l_distMatrix;
+        std::vector<std::vector<bool>> *l_incidenceMatrix;
+        std::vector<std::set<unsigned>> *l_boundaries;
+        
+        if(args["nodeType"] == "alphaNode"){
+            auto ret = processpyLHFWrapper<alphaNode>(args, data);
+            l_bettiTable = &ret->bettiTable;
+            l_ident = &ret->ident;
+            l_stats = &ret->stats;
+            l_runLog = &ret->runLog;
+            l_workData = &ret->workData;
+            l_centroidLabels = &ret->centroidLabels;
+            l_inputData = &ret->inputData;
+            l_distMatrix = &ret->distMatrix;
+            l_incidenceMatrix = &ret->incidenceMatrix;
+            l_boundaries = &ret->boundaries;
+            
+        } else if (args["nodeType"] == "witnessNode"){
+            auto ret = processpyLHFWrapper<witnessNode>(args, data);
+            l_bettiTable = &ret->bettiTable;
+            l_ident = &ret->ident;
+            l_stats = &ret->stats;
+            l_runLog = &ret->runLog;
+            l_workData = &ret->workData;
+            l_centroidLabels = &ret->centroidLabels;
+            l_inputData = &ret->inputData;
+            l_distMatrix = &ret->distMatrix;
+            l_incidenceMatrix = &ret->incidenceMatrix;
+            l_boundaries = &ret->boundaries;
+        } else {
+            auto ret = processpyLHFWrapper<simplexNode>(args, data);
+            l_bettiTable = &ret->bettiTable;
+            l_ident = &ret->ident;
+            l_stats = &ret->stats;
+            l_runLog = &ret->runLog;
+            l_workData = &ret->workData;
+            l_centroidLabels = &ret->centroidLabels;
+            l_inputData = &ret->inputData;
+            l_distMatrix = &ret->distMatrix;
+            l_incidenceMatrix = &ret->incidenceMatrix;
+            l_boundaries = &ret->boundaries;
+        }
+        
+        
+        retPipePacket* retStruct = (retPipePacket *) malloc (sizeof(retPipePacket));
+        
+        //Calculate the size of the betti table with total generator entries
+        int generators = 0;
+        for(auto i = 0; i < (*l_bettiTable).size(); i++){
+            generators += (*l_bettiTable)[i].boundaryPoints.size();
+        }
+        
+        //Allocate and populate the serialized betti table; size is number of entries plus the total number of generators
+		retBettiTable *bettiTable = (retBettiTable *)malloc(sizeof(retBettiTable) * (*l_bettiTable).size() + sizeof(unsigned) * generators); 
 
-		//C interface for python to call into LHF
-		auto lhflib = LHF<simplexNode>();
-		double start = omp_get_wtime();
-
-		//Create a pipePacket<simplexNode>(datatype) to store the complex and pass between engines
+		for (auto i = 0; i < (*l_bettiTable).size(); i++){
+			bettiTable[i].dim = (*l_bettiTable)[i].bettiDim;
+			bettiTable[i].birth = (*l_bettiTable)[i].birth;
+			bettiTable[i].death = (*l_bettiTable)[i].death;
+            bettiTable[i].boundarySize = (*l_bettiTable)[i].boundaryPoints.size();
+            
+            bettiTable[i].boundaryEntries = (unsigned*)malloc(sizeof(unsigned) * bettiTable[i].boundarySize);
+            
+            int jdx = 0;
+            for (auto generator: (*l_bettiTable)[i].boundaryPoints){
+                bettiTable[i].boundaryEntries[jdx] = generator;
+                jdx++;
+            }
+            
+		}
+        
+        retStruct->size_betti = (*l_bettiTable).size();
+        retStruct->LHF_size = dataSize;
+        retStruct->LHF_dim = dataDim;
+        retStruct->workData_size = (*l_workData).size();
+        retStruct->bettiTable = bettiTable;                 
+        retStruct->stats = (*l_stats).c_str();               
+        retStruct->runLog = (*l_runLog).c_str();
+        retStruct->ident = (*l_ident).c_str();
+        
+        double *inputData_retStruct = (double *)malloc(sizeof(double) * ((*l_inputData).size() * (*l_inputData)[0].size()));
+        double *distMatrix_retStruct = (double *)malloc(sizeof(double) * ((*l_distMatrix).size() * (*l_distMatrix).size()));
+        double *workData_retStruct = (double *)malloc(sizeof(double) * ((*l_workData).size() * (*l_workData).size()));
+        unsigned *centroidLabels_retStruct = (unsigned *)malloc(sizeof(unsigned) * ((*l_centroidLabels).size()));
+		//char *stats_retStruct = (char *)malloc(sizeof(char) * wD.stats.length());
+		//char *runLog_retStruct = (char *)malloc(sizeof(char) * wD.runLog.length());
+		//char *ident_retStruct = (char *)malloc(sizeof(char) * wD.ident.length());
+        
 		auto wD = pipePacket<simplexNode>(args, args["complexType"]); //wD (workingData)
+        
+		std::for_each(l_inputData->begin(), l_inputData->end(), [inputData_retStruct](const auto& row) mutable {inputData_retStruct = std::copy(row.begin(), row.end(), inputData_retStruct);});
+		std::for_each(l_distMatrix->begin(), l_distMatrix->end(), [distMatrix_retStruct](const auto& row) mutable {distMatrix_retStruct = std::copy(row.begin(), row.end(), distMatrix_retStruct);});
+		std::for_each(l_workData->begin(), l_workData->end(), [workData_retStruct](const auto& row) mutable {workData_retStruct = std::copy(row.begin(), row.end(), workData_retStruct);});
+        centroidLabels_retStruct = l_centroidLabels->data();
+        
+        retStruct->inputData = inputData_retStruct;
+        retStruct->distMatrix = distMatrix_retStruct;
+        retStruct->centroidLabels = centroidLabels_retStruct;
+        retStruct->workData = workData_retStruct;
+
+		std::cout << "Finished on the c++ side; Pis -> " << (*l_bettiTable).size() << std::endl;
+
+        
+        return retStruct;
+    }
 
-		wD.inputData = data;
-		wD.workData = wD.inputData;
 
-		//Determine what pipe we will be running
-		argParser::setPipeline(args);
-
-		//If data was found in the inputFile
-		if (wD.inputData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
-
-			if(args["mode"] == "reduced" || args["mode"] == "iterUpscale" || args["mode"] == "iter"){	
-				wD.bettiTable = lhflib.processParallelWrapper(args,wD);
-
-				sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
-			}
-			else{
-				lhflib.runPreprocessor(args, wD);
-				lhflib.runPipeline(args, wD);
-			}
-		}
-		else{
-			argParser::printUsage();
-		}
-
-		if ((args["debug"] == "1" || args["debug"] == "true") && wD.bettiTable.size() > 0){
-			std::cout << std::endl
-					  << "_______Merged BETTIS_______" << std::endl;
-
-			for (auto a : wD.bettiTable){
-				std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
-				utils::print1DVector(a.boundaryPoints);
-			}
-		}
-
-		delete wD.complex;
-
-		double end = omp_get_wtime();
-		std::cout << "Total LHF execution time (s): " << end - start << std::endl;
-
-		return;
-	}
-
-	PRAP *pyRunWrapper2(int argc, char *argv[], const double *pointCloud){
-
-		auto args = argParser::parse(argc, argv);
-
-
-		// int dataSize = std::atoi(args["datasize"].c_str());
-		// int dataDim = std::atoi(args["datadim"].c_str());
-
-		// std::vector<std::vector<double>> data(dataSize, std::vector<double>(dataDim));
-
-		// for (auto row = 0; row < dataSize; row++)
-		// {
-
-		// 	for (auto dim = 0; dim < dataDim; dim++)
-		// 	{
-
-		// 		data[row][dim] = pointCloud[row * dim + dim];
-		// 	}
-		// }
-
-		//C interface for python to call into LHF
-		auto lhflib = LHF<simplexNode>();
-		double start = omp_get_wtime();
-
-		//Create a pipePacket<simplexNode>(datatype) to store the complex and pass between engines
-		auto wD = pipePacket<simplexNode>(args, args["complexType"]); //wD (workingData)
-
-		// wD.inputData = data;
-		// wD.workData = wD.inputData;
-		auto rs = readInput();
-		if(args["pipeline"] != "slidingwindow" && args["pipeline"] != "naivewindow" && args["mode"] != "mpi"){
-			//Read data from inputFile CSV
-			wD.inputData = rs.readCSV(args["inputFile"]);
-			wD.workData = wD.inputData;
-		}
-
-
-		//Determine what pipe we will be running
-		argParser::setPipeline(args);
-
-		//If data was found in the inputFile
-		if (wD.inputData.size() > 0 || args["pipeline"] == "slidingwindow" || args["pipeline"] == "naivewindow" || args["mode"] == "mpi"){
-
-			if(args["mode"] == "reduced" || args["mode"] == "iterUpscale" || args["mode"] == "iter"){	
-				wD.bettiTable = lhflib.processParallelWrapper(args,wD);
-				sort(wD.bettiTable.begin(), wD.bettiTable.end(), sortBettis());
-			}
-			else{
-				lhflib.runPreprocessor(args, wD);
-				lhflib.runPipeline(args, wD);
-			}
-		}
-		else{
-			argParser::printUsage();
-		}
-
-		if ((args["debug"] == "1" || args["debug"] == "true") && wD.bettiTable.size() > 0){
-			std::cout << std::endl
-					  << "_______Merged BETTIS_______" << std::endl;
-
-			for (auto a : wD.bettiTable){
-				std::cout << a.bettiDim << ",\t" << a.birth << ",\t" << a.death << ",\t";
-				utils::print1DVector(a.boundaryPoints);
-			}
-		}
-
-		delete wD.complex;
-
-		double end = omp_get_wtime();
-		std::cout << "Total LHF execution time (s): " << end - start << std::endl;
-
-		BRET *retStruct = (BRET *)malloc(sizeof(BRET) * wD.bettiTable.size()); // = new testStruct(wD.bettiTable.size());
-
-		//PRET *retStruct2 = (PRET*)malloc(sizeof(PRET) * wD.size());
-
-		for (auto i = 0; i < wD.bettiTable.size(); i++){
-			retStruct[i].dim = wD.bettiTable[i].bettiDim;
-			retStruct[i].birth = wD.bettiTable[i].birth;
-			retStruct[i].death = wD.bettiTable[i].death;
-		}
-
-		///////////////////////////////////////////////////////////////////////////////////////////
-		double *inputData_retStruct = (double *)malloc(sizeof(double) * (wD.inputData.size() * wD.inputData[0].size()));
-
-		int sizof = 0;
-		for (int i = 0; i < wD.inputData.size(); i++){
-			for (int j = 0; j < wD.inputData[i].size(); j++){
-				// std::cout << sizof << " = " << wD.inputData[i][j] << std::endl;
-				inputData_retStruct[sizof] = wD.inputData[i][j];
-				sizof++;
-			}
-		}
-
-		// std::cout << "distsize-> " << wD.distMatrix.size() << std::endl;
-		// std::cout << "inputsize-> " << wD.inputData.size() << std::endl;
-		// std::cout << "centroidLabelssize-> " << wD.centroidLabels.size() << std::endl;
-		// std::cout << "workDatasize-> " << wD.workData.size() << std::endl;
-		// std::cout << "size[0]-> " << wD.distMatrix[0].size() << std::endl;
-
-		double *distMatrix_retStruct = (double *)malloc(sizeof(double) * (wD.distMatrix.size() * wD.distMatrix.size()));
-
-		sizof = 0;
-		for (int i = 0; i < wD.distMatrix.size(); i++){
-			for (int j = 0; j < wD.distMatrix[i].size(); j++){
-				// if(sizof % 100 == 0){
-				// 	std::cout << sizof << " = " << wD.distMatrix[i][j] << std::endl;
-				// }
-				// if(sizof < 100){
-				// 	std::cout << sizof << " = " << wD.distMatrix[i][j] << std::endl;
-				// }
-				distMatrix_retStruct[sizof] = wD.distMatrix[i][j];
-				sizof++;
-			}
-		}
-
-		// std::cout << "size-> " << wD.centroidLabels.size() << std::endl;
-		// std::cout << "size[0]-> " << wD.centroidLabels[0].size() << std::endl;
-
-		unsigned *centroidLabels_retStruct = (unsigned *)malloc(sizeof(unsigned) * (wD.centroidLabels.size()));
-
-		sizof = 0;
-		// std::cout << wD.centroidLabels.size() << std::endl;
-		for (int i = 0; i < wD.centroidLabels.size(); i++){
-			// std::cout << sizof << " = " << wD.centroidLabels[i] << std::endl;
-			centroidLabels_retStruct[sizof] = wD.centroidLabels[i];
-			sizof++;
-		}
-
-		// std::cout << "size-> " << wD.workData.size() << std::endl;
-
-		double *workData_retStruct = (double *)malloc(sizeof(double) * (wD.workData.size() * wD.workData[0].size()));
-
-		sizof = 0;
-		for (int i = 0; i < wD.workData.size(); i++){
-			// std::cout << "size() = "  << wD.workData[i].size() << std::endl;
-			for (int j = 0; j < wD.workData[i].size(); j++){
-				// std::cout << sizof << " = " << wD.workData[i][j] << std::endl;
-				workData_retStruct[sizof] = wD.workData[i][j];
-				// std::cout << sizof << " = " << workData_retStruct[sizof] << std::endl;
-				sizof++;
-			}
-		}
-
-		// std::cout << wD.stats << std::endl;
-
-		char *stats_retStruct = (char *)malloc(sizeof(char) * wD.stats.length());
-
-		int n = wD.stats.length();
-
-		if (wD.stats.empty()){
-		}
-		else{
-			// std::cout << wD.stats << std::endl;
-			char stats_char_array[n + 1];
-
-			strcpy(stats_char_array, wD.stats.c_str());
-
-			for (int i = 0; i < n; i++){
-				// std::cout << stats_char_array[i];
-				stats_retStruct[i] = stats_char_array[i];
-			}
-		}
-		////////////////////////////////////////////
-
-		char *runLog_retStruct = (char *)malloc(sizeof(char) * wD.runLog.length());
-
-		if (wD.runLog.empty()){
-		}
-		else{
-			// std::cout << wD.runLog << std::endl;
-			n = wD.runLog.length();
-
-			char runLog_char_array[n + 1];
-
-			strcpy(runLog_char_array, wD.runLog.c_str());
-
-			for (int i = 0; i < n; i++){
-				// std::cout << runLog_char_array[i];
-				runLog_retStruct[i] = runLog_char_array[i];
-			}
-		}
-
-		char *ident_retStruct = (char *)malloc(sizeof(char) * wD.ident.length());
-		if (wD.ident.empty()){
-		}
-		else{
-			std::cout << wD.ident << std::endl;
-
-			char *ident_retStruct = (char *)malloc(sizeof(char) * wD.ident.length());
-
-			n = wD.ident.length();
-
-			char ident_char_array[n + 1];
-
-			strcpy(ident_char_array, wD.ident.c_str());
-
-			for (int i = 0; i < n; i++){
-				// std::cout << ident_char_array[i];
-				ident_retStruct[i] = ident_char_array[i];
-			}
-		}
-		///////////////////////////////////////////////////////////////////////////////////////////
-		//Wrap the structure in the size...
-
-		// std::cout << wD.inputData << std::endl;
-
-		BRAP *a = (BRAP *)malloc(sizeof(int) + (sizeof(BRET) * wD.bettiTable.size()));
-		PRAP *b = (PRAP *)malloc(sizeof(int) + (sizeof(BRET) * (wD.bettiTable.size()))); //* (wD.inputData.size() * wD.inputData[0].size()) * wD.bettiTable.size())));
-		//PRAP* b;
-		a->size = wD.bettiTable.size();
-		a->ret = retStruct;
-
-		// std::cout << "bettisize = " << wD.bettiTable.size() << std::endl;
-		b->size_betti = wD.bettiTable.size();
-		// std::cout << "bettisize = " << wD.bettiTable.size() << std::endl;
-		b->BettiTable = retStruct;
-
-		b->LHF_size = wD.inputData.size();
-		b->LHF_dim = wD.inputData[0].size();
-		b->workData_size = wD.workData.size();
-		b->inputData = inputData_retStruct;
-		b->distMatrix = distMatrix_retStruct;
-		if (wD.centroidLabels.size() == 0){
-			// centroidLabels_retStruct = ;
-			b->centroidLabels = centroidLabels_retStruct;
-		}
-		else{
-			b->centroidLabels = centroidLabels_retStruct;
-		}
-		b->workData = workData_retStruct;
-		if (wD.stats.empty()){
-		}
-		else{
-			b->stats = stats_retStruct;
-		}
-		if (wD.runLog.empty()){
-		}
-		else{
-			b->runLog = runLog_retStruct;
-		}
-		if (wD.ident.empty()){
-		}
-		else{
-			b->ident = ident_retStruct;
-		}
-		// std::cout << "inputData_size-> " << wD.inputData.size() << std::endl;
-		// std::cout << "inputData_size[1]-> " << wD.inputData[0].size() << std::endl;
-
-		//b->ident = wD.ident;
-		// b->stats = wD.stats;
-		// b->runLog = wD.runLog;
-
-		std::cout << "Finished on the c++ side -> " << wD.bettiTable.size() << std::endl;
-		return b;
-	}
 }
 

@@ -8,26 +8,45 @@ Additional pipelines have been created for preprocessing, approximations of the 
 
 ### REQUIREMENTS 
 
-- C++14
+- C++23
   
 - CMake
 
-- OpenMPI (if build / run for distributed)
+- OpenMP
+
+- Eigen3
+
+- MPI (MPICH, OpenMPI)
+
+- CGAL
 
 ---
 			  
 ### COMPILING 
 
-	##    cmake .
-	##    make
+```console
+mkdir build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make
+```
+---
 
+### PYTHON Package Local Build
+
+```console
+cp build/LHFmain/libLHFlib.so.1.0.0 pyLHF/src/lhf/libLHFlib.so
+cd pyLHF/src/lhf
+pip install .
+```
 ---
 
 ###  RUNNING 
 
-	##    cd LHFmain
-	##    ./LHF <args>
-
+```console
+cd LHFmain
+./LHF <args>
+```
 ---
 
 ### ARGUMENTS
@@ -48,8 +67,8 @@ Additional pipelines have been created for preprocessing, approximations of the 
 ---
  
 ### EXAMPLES:
-
-	##    ./LHF -m fast --inputFile testData.csv
-	##    ./LHF --pipeline distMatrix.distMatrix.distMatrix -i testData.csv -o output.csv
-
+```console
+./LHF -m fast --inputFile testData.csv
+./LHF --pipeline distMatrix.distMatrix.distMatrix -i testData.csv -o output.csv
+```
 ---

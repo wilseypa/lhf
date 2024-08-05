@@ -81,26 +81,41 @@ class simplexBase {
 	void setStreamEvaluator(bool (*f) (std::vector<double>&, std::vector<std::vector<double>>&));
 
 	//virtual interface functions
+	virtual ~simplexBase();
 	virtual double getSize();
-	virtual bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&);
-	virtual bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&, int&, int&);
-	virtual void deleteIterative(int);
-	virtual void deleteIndexRecurse(int);  				// A wrapper for the actual deleteIndexRecurse method.
-	virtual void insert();
-	virtual bool find(std::vector<unsigned>);
-	virtual bool find(std::set<unsigned>);
 	virtual int simplexCount();
 	virtual int vertexCount();
+	virtual void outputComplex();
+
+	virtual void insert();
+	virtual bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&);
+	virtual bool insertIterative(std::vector<double>&, std::vector<std::vector<double>>&, int&, int&);
+
+	virtual bool find(std::vector<unsigned>);
+	virtual bool find(std::set<unsigned>);
+
+	virtual void deleteIterative(int);
+	virtual void deleteIndexRecurse(int);  				// A wrapper for the actual deleteIndexRecurse method.
+
 	virtual void prepareCofacets(int);
 	virtual void prepareFacets(int);
+
+	virtual void expandDimensions(int);
+	virtual std::vector<templateNode_P> expandDimension(std::vector<templateNode_P> edges);
+
+	//virtual void reduceComplex();
+
+
 
 	virtual std::vector<templateNode_P> getAllCofacets(const std::set<unsigned>&, double, const std::unordered_map<templateNode_P, templateNode_P>&, bool);
 	virtual std::vector<nodeType*> getAllCofacets(templateNode_P, const std::unordered_map<long long, templateNode_P>&, bool);
 	virtual std::vector<nodeType*> getAllCofacets(templateNode_P);
+    virtual std::vector<templateNode_P> getAllCofacets(const std::set<unsigned>&);
+
 	virtual std::vector<templateNode_P> getAllDelaunayCofacets(templateNode_P);
 	virtual std::vector<nodeType*> getAllDelaunayCofacets_basePointer(templateNode_P);
 	virtual std::vector<templateNode_P> getAllDelaunayCofacets(templateNode_P simp, std::unordered_map<templateNode_P,templateNode_P> pivotPairs,bool emergent);
-	virtual std::vector<templateNode_P> getAllCofacets(const std::set<unsigned>&);
+	
 	virtual std::vector<nodeType*> getAllFacets(nodeType*);
 	virtual std::vector<nodeType*> getAllFacets(templateNode_P);
 	virtual std::vector<templateNode_P> getAllFacets_P(templateNode_P);
@@ -109,11 +124,6 @@ class simplexBase {
 	virtual std::set<templateNode_P, cmpByWeight<templateNode_P>> getDimEdges(int);
 	virtual std::set<templateNode_P, cmpByWeight<templateNode_P>> getdelaunayDimEdges(int);
 	virtual std::vector<std::set<templateNode_P, cmpByWeight<templateNode_P>>> getAllEdges();
-	virtual std::vector<templateNode_P> expandDimension(std::vector<templateNode_P> edges);
 	virtual std::vector<templateNode_P> expanddelaunayDimension(int);
 
-	virtual void expandDimensions(int);
-	//virtual void reduceComplex();
-	virtual ~simplexBase();
-	virtual void outputComplex();
 };

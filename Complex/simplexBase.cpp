@@ -5,10 +5,11 @@
 #include <typeinfo>
 #include <functional>
 #include "simplexBase.hpp"
-//#include "simplexTree.hpp"
+#include "simplexTree.hpp"
 #include "simplexArrayList.hpp"
 #include "alphaComplex.hpp"
 #include "witnessComplex.hpp"
+#include "betaComplex.hpp"
 
 template<typename nodeType>
 simplexBase<nodeType>::simplexBase(){return;}
@@ -77,11 +78,10 @@ void simplexBase<nodeType>::setIncidenceMatrix(std::vector<std::vector<bool>>* _
 // simplexTree constructor, currently no needed information for the class constructor
 template<typename nodeType>
 simplexBase<nodeType>* simplexBase<nodeType>::newSimplex(const std::string &simplexT, std::map<std::string, std::string> &configMap){
+    std::cout << "Setting up " << simplexT << std::endl;
+    
 	if(simplexT == "simplexTree"){
-		//maxEpsilon and maxDimension are overwritten by setConfig
-		//auto t = new simplexTree(0, 0);
-		//t->setConfig(configMap);
-		auto t = new simplexArrayList<nodeType>(0, 0);
+		auto t = new simplexTree<nodeType>(0, 0);
 		t->setConfig(configMap);
 		return t;
 	} else if (simplexT == "simplexArrayList"){
@@ -94,6 +94,10 @@ simplexBase<nodeType>* simplexBase<nodeType>::newSimplex(const std::string &simp
 		return t;
 	} else if (simplexT == "witnessComplex"){
 		auto t = new witnessComplex<nodeType>(0, 0);
+		t->setConfig(configMap);
+		return t;
+	} else if (simplexT == "betaComplex"){
+		auto t = new betaComplex<nodeType>(0, 0);
 		t->setConfig(configMap);
 		return t;
 	}
