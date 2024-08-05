@@ -31,6 +31,6 @@ setup(
     ],
     packages=setuptools.find_packages(),
     package_data={'': ['./libLHFlib.so']},
-    install_requires=['numpy==1.26.4','scipy==1.13.1','scikit-learn==1.3.2','kneed==0.8.5','matplotlib==3.7.1'],
+    install_requires=['numpy==1.26.4','scipy==1.13.1','scikit-learn==1.5.0','kneed==0.8.5','matplotlib==3.7.1'],
     include_package_data=True,
 )
