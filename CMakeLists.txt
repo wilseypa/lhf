@@ -8,14 +8,15 @@ set(CMAKE_CXX_STANDARD_LIBRARIES "-lpthread")
 
 enable_testing()
 
-SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS} -O1")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}")
 
 if(UNIX AND NOT APPLE) 
     set(LINUX TRUE)
     message(STATUS ">>> Linux")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 elseif(APPLE)
     set(MACOS TRUE)
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Xpreprocessor -fopenmp")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp")
     set (OpenMP_C_FLAGS "-Xpreprocessor -fopenmp")
     set (OpenMP_C_LIB_NAMES "omp")
     set (OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp")
