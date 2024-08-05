@@ -116,7 +116,7 @@ endif()
 
 add_library(incrementalPipe STATIC "incrementalPipe.cpp" "incrementalPipe.hpp")
 if(TBB_FOUND)
-target_link_libraries(incrementalPipe PUBLIC basePipe utils OpenMP::OpenMP_CXX TBB:tbb)
+target_link_libraries(incrementalPipe PUBLIC basePipe utils OpenMP::OpenMP_CXX TBB::tbb)
 else()
 target_link_libraries(incrementalPipe PUBLIC basePipe utils OpenMP::OpenMP_CXX)
 endif()
