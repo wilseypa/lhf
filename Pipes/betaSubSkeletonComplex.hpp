@@ -6,8 +6,9 @@
 #include "kdTree.hpp"
 
 template <typename nodeType>
-class betaSubSkeletonComplex : public basePipe<nodeType> {
-  private:
+class betaSubSkeletonComplex : public basePipe<nodeType>
+{
+private:
 	double beta;
 	std::string betaMode;
 	double enclosingRadius;
@@ -15,15 +16,17 @@ class betaSubSkeletonComplex : public basePipe<nodeType> {
 	std::string betaMesh;
 	double epsilon;
 	// For generation of combinations n choose r
-	struct c_unique {
-	unsigned current;
-	c_unique() {current=0;}
-	unsigned operator()() {return ++current;}
+	struct c_unique
+	{
+		unsigned current;
+		c_unique() { current = 0; }
+		unsigned operator()() { return ++current; }
 	} UniqueNumber;
-  public:
-    betaSubSkeletonComplex();
-    void runPipe(pipePacket<nodeType>& inData);
-    bool checkInsertSubDsimplex(std::vector<unsigned> dsimplex,pipePacket<nodeType> &inData,double beta,double averageDistance,kdTree tree);
-    bool configPipe(std::map<std::string, std::string> &configMap);
-	void outputData(pipePacket<nodeType>&);
+
+public:
+	betaSubSkeletonComplex();
+	void runPipe(pipePacket<nodeType> &inData);
+	bool checkInsertSubDsimplex(std::vector<unsigned> dsimplex, pipePacket<nodeType> &inData, double beta, double averageDistance, kdTree tree);
+	bool configPipe(std::map<std::string, std::string> &configMap);
+	void outputData(pipePacket<nodeType> &);
 };

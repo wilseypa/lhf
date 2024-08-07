@@ -1,22 +1,18 @@
 #include <iostream>
 
-
-
-
-void testBasic(){
+void testBasic()
+{
 
 	std::cout << "Basic Test" << std::endl;
-
 }
 
-void testAdvanced(){
+void testAdvanced()
+{
 	std::cout << "Advanced Test" << std::endl;
-
 }
 
-
-int main (int, char**){
+int main(int, char **)
+{
 	testBasic();
 	testAdvanced();
-
 }

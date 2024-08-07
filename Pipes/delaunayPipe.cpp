@@ -18,7 +18,7 @@ delaunayPipe<nodeType>::delaunayPipe()
 std::vector<std::vector<unsigned>> qdelaunay_o(std::vector<std::vector<double>> &inputData)
 {
   int dim = inputData[0].size();
-  //typedef CGAL::Delaunay_triangulation<CGAL::Epick_d<CGAL::Dimension_tag<7>>> T;
+  // typedef CGAL::Delaunay_triangulation<CGAL::Epick_d<CGAL::Dimension_tag<7>>> T;
   typedef CGAL::Delaunay_triangulation<CGAL::Epick_d<CGAL::Dynamic_dimension_tag>> T;
   T dt(dim);
   std::vector<T::Point> points;
@@ -47,8 +47,8 @@ std::vector<std::vector<unsigned>> qdelaunay_o(std::vector<std::vector<double>> 
 template <typename nodeType>
 void delaunayPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 {
-  std::vector<std::vector<unsigned>> dsimplexes=qdelaunay_o(inData.inputData);
-  ((alphaComplex<alphaNode> *)inData.complex)->dsimplexmesh=dsimplexes;
+  std::vector<std::vector<unsigned>> dsimplexes = qdelaunay_o(inData.inputData);
+  ((alphaComplex<alphaNode> *)inData.complex)->dsimplexmesh = dsimplexes;
   ((alphaComplex<nodeType> *)inData.complex)->buildAlphaComplex(dsimplexes, inData.inputData.size(), inData.inputData);
   return;
 }

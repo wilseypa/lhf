@@ -2,10 +2,9 @@
 #include <vector>
 #include "simplexBase.hpp"
 
-
-
 // TEST simplexBase Functions
-void t_simp_functions(std::string &log){
+void t_simp_functions(std::string &log)
+{
 	/*simplexBase* testComplex = new simplexBase();
 	std::string failLog = "";
 	std::vector<double> testValue = {0.0, 1.0, 2.0};
@@ -97,10 +96,10 @@ void t_simp_functions(std::string &log){
 	return;
 }
 
-
 // Test simplexTree insertion, removal, etc. functions for sliding window
-void t_simp_tree_functions(std::string &log){
-	
+void t_simp_tree_functions(std::string &log)
+{
+
 	/*
 	std::map<std::string, std::string> config;
 	std::string failLog = "";
@@ -110,9 +109,9 @@ void t_simp_tree_functions(std::string &log){
 	std::vector<std::vector<double>> distMatrix = {};
 	simplexBase* testComplex = simplexBase::newSimplex("simplexTree", config);
 
-	
+
 	std::cout << "Beginning simplexTree tests" << std::endl;
-	
+
 	//Insert values from testValueArray into the complex to build the distance matrix
 	for(unsigned i = 0; i < testValueArray.size(); i++){
 		//Insert iterative into simplexTree
@@ -155,7 +154,7 @@ void t_simp_base_functions(std::string &log, std::string type){
 
 	simplexBase* testComplex = simplexBase::newSimplex(type, config);
 	testComplex->setDistanceMatrix(&testValueArray);
-	
+
 	std::cout << "Beginning simplexBase functions for " << type << std::endl;
 
 	//Insert values to initialize the complex
@@ -237,13 +236,14 @@ void t_simp_base_functions(std::string &log, std::string type){
 	} else {
 		 log += "PASSED: " + type + " Base Test Functions---------------------------\n";
 	}
-	
+
 	std::cout << "\tFinished simplexBase functions for " << type << std::endl;
 	*/
 }
 
 // TEST simplexArrayList Functions
-void t_simp_empty_functions(std::string &log, std::string type){
+void t_simp_empty_functions(std::string &log, std::string type)
+{
 	/*
 	std::map<std::string,std::string> config;
 	std::string failLog = "";
@@ -251,7 +251,7 @@ void t_simp_empty_functions(std::string &log, std::string type){
 	std::vector<std::vector<double>> testValueArray {{0.0, 1.0, 2.0},{2.0, 1.0, 0.0}};
 	std::vector<unsigned> findValue = {0};
 	std::set<unsigned> findValueSet = {0};
-	
+
 	std::cout << "Beginning simplexBase empty functions for " << type << std::endl;
 
 	simplexBase* testComplex = simplexBase::newSimplex(type, config);
@@ -321,24 +321,31 @@ void t_simp_empty_functions(std::string &log, std::string type){
 	} else {
 		 log += "PASSED: " + type + " Empty Test Functions---------------------------\n";
 	}
-	
+
 	std::cout << "\tFinished simplexBase empty functions for " << type << std::endl;
 	*/
 }
 
-int main (int, char**){
+int main(int, char **)
+{
 	std::string log;
 	t_simp_functions(log);
 
-	for(std::string type : {"simplexArrayList","simplexTree"}){
-		try{t_simp_empty_functions(log, type);}
-		catch(const std::exception){log += "FAILED: " + type + " Empty Test Functions---------------------------\n";}
+	for (std::string type : {"simplexArrayList", "simplexTree"})
+	{
+		try
+		{
+			t_simp_empty_functions(log, type);
+		}
+		catch (const std::exception)
+		{
+			log += "FAILED: " + type + " Empty Test Functions---------------------------\n";
+		}
 
-		//try{t_simp_base_functions(log, type);}
-		//catch(const std::exception){log += "FAILED: " + type + " Base Test Functions---------------------------\n";}
-
+		// try{t_simp_base_functions(log, type);}
+		// catch(const std::exception){log += "FAILED: " + type + " Base Test Functions---------------------------\n";}
 	}
 
-	std::cout << std::endl << log << std::endl;
+	std::cout << std::endl
+			  << log << std::endl;
 }
-

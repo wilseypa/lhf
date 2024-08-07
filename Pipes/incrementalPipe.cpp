@@ -6,14 +6,14 @@
 #include <chrono>
 #include <execution>
 #include <fstream>
-//#define PARALLEL
+// #define PARALLEL
 
 template <typename T>
-T dot(const std::vector<T>& a, const std::vector<T>& b) { return std::inner_product(a.begin(), a.end(), b.begin(), static_cast<T>(0)); } // Dot product of two vectors
+T dot(const std::vector<T> &a, const std::vector<T> &b) { return std::inner_product(a.begin(), a.end(), b.begin(), static_cast<T>(0)); } // Dot product of two vectors
 
 // Solution to equation of a hyperplane
 template <typename nodeType>
-std::vector<double> incrementalPipe<nodeType>::solvePlaneEquation(const std::vector<short>& points)
+std::vector<double> incrementalPipe<nodeType>::solvePlaneEquation(const std::vector<short> &points)
 {
 	int numPoints = points.size();
 	Eigen::MatrixXd A(numPoints, numPoints);
@@ -72,7 +72,7 @@ std::vector<short> incrementalPipe<nodeType>::first_simplex()
 
 // Perform DFS walk on the cospherical region
 template <typename nodeType>
-void incrementalPipe<nodeType>::cospherical_handler(std::vector<short>& simp, int& tp, short& omission, std::vector<std::vector<double>>& distMatrix)
+void incrementalPipe<nodeType>::cospherical_handler(std::vector<short> &simp, int &tp, short &omission, std::vector<std::vector<double>> &distMatrix)
 {
 	auto triangulation_point = tp;
 	auto temp = simp;
@@ -96,7 +96,7 @@ void incrementalPipe<nodeType>::cospherical_handler(std::vector<short>& simp, in
 
 // Compute the P_newpoint for provided Facet, P_context Pair
 template <typename nodeType>
-int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short>& simp, short& omission, std::vector<std::vector<double>>& distMatrix)
+int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, short &omission, std::vector<std::vector<double>> &distMatrix)
 {
 	auto normal = solvePlaneEquation(simp);
 	auto p1 = utils::circumCenter(simp, this->inputData);
@@ -107,7 +107,7 @@ int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short>& simp
 	bool flag = true;
 	std::set<short> simplex(simp.begin(), simp.end());
 	simplex.insert(omission);
-	for (auto& new_point : this->search_space)
+	for (auto &new_point : this->search_space)
 	{
 		if (simplex.find(new_point) == simplex.end() && (direction ^ (dot(normal, inputData[new_point]) > 1)))
 		{
@@ -140,7 +140,7 @@ int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short>& simp
 	{
 		double triangulation_radius = radius_vec[triangulation_point];
 		count = std::count_if(radius_vec.begin(), radius_vec.end(), [triangulation_radius](double val)
-			{ return std::abs(1 - (val / triangulation_radius)) <= 0.000000000001; });
+							  { return std::abs(1 - (val / triangulation_radius)) <= 0.000000000001; });
 		if (count != 1)
 		{
 			// cospherical_handler(simp,triangulation_point,omission,distMatrix);
@@ -150,10 +150,10 @@ int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short>& simp
 	return triangulation_point;
 }
 
-void reduce(std::set<std::vector<short>>& outer_dsimplexes, std::vector<std::pair<std::vector<short>, short>>& inner_d_1_shell, std::set<std::vector<short>>& dsimplexes)
+void reduce(std::set<std::vector<short>> &outer_dsimplexes, std::vector<std::pair<std::vector<short>, short>> &inner_d_1_shell, std::set<std::vector<short>> &dsimplexes)
 {
 	std::map<std::vector<short>, short> outer_d_1_shell;
-	for (auto& new_simplex : outer_dsimplexes)
+	for (auto &new_simplex : outer_dsimplexes)
 	{
 		// dsimplexes.insert(new_simplex);
 		for (short i = 0; i < new_simplex.size(); i++)
@@ -167,11 +167,11 @@ void reduce(std::set<std::vector<short>>& outer_dsimplexes, std::vector<std::pai
 	}
 	outer_dsimplexes.clear();
 #ifndef NO_PARALLEL_ALGORITHMS
-	std::for_each(std::execution::par_unseq, inner_d_1_shell.begin(), inner_d_1_shell.end(), [&](const auto& simp)
-		{ outer_d_1_shell.erase(simp.first); }); // Remove faces from previous iteration
+	std::for_each(std::execution::par_unseq, inner_d_1_shell.begin(), inner_d_1_shell.end(), [&](const auto &simp)
+				  { outer_d_1_shell.erase(simp.first); }); // Remove faces from previous iteration
 #else
-	std::for_each(inner_d_1_shell.begin(), inner_d_1_shell.end(), [&](const auto& simp)
-		{ outer_d_1_shell.erase(simp.first); });
+	std::for_each(inner_d_1_shell.begin(), inner_d_1_shell.end(), [&](const auto &simp)
+				  { outer_d_1_shell.erase(simp.first); });
 #endif
 	inner_d_1_shell.clear();
 	inner_d_1_shell.reserve(outer_d_1_shell.size());
@@ -181,22 +181,22 @@ void reduce(std::set<std::vector<short>>& outer_dsimplexes, std::vector<std::pai
 
 // runPipe -> Run the configured functions of this pipeline segment
 template <typename nodeType>
-void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType>& inData)
+void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 {
 	this->inputData = inData.inputData;
 	this->dim = inputData[0].size();
 	this->data_set_size = inputData.size();
 	for (unsigned i = 0; i < inputData.size(); i++)
 		this->search_space.push_back(i);
-	this->dsimplexes = { first_simplex() };
+	this->dsimplexes = {first_simplex()};
 	short new_point;
 #ifdef PARALLEL
 	{
 		std::vector<std::pair<std::vector<short>, short>> inner_d_1_shell;
 		std::set<std::vector<short>> outer_dsimplexes;
-		for (auto& new_simplex : dsimplexes)
+		for (auto &new_simplex : dsimplexes)
 		{
-			for (auto& i : new_simplex)
+			for (auto &i : new_simplex)
 			{
 				std::vector<short> key = new_simplex;
 				key.erase(std::find(key.begin(), key.end(), i));
@@ -224,9 +224,9 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType>& inData)
 	}
 #else
 	{
-		for (auto& new_simplex : dsimplexes)
+		for (auto &new_simplex : dsimplexes)
 		{
-			for (auto& i : new_simplex)
+			for (auto &i : new_simplex)
 			{
 				std::vector<short> key = new_simplex;
 				key.erase(std::find(key.begin(), key.end(), i));
@@ -246,7 +246,7 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType>& inData)
 			std::sort(first_vector.begin(), first_vector.end());
 			if (!this->dsimplexes.insert(first_vector).second)
 				continue;
-			for (auto& i : first_vector)
+			for (auto &i : first_vector)
 			{
 				if (i == new_point)
 					continue;
@@ -273,7 +273,7 @@ incrementalPipe<nodeType>::incrementalPipe() : inputData(*(new std::vector<std::
 
 // configPipe -> configure the function settings of this pipeline segment
 template <typename nodeType>
-bool incrementalPipe<nodeType>::configPipe(std::map<std::string, std::string>& configMap)
+bool incrementalPipe<nodeType>::configPipe(std::map<std::string, std::string> &configMap)
 {
 	std::string strDebug;
 
@@ -296,7 +296,7 @@ bool incrementalPipe<nodeType>::configPipe(std::map<std::string, std::string>& c
 }
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
 template <typename nodeType>
-void incrementalPipe<nodeType>::outputData(pipePacket<nodeType>& inData)
+void incrementalPipe<nodeType>::outputData(pipePacket<nodeType> &inData)
 {
 	std::ofstream file;
 	file.open("output/" + this->pipeType + "_output.csv");

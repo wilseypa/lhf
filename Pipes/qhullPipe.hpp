@@ -16,6 +16,8 @@
 #include "libqhullcpp/QhullVertexSet.h"
 #include "libqhullcpp/Qhull.h"
 
+using orgQhull::Coordinates;
+using orgQhull::PointCoordinates;
 using orgQhull::Qhull;
 using orgQhull::QhullError;
 using orgQhull::QhullFacet;
@@ -34,17 +36,17 @@ using orgQhull::QhullVertexListIterator;
 using orgQhull::QhullVertexSet;
 using orgQhull::QhullVertexSetIterator;
 using orgQhull::RboxPoints;
-using orgQhull::PointCoordinates;
-using orgQhull::Coordinates;
 
 template <typename nodeType>
-class qhullPipe : public basePipe<nodeType> {
-  private:
-	std::string mode;
-  public:
-    qhullPipe();
-    void runPipe(pipePacket<nodeType>& inData);
-    bool configPipe(std::map<std::string, std::string> &configMap);
-    void outputData(pipePacket<nodeType>&);
-    void qdelaunay_o(const Qhull&, std::vector<std::vector<unsigned>> &);
+class qhullPipe : public basePipe<nodeType>
+{
+private:
+  std::string mode;
+
+public:
+  qhullPipe();
+  void runPipe(pipePacket<nodeType> &inData);
+  bool configPipe(std::map<std::string, std::string> &configMap);
+  void outputData(pipePacket<nodeType> &);
+  void qdelaunay_o(const Qhull &, std::vector<std::vector<unsigned>> &);
 };
