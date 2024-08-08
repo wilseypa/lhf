@@ -7,6 +7,7 @@
 #include "basePipe.hpp"
 #include "simplexBase.hpp"
 #include "utils.hpp"
+#include "unionFind.hpp"
 
 template <typename nodeType>
 class incrementalPersistence : public basePipe<nodeType>

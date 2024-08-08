@@ -1,7 +1,7 @@
 /**
  * @file utils.hpp
  *
- * @brief Contains utility functions for the LFH system (https://github.com/wilseypa/LFH).
+ * @brief Contains utility functions for the LHF system (https://github.com/wilseypa/LHF).
  */
 
 #include <string>
@@ -14,171 +14,33 @@
 #include <iterator>
 #include "utils.hpp"
 #include <time.h>
+#include <execution>
 #include <Eigen/Dense>
 
 /**
- * @brief Contains utility functions for the LFH system (https://github.com/wilseypa/LFH).
- */
-
-/**
- * @brief Extracts boundary points from a vector of simplex nodes.
+ * @brief Construct a new utils::utils object
  *
- * @tparam T The type of the simplex nodes.
- * @param nodes The vector of simplex nodes.
- * @return A set of indices corresponding to the boundary points.
  */
-
-template std::set<unsigned int, std::less<unsigned int>, std::allocator<unsigned int>> utils::extractBoundaryPoints<simplexNode>(std::vector<std::shared_ptr<simplexNode>, std::allocator<std::shared_ptr<simplexNode>>>);
-template std::set<unsigned int, std::less<unsigned int>, std::allocator<unsigned int>> utils::extractBoundaryPoints<alphaNode>(std::vector<std::shared_ptr<alphaNode>, std::allocator<std::shared_ptr<alphaNode>>>);
-template std::set<unsigned int, std::less<unsigned int>, std::allocator<unsigned int>> utils::extractBoundaryPoints<witnessNode>(std::vector<std::shared_ptr<witnessNode>, std::allocator<std::shared_ptr<witnessNode>>>);
-
-/**
- * @brief Initializes a Union-Find data structure.
- *
- * @param n The number of elements in the Union-Find data structure.
- */
-
-unionFind::unionFind(int n) : rank(n, 0), parent(n, 0)
-{
-	for (int i = 0; i < n; i++)
-		parent[i] = i;
-}
-
-/**
-  @file utils.hpp
-
-  @brief Contains utility functions for the LFH system (https://github.com/wilseypa/LFH).
- */
-
-/**
-  @brief Contains utility functions for the LFH system (https://github.com/wilseypa/LFH).
- */
-
-/**
-	  @brief Extracts boundary points from a vector of simplex nodes.
-
-	  @tparam T The type of the simplex nodes.
-	  @param nodes The vector of simplex nodes.
-	  @return A set of indices corresponding to the boundary points.
-	 */
-
-/**
-@brief Finds the root of the component that contains the given element.
-
-@param i The index of the element.
-@return The index of the root of the component.
-*/
-
-int unionFind::find(int i)
-{
-	if (i == parent[i])
-		return i;				 // Found name of the component
-	parent[i] = find(parent[i]); // Path Compression
-	return parent[i];
-}
-
-/**
-  @brief Joins two components together.
-
-  @param x The index of an element in one component.
-  @param y The index of an element in another component.
-  @return True if the two components were joined, false otherwise.
- */
-
-bool unionFind::join(int x, int y)
-{ // Union by rank
-	x = find(x);
-	y = find(y);
-	if (x == y)
-		return false;
-	if (rank[x] == rank[y])
-	{
-		rank[y]++;
-		parent[x] = y;
-	}
-	else if (rank[x] < rank[y])
-	{
-		parent[x] = y;
-	}
-	else
-	{
-		parent[y] = x;
-	}
-	return true;
-}
-
-/**
-  @brief Contains utility functions for the LFH system (https://github.com/wilseypa/LFH).
- */
-
-/**
-	  @brief Determines whether A is a subset of B.
-
-	  @param A The vector to be tested for being a subset.
-	  @param B The vector that A is being tested against.
-	  @return True if A is a subset of B, false otherwise.
-	 */
-
-bool utils::isSubset(std::vector<unsigned> A, std::vector<unsigned> B)
-{
-	std::sort(A.begin(), A.end());
-	std::sort(B.begin(), B.end());
-	return std::includes(A.begin(), A.end(), B.begin(), B.end());
-}
-
-/**
-	@brief Constructs a new instance of the utils class.
-   */
-
-// utils constructor, currently no needed information for the class constructor
 utils::utils() {}
 
 /**
-	  @brief Constructs a new instance of the utils class.
-
-	  @param _debug The debug level.
-	  @param _outputFile The output file.
-	 */
-
-utils::utils(std::string _debug, std::string _outputFile)
+ * @brief Construct a new utils::utils object
+ *
+ * @param _debug The debug level.
+ * @param _outputFile The output file.
+ */
+utils::utils(const std::string &_debug, const std::string &_outputFile)
 {
 	debug = _debug;
 	outputFile = _outputFile;
 }
 
 /**
-	  @brief Calculates the average of a vector of doubles.
-
-	  @param v The vector of doubles.
-	  @return The average of the vector of doubles.
-	 */
-
-/**
-  @brief Determines whether A is a subset of B.
-
-  @param A The vector to be tested for being a subset.
-  @param B The vector that A is being tested against.
-  @return True if A is a subset of B, false otherwise.
+ * @brief
+ *
+ * @param v The vector of doubles.
+ * @return double The average of the vector of doubles.
  */
-
-/**
-  @brief Constructs a new instance of the utils class.
- */
-
-/**
-  @brief Constructs a new instance of the utils class.
-
-  @param _debug The debug level.
-  @param _outputFile The output file.
- */
-
-/**
-  @brief Calculates the average of a vector of doubles.
-
-  @param v The vector of doubles.
-  @return The average of the vector of doubles.
- */
-
 double utils ::getAverage(std::vector<double> &v)
 {
 	if (v.empty())
@@ -188,35 +50,39 @@ double utils ::getAverage(std::vector<double> &v)
 	return std::accumulate(v.begin(), v.end(), 0.0) / v.size();
 }
 
-std::vector<std::vector<double>> utils ::transposeMeanAdjusted(std::vector<std::vector<double>> input)
+/**
+ * @brief
+ *
+ * @param input
+ * @return std::vector<std::vector<double>>
+ */
+std::vector<std::vector<double>> utils ::transposeMeanAdjusted(std::vector<std::vector<double>> &input)
 {
-	std::vector<std::vector<double>> inputtranspose;
-	std::vector<std::vector<double>> inputstd;
+	std::vector<std::vector<double>> inputtranspose(input[0].size(), std::vector<double>(input.size()));
+	std::vector<std::vector<double>> inputstd(inputtranspose.size(), std::vector<double>(inputtranspose[0].size()));
 
 	for (int i = 0; i < input[0].size(); i++)
 	{
-		std::vector<double> row;
 		for (int j = 0; j < input.size(); j++)
-		{
-			row.push_back(input[j][i]);
-		}
-		inputtranspose.push_back(row);
+			inputtranspose[i][j] = input[j][i];
 	}
 
 	for (int i = 0; i < inputtranspose.size(); i++)
 	{
-		std::vector<double> inter;
 		double averagex = getAverage(inputtranspose[i]);
 		double stdval = 0;
 		for (int j = 0; j < inputtranspose[i].size(); j++)
-		{
-			inter.push_back((inputtranspose[i][j] - averagex));
-		}
-		inputstd.push_back(inter);
+			inputstd[i][j] = inputtranspose[i][j] - averagex;
 	}
 	return inputstd;
 }
 
+/**
+ * @brief
+ *
+ * @param input
+ * @return Eigen::MatrixXd
+ */
 Eigen::MatrixXd utils ::covariance(std::vector<std::vector<double>> input)
 {
 	Eigen::MatrixXd result(input.size(), input.size());
@@ -241,6 +107,13 @@ Eigen::MatrixXd utils ::covariance(std::vector<std::vector<double>> input)
 	return result;
 }
 
+/**
+ * @brief
+ *
+ * @param mat
+ * @param n
+ * @return double
+ */
 double utils ::determinantOfMatrix(std::vector<std::vector<double>> mat, int n)
 {
 	double det = 1;
@@ -287,23 +160,31 @@ double utils ::determinantOfMatrix(std::vector<std::vector<double>> mat, int n)
 	return (det);
 }
 
-std::vector<std::vector<double>> utils ::transpose(std::vector<std::vector<double>> input)
+/**
+ * @brief
+ *
+ * @param input
+ * @return std::vector<std::vector<double>>
+ */
+std::vector<std::vector<double>> utils ::transpose(const std::vector<std::vector<double>> &input)
 {
-	std::vector<std::vector<double>> inputtranspose;
-
+	std::vector<std::vector<double>> inputtranspose(input[0].size(), std::vector<double>(input.size()));
 	for (int i = 0; i < input[0].size(); i++)
 	{
-		std::vector<double> row;
 		for (int j = 0; j < input.size(); j++)
-		{
-			row.push_back(input[j][i]);
-		}
-		inputtranspose.push_back(row);
+			inputtranspose[i][j] = input[j][i];
 	}
 	return inputtranspose;
 }
 
-std::vector<std::vector<double>> utils ::matrixMultiplication(std::vector<std::vector<double>> matA, std::vector<std::vector<double>> matB)
+/**
+ * @brief
+ *
+ * @param matA
+ * @param matB
+ * @return std::vector<std::vector<double>>
+ */
+std::vector<std::vector<double>> utils ::matrixMultiplication(const std::vector<std::vector<double>> &matA, const std::vector<std::vector<double>> &matB)
 {
 	int n1 = matA.size();
 	int m1 = matA[0].size();
@@ -327,6 +208,13 @@ std::vector<std::vector<double>> utils ::matrixMultiplication(std::vector<std::v
 	return mat;
 }
 
+/**
+ * @brief
+ *
+ * @param mat
+ * @param n
+ * @return std::vector<std::vector<double>>
+ */
 std::vector<std::vector<double>> utils ::inverseOfMatrix(std::vector<std::vector<double>> mat, int n)
 {
 	int index;
@@ -389,6 +277,15 @@ std::vector<std::vector<double>> utils ::inverseOfMatrix(std::vector<std::vector
 	return matinv;
 }
 
+/**
+ * @brief
+ *
+ * @param hpcoff
+ * @param beta
+ * @param circumRadius
+ * @param circumCenter
+ * @return std::vector<std::vector<double>>
+ */
 std::vector<std::vector<double>> utils ::betaCentersCalculation(std::vector<double> hpcoff, double beta, double circumRadius, std::vector<double> circumCenter)
 {
 	double distance = sqrt(pow((beta * circumRadius), 2) - pow(circumRadius, 2));
@@ -428,6 +325,14 @@ std::vector<std::vector<double>> utils ::betaCentersCalculation(std::vector<doub
 	centers.push_back(center2);
 	return centers;
 }
+
+/**
+ * @brief
+ *
+ * @param input
+ * @param targetDim
+ * @return std::pair<std::vector<std::vector<double>>, std::vector<std::vector<double>>>
+ */
 std::pair<std::vector<std::vector<double>>, std::vector<std::vector<double>>> utils::computePCA(std::vector<std::vector<double>> input, int targetDim)
 {
 	std::vector<std::vector<double>> transp = transposeMeanAdjusted(input);
@@ -453,6 +358,15 @@ std::pair<std::vector<std::vector<double>>, std::vector<std::vector<double>>> ut
 
 	return std::make_pair(transpose(matrixMultiplication(eigenVecSelect, transp)), eigenVecSelect);
 }
+
+/**
+ * @brief
+ *
+ * @param input
+ * @param FinalOutput
+ * @param eigenvectors
+ * @return std::vector<std::vector<double>>
+ */
 std::vector<std::vector<double>> utils::computePCAInverse(std::vector<std::vector<double>> input, std::vector<std::vector<double>> FinalOutput, std::vector<std::vector<double>> eigenvectors)
 {
 
@@ -471,6 +385,17 @@ std::vector<std::vector<double>> utils::computePCAInverse(std::vector<std::vecto
 	}
 	return result;
 }
+
+/**
+ * @brief
+ *
+ * @param simplex
+ * @param inputData
+ * @param cc
+ * @param radius
+ * @param lowerdimension
+ * @return std::pair<std::vector<double>, std::vector<std::vector<double>>>
+ */
 std::pair<std::vector<double>, std::vector<std::vector<double>>> utils ::nullSpaceOfMatrix(std::set<unsigned> simplex, std::vector<std::vector<double>> inputData, std::vector<double> &cc, double radius, bool lowerdimension)
 {
 	int index;
@@ -546,6 +471,14 @@ std::pair<std::vector<double>, std::vector<std::vector<double>>> utils ::nullSpa
 
 	return std::make_pair(matns, outputPCA.second);
 }
+
+/**
+ * @brief
+ *
+ * @param simplex
+ * @param inputData
+ * @return std::vector<double>
+ */
 std::vector<double> utils::circumCenter(std::set<unsigned> &simplex, std::vector<std::vector<double>> &inputData)
 {
 	const int n = inputData[0].size();
@@ -604,6 +537,14 @@ std::vector<double> utils::circumCenter(std::set<unsigned> &simplex, std::vector
 
 	return circumCenter;
 }
+
+/**
+ * @brief
+ *
+ * @param simplex
+ * @param distMatrix
+ * @return double
+ */
 double utils::circumRadius(std::set<unsigned> &simplex, std::vector<std::vector<double>> *distMatrix)
 {
 	unsigned n = simplex.size();
@@ -639,6 +580,13 @@ double utils::circumRadius(std::set<unsigned> &simplex, std::vector<std::vector<
 	return result;
 }
 
+/**
+ * @brief
+ *
+ * @param simplex
+ * @param inputData
+ * @return std::vector<double>
+ */
 std::vector<double> utils::circumCenter(std::vector<short> &simplex, std::vector<std::vector<double>> &inputData)
 {
 	const int n = inputData[0].size();
@@ -676,6 +624,13 @@ std::vector<double> utils::circumCenter(std::vector<short> &simplex, std::vector
 	return circumCenter;
 }
 
+/**
+ * @brief
+ *
+ * @param simplex
+ * @param distMatrix
+ * @return double
+ */
 double utils::circumRadius(std::vector<short> &simplex, std::vector<std::vector<double>> &distMatrix)
 {
 	unsigned n = simplex.size();
@@ -703,6 +658,14 @@ double utils::circumRadius(std::vector<short> &simplex, std::vector<std::vector<
 	return result;
 }
 
+/**
+ * @brief
+ *
+ * @param simplex
+ * @param distMatrix
+ * @param dd
+ * @return double
+ */
 double utils ::simplexVolume(std::set<unsigned> simplex, std::vector<std::vector<double>> *distMatrix, int dd)
 {
 	std::vector<std::vector<double>> matACap(simplex.size() + 1);
@@ -731,6 +694,13 @@ double utils ::simplexVolume(std::set<unsigned> simplex, std::vector<std::vector
 	else
 		return (determinantOfMatrix(matACap, simplex.size() + 1)) / (pow(2, dd) * (pow(tgamma(dd + 1), 2)));
 }
+
+/**
+ * @brief
+ *
+ * @param spoints
+ * @return double
+ */
 double utils ::simplexVolume(std::vector<std::vector<double>> spoints)
 {
 	std::vector<std::vector<double>> matACap(spoints.size() + 1);
@@ -753,6 +723,15 @@ double utils ::simplexVolume(std::vector<std::vector<double>> spoints)
 		return (determinantOfMatrix(matACap, spoints.size() + 1)) / (pow(2, spoints[0].size()) * (pow(tgamma(spoints[0].size() + 1), 2)));
 }
 
+/**
+ * @brief
+ *
+ * @param k
+ * @param centroids
+ * @param originalData
+ * @param labels
+ * @return double
+ */
 double utils::computeMaxRadius(int k, std::vector<std::vector<double>> &centroids, std::vector<std::vector<double>> &originalData, std::vector<unsigned> &labels)
 {
 	double maxRadius = 0;
@@ -771,6 +750,15 @@ double utils::computeMaxRadius(int k, std::vector<std::vector<double>> &centroid
 	return maxRadius;
 }
 
+/**
+ * @brief
+ *
+ * @param k
+ * @param centroids
+ * @param originalData
+ * @param labels
+ * @return double
+ */
 double utils::computeAvgRadius(int k, std::vector<std::vector<double>> &centroids, std::vector<std::vector<double>> &originalData, std::vector<unsigned> &labels)
 {
 	double totalRadius = 0;
@@ -786,6 +774,14 @@ double utils::computeAvgRadius(int k, std::vector<std::vector<double>> &centroid
 	return totalRadius / originalData.size();
 }
 
+/**
+ * @brief
+ *
+ * @param inData
+ * @param beta
+ * @param betaMode
+ * @return std::vector<std::vector<bool>>
+ */
 std::vector<std::vector<bool>> utils ::betaNeighbors(std::vector<std::vector<double>> &inData, double beta, std::string betaMode)
 {
 	std::vector<std::vector<bool>> incidenceMatrix(inData.size(), std::vector<bool>(inData.size(), 0));
@@ -1000,6 +996,14 @@ std::vector<std::vector<bool>> utils ::betaNeighbors(std::vector<std::vector<dou
 	return incidenceMatrix;
 }
 
+/**
+ * @brief
+ *
+ * @param k
+ * @param originalData
+ * @param labels
+ * @return std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>>
+ */
 std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> utils::separatePartitions(int k, std::vector<std::vector<double>> originalData, std::vector<unsigned> labels)
 {
 	std::vector<std::vector<double>> a;
@@ -1016,6 +1020,15 @@ std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vecto
 	return std::make_pair(labres, res);
 }
 
+/**
+ * @brief
+ *
+ * @param rad
+ * @param centroids
+ * @param originalData
+ * @param labels
+ * @return std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>>
+ */
 std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> utils::separatePartitions(double rad, std::vector<std::vector<double>> centroids, std::vector<std::vector<double>> originalData, std::vector<unsigned> labels)
 {
 	std::vector<std::vector<double>> a;
@@ -1056,6 +1069,14 @@ std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vecto
 	return std::make_pair(labres, res);
 }
 
+/**
+ * @brief
+ *
+ * @param boundaryLists
+ * @param originalData
+ * @param labels
+ * @return std::vector<std::vector<std::vector<double>>>
+ */
 std::vector<std::vector<std::vector<double>>> utils::separateBoundaryPartitions(std::vector<std::set<unsigned>> boundaryLists, std::vector<std::vector<double>> originalData, std::vector<unsigned> labels)
 {
 	std::vector<std::vector<double>> a;
@@ -1083,24 +1104,49 @@ std::vector<std::vector<std::vector<double>>> utils::separateBoundaryPartitions(
 // 	}
 // }
 
+template std::set<unsigned int, std::less<unsigned int>, std::allocator<unsigned int>> utils::extractBoundaryPoints<simplexNode>(std::vector<std::shared_ptr<simplexNode>, std::allocator<std::shared_ptr<simplexNode>>> &);
+template std::set<unsigned int, std::less<unsigned int>, std::allocator<unsigned int>> utils::extractBoundaryPoints<alphaNode>(std::vector<std::shared_ptr<alphaNode>, std::allocator<std::shared_ptr<alphaNode>>> &);
+template std::set<unsigned int, std::less<unsigned int>, std::allocator<unsigned int>> utils::extractBoundaryPoints<witnessNode>(std::vector<std::shared_ptr<witnessNode>, std::allocator<std::shared_ptr<witnessNode>>> &);
+
+/**
+ * @brief
+ *
+ * @tparam T
+ * @param boundary
+ * @return std::set<unsigned>
+ */
 template <typename T>
-std::set<unsigned> utils::extractBoundaryPoints(std::vector<std::shared_ptr<T>> boundary)
+std::set<unsigned> utils::extractBoundaryPoints(std::vector<std::shared_ptr<T>> &boundary)
 {
 	std::set<unsigned> boundaryPoints;
-	for (auto simplex : boundary)
+	for (auto &simplex : boundary)
 		boundaryPoints.insert(simplex->simplex.begin(), simplex->simplex.end());
 	return boundaryPoints;
 }
 
+/**
+ * @brief
+ *
+ * @tparam T
+ * @param boundary
+ * @return std::set<unsigned>
+ */
 template <typename T>
-std::set<unsigned> utils::extractBoundaryPoints(std::vector<T *> boundary)
+std::set<unsigned> utils::extractBoundaryPoints(std::vector<T *> &boundary)
 {
 	std::set<unsigned> boundaryPoints;
-	for (auto simplex : boundary)
+	for (auto &simplex : boundary)
 		boundaryPoints.insert(simplex->simplex.begin(), simplex->simplex.end());
 	return boundaryPoints;
 }
 
+/**
+ * @brief
+ *
+ * @param partitionedLabels
+ * @param bettiTable
+ * @return std::vector<bettiBoundaryTableEntry>
+ */
 std::vector<bettiBoundaryTableEntry> utils::mapPartitionIndexing(std::vector<unsigned> partitionedLabels, std::vector<bettiBoundaryTableEntry> bettiTable)
 {
 	for (auto &bet : bettiTable)
@@ -1117,6 +1163,11 @@ std::vector<bettiBoundaryTableEntry> utils::mapPartitionIndexing(std::vector<uns
 	return bettiTable;
 }
 
+/**
+ * @brief
+ *
+ * @param a
+ */
 void utils::print2DVector(const std::vector<std::vector<unsigned>> &a)
 {
 	for (unsigned i = 0; i < a.size(); i++)
@@ -1130,6 +1181,11 @@ void utils::print2DVector(const std::vector<std::vector<unsigned>> &a)
 	return;
 }
 
+/**
+ * @brief
+ *
+ * @param a
+ */
 void utils::print1DSet(const std::pair<std::set<unsigned>, double> &a)
 {
 	std::cout << "Test\t";
@@ -1141,6 +1197,11 @@ void utils::print1DSet(const std::pair<std::set<unsigned>, double> &a)
 	std::cout << "\t";
 }
 
+/**
+ * @brief
+ *
+ * @param a
+ */
 void utils::print1DVector(const std::vector<double> &a)
 {
 	for (unsigned i = 0; i < a.size(); i++)
@@ -1151,6 +1212,11 @@ void utils::print1DVector(const std::vector<double> &a)
 	return;
 }
 
+/**
+ * @brief
+ *
+ * @param a
+ */
 void utils::print1DVector(const std::vector<unsigned> &a)
 {
 	for (unsigned i = 0; i < a.size(); i++)
@@ -1161,6 +1227,11 @@ void utils::print1DVector(const std::vector<unsigned> &a)
 	return;
 }
 
+/**
+ * @brief
+ *
+ * @param a
+ */
 void utils::print1DVector(const std::set<unsigned> &a)
 {
 	for (auto z : a)
@@ -1171,25 +1242,41 @@ void utils::print1DVector(const std::set<unsigned> &a)
 	return;
 }
 
-double utils::vectors_distance(const double &a, const double &b)
+/**
+ * @brief
+ *
+ * @param a
+ * @param b
+ * @return double
+ */
+double utils::vectors_distance(const double a, const double b)
 {
 	return pow((a - b), 2);
 }
 
+/**
+ * @brief
+ *
+ * @param setA
+ * @param setB
+ * @return std::set<unsigned>
+ */
 std::set<unsigned> utils::setXOR(std::set<unsigned> &setA, std::set<unsigned> &setB)
 {
 	std::set<unsigned> ret;
 
-	// if(setA.size() == 0)
-	//	ret = setB;
-	// else if (setB.size() == 0)
-	//	ret = setA;
-	// else
-	set_symmetric_difference(setA.begin(), setA.end(), setB.begin(), setB.end(), std::inserter(ret, ret.begin()));
+	std::set_symmetric_difference(setA.begin(), setA.end(), setB.begin(), setB.end(), std::inserter(ret, ret.begin()));
 
 	return ret;
 }
 
+/**
+ * @brief
+ *
+ * @param a
+ * @param b
+ * @return double
+ */
 double utils::vectors_distance(const std::vector<double> &a, const std::vector<double> &b)
 {
 	std::vector<double> temp;
@@ -1197,12 +1284,19 @@ double utils::vectors_distance(const std::vector<double> &a, const std::vector<d
 	if (b.size() == 0)
 		return 0;
 
-	std::transform(a.begin(), a.end(), b.begin(), std::back_inserter(temp), [](double e1, double e2)
-				   { return pow((e1 - e2), 2); });
-
-	return sqrt(std::accumulate(temp.begin(), temp.end(), 0.0));
+	return sqrt(std::transform_reduce(std::execution::par, a.cbegin(), a.cend(), b.cbegin(), 0.0, std::plus<>(),
+									  [](double e1, double e2)
+									  { return (e1 - e2) * (e1 - e2); }));
 }
 
+/**
+ * @brief
+ *
+ * @param v1
+ * @param v2
+ * @param isSorted
+ * @return std::vector<unsigned>
+ */
 std::vector<unsigned> utils::setIntersect(std::vector<unsigned> v1, std::vector<unsigned> v2, bool isSorted)
 {
 	std::vector<unsigned> ret;
@@ -1216,59 +1310,43 @@ std::vector<unsigned> utils::setIntersect(std::vector<unsigned> v1, std::vector<
 		sort(v2.begin(), v2.end());
 	}
 
-	set_intersection(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(ret));
-
-	/*for(auto iter = v1.begin(); iter!= v1.end(); iter++){
-		std::cout << *iter << ",";
-	}
-	std::cout << "\t";
-	for(auto iter = v2.begin(); iter!= v2.end(); iter++){
-		std::cout << *iter << ",";
-	}
-	std::cout << "\t";
-	for(auto iter = ret.begin(); iter!= ret.end(); iter++){
-		std::cout << *iter << ",";
-	}
-	std::cout << std::endl;*/
+	std::set_intersection(v1.begin(), v1.end(), v2.begin(), v2.end(), std::back_inserter(ret));
 
 	return ret;
 }
 
-std::set<unsigned> utils::setIntersect(std::set<unsigned> v1, std::set<unsigned> v2, bool isSorted)
+/**
+ * @brief
+ *
+ * @param v1
+ * @param v2
+ * @param isSorted
+ * @return std::set<unsigned>
+ */
+std::set<unsigned> utils::setIntersect(const std::set<unsigned> &v1, const std::set<unsigned> &v2, bool isSorted = true)
 {
 	std::set<unsigned> ret;
 
 	if (v1 == v2)
 		return v1;
 
-	// if(!isSorted){
-	//	sort(v1.begin(), v1.end());
-	//	sort(v2.begin(), v2.end());
-	// }
-
-	set_intersection(v1.begin(), v1.end(), v2.begin(), v2.end(), std::inserter(ret, ret.begin()));
-
-	/*for(auto iter = v1.begin(); iter!= v1.end(); iter++){
-		std::cout << *iter << ",";
-	}
-	std::cout << "\t";
-	for(auto iter = v2.begin(); iter!= v2.end(); iter++){
-		std::cout << *iter << ",";
-	}
-	std::cout << "\t";
-	for(auto iter = ret.begin(); iter!= ret.end(); iter++){
-		std::cout << *iter << ",";
-	}
-	std::cout << std::endl;*/
+	std::set_intersection(v1.begin(), v1.end(), v2.begin(), v2.end(), std::inserter(ret, ret.begin()));
 
 	return ret;
 }
 
+/**
+ * @brief
+ *
+ * @param v1
+ * @param v2
+ * @param isSorted
+ * @return std::pair<std::vector<unsigned>, std::vector<unsigned>>
+ */
 // Find the intersect of two vectors
 std::pair<std::vector<unsigned>, std::vector<unsigned>> utils::intersect(std::vector<unsigned> v1, std::vector<unsigned> v2, bool isSorted)
 {
 	std::pair<std::vector<unsigned>, std::vector<unsigned>> ret;
-	std::pair<std::vector<unsigned>, std::vector<unsigned>> retTemp;
 
 	if (v1 == v2)
 		return ret;
@@ -1279,35 +1357,25 @@ std::pair<std::vector<unsigned>, std::vector<unsigned>> utils::intersect(std::ve
 		sort(v2.begin(), v2.end());
 	}
 
-	set_union(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(retTemp.second));
-	set_symmetric_difference(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(retTemp.first));
+	std::set_symmetric_difference(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(ret.first));
 
-	/*for(auto iter = v1.begin(); iter!= v1.end(); iter++){
-		std::cout << *iter << ",";
-	}
-	std::cout << "\t";
-	for(auto iter = v2.begin(); iter!= v2.end(); iter++){
-		std::cout << *iter << ",";
-	}
-	std::cout << "\t";
-	for(auto iter = retTemp.first.begin(); iter!= retTemp.first.end(); iter++){
-		std::cout << *iter << ",";
-	}
-	std::cout << "\t";
-	for(auto iter = retTemp.second.begin(); iter!= retTemp.second.end(); iter++){
-		std::cout << *iter << ",";
-	}
-	std::cout << std::endl;
-	std::cout << std::to_string(retTemp.first.size() == 2) << std::endl;
-
-	*/
-
-	if (retTemp.first.size() == 2)
-		return retTemp;
-	else
+	if (ret.first.size() == 2)
+	{
+		std::set_union(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(ret.second));
 		return ret;
+	}
+	else
+		return std::pair<std::vector<unsigned>, std::vector<unsigned>>();
 }
 
+/**
+ * @brief
+ *
+ * @param v1
+ * @param v2
+ * @param isSorted
+ * @return std::vector<unsigned>
+ */
 // Find the symmetric difference of two vectors
 std::vector<unsigned> utils::symmetricDiff(std::vector<unsigned> v1, std::vector<unsigned> v2, bool isSorted)
 {
@@ -1322,71 +1390,51 @@ std::vector<unsigned> utils::symmetricDiff(std::vector<unsigned> v1, std::vector
 		sort(v1.begin(), v1.end());
 		sort(v2.begin(), v2.end());
 	}
-	set_symmetric_difference(v1.begin(), v1.end(), v2.begin(), v2.end(), back_inserter(retTemp));
-
-	/*for(auto iter = v1.begin(); iter!= v1.end(); iter++){
-		std::cout << *iter << ",";
-	}
-	std::cout << "\t";
-	for(auto iter = v2.begin(); iter!= v2.end(); iter++){
-		std::cout << *iter << ",";
-	}
-	std::cout << "\t";
-	for(auto iter = retTemp.begin(); iter!= retTemp.end(); iter++){
-		std::cout << *iter << ",";
-	}
-	std::cout << std::endl;*/
+	std::set_symmetric_difference(v1.begin(), v1.end(), v2.begin(), v2.end(), std::back_inserter(retTemp));
 
 	return retTemp;
 }
 
+/**
+ * @brief
+ *
+ * @param v1
+ * @param v2
+ * @param isSorted
+ * @return std::set<unsigned>
+ */
 // Find the symmetric difference of two vectors
-std::set<unsigned> utils::symmetricDiff(std::set<unsigned> v1, std::set<unsigned> v2, bool isSorted)
+std::set<unsigned> utils::symmetricDiff(const std::set<unsigned> &v1, const std::set<unsigned> &v2, bool isSorted)
 {
 	std::set<unsigned> ret;
-	std::set<unsigned> retTemp;
-
 	if (v1 == v2)
 		return ret;
 
-	// if(!isSorted){
-	//	sort(v1.begin(), v1.end());
-	//	sort(v2.begin(), v2.end());
-	//	}
-	set_symmetric_difference(v1.begin(), v1.end(), v2.begin(), v2.end(), std::inserter(retTemp, retTemp.begin()));
-
-	/*for(auto iter = v1.begin(); iter!= v1.end(); iter++){
-		std::cout << *iter << ",";
-	}
-	std::cout << "\t";
-	for(auto iter = v2.begin(); iter!= v2.end(); iter++){
-		std::cout << *iter << ",";
-	}
-	std::cout << "\t";
-	for(auto iter = retTemp.begin(); iter!= retTemp.end(); iter++){
-		std::cout << *iter << ",";
-	}
-	std::cout << std::endl;*/
-
-	return retTemp;
+	std::set_symmetric_difference(v1.begin(), v1.end(), v2.begin(), v2.end(), std::inserter(ret, ret.begin()));
+	return ret;
 }
 
+/**
+ * @brief
+ *
+ * @param set
+ * @param dim
+ * @return std::vector<std::set<unsigned>>
+ */
 // Iteratively build subsets (faces) of the simplex set
 std::vector<std::set<unsigned>> utils::getSubsets(std::set<unsigned> set, int dim)
 {
 	std::vector<std::set<unsigned>> subset;
-	std::set<unsigned> empty;
-	subset.push_back(empty);
+	subset.push_back(std::set<unsigned>());
 
 	// For each set in the
 	for (auto i = set.begin(); i != set.end(); i++)
 	{
 		std::vector<std::set<unsigned>> subsetTemp = subset;
-		unsigned entry = *i;
 
 		for (unsigned j = 0; j < subsetTemp.size(); j++)
 		{
-			subsetTemp[j].insert(entry);
+			subsetTemp[j].insert(*i);
 		}
 
 		unsigned z = 0;
@@ -1406,6 +1454,13 @@ std::vector<std::set<unsigned>> utils::getSubsets(std::set<unsigned> set, int di
 	return retSubset;
 }
 
+/**
+ * @brief
+ *
+ * @param v1
+ * @param v2
+ * @return std::set<unsigned>
+ */
 // Find the union of two vectors
 std::set<unsigned> utils::setUnion(std::set<unsigned> v1, std::set<unsigned> v2)
 {
@@ -1419,6 +1474,14 @@ std::set<unsigned> utils::setUnion(std::set<unsigned> v1, std::set<unsigned> v2)
 	return retTemp;
 }
 
+/**
+ * @brief
+ *
+ * @param v1
+ * @param v2
+ * @param isSorted
+ * @return std::vector<unsigned>
+ */
 // Find the union of two vectors
 std::vector<unsigned> utils::setUnion(std::vector<unsigned> v1, std::vector<unsigned> v2, bool isSorted)
 {
@@ -1451,6 +1514,12 @@ std::vector<unsigned> utils::setUnion(std::vector<unsigned> v1, std::vector<unsi
 	return retTemp;
 }
 
+/**
+ * @brief
+ *
+ * @param module
+ * @param message
+ */
 void utils::writeLog(std::string module, std::string message)
 {
 	if (debug == "1" || debug == "true")
@@ -1464,6 +1533,12 @@ void utils::writeLog(std::string module, std::string message)
 	return;
 }
 
+/**
+ * @brief
+ *
+ * @param module
+ * @param message
+ */
 void utils::writeDebug(std::string module, std::string message)
 {
 	if (debug == "0" || debug == "false")
@@ -1479,6 +1554,11 @@ void utils::writeDebug(std::string module, std::string message)
 	return;
 }
 
+/**
+ * @brief
+ *
+ * @param fullMessage
+ */
 void utils::writeFile(std::string fullMessage)
 {
 	std::ofstream outfile;
@@ -1488,6 +1568,14 @@ void utils::writeFile(std::string fullMessage)
 	return;
 }
 
+/**
+ * @brief
+ *
+ * @param a
+ * @param b
+ * @return true
+ * @return false
+ */
 bool utils::sortBySecond(const std::pair<std::set<unsigned>, double> &a, const std::pair<std::set<unsigned>, double> &b)
 {
 	if (a.second == b.second)
@@ -1508,6 +1596,12 @@ bool utils::sortBySecond(const std::pair<std::set<unsigned>, double> &a, const s
 	}
 }
 
+/**
+ * @brief
+ *
+ * @param set
+ * @return std::vector<std::set<unsigned>>
+ */
 // Iteratively build subsets (faces) of the simplex set
 std::vector<std::set<unsigned>> utils::getSubsets(std::set<unsigned> set)
 {
@@ -1543,6 +1637,12 @@ std::vector<std::set<unsigned>> utils::getSubsets(std::set<unsigned> set)
 	return retSubset;
 }
 
+/**
+ * @brief
+ *
+ * @param set
+ * @return std::vector<std::vector<unsigned>>
+ */
 // Iteratively build subsets (faces) of the simplex set
 std::vector<std::vector<unsigned>> utils::getSubsets(std::vector<unsigned> set)
 {
@@ -1578,21 +1678,34 @@ std::vector<std::vector<unsigned>> utils::getSubsets(std::vector<unsigned> set)
 	return retSubset;
 }
 
+/**
+ * @brief
+ *
+ * @param point
+ * @param pointcloud
+ * @return std::vector<double>
+ */
 std::vector<double> utils::nearestNeighbors(std::vector<double> &point, std::vector<std::vector<double>> &pointcloud)
 {
 	// based on random projection, x is current point being examined, n is number of centroids/facilities
-	utils ut;
-	std::vector<double> retVal;
+	std::vector<double> retVal(pointcloud.size());
 
 	// Get sq distances for each point
-	for (auto currentPoint : pointcloud)
+	for (auto &currentPoint : pointcloud)
 	{
-		retVal.push_back(ut.vectors_distance(point, currentPoint));
+		retVal.push_back(vectors_distance(point, currentPoint));
 	}
 
 	return retVal;
 }
 
+/**
+ * @brief
+ *
+ * @param serialData
+ * @param dim
+ * @return std::vector<std::vector<double>>
+ */
 std::vector<std::vector<double>> utils::deserialize(std::vector<double> serialData, unsigned dim)
 {
 
@@ -1613,12 +1726,18 @@ std::vector<std::vector<double>> utils::deserialize(std::vector<double> serialDa
 	{
 		for (unsigned j = 0; j < dim; j++)
 		{
-			ret[i][j] = (serialData)[(i * dim) + j];
+			ret[i][j] = serialData[(i * dim) + j];
 		}
 	}
 	return ret;
 }
 
+/**
+ * @brief
+ *
+ * @param origData
+ * @return std::vector<double>
+ */
 std::vector<double> utils::serialize(std::vector<std::vector<double>> &origData)
 {
 
@@ -1647,6 +1766,15 @@ std::vector<double> utils::serialize(std::vector<std::vector<double>> &origData)
 	return ret;
 }
 
+/**
+ * @brief
+ *
+ * @param dsimplex
+ * @param inputData
+ * @param distMatrix
+ * @param beta
+ * @return std::pair<std::vector<std::vector<double>>, std::vector<double>>
+ */
 std::pair<std::vector<std::vector<double>>, std::vector<double>> utils::calculateBetaCentersandRadius(std::vector<unsigned> dsimplex, std::vector<std::vector<double>> &inputData, std::vector<std::vector<double>> *distMatrix, double beta)
 {
 	std::vector<std::vector<double>> betacenters;
@@ -1802,4 +1930,19 @@ std::pair<std::vector<std::vector<double>>, std::vector<double>> utils::calculat
 		betaradii.push_back(betaRadius);
 	}
 	return std::make_pair(betacenters, betaradii);
+}
+
+/**
+ * @brief
+ *
+ * @param A
+ * @param B
+ * @return true
+ * @return false
+ */
+bool utils::isSubset(std::vector<unsigned> A, std::vector<unsigned> B)
+{
+	std::sort(A.begin(), A.end());
+	std::sort(B.begin(), B.end());
+	return std::includes(A.begin(), A.end(), B.begin(), B.end());
 }

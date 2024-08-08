@@ -16,17 +16,16 @@
 
 std::map<std::string, std::string> argMap = {{"betaMesh", "bmesh"}, {"betaMode", "bm"}, {"beta", "b"}, {"alphaFilterationValue", "afv"}, {"nodeType", "n"}, {"reductionPercentage", "rp"}, {"maxSize", "ms"}, {"threads", "t"}, {"threshold", "th"}, {"scalar", "s"}, {"mpi", "a"}, {"mode", "m"}, {"dimensions", "d"}, {"iterations", "r"}, {"pipeline", "p"}, {"inputFile", "i"}, {"outputFile", "o"}, {"epsilon", "e"}, {"lambda", "l"}, {"debug", "x"}, {"complexType", "c"}, {"clusters", "k"}, {"preprocessor", "pre"}, {"upscale", "u"}, {"twist", "w"}, {"collapse", "z"}, {"seed", "q"}, {"involutedUpscale", "iu"}, {"involuted", "inv"}};
 std::map<std::string, std::string> defaultMap = {{"betaMesh", "null.csv"}, {"betaMode", "noMode"}, {"beta", "1"}, {"alphaFilterationValue", "50000"}, {"nodeType", "simplexNode"}, {"reductionPercentage", "10"}, {"maxSize", "2000"}, {"threads", "30"}, {"threshold", "250"}, {"scalar", "0.5"}, {"mpi", "0"}, {"mode", "standard"}, {"dimensions", "1"}, {"iterations", "250"}, {"pipeline", ""}, {"inputFile", "None"}, {"outputFile", "output"}, {"epsilon", "5"}, {"lambda", ".25"}, {"debug", "0"}, {"complexType", "simplexArrayList"}, {"clusters", "20"}, {"preprocessor", ""}, {"upscale", "false"}, {"seed", "-1"}, {"twist", "false"}, {"collapse", "false"}, {"involutedUpscale", "false"}, {"involuted", "false"}};
-// argParse constructor, currently no needed information for the class constructor
+
 /**
- * @brief argParser constructor.
+ * @brief Constructor for argParser class.
  *
  * Currently, no additional information is needed for the class constructor.
  */
+
 argParser::argParser()
 {
 }
-
-// argParser::defaultArguments ->
 
 /**
  * @brief Sets the default values for command-line arguments.
@@ -103,11 +102,6 @@ void argParser::printUsage()
 	return;
 }
 
-// argParser::parse -> Parse through arguments and return a map (dictionary)
-//		-argc - argument count from Main()
-//		-argv - array of arguments from Main()
-//
-
 /**
  * @brief Parses the command-line arguments and returns a map of arguments.
  *
@@ -157,16 +151,7 @@ std::map<std::string, std::string> argParser::parse(int argc, char **argv)
  * @param args A map containing the parsed arguments and their values.
  */
 
-/**
- * @brief Prints the provided arguments to the console.
- *
- * This function takes a map (dictionary) of arguments and their values,
- * and prints them to the console in a user-friendly format.
- *
- * @param args A map containing the parsed arguments and their values.
- */
-
-void argParser::printArguments(std::map<std::string, std::string> args)
+void argParser::printArguments(std::map<std::string, std::string> &args)
 {
 
 	// Print the argument set

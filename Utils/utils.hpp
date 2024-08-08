@@ -10,7 +10,10 @@
 #include <numeric>
 #include "kdTree.hpp"
 
-// Simplex Node Structure
+/**
+ * @brief Simplex Node Structure
+ *
+ */
 struct simplexNode
 {
 	unsigned index;
@@ -22,7 +25,10 @@ struct simplexNode
 	simplexNode(std::set<unsigned> simp, double wt) : simplex(simp), weight(wt) {}
 };
 
-// Alpha Node Structure
+/**
+ * @brief Alpha Node Structure
+ *
+ */
 struct alphaNode
 {
 	unsigned index;
@@ -42,7 +48,10 @@ struct alphaNode
 	alphaNode(std::set<unsigned> simp, double wt) : simplex(simp), weight(wt) {}
 };
 
-// Witness Node Structure
+/**
+ * @brief Witness Node Structure
+ *
+ */
 struct witnessNode
 {
 	unsigned index;
@@ -57,6 +66,10 @@ struct witnessNode
 	witnessNode(std::set<unsigned> simp, double wt) : simplex(simp), weight(wt) {}
 };
 
+/**
+ * @brief
+ *
+ */
 struct bettiBoundaryTableEntry
 {
 	unsigned bettiDim;
@@ -71,17 +84,6 @@ struct bettiBoundaryTableEntry
 	}
 };
 
-class unionFind
-{
-private:
-	std::vector<int> rank, parent;
-
-public:
-	unionFind(int n);
-	int find(int i);
-	bool join(int x, int y);
-};
-
 class utils
 {
 private:
@@ -90,7 +92,7 @@ private:
 
 public:
 	utils();
-	utils(std::string, std::string);
+	utils(const std::string &, const std::string &);
 
 	static double computeMaxRadius(int, std::vector<std::vector<double>> &, std::vector<std::vector<double>> &, std::vector<unsigned> &);
 	static double computeAvgRadius(int, std::vector<std::vector<double>> &, std::vector<std::vector<double>> &, std::vector<unsigned> &);
@@ -100,25 +102,25 @@ public:
 	// void extractBoundaryPoints(std::vector<bettiBoundaryTableEntry>&);
 
 	template <typename T>
-	std::set<unsigned> extractBoundaryPoints(std::vector<std::shared_ptr<T>>);
+	std::set<unsigned> extractBoundaryPoints(std::vector<std::shared_ptr<T>> &);
 
 	template <typename T>
-	std::set<unsigned> extractBoundaryPoints(std::vector<T *>);
+	std::set<unsigned> extractBoundaryPoints(std::vector<T *> &);
 
 	static std::vector<bettiBoundaryTableEntry> mapPartitionIndexing(std::vector<unsigned>, std::vector<bettiBoundaryTableEntry>);
 	static void print2DVector(const std::vector<std::vector<unsigned>> &);
 	static void print1DVector(const std::vector<unsigned> &);
 	static void print1DVector(const std::set<unsigned> &);
 	static void print1DVector(const std::vector<double> &);
-	static double vectors_distance(const double &, const double &);
+	static double vectors_distance(const double, const double);
 	static double vectors_distance(const std::vector<double> &, const std::vector<double> &);
 	static void print1DSet(const std::pair<std::set<unsigned>, double> &);
 	static std::set<unsigned> setXOR(std::set<unsigned> &, std::set<unsigned> &);
-	static std::set<unsigned> setIntersect(std::set<unsigned>, std::set<unsigned>, bool isSorted);
+	static std::set<unsigned> setIntersect(const std::set<unsigned> &, const std::set<unsigned> &, bool isSorted);
 	static std::vector<unsigned> setIntersect(std::vector<unsigned>, std::vector<unsigned>, bool);
 	static std::vector<std::set<unsigned>> getSubsets(std::set<unsigned>, int);
 	static std::vector<unsigned> symmetricDiff(std::vector<unsigned>, std::vector<unsigned>, bool);
-	static std::set<unsigned> symmetricDiff(std::set<unsigned>, std::set<unsigned>, bool);
+	static std::set<unsigned> symmetricDiff(const std::set<unsigned> &, const std::set<unsigned> &, bool);
 	static std::vector<unsigned> setUnion(std::vector<unsigned>, std::vector<unsigned>, bool);
 	static std::set<unsigned> setUnion(std::set<unsigned>, std::set<unsigned>);
 	static std::pair<std::vector<unsigned>, std::vector<unsigned>> intersect(std::vector<unsigned>, std::vector<unsigned>, bool);
@@ -144,7 +146,7 @@ public:
 	static double circumRadius(std::vector<short> &simplex, std::vector<std::vector<double>> &distMatrix);
 	static std::vector<double> circumCenter(std::vector<short> &simplex, std::vector<std::vector<double>> &inputData);
 	static std::vector<std::vector<double>> inverseOfMatrix(std::vector<std::vector<double>> mat, int n);
-	static std::vector<std::vector<double>> matrixMultiplication(std::vector<std::vector<double>> matA, std::vector<std::vector<double>> matB);
+	static std::vector<std::vector<double>> matrixMultiplication(const std::vector<std::vector<double>> &matA, const std::vector<std::vector<double>> &matB);
 	static std::pair<std::vector<double>, std::vector<std::vector<double>>> nullSpaceOfMatrix(std::set<unsigned> simplex, std::vector<std::vector<double>> inputdata, std::vector<double> &cc, double radius, bool lowerdimension = false);
 	static std::vector<std::vector<double>> betaCentersCalculation(std::vector<double> hpcoff, double beta, double circumRadius, std::vector<double> circumCenter);
 	static double simplexVolume(std::set<unsigned> simplex, std::vector<std::vector<double>> *distMatrix, int dd);
@@ -159,9 +161,9 @@ public:
 	static std::vector<double> nearestNeighbors(std::vector<double> &, std::vector<std::vector<double>> &);
 
 	static Eigen::MatrixXd covariance(std::vector<std::vector<double>>);
-	static std::vector<std::vector<double>> transposeMeanAdjusted(std::vector<std::vector<double>>);
+	static std::vector<std::vector<double>> transposeMeanAdjusted(std::vector<std::vector<double>> &);
 	static double getAverage(std::vector<double> &);
-	static std::vector<std::vector<double>> transpose(std::vector<std::vector<double>>);
+	static std::vector<std::vector<double>> transpose(const std::vector<std::vector<double>> &);
 	static std::pair<std::vector<std::vector<double>>, std::vector<std::vector<double>>> computePCA(std::vector<std::vector<double>>, int);
 	static std::vector<std::vector<double>> computePCAInverse(std::vector<std::vector<double>>, std::vector<std::vector<double>>, std::vector<std::vector<double>>);
 };

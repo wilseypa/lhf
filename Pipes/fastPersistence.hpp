@@ -6,6 +6,7 @@
 #include "basePipe.hpp"
 #include "simplexBase.hpp"
 #include "utils.hpp"
+#include "unionFind.hpp"
 
 template <typename nodeType>
 class fastPersistence : public basePipe<nodeType>

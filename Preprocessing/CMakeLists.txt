@@ -4,6 +4,10 @@
 
 cmake_minimum_required(VERSION 3.5)
 
+add_library(cluster STATIC cluster.cpp cluster.hpp)
+target_link_libraries(cluster PUBLIC utils kMeansPlusPlus)
+target_include_directories(cluster PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
 add_library(preprocessor STATIC preprocessor.cpp preprocessor.hpp)
 target_link_libraries(preprocessor PUBLIC kMeansPlusPlus pipePacket)
 target_include_directories(preprocessor PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

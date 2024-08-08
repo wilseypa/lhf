@@ -8,14 +8,14 @@ class writeOutput
 private:
 public:
   writeOutput();
-  static bool writeStats(std::string, std::string);
-  static bool writeRunLog(std::string, std::string);
-  static bool writeCSV(std::string, std::string);
-  static bool writeCSV(std::string, std::string, std::string);
-  static bool writeCSV(std::vector<std::vector<double>>, std::string);
-  static bool writeCSV(std::vector<std::vector<double>>, std::string, std::string);
-  static bool writeMAT(std::vector<std::vector<double>>, std::string);
-  static bool writeBarcodes(std::vector<bettiBoundaryTableEntry>, std::string);
-  static bool writeConsole(std::vector<bettiBoundaryTableEntry>);
-  static std::string logRun(std::map<std::string, std::string>, std::string, std::string, std::string);
+  static bool writeStats(const std::string &, const std::string &);
+  static bool writeRunLog(const std::string &, const std::string &);
+  static bool writeCSV(const std::string &, const std::string &);
+  static bool writeCSV(const std::string &, const std::string &, const std::string &);
+  static bool writeCSV(std::vector<std::vector<double>> &, const std::string &);
+  static bool writeCSV(std::vector<std::vector<double>> &, const std::string &, const std::string &);
+  static bool writeMAT(std::vector<std::vector<double>> &, const std::string &);
+  static bool writeBarcodes(std::vector<bettiBoundaryTableEntry> &, const std::string &);
+  static bool writeConsole(std::vector<bettiBoundaryTableEntry> &);
+  static std::string logRun(std::map<std::string, std::string> &, const std::string &, const std::string &, const std::string &);
 };

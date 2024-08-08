@@ -1,7 +1,7 @@
 /**
  * @file utils.hpp
  *
- * @brief Contains utility functions for the LFH system (https://github.com/wilseypa/LFH).
+ * @brief Contains utility functions for the LHF system (https://github.com/wilseypa/LHF).
  */
 
 #include "cluster.hpp"
