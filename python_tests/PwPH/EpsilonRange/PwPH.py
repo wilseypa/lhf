@@ -18,6 +18,7 @@ from scipy.spatial import Delaunay
 from scipy.spatial import ConvexHull
 
 
+# Started working on BigData-24
 
 maxepsilon = 5
 distancematrix = []	  #initializae distance matrix
