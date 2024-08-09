@@ -21,6 +21,27 @@
 #include "utils.hpp"
 #include "readInput.hpp"
 
+using orgQhull::Coordinates;
+using orgQhull::PointCoordinates;
+using orgQhull::Qhull;
+using orgQhull::QhullError;
+using orgQhull::QhullFacet;
+using orgQhull::QhullFacetList;
+using orgQhull::QhullFacetListIterator;
+using orgQhull::QhullFacetSet;
+using orgQhull::QhullFacetSetIterator;
+using orgQhull::QhullPoint;
+using orgQhull::QhullPoints;
+using orgQhull::QhullPointsIterator;
+using orgQhull::QhullQh;
+using orgQhull::QhullUser;
+using orgQhull::QhullVertex;
+using orgQhull::QhullVertexList;
+using orgQhull::QhullVertexListIterator;
+using orgQhull::QhullVertexSet;
+using orgQhull::QhullVertexSetIterator;
+using orgQhull::RboxPoints;
+
 // basePipe constructor
 template <typename nodeType>
 betaSkeletonBasedComplex<nodeType>::betaSkeletonBasedComplex()

@@ -18,27 +18,6 @@
 #include "libqhullcpp/QhullVertexSet.h"
 #include "libqhullcpp/Qhull.h"
 
-using orgQhull::Coordinates;
-using orgQhull::PointCoordinates;
-using orgQhull::Qhull;
-using orgQhull::QhullError;
-using orgQhull::QhullFacet;
-using orgQhull::QhullFacetList;
-using orgQhull::QhullFacetListIterator;
-using orgQhull::QhullFacetSet;
-using orgQhull::QhullFacetSetIterator;
-using orgQhull::QhullPoint;
-using orgQhull::QhullPoints;
-using orgQhull::QhullPointsIterator;
-using orgQhull::QhullQh;
-using orgQhull::QhullUser;
-using orgQhull::QhullVertex;
-using orgQhull::QhullVertexList;
-using orgQhull::QhullVertexListIterator;
-using orgQhull::QhullVertexSet;
-using orgQhull::QhullVertexSetIterator;
-using orgQhull::RboxPoints;
-
 template <typename nodeType>
 class betaSkeletonBasedComplex : public basePipe<nodeType>
 {
@@ -64,8 +43,8 @@ public:
 	bool checkCC_Simplex_Inclusion(std::vector<unsigned> simplex, std::vector<std::vector<double>> inputData, std::vector<double> circumCenter);
 	int getoppvertex(std::vector<unsigned> simplex, std::vector<std::vector<double>> inputData, std::vector<double> circumCenter);
 	unsigned selectCenter(std::vector<double> hpcofffaces, std::vector<std::vector<double>> betaCenters, std::vector<double> otherPoint);
-	std::vector<std::vector<int>> qdelaunay_o(const Qhull &qhull);
-	std::vector<std::vector<int>> qconvex_o(const Qhull &qhull);
+	std::vector<std::vector<int>> qdelaunay_o(const orgQhull::Qhull &qhull);
+	std::vector<std::vector<int>> qconvex_o(const orgQhull::Qhull &qhull);
 	bool configPipe(std::map<std::string, std::string> &configMap);
 	void outputData(pipePacket<nodeType> &);
 };

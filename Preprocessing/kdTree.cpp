@@ -20,6 +20,13 @@
 #include "kdTree.hpp"
 #include "utils.hpp"
 
+using point = std::vector<double>;
+using pointIndex = std::pair<point, size_t>;
+using pointIndexArr = std::vector<pointIndex>;
+using pointVec = std::vector<point>;
+using indexArr = std::vector<size_t>;
+using kdNodePtr = std::shared_ptr<kdNode>; // initializer smart pointer
+
 kdTree::kdTree()
 {
     //   procName = "kdTree";

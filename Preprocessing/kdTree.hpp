@@ -8,80 +8,51 @@
 #include <vector>
 
 // github.com/crvs/KDTree/blob/master/KDTree.hpp
-using point = std::vector<double>;
-using pointList = std::vector<std::vector<double>>;
-using pointListItr = pointList::iterator;
-using indexArr = std::vector<size_t>;
-using pointIndex = typename std::pair<std::vector<double>, size_t>; // alias declarations
+// alias declarations
 
 class kdNode
 {
 public:
-    using kdNodePtr = std::shared_ptr<kdNode>; // initializer smart pointer
     size_t index;
-    point x;
-    kdNodePtr left;
-    kdNodePtr right;
+    std::vector<double> x;
+    std::shared_ptr<kdNode> left;
+    std::shared_ptr<kdNode> right;
 
     kdNode();
-    kdNode(const point &, const size_t &, const kdNodePtr &, const kdNodePtr &);
-    kdNode(const pointIndex &, const kdNodePtr &, const kdNodePtr &);
+    kdNode(const std::vector<double> &, const size_t &, const std::shared_ptr<kdNode> &, const std::shared_ptr<kdNode> &);
+    kdNode(const std::pair<std::vector<double>, size_t> &, const std::shared_ptr<kdNode> &, const std::shared_ptr<kdNode> &);
     ~kdNode(); // destructor
 
     double coord(const size_t &);
 
     explicit operator bool();
-    explicit operator point();
+    explicit operator std::vector<double>();
     explicit operator size_t();
-    explicit operator pointIndex();
+    explicit operator std::pair<std::vector<double>, size_t>();
 };
 
-using kdNodePtr = std::shared_ptr<kdNode>;
-
-kdNodePtr newkdNodePtr();
-
-using pointIndexArr = typename std::vector<pointIndex>;
-using pointVec = std::vector<point>;
+std::shared_ptr<kdNode> newkdNodePtr();
 
 class kdTree
 {
 public:
-    kdNodePtr root;
+    std::shared_ptr<kdNode> root;
+    std::shared_ptr<kdNode> makeTree(const std::vector<std::pair<std::vector<double>, size_t>>::iterator &begin, const std::vector<std::pair<std::vector<double>, size_t>>::iterator &end, const size_t &length, const size_t &level);
 
-    kdNodePtr makeTree(const pointIndexArr::iterator &begin, const pointIndexArr::iterator &end,
-                       const size_t &length, const size_t &level);
-
-public:
     kdTree();
     // explicit kdTree(pipePacket inData); //Prevent implicit conversion
-    kdTree(pointVec inData, int size);
+    kdTree(std::vector<std::vector<double>> inData, int size);
+    std::vector<double> nearestPoint(const std::vector<double> &pt);
+    size_t nearestIndex(const std::vector<double> &pt);
+    std::pair<std::vector<double>, size_t> nearestPointIndex(const std::vector<double> &pt);
+    std::vector<std::pair<std::vector<double>, size_t>> neighborhood(const std::vector<double> &pt, const double &rad);
+    std::vector<std::vector<double>> neighborhoodPoints(const std::vector<double> &pt, const double &rad);
+    std::vector<size_t> neighborhoodIndices(const std::vector<double> &pt, const double &rad);
+    std::vector<std::vector<bool>> betaNeighbors(std::vector<std::vector<double>> &, double beta, std::string betaMode);
 
 private:
-    kdNodePtr findNearest(
-        const kdNodePtr &branch,
-        const point &pt,
-        const size_t &level,
-        const kdNodePtr &best,
-        const double &bestDist);
-
-    kdNodePtr nearest(const point &pt);
-
-public:
-    point nearestPoint(const point &pt);
-    size_t nearestIndex(const point &pt);
-    pointIndex nearestPointIndex(const point &pt);
-
-private:
-    pointIndexArr neighborhood(
-        const kdNodePtr &branch,
-        const point &pt,
-        const double &rad, // epsilon
-        const size_t &level);
-
-public:
-    pointIndexArr neighborhood(const point &pt, const double &rad);
-
-    pointVec neighborhoodPoints(const point &pt, const double &rad);
-
-    indexArr neighborhoodIndices(const point &pt, const double &rad);
+    std::shared_ptr<kdNode> findNearest(const std::shared_ptr<kdNode> &branch, const std::vector<double> &pt, const size_t &level, const std::shared_ptr<kdNode> &best, const double &bestDist);
+    std::shared_ptr<kdNode> nearest(const std::vector<double> &pt);
+    std::vector<std::pair<std::vector<double>, size_t>> neighborhood(const std::shared_ptr<kdNode> &branch, const std::vector<double> &pt, const double &rad, const size_t &level);
 };
+
