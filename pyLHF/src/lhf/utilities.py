@@ -11,7 +11,7 @@ from sklearn.random_projection import SparseRandomProjection
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.neighbors import NearestNeighbors
-import pylab
+import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 def cliProgressBar(iteration, totalIterations):
@@ -152,10 +152,10 @@ def plot3DPointCloud(ptCld, title='', setAxis=True) :
         setAxis : boolean
 		If true, scales all axis to min/max of PC data; otherwise default
         """
-        figure = pylab.figure()
+        figure = plt.figure()
         fig = figure.add_subplot(111, projection='3d')
         if title != '' :
-                pylab.title(title)
+                plt.title(title)
         #fig.set(aspect='equal')
 	
 	#NOTE: Currently set this behind a flag but for PCs not normalized the stretch needs to be updated to take the 
@@ -178,7 +178,7 @@ def plot3DPointCloud(ptCld, title='', setAxis=True) :
                 fig.set_zticks([min, 0, max])
 
         fig.scatter(ptCld[:,0], ptCld[:,1], ptCld[:,2], marker='.', s=3)
-        #pylab.show()
+        #plt.show()
         return figure
     
 # this next function is planned for removal
