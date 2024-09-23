@@ -11,14 +11,6 @@ class alphaComplex : public simplexArrayList<nodeType>
 {
 	typedef std::shared_ptr<nodeType> templateNode_P;
 
-private:
-	struct c_unique
-	{
-		unsigned current;
-		c_unique() { current = 0; }
-		unsigned operator()() { return ++current; }
-	} UniqueNumber;
-
 public:
 	alphaComplex(double, double);
 
@@ -42,7 +34,7 @@ public:
 	void buildFilteration(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData, double beta, kdTree tree);
 	bool checkGabriel(std::vector<double>, std::vector<unsigned>, std::vector<std::vector<double>> &, double);
 	std::vector<templateNode_P> expanddelaunayDimension(int);
-	std::set<templateNode_P, cmpByWeight<templateNode_P>> getdelaunayDimEdges(int);
+	std::set<templateNode_P, cmpByWeight<templateNode_P>> getDimEdges(int);
 
 	// Nick
 

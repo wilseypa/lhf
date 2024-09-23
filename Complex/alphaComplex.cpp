@@ -38,10 +38,10 @@ alphaComplex<nodeType>::~alphaComplex()
 }
 
 template <typename nodeType>
-std::set<std::shared_ptr<nodeType>, cmpByWeight<std::shared_ptr<nodeType>>> alphaComplex<nodeType>::getdelaunayDimEdges(int dim)
+std::set<std::shared_ptr<nodeType>, cmpByWeight<std::shared_ptr<nodeType>>> alphaComplex<nodeType>::getDimEdges(int dim)
 {
 	/**
-		getdelaunayDimEdges(int dim)
+		getDimEdges(int dim)
 
 		Maintained by Anurag
 
@@ -109,8 +109,8 @@ std::vector<std::shared_ptr<nodeType>> alphaComplex<nodeType>::expanddelaunayDim
 		@return tbd
 	*/
 	this->simplexList[dim - 1].clear();
-	std::set<std::shared_ptr<nodeType>, cmpByWeight<std::shared_ptr<nodeType>>> set_simplexes = getdelaunayDimEdges(dim);
-	getdelaunayDimEdges(dim + 1);
+	std::set<std::shared_ptr<nodeType>, cmpByWeight<std::shared_ptr<nodeType>>> set_simplexes = getDimEdges(dim);
+	getDimEdges(dim + 1);
 	std::vector<std::shared_ptr<nodeType>> ret(set_simplexes.begin(), set_simplexes.end());
 	return ret;
 }

@@ -183,7 +183,7 @@ void incrementalPersistence<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	}
 
 	// Get the set of all points
-	auto e = inData.complex->simplexType == "alphaComplex" ? complex->getdelaunayDimEdges(0) : complex->getDimEdges(0);
+	auto e = complex->getDimEdges(0);
 	// Convert the set to a vector
 	std::vector<std::shared_ptr<nodeType>> edges = std::vector<std::shared_ptr<nodeType>>(e.begin(), e.end());
 	// Initialize the binomial table

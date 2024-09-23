@@ -140,14 +140,6 @@ std::set<std::shared_ptr<nodeType>, cmpByWeight<std::shared_ptr<nodeType>>> simp
 }
 
 template <typename nodeType>
-std::set<std::shared_ptr<nodeType>, cmpByWeight<std::shared_ptr<nodeType>>> simplexBase<nodeType>::getdelaunayDimEdges(int dim)
-{
-	ut.writeLog(simplexType, "No getdelunayDimEdges function defined");
-	std::set<std::shared_ptr<nodeType>, cmpByWeight<std::shared_ptr<nodeType>>> simplexList[dim];
-	return simplexList[dim];
-}
-
-template <typename nodeType>
 std::vector<std::set<std::shared_ptr<nodeType>, cmpByWeight<std::shared_ptr<nodeType>>>> simplexBase<nodeType>::getAllEdges()
 {
 	return simplexList;

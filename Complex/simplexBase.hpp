@@ -125,7 +125,6 @@ public:
 	virtual std::vector<templateNode_P> getAllFacets_P(templateNode_P);
 
 	virtual std::set<templateNode_P, cmpByWeight<templateNode_P>> getDimEdges(int);
-	virtual std::set<templateNode_P, cmpByWeight<templateNode_P>> getdelaunayDimEdges(int);
 	virtual std::vector<std::set<templateNode_P, cmpByWeight<templateNode_P>>> getAllEdges();
 	virtual std::vector<templateNode_P> expanddelaunayDimension(int);
 };
