@@ -1,10 +1,8 @@
 
 #pragma once
-#include "simplexBase.hpp"
 #include <set>
 #include <unordered_map>
 #include "alphaComplex.hpp"
-#include "simplexArrayList.hpp"
 #include "utils.hpp"
 
 template <typename nodeType>

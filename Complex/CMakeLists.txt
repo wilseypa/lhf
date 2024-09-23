@@ -15,11 +15,11 @@ target_link_libraries(simplexArrayList PUBLIC simplexBase)
 target_include_directories(simplexArrayList PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(alphaComplex STATIC alphaComplex.cpp alphaComplex.hpp)
-target_link_libraries(alphaComplex PUBLIC utils kdTree simplexArrayList simplexBase OpenMP::OpenMP_CXX)
+target_link_libraries(alphaComplex PUBLIC utils kdTree simplexArrayList OpenMP::OpenMP_CXX)
 target_include_directories(alphaComplex PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(witnessComplex STATIC witnessComplex.cpp witnessComplex.hpp)
-target_link_libraries(witnessComplex PUBLIC simplexArrayList simplexBase)
+target_link_libraries(witnessComplex PUBLIC simplexArrayList)
 target_include_directories(witnessComplex PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(simplexTree STATIC simplexTree.cpp simplexTree.hpp)
@@ -27,7 +27,7 @@ target_link_libraries(simplexTree PUBLIC utils kdTree simplexBase)
 target_include_directories(simplexTree PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(betaComplex STATIC betaComplex.cpp betaComplex.hpp)
-target_link_libraries(betaComplex PUBLIC simplexBase alphaComplex)
+target_link_libraries(betaComplex PUBLIC alphaComplex)
 target_include_directories(betaComplex PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 INSTALL (TARGETS simplexBase

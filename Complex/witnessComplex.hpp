@@ -1,6 +1,5 @@
 
 #pragma once
-#include "simplexBase.hpp"
 #include <set>
 #include <unordered_map>
 #include "simplexArrayList.hpp"
