@@ -239,7 +239,7 @@ void argParser::setPipeline(std::map<std::string, std::string> &args)
 		args["nodeType"] = "alphaNode";
 		args["mode"] = "alpha";
 		args["complexType"] = "alphaComplex";
-		args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";
+		args["pipeline"] = "distMatrix.alpha.fastPersistence";
 
 		if (args["upscale"] == "true")
 			args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence.upscale";

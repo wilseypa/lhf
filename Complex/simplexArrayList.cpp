@@ -209,12 +209,6 @@ std::vector<nodeType *> simplexArrayList<nodeType>::getAllCofacets(std::shared_p
 }
 
 template <typename nodeType>
-std::vector<nodeType *> simplexArrayList<nodeType>::getAllCofacets(std::shared_ptr<nodeType> simp)
-{
-	return getAllCofacets(simp, std::unordered_map<long long, std::shared_ptr<nodeType>>(), false, true, 0);
-}
-
-template <typename nodeType>
 std::vector<nodeType *> simplexArrayList<nodeType>::getAllFacets(nodeType *simp, bool recordVertices, unsigned dim)
 {
 	std::vector<nodeType *> ret;
@@ -271,7 +265,7 @@ std::vector<nodeType *> simplexArrayList<nodeType>::getAllFacets(std::shared_ptr
 }
 
 template <typename nodeType>
-std::vector<std::shared_ptr<nodeType>> simplexArrayList<nodeType>::getAllFacets_P(std::shared_ptr<nodeType> simp)
+std::vector<std::shared_ptr<nodeType>> simplexArrayList<nodeType>::getAllFacets(std::shared_ptr<nodeType> simp)
 {
 	std::vector<std::shared_ptr<nodeType>> ret;
 

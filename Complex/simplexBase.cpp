@@ -166,31 +166,19 @@ std::vector<nodeType *> simplexBase<nodeType>::getAllCofacets(std::shared_ptr<no
 }
 
 template <typename nodeType>
-std::vector<std::shared_ptr<nodeType>> simplexBase<nodeType>::getAllDelaunayCofacets(std::shared_ptr<nodeType>)
+std::vector<std::shared_ptr<nodeType>> simplexBase<nodeType>::getAllCofacets(std::shared_ptr<nodeType>)
 {
 	ut.writeLog(simplexType, "No getdelaunay cofacets function defined");
 	return std::vector<std::shared_ptr<nodeType>>();
 }
 
 template <typename nodeType>
-std::vector<nodeType *> simplexBase<nodeType>::getAllDelaunayCofacets_basePointer(std::shared_ptr<nodeType>)
+std::vector<nodeType *> simplexBase<nodeType>::getAllCofacets_basePointer(std::shared_ptr<nodeType>)
 {
 	ut.writeLog(simplexType, "No getdelaunay cofacets function defined");
 	return std::vector<nodeType *>();
 }
 
-template <typename nodeType>
-std::vector<std::shared_ptr<nodeType>> simplexBase<nodeType>::getAllDelaunayCofacets(std::shared_ptr<nodeType> simp, std::unordered_map<std::shared_ptr<nodeType>, std::shared_ptr<nodeType>> pivotPairs, bool emergent)
-{
-	ut.writeLog(simplexType, "No getdelaunay cofacets function defined");
-	return std::vector<std::shared_ptr<nodeType>>();
-}
-template <typename nodeType>
-std::vector<nodeType *> simplexBase<nodeType>::getAllCofacets(std::shared_ptr<nodeType>)
-{
-	ut.writeLog(simplexType, "No get cofacets function defined");
-	return std::vector<nodeType *>();
-}
 
 template <typename nodeType>
 std::vector<nodeType *> simplexBase<nodeType>::getAllFacets(nodeType *)
@@ -200,13 +188,7 @@ std::vector<nodeType *> simplexBase<nodeType>::getAllFacets(nodeType *)
 }
 
 template <typename nodeType>
-std::vector<nodeType *> simplexBase<nodeType>::getAllFacets(std::shared_ptr<nodeType> simplex)
-{
-	return getAllFacets(simplex.get());
-}
-
-template <typename nodeType>
-std::vector<std::shared_ptr<nodeType>> simplexBase<nodeType>::getAllFacets_P(std::shared_ptr<nodeType> simplex)
+std::vector<std::shared_ptr<nodeType>> simplexBase<nodeType>::getAllFacets(std::shared_ptr<nodeType> simplex)
 {
 	ut.writeLog(simplexType, "No get facets function defined");
 	return std::vector<std::shared_ptr<nodeType>>();

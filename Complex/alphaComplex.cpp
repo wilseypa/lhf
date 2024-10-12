@@ -116,46 +116,7 @@ std::vector<std::shared_ptr<nodeType>> alphaComplex<nodeType>::expanddelaunayDim
 }
 
 template <typename nodeType>
-std::vector<std::shared_ptr<nodeType>> alphaComplex<nodeType>::getAllDelaunayCofacets(std::shared_ptr<nodeType> simp, std::unordered_map<std::shared_ptr<nodeType>, std::shared_ptr<nodeType>> pivotPairs, bool emergent)
-{
-	/**
-		getAllDelaunayCofacets(std::shared_ptr<nodeType> simp, std::unordered_map<std::shared_ptr<nodeType>,std::shared_ptr<nodeType>> pivotPairs, bool emergent)
-
-		@brief For each pivot, get column of the pivot
-		@tparam nodeType The data type of the simplex node.
-		@param dim tbd
-		@return tbd
-	*/
-
-	std::vector<std::shared_ptr<nodeType>> ret;
-	unsigned dimension = simp->simplex.size();
-
-	for (auto iter = this->simplexList[dimension].rbegin(); iter != this->simplexList[dimension].rend(); ++iter)
-	{
-		auto simplex = *iter;
-		std::vector<unsigned>::iterator it;
-		std::vector<unsigned> v(simplex->simplex.size());
-
-		it = std::set_intersection(simp->simplex.begin(), simp->simplex.end(), simplex->simplex.begin(), simplex->simplex.end(), v.begin());
-		v.resize(it - v.begin());
-
-		if (v.size() == simp->simplex.size())
-		{
-			ret.push_back(simplex);
-			if (emergent && simplex->weight == simp->weight)
-			{
-				if (pivotPairs.find(simplex) == pivotPairs.end())
-					return ret;
-				emergent = false;
-			}
-		}
-	}
-
-	return ret;
-}
-
-template <typename nodeType>
-std::vector<std::shared_ptr<nodeType>> alphaComplex<nodeType>::getAllDelaunayCofacets(std::shared_ptr<nodeType> simp)
+std::vector<std::shared_ptr<nodeType>> alphaComplex<nodeType>::getAllCofacets(std::shared_ptr<nodeType> simp)
 {
 	/**
 		getAllDelaunayCofacets(std::shared_ptr<nodeType> simp)
@@ -168,77 +129,30 @@ std::vector<std::shared_ptr<nodeType>> alphaComplex<nodeType>::getAllDelaunayCof
 	*/
 	std::vector<std::shared_ptr<nodeType>> ret;
 	unsigned dimension = simp->simplex.size();
-	for (auto iter = this->simplexList[dimension].rbegin(); iter != this->simplexList[dimension].rend(); ++iter)
+	for (auto &iter : this->simplexList[dimension])
 	{
-		auto simplex = *iter;
-		std::vector<unsigned>::iterator it;
-		std::vector<unsigned> v(simplex->simplex.size());
-
-		it = std::set_intersection(simp->simplex.begin(), simp->simplex.end(), simplex->simplex.begin(), simplex->simplex.end(), v.begin());
-		v.resize(it - v.begin());
-
-		if (v.size() == simp->simplex.size())
-			ret.push_back(simplex);
+		if (std::includes(iter->simplex.begin(), iter->simplex.end(), simp->simplex.begin(), simp->simplex.end()))
+			ret.push_back(iter);
 	}
 
 	return ret;
 }
 
 template <typename nodeType>
-std::vector<nodeType *> alphaComplex<nodeType>::getAllDelaunayCofacets_basePointer(std::shared_ptr<nodeType> simp)
+std::vector<nodeType *> alphaComplex<nodeType>::getAllCofacets_basePointer(std::shared_ptr<nodeType> simp)
 {
 	std::vector<nodeType *> ret;
 	unsigned dimension = simp->simplex.size();
-
-	for (auto iter = this->simplexList[dimension].rbegin(); iter != this->simplexList[dimension].rend(); ++iter)
+	for (auto &iter : this->simplexList[dimension])
 	{
-		auto simplex = *iter;
-		std::vector<unsigned>::iterator it;
-		std::vector<unsigned> v(simplex->simplex.size());
-
-		it = std::set_intersection(simp->simplex.begin(), simp->simplex.end(), simplex->simplex.begin(), simplex->simplex.end(), v.begin());
-		v.resize(it - v.begin());
-
-		if (v.size() == simp->simplex.size())
+		if (std::includes(iter->simplex.begin(), iter->simplex.end(), simp->simplex.begin(), simp->simplex.end()))
 		{
-			nodeType *x = new nodeType(simplex->simplex, simplex->weight);
-			x->hash = simplex->hash;
+			nodeType *x = new nodeType(iter->simplex, iter->weight);
+			x->hash = iter->hash;
 			ret.push_back(x);
 		}
 	}
 	return ret;
-}
-
-template <typename nodeType>
-
-bool alphaComplex<nodeType>::checkGabriel(std::vector<double> point, std::vector<unsigned> dsimplex, std::vector<std::vector<double>> &inputData, double beta)
-{
-	bool intersectionCircle = false;
-	bool intersectionLune = false;
-	if (beta < 0)
-		exit(0);
-	else if (beta == 0)
-		return false;
-	else if (beta < 1)
-		intersectionCircle = true;
-	else
-		intersectionLune = true;
-
-	auto betacentersandradii = utils::calculateBetaCentersandRadius(dsimplex, inputData, this->distMatrix, beta);
-	int i = 0;
-	for (auto bc : betacentersandradii.first)
-	{
-		double distance = utils::vectors_distance(point, bc);
-		if (intersectionCircle && distance > betacentersandradii.second[i])
-			return false;
-		if (!intersectionCircle && distance < betacentersandradii.second[i])
-			return true;
-		i++;
-	}
-	if (intersectionCircle)
-		return true;
-	else
-		return false;
 }
 
 template <>
@@ -257,9 +171,10 @@ void alphaComplex<alphaNode>::buildWeightedAlphaComplex(std::vector<std::vector<
 	unsigned maxDimension = dsimplexmesh[0].size() - 1;
 	this->bin = binomialTable(npts, this->maxDimension + 1);
 
-	for (int i = 0; i <= maxDimension + 1; i++)
+	for (int i = 0; i <= this->maxDimension; i++)
 		this->simplexList.push_back({});
 
+#pragma omp parallel for
 	for (int i = 0; i < dsimplexmesh.size(); ++i)
 	{
 		auto simplex = dsimplexmesh[i];
@@ -270,6 +185,8 @@ void alphaComplex<alphaNode>::buildWeightedAlphaComplex(std::vector<std::vector<
 
 		for (int counter = 1; counter < pow_set_size; counter++)
 		{
+			if (__builtin_popcount(counter) > this->maxDimension + 1)
+				continue;
 			double weight = 0;
 			for (int j = 0; j < simplex.size(); j++)
 			{
@@ -285,14 +202,18 @@ void alphaComplex<alphaNode>::buildWeightedAlphaComplex(std::vector<std::vector<
 				}
 			}
 			std::shared_ptr<alphaNode> tot = std::make_shared<alphaNode>(alphaNode(gensimp, weight));
+			if (this->simplexList[gensimp.size() - 1].find(tot) == this->simplexList[gensimp.size() - 1].end())
+			{
+				if (gensimp.size() == 1)
+					tot->hash = *(gensimp.begin());
 
-			if (gensimp.size() == 1)
-				tot->hash = *(gensimp.begin());
-
-			else
-				tot->hash = this->simplexHash(gensimp);
-
-			this->simplexList[gensimp.size() - 1].insert(tot);
+				else
+					tot->hash = this->simplexHash(gensimp);
+#pragma omp critical
+				{
+					this->simplexList[gensimp.size() - 1].insert(tot);
+				}
+			}
 
 			gensimp.clear();
 		}
@@ -409,6 +330,13 @@ void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<unsigned
 	int di = 0;
 	for (auto x : this->simplexList)
 		std::cout << "Count of " << di++ << "-simplex ::" << x.size() << "\n";
+
+	neighbourhood = std::vector<std::vector<int>>(npts, std::vector<int>(npts, 0));
+	for (const auto &x : this->simplexList[1]) // Use edges to build neighbourhood relationship
+	{
+		neighbourhood[*x->simplex.begin()][*(--x->simplex.end())] = 1;
+		neighbourhood[*(--x->simplex.end())][*x->simplex.begin()] = 1;
+	}
 	return;
 }
 
