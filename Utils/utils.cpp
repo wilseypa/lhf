@@ -38,10 +38,255 @@ utils::utils(const std::string &_debug, const std::string &_outputFile)
 /**
  * @brief
  *
+ * @param module
+ * @param message
+ */
+void utils::writeLog(std::string module, std::string message)
+{
+	if (debug == "1" || debug == "true")
+	{
+		std::cout << "[" << module << "]:\t" << message << std::endl;
+	}
+	else
+	{
+		writeFile("[" + module + "]:\t" + message);
+	}
+	return;
+}
+
+/**
+ * @brief
+ *
+ * @param module
+ * @param message
+ */
+void utils::writeDebug(std::string module, std::string message)
+{
+	if (debug == "0" || debug == "false")
+	{
+		return;
+	}
+	else
+	{
+		std::cout << "[DEBUG]\t[" << module << "]:\t" << message << std::endl;
+		writeFile("[DEBUG]\t[" + module + "]:\t" + message);
+	}
+
+	return;
+}
+
+/**
+ * @brief
+ *
+ * @param fullMessage
+ */
+void utils::writeFile(std::string fullMessage)
+{
+	std::ofstream outfile;
+	outfile.open(outputFile + "_debug.txt", std::ios_base::app);
+	outfile << fullMessage << "\n";
+
+	return;
+}
+
+/**
+ * @brief
+ *
+ * @param k
+ * @param centroids
+ * @param originalData
+ * @param labels
+ * @return double
+ */
+double utils::computeMaxRadius(int k, const std::vector<std::vector<double>> &centroids, const std::vector<std::vector<double>> &originalData, std::vector<unsigned> &labels)
+{
+	double maxRadius = 0;
+	double curRadius = 0;
+
+	// Iterate through each point
+	for (unsigned i = 0; i < originalData.size(); i++)
+	{
+		// Check the distance of this point to it's centroid
+		curRadius = vectors_distance(originalData[i], centroids[labels[i]]);
+
+		if (curRadius > maxRadius)
+			maxRadius = curRadius;
+	}
+
+	return maxRadius;
+}
+
+/**
+ * @brief
+ *
+ * @param k
+ * @param centroids
+ * @param originalData
+ * @param labels
+ * @return double
+ */
+double utils::computeAvgRadius(int k, const std::vector<std::vector<double>> &centroids, const std::vector<std::vector<double>> &originalData, std::vector<unsigned> &labels)
+{
+	double totalRadius = 0;
+
+	// Iterate through each point
+	for (unsigned i = 0; i < originalData.size(); i++)
+	{
+
+		// Check the distance of this point to it's centroid
+		totalRadius += vectors_distance(originalData[i], centroids[labels[i]]);
+	}
+
+	return totalRadius / originalData.size();
+}
+
+/**
+ * @brief
+ *
+ * @param k
+ * @param originalData
+ * @param labels
+ * @return std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>>
+ */
+std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> utils::separatePartitions(int k, const std::vector<std::vector<double>> &originalData, const std::vector<unsigned> &labels)
+{
+	std::vector<std::vector<double>> a;
+	std::vector<unsigned> b;
+	std::vector<std::vector<std::vector<double>>> res(k, a);
+	std::vector<std::vector<unsigned>> labres(k, b);
+
+	for (unsigned i = 0; i < labels.size(); i++)
+	{
+		res[labels[i]].push_back(originalData[i]);
+		labres[labels[i]].push_back(i);
+	}
+
+	return std::make_pair(labres, res);
+}
+
+/**
+ * @brief
+ *
+ * @param rad
+ * @param centroids
+ * @param originalData
+ * @param labels
+ * @return std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>>
+ */
+std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> utils::separatePartitions(double rad, const std::vector<std::vector<double>> &centroids, const std::vector<std::vector<double>> &originalData, const std::vector<unsigned> &labels)
+{
+	std::vector<std::vector<double>> a;
+	std::vector<unsigned> b;
+
+	// Store the results to return
+	std::vector<std::vector<std::vector<double>>> res(centroids.size(), a);
+	std::vector<std::vector<unsigned>> labres(centroids.size(), b);
+
+	// Iterate through each label
+	for (unsigned i = 0; i < labels.size(); i++)
+	{
+
+		// Check for this point belonging to each centroid
+		for (unsigned j = 0; j < centroids.size(); j++)
+		{
+			if (labels[i] == j)
+			{
+				// If this is a labeled constituent put to front of array
+				res[j].insert(res[j].begin(), originalData[i]);
+				labres[j].insert(labres[j].begin(), i);
+			}
+			else
+			{
+
+				double curRad = vectors_distance(originalData[i], centroids[j]);
+
+				// If this distance is less than our radius cutoff push to back
+				if (curRad < rad)
+				{
+					res[j].push_back(originalData[i]);
+					labres[j].push_back(i);
+				}
+			}
+		}
+	}
+
+	return std::make_pair(labres, res);
+}
+
+/**
+ * @brief
+ *
+ * @param boundaryLists
+ * @param originalData
+ * @param labels
+ * @return std::vector<std::vector<std::vector<double>>>
+ */
+std::vector<std::vector<std::vector<double>>> utils::separateBoundaryPartitions(const std::vector<std::set<unsigned>> &boundaryLists, const std::vector<std::vector<double>> &originalData, const std::vector<unsigned> &labels)
+{
+	std::vector<std::vector<double>> a;
+	std::vector<std::vector<std::vector<double>>> res(boundaryLists.size(), a);
+
+	for (unsigned i = 0; i < originalData.size(); i++)
+	{
+
+		for (unsigned j = 0; j < boundaryLists.size(); j++)
+		{
+
+			if (boundaryLists[j].find(labels[i]) != boundaryLists[j].end())
+				res[j].push_back(originalData[i]);
+		}
+	}
+
+	return res;
+}
+
+template std::set<unsigned> utils::extractBoundaryPoints<simplexNode>(const std::vector<std::shared_ptr<simplexNode>> &);
+template std::set<unsigned> utils::extractBoundaryPoints<alphaNode>(const std::vector<std::shared_ptr<alphaNode>> &);
+template std::set<unsigned> utils::extractBoundaryPoints<witnessNode>(const std::vector<std::shared_ptr<witnessNode>> &);
+
+/**
+ * @brief
+ *
+ * @tparam T
+ * @param boundary
+ * @return std::set<unsigned>
+ */
+template <typename T>
+std::set<unsigned> utils::extractBoundaryPoints(const std::vector<std::shared_ptr<T>> &boundary)
+{
+	std::set<unsigned> boundaryPoints;
+	for (auto &simplex : boundary)
+		boundaryPoints.insert(simplex->simplex.begin(), simplex->simplex.end());
+	return boundaryPoints;
+}
+
+template std::set<unsigned> utils::extractBoundaryPoints<simplexNode>(const std::vector<simplexNode *> &);
+template std::set<unsigned> utils::extractBoundaryPoints<alphaNode>(const std::vector<alphaNode *> &);
+template std::set<unsigned> utils::extractBoundaryPoints<witnessNode>(const std::vector<witnessNode *> &);
+
+/**
+ * @brief
+ *
+ * @tparam T
+ * @param boundary
+ * @return std::set<unsigned>
+ */
+template <typename T>
+std::set<unsigned> utils::extractBoundaryPoints(const std::vector<T *> &boundary)
+{
+	std::set<unsigned> boundaryPoints;
+	for (auto &simplex : boundary)
+		boundaryPoints.insert(simplex->simplex.begin(), simplex->simplex.end());
+	return boundaryPoints;
+}
+
+/**
+ * @brief
+ *
  * @param v The vector of doubles.
  * @return double The average of the vector of doubles.
  */
-double utils ::getAverage(std::vector<double> &v)
+double utils ::getAverage(const std::vector<double> &v)
 {
 	if (v.empty())
 	{
@@ -56,23 +301,18 @@ double utils ::getAverage(std::vector<double> &v)
  * @param input
  * @return std::vector<std::vector<double>>
  */
-std::vector<std::vector<double>> utils ::transposeMeanAdjusted(std::vector<std::vector<double>> &input)
+std::vector<std::vector<double>> utils ::transposeMeanAdjusted(const std::vector<std::vector<double>> &input)
 {
-	std::vector<std::vector<double>> inputtranspose(input[0].size(), std::vector<double>(input.size()));
-	std::vector<std::vector<double>> inputstd(inputtranspose.size(), std::vector<double>(inputtranspose[0].size()));
+	std::vector<double> inputtranspose(input.size());
+	std::vector<std::vector<double>> inputstd(input[0].size(), std::vector<double>(input.size()));
 
 	for (int i = 0; i < input[0].size(); i++)
 	{
 		for (int j = 0; j < input.size(); j++)
-			inputtranspose[i][j] = input[j][i];
-	}
-
-	for (int i = 0; i < inputtranspose.size(); i++)
-	{
-		double averagex = getAverage(inputtranspose[i]);
-		double stdval = 0;
-		for (int j = 0; j < inputtranspose[i].size(); j++)
-			inputstd[i][j] = inputtranspose[i][j] - averagex;
+			inputtranspose[j] = input[j][i];
+		double average = getAverage(inputtranspose);
+		for (int j = 0; j < inputtranspose.size(); j++)
+			inputstd[i][j] = inputtranspose[j] - average;
 	}
 	return inputstd;
 }
@@ -83,13 +323,13 @@ std::vector<std::vector<double>> utils ::transposeMeanAdjusted(std::vector<std::
  * @param input
  * @return Eigen::MatrixXd
  */
-Eigen::MatrixXd utils ::covariance(std::vector<std::vector<double>> input)
+Eigen::MatrixXd utils ::covariance(const std::vector<std::vector<double>> &input)
 {
 	Eigen::MatrixXd result(input.size(), input.size());
 	int i = 0, j = 0;
-	for (auto x : input)
+	for (auto &x : input)
 	{
-		for (auto y : input)
+		for (auto &y : input)
 		{
 			double value = 0;
 			double averagex = getAverage(x);
@@ -286,7 +526,7 @@ std::vector<std::vector<double>> utils ::inverseOfMatrix(std::vector<std::vector
  * @param circumCenter
  * @return std::vector<std::vector<double>>
  */
-std::vector<std::vector<double>> utils ::betaCentersCalculation(std::vector<double> hpcoff, double beta, double circumRadius, std::vector<double> circumCenter)
+std::vector<std::vector<double>> utils ::betaCentersCalculation(const std::vector<double> &hpcoff, double beta, double circumRadius, std::vector<double> circumCenter)
 {
 	double distance = sqrt(pow((beta * circumRadius), 2) - pow(circumRadius, 2));
 	double d1, d2; // Parallel Plane coefficient
@@ -333,7 +573,7 @@ std::vector<std::vector<double>> utils ::betaCentersCalculation(std::vector<doub
  * @param targetDim
  * @return std::pair<std::vector<std::vector<double>>, std::vector<std::vector<double>>>
  */
-std::pair<std::vector<std::vector<double>>, std::vector<std::vector<double>>> utils::computePCA(std::vector<std::vector<double>> input, int targetDim)
+std::pair<std::vector<std::vector<double>>, std::vector<std::vector<double>>> utils::computePCA(const std::vector<std::vector<double>> &input, int targetDim)
 {
 	std::vector<std::vector<double>> transp = transposeMeanAdjusted(input);
 	Eigen::MatrixXd covar = covariance(transp);
@@ -367,7 +607,7 @@ std::pair<std::vector<std::vector<double>>, std::vector<std::vector<double>>> ut
  * @param eigenvectors
  * @return std::vector<std::vector<double>>
  */
-std::vector<std::vector<double>> utils::computePCAInverse(std::vector<std::vector<double>> input, std::vector<std::vector<double>> FinalOutput, std::vector<std::vector<double>> eigenvectors)
+std::vector<std::vector<double>> utils::computePCAInverse(const std::vector<std::vector<double>> &input, const std::vector<std::vector<double>> &FinalOutput, const std::vector<std::vector<double>> &eigenvectors)
 {
 
 	auto result = transpose(matrixMultiplication(transpose(eigenvectors), transpose(FinalOutput)));
@@ -396,7 +636,7 @@ std::vector<std::vector<double>> utils::computePCAInverse(std::vector<std::vecto
  * @param lowerdimension
  * @return std::pair<std::vector<double>, std::vector<std::vector<double>>>
  */
-std::pair<std::vector<double>, std::vector<std::vector<double>>> utils ::nullSpaceOfMatrix(std::set<unsigned> simplex, std::vector<std::vector<double>> inputData, std::vector<double> &cc, double radius, bool lowerdimension)
+std::pair<std::vector<double>, std::vector<std::vector<double>>> utils ::nullSpaceOfMatrix(const std::set<unsigned> &simplex, const std::vector<std::vector<double>> &inputData, std::vector<double> &cc, double radius, bool lowerdimension)
 {
 	int index;
 	srand(time(NULL));
@@ -479,7 +719,7 @@ std::pair<std::vector<double>, std::vector<std::vector<double>>> utils ::nullSpa
  * @param inputData
  * @return std::vector<double>
  */
-std::vector<double> utils::circumCenter(std::set<unsigned> &simplex, std::vector<std::vector<double>> &inputData)
+std::vector<double> utils::circumCenter(const std::set<unsigned> &simplex, std::vector<std::vector<double>> &inputData)
 {
 	const int n = inputData[0].size();
 	const int m = simplex.size();
@@ -545,7 +785,7 @@ std::vector<double> utils::circumCenter(std::set<unsigned> &simplex, std::vector
  * @param distMatrix
  * @return double
  */
-double utils::circumRadius(std::set<unsigned> &simplex, std::vector<std::vector<double>> *distMatrix)
+double utils::circumRadius(const std::set<unsigned> &simplex, const std::vector<std::vector<double>> *distMatrix)
 {
 	unsigned n = simplex.size();
 	Eigen::MatrixXd matA(n, n);
@@ -587,7 +827,7 @@ double utils::circumRadius(std::set<unsigned> &simplex, std::vector<std::vector<
  * @param inputData
  * @return std::vector<double>
  */
-std::vector<double> utils::circumCenter(std::vector<short> &simplex, std::vector<std::vector<double>> &inputData)
+std::vector<double> utils::circumCenter(const std::vector<short> &simplex, std::vector<std::vector<double>> &inputData)
 {
 	const int n = inputData[0].size();
 	const int m = simplex.size();
@@ -631,7 +871,7 @@ std::vector<double> utils::circumCenter(std::vector<short> &simplex, std::vector
  * @param distMatrix
  * @return double
  */
-double utils::circumRadius(std::vector<short> &simplex, std::vector<std::vector<double>> &distMatrix)
+double utils::circumRadius(const std::vector<short> &simplex, const std::vector<std::vector<double>> &distMatrix)
 {
 	unsigned n = simplex.size();
 	Eigen::MatrixXd matA(n, n);
@@ -666,7 +906,7 @@ double utils::circumRadius(std::vector<short> &simplex, std::vector<std::vector<
  * @param dd
  * @return double
  */
-double utils ::simplexVolume(std::set<unsigned> simplex, std::vector<std::vector<double>> *distMatrix, int dd)
+double utils ::simplexVolume(const std::set<unsigned> &simplex, const std::vector<std::vector<double>> *distMatrix, int dd)
 {
 	std::vector<std::vector<double>> matACap(simplex.size() + 1);
 	int ii = 0;
@@ -701,7 +941,7 @@ double utils ::simplexVolume(std::set<unsigned> simplex, std::vector<std::vector
  * @param spoints
  * @return double
  */
-double utils ::simplexVolume(std::vector<std::vector<double>> spoints)
+double utils ::simplexVolume(const std::vector<std::vector<double>> &spoints)
 {
 	std::vector<std::vector<double>> matACap(spoints.size() + 1);
 	int ii = 0;
@@ -721,57 +961,6 @@ double utils ::simplexVolume(std::vector<std::vector<double>> spoints)
 		return ((-1) * determinantOfMatrix(matACap, spoints.size() + 1)) / (pow(2, spoints[0].size()) * (pow(tgamma(spoints[0].size() + 1), 2)));
 	else
 		return (determinantOfMatrix(matACap, spoints.size() + 1)) / (pow(2, spoints[0].size()) * (pow(tgamma(spoints[0].size() + 1), 2)));
-}
-
-/**
- * @brief
- *
- * @param k
- * @param centroids
- * @param originalData
- * @param labels
- * @return double
- */
-double utils::computeMaxRadius(int k, std::vector<std::vector<double>> &centroids, std::vector<std::vector<double>> &originalData, std::vector<unsigned> &labels)
-{
-	double maxRadius = 0;
-	double curRadius = 0;
-
-	// Iterate through each point
-	for (unsigned i = 0; i < originalData.size(); i++)
-	{
-		// Check the distance of this point to it's centroid
-		curRadius = vectors_distance(originalData[i], centroids[labels[i]]);
-
-		if (curRadius > maxRadius)
-			maxRadius = curRadius;
-	}
-
-	return maxRadius;
-}
-
-/**
- * @brief
- *
- * @param k
- * @param centroids
- * @param originalData
- * @param labels
- * @return double
- */
-double utils::computeAvgRadius(int k, std::vector<std::vector<double>> &centroids, std::vector<std::vector<double>> &originalData, std::vector<unsigned> &labels)
-{
-	double totalRadius = 0;
-
-	// Iterate through each point
-	for (unsigned i = 0; i < originalData.size(); i++)
-	{
-
-		// Check the distance of this point to it's centroid
-		totalRadius += vectors_distance(originalData[i], centroids[labels[i]]);
-	}
-
-	return totalRadius / originalData.size();
 }
 
 /**
@@ -996,106 +1185,6 @@ std::vector<std::vector<bool>> utils ::betaNeighbors(std::vector<std::vector<dou
 	return incidenceMatrix;
 }
 
-/**
- * @brief
- *
- * @param k
- * @param originalData
- * @param labels
- * @return std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>>
- */
-std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> utils::separatePartitions(int k, std::vector<std::vector<double>> originalData, std::vector<unsigned> labels)
-{
-	std::vector<std::vector<double>> a;
-	std::vector<unsigned> b;
-	std::vector<std::vector<std::vector<double>>> res(k, a);
-	std::vector<std::vector<unsigned>> labres(k, b);
-
-	for (unsigned i = 0; i < labels.size(); i++)
-	{
-		res[labels[i]].push_back(originalData[i]);
-		labres[labels[i]].push_back(i);
-	}
-
-	return std::make_pair(labres, res);
-}
-
-/**
- * @brief
- *
- * @param rad
- * @param centroids
- * @param originalData
- * @param labels
- * @return std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>>
- */
-std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> utils::separatePartitions(double rad, std::vector<std::vector<double>> centroids, std::vector<std::vector<double>> originalData, std::vector<unsigned> labels)
-{
-	std::vector<std::vector<double>> a;
-	std::vector<unsigned> b;
-
-	// Store the results to return
-	std::vector<std::vector<std::vector<double>>> res(centroids.size(), a);
-	std::vector<std::vector<unsigned>> labres(centroids.size(), b);
-
-	// Iterate through each label
-	for (unsigned i = 0; i < labels.size(); i++)
-	{
-
-		// Check for this point belonging to each centroid
-		for (unsigned j = 0; j < centroids.size(); j++)
-		{
-			if (labels[i] == j)
-			{
-				// If this is a labeled constituent put to front of array
-				res[j].insert(res[j].begin(), originalData[i]);
-				labres[j].insert(labres[j].begin(), i);
-			}
-			else
-			{
-
-				double curRad = vectors_distance(originalData[i], centroids[j]);
-
-				// If this distance is less than our radius cutoff push to back
-				if (curRad < rad)
-				{
-					res[j].push_back(originalData[i]);
-					labres[j].push_back(i);
-				}
-			}
-		}
-	}
-
-	return std::make_pair(labres, res);
-}
-
-/**
- * @brief
- *
- * @param boundaryLists
- * @param originalData
- * @param labels
- * @return std::vector<std::vector<std::vector<double>>>
- */
-std::vector<std::vector<std::vector<double>>> utils::separateBoundaryPartitions(std::vector<std::set<unsigned>> boundaryLists, std::vector<std::vector<double>> originalData, std::vector<unsigned> labels)
-{
-	std::vector<std::vector<double>> a;
-	std::vector<std::vector<std::vector<double>>> res(boundaryLists.size(), a);
-
-	for (unsigned i = 0; i < originalData.size(); i++)
-	{
-
-		for (unsigned j = 0; j < boundaryLists.size(); j++)
-		{
-
-			if (boundaryLists[j].find(labels[i]) != boundaryLists[j].end())
-				res[j].push_back(originalData[i]);
-		}
-	}
-
-	return res;
-}
-
 // void utils::extractBoundaryPoints(std::vector<bettiBoundaryTableEntry>& bettiTable){
 // 	for(auto& bet: bettiTable){
 // 		std::set<unsigned> bound;
@@ -1104,42 +1193,6 @@ std::vector<std::vector<std::vector<double>>> utils::separateBoundaryPartitions(
 // 	}
 // }
 
-template std::set<unsigned int, std::less<unsigned int>, std::allocator<unsigned int>> utils::extractBoundaryPoints<simplexNode>(std::vector<std::shared_ptr<simplexNode>, std::allocator<std::shared_ptr<simplexNode>>> &);
-template std::set<unsigned int, std::less<unsigned int>, std::allocator<unsigned int>> utils::extractBoundaryPoints<alphaNode>(std::vector<std::shared_ptr<alphaNode>, std::allocator<std::shared_ptr<alphaNode>>> &);
-template std::set<unsigned int, std::less<unsigned int>, std::allocator<unsigned int>> utils::extractBoundaryPoints<witnessNode>(std::vector<std::shared_ptr<witnessNode>, std::allocator<std::shared_ptr<witnessNode>>> &);
-
-/**
- * @brief
- *
- * @tparam T
- * @param boundary
- * @return std::set<unsigned>
- */
-template <typename T>
-std::set<unsigned> utils::extractBoundaryPoints(std::vector<std::shared_ptr<T>> &boundary)
-{
-	std::set<unsigned> boundaryPoints;
-	for (auto &simplex : boundary)
-		boundaryPoints.insert(simplex->simplex.begin(), simplex->simplex.end());
-	return boundaryPoints;
-}
-
-/**
- * @brief
- *
- * @tparam T
- * @param boundary
- * @return std::set<unsigned>
- */
-template <typename T>
-std::set<unsigned> utils::extractBoundaryPoints(std::vector<T *> &boundary)
-{
-	std::set<unsigned> boundaryPoints;
-	for (auto &simplex : boundary)
-		boundaryPoints.insert(simplex->simplex.begin(), simplex->simplex.end());
-	return boundaryPoints;
-}
-
 /**
  * @brief
  *
@@ -1147,7 +1200,7 @@ std::set<unsigned> utils::extractBoundaryPoints(std::vector<T *> &boundary)
  * @param bettiTable
  * @return std::vector<bettiBoundaryTableEntry>
  */
-std::vector<bettiBoundaryTableEntry> utils::mapPartitionIndexing(std::vector<unsigned> partitionedLabels, std::vector<bettiBoundaryTableEntry> bettiTable)
+std::vector<bettiBoundaryTableEntry> utils::mapPartitionIndexing(const std::vector<unsigned> partitionedLabels, std::vector<bettiBoundaryTableEntry> bettiTable)
 {
 	for (auto &bet : bettiTable)
 	{
@@ -1512,60 +1565,6 @@ std::vector<unsigned> utils::setUnion(std::vector<unsigned> v1, std::vector<unsi
 	}
 	std::cout << std::endl;*/
 	return retTemp;
-}
-
-/**
- * @brief
- *
- * @param module
- * @param message
- */
-void utils::writeLog(std::string module, std::string message)
-{
-	if (debug == "1" || debug == "true")
-	{
-		std::cout << "[" << module << "]:\t" << message << std::endl;
-	}
-	else
-	{
-		writeFile("[" + module + "]:\t" + message);
-	}
-	return;
-}
-
-/**
- * @brief
- *
- * @param module
- * @param message
- */
-void utils::writeDebug(std::string module, std::string message)
-{
-	if (debug == "0" || debug == "false")
-	{
-		return;
-	}
-	else
-	{
-		std::cout << "[DEBUG]\t[" << module << "]:\t" << message << std::endl;
-		writeFile("[DEBUG]\t[" + module + "]:\t" + message);
-	}
-
-	return;
-}
-
-/**
- * @brief
- *
- * @param fullMessage
- */
-void utils::writeFile(std::string fullMessage)
-{
-	std::ofstream outfile;
-	outfile.open(outputFile + "_debug.txt", std::ios_base::app);
-	outfile << fullMessage << "\n";
-
-	return;
 }
 
 /**
