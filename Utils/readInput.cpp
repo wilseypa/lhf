@@ -42,7 +42,7 @@ readInput::readInput()
   @todo Handle if there is a comma at the end of the line (i.e. "5,5,5," should be <5,5,5>).
  */
 
-std::vector<std::vector<double>> readInput::readCSV(std::string filename)
+std::vector<std::vector<double>> readInput::readCSV(const std::string &filename)
 {
 	std::vector<std::vector<double>> result;
 
@@ -85,12 +85,12 @@ std::vector<std::vector<double>> readInput::readCSV(std::string filename)
   @return True if the vector was parsed successfully, false otherwise.
  */
 
-bool readInput::parseDoubleVector(std::string line, std::vector<double> &row)
+bool readInput::parseDoubleVector(const std::string & readline, std::vector<double> &row)
 {
 	std::size_t pos = std::string::npos;
 
 	// Replace whitespace in the current line
-	line = std::regex_replace(line, std::regex(" "), "");
+	std::string line = std::regex_replace(readline, std::regex(" "), "");
 
 	// Check if the line has a length (is not a blank line)
 	if (line.size() > 1)
@@ -134,7 +134,7 @@ bool readInput::parseDoubleVector(std::string line, std::vector<double> &row)
   @todo A lot.
  */
 
-std::vector<std::vector<double>> readInput::readMAT(std::string filename)
+std::vector<std::vector<double>> readInput::readMAT(const std::string &filename)
 {
 	std::vector<std::vector<double>> result;
 	int vectors = 0;
@@ -203,7 +203,7 @@ std::vector<std::vector<double>> readInput::readMAT(std::string filename)
   @return True if the stream was initialized successfully, false otherwise.
  */
 
-bool readInput::streamInit(std::string filename)
+bool readInput::streamInit(const std::string &filename)
 {
 	pFile = fopen(filename.c_str(), "r");
 

@@ -70,7 +70,7 @@ bool writeOutput::writeBarcodes(std::vector<bettiBoundaryTableEntry> &data, cons
 	std::ofstream file(filename + ".csv");
 	file << "dimension,birth,death\n";
 
-	for (auto row : data)
+	for (auto& row : data)
 		file << std::to_string(row.bettiDim) << "," << std::to_string(row.birth) << "," << std::to_string(row.death) << '\n';
 
 	file.close();
@@ -89,7 +89,7 @@ bool writeOutput::writeCSV(std::vector<std::vector<double>> &data, const std::st
 {
 	std::ofstream file(filename + ".csv");
 
-	for (auto row : data)
+	for (auto& row : data)
 	{
 		for (size_t i = 0; i < row.size() - 1; ++i)
 		{
@@ -133,7 +133,7 @@ bool writeOutput::writeCSV(std::vector<std::vector<double>> &data, const std::st
 
 	file << header;
 
-	for (auto row : data)
+	for (auto& row : data)
 	{
 		for (size_t i = 0; i < row.size() - 1; ++i)
 		{
@@ -178,9 +178,9 @@ bool writeOutput::writeMAT(std::vector<std::vector<double>> &data, const std::st
 
 	file << std::to_string(data.size()) << "\n"
 		 << std::to_string(data[0].size()) << "\n";
-	for (auto row : data)
+	for (auto& row : data)
 	{
-		for (auto column : row)
+		for (auto& column : row)
 		{
 			file << std::to_string(column) << "\n";
 		}
@@ -200,7 +200,7 @@ bool writeOutput::writeConsole(std::vector<bettiBoundaryTableEntry> &data)
 {
 	std::cout << "dimension,birth,death" << std::endl;
 
-	for (auto row : data)
+	for (auto& row : data)
 		std::cout << std::to_string(row.bettiDim) << "," << std::to_string(row.birth) << "," << std::to_string(row.death) << std::endl;
 	std::cout << std::endl;
 	return true;
