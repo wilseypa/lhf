@@ -19,11 +19,12 @@ struct Args
 	std::string shorthand;	  // Shorthand name for the argument
 	std::string defaultValue; // Default value for the argument
 	std::string description;  // Explanation or description of the argument
+	std::string d_type;		  // DataType of the Argument
 
-	Args() : shorthand(""), defaultValue(""), description("") {}
+	Args() : shorthand(""), defaultValue(""), description(""), d_type("") {}
 
-	Args(const std::string &sh, const std::string &def, const std::string &desc)
-		: shorthand(sh), defaultValue(def), description(desc)
+	Args(const std::string &sh, const std::string &def, const std::string &desc, const std::string &d_t)
+		: shorthand(sh), defaultValue(def), description(desc), d_type(d_t)
 	{
 		if (description == "")
 			description = "No Description available";
@@ -31,35 +32,35 @@ struct Args
 };
 
 static std::map<std::string, Args> argMap = {
-	{"betaMesh", Args("bmesh", "null.csv", "")},
-	{"betaMode", Args("bm", "noMode", "")},
-	{"beta", Args("b", "1", "")},
-	{"alphaFilterationValue", Args("afv", "50000", "")},
-	{"nodeType", Args("n", "simplexNode", "")},
-	{"reductionPercentage", Args("rp", "10", "")},
-	{"maxSize", Args("ms", "2000", "")},
-	{"threads", Args("t", "30", "")},
-	{"threshold", Args("th", "250", "")},
-	{"scalar", Args("s", "0.5", "")},
-	{"mpi", Args("a", "0", "")},
-	{"mode", Args("m", "standard", "Sets the mode for LHF to run in (standard|reduced|upscale|sw)")},
-	{"dimensions", Args("d", "1", "Sets the maximum homology dimension to compute (H_d)")},
-	{"iterations", Args("r", "250", "")},
-	{"pipeline", Args("p", "", "")},
-	{"inputFile", Args("i", "None", "Filename (csv) for LHF input")},
-	{"outputFile", Args("o", "output", "Filename for LHF output")},
-	{"epsilon", Args("e", "5", "Maximum epsilon threshold")},
-	{"lambda", Args("l", ".25", "Decay factor lambda for DenStream")},
-	{"debug", Args("x", "0", "")},
-	{"complexType", Args("c", "simplexArrayList", "")},
-	{"clusters", Args("k", "20", "")},
-	{"preprocessor", Args("pre", "", "")},
-	{"upscale", Args("u", "false", "")},
-	{"seed", Args("q", "-1", "")},
-	{"twist", Args("w", "false", "")},
-	{"collapse", Args("z", "false", "")},
-	{"involutedUpscale", Args("iu", "false", "")},
-	{"involuted", Args("inv", "false", "")}};
+	{"betaMesh", Args("bmesh", "null.csv", "", "")},
+	{"betaMode", Args("bm", "noMode", "", "")},
+	{"beta", Args("b", "1", "", "<int>")},
+	{"alphaFilterationValue", Args("afv", "50000", "", "")},
+	{"nodeType", Args("n", "simplexNode", "", "")},
+	{"reductionPercentage", Args("rp", "10", "", "")},
+	{"maxSize", Args("ms", "2000", "", "")},
+	{"threads", Args("t", "30", "", "<int>")},
+	{"threshold", Args("th", "250", "", "")},
+	{"scalar", Args("s", "0.5", "", "")},
+	{"mpi", Args("a", "0", "", "<int>")},
+	{"mode", Args("m", "standard", "Sets the mode for LHF to run in", "(standard|reduced|upscale|sw)")},
+	{"dimensions", Args("d", "1", "Sets the maximum homology dimension to compute (H_d)", "<int>")},
+	{"iterations", Args("r", "250", "", "<int>")},
+	{"pipeline", Args("p", "", "", "")},
+	{"inputFile", Args("i", "None", "Filename (csv) for LHF input", "<filename>")},
+	{"outputFile", Args("o", "output", "Filename for LHF output", "<filename>")},
+	{"epsilon", Args("e", "5", "Maximum epsilon threshold", "<float>")},
+	{"lambda", Args("l", ".25", "Decay factor lambda for DenStream", "")},
+	{"debug", Args("x", "0", "", "<int(0|1)>")},
+	{"complexType", Args("c", "simplexArrayList", "", "")},
+	{"clusters", Args("k", "20", "", "<int>")},
+	{"preprocessor", Args("pre", "", "", "")},
+	{"upscale", Args("u", "false", "", "<bool>")},
+	{"seed", Args("q", "-1", "", "")},
+	{"twist", Args("w", "false", "", "<bool>")},
+	{"collapse", Args("z", "false", "", "<bool>")},
+	{"involutedUpscale", Args("iu", "false", "", "<bool>")},
+	{"involuted", Args("inv", "false", "", "<bool>")}};
 
 /**
  * @brief Constructor for argParser class.
@@ -122,9 +123,9 @@ void argParser::printUsage()
 	std::cout << "Additional Options:" << std::endl;
 	for (const auto &arg : argMap)
 	{
-		std::cout << "\t -" << arg.second.shorthand << ",--" << arg.first << std::endl;
+		std::cout << "\t -" << arg.second.shorthand << ",--" << arg.first << " " << arg.second.d_type << std::endl;
 		std::cout << "\t\t" << arg.second.description << std::endl;
-		std::cout << "\t\t\tdefault: " << arg.second.defaultValue << std::endl;
+		std::cout << "\t\t\tDefault: " << arg.second.defaultValue << std::endl;
 		std::cout << std::endl;
 	}
 
@@ -180,7 +181,7 @@ std::map<std::string, std::string> argParser::parse(int argc, char **argv)
  * @param args A map containing the parsed arguments and their values.
  */
 
-void argParser::printArguments(std::map<std::string, std::string> &args)
+void argParser::printArguments(const std::map<std::string, std::string> &args)
 {
 
 	// Print the argument set

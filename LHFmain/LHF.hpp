@@ -24,7 +24,6 @@ public:
     int nprocs = 1, id = 0;
 
     void testFunc(int num1) { std::cout << num1 << std::endl; };
-    void myprint(void);
     void outputBettis(std::map<std::string, std::string>, pipePacket<nodeType> &);
     void runPipeline(std::map<std::string, std::string>, pipePacket<nodeType> &);
     void runPreprocessor(std::map<std::string, std::string> &, pipePacket<nodeType> &);
