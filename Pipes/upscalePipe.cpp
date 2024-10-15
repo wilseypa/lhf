@@ -65,7 +65,7 @@ void upscalePipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 
 			for (auto bp = upscaleBoundaries.begin(); bp != upscaleBoundaries.end(); bp++)
 			{
-				if (this->ut.setIntersect(bp->first, pi->boundaryPoints, true).size() > 0)
+				if (this->ut.setIntersect(bp->first, pi->boundaryPoints).size() > 0)
 				{
 
 					if (!isFound)

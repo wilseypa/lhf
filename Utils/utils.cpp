@@ -306,12 +306,12 @@ std::vector<std::vector<double>> utils ::transposeMeanAdjusted(const std::vector
 	std::vector<double> inputtranspose(input.size());
 	std::vector<std::vector<double>> inputstd(input[0].size(), std::vector<double>(input.size()));
 
-	for (int i = 0; i < input[0].size(); i++)
+	for (size_t i = 0; i < input[0].size(); i++)
 	{
-		for (int j = 0; j < input.size(); j++)
+		for (size_t j = 0; j < input.size(); j++)
 			inputtranspose[j] = input[j][i];
 		double average = getAverage(inputtranspose);
-		for (int j = 0; j < inputtranspose.size(); j++)
+		for (size_t j = 0; j < inputtranspose.size(); j++)
 			inputstd[i][j] = inputtranspose[j] - average;
 	}
 	return inputstd;
@@ -334,7 +334,7 @@ Eigen::MatrixXd utils ::covariance(const std::vector<std::vector<double>> &input
 			double value = 0;
 			double averagex = getAverage(x);
 			double averagey = getAverage(y);
-			for (int i = 0; i < x.size(); i++)
+			for (size_t i = 0; i < x.size(); i++)
 			{
 				value += (x[i] - averagex) * (y[i] - averagey);
 			}
@@ -354,10 +354,10 @@ Eigen::MatrixXd utils ::covariance(const std::vector<std::vector<double>> &input
  * @param n
  * @return double
  */
-double utils ::determinantOfMatrix(std::vector<std::vector<double>> mat, int n)
+double utils ::determinantOfMatrix(std::vector<std::vector<double>> mat, unsigned n)
 {
 	double det = 1;
-	int index;
+	unsigned index;
 	for (unsigned i = 0; i < n; i++)
 	{
 		index = i;
@@ -367,7 +367,7 @@ double utils ::determinantOfMatrix(std::vector<std::vector<double>> mat, int n)
 			continue;
 		if (index != i)
 		{
-			for (int j = 0; j < n; j++)
+			for (unsigned j = 0; j < n; j++)
 			{
 				double temp12 = mat[index][j];
 				mat[index][j] = mat[i][j];
@@ -409,9 +409,9 @@ double utils ::determinantOfMatrix(std::vector<std::vector<double>> mat, int n)
 std::vector<std::vector<double>> utils ::transpose(const std::vector<std::vector<double>> &input)
 {
 	std::vector<std::vector<double>> inputtranspose(input[0].size(), std::vector<double>(input.size()));
-	for (int i = 0; i < input[0].size(); i++)
+	for (size_t i = 0; i < input[0].size(); i++)
 	{
-		for (int j = 0; j < input.size(); j++)
+		for (size_t j = 0; j < input.size(); j++)
 			inputtranspose[i][j] = input[j][i];
 	}
 	return inputtranspose;
@@ -426,20 +426,20 @@ std::vector<std::vector<double>> utils ::transpose(const std::vector<std::vector
  */
 std::vector<std::vector<double>> utils ::matrixMultiplication(const std::vector<std::vector<double>> &matA, const std::vector<std::vector<double>> &matB)
 {
-	int n1 = matA.size();
-	int m1 = matA[0].size();
-	int n2 = matB.size();
-	int m2 = matB[0].size();
+	size_t n1 = matA.size();
+	size_t m1 = matA[0].size();
+	size_t n2 = matB.size();
+	size_t m2 = matB[0].size();
 	std::vector<std::vector<double>> mat(n1, std::vector<double>(m2, 0));
 
 	if (m1 != n2)
 		return mat;
 
-	for (int i = 0; i < n1; i++)
+	for (size_t i = 0; i < n1; i++)
 	{
-		for (int j = 0; j < m2; j++)
+		for (size_t j = 0; j < m2; j++)
 		{
-			for (int x = 0; x < m1; x++)
+			for (size_t x = 0; x < m1; x++)
 			{
 				mat[i][j] += matA[i][x] * matB[x][j];
 			}
@@ -463,7 +463,7 @@ std::vector<std::vector<double>> utils ::inverseOfMatrix(std::vector<std::vector
 	for (int i = 0; i < n; i++)
 		matinv[i][i] = 1;
 
-	for (unsigned i = 0; i < n; i++)
+	for (int i = 0; i < n; i++)
 	{
 		index = i;
 		while (mat[index][i] == 0 && index < n)
@@ -485,28 +485,28 @@ std::vector<std::vector<double>> utils ::inverseOfMatrix(std::vector<std::vector
 		double rectemp = mat[i][i];
 		if (mat[i][i] != 1)
 		{
-			for (unsigned j = 0; j < n; j++)
+			for (int j = 0; j < n; j++)
 			{
 				mat[i][j] /= rectemp;
 				matinv[i][j] /= rectemp;
 			}
 		}
-		for (unsigned j = 0; j < n; j++)
+		for (int j = 0; j < n; j++)
 		{
 			if (mat[j][i] != 0 && j != i)
 			{
 				double rectemp2 = mat[j][i];
-				for (unsigned t = 0; t < n; t++)
+				for (int t = 0; t < n; t++)
 				{
 					mat[i][t] *= rectemp2;
 					matinv[i][t] *= rectemp2;
 				}
-				for (unsigned t = 0; t < n; t++)
+				for (int t = 0; t < n; t++)
 				{
 					mat[j][t] -= mat[i][t];
 					matinv[j][t] -= matinv[i][t];
 				}
-				for (unsigned k = 0; k < n; k++)
+				for (int k = 0; k < n; k++)
 				{
 					mat[i][k] /= rectemp2;
 					matinv[i][k] /= rectemp2;
@@ -584,7 +584,7 @@ std::pair<std::vector<std::vector<double>>, std::vector<std::vector<double>>> ut
 	for (int k = input[0].size() - 1; k >= 0; k--)
 	{
 		std::vector<double> evec;
-		for (int p = 0; p < input[0].size(); p++)
+		for (size_t p = 0; p < input[0].size(); p++)
 			evec.push_back(es.eigenvectors().col(k)[p]);
 		eigenvec.push_back(evec);
 	}
@@ -617,7 +617,7 @@ std::vector<std::vector<double>> utils::computePCAInverse(const std::vector<std:
 	for (auto x : transposeinput)
 	{
 		double average = getAverage(x);
-		for (int y = 0; y < result.size(); y++)
+		for (size_t y = 0; y < result.size(); y++)
 		{
 			result[y][i] += average;
 		}
@@ -656,7 +656,7 @@ std::pair<std::vector<double>, std::vector<std::vector<double>>> utils ::nullSpa
 		mat.pop_back();
 	}
 
-	for (unsigned i = 0; i < n; i++)
+	for (int i = 0; i < n; i++)
 	{
 		index = i;
 		while (mat[index][i] == 0 && index < n)
@@ -678,29 +678,29 @@ std::pair<std::vector<double>, std::vector<std::vector<double>>> utils ::nullSpa
 		double rectemp = mat[i][i];
 		if (mat[i][i] != 1)
 		{
-			for (unsigned j = 0; j < n; j++)
+			for (int j = 0; j < n; j++)
 			{
 				mat[i][j] /= rectemp;
 			}
 			matns[i] /= rectemp;
 		}
 
-		for (unsigned j = 0; j < n; j++)
+		for (int j = 0; j < n; j++)
 		{
 			if (mat[j][i] != 0 && j != i)
 			{
 				double rectemp2 = mat[j][i];
-				for (unsigned t = 0; t < n; t++)
+				for (int t = 0; t < n; t++)
 				{
 					mat[i][t] *= rectemp2;
 				}
 				matns[i] *= rectemp2;
-				for (unsigned t = 0; t < n; t++)
+				for (int t = 0; t < n; t++)
 				{
 					mat[j][t] -= mat[i][t];
 				}
 				matns[j] -= matns[i];
-				for (unsigned k = 0; k < n; k++)
+				for (int k = 0; k < n; k++)
 				{
 					mat[i][k] /= rectemp2;
 				}
@@ -767,7 +767,6 @@ std::vector<double> utils::circumCenter(const std::set<unsigned> &simplex, std::
 
 	for (int i = 0; i < n; i++)
 	{
-		double coordinate = 0;
 		auto index = simplex.begin();
 		for (int j = 0; j < m; j++, ++index)
 		{
@@ -927,7 +926,7 @@ double utils ::simplexVolume(const std::set<unsigned> &simplex, const std::vecto
 		ii++;
 	}
 	matACap[0].push_back(0);
-	for (auto i : simplex)
+	for (size_t i = 0; i < simplex.size(); i++)
 		matACap[0].push_back(1);
 	if (dd % 2 == 0)
 		return ((-1) * determinantOfMatrix(matACap, simplex.size() + 1)) / (pow(2, dd) * (pow(tgamma(dd + 1), 2)));
@@ -955,7 +954,7 @@ double utils ::simplexVolume(const std::vector<std::vector<double>> &spoints)
 		ii++;
 	}
 	matACap[0].push_back(0);
-	for (int i = 0; i < spoints.size(); i++)
+	for (size_t i = 0; i < spoints.size(); i++)
 		matACap[0].push_back(1);
 	if (spoints.size() % 2 == 0)
 		return ((-1) * determinantOfMatrix(matACap, spoints.size() + 1)) / (pow(2, spoints[0].size()) * (pow(tgamma(spoints[0].size() + 1), 2)));
@@ -1376,7 +1375,7 @@ std::vector<unsigned> utils::setIntersect(std::vector<unsigned> v1, std::vector<
  * @param isSorted
  * @return std::set<unsigned>
  */
-std::set<unsigned> utils::setIntersect(const std::set<unsigned> &v1, const std::set<unsigned> &v2, bool isSorted = true)
+std::set<unsigned> utils::setIntersect(const std::set<unsigned> &v1, const std::set<unsigned> &v2)
 {
 	std::set<unsigned> ret;
 
@@ -1457,7 +1456,7 @@ std::vector<unsigned> utils::symmetricDiff(std::vector<unsigned> v1, std::vector
  * @return std::set<unsigned>
  */
 // Find the symmetric difference of two vectors
-std::set<unsigned> utils::symmetricDiff(const std::set<unsigned> &v1, const std::set<unsigned> &v2, bool isSorted)
+std::set<unsigned> utils::symmetricDiff(const std::set<unsigned> &v1, const std::set<unsigned> &v2)
 {
 	std::set<unsigned> ret;
 	if (v1 == v2)
@@ -1475,7 +1474,7 @@ std::set<unsigned> utils::symmetricDiff(const std::set<unsigned> &v1, const std:
  * @return std::vector<std::set<unsigned>>
  */
 // Iteratively build subsets (faces) of the simplex set
-std::vector<std::set<unsigned>> utils::getSubsets(std::set<unsigned> set, int dim)
+std::vector<std::set<unsigned>> utils::getSubsets(std::set<unsigned> set, size_t dim)
 {
 	std::vector<std::set<unsigned>> subset;
 	subset.push_back(std::set<unsigned>());
@@ -1490,7 +1489,6 @@ std::vector<std::set<unsigned>> utils::getSubsets(std::set<unsigned> set, int di
 			subsetTemp[j].insert(*i);
 		}
 
-		unsigned z = 0;
 		for (auto j = subsetTemp.begin(); j != subsetTemp.end(); j++)
 		{
 			subset.push_back(*j);
@@ -1619,7 +1617,6 @@ std::vector<std::set<unsigned>> utils::getSubsets(std::set<unsigned> set)
 			subsetTemp[j].insert(entry);
 		}
 
-		unsigned z = 0;
 		for (auto j = subsetTemp.begin(); j != subsetTemp.end(); j++)
 		{
 			subset.push_back(*j);
@@ -1660,7 +1657,6 @@ std::vector<std::vector<unsigned>> utils::getSubsets(std::vector<unsigned> set)
 			subsetTemp[j].push_back(entry);
 		}
 
-		unsigned z = 0;
 		for (auto j = subsetTemp.begin(); j != subsetTemp.end(); j++)
 		{
 			subset.push_back(*j);
@@ -1716,14 +1712,13 @@ std::vector<std::vector<double>> utils::deserialize(std::vector<double> serialDa
 	}
 
 	// Deduce the number of vectors
-	auto n = serialData.size() / dim;
-	auto begin = serialData.begin();
+	size_t n = serialData.size() / dim;
 
 	std::vector<std::vector<double>> ret(n, std::vector<double>(dim));
 
-	for (unsigned i = 0; i < n; i++)
+	for (size_t i = 0; i < n; i++)
 	{
-		for (unsigned j = 0; j < dim; j++)
+		for (size_t j = 0; j < dim; j++)
 		{
 			ret[i][j] = serialData[(i * dim) + j];
 		}
@@ -1747,16 +1742,16 @@ std::vector<double> utils::serialize(std::vector<std::vector<double>> &origData)
 		return {};
 	}
 
-	auto n = origData.size();
-	auto d = origData[0].size();
+	size_t n = origData.size();
+	size_t d = origData[0].size();
 
 	// Preallocate our vector to prevent resizing
 	std::vector<double> ret(n * d);
 
 	// Copy element by element
-	for (unsigned i = 0; i < n; i++)
+	for (size_t i = 0; i < n; i++)
 	{
-		for (unsigned k = 0; k < d; k++)
+		for (size_t k = 0; k < d; k++)
 		{
 			ret[(i * d) + k] = origData[i][k];
 		}
@@ -1779,15 +1774,12 @@ std::pair<std::vector<std::vector<double>>, std::vector<double>> utils::calculat
 	std::vector<std::vector<double>> betacenters;
 	std::vector<double> betaradii;
 	bool intersectionCircle = false;
-	bool intersectionLune = false;
 	if (beta < 0)
 		exit(0);
 	else if (beta == 0)
 		return std::make_pair(betacenters, betaradii);
 	else if (beta < 1)
 		intersectionCircle = true;
-	else
-		intersectionLune = true;
 
 	if (beta < 1)
 		beta = 1 / beta;
@@ -1812,7 +1804,6 @@ std::pair<std::vector<std::vector<double>>, std::vector<double>> utils::calculat
 		circumRadius = utils::circumRadius(simplex, distMatrix);
 	else
 		circumRadius = pow((*distMatrix)[dsimplex[0]][dsimplex[1]] / 2, 2);
-	bool first = true;
 
 	std::vector<size_t> neighbors;
 	std::vector<std::vector<size_t>> neighborsCircleIntersection;
@@ -1826,11 +1817,6 @@ std::pair<std::vector<std::vector<double>>, std::vector<double>> utils::calculat
 		std::vector<double> faceCC;
 		if (face.size() > 2)
 			faceCC = utils::circumCenter(face, inputData);
-		else if (face.size() == 2)
-		{
-			auto first = face.begin();
-			std::vector<double> fR;
-		}
 		double faceRadius;
 		if (face.size() > 2)
 			faceRadius = utils::circumRadius(face, distMatrix);
@@ -1867,7 +1853,7 @@ std::pair<std::vector<std::vector<double>>, std::vector<double>> utils::calculat
 			expr1--;
 			expr2--;
 			expr3--;
-			if ((expr1 > 0 && expr3 > 0) && expr2 > 0 || (expr1 < 0 && expr3 < 0) && expr2 < 0)
+			if (((expr1 > 0 && expr3 > 0) && expr2 > 0) || ((expr1 < 0 && expr3 < 0) && expr2 < 0))
 			{
 				sameside = true;
 				betaCenter = betaCenters[1];
@@ -1921,6 +1907,7 @@ std::pair<std::vector<std::vector<double>>, std::vector<double>> utils::calculat
 					else
 						betaCenter.push_back((2 - beta) * circumCenter[y] + (beta - 1) * faceCC[y]);
 				}
+			// Anurag -> Author:: Beta Radius might remain unintialized here
 		}
 		if (!intersectionCircle || beta <= 2)
 			betaRadius = utils::vectors_distance(betaCenter, inputData[face1[0]]);

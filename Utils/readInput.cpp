@@ -62,7 +62,7 @@ std::vector<std::vector<double>> readInput::readCSV(const std::string &filename)
 		getline(file, line);	 // Read the next line from file
 		if (parseDoubleVector(line, tmp))
 		{
-			if (vec_len == tmp.size() || vec_len == 0, vec_len = tmp.size())
+			if (vec_len == tmp.size() || (vec_len == 0 && (vec_len = tmp.size())))
 				result.push_back(tmp);
 			else
 			{

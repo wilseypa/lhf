@@ -126,13 +126,13 @@ public:
 	static double vectors_distance(const double, const double);
 	static double vectors_distance(const std::vector<double> &, const std::vector<double> &);
 	static std::set<unsigned> setXOR(std::set<unsigned> &, std::set<unsigned> &);
-	static std::set<unsigned> setIntersect(const std::set<unsigned> &, const std::set<unsigned> &, bool isSorted);
+	static std::set<unsigned> setIntersect(const std::set<unsigned> &, const std::set<unsigned> &);
 	static std::vector<unsigned> setIntersect(std::vector<unsigned>, std::vector<unsigned>, bool);
-	static std::vector<std::set<unsigned>> getSubsets(std::set<unsigned>, int);
+	static std::vector<std::set<unsigned>> getSubsets(std::set<unsigned>, size_t);
 	static std::vector<std::set<unsigned>> getSubsets(std::set<unsigned> set);
 	static std::vector<std::vector<unsigned>> getSubsets(std::vector<unsigned> set);
 	static std::vector<unsigned> symmetricDiff(std::vector<unsigned>, std::vector<unsigned>, bool);
-	static std::set<unsigned> symmetricDiff(const std::set<unsigned> &, const std::set<unsigned> &, bool);
+	static std::set<unsigned> symmetricDiff(const std::set<unsigned> &, const std::set<unsigned> &);
 	static std::vector<unsigned> setUnion(std::vector<unsigned>, std::vector<unsigned>, bool);
 	static std::set<unsigned> setUnion(std::set<unsigned>, std::set<unsigned>);
 	static std::pair<std::vector<unsigned>, std::vector<unsigned>> intersect(std::vector<unsigned>, std::vector<unsigned>, bool);
@@ -140,7 +140,7 @@ public:
 
 	static bool sortBySecond(const std::pair<std::set<unsigned>, double> &, const std::pair<std::set<unsigned>, double> &);
 
-	static double determinantOfMatrix(std::vector<std::vector<double>> mat, int n);
+	static double determinantOfMatrix(std::vector<std::vector<double>> mat, unsigned n);
 	// Alpha (delaunay)
 	static double circumRadius(const std::set<unsigned> &simplex, const std::vector<std::vector<double>> *distMatrix);
 	static double circumRadius(const std::vector<short> &simplex, const std::vector<std::vector<double>> &distMatrix);
