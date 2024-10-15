@@ -65,7 +65,7 @@ bool writeOutput::writeRunLog(const std::string &stats, const std::string &filen
  * @return true 
  * @return false 
  */
-bool writeOutput::writeBarcodes(std::vector<bettiBoundaryTableEntry> &data, const std::string &filename)
+bool writeOutput::writeBarcodes(const std::vector<bettiBoundaryTableEntry> &data, const std::string &filename)
 {
 	std::ofstream file(filename + ".csv");
 	file << "dimension,birth,death\n";
@@ -85,7 +85,7 @@ bool writeOutput::writeBarcodes(std::vector<bettiBoundaryTableEntry> &data, cons
  * @return false 
  */
 // writeCSV -> write a csv formatted file of data input
-bool writeOutput::writeCSV(std::vector<std::vector<double>> &data, const std::string &filename)
+bool writeOutput::writeCSV(const std::vector<std::vector<double>> &data, const std::string &filename)
 {
 	std::ofstream file(filename + ".csv");
 
@@ -127,7 +127,7 @@ bool writeOutput::writeCSV(const std::string &data, const std::string &filename)
  * @return false 
  */
 // writeCSV -> write a csv formatted file of data input
-bool writeOutput::writeCSV(std::vector<std::vector<double>> &data, const std::string &filename, const std::string &header)
+bool writeOutput::writeCSV(const std::vector<std::vector<double>> &data, const std::string &filename, const std::string &header)
 {
 	std::ofstream file(filename + ".csv");
 
@@ -172,7 +172,7 @@ bool writeOutput::writeCSV(const std::string &data, const std::string &filename,
  * @return false 
  */
 // writeMAT -> write in a mat formatted file of data input
-bool writeOutput::writeMAT(std::vector<std::vector<double>> &data, const std::string &filename)
+bool writeOutput::writeMAT(const std::vector<std::vector<double>> &data, const std::string &filename)
 {
 	std::ofstream file(filename + ".mat");
 
@@ -196,7 +196,7 @@ bool writeOutput::writeMAT(std::vector<std::vector<double>> &data, const std::st
  * @return false 
  */
 // writeConsole -> write data input to console (hopefully pretty-print)
-bool writeOutput::writeConsole(std::vector<bettiBoundaryTableEntry> &data)
+bool writeOutput::writeConsole(const std::vector<bettiBoundaryTableEntry> &data)
 {
 	std::cout << "dimension,birth,death" << std::endl;
 
@@ -214,7 +214,7 @@ bool writeOutput::writeConsole(std::vector<bettiBoundaryTableEntry> &data)
  * @param runtime 
  * @return std::string 
  */
-std::string writeOutput::logRun(std::map<std::string, std::string> &args, const std::string &ident, const std::string &wdStats, const std::string &runtime)
+std::string writeOutput::logRun(const std::map<std::string, std::string> &args, const std::string &ident, const std::string &wdStats, const std::string &runtime)
 {
 	// Get current time
 	auto res = std::time(nullptr);
