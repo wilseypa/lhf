@@ -33,8 +33,8 @@ struct Args
 
 static std::map<std::string, Args> argMap = {
 	{"betaMesh", Args("bmesh", "null.csv", "", "")},
-	{"betaMode", Args("bm", "noMode", "", "")},
-	{"beta", Args("b", "1", "", "<int>")},
+	{"betaMode", Args("bm", "noMode", "", "(noMode|lune|circle)")},
+	{"beta", Args("b", "1", "", "")},
 	{"alphaFilterationValue", Args("afv", "50000", "", "")},
 	{"nodeType", Args("n", "simplexNode", "", "")},
 	{"reductionPercentage", Args("rp", "10", "", "")},
@@ -52,7 +52,7 @@ static std::map<std::string, Args> argMap = {
 	{"epsilon", Args("e", "5", "Maximum epsilon threshold", "<float>")},
 	{"lambda", Args("l", ".25", "Decay factor lambda for DenStream", "")},
 	{"debug", Args("x", "0", "", "<int(0|1)>")},
-	{"complexType", Args("c", "simplexArrayList", "", "")},
+	{"complexType", Args("c", "simplexArrayList", "", "(simplexArrayList|simplexTree|alphaComplex|betaComplex|witnessComplex)")},
 	{"clusters", Args("k", "20", "", "<int>")},
 	{"preprocessor", Args("pre", "", "", "")},
 	{"upscale", Args("u", "false", "", "<bool>")},

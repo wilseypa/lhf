@@ -36,7 +36,7 @@ make
 
 ```console
 cp build/LHFmain/libLHFlib.so.1.0.0 pyLHF/src/lhf/libLHFlib.so
-cd pyLHF/src/lhf
+cd pyLHF/src
 pip install .
 ```
 ---
@@ -52,36 +52,36 @@ cd LHFmain
 ### ARGUMENTS
 
  | Argument  | Shorthand | Default | Description | DataType
- | ------------- | ------------- | ------------- | ------------- | ------------- |
- | --betaMesh |-bmesh| null.csv| | |
- | --betaMode |-bm| noMode| | |
- | --beta |-b| 1| | `<int>`|
- | --alphaFilterationValue |-afv| 50000| | |
- | --nodeType |-n| simplexNode| | |
- | --reductionPercentage |-rp| 10| | |
- | --maxSize |-ms| 2000| | |
- | --threads |-t| 30| | `<int>`|
- | --threshold |-th| 250| | |
- | --scalar |-s| 0.5| | |
- | --mpi |-a| 0| | `<int>`|
- | --mode |-m| standard| Sets the mode for LHF to run in| (standard\|reduced\|upscale\|sw)|
- | --dimensions |-d| 1| Sets the maximum homology dimension to compute (H_d)| `<int>`|
- | --iterations |-r| 250| | `<int>`|
- | --pipeline |-p| | | |
- | --inputFile |-i| None| Filename (csv) for LHF input| `<filename>`|
- | --outputFile |-o| output| Filename for LHF output| `<filename>`|
- | --epsilon |-e| 5| Maximum epsilon threshold| `<float>`|
- | --lambda |-l| .25| Decay factor lambda for DenStream| |
- | --debug |-x| 0| | `<int(0\|1)>`|
- | --complexType |-c| simplexArrayList| | |
- | --clusters |-k| 20| | `<int>`|
- | --preprocessor |-pre| | | |
- | --upscale |-u| false| | `<bool>`|
- | --seed |-q| -1| | |
- | --twist |-w| false| | `<bool>`|
- | --collapse |-z| false| | `<bool>`|
- | --involutedUpscale |-iu| false| | `<bool>`|
- | --involuted| -inv| false| | `<bool>`|
+ | ------------- | ------------- | ------------- | ------------- | ------------- | 
+ | --betaMesh | -bmesh | null.csv |  |  | 
+ | --betaMode | -bm | noMode |  |  | 
+ | --beta | -b | 1 |  |  | 
+ | --alphaFilterationValue | -afv | 50000 |  |  | 
+ | --nodeType | -n | simplexNode |  |  | 
+ | --reductionPercentage | -rp | 10 |  |  | 
+ | --maxSize | -ms | 2000 |  |  | 
+ | --threads | -t | 30 |  | `<int>` | 
+ | --threshold | -th | 250 |  |  | 
+ | --scalar | -s | 0.5 |  |  | 
+ | --mpi | -a | 0 |  | `<int>` | 
+ | --mode | -m | standard | Sets the mode for LHF to run in | (standard \| reduced \| upscale \| sw) | 
+ | --dimensions | -d | 1 | Sets the maximum homology dimension to compute (H_d) | `<int>` | 
+ | --iterations | -r | 250 |  | `<int>` | 
+ | --pipeline | -p |  |  |  | 
+ | --inputFile | -i | None | Filename (csv) for LHF input | `<filename>` | 
+ | --outputFile | -o | output | Filename for LHF output | `<filename>` | 
+ | --epsilon | -e | 5 | Maximum epsilon threshold | `<float>` | 
+ | --lambda | -l | .25 | Decay factor lambda for DenStream |  | 
+ | --debug | -x | 0 |  | `<int(0\|1)>` | 
+ | --complexType | -c | simplexArrayList |  |  | 
+ | --clusters | -k | 20 |  | `<int>` | 
+ | --preprocessor | -pre |  |  |  | 
+ | --upscale | -u | false |  | `<bool>` | 
+ | --seed | -q | -1 |  |  | 
+ | --twist | -w | false |  | `<bool>` | 
+ | --collapse | -z | false |  | `<bool>` | 
+ | --involutedUpscale | -iu | false |  | `<bool>` | 
+ | --involuted | -inv | false |  | `<bool>` | 
 
 ---
  

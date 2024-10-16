@@ -41,7 +41,7 @@ utils::utils(const std::string &_debug, const std::string &_outputFile)
  * @param module
  * @param message
  */
-void utils::writeLog(std::string module, std::string message)
+void utils::writeLog(const std::string &module, const std::string &message)
 {
 	if (debug == "1" || debug == "true")
 	{
@@ -60,7 +60,7 @@ void utils::writeLog(std::string module, std::string message)
  * @param module
  * @param message
  */
-void utils::writeDebug(std::string module, std::string message)
+void utils::writeDebug(const std::string &module, const std::string &message)
 {
 	if (debug == "0" || debug == "false")
 	{
@@ -80,7 +80,7 @@ void utils::writeDebug(std::string module, std::string message)
  *
  * @param fullMessage
  */
-void utils::writeFile(std::string fullMessage)
+void utils::writeFile(const std::string &fullMessage)
 {
 	std::ofstream outfile;
 	outfile.open(outputFile + "_debug.txt", std::ios_base::app);
@@ -98,7 +98,7 @@ void utils::writeFile(std::string fullMessage)
  * @param labels
  * @return double
  */
-double utils::computeMaxRadius(int k, const std::vector<std::vector<double>> &centroids, const std::vector<std::vector<double>> &originalData, std::vector<unsigned> &labels)
+double utils::computeMaxRadius(int k, const std::vector<std::vector<double>> &centroids, const std::vector<std::vector<double>> &originalData, const std::vector<unsigned> &labels)
 {
 	double maxRadius = 0;
 	double curRadius = 0;
@@ -125,7 +125,7 @@ double utils::computeMaxRadius(int k, const std::vector<std::vector<double>> &ce
  * @param labels
  * @return double
  */
-double utils::computeAvgRadius(int k, const std::vector<std::vector<double>> &centroids, const std::vector<std::vector<double>> &originalData, std::vector<unsigned> &labels)
+double utils::computeAvgRadius(int k, const std::vector<std::vector<double>> &centroids, const std::vector<std::vector<double>> &originalData, const std::vector<unsigned> &labels)
 {
 	double totalRadius = 0;
 
@@ -526,7 +526,7 @@ std::vector<std::vector<double>> utils ::inverseOfMatrix(std::vector<std::vector
  * @param circumCenter
  * @return std::vector<std::vector<double>>
  */
-std::vector<std::vector<double>> utils ::betaCentersCalculation(const std::vector<double> &hpcoff, double beta, double circumRadius, std::vector<double> circumCenter)
+std::vector<std::vector<double>> utils ::betaCentersCalculation(const std::vector<double> &hpcoff, double beta, double circumRadius, const std::vector<double> &circumCenter)
 {
 	double distance = sqrt(pow((beta * circumRadius), 2) - pow(circumRadius, 2));
 	double d1, d2; // Parallel Plane coefficient
@@ -636,7 +636,7 @@ std::vector<std::vector<double>> utils::computePCAInverse(const std::vector<std:
  * @param lowerdimension
  * @return std::pair<std::vector<double>, std::vector<std::vector<double>>>
  */
-std::pair<std::vector<double>, std::vector<std::vector<double>>> utils ::nullSpaceOfMatrix(const std::set<unsigned> &simplex, const std::vector<std::vector<double>> &inputData, std::vector<double> &cc, double radius, bool lowerdimension)
+std::pair<std::vector<double>, std::vector<std::vector<double>>> utils ::nullSpaceOfMatrix(const std::set<unsigned> &simplex, const std::vector<std::vector<double>> &inputData, std::vector<double> cc, double radius, bool lowerdimension)
 {
 	int index;
 	srand(time(NULL));
@@ -970,7 +970,7 @@ double utils ::simplexVolume(const std::vector<std::vector<double>> &spoints)
  * @param betaMode
  * @return std::vector<std::vector<bool>>
  */
-std::vector<std::vector<bool>> utils ::betaNeighbors(std::vector<std::vector<double>> &inData, double beta, std::string betaMode)
+std::vector<std::vector<bool>> utils ::betaNeighbors(const std::vector<std::vector<double>> &inData, double beta, std::string betaMode)
 {
 	std::vector<std::vector<bool>> incidenceMatrix(inData.size(), std::vector<bool>(inData.size(), 0));
 	kdTree tree(inData, inData.size()); // KDTree for efficient nearest neighbor search
@@ -1199,7 +1199,7 @@ std::vector<std::vector<bool>> utils ::betaNeighbors(std::vector<std::vector<dou
  * @param bettiTable
  * @return std::vector<bettiBoundaryTableEntry>
  */
-std::vector<bettiBoundaryTableEntry> utils::mapPartitionIndexing(const std::vector<unsigned> partitionedLabels, std::vector<bettiBoundaryTableEntry> bettiTable)
+std::vector<bettiBoundaryTableEntry> utils::mapPartitionIndexing(const std::vector<unsigned> &partitionedLabels, std::vector<bettiBoundaryTableEntry> bettiTable)
 {
 	for (auto &bet : bettiTable)
 	{
@@ -1313,7 +1313,7 @@ double utils::vectors_distance(const double a, const double b)
  * @param setB
  * @return std::set<unsigned>
  */
-std::set<unsigned> utils::setXOR(std::set<unsigned> &setA, std::set<unsigned> &setB)
+std::set<unsigned> utils::setXOR(const std::set<unsigned> &setA, const std::set<unsigned> &setB)
 {
 	std::set<unsigned> ret;
 
@@ -1474,7 +1474,7 @@ std::set<unsigned> utils::symmetricDiff(const std::set<unsigned> &v1, const std:
  * @return std::vector<std::set<unsigned>>
  */
 // Iteratively build subsets (faces) of the simplex set
-std::vector<std::set<unsigned>> utils::getSubsets(std::set<unsigned> set, size_t dim)
+std::vector<std::set<unsigned>> utils::getSubsets(const std::set<unsigned> &set, size_t dim)
 {
 	std::vector<std::set<unsigned>> subset;
 	subset.push_back(std::set<unsigned>());
@@ -1513,7 +1513,7 @@ std::vector<std::set<unsigned>> utils::getSubsets(std::set<unsigned> set, size_t
  * @return std::set<unsigned>
  */
 // Find the union of two vectors
-std::set<unsigned> utils::setUnion(std::set<unsigned> v1, std::set<unsigned> v2)
+std::set<unsigned> utils::setUnion(const std::set<unsigned> &v1, const std::set<unsigned> &v2)
 {
 	std::set<unsigned> retTemp;
 
@@ -1600,7 +1600,7 @@ bool utils::sortBySecond(const std::pair<std::set<unsigned>, double> &a, const s
  * @return std::vector<std::set<unsigned>>
  */
 // Iteratively build subsets (faces) of the simplex set
-std::vector<std::set<unsigned>> utils::getSubsets(std::set<unsigned> set)
+std::vector<std::set<unsigned>> utils::getSubsets(const std::set<unsigned> &set)
 {
 	std::vector<std::set<unsigned>> subset;
 	std::set<unsigned> empty;
@@ -1640,7 +1640,7 @@ std::vector<std::set<unsigned>> utils::getSubsets(std::set<unsigned> set)
  * @return std::vector<std::vector<unsigned>>
  */
 // Iteratively build subsets (faces) of the simplex set
-std::vector<std::vector<unsigned>> utils::getSubsets(std::vector<unsigned> set)
+std::vector<std::vector<unsigned>> utils::getSubsets(const std::vector<unsigned> &set)
 {
 	std::vector<std::vector<unsigned>> subset;
 	std::vector<unsigned> empty;
@@ -1680,7 +1680,7 @@ std::vector<std::vector<unsigned>> utils::getSubsets(std::vector<unsigned> set)
  * @param pointcloud
  * @return std::vector<double>
  */
-std::vector<double> utils::nearestNeighbors(std::vector<double> &point, std::vector<std::vector<double>> &pointcloud)
+std::vector<double> utils::nearestNeighbors(const std::vector<double> &point, const std::vector<std::vector<double>> &pointcloud)
 {
 	// based on random projection, x is current point being examined, n is number of centroids/facilities
 	std::vector<double> retVal(pointcloud.size());
@@ -1701,7 +1701,7 @@ std::vector<double> utils::nearestNeighbors(std::vector<double> &point, std::vec
  * @param dim
  * @return std::vector<std::vector<double>>
  */
-std::vector<std::vector<double>> utils::deserialize(std::vector<double> serialData, unsigned dim)
+std::vector<std::vector<double>> utils::deserialize(const std::vector<double> &serialData, unsigned dim)
 {
 
 	// First check if the vector size matches the dimension
@@ -1732,7 +1732,7 @@ std::vector<std::vector<double>> utils::deserialize(std::vector<double> serialDa
  * @param origData
  * @return std::vector<double>
  */
-std::vector<double> utils::serialize(std::vector<std::vector<double>> &origData)
+std::vector<double> utils::serialize(const std::vector<std::vector<double>> &origData)
 {
 
 	// Make sure we have data to serialize
@@ -1769,7 +1769,7 @@ std::vector<double> utils::serialize(std::vector<std::vector<double>> &origData)
  * @param beta
  * @return std::pair<std::vector<std::vector<double>>, std::vector<double>>
  */
-std::pair<std::vector<std::vector<double>>, std::vector<double>> utils::calculateBetaCentersandRadius(std::vector<unsigned> dsimplex, std::vector<std::vector<double>> &inputData, std::vector<std::vector<double>> *distMatrix, double beta)
+std::pair<std::vector<std::vector<double>>, std::vector<double>> utils::calculateBetaCentersandRadius(const std::vector<unsigned> &dsimplex, std::vector<std::vector<double>> &inputData, const std::vector<std::vector<double>> *distMatrix, double beta)
 {
 	std::vector<std::vector<double>> betacenters;
 	std::vector<double> betaradii;

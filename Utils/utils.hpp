@@ -95,17 +95,17 @@ public:
 	utils(const std::string &, const std::string &);
 
 	// Utility functions for writing to console/debug file
-	void writeLog(std::string module, std::string message);
-	void writeDebug(std::string module, std::string message);
-	void writeError(std::string module, std::string error)
+	void writeLog(const std::string &module, const std::string &message);
+	void writeDebug(const std::string &module, const std::string &message);
+	void writeError(const std::string &module, const std::string &error)
 	{
 		writeLog(module, error);
 		return;
 	};
-	void writeFile(std::string fullMessage);
+	void writeFile(const std::string &fullMessage);
 
-	static double computeMaxRadius(int, const std::vector<std::vector<double>> &, const std::vector<std::vector<double>> &, std::vector<unsigned> &);
-	static double computeAvgRadius(int, const std::vector<std::vector<double>> &, const std::vector<std::vector<double>> &, std::vector<unsigned> &);
+	static double computeMaxRadius(int, const std::vector<std::vector<double>> &, const std::vector<std::vector<double>> &, const std::vector<unsigned> &);
+	static double computeAvgRadius(int, const std::vector<std::vector<double>> &, const std::vector<std::vector<double>> &, const std::vector<unsigned> &);
 	static std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> separatePartitions(int, const std::vector<std::vector<double>> &, const std::vector<unsigned> &);
 	static std::pair<std::vector<std::vector<unsigned>>, std::vector<std::vector<std::vector<double>>>> separatePartitions(double, const std::vector<std::vector<double>> &, const std::vector<std::vector<double>> &, const std::vector<unsigned> &);
 	static std::vector<std::vector<std::vector<double>>> separateBoundaryPartitions(const std::vector<std::set<unsigned>> &, const std::vector<std::vector<double>> &, const std::vector<unsigned> &);
@@ -117,7 +117,7 @@ public:
 	template <typename T>
 	static std::set<unsigned> extractBoundaryPoints(const std::vector<T *> &);
 
-	static std::vector<bettiBoundaryTableEntry> mapPartitionIndexing(const std::vector<unsigned>, std::vector<bettiBoundaryTableEntry>);
+	static std::vector<bettiBoundaryTableEntry> mapPartitionIndexing(const std::vector<unsigned> &, std::vector<bettiBoundaryTableEntry>);
 	static void print2DVector(const std::vector<std::vector<unsigned>> &);
 	static void print1DVector(const std::vector<unsigned> &);
 	static void print1DVector(const std::set<unsigned> &);
@@ -125,16 +125,16 @@ public:
 	static void print1DSet(const std::pair<std::set<unsigned>, double> &);
 	static double vectors_distance(const double, const double);
 	static double vectors_distance(const std::vector<double> &, const std::vector<double> &);
-	static std::set<unsigned> setXOR(std::set<unsigned> &, std::set<unsigned> &);
+	static std::set<unsigned> setXOR(const std::set<unsigned> &, const std::set<unsigned> &);
 	static std::set<unsigned> setIntersect(const std::set<unsigned> &, const std::set<unsigned> &);
 	static std::vector<unsigned> setIntersect(std::vector<unsigned>, std::vector<unsigned>, bool);
-	static std::vector<std::set<unsigned>> getSubsets(std::set<unsigned>, size_t);
-	static std::vector<std::set<unsigned>> getSubsets(std::set<unsigned> set);
-	static std::vector<std::vector<unsigned>> getSubsets(std::vector<unsigned> set);
+	static std::vector<std::set<unsigned>> getSubsets(const std::set<unsigned> &, size_t);
+	static std::vector<std::set<unsigned>> getSubsets(const std::set<unsigned> &set);
+	static std::vector<std::vector<unsigned>> getSubsets(const std::vector<unsigned> &);
 	static std::vector<unsigned> symmetricDiff(std::vector<unsigned>, std::vector<unsigned>, bool);
 	static std::set<unsigned> symmetricDiff(const std::set<unsigned> &, const std::set<unsigned> &);
 	static std::vector<unsigned> setUnion(std::vector<unsigned>, std::vector<unsigned>, bool);
-	static std::set<unsigned> setUnion(std::set<unsigned>, std::set<unsigned>);
+	static std::set<unsigned> setUnion(const std::set<unsigned> &, const std::set<unsigned> &);
 	static std::pair<std::vector<unsigned>, std::vector<unsigned>> intersect(std::vector<unsigned>, std::vector<unsigned>, bool);
 	static bool isSubset(std::vector<unsigned>, std::vector<unsigned>);
 
@@ -150,16 +150,16 @@ public:
 	static double simplexVolume(const std::vector<std::vector<double>> &mat);
 	static std::vector<std::vector<double>> inverseOfMatrix(std::vector<std::vector<double>> mat, int n);
 	static std::vector<std::vector<double>> matrixMultiplication(const std::vector<std::vector<double>> &matA, const std::vector<std::vector<double>> &matB);
-	static std::pair<std::vector<double>, std::vector<std::vector<double>>> nullSpaceOfMatrix(const std::set<unsigned> &simplex, const std::vector<std::vector<double>> &inputdata, std::vector<double> &cc, double radius, bool lowerdimension = false);
+	static std::pair<std::vector<double>, std::vector<std::vector<double>>> nullSpaceOfMatrix(const std::set<unsigned> &simplex, const std::vector<std::vector<double>> &inputdata, std::vector<double> cc, double radius, bool lowerdimension = false);
 
-	static std::vector<std::vector<bool>> betaNeighbors(std::vector<std::vector<double>> &, double beta, std::string betaMode);
-	static std::vector<std::vector<double>> betaCentersCalculation(const std::vector<double> &hpcoff, double beta, double circumRadius, std::vector<double> circumCenter);
-	static std::pair<std::vector<std::vector<double>>, std::vector<double>> calculateBetaCentersandRadius(std::vector<unsigned> simplex, std::vector<std::vector<double>> &inputData, std::vector<std::vector<double>> *distMatrix, double beta);
+	static std::vector<std::vector<bool>> betaNeighbors(const std::vector<std::vector<double>> &, double beta, std::string betaMode);
+	static std::vector<std::vector<double>> betaCentersCalculation(const std::vector<double> &hpcoff, double beta, double circumRadius, const std::vector<double> &circumCenter);
+	static std::pair<std::vector<std::vector<double>>, std::vector<double>> calculateBetaCentersandRadius(const std::vector<unsigned> &simplex, std::vector<std::vector<double>> &inputData, const std::vector<std::vector<double>> *distMatrix, double beta);
 
-	static std::vector<double> serialize(std::vector<std::vector<double>> &);
-	static std::vector<std::vector<double>> deserialize(std::vector<double>, unsigned);
+	static std::vector<double> serialize(const std::vector<std::vector<double>> &);
+	static std::vector<std::vector<double>> deserialize(const std::vector<double> &, unsigned);
 
-	static std::vector<double> nearestNeighbors(std::vector<double> &, std::vector<std::vector<double>> &);
+	static std::vector<double> nearestNeighbors(const std::vector<double> &, const std::vector<std::vector<double>> &);
 
 	static Eigen::MatrixXd covariance(const std::vector<std::vector<double>> &);
 
