@@ -693,12 +693,6 @@ void simplexTree<nodeType>::recurseGetEdges(std::vector<std::set<std::shared_ptr
 	return;
 }
 
-template <typename nodeType>
-std::vector<nodeType *> simplexTree<nodeType>::getAllCofacets(std::shared_ptr<nodeType> simp)
-{
-	return getAllCofacets(simp, std::unordered_map<long long, templateNode_P>(), false);
-}
-
 /*
 template<typename nodeType>
 std::vector<std::shared_ptr<nodeType>> simplexTree<nodeType>::getAllCofacets(const std::set<unsigned>& simp, double simplexWeight, const std::unordered_map<std::shared_ptr<nodeType>, std::shared_ptr<nodeType>>& pivotPairs, bool checkEmergent){
@@ -740,38 +734,9 @@ std::vector<std::shared_ptr<nodeType>> simplexTree<nodeType>::getAllCofacets(con
 	return ret;
 }*/
 
-template <typename nodeType>
-std::vector<nodeType *> simplexTree<nodeType>::getAllFacets(std::shared_ptr<nodeType> simp)
-{
-	std::vector<nodeType *> ret;
-	simplexTreeNode<nodeType> *parentNode = find(simp->simplex.begin(), simp->simplex.end(), root);
-	if (parentNode == nullptr)
-		return ret; // Simplex isn't in the simplex tree
-
-	simplexTreeNode<nodeType> *tempNode;
-	auto it = simp->simplex.end();
-
-	while (true)
-	{
-		--it;
-		if (parentNode != root.get())
-			parentNode = parentNode->parent;
-		else
-			break;
-
-		// Insert all of the children in reverse lexicographic order
-		tempNode = find(std::next(it), simp->simplex.end(), parentNode);
-		if (tempNode != nullptr && tempNode->valid)
-		{
-			ret.push_back(tempNode->simpNode.get());
-		}
-	}
-
-	return ret;
-}
 
 template <typename nodeType>
-std::vector<std::shared_ptr<nodeType>> simplexTree<nodeType>::getAllFacets_P(std::shared_ptr<nodeType> simp)
+std::vector<std::shared_ptr<nodeType>> simplexTree<nodeType>::getAllFacets(std::shared_ptr<nodeType> simp)
 {
 	std::vector<templateNode_P> ret;
 	simplexTreeNode<nodeType> *parentNode = find(simp->simplex.begin(), simp->simplex.end(), root);

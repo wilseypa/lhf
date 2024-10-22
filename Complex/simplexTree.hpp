@@ -110,14 +110,10 @@ public:
 
     std::vector<templateNode_P> getAllCofacets(const std::set<unsigned> &, double, const std::unordered_map<templateNode_P, templateNode_P> &, bool);
     std::vector<nodeType *> getAllCofacets(templateNode_P, const std::unordered_map<long long, templateNode_P> &, bool) { return std::vector<nodeType *>(); };
-    std::vector<nodeType *> getAllCofacets(templateNode_P);
     std::vector<templateNode_P> getAllCofacets(const std::set<unsigned> &) { return std::vector<templateNode_P>(); };
 
-    std::vector<templateNode_P> getAllDelaunayCofacets(templateNode_P) { return std::vector<templateNode_P>(); };
-
     std::vector<nodeType *> getAllFacets(nodeType *) { return std::vector<nodeType *>(); };
-    std::vector<nodeType *> getAllFacets(templateNode_P);
-    std::vector<templateNode_P> getAllFacets_P(templateNode_P);
+    std::vector<templateNode_P> getAllFacets(templateNode_P);
 
     // Commenting out for now - not sure if the first argument type is what we want to use
 

@@ -62,7 +62,7 @@ std::vector<simplexNodePointer> incrementalPersistence<nodeType>::incrementalByD
 
 			// Get all cofacets using emergent pair optimization
 			std::vector<nodeType *> faceList = (mode == "homology" ? complex->getAllFacets(simplex, saveVertices, dimension)
-																   : (inData.complex->simplexType == "alphaComplex" ? inData.complex->getAllDelaunayCofacets_basePointer(simplex)
+																   : (inData.complex->simplexType == "alphaComplex" ? inData.complex->getAllCofacets_basePointer(simplex)
 																													: complex->getAllCofacets(simplex, pivotPairs, true, saveVertices, dimension)));
 
 			std::vector<simplexNodePointer> columnV; // Reduction column of matrix V
@@ -148,7 +148,7 @@ std::vector<simplexNodePointer> incrementalPersistence<nodeType>::incrementalByD
 					for (simplexNodePointer simp : v[pivotPairs[pivot->hash]])
 					{
 						columnV.push_back(simp);
-						std::vector<nodeType *> faces = (mode == "homology" ? complex->getAllFacets(simp, saveVertices, dimension) : (inData.complex->simplexType == "alphaComplex" ? inData.complex->getAllDelaunayCofacets_basePointer(simp) : complex->getAllCofacets(simp, pivotPairs, false, saveVertices, dimension)));
+						std::vector<nodeType *> faces = (mode == "homology" ? complex->getAllFacets(simp, saveVertices, dimension) : (inData.complex->simplexType == "alphaComplex" ? inData.complex->getAllCofacets_basePointer(simp) : complex->getAllCofacets(simp, pivotPairs, false, saveVertices, dimension)));
 						faceList.insert(faceList.end(), faces.begin(), faces.end());
 					}
 					std::make_heap(faceList.begin(), faceList.end(), compStruct);

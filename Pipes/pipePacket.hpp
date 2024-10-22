@@ -27,6 +27,6 @@ public:
 	std::set<double, std::greater<double>> weights;
 	std::string bettiOutput;
 
-	double getSize();
+	size_t getSize();
 	std::string getStats();
 };

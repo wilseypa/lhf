@@ -37,18 +37,18 @@ std::string pipePacket<nodeType>::getStats()
 }
 
 template <typename nodeType>
-double pipePacket<nodeType>::getSize()
+size_t pipePacket<nodeType>::getSize()
 {
 	size_t size = 0;
 
 	// 1. Calculate size of original data
-	for (auto row : workData)
+	for (auto& row : workData)
 	{
 		size += row.size() * sizeof(row[0]);
 	}
 
 	// 2. Calculate size of input data
-	for (auto row : inputData)
+	for (auto& row : inputData)
 	{
 		size += row.size() * sizeof(row[0]);
 	}
@@ -57,7 +57,7 @@ double pipePacket<nodeType>::getSize()
 	size += centroidLabels.size() * sizeof(centroidLabels[0]);
 
 	// 4. Calculate size of the distance matrix
-	for (auto row : distMatrix)
+	for (auto& row : distMatrix)
 	{
 		size += row.size() * sizeof(row[0]);
 	}
@@ -66,7 +66,7 @@ double pipePacket<nodeType>::getSize()
 	size += complex->getSize();
 
 	// 6. Calculate size of the boundaries
-	for (auto row : boundaries)
+	for (auto& row : boundaries)
 	{
 		size += row.size() * sizeof(row.begin());
 	}
@@ -75,7 +75,7 @@ double pipePacket<nodeType>::getSize()
 	size += weights.size() * sizeof(weights.begin());
 
 	// 8. Calculate size of bettiTable
-	for (auto betti : bettiTable)
+	for (auto& betti : bettiTable)
 	{
 		size += betti.getSize();
 	}

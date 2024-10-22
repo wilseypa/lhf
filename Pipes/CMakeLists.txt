@@ -115,12 +115,13 @@ if(APPLE)
 endif()
 
 add_library(incrementalPipe STATIC "incrementalPipe.cpp" "incrementalPipe.hpp")
-if(TBB_FOUND)
-target_link_libraries(incrementalPipe PUBLIC basePipe utils OpenMP::OpenMP_CXX TBB::tbb)
-else()
 target_link_libraries(incrementalPipe PUBLIC basePipe utils OpenMP::OpenMP_CXX)
-endif()
 target_include_directories(incrementalPipe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${EIGEN3_INCLUDE_DIR})
+
+if(TBB_FOUND)
+target_link_libraries(incrementalPipe PUBLIC TBB::tbb)
+endif()
+
 
 INSTALL (TARGETS basePipe
 	LIBRARY DESTINATION lib

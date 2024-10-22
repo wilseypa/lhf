@@ -86,6 +86,37 @@ void betaComplex<nodeType>::buildBetaComplex(std::vector<std::vector<unsigned>> 
 	return;
 }
 
+template <typename nodeType>
+bool betaComplex<nodeType>::checkGabriel(std::vector<double> point, std::vector<unsigned> dsimplex, std::vector<std::vector<double>> &inputData, double beta)
+{
+	bool intersectionCircle = false;
+	bool intersectionLune = false;
+	if (beta < 0)
+		exit(0);
+	else if (beta == 0)
+		return false;
+	else if (beta < 1)
+		intersectionCircle = true;
+	else
+		intersectionLune = true;
+
+	auto betacentersandradii = utils::calculateBetaCentersandRadius(dsimplex, inputData, this->distMatrix, beta);
+	int i = 0;
+	for (auto bc : betacentersandradii.first)
+	{
+		double distance = utils::vectors_distance(point, bc);
+		if (intersectionCircle && distance > betacentersandradii.second[i])
+			return false;
+		if (!intersectionCircle && distance < betacentersandradii.second[i])
+			return true;
+		i++;
+	}
+	if (intersectionCircle)
+		return true;
+	else
+		return false;
+}
+
 void buildFilteration(std::vector<std::vector<unsigned>> dsimplexmesh, int npts, std::vector<std::vector<double>> inputData, double beta, kdTree tree)
 {
 	std::cout << "Not implemented" << std::endl;

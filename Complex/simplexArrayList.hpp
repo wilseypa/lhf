@@ -35,10 +35,10 @@ public:
 
 	void initBinom();
 	std::vector<nodeType *> getAllCofacets(templateNode_P, const std::unordered_map<long long, templateNode_P> &, bool = true, bool = true, unsigned = 0);
-	std::vector<nodeType *> getAllCofacets(templateNode_P);
+	std::vector<templateNode_P> getAllCofacets(const std::set<unsigned> &, double, const std::unordered_map<templateNode_P, templateNode_P> &, bool = true);
 	std::vector<nodeType *> getAllFacets(nodeType *, bool = true, unsigned = 0);
 	std::vector<nodeType *> getAllFacets(templateNode_P, bool = true, unsigned = 0);
-	std::vector<templateNode_P> getAllFacets_P(templateNode_P);
+	std::vector<templateNode_P> getAllFacets(templateNode_P);
 	std::vector<templateNode_P> expandDimension(std::vector<templateNode_P>, bool = true, unsigned = 0);
 
 	// virtual interface functions
@@ -49,7 +49,6 @@ public:
 	int vertexCount();
 	void prepareCofacets(int);
 	void prepareFacets(int);
-	std::vector<templateNode_P> getAllCofacets(const std::set<unsigned> &, double, const std::unordered_map<templateNode_P, templateNode_P> &, bool = true);
 	bool deletion(std::set<unsigned>);
 	void expandDimensions(int);
 

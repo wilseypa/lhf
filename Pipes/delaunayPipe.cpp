@@ -24,7 +24,7 @@ std::vector<std::vector<unsigned>> qdelaunay_o(std::vector<std::vector<double>> 
   std::vector<T::Point> points;
   unsigned index = 0;
   std::map<T::Point, unsigned> index_of_vertex;
-  for (auto i : inputData)
+  for (auto& i : inputData)
   {
     T::Point p(i.begin(), i.end());
     points.push_back(p);
@@ -32,13 +32,13 @@ std::vector<std::vector<unsigned>> qdelaunay_o(std::vector<std::vector<double>> 
   }
   dt.insert(points.begin(), points.end());
   points.clear();
-  long unsigned int number_of_finite_full_cell = dt.number_of_finite_full_cells();
+  size_t number_of_finite_full_cell = dt.number_of_finite_full_cells();
   std::vector<std::vector<unsigned>> dsimplexes(number_of_finite_full_cell, std::vector<unsigned>(dim + 1));
 #pragma omp parallel for
   for (int j = 0; j <= dim; ++j)
   {
     auto i = dt.finite_full_cells_begin();
-    for (long unsigned int k = 0; k < number_of_finite_full_cell; k++)
+    for (size_t k = 0; k < number_of_finite_full_cell; k++)
       dsimplexes[k][j] = index_of_vertex[(i++)->vertex(j)->point()];
   }
   return dsimplexes;
