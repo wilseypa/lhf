@@ -29,11 +29,7 @@ utils::utils() {}
  * @param _debug The debug level.
  * @param _outputFile The output file.
  */
-utils::utils(const std::string &_debug, const std::string &_outputFile)
-{
-	debug = _debug;
-	outputFile = _outputFile;
-}
+utils::utils(const std::string &_debug, const std::string &_outputFile) : debug(_debug), outputFile(_outputFile) {}
 
 /**
  * @brief
@@ -719,7 +715,7 @@ std::pair<std::vector<double>, std::vector<std::vector<double>>> utils ::nullSpa
  * @param inputData
  * @return std::vector<double>
  */
-std::vector<double> utils::circumCenter(const std::set<unsigned> &simplex, std::vector<std::vector<double>> &inputData)
+std::vector<double> utils::circumCenter(const std::set<unsigned> &simplex, const std::vector<std::vector<double>> &inputData)
 {
 	const int n = inputData[0].size();
 	const int m = simplex.size();
@@ -739,12 +735,12 @@ std::vector<double> utils::circumCenter(const std::set<unsigned> &simplex, std::
 	for (auto i : simplexcopy)
 	{
 		int temp = ii;
-		const Eigen::VectorXd d1 = Eigen::Map<Eigen::VectorXd>(inputData[i].data(), n) - Eigen::Map<Eigen::VectorXd>(inputData[Sn].data(), n);
+		const Eigen::VectorXd d1 = Eigen::Map<const Eigen::VectorXd>(inputData[i].data(), n) - Eigen::Map<const Eigen::VectorXd>(inputData[Sn].data(), n);
 		for (auto j : simplexcopy)
 		{
 			if (i <= j)
 			{
-				const Eigen::VectorXd d2 = Eigen::Map<Eigen::VectorXd>(inputData[j].data(), n) - Eigen::Map<Eigen::VectorXd>(inputData[Sn].data(), n);
+				const Eigen::VectorXd d2 = Eigen::Map<const Eigen::VectorXd>(inputData[j].data(), n) - Eigen::Map<const Eigen::VectorXd>(inputData[Sn].data(), n);
 				const double dotProduct = d1.dot(d2);
 				matA(ii, temp) = dotProduct;
 				matA(temp, ii) = dotProduct;
@@ -826,22 +822,22 @@ double utils::circumRadius(const std::set<unsigned> &simplex, const std::vector<
  * @param inputData
  * @return std::vector<double>
  */
-std::vector<double> utils::circumCenter(const std::vector<short> &simplex, std::vector<std::vector<double>> &inputData)
+std::vector<double> utils::circumCenter(const std::vector<short> &simplex, const std::vector<std::vector<double>> &inputData)
 {
 	const int n = inputData[0].size();
 	const int m = simplex.size();
 	Eigen::MatrixXd matA(m, m);
 	Eigen::VectorXd matC(m, 1);
 	std::vector<double> circumCenter(n, 0.0);
-	const Eigen::VectorXd &Sn = Eigen::Map<Eigen::VectorXd>(inputData[simplex.back()].data(), n);
+	const Eigen::VectorXd &Sn = Eigen::Map<const Eigen::VectorXd>(inputData[simplex.back()].data(), n);
 	int ii = 0;
 	for (auto i = simplex.begin(); i != simplex.end() - 1; ++i)
 	{
 		int temp = ii;
-		const Eigen::VectorXd &d1 = Eigen::Map<Eigen::VectorXd>(inputData[*i].data(), n) - Sn;
+		const Eigen::VectorXd &d1 = Eigen::Map<const Eigen::VectorXd>(inputData[*i].data(), n) - Sn;
 		for (auto j = i; j != simplex.end() - 1; ++j, ++temp)
 		{
-			const double dotProduct = d1.dot(Eigen::Map<Eigen::VectorXd>(inputData[*j].data(), n) - Sn);
+			const double dotProduct = d1.dot(Eigen::Map<const Eigen::VectorXd>(inputData[*j].data(), n) - Sn);
 			matA(ii, temp) = dotProduct;
 			matA(temp, ii) = dotProduct;
 			if (i == j)
@@ -970,7 +966,7 @@ double utils ::simplexVolume(const std::vector<std::vector<double>> &spoints)
  * @param betaMode
  * @return std::vector<std::vector<bool>>
  */
-std::vector<std::vector<bool>> utils ::betaNeighbors(const std::vector<std::vector<double>> &inData, double beta, std::string betaMode)
+std::vector<std::vector<bool>> utils ::betaNeighbors(const std::vector<std::vector<double>> &inData, double beta, const std::string &betaMode)
 {
 	std::vector<std::vector<bool>> incidenceMatrix(inData.size(), std::vector<bool>(inData.size(), 0));
 	kdTree tree(inData, inData.size()); // KDTree for efficient nearest neighbor search
@@ -1286,7 +1282,7 @@ void utils::print1DVector(const std::vector<unsigned> &a)
  */
 void utils::print1DVector(const std::set<unsigned> &a)
 {
-	for (auto z : a)
+	for (auto &z : a)
 	{
 		std::cout << z << ",";
 	}
@@ -1301,7 +1297,7 @@ void utils::print1DVector(const std::set<unsigned> &a)
  * @param b
  * @return double
  */
-double utils::vectors_distance(const double a, const double b)
+inline double utils::vectors_distance(const double &a, const double &b)
 {
 	return pow((a - b), 2);
 }
@@ -1336,9 +1332,15 @@ double utils::vectors_distance(const std::vector<double> &a, const std::vector<d
 	if (b.size() == 0)
 		return 0;
 
+#ifndef NO_PARALLEL_ALGORITHMS
 	return sqrt(std::transform_reduce(std::execution::par, a.cbegin(), a.cend(), b.cbegin(), 0.0, std::plus<>(),
 									  [](double e1, double e2)
 									  { return (e1 - e2) * (e1 - e2); }));
+#else
+	return sqrt(std::transform_reduce(a.cbegin(), a.cend(), b.cbegin(), 0.0, std::plus<>(),
+									  [](double e1, double e2)
+									  { return (e1 - e2) * (e1 - e2); }));
+#endif
 }
 
 /**
@@ -1575,22 +1577,18 @@ std::vector<unsigned> utils::setUnion(std::vector<unsigned> v1, std::vector<unsi
  */
 bool utils::sortBySecond(const std::pair<std::set<unsigned>, double> &a, const std::pair<std::set<unsigned>, double> &b)
 {
-	if (a.second == b.second)
-	{ // If the simplices have the same weight, sort by reverse lexicographic order for fastPersistence
-		auto itA = a.first.rbegin(), itB = b.first.rbegin();
-		while (itA != a.first.rend())
-		{
-			if (*itA != *itB)
-				return *itA > *itB;
-			++itA;
-			++itB;
-		}
-		return false;
-	}
-	else
-	{
+	if (a.second != b.second)
 		return a.second < b.second;
+	// If the simplices have the same weight, sort by reverse lexicographic order for fastPersistence
+	auto itA = a.first.rbegin(), itB = b.first.rbegin();
+	while (itA != a.first.rend())
+	{
+		if (*itA != *itB)
+			return *itA > *itB;
+		++itA;
+		++itB;
 	}
+	return false;
 }
 
 /**

@@ -123,13 +123,13 @@ public:
 	static void print1DVector(const std::set<unsigned> &);
 	static void print1DVector(const std::vector<double> &);
 	static void print1DSet(const std::pair<std::set<unsigned>, double> &);
-	static double vectors_distance(const double, const double);
+	static inline double vectors_distance(const double &, const double &);
 	static double vectors_distance(const std::vector<double> &, const std::vector<double> &);
 	static std::set<unsigned> setXOR(const std::set<unsigned> &, const std::set<unsigned> &);
 	static std::set<unsigned> setIntersect(const std::set<unsigned> &, const std::set<unsigned> &);
 	static std::vector<unsigned> setIntersect(std::vector<unsigned>, std::vector<unsigned>, bool);
 	static std::vector<std::set<unsigned>> getSubsets(const std::set<unsigned> &, size_t);
-	static std::vector<std::set<unsigned>> getSubsets(const std::set<unsigned> &set);
+	static std::vector<std::set<unsigned>> getSubsets(const std::set<unsigned> &);
 	static std::vector<std::vector<unsigned>> getSubsets(const std::vector<unsigned> &);
 	static std::vector<unsigned> symmetricDiff(std::vector<unsigned>, std::vector<unsigned>, bool);
 	static std::set<unsigned> symmetricDiff(const std::set<unsigned> &, const std::set<unsigned> &);
@@ -144,15 +144,15 @@ public:
 	// Alpha (delaunay)
 	static double circumRadius(const std::set<unsigned> &simplex, const std::vector<std::vector<double>> *distMatrix);
 	static double circumRadius(const std::vector<short> &simplex, const std::vector<std::vector<double>> &distMatrix);
-	static std::vector<double> circumCenter(const std::set<unsigned> &simplex, std::vector<std::vector<double>> &inputData);
-	static std::vector<double> circumCenter(const std::vector<short> &simplex, std::vector<std::vector<double>> &inputData);
+	static std::vector<double> circumCenter(const std::set<unsigned> &simplex, const std::vector<std::vector<double>> &inputData);
+	static std::vector<double> circumCenter(const std::vector<short> &simplex, const std::vector<std::vector<double>> &inputData);
 	static double simplexVolume(const std::set<unsigned> &simplex, const std::vector<std::vector<double>> *distMatrix, int dd);
 	static double simplexVolume(const std::vector<std::vector<double>> &mat);
 	static std::vector<std::vector<double>> inverseOfMatrix(std::vector<std::vector<double>> mat, int n);
 	static std::vector<std::vector<double>> matrixMultiplication(const std::vector<std::vector<double>> &matA, const std::vector<std::vector<double>> &matB);
 	static std::pair<std::vector<double>, std::vector<std::vector<double>>> nullSpaceOfMatrix(const std::set<unsigned> &simplex, const std::vector<std::vector<double>> &inputdata, std::vector<double> cc, double radius, bool lowerdimension = false);
 
-	static std::vector<std::vector<bool>> betaNeighbors(const std::vector<std::vector<double>> &, double beta, std::string betaMode);
+	static std::vector<std::vector<bool>> betaNeighbors(const std::vector<std::vector<double>> &, double beta, const std::string &betaMode);
 	static std::vector<std::vector<double>> betaCentersCalculation(const std::vector<double> &hpcoff, double beta, double circumRadius, const std::vector<double> &circumCenter);
 	static std::pair<std::vector<std::vector<double>>, std::vector<double>> calculateBetaCentersandRadius(const std::vector<unsigned> &simplex, std::vector<std::vector<double>> &inputData, const std::vector<std::vector<double>> *distMatrix, double beta);
 

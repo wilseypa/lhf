@@ -8,6 +8,10 @@ cmake_minimum_required(VERSION 3.5)
 find_package(Eigen3 REQUIRED)
 find_package(OpenMP REQUIRED)
 
+if(APPLE)
+    add_compile_definitions(NO_PARALLEL_ALGORITHMS=1)
+endif()
+
 add_library(utils STATIC utils.cpp utils.hpp)
 target_link_libraries(utils PUBLIC kdTree Eigen3::Eigen OpenMP::OpenMP_CXX)
 target_include_directories(utils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${EIGEN3_INCLUDE_DIRS} ${OpenMP_CXX_INCLUDE_DIRS})
