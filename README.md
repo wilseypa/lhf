@@ -54,7 +54,7 @@ cd LHFmain
  | Argument  | Shorthand | Default | Description | DataType
  | ------------- | ------------- | ------------- | ------------- | ------------- | 
  | --betaMesh | -bmesh | null.csv |  |  | 
- | --betaMode | -bm | noMode |  |  | 
+ | --betaMode | -bm | noMode |  | (noMode \| lune \|circle) | 
  | --beta | -b | 1 |  |  | 
  | --alphaFilterationValue | -afv | 50000 |  |  | 
  | --nodeType | -n | simplexNode |  |  | 
@@ -73,7 +73,7 @@ cd LHFmain
  | --epsilon | -e | 5 | Maximum epsilon threshold | `<float>` | 
  | --lambda | -l | .25 | Decay factor lambda for DenStream |  | 
  | --debug | -x | 0 |  | `<int(0\|1)>` | 
- | --complexType | -c | simplexArrayList |  |  | 
+ | --complexType | -c | simplexArrayList |  | (simplexArrayList \| simplexTree \| alphaComplex \| betaComplex \| witnessComplex) | 
  | --clusters | -k | 20 |  | `<int>` | 
  | --preprocessor | -pre |  |  |  | 
  | --upscale | -u | false |  | `<bool>` | 
