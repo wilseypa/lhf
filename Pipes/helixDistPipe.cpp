@@ -209,8 +209,13 @@ void reduce(std::set<std::vector<short>> &outer_dsimplexes, std::map<std::vector
 		}
 	}
 	outer_dsimplexes.clear();
+#ifndef NO_PARALLEL_ALGORITHMS
 	std::for_each(std::execution::par_unseq, inner_d_1_shell.begin(), inner_d_1_shell.end(), [&](const auto &simp)
 				  { outer_d_1_shell.erase(simp.first); }); // Remove faces from previous iteration
+#else
+	std::for_each(inner_d_1_shell.begin(), inner_d_1_shell.end(), [&](const auto &simp)
+				  { outer_d_1_shell.erase(simp.first); });
+#endif
 	inner_d_1_shell.clear();
 	std::swap(inner_d_1_shell, outer_d_1_shell);
 	return;

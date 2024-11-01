@@ -155,7 +155,7 @@ int helixPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, shor
 			}
 #else
 			{
-			// cospherical_handler(simp,triangulation_point,omission,distMatrix);
+				// cospherical_handler(simp,triangulation_point,omission,distMatrix);
 			}
 #endif
 			return -1;
@@ -180,8 +180,13 @@ void reduce(std::set<std::vector<short>> &outer_dsimplexes, std::vector<std::pai
 		}
 	}
 	outer_dsimplexes.clear();
+#ifndef NO_PARALLEL_ALGORITHMS
 	std::for_each(std::execution::par_unseq, inner_d_1_shell.begin(), inner_d_1_shell.end(), [&](const auto &simp)
 				  { outer_d_1_shell.erase(simp.first); }); // Remove faces from previous iteration
+#else
+	std::for_each(inner_d_1_shell.begin(), inner_d_1_shell.end(), [&](const auto &simp)
+				  { outer_d_1_shell.erase(simp.first); });
+#endif
 	inner_d_1_shell.clear();
 	inner_d_1_shell.reserve(outer_d_1_shell.size());
 	std::move(outer_d_1_shell.begin(), outer_d_1_shell.end(), std::back_inserter(inner_d_1_shell));
