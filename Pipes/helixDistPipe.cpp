@@ -1,7 +1,8 @@
-#include <helixDistPipe.hpp>
+#include "helixDistPipe.hpp"
 #include "utils.hpp"
+#include "readInput.hpp"
+#include "writeOutput.hpp"
 #include "multifileops.hpp"
-#include "fileops.hpp"
 #include <limits>
 #include <random>
 #include <chrono>
@@ -10,7 +11,6 @@
 #include <Eigen/Dense>
 #include <omp.h>
 #include <mpi.h>
-#include <readInput.hpp>
 
 #define WRITE_CSV_OUTPUTS
 
@@ -271,12 +271,12 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		std::clog << "Iter 0 on process " << rank << " Found " << initial_dsimplexes.size() << " dsimplexes" << std::endl;
 #ifdef WRITE_CSV_OUTPUTS
 		std::sort(initial_dsimplexes.begin(), initial_dsimplexes.end());
-		writeBinaryFile(initial_dsimplexes, "output/0_0.bin");
+		writeOutput::writeBinary(initial_dsimplexes, "output/0_0.bin");
 #endif
 		initial_dsimplexes.clear();
 		if (inner_d_1_shell.empty())
 			return;
-		writeBinaryFile(inner_d_1_shell, "input/1.dat");
+		writeOutput::writeBinary(inner_d_1_shell, "input/1.dat");
 	}
 
 	// Restrict other processes from proceeding until serial task is completed
@@ -286,7 +286,7 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	int iter_counter = 1;
 	while (true)
 	{
-		std::map<std::vector<short>, short> local_d_1_shell_map = readBinaryMapFile("input/" + std::to_string(iter_counter) + ".dat", numProcesses, rank);
+		std::map<std::vector<short>, short> local_d_1_shell_map = readInput::readBinaryMap("input/" + std::to_string(iter_counter) + ".dat", numProcesses, rank);
 		if (local_d_1_shell_map.empty())
 			break;
 		std::vector<std::vector<short>> local_dsimplexes_output;
@@ -316,7 +316,7 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		if (!local_dsimplexes_output.empty())
 		{
 			std::sort(local_dsimplexes_output.begin(), local_dsimplexes_output.end());
-			writeBinaryFile(local_dsimplexes_output, "output/" + std::to_string(iter_counter) + "_" + std::to_string(rank) + ".bin");
+			writeOutput::writeBinary(local_dsimplexes_output, "output/" + std::to_string(iter_counter) + "_" + std::to_string(rank) + ".bin");
 		}
 #endif
 		// Compute facets from current layer and store to intermediate file
@@ -332,7 +332,7 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 			}
 		}
 		local_dsimplexes_output.clear();
-		writeBinaryFile(outer_d_1_shell, "intermediate/" + std::to_string(rank) + ".dat");
+		writeOutput::writeBinary(outer_d_1_shell, "intermediate/" + std::to_string(rank) + ".dat");
 		outer_d_1_shell.clear();
 
 		// Wait for all process to commit facets
@@ -341,7 +341,7 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		if (rank == 0)
 		{
 			// Perform custom multifile sort on the intermediate simplexes also remove duplicate entries
-			MultiFIle<MapBinaryFile, std::pair<std::vector<short>, short>> facets("intermediate");
+			MultiFile<MapBinaryFile, std::pair<std::vector<short>, short>> facets("intermediate");
 			facets.compressMap("input/" + std::to_string(iter_counter + 1) + ".dat", iter_counter);
 		}
 
@@ -352,7 +352,7 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 #ifdef WRITE_CSV_OUTPUTS
 	if (rank == 0)
 	{
-		MultiFIle<VectorBinaryFile, std::vector<short>> dsimplexes("output");
+		MultiFile<VectorBinaryFile, std::vector<short>> dsimplexes("output");
 		std::clog << "Found " << dsimplexes.writeCSV("dsimplexes.csv") << " dsimplexes for datset" << std::endl;
 	}
 #endif
