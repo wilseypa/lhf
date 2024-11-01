@@ -197,6 +197,90 @@ std::vector<std::vector<double>> readInput::readMAT(const std::string &filename)
 }
 
 /**
+ * @brief 
+ * 
+ * @param filename 
+ * @param numProcesses 
+ * @param rank 
+ * @return std::map<std::vector<short>, short> 
+ */
+std::map<std::vector<short>, short> readInput::readBinaryMap(const std::string &filename, int numProcesses, int rank)
+{
+    std::ifstream file(filename, std::ios::in | std::ios::binary);
+    if (!file.is_open())
+    {
+        std::cerr << "Failed to open the file for reading." << std::endl;
+        return {};
+    }
+
+    std::map<std::vector<short>, short> data;
+
+    size_t mapSize;
+    size_t vectorSize;
+
+    // Read the size of the map and vector
+    file.read(reinterpret_cast<char *>(&mapSize), sizeof(mapSize));
+    file.read(reinterpret_cast<char *>(&vectorSize), sizeof(vectorSize));
+    size_t block_size = ceil((double) mapSize / numProcesses);
+    size_t end = block_size * (rank+1);
+    size_t start = (rank == 0) ? 0 : end - block_size;
+
+    // Read data using standard file operations
+    std::vector<short> key(vectorSize);
+    short value;
+
+    // Seek to the correct position in the file
+    file.seekg(sizeof(size_t) * 2 + (start * (vectorSize + 1)) * sizeof(short));
+
+    for (size_t i = start; i < end; ++i)
+    {
+        file.read(reinterpret_cast<char *>(key.data()), vectorSize * sizeof(short));
+        file.read(reinterpret_cast<char *>(&value), sizeof(short));
+        data.emplace(key, value);
+    }
+
+    file.close();
+    return data;
+}
+
+/**
+ * @brief 
+ * 
+ * @param filename 
+ * @return std::vector<std::vector<short>> 
+ */
+std::vector<std::vector<short>> readInput::readBinaryVector(const std::string &filename)
+{
+    std::ifstream file(filename, std::ios::in | std::ios::binary);
+
+    if (!file.is_open())
+    {
+        std::cerr << "Failed to open the file for reading." << std::endl;
+        return {};
+    }
+
+    size_t dim1;
+    size_t dim2;
+
+    // Read the dimensions of the vector
+    file.read(reinterpret_cast<char *>(&dim1), sizeof(dim1));
+    file.read(reinterpret_cast<char *>(&dim2), sizeof(dim2));
+
+    std::vector<std::vector<short>> data;
+    data.reserve(dim1);
+
+    while (dim1-- > 0)
+    {
+        std::vector<short> vec(dim2);
+        file.read(reinterpret_cast<char *>(vec.data()), dim2 * sizeof(short));
+        data.emplace_back(vec);
+    }
+
+    file.close();
+    return data;
+}
+
+/**
   @brief Initializes the input stream for reading from a file.
 
   @param filename The complete filename and relative path (if needed) for reading.

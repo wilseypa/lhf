@@ -830,32 +830,25 @@ std::vector<double> utils::circumCenter(const std::vector<short> &simplex, const
 	Eigen::VectorXd matC(m, 1);
 	std::vector<double> circumCenter(n, 0.0);
 	const Eigen::VectorXd &Sn = Eigen::Map<const Eigen::VectorXd>(inputData[simplex.back()].data(), n);
-	int ii = 0;
-	for (auto i = simplex.begin(); i != simplex.end() - 1; ++i)
+	for (int i = 0; i < m - 1; ++i)
 	{
-		int temp = ii;
-		const Eigen::VectorXd &d1 = Eigen::Map<const Eigen::VectorXd>(inputData[*i].data(), n) - Sn;
-		for (auto j = i; j != simplex.end() - 1; ++j, ++temp)
+		const Eigen::VectorXd &d1 = Eigen::Map<const Eigen::VectorXd>(inputData[simplex[i]].data(), n) - Sn;
+		for (int j = i; j < m - 1; ++j)
 		{
-			const double dotProduct = d1.dot(Eigen::Map<const Eigen::VectorXd>(inputData[*j].data(), n) - Sn);
-			matA(ii, temp) = dotProduct;
-			matA(temp, ii) = dotProduct;
-			if (i == j)
-				matC(ii) = dotProduct / 2.0;
+			const double dotProduct = d1.dot(Eigen::Map<const Eigen::VectorXd>(inputData[simplex[j]].data(), n) - Sn);
+			matA(i, j) = dotProduct;
+			matA(j, i) = dotProduct;
 		}
-		matA(ii, m - 1) = 0;
-		ii++;
 	}
-	matA.row(ii).setConstant(1);
-	matC(ii) = 1;
+	matA.col(m - 1).setZero();
+	matA.row(m - 1).setOnes();
+	matC = matA.diagonal() / 2;
+	matC(m - 1) = 1;
 	// Solve the linear
 	Eigen::VectorXd rawCircumCenter = matA.inverse() * matC;
-	for (int i = 0; i < n; i++)
-	{
-		auto index = simplex.begin();
-		for (int j = 0; j < m; ++j, ++index)
-			circumCenter[i] += rawCircumCenter(j) * inputData[*index][i];
-	}
+	for (int i = 0; i < m; ++i)
+		for (int j = 0; j < n; ++j)
+			circumCenter[j] += rawCircumCenter(i) * inputData[simplex[i]][j];
 	return circumCenter;
 }
 
@@ -868,19 +861,12 @@ std::vector<double> utils::circumCenter(const std::vector<short> &simplex, const
  */
 double utils::circumRadius(const std::vector<short> &simplex, const std::vector<std::vector<double>> &distMatrix)
 {
-	unsigned n = simplex.size();
+	const unsigned n = simplex.size();
 	Eigen::MatrixXd matA(n, n);
 	Eigen::MatrixXd matACap(n + 1, n + 1);
-	unsigned ii = 0;
-	for (auto i : simplex)
-	{
-		unsigned temp = 0;
-		for (auto j : simplex)
-		{
-			matA(ii, temp++) = (i <= j) ? distMatrix[i][j] * distMatrix[i][j] : distMatrix[j][i] * distMatrix[j][i];
-		}
-		ii++;
-	}
+	for (unsigned i = 0; i < n; ++i)
+		for (unsigned j = 0; j < n; ++j)
+			matA(i, j) = simplex[i] <= simplex[j] ? distMatrix[simplex[i]][simplex[j]] : distMatrix[simplex[j]][simplex[i]];
 	matACap.block(1, 1, n, n) = matA;
 	matACap.col(0).setConstant(1);
 	matACap.row(0).setConstant(1);
@@ -1767,7 +1753,7 @@ std::vector<double> utils::serialize(const std::vector<std::vector<double>> &ori
  * @param beta
  * @return std::pair<std::vector<std::vector<double>>, std::vector<double>>
  */
-std::pair<std::vector<std::vector<double>>, std::vector<double>> utils::calculateBetaCentersandRadius(const std::vector<unsigned> &dsimplex, std::vector<std::vector<double>> &inputData, const std::vector<std::vector<double>> *distMatrix, double beta)
+std::pair<std::vector<std::vector<double>>, std::vector<double>> utils::calculateBetaCentersandRadius(const std::vector<unsigned> &dsimplex, const std::vector<std::vector<double>> &inputData, const std::vector<std::vector<double>> *distMatrix, double beta)
 {
 	std::vector<std::vector<double>> betacenters;
 	std::vector<double> betaradii;

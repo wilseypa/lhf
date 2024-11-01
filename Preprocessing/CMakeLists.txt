@@ -4,35 +4,35 @@
 
 cmake_minimum_required(VERSION 3.5)
 
-add_library(cluster STATIC cluster.cpp cluster.hpp)
+add_library(cluster STATIC cluster.cpp)
 target_link_libraries(cluster PUBLIC utils kMeansPlusPlus)
 target_include_directories(cluster PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_library(preprocessor STATIC preprocessor.cpp preprocessor.hpp)
+add_library(preprocessor STATIC preprocessor.cpp)
 target_link_libraries(preprocessor PUBLIC kMeansPlusPlus pipePacket)
 target_include_directories(preprocessor PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_library(kMeansPlusPlus STATIC kMeansPlusPlus.cpp kMeansPlusPlus.hpp)
+add_library(kMeansPlusPlus STATIC kMeansPlusPlus.cpp)
 target_link_libraries(kMeansPlusPlus PUBLIC utils preprocessor cluster)
 target_include_directories(kMeansPlusPlus PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_library(streamingKmeans STATIC streamingKmeans.cpp streamingKmeans.hpp)
+add_library(streamingKmeans STATIC streamingKmeans.cpp)
 target_link_libraries(streamingKmeans PUBLIC utils streamingUtils preprocessor)
 target_include_directories(streamingKmeans PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_library(streamingUtils STATIC streamingUtils.cpp streamingUtils.hpp)
+add_library(streamingUtils STATIC streamingUtils.cpp)
 target_link_libraries(streamingUtils PUBLIC utils preprocessor)
 target_include_directories(streamingUtils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_library(denStream STATIC denStream.cpp denStream.hpp)
+add_library(denStream STATIC denStream.cpp)
 target_link_libraries(denStream PUBLIC utils dbscan preprocessor)
 target_include_directories(denStream PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_library(dbscan STATIC dbscan.cpp dbscan.hpp)
+add_library(dbscan STATIC dbscan.cpp)
 target_link_libraries(dbscan PUBLIC utils kdTree kDTree)
 target_include_directories(dbscan PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_library(kdTree STATIC kdTree.cpp kdTree.hpp)
+add_library(kdTree STATIC kdTree.cpp)
 target_link_libraries(kdTree PUBLIC utils)
 target_include_directories(kdTree PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 

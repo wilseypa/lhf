@@ -16,13 +16,14 @@
 #include "fastPersistence.hpp"
 #include "ripsPipe.hpp"
 #include "naiveWindow.hpp"
-// #include "betaSkeletonBasedComplex.hpp"
-// #include "betaSubSkeletonComplex.hpp"
+#include "betaSkeletonBasedComplex.hpp"
+#include "betaSubSkeletonComplex.hpp"
 #include "upscalePipe.hpp"
 #include "qhullPipe.hpp"
 #include "slidingWindow.hpp"
 #include "delaunayPipe.hpp"
-#include "incrementalPipe.hpp"
+#include "helixPipe.hpp"
+#include "helixDistPipe.hpp"
 
 template <typename nodeType>
 basePipe<nodeType> *basePipe<nodeType>::newPipe(const std::string &pipeType, const std::string &complexType)
@@ -65,12 +66,15 @@ basePipe<nodeType> *basePipe<nodeType>::newPipe(const std::string &pipeType, con
 	}
 	else if (pipeType == "upscale")
 	{
-		std::cout << "Building upscale" << std::endl;
 		return new upscalePipe<nodeType>();
-		//} else if (pipeType == "betaSkeletonBasedComplex"){
-		//	return new betaSkeletonBasedComplex<nodeType>();
-		//} else if (pipeType == "betaSubSkeletonComplex"){
-		//	return new betaSubSkeletonComplex<nodeType>();
+	}
+	else if (pipeType == "betaSkeletonBasedComplex")
+	{
+		return new betaSkeletonBasedComplex<nodeType>();
+	}
+	else if (pipeType == "betaSubSkeletonComplex")
+	{
+		return new betaSubSkeletonComplex<nodeType>();
 	}
 	else if (pipeType == "qhullPipe" || pipeType == "qhull" || pipeType == "alpha")
 	{
@@ -84,9 +88,13 @@ basePipe<nodeType> *basePipe<nodeType>::newPipe(const std::string &pipeType, con
 	{
 		return new delaunayPipe<nodeType>();
 	}
-	else if (pipeType == "incrementalPipe")
+	else if (pipeType == "helixPipe")
 	{
-		return new incrementalPipe<nodeType>();
+		return new helixPipe<nodeType>();
+	}
+	else if (pipeType == "helixDistPipe")
+	{
+		return new helixDistPipe<nodeType>();
 	}
 
 	return 0;

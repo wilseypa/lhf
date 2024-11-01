@@ -15,7 +15,7 @@ include_directories(SYSTEM ${MPI_INCLUDE_PATH})
 find_package(OpenMP REQUIRED)
 
 #Add Source to this project's executable
-add_library(LHFlib SHARED "LHF.cpp" "LHF.hpp")
+add_library(LHFlib SHARED LHF.cpp)
 set_target_properties(LHFlib PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(LHFlib PROPERTIES SOVERSION 1)
 set_target_properties(LHFlib PROPERTIES POSITION_INDEPENDENT_CODE ON)

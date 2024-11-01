@@ -1,4 +1,4 @@
-#include <incrementalPipe.hpp>
+#include "helixPipe.hpp"
 #include <Eigen/Dense>
 #include <limits>
 #include <omp.h>
@@ -6,14 +6,14 @@
 #include <chrono>
 #include <execution>
 #include <fstream>
-// #define PARALLEL
+#define PARALLEL
 
 template <typename T>
 T dot(const std::vector<T> &a, const std::vector<T> &b) { return std::inner_product(a.begin(), a.end(), b.begin(), static_cast<T>(0)); } // Dot product of two vectors
 
 // Solution to equation of a hyperplane
 template <typename nodeType>
-std::vector<double> incrementalPipe<nodeType>::solvePlaneEquation(const std::vector<short> &points)
+std::vector<double> helixPipe<nodeType>::solvePlaneEquation(const std::vector<short> &points)
 {
 	int numPoints = points.size();
 	Eigen::MatrixXd A(numPoints, numPoints);
@@ -26,7 +26,7 @@ std::vector<double> incrementalPipe<nodeType>::solvePlaneEquation(const std::vec
 
 // Compute the seed simplex for initialization of algorithm
 template <typename nodeType>
-std::vector<short> incrementalPipe<nodeType>::first_simplex()
+std::vector<short> helixPipe<nodeType>::first_simplex()
 {
 	std::vector<short> simplex;
 	if (this->data_set_size < this->dim + 2)
@@ -72,13 +72,13 @@ std::vector<short> incrementalPipe<nodeType>::first_simplex()
 
 // Perform DFS walk on the cospherical region
 template <typename nodeType>
-void incrementalPipe<nodeType>::cospherical_handler(std::vector<short> &simp, int &tp, short &omission, std::vector<std::vector<double>> &distMatrix)
+void helixPipe<nodeType>::cospherical_handler(std::vector<short> &simp, int &tp, short &omission, std::vector<std::vector<double>> &distMatrix)
 {
 	auto triangulation_point = tp;
 	auto temp = simp;
 	temp.push_back(triangulation_point);
 	std::sort(temp.begin(), temp.end());
-	this->dsimplexes.insert(temp);
+	this->spherical_dsimplexes.insert(temp);
 	for (auto i : temp)
 	{
 		auto new_face = temp;
@@ -90,13 +90,13 @@ void incrementalPipe<nodeType>::cospherical_handler(std::vector<short> &simp, in
 			continue;
 		new_face.push_back(new_point);
 		std::sort(new_face.begin(), new_face.end());
-		this->dsimplexes.insert(new_face);
+		this->spherical_dsimplexes.insert(new_face);
 	}
 }
 
 // Compute the P_newpoint for provided Facet, P_context Pair
 template <typename nodeType>
-int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, short &omission, std::vector<std::vector<double>> &distMatrix)
+int helixPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, short &omission, std::vector<std::vector<double>> &distMatrix)
 {
 	auto normal = solvePlaneEquation(simp);
 	auto p1 = utils::circumCenter(simp, this->inputData);
@@ -109,13 +109,14 @@ int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp
 	simplex.insert(omission);
 	for (auto &new_point : this->search_space)
 	{
-		if (simplex.find(new_point) == simplex.end() && (direction ^ (dot(normal, inputData[new_point]) > 1)))
+		if (simplex.find(new_point) == simplex.end() && (direction ^ dot(normal, inputData[new_point]) > 1))
 		{
 			simp.push_back(new_point);
 			auto temp = utils::vectors_distance(p1, inputData[new_point]);
 			if (ring_radius > temp)
 			{
-				radius_vec[new_point] = sqrt(utils::circumRadius(simp, distMatrix));
+				auto temp_radius = utils::circumRadius(simp, distMatrix);
+				radius_vec[new_point] = (temp_radius >= 0) ? sqrt(temp_radius) : utils::vectors_distance(utils::circumCenter(simp, this->inputData), inputData[new_point]);
 				if (largest_radius < radius_vec[new_point])
 				{
 					largest_radius = radius_vec[new_point];
@@ -125,7 +126,8 @@ int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp
 			}
 			else if (flag && 2 * smallest_radius > temp) // reduce search space
 			{
-				radius_vec[new_point] = sqrt(utils::circumRadius(simp, distMatrix));
+				auto temp_radius = utils::circumRadius(simp, distMatrix);
+				radius_vec[new_point] = (temp_radius >= 0) ? sqrt(temp_radius) : utils::vectors_distance(utils::circumCenter(simp, this->inputData), inputData[new_point]);
 				if (smallest_radius > radius_vec[new_point])
 				{
 					smallest_radius = radius_vec[new_point];
@@ -143,14 +145,26 @@ int incrementalPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp
 							  { return std::abs(1 - (val / triangulation_radius)) <= 0.000000000001; });
 		if (count != 1)
 		{
-			// cospherical_handler(simp,triangulation_point,omission,distMatrix);
+#ifdef PARALLEL
+			{
+				std::cout << "Triangulation radius is " << triangulation_radius << std::endl;
+#pragma omp critical
+				{
+					// cospherical_handler(simp,triangulation_point,omission,distMatrix);
+				}
+			}
+#else
+			{
+				// cospherical_handler(simp,triangulation_point,omission,distMatrix);
+			}
+#endif
 			return -1;
 		}
 	}
 	return triangulation_point;
 }
 
-void reduce(std::set<std::vector<short>> &outer_dsimplexes, std::vector<std::pair<std::vector<short>, short>> &inner_d_1_shell, std::set<std::vector<short>> &dsimplexes)
+void reduce(std::set<std::vector<short>> &outer_dsimplexes, std::vector<std::pair<std::vector<short>, short>> &inner_d_1_shell, std::vector<std::vector<short>> &dsimplexes)
 {
 	std::map<std::vector<short>, short> outer_d_1_shell;
 	for (auto &new_simplex : outer_dsimplexes)
@@ -181,7 +195,7 @@ void reduce(std::set<std::vector<short>> &outer_dsimplexes, std::vector<std::pai
 
 // runPipe -> Run the configured functions of this pipeline segment
 template <typename nodeType>
-void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
+void helixPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 {
 	this->inputData = inData.inputData;
 	this->dim = inputData[0].size();
@@ -224,7 +238,7 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	}
 #else
 	{
-		for (auto &new_simplex : dsimplexes)
+		for (auto &new_simplex : this->dsimplexes)
 		{
 			for (auto &i : new_simplex)
 			{
@@ -244,8 +258,7 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 				continue;
 			first_vector.push_back(new_point);
 			std::sort(first_vector.begin(), first_vector.end());
-			if (!this->dsimplexes.insert(first_vector).second)
-				continue;
+			this->dsimplexes.push_back(first_vector);
 			for (auto &i : first_vector)
 			{
 				if (i == new_point)
@@ -265,15 +278,15 @@ void incrementalPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 
 // basePipe constructor
 template <typename nodeType>
-incrementalPipe<nodeType>::incrementalPipe() : inputData(*(new std::vector<std::vector<double>>()))
+helixPipe<nodeType>::helixPipe() : inputData(*(new std::vector<std::vector<double>>()))
 {
-	this->pipeType = "incrementalPipe";
+	this->pipeType = "helixPipe";
 	return;
 }
 
 // configPipe -> configure the function settings of this pipeline segment
 template <typename nodeType>
-bool incrementalPipe<nodeType>::configPipe(std::map<std::string, std::string> &configMap)
+bool helixPipe<nodeType>::configPipe(std::map<std::string, std::string> &configMap)
 {
 	std::string strDebug;
 
@@ -290,13 +303,13 @@ bool incrementalPipe<nodeType>::configPipe(std::map<std::string, std::string> &c
 	this->ut = utils(strDebug, this->outputFile);
 
 	this->configured = true;
-	this->ut.writeDebug("incrementalPipe", "Configured with parameters { eps: " + configMap["epsilon"] + " , debug: " + strDebug + ", outputFile: " + this->outputFile + " }");
+	this->ut.writeDebug("helixPipe", "Configured with parameters { eps: " + configMap["epsilon"] + " , debug: " + strDebug + ", outputFile: " + this->outputFile + " }");
 
 	return true;
 }
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
 template <typename nodeType>
-void incrementalPipe<nodeType>::outputData(pipePacket<nodeType> &inData)
+void helixPipe<nodeType>::outputData(pipePacket<nodeType> &inData)
 {
 	std::ofstream file;
 	file.open("output/" + this->pipeType + "_output.csv");
@@ -306,6 +319,6 @@ void incrementalPipe<nodeType>::outputData(pipePacket<nodeType> &inData)
 	return;
 }
 
-template class incrementalPipe<simplexNode>;
-template class incrementalPipe<alphaNode>;
-template class incrementalPipe<witnessNode>;
+template class helixPipe<simplexNode>;
+template class helixPipe<alphaNode>;
+template class helixPipe<witnessNode>;
