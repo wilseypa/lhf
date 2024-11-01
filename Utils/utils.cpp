@@ -1767,7 +1767,7 @@ std::vector<double> utils::serialize(const std::vector<std::vector<double>> &ori
  * @param beta
  * @return std::pair<std::vector<std::vector<double>>, std::vector<double>>
  */
-std::pair<std::vector<std::vector<double>>, std::vector<double>> utils::calculateBetaCentersandRadius(const std::vector<unsigned> &dsimplex, std::vector<std::vector<double>> &inputData, const std::vector<std::vector<double>> *distMatrix, double beta)
+std::pair<std::vector<std::vector<double>>, std::vector<double>> utils::calculateBetaCentersandRadius(const std::vector<unsigned> &dsimplex, const std::vector<std::vector<double>> &inputData, const std::vector<std::vector<double>> *distMatrix, double beta)
 {
 	std::vector<std::vector<double>> betacenters;
 	std::vector<double> betaradii;

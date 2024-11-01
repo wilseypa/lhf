@@ -117,7 +117,7 @@ public:
 	template <typename T>
 	static std::set<unsigned> extractBoundaryPoints(const std::vector<T *> &);
 
-	static std::vector<bettiBoundaryTableEntry> mapPartitionIndexing(const std::vector<unsigned> &, std::vector<bettiBoundaryTableEntry>);
+	static std::vector<bettiBoundaryTableEntry> mapPartitionIndexing(const std::vector<unsigned> &, std::vector<bettiBoundaryTableEntry>); // Const
 	static void print2DVector(const std::vector<std::vector<unsigned>> &);
 	static void print1DVector(const std::vector<unsigned> &);
 	static void print1DVector(const std::set<unsigned> &);
@@ -140,7 +140,7 @@ public:
 
 	static bool sortBySecond(const std::pair<std::set<unsigned>, double> &, const std::pair<std::set<unsigned>, double> &);
 
-	static double determinantOfMatrix(std::vector<std::vector<double>> mat, unsigned n);
+	static double determinantOfMatrix(std::vector<std::vector<double>> mat, unsigned n); // Const
 	// Alpha (delaunay)
 	static double circumRadius(const std::set<unsigned> &simplex, const std::vector<std::vector<double>> *distMatrix);
 	static double circumRadius(const std::vector<short> &simplex, const std::vector<std::vector<double>> &distMatrix);
@@ -148,13 +148,13 @@ public:
 	static std::vector<double> circumCenter(const std::vector<short> &simplex, const std::vector<std::vector<double>> &inputData);
 	static double simplexVolume(const std::set<unsigned> &simplex, const std::vector<std::vector<double>> *distMatrix, int dd);
 	static double simplexVolume(const std::vector<std::vector<double>> &mat);
-	static std::vector<std::vector<double>> inverseOfMatrix(std::vector<std::vector<double>> mat, int n);
+	static std::vector<std::vector<double>> inverseOfMatrix(std::vector<std::vector<double>> mat, int n); // Const
 	static std::vector<std::vector<double>> matrixMultiplication(const std::vector<std::vector<double>> &matA, const std::vector<std::vector<double>> &matB);
-	static std::pair<std::vector<double>, std::vector<std::vector<double>>> nullSpaceOfMatrix(const std::set<unsigned> &simplex, const std::vector<std::vector<double>> &inputdata, std::vector<double> cc, double radius, bool lowerdimension = false);
+	static std::pair<std::vector<double>, std::vector<std::vector<double>>> nullSpaceOfMatrix(const std::set<unsigned> &simplex, const std::vector<std::vector<double>> &inputdata, std::vector<double> cc, double radius, bool lowerdimension = false); // Const
 
 	static std::vector<std::vector<bool>> betaNeighbors(const std::vector<std::vector<double>> &, double beta, const std::string &betaMode);
 	static std::vector<std::vector<double>> betaCentersCalculation(const std::vector<double> &hpcoff, double beta, double circumRadius, const std::vector<double> &circumCenter);
-	static std::pair<std::vector<std::vector<double>>, std::vector<double>> calculateBetaCentersandRadius(const std::vector<unsigned> &simplex, std::vector<std::vector<double>> &inputData, const std::vector<std::vector<double>> *distMatrix, double beta);
+	static std::pair<std::vector<std::vector<double>>, std::vector<double>> calculateBetaCentersandRadius(const std::vector<unsigned> &simplex, const std::vector<std::vector<double>> &inputData, const std::vector<std::vector<double>> *distMatrix, double beta);
 
 	static std::vector<double> serialize(const std::vector<std::vector<double>> &);
 	static std::vector<std::vector<double>> deserialize(const std::vector<double> &, unsigned);
