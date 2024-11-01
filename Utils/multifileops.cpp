@@ -181,8 +181,8 @@ bool MultiFile<FileType, baseType>::readValue()
  * @return true
  * @return false
  */
-template <typename FileType, class baseType>
-bool MultiFile<FileType, baseType>::readUnique()
+template <>
+bool MultiFile<MapBinaryFile, std::pair<std::vector<short>,short>>::readUnique()
 {
     while (readValue())
     {
@@ -227,14 +227,14 @@ MultiFile<FileType, baseType>::MultiFile(const std::string &directory)
  * @param outputFileName
  * @param iterationCounter
  */
-template <typename FileType, class baseType>
-void MultiFile<FileType, baseType>::compressMap(const std::string &outputFileName, int iterationCounter)
+template <>
+void MultiFile<MapBinaryFile, std::pair<std::vector<short>, short>>::compressMap(const std::string &outputFileName, int iterationCounter)
 {
     // Open the output file for writing
     std::ofstream outputFile(outputFileName, std::ios::out | std::ios::binary);
 
     // Read from the previous iteration's data file
-    FileType previousReader("input/" + std::to_string(iterationCounter) + ".dat");
+    MapBinaryFile previousReader("input/" + std::to_string(iterationCounter) + ".dat");
 
     // Initialize variables for map size and vector size
     size_t mapSize = 0, vectorSize = previousReader.cache.first.size();
@@ -277,8 +277,8 @@ void MultiFile<FileType, baseType>::compressMap(const std::string &outputFileNam
  * @param outputFileName
  * @return size_t
  */
-template <typename FileType, class baseType>
-size_t MultiFile<FileType, baseType>::writeCSV(const std::string &outputFileName)
+template <>
+size_t MultiFile<VectorBinaryFile, std::vector<short>>::writeCSV(const std::string &outputFileName)
 {
     std::ofstream outputFile(outputFileName, std::ios::out);
     size_t size = 0;
@@ -297,3 +297,6 @@ size_t MultiFile<FileType, baseType>::writeCSV(const std::string &outputFileName
     outputFile.close();
     return size;
 };
+
+template class MultiFile<MapBinaryFile, std::pair<std::vector<short>, short>>;
+template class MultiFile<VectorBinaryFile, std::vector<short>>;

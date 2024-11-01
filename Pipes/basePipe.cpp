@@ -92,10 +92,10 @@ basePipe<nodeType> *basePipe<nodeType>::newPipe(const std::string &pipeType, con
 	{
 		return new helixPipe<nodeType>();
 	}
-	// else if (pipeType == "helixDistPipe")
-	// {
-	// 	return new helixDistPipe<nodeType>();
-	// }
+	else if (pipeType == "helixDistPipe")
+	{
+		return new helixDistPipe<nodeType>();
+	}
 
 	return 0;
 }
