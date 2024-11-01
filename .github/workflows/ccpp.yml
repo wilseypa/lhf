@@ -63,7 +63,7 @@ jobs:
       run:  vcpkg update && vcpkg install cgal eigen3 msmpi
 
     # Checkout v2 : https://github.com/actions/checkout
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       
     # Check CMake Version 
     - name: Check CMake (${{ matrix.mpi }})
