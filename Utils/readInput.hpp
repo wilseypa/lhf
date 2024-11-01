@@ -6,6 +6,7 @@
 #include <regex>
 #include <fstream>
 #include <cmath>
+#include <map>
 
 // Header file for readInput class - see readInput.cpp for descriptions
 
