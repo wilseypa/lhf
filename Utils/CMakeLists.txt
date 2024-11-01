@@ -12,22 +12,26 @@ if(APPLE)
     add_compile_definitions(NO_PARALLEL_ALGORITHMS=1)
 endif()
 
-add_library(utils STATIC utils.cpp utils.hpp)
+add_library(utils STATIC utils.cpp)
 target_link_libraries(utils PUBLIC kdTree Eigen3::Eigen OpenMP::OpenMP_CXX)
 target_include_directories(utils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${EIGEN3_INCLUDE_DIRS} ${OpenMP_CXX_INCLUDE_DIRS})
 
-add_library(unionFind STATIC unionFind.cpp unionFind.hpp)
+add_library(unionFind STATIC unionFind.cpp)
 target_include_directories(unionFind PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_library(readInput STATIC readInput.cpp readInput.hpp)
+add_library(readInput STATIC readInput.cpp)
 target_include_directories(readInput PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_library(argParser STATIC argParser.cpp argParser.hpp)
+add_library(argParser STATIC argParser.cpp)
 target_include_directories(argParser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_library(writeOutput STATIC writeOutput.cpp writeOutput.hpp)
+add_library(writeOutput STATIC writeOutput.cpp)
 target_link_libraries(writeOutput PUBLIC utils)
 target_include_directories(writeOutput PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_library(multifileops STATIC multifileops.cpp)
+target_link_libraries(multifileops PUBLIC utils)
+target_include_directories(multifileops PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 INSTALL (TARGETS utils
 	LIBRARY DESTINATION lib
