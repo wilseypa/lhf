@@ -49,6 +49,7 @@ endif()
 find_package(OpenMP REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(TBB)
+find_package(MPI REQUIRED)
 
 add_library(pipePacket STATIC "pipePacket.cpp" "pipePacket.hpp")
 target_link_libraries(pipePacket PUBLIC simplexBase)
@@ -59,7 +60,7 @@ target_link_libraries(basePipe PUBLIC
  distMatrixPipe neighGraphPipe 
  ripsPipe betaSkeletonBasedComplex betaSubSkeletonComplex
  upscalePipe slidingWindow fastPersistence 
- incrementalPersistence naiveWindow qhullPipe delaunayPipe incrementalPipe)
+ incrementalPersistence naiveWindow qhullPipe delaunayPipe helixPipe helixDistPipe)
 target_include_directories(basePipe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(distMatrixPipe STATIC "distMatrixPipe.cpp" "distMatrixPipe.hpp")
@@ -114,12 +115,17 @@ if(APPLE)
     add_compile_definitions(NO_PARALLEL_ALGORITHMS=1)
 endif()
 
-add_library(incrementalPipe STATIC "incrementalPipe.cpp" "incrementalPipe.hpp")
-target_link_libraries(incrementalPipe PUBLIC basePipe utils OpenMP::OpenMP_CXX)
-target_include_directories(incrementalPipe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${EIGEN3_INCLUDE_DIR})
+add_library(helixPipe STATIC "helixPipe.cpp" "helixPipe.hpp")
+target_link_libraries(helixPipe PUBLIC basePipe utils OpenMP::OpenMP_CXX)
+target_include_directories(helixPipe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${EIGEN3_INCLUDE_DIR})
+
+add_library(helixDistPipe STATIC "helixDistPipe.cpp" "helixDistPipe.hpp")
+target_link_libraries(helixDistPipe PUBLIC basePipe utils OpenMP::OpenMP_CXX MPI::MPI_CXX)
+target_include_directories(helixDistPipe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${EIGEN3_INCLUDE_DIR} ${MPI_INCLUDE_PATH})
 
 if(TBB_FOUND)
-target_link_libraries(incrementalPipe PUBLIC TBB::tbb)
+target_link_libraries(helixPipe PUBLIC TBB::tbb)
+target_link_libraries(helixDistPipe PUBLIC TBB::tbb)
 endif()
 
 
