@@ -10,23 +10,7 @@
 // #define PARALLEL
 
 template <typename T>
-std::ostream &operator<<(std::ostream &os, const std::vector<T> &vec)
-{
-	os << "[";
-	for (size_t i = 0; i < vec.size(); ++i)
-	{
-		os << vec[i];
-		if (i < vec.size() - 1)
-		{
-			os << ", ";
-		}
-	}
-	os << "]";
-	return os;
-}
-
-template <typename T>
-T dot(const std::vector<T> &a, const std::vector<T> &b) { return std::inner_product(a.begin(), a.end(), b.begin(), static_cast<T>(0)); } // Dot product of two vectors
+static inline T dot(const std::vector<T> &a, const std::vector<T> &b) { return std::inner_product(a.begin(), a.end(), b.begin(), static_cast<T>(0)); } // Dot product of two vectors
 
 // Solution to equation of a hyperplane
 template <typename nodeType>
@@ -110,7 +94,7 @@ void helixPipe<nodeType>::cospherical_handler(std::vector<short> &simp, int &tp,
 	}
 }
 
-#if 1
+#if 0
 // Compute the P_newpoint for provided Facet, P_context Pair
 template <typename nodeType>
 int helixPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, short &omission, std::vector<std::vector<double>> &distMatrix)
@@ -192,15 +176,13 @@ int helixPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, shor
 	for (const auto &point : simp)
 		active_points[point] = false;
 
-	bool onConvexHull = false;
-
 	// Filter points opposite to hyperplane
 	for (size_t idx = 0; idx < active_points.size(); ++idx)
-	{
 		active_points[idx] = active_points[idx] && (direction ^ (dot(normal, inputData[idx]) > 1));
-		onConvexHull |= active_points[idx];
-	}
-	if (!onConvexHull)
+
+	// Early return if plane is on convex hull
+	if (std::none_of(active_points.begin(), active_points.end(), [](bool isActive)
+					 { return isActive; }))
 		return -1;
 
 	// Default values
@@ -222,9 +204,9 @@ int helixPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, shor
 	{
 		// Search outside space with smallest circumradius
 		double smallest_radius = std::numeric_limits<double>::max() / 2;
-		for (size_t idx = 0; idx < active_points.size(); ++idx)
+		for (size_t idx = 0; idx < dist_vec.size(); ++idx)
 		{
-			if (active_points[idx] && dist_vec[idx] > ring_radius && dist_vec[idx] < 2 * smallest_radius)
+			if (dist_vec[idx] != std::numeric_limits<double>::infinity() && dist_vec[idx] > ring_radius && dist_vec[idx] < 2 * smallest_radius)
 			{
 				simp.push_back(idx);
 				auto temp_radius = utils::circumRadius(simp, distMatrix);
@@ -244,9 +226,9 @@ int helixPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, shor
 	{
 		// Search inside space with largest circumradius
 		double largest_radius = 0;
-		for (size_t idx = 0; idx < active_points.size(); ++idx)
+		for (size_t idx = 0; idx < dist_vec.size(); ++idx)
 		{
-			if (active_points[idx] && dist_vec[idx] < ring_radius)
+			if (dist_vec[idx] != std::numeric_limits<double>::infinity() && dist_vec[idx] < ring_radius)
 			{
 				simp.push_back(idx);
 				auto temp_radius = utils::circumRadius(simp, distMatrix);

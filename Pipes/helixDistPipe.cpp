@@ -384,7 +384,7 @@ bool helixDistPipe<nodeType>::configPipe(std::map<std::string, std::string> &con
 	this->ut = utils(strDebug, this->outputFile);
 
 	this->configured = true;
-	this->ut.writeDebug("helixPipe", "Configured with parameters { eps: " + configMap["epsilon"] + " , debug: " + strDebug + ", outputFile: " + this->outputFile + " }");
+	this->ut.writeDebug("helixDistPipe", "Configured with parameters { eps: " + configMap["epsilon"] + " , debug: " + strDebug + ", outputFile: " + this->outputFile + " }");
 
 	return true;
 }
