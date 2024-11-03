@@ -168,4 +168,7 @@ public:
 	static std::vector<std::vector<double>> transposeMeanAdjusted(const std::vector<std::vector<double>> &);
 	static std::pair<std::vector<std::vector<double>>, std::vector<std::vector<double>>> computePCA(const std::vector<std::vector<double>> &, int);
 	static std::vector<std::vector<double>> computePCAInverse(const std::vector<std::vector<double>> &, const std::vector<std::vector<double>> &, const std::vector<std::vector<double>> &);
+
+	template <typename T>
+	static T dot(const std::vector<T> &, const std::vector<T> &);
 };

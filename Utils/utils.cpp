@@ -1906,3 +1906,8 @@ bool utils::isSubset(std::vector<unsigned> A, std::vector<unsigned> B)
 	std::sort(B.begin(), B.end());
 	return std::includes(A.begin(), A.end(), B.begin(), B.end());
 }
+
+template <typename T>
+inline T utils::dot(const std::vector<T> &a, const std::vector<T> &b) { return std::inner_product(a.begin(), a.end(), b.begin(), static_cast<T>(0)); }
+
+template double utils::dot<double>(const std::vector<double> &a, const std::vector<double> &);
