@@ -120,8 +120,8 @@ target_link_libraries(helixPipe PUBLIC basePipe utils OpenMP::OpenMP_CXX)
 target_include_directories(helixPipe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${EIGEN3_INCLUDE_DIR})
 
 add_library(helixDistPipe STATIC helixDistPipe.cpp)
-target_link_libraries(helixDistPipe PUBLIC helixPipe readInput writeOutput multifileops utils OpenMP::OpenMP_CXX MPI::MPI_CXX)
-target_include_directories(helixDistPipe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${EIGEN3_INCLUDE_DIR} ${MPI_INCLUDE_PATH})
+target_link_libraries(helixDistPipe PUBLIC helixPipe readInput writeOutput multifileops utils MPI::MPI_CXX)
+target_include_directories(helixDistPipe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${MPI_INCLUDE_PATH})
 
 if(TBB_FOUND)
 target_link_libraries(helixPipe PUBLIC TBB::tbb)

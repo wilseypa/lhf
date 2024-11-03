@@ -8,8 +8,6 @@
 #include <chrono>
 #include <execution>
 #include <filesystem>
-#include <Eigen/Dense>
-#include <omp.h>
 #include <mpi.h>
 
 #define WRITE_CSV_OUTPUTS
@@ -18,34 +16,6 @@ template <typename nodeType>
 helixDistPipe<nodeType>::helixDistPipe() : dim(0), data_set_size(0)
 {
 	this->pipeType = "helixDistPipe";
-	return;
-}
-
-void reduce(std::set<std::vector<short>> &outer_dsimplexes, std::map<std::vector<short>, short> &inner_d_1_shell, std::vector<std::vector<short>> &dsimplexes)
-{
-	std::map<std::vector<short>, short> outer_d_1_shell;
-	for (auto &new_simplex : outer_dsimplexes)
-	{
-		dsimplexes.push_back(new_simplex);
-		for (short i = 0; i < new_simplex.size(); i++)
-		{
-			std::vector<short> key = new_simplex;
-			key.erase(key.begin() + i);
-			auto it = outer_d_1_shell.try_emplace(std::move(key), new_simplex[i]);
-			if (!it.second)
-				outer_d_1_shell.erase(it.first); // Create new shell and remove collided faces max only 2 can occur.
-		}
-	}
-	outer_dsimplexes.clear();
-#ifndef NO_PARALLEL_ALGORITHMS
-	std::for_each(std::execution::par_unseq, inner_d_1_shell.begin(), inner_d_1_shell.end(), [&](const auto &simp)
-				  { outer_d_1_shell.erase(simp.first); }); // Remove faces from previous iteration
-#else
-	std::for_each(inner_d_1_shell.begin(), inner_d_1_shell.end(), [&](const auto &simp)
-				  { outer_d_1_shell.erase(simp.first); });
-#endif
-	inner_d_1_shell.clear();
-	std::swap(inner_d_1_shell, outer_d_1_shell);
 	return;
 }
 
@@ -75,14 +45,14 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		std::filesystem::create_directory("output") && std::filesystem::create_directory("intermediate") && std::filesystem::create_directory("input");
 		// Perform initial iteration normally
 		std::vector<std::vector<short>> initial_dsimplexes = {this->first_simplex()};
-		std::map<std::vector<short>, short> inner_d_1_shell;
+		std::vector<std::pair<std::vector<short>, short>> inner_d_1_shell;
 		for (auto &new_simplex : initial_dsimplexes)
 		{
 			for (auto &i : new_simplex)
 			{
 				std::vector<short> key = new_simplex;
 				key.erase(std::find(key.begin(), key.end(), i));
-				inner_d_1_shell.emplace(key, i);
+				inner_d_1_shell.push_back(std::make_pair(key, i));
 			}
 		}
 		// Compute 10000 facets per process to reduce no of iterations
@@ -99,7 +69,7 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 				std::sort(first_vector.begin(), first_vector.end());
 				outer_dsimplexes.insert(first_vector);
 			}
-			reduce(outer_dsimplexes, inner_d_1_shell, initial_dsimplexes);
+			this->reduce(outer_dsimplexes, inner_d_1_shell, initial_dsimplexes);
 		}
 		std::clog << "Iter 0 on process " << rank << " Found " << initial_dsimplexes.size() << " dsimplexes" << std::endl;
 #ifdef WRITE_CSV_OUTPUTS
@@ -109,7 +79,7 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		initial_dsimplexes.clear();
 		if (inner_d_1_shell.empty())
 			return;
-		writeOutput::writeBinary(inner_d_1_shell, "input/1.dat");
+		//writeOutput::writeBinary(inner_d_1_shell, "input/1.dat");
 	}
 
 	// Restrict other processes from proceeding until serial task is completed

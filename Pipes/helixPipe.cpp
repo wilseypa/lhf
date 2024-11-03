@@ -25,25 +25,24 @@ std::vector<double> helixPipe<nodeType>::solvePlaneEquation(const std::vector<sh
 template <typename nodeType>
 std::vector<short> helixPipe<nodeType>::first_simplex()
 {
-	std::vector<short> simplex;
-	if (this->data_set_size < this->dim + 2)
-		return simplex; // Not enough points
-	for (short i = 0; i < this->dim; i++)
-		simplex.push_back(i); // Pseudo Random initialization of Splitting Hyperplane
+	std::vector<short> simplex(this->dim);
+	std::iota(simplex.begin(), simplex.end(), 0); // Pseudo Random initialization of Splitting Hyperplane
 	auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 	auto rng = std::default_random_engine{};
 	std::vector<short> outer_points;
-	do
+	while (true)
 	{
 		simplex.insert(simplex.end(), outer_points.begin(), outer_points.end());
 		std::shuffle(simplex.begin(), simplex.end(), rng);
 		outer_points.clear();
-		simplex.erase(simplex.begin() + this->dim, simplex.end());
-		auto equation = solvePlaneEquation(simplex);
+		simplex.resize(this->dim);
+		auto equation = this->solvePlaneEquation(simplex);
 		for (unsigned i = 0; i < this->data_set_size; i++)
 			if (std::find(simplex.begin(), simplex.end(), i) == simplex.end() && utils::dot(this->inputData[i], equation) > 1)
 				outer_points.push_back(i);
-	} while (!outer_points.empty()); // Converge Hyperplane to Convex Hull
+		if (outer_points.empty()) // Converge Hyperplane to Convex Hull
+			break;
+	} 
 	double radius = 0;
 	std::vector<double> center;
 	for (short i = 0; i < this->data_set_size; i++) // BruteForce to Find last point for construction of simplex.
@@ -82,7 +81,7 @@ void helixPipe<nodeType>::cospherical_handler(std::vector<short> &simp, int &tp,
 		new_face.erase(std::find(new_face.begin(), new_face.end(), i));
 		if (simp == new_face)
 			continue;
-		auto new_point = expand_d_minus_1_simplex(new_face, i, distMatrix);
+		auto new_point = this->expand_d_minus_1_simplex(new_face, i, distMatrix);
 		if (new_point == -1)
 			continue;
 		new_face.push_back(new_point);
@@ -164,7 +163,7 @@ template <typename nodeType>
 short helixPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, short &omission, std::vector<std::vector<double>> &distMatrix)
 {
 	// Mandatory requirements
-	auto normal = solvePlaneEquation(simp);
+	auto normal = this->solvePlaneEquation(simp);
 	bool direction = utils::dot(normal, inputData[omission]) > 1;
 
 	// Modify search_space
@@ -250,10 +249,10 @@ short helixPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, sh
 #ifdef PARALLEL
 #pragma omp critical
 		{
-			// cospherical_handler(simp,triangulation_point,omission,distMatrix);
+			// this->cospherical_handler(simp,triangulation_point,omission,distMatrix);
 		}
 #else
-		// cospherical_handler(simp,triangulation_point,omission,distMatrix);
+		// this->cospherical_handler(simp,triangulation_point,omission,distMatrix);
 #endif
 		return -1;
 	}
@@ -261,7 +260,8 @@ short helixPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, sh
 }
 #endif
 
-void reduce(std::set<std::vector<short>> &outer_dsimplexes, std::vector<std::pair<std::vector<short>, short>> &inner_d_1_shell, std::vector<std::vector<short>> &dsimplexes)
+template <typename nodeType>
+void helixPipe<nodeType>::reduce(std::set<std::vector<short>> &outer_dsimplexes, std::vector<std::pair<std::vector<short>, short>> &inner_d_1_shell, std::vector<std::vector<short>> &dsimplexes)
 {
 	std::map<std::vector<short>, short> outer_d_1_shell;
 	for (auto &new_simplex : outer_dsimplexes)
@@ -295,16 +295,21 @@ template <typename nodeType>
 void helixPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 {
 	this->inputData = inData.inputData;
-	this->dim = this->inputData[0].size();
 	this->data_set_size = this->inputData.size();
+	if (!this->data_set_size)
+		return; // Empty inputData
+	this->dim = this->inputData.size() > 0 ? this->inputData[0].size() : 0;
+	if (this->data_set_size < this->dim + 2)
+		return; // Not enough points
+
 	this->search_space.resize(this->data_set_size);
 	std::iota(this->search_space.begin(), this->search_space.end(), 0);
 
-	this->dsimplexmesh = {first_simplex()};
+	this->dsimplexmesh = {this->first_simplex()};
 	short new_point;
 #ifdef PARALLEL
 	std::vector<std::pair<std::vector<short>, short>> inner_d_1_shell;
-	for (auto &new_simplex : dsimplexes)
+	for (auto &new_simplex : this->dsimplexmesh)
 	{
 		for (auto &i : new_simplex)
 		{
@@ -320,7 +325,7 @@ void helixPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		for (int i = 0; i < inner_d_1_shell.size(); i++)
 		{
 			auto iter = inner_d_1_shell[i];
-			new_point = expand_d_minus_1_simplex(iter.first, iter.second, inData.distMatrix);
+			new_point = this->expand_d_minus_1_simplex(iter.first, iter.second, inData.distMatrix);
 			if (new_point == -1)
 				continue;
 			iter.first.push_back(new_point);
@@ -330,7 +335,7 @@ void helixPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 				outer_dsimplexes.insert(iter.first);
 		}
 		std::cout << "Intermediate dsimplex size " << outer_dsimplexes.size() << std::endl;
-		reduce(outer_dsimplexes, inner_d_1_shell, this->dsimplexmesh);
+		this->reduce(outer_dsimplexes, inner_d_1_shell, this->dsimplexmesh);
 	}
 #else
 	std::map<std::vector<short>, short> inner_d_1_shell;
@@ -349,7 +354,7 @@ void helixPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		std::vector<short> first_vector = iter->first;
 		short omission = iter->second;
 		inner_d_1_shell.erase(iter);
-		new_point = expand_d_minus_1_simplex(first_vector, omission, inData.distMatrix);
+		new_point = this->expand_d_minus_1_simplex(first_vector, omission, inData.distMatrix);
 		if (new_point == -1)
 			continue;
 		first_vector.push_back(new_point);
@@ -414,7 +419,7 @@ void helixPipe<nodeType>::outputData(pipePacket<nodeType> &inData)
 			continue;
 		for (size_t i = 0; i < simplex.size() - 1; i++)
 			file << simplex[i] << ",";
-		file << simplex.back() << "\n"; 
+		file << simplex.back() << "\n";
 	}
 
 	file.close();
