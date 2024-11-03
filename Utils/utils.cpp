@@ -792,15 +792,7 @@ double utils::circumRadius(const std::set<unsigned> &simplex, const std::vector<
 		unsigned temp = 0;
 		for (auto j : simplex)
 		{
-			double distSquared;
-			if ((*distMatrix)[i][j] != 0)
-			{
-				distSquared = pow((*distMatrix)[i][j], 2);
-			}
-			else
-			{
-				distSquared = pow((*distMatrix)[j][i], 2);
-			}
+			double distSquared = pow(((*distMatrix)[i][j] != 0) ? (*distMatrix)[i][j] : (*distMatrix)[j][i], 2);
 			matA(ii, temp) = distSquared;
 			matACap(ii + 1, temp + 1) = distSquared;
 			temp++;
@@ -866,7 +858,7 @@ double utils::circumRadius(const std::vector<short> &simplex, const std::vector<
 	Eigen::MatrixXd matACap(n + 1, n + 1);
 	for (unsigned i = 0; i < n; ++i)
 		for (unsigned j = 0; j < n; ++j)
-			matA(i, j) = simplex[i] <= simplex[j] ? distMatrix[simplex[i]][simplex[j]] : distMatrix[simplex[j]][simplex[i]];
+			matA(i, j) = pow(simplex[i] <= simplex[j] ? distMatrix[simplex[i]][simplex[j]] : distMatrix[simplex[j]][simplex[i]], 2);
 	matACap.block(1, 1, n, n) = matA;
 	matACap.col(0).setConstant(1);
 	matACap.row(0).setConstant(1);
@@ -1313,8 +1305,6 @@ std::set<unsigned> utils::setXOR(const std::set<unsigned> &setA, const std::set<
  */
 double utils::vectors_distance(const std::vector<double> &a, const std::vector<double> &b)
 {
-	std::vector<double> temp;
-
 	if (b.size() == 0)
 		return 0;
 
@@ -1916,3 +1906,8 @@ bool utils::isSubset(std::vector<unsigned> A, std::vector<unsigned> B)
 	std::sort(B.begin(), B.end());
 	return std::includes(A.begin(), A.end(), B.begin(), B.end());
 }
+
+template <typename T>
+inline T utils::dot(const std::vector<T> &a, const std::vector<T> &b) { return std::inner_product(a.begin(), a.end(), b.begin(), static_cast<T>(0)); }
+
+template double utils::dot<double>(const std::vector<double> &a, const std::vector<double> &);

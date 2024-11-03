@@ -24,7 +24,7 @@ std::vector<std::vector<unsigned>> qdelaunay_o(std::vector<std::vector<double>> 
   std::vector<T::Point> points;
   unsigned index = 0;
   std::map<T::Point, unsigned> index_of_vertex;
-  for (auto& i : inputData)
+  for (auto &i : inputData)
   {
     T::Point p(i.begin(), i.end());
     points.push_back(p);
@@ -47,9 +47,8 @@ std::vector<std::vector<unsigned>> qdelaunay_o(std::vector<std::vector<double>> 
 template <typename nodeType>
 void delaunayPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 {
-  std::vector<std::vector<unsigned>> dsimplexes = qdelaunay_o(inData.inputData);
-  ((alphaComplex<alphaNode> *)inData.complex)->dsimplexmesh = dsimplexes;
-  ((alphaComplex<nodeType> *)inData.complex)->buildAlphaComplex(dsimplexes, inData.inputData.size(), inData.inputData);
+  ((alphaComplex<alphaNode> *)inData.complex)->dsimplexmesh = qdelaunay_o(inData.inputData);
+  ((alphaComplex<nodeType> *)inData.complex)->buildAlphaComplex(inData.complex->dsimplexmesh, inData.inputData.size(), inData.inputData);
   return;
 }
 
@@ -83,7 +82,15 @@ void delaunayPipe<nodeType>::outputData(pipePacket<nodeType> &inData)
   std::ofstream file;
   file.open("output/" + this->pipeType + "_output.csv");
   // code to print the data
-
+  for (const auto &simplex : inData.complex->dsimplexmesh)
+  {
+    if (simplex.empty())
+      continue;
+    for (size_t i = 0; i < simplex.size() - 1; i++)
+      file << simplex[i] << ",";
+    file << simplex.back() << "\n";
+  }
+  
   file.close();
   return;
 }
