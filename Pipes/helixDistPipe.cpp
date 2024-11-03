@@ -79,7 +79,7 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		initial_dsimplexes.clear();
 		if (inner_d_1_shell.empty())
 			return;
-		//writeOutput::writeBinary(inner_d_1_shell, "input/1.dat");
+		writeOutput::writeBinary(inner_d_1_shell, "input/1.dat");
 	}
 
 	// Restrict other processes from proceeding until serial task is completed

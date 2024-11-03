@@ -216,6 +216,44 @@ void writeOutput::writeBinary(const std::map<std::vector<short>, short> &data, c
 }
 
 /**
+ * @brief 
+ * 
+ * @param data 
+ * @param filename 
+ */
+void writeOutput::writeBinary(const std::vector<std::pair<std::vector<short>, short>> &data, const std::string &filename)
+{
+	if (data.empty())
+		return;
+	std::ofstream file(filename, std::ios::out | std::ios::binary);
+
+	if (!file.is_open())
+	{
+		std::cerr << "Failed to open the file for writing." << std::endl;
+		return;
+	}
+
+	// Write the size of the map
+	const size_t mapSize = data.size();
+	const size_t vectorSize = data.begin()->first.size();
+
+	// Write the size of the map and vector
+	file.write(reinterpret_cast<const char *>(&mapSize), sizeof(mapSize));
+	file.write(reinterpret_cast<const char *>(&vectorSize), sizeof(vectorSize));
+
+	// Iterate through the map and write each key-value pair
+	for (const auto &entry : data)
+	{
+		// Write the vector elements
+		file.write(reinterpret_cast<const char *>(entry.first.data()), vectorSize * sizeof(short));
+		// Write the short value associated with the vector
+		file.write(reinterpret_cast<const char *>(&entry.second), sizeof(short));
+	}
+
+	file.close();
+}
+
+/**
  * @brief
  *
  * @param data
