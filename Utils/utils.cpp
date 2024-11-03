@@ -1313,8 +1313,6 @@ std::set<unsigned> utils::setXOR(const std::set<unsigned> &setA, const std::set<
  */
 double utils::vectors_distance(const std::vector<double> &a, const std::vector<double> &b)
 {
-	std::vector<double> temp;
-
 	if (b.size() == 0)
 		return 0;
 
