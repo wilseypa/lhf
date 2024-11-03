@@ -6,7 +6,24 @@
 #include <chrono>
 #include <execution>
 #include <fstream>
-#define PARALLEL
+#include <ranges>
+// #define PARALLEL
+
+template <typename T>
+std::ostream &operator<<(std::ostream &os, const std::vector<T> &vec)
+{
+	os << "[";
+	for (size_t i = 0; i < vec.size(); ++i)
+	{
+		os << vec[i];
+		if (i < vec.size() - 1)
+		{
+			os << ", ";
+		}
+	}
+	os << "]";
+	return os;
+}
 
 template <typename T>
 T dot(const std::vector<T> &a, const std::vector<T> &b) { return std::inner_product(a.begin(), a.end(), b.begin(), static_cast<T>(0)); } // Dot product of two vectors
@@ -93,6 +110,7 @@ void helixPipe<nodeType>::cospherical_handler(std::vector<short> &simp, int &tp,
 	}
 }
 
+#if 1
 // Compute the P_newpoint for provided Facet, P_context Pair
 template <typename nodeType>
 int helixPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, short &omission, std::vector<std::vector<double>> &distMatrix)
@@ -159,6 +177,111 @@ int helixPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, shor
 	return triangulation_point;
 }
 
+#else
+// Compute the P_newpoint for provided Facet, P_context Pair
+template <typename nodeType>
+int helixPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, short &omission, std::vector<std::vector<double>> &distMatrix)
+{
+	// Mandatory requirements
+	auto normal = solvePlaneEquation(simp);
+	bool direction = dot(normal, inputData[omission]) > 1;
+
+	// Modify search_space
+	std::vector<bool> active_points(this->data_set_size, true);
+	active_points[omission] = false;
+	for (const auto &point : simp)
+		active_points[point] = false;
+
+	bool onConvexHull = false;
+
+	// Filter points opposite to hyperplane
+	for (size_t idx = 0; idx < active_points.size(); ++idx)
+	{
+		active_points[idx] = active_points[idx] && (direction ^ (dot(normal, inputData[idx]) > 1));
+		onConvexHull |= active_points[idx];
+	}
+	if (!onConvexHull)
+		return -1;
+
+	// Default values
+	short triangulation_point = -1;
+	// Calculate the circumcenter of the facet
+	auto center = utils::circumCenter(simp, inputData);
+
+	std::vector<double> dist_vec;
+	dist_vec.reserve(this->data_set_size);
+
+	for (size_t idx = 0; idx < active_points.size(); ++idx)
+		dist_vec.push_back(active_points[idx] ? utils::vectors_distance(center, inputData[idx]) : std::numeric_limits<double>::infinity());
+
+	auto ring_radius = utils::vectors_distance(center, this->inputData[simp[0]]);
+
+	// Check for any distances less than the distance to the first simplex point
+	if (std::find_if(dist_vec.begin(), dist_vec.end(), [&](double distance)
+					 { return distance < ring_radius; }) == dist_vec.end())
+	{
+		// Search outside space with smallest circumradius
+		double smallest_radius = std::numeric_limits<double>::max() / 2;
+		for (size_t idx = 0; idx < active_points.size(); ++idx)
+		{
+			if (active_points[idx] && dist_vec[idx] > ring_radius && dist_vec[idx] < 2 * smallest_radius)
+			{
+				simp.push_back(idx);
+				auto temp_radius = utils::circumRadius(simp, distMatrix);
+				dist_vec[idx] = (temp_radius >= 0) ? sqrt(temp_radius) : utils::vectors_distance(utils::circumCenter(simp, this->inputData), this->inputData[idx]);
+				simp.pop_back();
+				if (smallest_radius > dist_vec[idx])
+				{
+					smallest_radius = dist_vec[idx];
+					triangulation_point = idx;
+				}
+			}
+			else
+				dist_vec[idx] = 0;
+		}
+	}
+	else
+	{
+		// Search inside space with largest circumradius
+		double largest_radius = 0;
+		for (size_t idx = 0; idx < active_points.size(); ++idx)
+		{
+			if (active_points[idx] && dist_vec[idx] < ring_radius)
+			{
+				simp.push_back(idx);
+				auto temp_radius = utils::circumRadius(simp, distMatrix);
+				dist_vec[idx] = (temp_radius >= 0) ? sqrt(temp_radius) : utils::vectors_distance(utils::circumCenter(simp, this->inputData), this->inputData[idx]);
+				simp.pop_back();
+				if (largest_radius < dist_vec[idx])
+				{
+					largest_radius = dist_vec[idx];
+					triangulation_point = idx;
+				}
+			}
+			else
+				dist_vec[idx] = 0;
+		}
+	}
+	double triangulation_radius = dist_vec[triangulation_point];
+	int count = std::count_if(dist_vec.begin(), dist_vec.end(), [triangulation_radius](double val)
+							  { return std::abs(1 - (val / triangulation_radius)) <= 0.000000000001; });
+	if (count != 1)
+	{
+		std::cout << "Cospherical Region Found at triangulation radius " << triangulation_radius << std::endl;
+#ifdef PARALLEL
+#pragma omp critical
+		{
+			// cospherical_handler(simp,triangulation_point,omission,distMatrix);
+		}
+#else
+		// cospherical_handler(simp,triangulation_point,omission,distMatrix);
+#endif
+		return -1;
+	}
+	return triangulation_point;
+}
+#endif
+
 void reduce(std::set<std::vector<short>> &outer_dsimplexes, std::vector<std::pair<std::vector<short>, short>> &inner_d_1_shell, std::vector<std::vector<short>> &dsimplexes)
 {
 	std::map<std::vector<short>, short> outer_d_1_shell;
@@ -199,10 +322,9 @@ void helixPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	std::iota(this->search_space.begin(), this->search_space.end(), 0);
 
 	this->dsimplexes = {first_simplex()};
-
+	short new_point;
 #ifdef PARALLEL
 	std::vector<std::pair<std::vector<short>, short>> inner_d_1_shell;
-	short new_point;
 	for (auto &new_simplex : dsimplexes)
 	{
 		for (auto &i : new_simplex)
@@ -239,15 +361,15 @@ void helixPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		{
 			std::vector<short> key = new_simplex;
 			key.erase(std::find(key.begin(), key.end(), i));
-			this->inner_d_1_shell.emplace(key, i);
+			inner_d_1_shell.emplace(key, i);
 		}
 	}
-	while (!this->inner_d_1_shell.empty())
+	while (!inner_d_1_shell.empty())
 	{
-		auto iter = this->inner_d_1_shell.begin();
+		auto iter = inner_d_1_shell.begin();
 		std::vector<short> first_vector = iter->first;
 		short omission = iter->second;
-		this->inner_d_1_shell.erase(iter);
+		inner_d_1_shell.erase(iter);
 		new_point = expand_d_minus_1_simplex(first_vector, omission, inData.distMatrix);
 		if (new_point == -1)
 			continue;
@@ -260,9 +382,9 @@ void helixPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 				continue;
 			std::vector<short> key = first_vector;
 			key.erase(std::find(key.begin(), key.end(), i));
-			auto temp = this->inner_d_1_shell.emplace(key, i);
+			auto temp = inner_d_1_shell.emplace(key, i);
 			if (!temp.second)
-				this->inner_d_1_shell.erase(temp.first); // Create new shell and remove collided faces max only 2 can occur.
+				inner_d_1_shell.erase(temp.first); // Create new shell and remove collided faces max only 2 can occur.
 		}
 	}
 #endif
