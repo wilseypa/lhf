@@ -365,6 +365,41 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	return;
 }
 
+// configPipe -> configure the function settings of this pipeline segment
+template <typename nodeType>
+bool helixDistPipe<nodeType>::configPipe(std::map<std::string, std::string> &configMap)
+{
+	std::string strDebug;
+
+	auto pipe = configMap.find("debug");
+	if (pipe != configMap.end())
+	{
+		this->debug = std::atoi(configMap["debug"].c_str());
+		strDebug = configMap["debug"];
+	}
+	pipe = configMap.find("outputFile");
+	if (pipe != configMap.end())
+		this->outputFile = configMap["outputFile"].c_str();
+
+	this->ut = utils(strDebug, this->outputFile);
+
+	this->configured = true;
+	this->ut.writeDebug("helixPipe", "Configured with parameters { eps: " + configMap["epsilon"] + " , debug: " + strDebug + ", outputFile: " + this->outputFile + " }");
+
+	return true;
+}
+// outputData -> used for tracking each stage of the pipeline's data output without runtime
+template <typename nodeType>
+void helixDistPipe<nodeType>::outputData(pipePacket<nodeType> &inData)
+{
+	std::ofstream file;
+	file.open("output/" + this->pipeType + "_output.csv");
+	// code to print the data
+
+	file.close();
+	return;
+}
+
 template class helixDistPipe<simplexNode>;
 template class helixDistPipe<alphaNode>;
 template class helixDistPipe<witnessNode>;

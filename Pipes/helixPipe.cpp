@@ -18,8 +18,7 @@ std::vector<double> helixPipe<nodeType>::solvePlaneEquation(const std::vector<sh
 	int numPoints = points.size();
 	Eigen::MatrixXd A(numPoints, numPoints);
 	for (int i = 0; i < numPoints; i++)
-		for (int j = 0; j < numPoints; j++)
-			A(i, j) = inputData[points[i]][j];
+		A.row(i) = Eigen::Map<Eigen::VectorXd>(this->inputData[points[i]].data(), numPoints);
 	Eigen::VectorXd coefficients = A.completeOrthogonalDecomposition().solve(Eigen::VectorXd::Ones(numPoints));
 	return std::vector<double>(coefficients.data(), coefficients.data() + coefficients.size());
 }
@@ -102,21 +101,21 @@ int helixPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, shor
 	auto p1 = utils::circumCenter(simp, this->inputData);
 	bool direction = (dot(normal, this->inputData[omission]) > 1);
 	std::vector<double> radius_vec(this->data_set_size, 0);
-	double largest_radius = 0, smallest_radius = std::numeric_limits<double>::max() / 2, ring_radius = utils::vectors_distance(p1, inputData[simp[0]]);
+	double largest_radius = 0, smallest_radius = std::numeric_limits<double>::max() / 2, ring_radius = utils::vectors_distance(p1, this->inputData[simp[0]]);
 	int triangulation_point = -1;
 	bool flag = true;
 	std::set<short> simplex(simp.begin(), simp.end());
 	simplex.insert(omission);
 	for (auto &new_point : this->search_space)
 	{
-		if (simplex.find(new_point) == simplex.end() && (direction ^ dot(normal, inputData[new_point]) > 1))
+		if (simplex.find(new_point) == simplex.end() && (direction ^ dot(normal, this->inputData[new_point]) > 1))
 		{
 			simp.push_back(new_point);
-			auto temp = utils::vectors_distance(p1, inputData[new_point]);
+			auto temp = utils::vectors_distance(p1, this->inputData[new_point]);
 			if (ring_radius > temp)
 			{
 				auto temp_radius = utils::circumRadius(simp, distMatrix);
-				radius_vec[new_point] = (temp_radius >= 0) ? sqrt(temp_radius) : utils::vectors_distance(utils::circumCenter(simp, this->inputData), inputData[new_point]);
+				radius_vec[new_point] = (temp_radius >= 0) ? sqrt(temp_radius) : utils::vectors_distance(utils::circumCenter(simp, this->inputData), this->inputData[new_point]);
 				if (largest_radius < radius_vec[new_point])
 				{
 					largest_radius = radius_vec[new_point];
@@ -127,7 +126,7 @@ int helixPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, shor
 			else if (flag && 2 * smallest_radius > temp) // reduce search space
 			{
 				auto temp_radius = utils::circumRadius(simp, distMatrix);
-				radius_vec[new_point] = (temp_radius >= 0) ? sqrt(temp_radius) : utils::vectors_distance(utils::circumCenter(simp, this->inputData), inputData[new_point]);
+				radius_vec[new_point] = (temp_radius >= 0) ? sqrt(temp_radius) : utils::vectors_distance(utils::circumCenter(simp, this->inputData), this->inputData[new_point]);
 				if (smallest_radius > radius_vec[new_point])
 				{
 					smallest_radius = radius_vec[new_point];
@@ -145,18 +144,14 @@ int helixPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, shor
 							  { return std::abs(1 - (val / triangulation_radius)) <= 0.000000000001; });
 		if (count != 1)
 		{
+			std::cout << "Triangulation radius is " << triangulation_radius << std::endl;
 #ifdef PARALLEL
-			{
-				std::cout << "Triangulation radius is " << triangulation_radius << std::endl;
 #pragma omp critical
-				{
-					// cospherical_handler(simp,triangulation_point,omission,distMatrix);
-				}
-			}
-#else
 			{
 				// cospherical_handler(simp,triangulation_point,omission,distMatrix);
 			}
+#else
+			// cospherical_handler(simp,triangulation_point,omission,distMatrix);
 #endif
 			return -1;
 		}
@@ -169,7 +164,7 @@ void reduce(std::set<std::vector<short>> &outer_dsimplexes, std::vector<std::pai
 	std::map<std::vector<short>, short> outer_d_1_shell;
 	for (auto &new_simplex : outer_dsimplexes)
 	{
-		// dsimplexes.insert(new_simplex);
+		dsimplexes.emplace_back(new_simplex);
 		for (short i = 0; i < new_simplex.size(); i++)
 		{
 			std::vector<short> key = new_simplex;
@@ -198,87 +193,86 @@ template <typename nodeType>
 void helixPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 {
 	this->inputData = inData.inputData;
-	this->dim = inputData[0].size();
-	this->data_set_size = inputData.size();
-	for (unsigned i = 0; i < inputData.size(); i++)
-		this->search_space.push_back(i);
+	this->dim = this->inputData[0].size();
+	this->data_set_size = this->inputData.size();
+	this->search_space.resize(this->data_set_size);
+	std::iota(this->search_space.begin(), this->search_space.end(), 0);
+
 	this->dsimplexes = {first_simplex()};
-	short new_point;
+
 #ifdef PARALLEL
+	std::vector<std::pair<std::vector<short>, short>> inner_d_1_shell;
+	short new_point;
+	for (auto &new_simplex : dsimplexes)
 	{
-		std::vector<std::pair<std::vector<short>, short>> inner_d_1_shell;
-		std::set<std::vector<short>> outer_dsimplexes;
-		for (auto &new_simplex : dsimplexes)
+		for (auto &i : new_simplex)
 		{
-			for (auto &i : new_simplex)
-			{
-				std::vector<short> key = new_simplex;
-				key.erase(std::find(key.begin(), key.end(), i));
-				inner_d_1_shell.push_back(std::make_pair(key, i));
-			}
-		}
-		while (inner_d_1_shell.size() != 0)
-		{
-#pragma omp parallel for private(new_point)
-			for (int i = 0; i < inner_d_1_shell.size(); i++)
-			{
-				auto iter = inner_d_1_shell[i];
-				new_point = expand_d_minus_1_simplex(iter.first, iter.second, inData.distMatrix);
-				if (new_point == -1)
-					continue;
-				iter.first.push_back(new_point);
-				std::sort(iter.first.begin(), iter.first.end());
-				if (outer_dsimplexes.find(iter.first) == outer_dsimplexes.end())
-#pragma omp critical
-					outer_dsimplexes.insert(iter.first);
-			}
-			std::cout << "Intermediate dsimplex size " << outer_dsimplexes.size() << std::endl;
-			reduce(outer_dsimplexes, inner_d_1_shell, this->dsimplexes);
+			std::vector<short> key = new_simplex;
+			key.erase(std::find(key.begin(), key.end(), i));
+			inner_d_1_shell.push_back(std::make_pair(key, i));
 		}
 	}
-#else
+	std::set<std::vector<short>> outer_dsimplexes;
+	while (inner_d_1_shell.size() != 0)
 	{
-		for (auto &new_simplex : this->dsimplexes)
+#pragma omp parallel for private(new_point)
+		for (int i = 0; i < inner_d_1_shell.size(); i++)
 		{
-			for (auto &i : new_simplex)
-			{
-				std::vector<short> key = new_simplex;
-				key.erase(std::find(key.begin(), key.end(), i));
-				this->inner_d_1_shell.emplace(key, i);
-			}
-		}
-		while (!this->inner_d_1_shell.empty())
-		{
-			auto iter = this->inner_d_1_shell.begin();
-			std::vector<short> first_vector = iter->first;
-			short omission = iter->second;
-			this->inner_d_1_shell.erase(iter);
-			new_point = expand_d_minus_1_simplex(first_vector, omission, inData.distMatrix);
+			auto iter = inner_d_1_shell[i];
+			new_point = expand_d_minus_1_simplex(iter.first, iter.second, inData.distMatrix);
 			if (new_point == -1)
 				continue;
-			first_vector.push_back(new_point);
-			std::sort(first_vector.begin(), first_vector.end());
-			this->dsimplexes.push_back(first_vector);
-			for (auto &i : first_vector)
-			{
-				if (i == new_point)
-					continue;
-				std::vector<short> key = first_vector;
-				key.erase(std::find(key.begin(), key.end(), i));
-				auto temp = this->inner_d_1_shell.emplace(key, i);
-				if (!temp.second)
-					this->inner_d_1_shell.erase(temp.first); // Create new shell and remove collided faces max only 2 can occur.
-			}
+			iter.first.push_back(new_point);
+			std::sort(iter.first.begin(), iter.first.end());
+			if (outer_dsimplexes.find(iter.first) == outer_dsimplexes.end())
+#pragma omp critical
+				outer_dsimplexes.insert(iter.first);
+		}
+		std::cout << "Intermediate dsimplex size " << outer_dsimplexes.size() << std::endl;
+		reduce(outer_dsimplexes, inner_d_1_shell, this->dsimplexes);
+	}
+#else
+	std::map<std::vector<short>, short> inner_d_1_shell;
+	for (auto &new_simplex : this->dsimplexes)
+	{
+		for (auto &i : new_simplex)
+		{
+			std::vector<short> key = new_simplex;
+			key.erase(std::find(key.begin(), key.end(), i));
+			this->inner_d_1_shell.emplace(key, i);
+		}
+	}
+	while (!this->inner_d_1_shell.empty())
+	{
+		auto iter = this->inner_d_1_shell.begin();
+		std::vector<short> first_vector = iter->first;
+		short omission = iter->second;
+		this->inner_d_1_shell.erase(iter);
+		new_point = expand_d_minus_1_simplex(first_vector, omission, inData.distMatrix);
+		if (new_point == -1)
+			continue;
+		first_vector.push_back(new_point);
+		std::sort(first_vector.begin(), first_vector.end());
+		this->dsimplexes.push_back(first_vector);
+		for (auto &i : first_vector)
+		{
+			if (i == new_point)
+				continue;
+			std::vector<short> key = first_vector;
+			key.erase(std::find(key.begin(), key.end(), i));
+			auto temp = this->inner_d_1_shell.emplace(key, i);
+			if (!temp.second)
+				this->inner_d_1_shell.erase(temp.first); // Create new shell and remove collided faces max only 2 can occur.
 		}
 	}
 #endif
-	std::cout << dsimplexes.size() << std::endl;
+	std::cout << this->dsimplexes.size() << std::endl;
 	return;
 }
 
 // basePipe constructor
 template <typename nodeType>
-helixPipe<nodeType>::helixPipe() : inputData(*(new std::vector<std::vector<double>>()))
+helixPipe<nodeType>::helixPipe()
 {
 	this->pipeType = "helixPipe";
 	return;

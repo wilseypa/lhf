@@ -7,8 +7,7 @@
 template <typename nodeType> 
 class helixPipe : public basePipe<nodeType> {
   private:
-  	std::vector<std::vector<double>>& inputData;
-    std::map<std::vector<short>, short> inner_d_1_shell;
+  	std::vector<std::vector<double>> inputData;
     std::vector<std::vector<short>> dsimplexes;
     std::set<std::vector<short>> spherical_dsimplexes;
     std::vector<short> search_space;
