@@ -13,7 +13,7 @@
 #define WRITE_CSV_OUTPUTS
 
 template <typename nodeType>
-helixDistPipe<nodeType>::helixDistPipe() : dim(0), data_set_size(0)
+helixDistPipe<nodeType>::helixDistPipe()
 {
 	this->pipeType = "helixDistPipe";
 	return;
@@ -23,12 +23,15 @@ helixDistPipe<nodeType>::helixDistPipe() : dim(0), data_set_size(0)
 template <typename nodeType>
 void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 {
-	inputData = inData.inputData;
-	distMatrix = inData.distMatrix;
-	dim = inputData.size() > 0 ? inputData[0].size() : 0;
-	data_set_size = inputData.size();
-	for (unsigned i = 0; i < inputData.size(); i++)
-		this->search_space.insert(i);
+	this->inputData = inData.inputData;
+	this->data_set_size = this->inputData.size();
+	if (!this->data_set_size)
+		return; // Empty inputData
+	this->dim = this->inputData.size() > 0 ? this->inputData[0].size() : 0;
+	if (this->data_set_size < this->dim + 2)
+		return; // Not enough points
+	this->search_space.resize(this->data_set_size);
+	std::iota(this->search_space.begin(), this->search_space.end(), 0);
 
 	int numProcesses, rank;
 	MPI_Comm_size(MPI_COMM_WORLD, &numProcesses);
@@ -62,7 +65,7 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 			for (auto &[facet, point] : inner_d_1_shell)
 			{
 				std::vector<short> first_vector = facet;
-				short new_point = this->expand_d_minus_1_simplex(first_vector, point, distMatrix);
+				short new_point = this->expand_d_minus_1_simplex(first_vector, point, inData.distMatrix);
 				if (new_point == -1)
 					continue;
 				first_vector.push_back(new_point);
@@ -99,7 +102,7 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 			std::vector<short> first_vector = iter->first;
 			short omission = iter->second;
 			local_d_1_shell_map.erase(iter);
-			short new_point = this->expand_d_minus_1_simplex(first_vector, omission, distMatrix);
+			short new_point = this->expand_d_minus_1_simplex(first_vector, omission, inData.distMatrix);
 			if (new_point == -1)
 				continue;
 			first_vector.insert(std::lower_bound(first_vector.begin(), first_vector.end(), new_point), new_point);
