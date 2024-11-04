@@ -42,7 +42,7 @@ std::vector<short> helixPipe<nodeType>::first_simplex()
 				outer_points.push_back(i);
 		if (outer_points.empty()) // Converge Hyperplane to Convex Hull
 			break;
-	} 
+	}
 	double radius = 0;
 	std::vector<double> center;
 	for (short i = 0; i < this->data_set_size; i++) // BruteForce to Find last point for construction of simplex.
