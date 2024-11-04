@@ -51,4 +51,5 @@ public:
     MultiFile(const std::string &directory);
     void compressMap(const std::string &outputFileName, int iterationCounter);
     size_t writeCSV(const std::string &outputFileName);
+    void loadAggregateData(std::vector<std::vector<unsigned>>& mat);
 };
