@@ -10,13 +10,24 @@
 #include <filesystem>
 #include <mpi.h>
 
-#define WRITE_CSV_OUTPUTS
-
 template <typename nodeType>
 helixDistPipe<nodeType>::helixDistPipe()
 {
 	this->pipeType = "helixDistPipe";
 	return;
+}
+
+template <typename nodeType>
+helixDistPipe<nodeType>::~helixDistPipe()
+{
+	int rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	if (rank == 0)
+	{
+		const std::vector<std::string> directories = {".output", ".intermediate", ".input"};
+		for (const auto &dir : directories)
+			std::filesystem::exists(dir) && std::filesystem::remove_all(dir);
+	}
 }
 
 // run -> Run the configured functions of this line segment
@@ -42,10 +53,10 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	{
 		// Refresh the directories
 		std::clog << "MPI configured with " << numProcesses << " processes" << std::endl;
-		std::filesystem::exists("output") && std::filesystem::remove_all("output");
-		std::filesystem::exists("intermediate") && std::filesystem::remove_all("intermediate");
-		std::filesystem::exists("input") && std::filesystem::remove_all("input");
-		std::filesystem::create_directory("output") && std::filesystem::create_directory("intermediate") && std::filesystem::create_directory("input");
+		std::filesystem::exists(".output") && std::filesystem::remove_all(".output");
+		std::filesystem::exists(".intermediate") && std::filesystem::remove_all(".intermediate");
+		std::filesystem::exists(".input") && std::filesystem::remove_all(".input");
+		std::filesystem::create_directory(".output") && std::filesystem::create_directory(".intermediate") && std::filesystem::create_directory(".input");
 		// Perform initial iteration normally
 		std::vector<std::vector<short>> initial_dsimplexes = {this->first_simplex()};
 		std::vector<std::pair<std::vector<short>, short>> inner_d_1_shell;
@@ -75,14 +86,14 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 			this->reduce(outer_dsimplexes, inner_d_1_shell, initial_dsimplexes);
 		}
 		std::clog << "Iter 0 on process " << rank << " Found " << initial_dsimplexes.size() << " dsimplexes" << std::endl;
-#ifdef WRITE_CSV_OUTPUTS
+
 		std::sort(initial_dsimplexes.begin(), initial_dsimplexes.end());
-		writeOutput::writeBinary(initial_dsimplexes, "output/0_0.bin");
-#endif
+		writeOutput::writeBinary(initial_dsimplexes, ".output/0_0.bin");
+
 		initial_dsimplexes.clear();
 		if (inner_d_1_shell.empty())
 			return;
-		writeOutput::writeBinary(inner_d_1_shell, "input/1.dat");
+		writeOutput::writeBinary(inner_d_1_shell, ".input/1.dat");
 	}
 
 	// Restrict other processes from proceeding until serial task is completed
@@ -92,7 +103,7 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	int iter_counter = 1;
 	while (true)
 	{
-		std::map<std::vector<short>, short> local_d_1_shell_map = readInput::readBinaryMap("input/" + std::to_string(iter_counter) + ".dat", numProcesses, rank);
+		std::map<std::vector<short>, short> local_d_1_shell_map = readInput::readBinaryMap(".input/" + std::to_string(iter_counter) + ".dat", numProcesses, rank);
 		if (local_d_1_shell_map.empty())
 			break;
 		std::vector<std::vector<short>> local_dsimplexes_output;
@@ -118,13 +129,12 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		std::clog << "Iter " << iter_counter << " on process " << rank << " Found " << local_dsimplexes_output.size() << " dsimplexes" << std::endl;
 		// Commit dsimplexes to file
 
-#ifdef WRITE_CSV_OUTPUTS
 		if (!local_dsimplexes_output.empty())
 		{
 			std::sort(local_dsimplexes_output.begin(), local_dsimplexes_output.end());
-			writeOutput::writeBinary(local_dsimplexes_output, "output/" + std::to_string(iter_counter) + "_" + std::to_string(rank) + ".bin");
+			writeOutput::writeBinary(local_dsimplexes_output, ".output/" + std::to_string(iter_counter) + "_" + std::to_string(rank) + ".bin");
 		}
-#endif
+
 		// Compute facets from current layer and store to intermediate file
 		std::map<std::vector<short>, short> outer_d_1_shell;
 		for (auto &new_simplex : local_dsimplexes_output)
@@ -138,7 +148,7 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 			}
 		}
 		local_dsimplexes_output.clear();
-		writeOutput::writeBinary(outer_d_1_shell, "intermediate/" + std::to_string(rank) + ".dat");
+		writeOutput::writeBinary(outer_d_1_shell, ".intermediate/" + std::to_string(rank) + ".dat");
 		outer_d_1_shell.clear();
 
 		// Wait for all process to commit facets
@@ -147,22 +157,19 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		if (rank == 0)
 		{
 			// Perform custom multifile sort on the intermediate simplexes also remove duplicate entries
-			MultiFile<MapBinaryFile, std::pair<std::vector<short>, short>> facets("intermediate");
-			facets.compressMap("input/" + std::to_string(iter_counter + 1) + ".dat", iter_counter);
+			MultiFile<MapBinaryFile, std::pair<std::vector<short>, short>> facets(".intermediate");
+			facets.compressMap(".input/" + std::to_string(iter_counter + 1) + ".dat", iter_counter);
 		}
 
 		MPI_Barrier(MPI_COMM_WORLD);
-		std::filesystem::remove("intermediate/" + std::to_string(rank) + ".dat");
+		std::filesystem::remove(".intermediate/" + std::to_string(rank) + ".dat");
 		iter_counter++;
 	}
-#ifdef WRITE_CSV_OUTPUTS
 	if (rank == 0)
 	{
-		MultiFile<VectorBinaryFile, std::vector<short>> dsimplexes("output");
-		std::clog << "Found " << dsimplexes.writeCSV("dsimplexes.csv") << " dsimplexes for datset" << std::endl;
+		MultiFile<VectorBinaryFile, std::vector<short>> dsimplexes(".output");
+		dsimplexes.loadAggregateData(inData.complex->dsimplexmesh);
 	}
-#endif
-
 	return;
 }
 
@@ -193,11 +200,23 @@ bool helixDistPipe<nodeType>::configPipe(std::map<std::string, std::string> &con
 template <typename nodeType>
 void helixDistPipe<nodeType>::outputData(pipePacket<nodeType> &inData)
 {
-	std::ofstream file;
-	file.open("output/" + this->pipeType + "_output.csv");
-	// code to print the data
+	int rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	if (rank == 0)
+	{
+		std::ofstream file;
+		file.open("output/" + this->pipeType + "_output.csv");
+		for (const auto &simplex : inData.complex->dsimplexmesh)
+		{
+			if (simplex.empty())
+				continue;
+			for (size_t i = 0; i < simplex.size() - 1; i++)
+				file << simplex[i] << ",";
+			file << simplex.back() << "\n";
+		}
 
-	file.close();
+		file.close();
+	}
 	return;
 }
 

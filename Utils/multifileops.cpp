@@ -182,7 +182,7 @@ bool MultiFile<FileType, baseType>::readValue()
  * @return false
  */
 template <>
-bool MultiFile<MapBinaryFile, std::pair<std::vector<short>,short>>::readUnique()
+bool MultiFile<MapBinaryFile, std::pair<std::vector<short>, short>>::readUnique()
 {
     while (readValue())
     {
@@ -234,7 +234,7 @@ void MultiFile<MapBinaryFile, std::pair<std::vector<short>, short>>::compressMap
     std::ofstream outputFile(outputFileName, std::ios::out | std::ios::binary);
 
     // Read from the previous iteration's data file
-    MapBinaryFile previousReader("input/" + std::to_string(iterationCounter) + ".dat");
+    MapBinaryFile previousReader(".input/" + std::to_string(iterationCounter) + ".dat");
 
     // Initialize variables for map size and vector size
     size_t mapSize = 0, vectorSize = previousReader.cache.first.size();
@@ -266,7 +266,7 @@ void MultiFile<MapBinaryFile, std::pair<std::vector<short>, short>>::compressMap
 
     // Close the file streams and remove the previous iteration's data file
     previousReader.fileStream.close();
-    std::filesystem::remove("input/" + std::to_string(iterationCounter) + ".dat");
+    std::filesystem::remove(".input/" + std::to_string(iterationCounter) + ".dat");
 };
 
 /**
@@ -296,6 +296,28 @@ size_t MultiFile<VectorBinaryFile, std::vector<short>>::writeCSV(const std::stri
     }
     outputFile.close();
     return size;
+};
+
+/**
+ * @brief
+ *
+ * @tparam
+ * @param mat
+ */
+template <>
+void MultiFile<VectorBinaryFile, std::vector<short>>::loadAggregateData(std::vector<std::vector<unsigned>> &mat)
+{
+    size_t size = 0;
+    while (readValue())
+    {
+        for (auto it = fileDataMap.begin(); it != fileDataMap.end(); ++it)
+        {
+            if (curr_element == it->cache && !it->updateCache())
+                fileDataMap.erase(it--);
+        }
+        mat.push_back({curr_element.begin(), curr_element.end()});
+    }
+    return;
 };
 
 template class MultiFile<MapBinaryFile, std::pair<std::vector<short>, short>>;
