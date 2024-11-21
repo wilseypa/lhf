@@ -10,33 +10,30 @@ from time import process_time
 import numpy as np
 import os
 
-        
-        
+
 class bettiTable(ctypes.Structure):
-    
+
     """
     This structure mirrors the definition of retBettiTable in LHF.hpp
-    
-    """       
+
+    """
     _fields_ = [
         ("dim", ctypes.c_int),                      # int dim
         ("birth", ctypes.c_double),                 # double birth
         ("death", ctypes.c_double),                 # double death
         ("boundarySize", ctypes.c_int),          # int boundarySize
-        ("boundaryEntries", ctypes.POINTER(ctypes.c_uint))    # unsigned* boundaryEntries
-        ]
-    
-    
-        
-        
-        
+        # unsigned* boundaryEntries
+        ("boundaryEntries", ctypes.POINTER(ctypes.c_uint))
+    ]
+
+
 class pipePacket(ctypes.Structure):
     """
     This structure mirrors the definition of retPipePacket in LHF.hpp
-    
-    
-    """        
-    _fields_ = [  
+
+
+    """
+    _fields_ = [
         ("size_betti", ctypes.c_int),                       # int size_betti
         ("LHF_size", ctypes.c_int),                         # int LHF_size
         ("LHF_dim", ctypes.c_int),                          # int LHF_dim
@@ -45,11 +42,13 @@ class pipePacket(ctypes.Structure):
         ("inputData", ctypes.POINTER(ctypes.c_double)),     # double* inputData
         ("distMatrix", ctypes.POINTER(ctypes.c_double)),    # double* distMatrix
         ("workData", ctypes.POINTER(ctypes.c_double)),      # double* workData
-        ("centroidLabels", ctypes.POINTER(ctypes.c_uint)),  # unsigned* centroidLabels
+        # unsigned* centroidLabels
+        ("centroidLabels", ctypes.POINTER(ctypes.c_uint)),
         ("stats", ctypes.c_char_p),                         # char* stats
         ("runLog", ctypes.c_char_p),                        # char* runLog
         ("ident", ctypes.c_char_p)                          # char* ident
-        ]
+    ]
+
 
 class createPipeline:
     """
@@ -67,10 +66,9 @@ class createPipeline:
     filename = os.path.join(script_dir, "libLHFlib.so")
     lib = ctypes.CDLL(filename, mode=1)
     config = {}
-    default = {"threads": "30", "mpi": "0", "dimensions": "2", "outputFile": "output", "epsilon": "5", "debug": "0", "complexType": "simplexArrayList", "preprocessor": "", "upscale": "false"}
+    default = {"threads": "30", "mpi": "0", "dimensions": "2", "outputFile": "output", "epsilon": "5",
+               "debug": "0", "complexType": "simplexArrayList", "preprocessor": "", "upscale": "false"}
     data = []
-
-
 
     def __init__(self):
         """
@@ -82,10 +80,10 @@ class createPipeline:
 
         self.lib.free_pipeWrap.argtypes = [ctypes.c_void_p]
         self.lib.free_pipeWrap.restype = None
-        
-        self.lib.pyLHFWrapper.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.POINTER(ctypes.c_double)]
+
+        self.lib.pyLHFWrapper.argtypes = [
+            ctypes.c_int, ctypes.c_char_p, ctypes.POINTER(ctypes.c_double)]
         self.lib.pyLHFWrapper.restype = ctypes.c_void_p
-        
 
     def mergeConfig(self):
         """
@@ -96,7 +94,7 @@ class createPipeline:
             if cfg not in self.config.keys():
                 self.config[cfg] = self.default[cfg]
 
-    def config2string(self, inList):
+    def config2string(self, inList: dict) -> bytes:
         """
         Converts a dictionary of configuration arguments into a string.
 
@@ -111,8 +109,8 @@ class createPipeline:
             ret += a + " " + str(inList[a])+" "
 
         return ret.encode('utf-8')
-        
-    def runPH(self, data):
+
+    def runPH(self, data: np.ndarray) -> tuple[np.ndarray, pipePacket, float] :
         """
         Runs the persistent homology computation using the LHF shared object library and returns the pipepacket result.
 
@@ -123,31 +121,30 @@ class createPipeline:
             numpy.ndarray: An array of computed persistent homology data.
         """
 
-        #Get data sizes to pass to C
+        # Get data sizes to pass to C
         self.config["datasize"] = len(data)
         self.config["datadim"] = len(data[0])
-        
+
         self.mergeConfig()
         temp = self.config2string(self.config)
-        
+
         na = ctypes.c_char_p(temp)
-        
+
         self.data = data.flatten().tolist()
         self.data = (ctypes.c_double * len(self.data))(*self.data)
-        
+
         start = process_time()
         retAddr = self.lib.pyLHFWrapper(len(temp), na, self.data)
         elapsed = (process_time() - start)
-        
+
         retPH = pipePacket.from_address(retAddr)
-        
+
         bettiTable = self.decodeReturn(retPH.size_betti, retPH.bettiTable)
         self.lib.free_pipeWrap(retAddr)
-        
+
         return bettiTable, retPH, elapsed
-        
-        
-    def decodeReturn(self,s_betti, bettis):
+
+    def decodeReturn(self, s_betti: ctypes.c_int, bettis: ctypes.POINTER[bettiTable]) -> np.ndarray:
         """
         Decodes the computed persistent homology data returned by the PyBind library.
 
@@ -159,10 +156,9 @@ class createPipeline:
         """
         piResults = []
         for idx in range(s_betti):
-            temp = [bettis[idx].dim, bettis[idx].birth, bettis[idx].death, [bettis[idx].boundaryEntries[i] for i in range(bettis[idx].boundarySize)]]
-            
-            piResults.append(temp)
-        
-        return piResults
-        
+            temp = [bettis[idx].dim, bettis[idx].birth, bettis[idx].death, [
+                bettis[idx].boundaryEntries[i] for i in range(bettis[idx].boundarySize)]]
 
+            piResults.append(temp)
+
+        return piResults
