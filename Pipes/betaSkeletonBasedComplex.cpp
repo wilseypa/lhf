@@ -478,8 +478,8 @@ bool betaSkeletonBasedComplex<alphaNode>::checkInsertDsimplex(std::vector<unsign
 	double maxEdge = 0;
 	for (auto x : dsimplex)
 		for (auto y : dsimplex)
-			if (maxEdge < (*((alphaComplex<alphaNode> *)inData.complex)->distMatrix)[x][y])
-				maxEdge = (*((alphaComplex<alphaNode> *)inData.complex)->distMatrix)[x][y];
+			if (maxEdge < inData.distMatrix[x][y])
+				maxEdge = inData.distMatrix[x][y];
 
 	if (maxEdge > this->epsilon)
 		return false;
@@ -524,7 +524,7 @@ bool betaSkeletonBasedComplex<alphaNode>::checkInsertDsimplex(std::vector<unsign
 			if(simplex.size()>2)
 				circumRadius = utils::circumRadius(simplex,((alphaComplex<alphaNode>*)inData.complex)->distMatrix);
 			else
-				circumRadius = pow((*((alphaComplex<alphaNode>*)inData.complex)->distMatrix)[dsimplex[0]][dsimplex[1]]/2,2);
+				circumRadius = pow(inData.distMatrix[dsimplex[0]][dsimplex[1]]/2,2);
 			bool first = true;
 
 			std::vector<size_t> neighbors;
@@ -551,7 +551,7 @@ bool betaSkeletonBasedComplex<alphaNode>::checkInsertDsimplex(std::vector<unsign
 				if(face.size()>2)
 					faceRadius = utils::circumRadius(face,((alphaComplex<alphaNode>*)inData.complex)->distMatrix);
 				else
-					faceRadius = pow((*((alphaComplex<alphaNode>*)inData.complex)->distMatrix)[face1[0]][face1[1]]/2,2);
+					faceRadius = pow(inData.distMatrix[face1[0]][face1[1]]/2,2);
 
 				std::vector<double> hpcoff = utils::nullSpaceOfMatrix(face,inData.inputData,faceCC,sqrt(faceRadius));
 				std::vector<double> betaCenter;
@@ -732,9 +732,9 @@ bool betaSkeletonBasedComplex<alphaNode>::checkInsertDsimplex(std::vector<unsign
 
 		double circumRadius;
 		if (simplex.size() > 2)
-			circumRadius = utils::circumRadius(simplex, ((alphaComplex<alphaNode> *)inData.complex)->distMatrix);
+			circumRadius = utils::circumRadius(simplex, inData.distMatrix);
 		else
-			circumRadius = pow((*((alphaComplex<alphaNode> *)inData.complex)->distMatrix)[dsimplex[0]][dsimplex[1]] / 2, 2);
+			circumRadius = pow(inData.distMatrix[dsimplex[0]][dsimplex[1]] / 2, 2);
 		bool first = true;
 
 		bool obtuse = false;
@@ -768,9 +768,9 @@ bool betaSkeletonBasedComplex<alphaNode>::checkInsertDsimplex(std::vector<unsign
 			}
 			double faceRadius;
 			if (face.size() > 2)
-				faceRadius = utils::circumRadius(face, ((alphaComplex<alphaNode> *)inData.complex)->distMatrix);
+				faceRadius = utils::circumRadius(face, inData.distMatrix);
 			else
-				faceRadius = pow(((*((alphaComplex<alphaNode> *)inData.complex)->distMatrix)[face1[0]][face1[1]] / 2), 2);
+				faceRadius = pow((inData.distMatrix[face1[0]][face1[1]] / 2), 2);
 			auto result = utils::nullSpaceOfMatrix(face, inData.inputData, faceCC, sqrt(faceRadius));
 			std::vector<double> hpcoff = result.first;
 			std::vector<std::vector<double>> refbetaCenters;
@@ -874,9 +874,9 @@ bool betaSkeletonBasedComplex<alphaNode>::checkInsertDsimplex(std::vector<unsign
 		}
 		double circumRadius;
 		if (simplex.size() > 2)
-			circumRadius = utils::circumRadius(simplex, ((alphaComplex<alphaNode> *)inData.complex)->distMatrix);
+			circumRadius = utils::circumRadius(simplex, inData.distMatrix);
 		else
-			circumRadius = pow((*((alphaComplex<alphaNode> *)inData.complex)->distMatrix)[dsimplex[0]][dsimplex[1]] / 2, 2);
+			circumRadius = pow(inData.distMatrix[dsimplex[0]][dsimplex[1]] / 2, 2);
 		bool first = true;
 		for (auto x : simplex)
 		{
