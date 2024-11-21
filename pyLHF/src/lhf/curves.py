@@ -28,7 +28,7 @@ def subtractCurve(orig, sub):
 	"""
 	output = []
 	subIndex = 0
-	curSub = 0;
+	curSub = 0
 	
 	for i in range(len(orig)):
 		
