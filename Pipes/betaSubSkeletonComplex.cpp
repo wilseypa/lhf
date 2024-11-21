@@ -200,8 +200,8 @@ bool betaSubSkeletonComplex<alphaNode>::checkInsertSubDsimplex(std::vector<unsig
 	double maxEdge = 0;
 	for (auto x : dsimplex)
 		for (auto y : dsimplex)
-			if (maxEdge < (*((alphaComplex<alphaNode> *)inData.complex)->distMatrix)[x][y])
-				maxEdge = (*((alphaComplex<alphaNode> *)inData.complex)->distMatrix)[x][y];
+			if (maxEdge < inData.distMatrix[x][y])
+				maxEdge = inData.distMatrix[x][y];
 
 	if (maxEdge > this->epsilon)
 		return false;
@@ -219,6 +219,12 @@ bool betaSubSkeletonComplex<alphaNode>::checkInsertSubDsimplex(std::vector<unsig
 		return true;
 	else if (beta < 1)
 		intersectionCircle = true;
+	else if (beta == 1)
+	{
+		intersectionLune = true;
+		intersectionCircle = true;
+		unionCircle = true;
+	}
 	else if (beta > 1)
 	{
 		if (this->betaMode == "betaHighLune")
@@ -226,36 +232,30 @@ bool betaSubSkeletonComplex<alphaNode>::checkInsertSubDsimplex(std::vector<unsig
 		else
 			unionCircle = true;
 	}
-	else if (beta == 1)
+	std::vector<double> circumCenter;
+	std::set<unsigned> simplex(dsimplex.begin(), dsimplex.end());
+
+	if (simplex.size() > 2)
+		circumCenter = utils::circumCenter(simplex, inData.inputData);
+	else if (simplex.size() == 2)
 	{
-		intersectionLune = true;
-		intersectionCircle = true;
-		unionCircle = true;
+		auto first = simplex.begin();
+		std::vector<double> R;
+		std::vector<double> A = inData.inputData[*first];
+		std::advance(first, 1);
+		std::vector<double> B = inData.inputData[*first];
+		std::transform(A.begin(), A.end(), B.begin(), std::back_inserter(R), [](double e1, double e2)
+					   { return ((e1 + e2) / 2); });
+		circumCenter = R;
 	}
+	double circumRadius;
+	circumRadius = pow(utils::vectors_distance(circumCenter, inData.inputData[dsimplex[0]]), 2);
 
 	if (this->betaMode == "betaHighCircle")
 	{
 		if (beta < 1)
 			beta = 1 / beta;
-		std::set<unsigned> simplex(dsimplex.begin(), dsimplex.end());
-		std::vector<double> circumCenter;
-		if (simplex.size() > 2)
-			circumCenter = utils::circumCenter(simplex, inData.inputData);
-		else if (simplex.size() == 2)
-		{
-			auto first = simplex.begin();
-			std::vector<double> R;
-			std::vector<double> A = inData.inputData[*first];
-			std::advance(first, 1);
-			std::vector<double> B = inData.inputData[*first];
-			std::transform(A.begin(), A.end(), B.begin(), std::back_inserter(R), [](double e1, double e2)
-						   { return ((e1 + e2) / 2); });
-			circumCenter = R;
-		}
 
-		double circumRadius;
-		circumRadius = pow(utils::vectors_distance(circumCenter, inData.inputData[dsimplex[0]]), 2);
-		circumRadius = pow(utils::vectors_distance(circumCenter, inData.inputData[dsimplex[0]]), 2);
 		std::vector<size_t> neighbors;
 		std::vector<std::vector<size_t>> neighborsCircleIntersection;
 		std::vector<std::vector<double>> mat;
@@ -296,25 +296,8 @@ bool betaSubSkeletonComplex<alphaNode>::checkInsertSubDsimplex(std::vector<unsig
 
 	else if (this->betaMode == "betaHighLune")
 	{
-		std::set<unsigned> simplex(dsimplex.begin(), dsimplex.end());
-		std::vector<double> circumCenter;
 		std::vector<double> circumCenterfaces;
 		std::vector<double> circumCenterfaces1;
-		if (simplex.size() > 2)
-			circumCenter = utils::circumCenter(simplex, inData.inputData);
-		else if (simplex.size() == 2)
-		{
-			auto first = simplex.begin();
-			std::vector<double> R;
-			std::vector<double> A = inData.inputData[*first];
-			std::advance(first, 1);
-			std::vector<double> B = inData.inputData[*first];
-			std::transform(A.begin(), A.end(), B.begin(), std::back_inserter(R), [](double e1, double e2)
-						   { return ((e1 + e2) / 2); });
-			circumCenter = R;
-		}
-		double circumRadius;
-		circumRadius = pow(utils::vectors_distance(circumCenter, inData.inputData[dsimplex[0]]), 2);
 
 		bool first = true;
 		for (auto x : simplex)
@@ -355,9 +338,7 @@ bool betaSubSkeletonComplex<alphaNode>::checkInsertSubDsimplex(std::vector<unsig
 	if (this->betaMode == "betaHighLune" && neighborsfinalLune.size() == 0)
 		return true;
 	if (this->betaMode == "betaHighCircle" && neighborsfinalCircle.size() == 0)
-	{
 		return true;
-	}
 	return false;
 }
 
