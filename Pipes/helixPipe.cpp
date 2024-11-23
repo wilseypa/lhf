@@ -166,19 +166,18 @@ short helixPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, sh
 	auto normal = this->solvePlaneEquation(simp);
 	bool direction = utils::dot(normal, inputData[omission]) > 1;
 
-	// Modify search_space
-	std::vector<bool> active_points(this->data_set_size, true);
-	active_points[omission] = false;
-	for (const auto &point : simp)
-		active_points[point] = false;
-
 	// Filter points opposite to hyperplane
-	for (size_t idx = 0; idx < active_points.size(); ++idx)
-		active_points[idx] = active_points[idx] && (direction ^ (utils::dot(normal, inputData[idx]) > 1));
+	for (size_t idx = 0; idx < this->active_data.size(); ++idx)
+		this->active_data[idx] = direction ^ (utils::dot(normal, inputData[idx]) > 1) ? 0 : std::numeric_limits<double>::infinity();
+
+	// Deactivate points from original simplex
+	this->active_data[omission] = std::numeric_limits<double>::infinity();
+	for (const auto &point : simp)
+		this->active_data[point] = std::numeric_limits<double>::infinity();
 
 	// Early return if plane is on convex hull
-	if (std::none_of(active_points.begin(), active_points.end(), [](bool isActive)
-					 { return isActive; }))
+	if (std::all_of(this->active_data.begin(), this->active_data.end(), [](double isActive)
+					{ return isActive == std::numeric_limits<double>::infinity(); }))
 		return -1;
 
 	// Default values
@@ -186,62 +185,60 @@ short helixPipe<nodeType>::expand_d_minus_1_simplex(std::vector<short> &simp, sh
 	// Calculate the circumcenter of the facet
 	auto center = utils::circumCenter(simp, inputData);
 
-	std::vector<double> dist_vec;
-	dist_vec.reserve(this->data_set_size);
-
-	for (size_t idx = 0; idx < active_points.size(); ++idx)
-		dist_vec.push_back(active_points[idx] ? utils::vectors_distance(center, inputData[idx]) : std::numeric_limits<double>::infinity());
+	for (size_t idx = 0; idx < this->active_data.size(); ++idx)
+		if (this->active_data[idx] != std::numeric_limits<double>::infinity())
+			this->active_data[idx] = utils::vectors_distance(center, inputData[idx]);
 
 	auto ring_radius = utils::vectors_distance(center, this->inputData[simp[0]]);
 
 	// Check for any distances less than the distance to the first simplex point
-	if (std::find_if(dist_vec.begin(), dist_vec.end(), [&](double distance)
-					 { return distance < ring_radius; }) == dist_vec.end())
+	if (std::find_if(this->active_data.begin(), this->active_data.end(), [&](double distance)
+					 { return distance < ring_radius; }) == this->active_data.end())
 	{
 		// Search outside space with smallest circumradius
 		double smallest_radius = std::numeric_limits<double>::max() / 2;
-		for (size_t idx = 0; idx < dist_vec.size(); ++idx)
+		for (size_t idx = 0; idx < this->active_data.size(); ++idx)
 		{
-			if (dist_vec[idx] != std::numeric_limits<double>::infinity() && dist_vec[idx] > ring_radius && dist_vec[idx] < 2 * smallest_radius)
+			if (this->active_data[idx] != std::numeric_limits<double>::infinity() && this->active_data[idx] > ring_radius && this->active_data[idx] < 2 * smallest_radius)
 			{
 				simp.push_back(idx);
 				auto temp_radius = utils::circumRadius(simp, distMatrix);
-				dist_vec[idx] = (temp_radius >= 0) ? sqrt(temp_radius) : utils::vectors_distance(utils::circumCenter(simp, this->inputData), this->inputData[idx]);
+				this->active_data[idx] = (temp_radius >= 0) ? sqrt(temp_radius) : utils::vectors_distance(utils::circumCenter(simp, this->inputData), this->inputData[idx]);
 				simp.pop_back();
-				if (smallest_radius > dist_vec[idx])
+				if (smallest_radius > this->active_data[idx])
 				{
-					smallest_radius = dist_vec[idx];
+					smallest_radius = this->active_data[idx];
 					triangulation_point = idx;
 				}
 			}
 			else
-				dist_vec[idx] = 0;
+				this->active_data[idx] = 0;
 		}
 	}
 	else
 	{
 		// Search inside space with largest circumradius
 		double largest_radius = 0;
-		for (size_t idx = 0; idx < dist_vec.size(); ++idx)
+		for (size_t idx = 0; idx < this->active_data.size(); ++idx)
 		{
-			if (dist_vec[idx] != std::numeric_limits<double>::infinity() && dist_vec[idx] < ring_radius)
+			if (this->active_data[idx] != std::numeric_limits<double>::infinity() && this->active_data[idx] < ring_radius)
 			{
 				simp.push_back(idx);
 				auto temp_radius = utils::circumRadius(simp, distMatrix);
-				dist_vec[idx] = (temp_radius >= 0) ? sqrt(temp_radius) : utils::vectors_distance(utils::circumCenter(simp, this->inputData), this->inputData[idx]);
+				this->active_data[idx] = (temp_radius >= 0) ? sqrt(temp_radius) : utils::vectors_distance(utils::circumCenter(simp, this->inputData), this->inputData[idx]);
 				simp.pop_back();
-				if (largest_radius < dist_vec[idx])
+				if (largest_radius < this->active_data[idx])
 				{
-					largest_radius = dist_vec[idx];
+					largest_radius = this->active_data[idx];
 					triangulation_point = idx;
 				}
 			}
 			else
-				dist_vec[idx] = 0;
+				this->active_data[idx] = 0;
 		}
 	}
-	double triangulation_radius = dist_vec[triangulation_point];
-	int count = std::count_if(dist_vec.begin(), dist_vec.end(), [triangulation_radius](double val)
+	double triangulation_radius = this->active_data[triangulation_point];
+	int count = std::count_if(this->active_data.begin(), this->active_data.end(), [triangulation_radius](double val)
 							  { return std::abs(1 - (val / triangulation_radius)) <= 0.000000000001; });
 	if (count != 1)
 	{
@@ -302,8 +299,7 @@ void helixPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	if (this->data_set_size < this->dim + 2)
 		return; // Not enough points
 
-	this->search_space.resize(this->data_set_size);
-	std::iota(this->search_space.begin(), this->search_space.end(), 0);
+	this->active_data.resize(this->data_set_size, 0);
 
 	this->dsimplexmesh = {this->first_simplex()};
 	short new_point;
@@ -321,7 +317,7 @@ void helixPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	std::set<std::vector<short>> outer_dsimplexes;
 	while (inner_d_1_shell.size() != 0)
 	{
-#pragma omp parallel for private(new_point)
+#pragma omp parallel for private(new_point, this->this->active_data)
 		for (int i = 0; i < inner_d_1_shell.size(); i++)
 		{
 			auto iter = inner_d_1_shell[i];
@@ -372,6 +368,24 @@ void helixPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		}
 	}
 #endif
+	std::vector<std::vector<int>> cache(this->data_set_size, std::vector<int>(this->data_set_size, 0));
+	std::sort(this->dsimplexmesh.begin(),this->dsimplexmesh.end());
+	for (auto simplex : this->dsimplexmesh)
+		for (int i = 0; i < simplex.size() - 1; i++)
+			for (int j = i + 1; j < simplex.size(); j++)
+			{
+				cache[simplex[i]][simplex[j]] = 1;
+				cache[simplex[j]][simplex[i]] = 1;
+			}
+	// Code to print the cache matrix
+	for (int i = 0; i < this->data_set_size; i++)
+	{
+		for (int j = 0; j < this->data_set_size; j++)
+		{
+			std::cout << cache[i][j] << " "; // Print each element followed by a space
+		}
+		std::cout << std::endl; // After each row, print a newline
+	}
 	return;
 }
 

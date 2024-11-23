@@ -8,6 +8,9 @@
 template <typename nodeType>
 class helixDistPipe : public helixPipe<nodeType>
 {
+private:
+  int rank = 0, numProcesses = 0;
+
 public:
   helixDistPipe();
   ~helixDistPipe();

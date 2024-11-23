@@ -14,9 +14,11 @@ from setuptools.command.build_ext import build_ext
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
+version = os.getenv('PACKAGE_VERSION', '2.0.1')
+
 setup(
     name='lhf',
-    version='2.0.1',    
+    version=version,    
     description='Light Weight Homology Framework (lhf)',
     long_description=long_description,
     long_description_content_type="text/markdown",
