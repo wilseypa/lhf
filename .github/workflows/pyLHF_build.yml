@@ -1,0 +1,71 @@
+name: Build Python Wrapper for LHF
+
+on:
+  workflow_dispatch:
+    inputs:
+      PACKAGE_VERSION:
+        description: 'Version of the package to build'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # We still use GitHub-hosted Ubuntu, but inside a Docker container
+
+    steps:
+    # Step 1: Checkout the code
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Step 2: Set up Docker to use the manylinux image
+    - name: Pull manylinux Docker image
+      run: docker run -d --name manylinux-container -v $PWD:/lhf quay.io/pypa/manylinux_2_28_x86_64:latest tail -f /dev/null
+
+    # Step 3: Install system dependencies
+    - name: Install system dependencies
+      run: docker exec manylinux-container bash -c "yum install -y eigen3-devel gmp-devel mpfr-devel openmpi-devel cmake && yum clean all"
+
+    # Step 4: Set up Boost Library
+    - name: Set up Boost Library
+      run: |
+        docker exec manylinux-container bash -c "
+          curl -L https://archives.boost.io/release/1.85.0/source/boost_1_85_0.tar.bz2 | tar --bzip2 -xf - && \
+          cd boost_1_85_0 && \
+          ./bootstrap.sh --prefix=/usr/local --without-libraries=python&& \
+          ./b2 install -d0 && \
+          cd / && rm -rf /boost_1_85_0
+        "
+
+    # Step 5: Compile LHF Library
+    - name: Compile LHF Library
+      run: |
+        docker exec manylinux-container bash -c "
+          export PATH=/usr/lib64/openmpi/bin:\$PATH && \
+          mkdir -p /lhf/build && cd /lhf/build && \
+          echo $PATH && \
+          cmake .. -DCMAKE_BUILD_TYPE=Release && make -j
+        "
+
+    # Step 6: Use the shared object to build LHF wheels
+    - name: Build python wheels
+      run: |
+        docker exec manylinux-container bash -c "
+          cp -f /lhf/build/LHFmain/libLHFlib.so /lhf/pyLHF/src/lhf/
+                    
+          cd /lhf/pyLHF/src/
+          PACKAGE_VERSION=${{ github.event.inputs.PACKAGE_VERSION }} "/opt/python/cp310-cp310/bin/pip3" wheel --no-deps -w wheelhouse/ . --no-cache
+
+          cd /lhf/pyLHF/src/wheelhouse
+          auditwheel show "lhf-${{ github.event.inputs.PACKAGE_VERSION }}-py3-none-any.whl"
+          auditwheel repair "lhf-${{ github.event.inputs.PACKAGE_VERSION }}-py3-none-any.whl" --plat "manylinux_2_24_x86_64"
+        "
+
+    # Step 7: Cleanup Docker container
+    - name: Cleanup Docker container
+      run: docker stop manylinux-container && docker rm manylinux-container || true
+
+    # Step 8: Upload Wheel as GitHub Artifact
+    - name: Upload Wheel as GitHub Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: lhf-${{ github.event.inputs.PACKAGE_VERSION }}-py3-none-any.whl
+        path: pyLHF/src/wheelhouse/lhf-${{ github.event.inputs.PACKAGE_VERSION }}-py3-none-any.whl

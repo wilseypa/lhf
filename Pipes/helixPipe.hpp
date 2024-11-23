@@ -8,10 +8,10 @@ template <typename nodeType>
 class helixPipe : public basePipe<nodeType>
 {
 protected:
+  std::vector<double> active_data;
   std::vector<std::vector<double>> inputData;
   std::vector<std::vector<short>> dsimplexmesh;
   std::set<std::vector<short>> spherical_dsimplexes;
-  std::vector<short> search_space;
   unsigned dim;
   unsigned data_set_size;
   std::vector<double> solvePlaneEquation(const std::vector<short> &points);

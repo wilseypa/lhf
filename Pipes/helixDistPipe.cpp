@@ -14,17 +14,28 @@ template <typename nodeType>
 helixDistPipe<nodeType>::helixDistPipe()
 {
 	this->pipeType = "helixDistPipe";
-	return;
+	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Comm_rank(MPI_COMM_WORLD, &this->rank);
+	MPI_Comm_size(MPI_COMM_WORLD, &this->numProcesses);
+	if (this->rank == 0)
+	{
+		const std::vector<std::filesystem::path> directories = {".output", ".intermediate", ".input"};
+		for (const auto &dir : directories)
+		{
+			if (std::filesystem::exists(dir))
+				std::filesystem::remove_all(dir);
+			if (!std::filesystem::create_directory(dir))
+				std::cerr << "Failed to create directory: " << dir << std::endl;
+		}
+	}
 }
 
 template <typename nodeType>
 helixDistPipe<nodeType>::~helixDistPipe()
 {
-	int rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	if (rank == 0)
+	if (this->rank == 0)
 	{
-		const std::vector<std::string> directories = {".output", ".intermediate", ".input"};
+		const std::vector<std::filesystem::path> directories = {".output", ".intermediate", ".input"};
 		for (const auto &dir : directories)
 			std::filesystem::exists(dir) && std::filesystem::remove_all(dir);
 	}
@@ -37,26 +48,23 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	this->inputData = inData.inputData;
 	this->data_set_size = this->inputData.size();
 	if (!this->data_set_size)
+	{
+		this->ut.writeDebug("HelixDistPipe", "Dataset was empty for Pipe");
 		return; // Empty inputData
+	}
 	this->dim = this->inputData.size() > 0 ? this->inputData[0].size() : 0;
 	if (this->data_set_size < this->dim + 2)
+	{
+		this->ut.writeDebug("HelixDistPipe", "InputData needs atleast dim + 2 points for Delaunay Triangulation to work.");
 		return; // Not enough points
-	this->search_space.resize(this->data_set_size);
-	std::iota(this->search_space.begin(), this->search_space.end(), 0);
+	}
+	this->active_data.resize(this->data_set_size, 0);
 
-	int numProcesses, rank;
-	MPI_Comm_size(MPI_COMM_WORLD, &numProcesses);
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	std::clog << "MPI configured with " << this->numProcesses << " processes" << std::endl;
 
 	// Initialization of algorithm by serial processing
-	if (rank == 0)
+	if (this->rank == 0)
 	{
-		// Refresh the directories
-		std::clog << "MPI configured with " << numProcesses << " processes" << std::endl;
-		std::filesystem::exists(".output") && std::filesystem::remove_all(".output");
-		std::filesystem::exists(".intermediate") && std::filesystem::remove_all(".intermediate");
-		std::filesystem::exists(".input") && std::filesystem::remove_all(".input");
-		std::filesystem::create_directory(".output") && std::filesystem::create_directory(".intermediate") && std::filesystem::create_directory(".input");
 		// Perform initial iteration normally
 		std::vector<std::vector<short>> initial_dsimplexes = {this->first_simplex()};
 		std::vector<std::pair<std::vector<short>, short>> inner_d_1_shell;
@@ -85,14 +93,17 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 			}
 			this->reduce(outer_dsimplexes, inner_d_1_shell, initial_dsimplexes);
 		}
-		std::clog << "Iter 0 on process " << rank << " Found " << initial_dsimplexes.size() << " dsimplexes" << std::endl;
+		std::clog << "Iter 0 on process " << this->rank << " Found " << initial_dsimplexes.size() << " dsimplexes" << std::endl;
 
 		std::sort(initial_dsimplexes.begin(), initial_dsimplexes.end());
 		writeOutput::writeBinary(initial_dsimplexes, ".output/0_0.bin");
 
 		initial_dsimplexes.clear();
 		if (inner_d_1_shell.empty())
+		{
+			this->ut.writeDebug("HelixDistPipe", "Delaunay Triangulation collapsed before Distributed Implementation criteria reached.");
 			return;
+		}
 		writeOutput::writeBinary(inner_d_1_shell, ".input/1.dat");
 	}
 
@@ -103,7 +114,7 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	int iter_counter = 1;
 	while (true)
 	{
-		std::map<std::vector<short>, short> local_d_1_shell_map = readInput::readBinaryMap(".input/" + std::to_string(iter_counter) + ".dat", numProcesses, rank);
+		std::map<std::vector<short>, short> local_d_1_shell_map = readInput::readBinaryMap(".input/" + std::to_string(iter_counter) + ".dat", this->numProcesses, this->rank);
 		if (local_d_1_shell_map.empty())
 			break;
 		std::vector<std::vector<short>> local_dsimplexes_output;
@@ -126,13 +137,13 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 			local_dsimplexes_output.push_back(std::move(first_vector));
 		}
 
-		std::clog << "Iter " << iter_counter << " on process " << rank << " Found " << local_dsimplexes_output.size() << " dsimplexes" << std::endl;
+		std::clog << "Iter " << iter_counter << " on process " << this->rank << " Found " << local_dsimplexes_output.size() << " dsimplexes" << std::endl;
 		// Commit dsimplexes to file
 
 		if (!local_dsimplexes_output.empty())
 		{
 			std::sort(local_dsimplexes_output.begin(), local_dsimplexes_output.end());
-			writeOutput::writeBinary(local_dsimplexes_output, ".output/" + std::to_string(iter_counter) + "_" + std::to_string(rank) + ".bin");
+			writeOutput::writeBinary(local_dsimplexes_output, ".output/" + std::to_string(iter_counter) + "_" + std::to_string(this->rank) + ".bin");
 		}
 
 		// Compute facets from current layer and store to intermediate file
@@ -148,13 +159,13 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 			}
 		}
 		local_dsimplexes_output.clear();
-		writeOutput::writeBinary(outer_d_1_shell, ".intermediate/" + std::to_string(rank) + ".dat");
+		writeOutput::writeBinary(outer_d_1_shell, ".intermediate/" + std::to_string(this->rank) + ".dat");
 		outer_d_1_shell.clear();
 
 		// Wait for all process to commit facets
 		MPI_Barrier(MPI_COMM_WORLD);
 
-		if (rank == 0)
+		if (this->rank == 0)
 		{
 			// Perform custom multifile sort on the intermediate simplexes also remove duplicate entries
 			MultiFile<MapBinaryFile, std::pair<std::vector<short>, short>> facets(".intermediate");
@@ -162,10 +173,10 @@ void helixDistPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		}
 
 		MPI_Barrier(MPI_COMM_WORLD);
-		std::filesystem::remove(".intermediate/" + std::to_string(rank) + ".dat");
+		std::filesystem::remove(".intermediate/" + std::to_string(this->rank) + ".dat");
 		iter_counter++;
 	}
-	if (rank == 0)
+	if (this->rank == 0)
 	{
 		MultiFile<VectorBinaryFile, std::vector<short>> dsimplexes(".output");
 		dsimplexes.loadAggregateData(inData.complex->dsimplexmesh);
@@ -200,9 +211,7 @@ bool helixDistPipe<nodeType>::configPipe(std::map<std::string, std::string> &con
 template <typename nodeType>
 void helixDistPipe<nodeType>::outputData(pipePacket<nodeType> &inData)
 {
-	int rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	if (rank == 0)
+	if (this->rank == 0)
 	{
 		std::ofstream file;
 		file.open("output/" + this->pipeType + "_output.csv");
@@ -214,7 +223,6 @@ void helixDistPipe<nodeType>::outputData(pipePacket<nodeType> &inData)
 				file << simplex[i] << ",";
 			file << simplex.back() << "\n";
 		}
-
 		file.close();
 	}
 	return;
