@@ -262,7 +262,7 @@ void argParser::setPipeline(std::map<std::string, std::string> &args)
 	 * ALPHA MODE:
 	 * 	Triangulation with Alpha (gabriel) filtration
 	 */
-	else if (args["mode"] == "alpha" || args["complexType"] == "alpha" || args["complexType"] == "alphaComplex")
+	else if (args["mode"] == "alpha")
 	{
 
 		// TODO: Nick come check these are still correct after splitting betaComplex
@@ -432,6 +432,10 @@ void argParser::setPipeline(std::map<std::string, std::string> &args)
 		{
 			args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";
 		}
+	}
+	else if(args["mode"]== "custom")
+	{
+		;
 	}
 
 	return;

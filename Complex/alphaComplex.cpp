@@ -331,12 +331,6 @@ void alphaComplex<alphaNode>::buildAlphaComplex(std::vector<std::vector<unsigned
 	for (auto x : this->simplexList)
 		std::cout << "Count of " << di++ << "-simplex ::" << x.size() << "\n";
 
-	neighbourhood = std::vector<std::vector<int>>(npts, std::vector<int>(npts, 0));
-	for (const auto &x : this->simplexList[1]) // Use edges to build neighbourhood relationship
-	{
-		neighbourhood[*x->simplex.begin()][*(--x->simplex.end())] = 1;
-		neighbourhood[*(--x->simplex.end())][*x->simplex.begin()] = 1;
-	}
 	return;
 }
 
