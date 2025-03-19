@@ -102,6 +102,12 @@ void qhullPipe<nodeType>::runPipe(pipePacket<nodeType> &inData)
 
 		((alphaComplex<nodeType> *)inData.complex)->buildWeightedAlphaComplex(inData.complex->dsimplexmesh, inData.inputData.size(), inData.inputData);
 	}
+	else if(this->mode =="custom")
+	{
+		qh.runQhull(pts->comment().c_str(), pts->dimension(), pts->count(), &*pts->coordinates(), "d Qt");
+		qdelaunay_o(qh, inData.complex->dsimplexmesh);
+		((alphaComplex<nodeType> *)inData.complex)->buildAlphaComplex(inData.complex->dsimplexmesh, inData.inputData.size(), inData.inputData);
+	}
 
 	// If we are not in debug mode, clear the simplex mesh here; in debug mode, output and then clear.
 	if (this->debug == 0)
