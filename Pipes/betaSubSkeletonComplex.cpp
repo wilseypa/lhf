@@ -113,6 +113,9 @@ void betaSubSkeletonComplex<nodeType>::runPipe(pipePacket<nodeType> &inData)
 					{
 						std::sort(dsimplexIndexed1.begin(), dsimplexIndexed1.end());
 						dsimplexmesh.push_back(dsimplexIndexed1);
+						for(auto x:dsimplexIndexed1)
+							std::cout<<x<<",";
+						std::cout<<std::endl;
 						count++;
 					}
 				}

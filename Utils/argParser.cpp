@@ -205,9 +205,7 @@ void argParser::printArguments(const std::map<std::string, std::string> &args)
  */
 
 void argParser::setPipeline(std::map<std::string, std::string> &args)
-{
-
-	// Handle iterative / involuted and upscaling flags
+{	// Handle iterative / involuted and upscaling flags
 	if (args["mode"] == "iterUpscale" || args["involutedUpscale"] == "true")
 	{
 		args["upscale"] = "true";
@@ -280,16 +278,14 @@ void argParser::setPipeline(std::map<std::string, std::string> &args)
 	 * 	Triangulation with Beta-sparsification
 	 */
 	else if (args["mode"] == "beta" || args["complexType"] == "graphInducedComplex" || args["complexType"] == "betaGeneral" || args["complexType"] == "betaExtended")
-	{
-		args["nodeType"] = "alphaNode";
+	{	args["nodeType"] = "alphaNode";
 		args["mode"] = "beta";
 
 		if (args["complexType"] == "betaGeneral")
 			args["pipeline"] = "distMatrix.betaSkeletonBasedComplex.neighGraph.rips.fastPersistence";
 		else if (args["complexType"] == "betaExtended")
 			args["pipeline"] = "distMatrix.betaSubSkeletonComplex.neighGraph.rips.fastPersistence";
-
-		args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
+		//args["pipeline"] = "distMatrix.neighGraph.rips.fastPersistence";
 		args["complexType"] = "betaComplex";
 	}
 
