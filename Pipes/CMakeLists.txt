@@ -83,6 +83,10 @@ add_library(betaSubSkeletonComplex STATIC betaSubSkeletonComplex.cpp)
 target_link_libraries(betaSubSkeletonComplex PUBLIC basePipe alphaComplex readInput utils kdTree)
 target_include_directories(betaSubSkeletonComplex PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
+add_library(betaPolytopes STATIC betaPolytopes.cpp)
+target_link_libraries(betaPolytopes PUBLIC basePipe alphaComplex readInput utils kdTree)
+target_include_directories(betaPolytopes PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
 add_library(upscalePipe STATIC upscalePipe.cpp)
 target_link_libraries(upscalePipe PUBLIC basePipe utils)
 target_include_directories(upscalePipe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
