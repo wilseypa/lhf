@@ -9,11 +9,8 @@ template <typename nodeType>
 class betaPolytopes : public basePipe<nodeType>
 {
 private:
-	double beta;
-	std::string betaMode;
 	double enclosingRadius;
 	int dim;
-	std::string betaMesh;
 	double epsilon;
 public:	
 	betaPolytopes();

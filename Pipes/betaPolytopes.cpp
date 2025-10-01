@@ -32,6 +32,7 @@ betaPolytopes<nodeType>::betaPolytopes()
 template <typename nodeType>
 void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 {
+	std::cout<<"We will generate Polytopes here"<<std::endl;
 }
 
 // configPipe -> configure the function settings of this pipeline segment
@@ -50,27 +51,12 @@ bool betaPolytopes<nodeType>::configPipe(std::map<std::string, std::string> &con
 	if (pipe != configMap.end())
 		this->outputFile = configMap["outputFile"].c_str();
 
-	pipe = configMap.find("beta");
-	if (pipe != configMap.end())
-		this->beta = std::atof(configMap["beta"].c_str());
-
-	pipe = configMap.find("betaMode");
-	if (pipe != configMap.end())
-		this->betaMode = configMap["betaMode"].c_str();
-
-	pipe = configMap.find("epsilon");
-	if (pipe != configMap.end())
-		this->epsilon = std::atof(configMap["epsilon"].c_str());
-
 	this->ut = utils(strDebug, this->outputFile);
 	pipe = configMap.find("dimensions");
 	if (pipe != configMap.end())
 	{
 		this->dim = std::atoi(configMap["dimensions"].c_str());
 	}
-	pipe = configMap.find("betaMesh");
-	if (pipe != configMap.end())
-		this->betaMesh = configMap["betaMesh"].c_str();
 
 	pipe = configMap.find("epsilon");
 	if (pipe != configMap.end())
@@ -79,7 +65,7 @@ bool betaPolytopes<nodeType>::configPipe(std::map<std::string, std::string> &con
 		return false;
 
 	this->configured = true;
-	this->ut.writeDebug("betaSubSkeletonComplex Pipe ", "Configured with parameters { eps: " + configMap["epsilon"] + configMap["beta"] + " , debug: " + strDebug + ", outputFile: " + this->outputFile + " }");
+	this->ut.writeDebug("betaPolytopes Pipe ", "Configured with parameters { eps: " + configMap["epsilon"] + configMap["beta"] + " , debug: " + strDebug + ", outputFile: " + this->outputFile + " }");
 
 	return true;
 }
