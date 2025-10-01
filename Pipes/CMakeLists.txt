@@ -58,7 +58,7 @@ target_include_directories(pipePacket PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${PROJE
 add_library(basePipe STATIC basePipe.cpp)
 target_link_libraries(basePipe PUBLIC
  distMatrixPipe neighGraphPipe 
- ripsPipe betaSkeletonBasedComplex betaSubSkeletonComplex
+ ripsPipe betaSkeletonBasedComplex betaSubSkeletonComplex betaPolytopes
  upscalePipe slidingWindow fastPersistence 
  incrementalPersistence naiveWindow qhullPipe delaunayPipe helixPipe helixDistPipe)
 target_include_directories(basePipe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
