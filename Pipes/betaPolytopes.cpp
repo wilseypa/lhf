@@ -32,6 +32,13 @@ betaPolytopes<nodeType>::betaPolytopes()
 template <typename nodeType>
 void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 {
+	std::vector<std::vector<unsigned>> dsimplexmesh = inData.dsimplexmesh;
+
+	for(auto x:dsimplexmesh){
+	  for(auto y:x)
+		std::cout<<y<<" ";
+	std::cout<<std::endl;
+	}
 	std::cout<<"We will generate Polytopes here"<<std::endl;
 }
 

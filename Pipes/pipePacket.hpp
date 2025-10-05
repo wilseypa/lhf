@@ -21,6 +21,8 @@ public:
 	std::vector<std::vector<double>> inputData;
 	std::vector<std::vector<double>> distMatrix;
 	std::vector<std::vector<bool>> incidenceMatrix;
+	std::vector<std::vector<unsigned>> dsimplexmesh;
+
 	simplexBase<nodeType> *complex = nullptr;
 
 	std::vector<std::set<unsigned>> boundaries;

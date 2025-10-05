@@ -113,9 +113,6 @@ void betaSubSkeletonComplex<nodeType>::runPipe(pipePacket<nodeType> &inData)
 					{
 						std::sort(dsimplexIndexed1.begin(), dsimplexIndexed1.end());
 						dsimplexmesh.push_back(dsimplexIndexed1);
-						for(auto x:dsimplexIndexed1)
-							std::cout<<x<<",";
-						std::cout<<std::endl;
 						count++;
 					}
 				}
@@ -190,6 +187,7 @@ void betaSubSkeletonComplex<nodeType>::runPipe(pipePacket<nodeType> &inData)
 
 	// std::cout<<"Edges ="<<countd1<<" ";
 	inData.incidenceMatrix = incidenceMatrix;
+	inData.dsimplexmesh = dsimplexmesh;
 	std::ofstream file("PHdSphereDimensionWiseMeshSize.txt", std::ios_base::app);
 	file << this->betaMode << "," << inData.inputData.size() << "," << inData.inputData[0].size() << "," << this->beta << "," << dsimplexmesh.size() << std::endl;
 	file.close();
