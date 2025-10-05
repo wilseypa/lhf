@@ -39,7 +39,28 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		std::cout<<y<<" ";
 	std::cout<<std::endl;
 	}
+	
 	std::cout<<"We will generate Polytopes here"<<std::endl;
+	
+	/* Outlie of the algorithm that I have in mind.
+	1. Intialize every simplex in the mesh as unvisited
+	2. Start from a random simplex which is unvisited
+	    3. Initialize a strand as current simplex and strand boundary as simplex facets
+	      4. For every facet f in the boundary.
+				remove f from boundary
+	            5. Find the count(n) of cofacets (cfs) of facet f other than those in the strand
+				6.   if(n==1):
+				         add that cofacet to the strand and its unexplored facets to boundary.
+				     else if(n>1)
+						 This is bifurcation, trifucrcation etc. stop. The stand will not grow in that directon
+	
+	After strands are identified it is time to flatten them and do convex decomposition.
+	
+	*/
+	
+	
+	
+	
 }
 
 // configPipe -> configure the function settings of this pipeline segment
