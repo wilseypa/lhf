@@ -24,4 +24,9 @@ COPY . .
 # Start an interactive shell by default
 CMD ["bash"]
 
+#docker build -t lhf-dev .
+#docker run -it --rm --name lhf-container -v ~/Projects/lhf:/lhf -w /lhf lhf-dev bash
+
+#docker exec -it lhf-container bash
+#docker start -ai lhf-container
 

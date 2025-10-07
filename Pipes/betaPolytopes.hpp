@@ -12,6 +12,18 @@ private:
 	double enclosingRadius;
 	int dim;
 	double epsilon;
+
+	struct VectorHash {
+		size_t operator()(const std::vector<int>& v) const noexcept {
+			std::hash<int> hasher;
+			size_t seed = 0;
+			for (int i : v) {
+				seed ^= hasher(i) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+			}
+			return seed;
+		}
+	};
+	
 public:	
 	betaPolytopes();
 	void runPipe(pipePacket<nodeType> &inData);

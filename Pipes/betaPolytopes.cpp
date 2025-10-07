@@ -15,6 +15,7 @@
 #include <functional>
 #include <set>
 #include <algorithm>
+#include <unordered_map>
 #include "betaPolytopes.hpp"
 #include "alphaComplex.hpp"
 #include "utils.hpp"
@@ -33,6 +34,8 @@ template <typename nodeType>
 void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 {
 	std::vector<std::vector<unsigned>> dsimplexmesh = inData.dsimplexmesh;
+	std::unordered_map<std::vector<int>, int, VectorHash> facelist; //stores <face, #of incident simplex>
+	std::vector<int> face;
 
 	for(auto x:dsimplexmesh){
 	  for(auto y:x)
@@ -41,6 +44,33 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	}
 	
 	std::cout<<"We will generate Polytopes here"<<std::endl;
+	
+	for(auto x:dsimplexmesh) {
+		for(int i = 0; i < x.size(); ++i) {
+			std::vector<int> temp;
+			temp.reserve(x.size() - 1);
+			for(int j = 0; j < x.size(); ++j) {
+				if (i != j){
+					temp.push_back(x[j]);
+				}
+			}
+			auto got = facelist.find(temp);
+				if(got == facelist.end()) {
+					facelist[temp] = 1;
+				}
+				else{
+					facelist[temp]++;
+				}
+		}
+	}
+
+	std::cout << "dump unordered_map" << std::endl;
+	for(const auto& pair : facelist) {
+		for(auto x:pair.first) {
+			std::cout<<x<<" ";
+		}
+		std::cout << std::endl << pair.second << std::endl;
+	}
 	
 	/* Outlie of the algorithm that I have in mind.
 	1. Intialize every simplex in the mesh as unvisited
