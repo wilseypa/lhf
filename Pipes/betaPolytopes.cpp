@@ -34,8 +34,10 @@ template <typename nodeType>
 void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 {
 	std::vector<std::vector<unsigned>> dsimplexmesh = inData.dsimplexmesh;
-	std::unordered_map<std::vector<int>, int, VectorHash> facelist; //stores <face, #of incident simplex>
-	std::vector<int> face;
+	std::vector<Simplex> mesh_structs; //copy in here to have struct features in each simplex
+	//mesh_structs.reserve(this -> dim + 1); potential optimization
+	std::unordered_map<std::vector<unsigned>, unsigned, VectorHash> facelist; //stores <face, #of incident simplex>
+	std::vector<Strand> strands;
 
 	for(auto x:dsimplexmesh){
 	  for(auto y:x)
@@ -46,23 +48,39 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	std::cout<<"We will generate Polytopes here"<<std::endl;
 	
 	for(auto x:dsimplexmesh) {
+		Simplex current_simplex{this -> dim};
 		for(int i = 0; i < x.size(); ++i) {
-			std::vector<int> temp;
-			temp.reserve(x.size() - 1);
+			std::vector<unsigned> current_face;
+			//current_face.reserve(x.size() - 1);
 			for(int j = 0; j < x.size(); ++j) {
 				if (i != j){
-					temp.push_back(x[j]);
+					current_face.push_back(x[j]);
 				}
 			}
-			auto got = facelist.find(temp);
-				if(got == facelist.end()) {
-					facelist[temp] = 1;
-				}
-				else{
-					facelist[temp]++;
-				}
+			current_simplex.faces.push_back(current_face);
+			auto got = facelist.find(current_face);
+			if(got == facelist.end()) {
+				facelist[current_face] = 1;
+			}
+			else{
+				facelist[current_face]++;
+			}
 		}
+		mesh_structs.push_back(current_simplex);
 	}
+
+//TESTS
+	std::cout << "print simplicies as face lists\n";
+	for(const auto& simplex : mesh_structs) {
+		for(auto face:simplex.faces) {
+			for(auto x:face){
+				std::cout << x << " ";
+			}
+			std::cout << std::endl;
+		}
+		std::cout << std::endl;
+	}
+
 
 	std::cout << "dump unordered_map" << std::endl;
 	for(const auto& pair : facelist) {
@@ -71,6 +89,8 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		}
 		std::cout << std::endl << pair.second << std::endl;
 	}
+
+
 	
 	/* Outlie of the algorithm that I have in mind.
 	1. Intialize every simplex in the mesh as unvisited

@@ -15,7 +15,7 @@ private:
 
 	struct VectorHash {
 		size_t operator()(const std::vector<unsigned>& v) const noexcept {
-			std::hash<int> hasher;
+			std::hash<unsigned> hasher;
 			size_t seed = 0;
 			for (int i : v) {
 				seed ^= hasher(i) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
@@ -25,12 +25,17 @@ private:
 	};
 	
 	struct Simplex {
-		std::vector<unsigned> simplex;
 		std::vector<std::vector<unsigned>> faces;
 		bool visited;
 
-		Simplex(int d) : simplex(d+1), faces(d+1, std::vector<unsigned>(d)), visited(false) {}
+		Simplex() = default;
+		Simplex(int d) : faces(), visited(false) {}
+	};
+	
+	struct Strand {
+		std::vector<Simplex> strand;
 
+		Strand() = default;
 	};
 
 public:	
