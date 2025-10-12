@@ -14,7 +14,7 @@ private:
 	double epsilon;
 
 	struct VectorHash {
-		size_t operator()(const std::vector<int>& v) const noexcept {
+		size_t operator()(const std::vector<unsigned>& v) const noexcept {
 			std::hash<int> hasher;
 			size_t seed = 0;
 			for (int i : v) {
@@ -24,6 +24,15 @@ private:
 		}
 	};
 	
+	struct Simplex {
+		std::vector<unsigned> simplex;
+		std::vector<std::vector<unsigned>> faces;
+		bool visited;
+
+		Simplex(int d) : simplex(d+1), faces(d+1, std::vector<unsigned>(d)), visited(false) {}
+
+	};
+
 public:	
 	betaPolytopes();
 	void runPipe(pipePacket<nodeType> &inData);

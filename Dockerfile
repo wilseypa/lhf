@@ -24,9 +24,11 @@ COPY . .
 # Start an interactive shell by default
 CMD ["bash"]
 
-#docker build -t lhf-dev .
-#docker run -it --rm --name lhf-container -v ~/Projects/lhf:/lhf -w /lhf lhf-dev bash
+#docker build -t lhf-container .
 
-#docker exec -it lhf-container bash
-#docker start -ai lhf-container
+#docker run -it --rm --name lhf-container -v "$(pwd)":/lhf -w /lhf lhf-container bash
+
+#docker exec -it -w /lhf lhf-container bash
+
+#./LHF -i inputData.csv -b 1 -bm betaHighCircle -e 100 -d 2 -complexType betaPoly -m beta
 
