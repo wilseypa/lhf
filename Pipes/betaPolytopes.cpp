@@ -36,7 +36,7 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	std::vector<std::vector<unsigned>> dsimplexmesh = inData.dsimplexmesh;
 	std::vector<Simplex> mesh_structs; //copy in here to have struct features in each simplex
 	//mesh_structs.reserve(this -> dim + 1); potential optimization
-	std::unordered_map<std::vector<unsigned>, unsigned, VectorHash> facelist; //stores <face, #of incident simplex>
+	std::unordered_map<Face, unsigned, FaceHash> facelist; //stores <face, #of incident simplex>
 	std::vector<Strand> strands;
 
 	for(auto x:dsimplexmesh){
@@ -47,17 +47,19 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	
 	std::cout<<"We will generate Polytopes here"<<std::endl;
 	
-	for(auto x:dsimplexmesh) {
+	for(const auto& x:dsimplexmesh) {
 		Simplex current_simplex{this -> dim};
 		for(int i = 0; i < x.size(); ++i) {
-			std::vector<unsigned> current_face;
+			//std::vector<unsigned> current_face;
 			//current_face.reserve(x.size() - 1);
+			Face current_face;
 			for(int j = 0; j < x.size(); ++j) {
 				if (i != j){
-					current_face.push_back(x[j]);
+					current_face.verticies.push_back(x[j]);
 				}
 			}
 			current_simplex.faces.push_back(current_face);
+			current_face.adjacent_simplicies.push_back(&current_simplex);
 			auto got = facelist.find(current_face);
 			if(got == facelist.end()) {
 				facelist[current_face] = 1;
@@ -69,7 +71,17 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		mesh_structs.push_back(current_simplex);
 	}
 
+	for(auto simplex:mesh_structs) {
+		if(simplex.visited = false) {
+			Strand strand;
+			flood_fill(strand, simplex, facelist);
+		}
+	}
+
 //TESTS
+
+	std::cout << "print strands\n";
+/*
 	std::cout << "print simplicies as face lists\n";
 	for(const auto& simplex : mesh_structs) {
 		for(auto face:simplex.faces) {
@@ -82,15 +94,15 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	}
 
 
+
 	std::cout << "dump unordered_map" << std::endl;
 	for(const auto& pair : facelist) {
-		for(auto x:pair.first) {
+		for(auto x:pair.first.verticies) {
 			std::cout<<x<<" ";
 		}
 		std::cout << std::endl << pair.second << std::endl;
 	}
-
-
+*/
 	
 	/* Outlie of the algorithm that I have in mind.
 	1. Intialize every simplex in the mesh as unvisited
@@ -155,6 +167,23 @@ void betaPolytopes<nodeType>::outputData(pipePacket<nodeType> &inData)
 	// Output related to betaPolytopes
 	return;
 }
+
+template <typename nodeType>
+void betaPolytopes<nodeType>::flood_fill(Strand& strand, Simplex& simplex, const std::unordered_map<Face, unsigned, FaceHash>& facelist) {
+	for(const auto& face:simplex.faces) {
+		if(facelist.at(face)==this -> dim) {
+			for(auto* current_simplex:face.adjacent_simplicies) {
+				if(current_simplex -> faces == simplex.faces) {
+					continue;
+				}
+				flood_fill(strand, *current_simplex, facelist);
+			}
+			strand.simplicies.push_back(simplex);
+			simplex.visited = true;
+		}
+	}
+}
+
 
 
 template class betaPolytopes<simplexNode>;

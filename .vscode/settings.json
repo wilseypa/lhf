@@ -18,6 +18,7 @@
         "bitset": "cpp",
         "forward_list": "cpp",
         "mutex": "cpp",
-        "sstream": "cpp"
+        "sstream": "cpp",
+        "unordered_map": "cpp"
     }
 }
