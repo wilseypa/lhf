@@ -36,7 +36,7 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	std::vector<std::vector<unsigned>> dsimplexmesh = inData.dsimplexmesh;
 	std::vector<Simplex> mesh_structs; //copy in here to have struct features in each simplex
 	//mesh_structs.reserve(this -> dim + 1); potential optimization
-	std::unordered_map<Face, unsigned, FaceHash> facelist; //stores <face, #of incident simplex>
+	std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq> facelist; //stores <face, #of incident simplex>
 	std::vector<Strand> strands;
 
 	for(auto x:dsimplexmesh){
@@ -48,39 +48,49 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	std::cout<<"We will generate Polytopes here"<<std::endl;
 	
 	for(const auto& x:dsimplexmesh) {
-		Simplex current_simplex{this -> dim};
+		auto current_simplex = std::make_shared<Simplex>(this->dim);
 		for(int i = 0; i < x.size(); ++i) {
 			//std::vector<unsigned> current_face;
 			//current_face.reserve(x.size() - 1);
-			Face current_face;
+			auto current_face = std::make_shared<Face>();
 			for(int j = 0; j < x.size(); ++j) {
 				if (i != j){
-					current_face.verticies.push_back(x[j]);
+					current_face -> verticies.push_back(x[j]);
 				}
 			}
-			current_simplex.faces.push_back(current_face);
-			current_face.adjacent_simplicies.push_back(&current_simplex);
-			auto got = facelist.find(current_face);
-			if(got == facelist.end()) {
-				facelist[current_face] = 1;
-			}
-			else{
-				facelist[current_face]++;
+			current_simplex -> faces.push_back(current_face);
+			current_face -> adjacent_simplicies.push_back(current_simplex);
+			auto [it, inserted] = facelist.emplace(current_face, 1);
+			if(!inserted) {
+				it -> second++;
 			}
 		}
-		mesh_structs.push_back(current_simplex);
+		mesh_structs.push_back(*current_simplex);
 	}
 
 	for(auto simplex:mesh_structs) {
-		if(simplex.visited = false) {
+		if(simplex.visited == false) {
 			Strand strand;
 			flood_fill(strand, simplex, facelist);
+			strands.push_back(strand);
 		}
 	}
 
 //TESTS
 
 	std::cout << "print strands\n";
+	for(const auto& strand:strands) {
+		for(const auto& simplex:strand.simplicies) {
+			for(const auto& face:simplex.faces) {
+				for(const auto& vert:face -> verticies) {
+					std::cout << vert << " ";
+				}
+			}
+			std::cout << std::endl;
+		}
+		std::cout << std::endl;
+	}
+
 /*
 	std::cout << "print simplicies as face lists\n";
 	for(const auto& simplex : mesh_structs) {
@@ -96,13 +106,15 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 
 
 	std::cout << "dump unordered_map" << std::endl;
-	for(const auto& pair : facelist) {
-		for(auto x:pair.first.verticies) {
-			std::cout<<x<<" ";
-		}
-		std::cout << std::endl << pair.second << std::endl;
-	}
+	std::cout << "facelist size: " << facelist.size() << std::endl;
+	for (auto& [f, deg] : facelist) {
+		std::cout << "Face { ";
+		for (auto v : f->verticies)
+			std::cout << v << " ";
+		std::cout << "} degree=" << deg << std::endl;
+}
 */
+
 	
 	/* Outlie of the algorithm that I have in mind.
 	1. Intialize every simplex in the mesh as unvisited
@@ -169,19 +181,18 @@ void betaPolytopes<nodeType>::outputData(pipePacket<nodeType> &inData)
 }
 
 template <typename nodeType>
-void betaPolytopes<nodeType>::flood_fill(Strand& strand, Simplex& simplex, const std::unordered_map<Face, unsigned, FaceHash>& facelist) {
+void betaPolytopes<nodeType>::flood_fill(Strand& strand, Simplex& simplex, const std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq>& facelist) {
+	if(simplex.visited) return;
+	strand.simplicies.push_back(simplex);
+	simplex.visited = true;
 	for(const auto& face:simplex.faces) {
 		if(facelist.at(face)==this -> dim) {
-			for(auto* current_simplex:face.adjacent_simplicies) {
-				if(current_simplex -> faces == simplex.faces) {
-					continue;
-				}
+			for(auto& current_simplex:face -> adjacent_simplicies) {
 				flood_fill(strand, *current_simplex, facelist);
 			}
-			strand.simplicies.push_back(simplex);
-			simplex.visited = true;
 		}
 	}
+	return;
 }
 
 
