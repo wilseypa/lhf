@@ -35,7 +35,6 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 {
 	std::vector<std::vector<unsigned>> dsimplexmesh = inData.dsimplexmesh;
 	std::vector<std::shared_ptr<Simplex>> mesh_structs; //copy in here to have struct features in each simplex
-	//mesh_structs.reserve(this -> dim + 1); potential optimization
 	std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq> facelist; //stores <face, #of incident simplex>
 	std::vector<Strand> strands;
 
@@ -47,11 +46,11 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	
 	std::cout<<"We will generate Polytopes here"<<std::endl;
 	
+	//iterate through each simplex and construct each Simplex object as list of its faces
 	for(const auto& x:dsimplexmesh) {
 		auto current_simplex = std::make_shared<Simplex>(this->dim);
+		//iterate through each face of each simplex to construct Face object as vertices and adjacent simplices
 		for(int i = 0; i < x.size(); ++i) {
-			//std::vector<unsigned> current_face;
-			//current_face.reserve(x.size() - 1);
 			auto current_face = std::make_shared<Face>();
 			for(int j = 0; j < x.size(); ++j) {
 				if (i != j){
@@ -60,7 +59,7 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 			}
 			current_simplex -> faces.push_back(current_face);
 
-			auto [it, inserted] = facelist.emplace(current_face, 1);
+			auto [it, inserted] = facelist.emplace(current_face, 1); //facelist as hashtable makes this check fast
 			if(!inserted) {
 				it -> first -> adjacent_simplicies.push_back(current_simplex);
 				it -> second++;
@@ -72,8 +71,7 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 
 	for(auto simplex:mesh_structs) {
 		if(simplex -> visited == false) {
-			std::cout << "new strand" << std::endl;
-			Strand strand;
+			Strand strand; //whenever last recursion ends (last strand fully enumerated), find a new unvisited simplex to enumerate new strand
 			flood_fill(strand, simplex, facelist);
 			strands.push_back(strand);
 		}
@@ -186,9 +184,10 @@ void betaPolytopes<nodeType>::outputData(pipePacket<nodeType> &inData)
 
 template <typename nodeType>
 void betaPolytopes<nodeType>::flood_fill(Strand& strand, std::shared_ptr<Simplex>& simplex, const std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq>& facelist) {
-	if(simplex -> visited) return;
+	if(simplex -> visited) return; //avoid duplicate simplices
 	strand.simplicies.push_back(simplex);
-	simplex -> visited = true;
+	simplex -> visited = true; //mark as visited once pushed to a strand
+	//for each face, check if not an intersection, then recursively call function to add adjacent simplex to strand
 	for(const auto& face:simplex -> faces) {
 		if(facelist.at(face)==2) {
 			for(auto& current_simplex:face -> adjacent_simplicies) {
