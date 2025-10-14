@@ -34,7 +34,7 @@ template <typename nodeType>
 void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 {
 	std::vector<std::vector<unsigned>> dsimplexmesh = inData.dsimplexmesh;
-	std::vector<Simplex> mesh_structs; //copy in here to have struct features in each simplex
+	std::vector<std::shared_ptr<Simplex>> mesh_structs; //copy in here to have struct features in each simplex
 	//mesh_structs.reserve(this -> dim + 1); potential optimization
 	std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq> facelist; //stores <face, #of incident simplex>
 	std::vector<Strand> strands;
@@ -59,17 +59,20 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 				}
 			}
 			current_simplex -> faces.push_back(current_face);
-			current_face -> adjacent_simplicies.push_back(current_simplex);
+
 			auto [it, inserted] = facelist.emplace(current_face, 1);
 			if(!inserted) {
+				it -> first -> adjacent_simplicies.push_back(current_simplex);
 				it -> second++;
 			}
+			else {current_face -> adjacent_simplicies.push_back(current_simplex);}
 		}
-		mesh_structs.push_back(*current_simplex);
+		mesh_structs.push_back(current_simplex);
 	}
 
 	for(auto simplex:mesh_structs) {
-		if(simplex.visited == false) {
+		if(simplex -> visited == false) {
+			std::cout << "new strand" << std::endl;
 			Strand strand;
 			flood_fill(strand, simplex, facelist);
 			strands.push_back(strand);
@@ -80,8 +83,9 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 
 	std::cout << "print strands\n";
 	for(const auto& strand:strands) {
+		std::cout << "Strand: " << std::endl;
 		for(const auto& simplex:strand.simplicies) {
-			for(const auto& face:simplex.faces) {
+			for(const auto& face:simplex -> faces) {
 				for(const auto& vert:face -> verticies) {
 					std::cout << vert << " ";
 				}
@@ -181,14 +185,14 @@ void betaPolytopes<nodeType>::outputData(pipePacket<nodeType> &inData)
 }
 
 template <typename nodeType>
-void betaPolytopes<nodeType>::flood_fill(Strand& strand, Simplex& simplex, const std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq>& facelist) {
-	if(simplex.visited) return;
+void betaPolytopes<nodeType>::flood_fill(Strand& strand, std::shared_ptr<Simplex>& simplex, const std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq>& facelist) {
+	if(simplex -> visited) return;
 	strand.simplicies.push_back(simplex);
-	simplex.visited = true;
-	for(const auto& face:simplex.faces) {
-		if(facelist.at(face)==this -> dim) {
+	simplex -> visited = true;
+	for(const auto& face:simplex -> faces) {
+		if(facelist.at(face)==2) {
 			for(auto& current_simplex:face -> adjacent_simplicies) {
-				flood_fill(strand, *current_simplex, facelist);
+				flood_fill(strand, current_simplex, facelist);
 			}
 		}
 	}

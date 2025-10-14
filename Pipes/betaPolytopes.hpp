@@ -58,7 +58,7 @@ private:
 	};
 	
 	struct Strand {
-		std::vector<Simplex> simplicies;
+		std::vector<std::shared_ptr<Simplex>> simplicies;
 
 		Strand() = default;
 	};
@@ -69,5 +69,5 @@ public:
 	bool configPipe(std::map<std::string, std::string> &configMap);
 	void outputData(pipePacket<nodeType> &);
 
-	void flood_fill(Strand& strand, Simplex& simplex, const std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq> &facelist);
+	void flood_fill(Strand& strand, std::shared_ptr<Simplex>& simplex, const std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq> &facelist);
 };
