@@ -263,7 +263,7 @@ void argParser::setPipeline(std::map<std::string, std::string> &args)
 	else if (args["mode"] == "alpha")
 	{
 
-		// TODO: Nick come check these are still correct after splitting betaComplex
+		// TODO: Nick come check these are still correct after splitting betaComplex	
 		args["nodeType"] = "alphaNode";
 		args["mode"] = "alpha";
 		args["complexType"] = "alphaComplex";

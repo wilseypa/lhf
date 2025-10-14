@@ -37,11 +37,30 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	std::unordered_map<std::vector<int>, int, VectorHash> facelist; //stores <face, #of incident simplex>
 	std::vector<int> face;
 
+/*
 	for(auto x:dsimplexmesh){
 	  for(auto y:x)
 		std::cout<<y<<" ";
 	std::cout<<std::endl;
 	}
+*/
+	std::ofstream outFile("../../python_tests/Polytopal_Development/betaMesh.txt");
+    
+    // Check if the file opened successfully
+    if (!outFile) {
+        std::cerr << "Error opening file." << std::endl;
+        return;
+    }
+    
+    // Write each row
+    for (const auto& row : dsimplexmesh) {
+        for (const auto& elem : row) {
+            outFile << elem << " "; // Write element followed by a space
+        }
+        outFile << "\n"; // New line after each row
+    }
+    
+    outFile.close(); // Close file
 	
 	std::cout<<"We will generate Polytopes here"<<std::endl;
 	
