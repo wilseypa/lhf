@@ -34,8 +34,9 @@ template <typename nodeType>
 void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 {
 	std::vector<std::vector<unsigned>> dsimplexmesh = inData.dsimplexmesh;
-	std::unordered_map<std::vector<int>, int, VectorHash> facelist; //stores <face, #of incident simplex>
-	std::vector<int> face;
+	std::vector<std::shared_ptr<Simplex>> mesh_structs; //copy in here to have struct features in each simplex
+	std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq> facelist; //stores <face, #of incident simplex>
+	std::vector<Strand> strands;
 
 /*
 	for(auto x:dsimplexmesh){
@@ -64,32 +65,77 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	
 	std::cout<<"We will generate Polytopes here"<<std::endl;
 	
-	for(auto x:dsimplexmesh) {
+	//iterate through each simplex and construct each Simplex object as list of its faces
+	for(const auto& x:dsimplexmesh) {
+		auto current_simplex = std::make_shared<Simplex>(this->dim);
+		//iterate through each face of each simplex to construct Face object as vertices and adjacent simplices
 		for(int i = 0; i < x.size(); ++i) {
-			std::vector<int> temp;
-			temp.reserve(x.size() - 1);
+			auto current_face = std::make_shared<Face>();
 			for(int j = 0; j < x.size(); ++j) {
 				if (i != j){
-					temp.push_back(x[j]);
+					current_face -> verticies.push_back(x[j]);
 				}
 			}
-			auto got = facelist.find(temp);
-				if(got == facelist.end()) {
-					facelist[temp] = 1;
-				}
-				else{
-					facelist[temp]++;
-				}
+			current_simplex -> faces.push_back(current_face);
+
+			auto [it, inserted] = facelist.emplace(current_face, 1); //facelist as hashtable makes this check fast
+			if(!inserted) {
+				it -> first -> adjacent_simplicies.push_back(current_simplex);
+				it -> second++;
+			}
+			else {current_face -> adjacent_simplicies.push_back(current_simplex);}
+		}
+		mesh_structs.push_back(current_simplex);
+	}
+
+	for(auto simplex:mesh_structs) {
+		if(simplex -> visited == false) {
+			Strand strand; //whenever last recursion ends (last strand fully enumerated), find a new unvisited simplex to enumerate new strand
+			flood_fill(strand, simplex, facelist);
+			strands.push_back(strand);
 		}
 	}
 
-	std::cout << "dump unordered_map" << std::endl;
-	for(const auto& pair : facelist) {
-		for(auto x:pair.first) {
-			std::cout<<x<<" ";
+//TESTS
+
+	std::cout << "print strands\n";
+	for(const auto& strand:strands) {
+		std::cout << "Strand: " << std::endl;
+		for(const auto& simplex:strand.simplicies) {
+			for(const auto& face:simplex -> faces) {
+				for(const auto& vert:face -> verticies) {
+					std::cout << vert << " ";
+				}
+			}
+			std::cout << std::endl;
 		}
-		std::cout << std::endl << pair.second << std::endl;
+		std::cout << std::endl;
 	}
+
+/*
+	std::cout << "print simplicies as face lists\n";
+	for(const auto& simplex : mesh_structs) {
+		for(auto face:simplex.faces) {
+			for(auto x:face){
+				std::cout << x << " ";
+			}
+			std::cout << std::endl;
+		}
+		std::cout << std::endl;
+	}
+
+
+
+	std::cout << "dump unordered_map" << std::endl;
+	std::cout << "facelist size: " << facelist.size() << std::endl;
+	for (auto& [f, deg] : facelist) {
+		std::cout << "Face { ";
+		for (auto v : f->verticies)
+			std::cout << v << " ";
+		std::cout << "} degree=" << deg << std::endl;
+}
+*/
+
 	
 	/* Outlie of the algorithm that I have in mind.
 	1. Intialize every simplex in the mesh as unvisited
@@ -154,6 +200,23 @@ void betaPolytopes<nodeType>::outputData(pipePacket<nodeType> &inData)
 	// Output related to betaPolytopes
 	return;
 }
+
+template <typename nodeType>
+void betaPolytopes<nodeType>::flood_fill(Strand& strand, std::shared_ptr<Simplex>& simplex, const std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq>& facelist) {
+	if(simplex -> visited) return; //avoid duplicate simplices
+	strand.simplicies.push_back(simplex);
+	simplex -> visited = true; //mark as visited once pushed to a strand
+	//for each face, check if not an intersection, then recursively call function to add adjacent simplex to strand
+	for(const auto& face:simplex -> faces) {
+		if(facelist.at(face)==2) {
+			for(auto& current_simplex:face -> adjacent_simplicies) {
+				flood_fill(strand, current_simplex, facelist);
+			}
+		}
+	}
+	return;
+}
+
 
 
 template class betaPolytopes<simplexNode>;
