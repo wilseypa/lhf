@@ -44,6 +44,13 @@
         "map": "cpp",
         "regex": "cpp",
         "set": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "__hash_table": "cpp",
+        "__tree": "cpp",
+        "__node_handle": "cpp",
+        "memory": "cpp",
+        "iomanip": "cpp",
+        "optional": "cpp",
+        "algorithm": "cpp"
     }
 }

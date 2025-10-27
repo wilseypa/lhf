@@ -12,6 +12,9 @@ CTestTestfile.cmake
 _deps
 CMakeUserPresets.json
 
+#data sets
+*.csv
+
 ## C++ Specific Ignores
 # Prerequisites
 *.d

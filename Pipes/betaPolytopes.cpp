@@ -98,18 +98,28 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 
 //TESTS
 
-	std::cout << "print strands\n";
-	for(const auto& strand:strands) {
-		std::cout << "Strand: " << std::endl;
-		for(const auto& simplex:strand.simplicies) {
-			for(const auto& face:simplex -> faces) {
-				for(const auto& vert:face -> verticies) {
+	std::cout << "Printing strands:\n";
+
+	int strand_idx = 0;
+	for (const auto& strand : strands) {
+		std::cout << "Strand " << strand_idx++ << ":\n";
+
+		int simplex_idx = 0;
+		for (const auto& simplex : strand.simplicies) {
+			std::cout << "  Simplex " << simplex_idx++ << ":\n";
+
+			int face_idx = 0;
+			for (const auto& face : simplex->faces) {
+				std::cout << "    Face " << face_idx++ << ": ";
+
+				for (const auto& vert : face->verticies) {
 					std::cout << vert << " ";
 				}
+				std::cout << "\n";
 			}
-			std::cout << std::endl;
+			std::cout << "\n";
 		}
-		std::cout << std::endl;
+		std::cout << "\n";
 	}
 
 /*
