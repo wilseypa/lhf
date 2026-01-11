@@ -3,7 +3,9 @@
 // Header file for betaPOlytopesPipe class - see betaPolytopes.cpp for descriptions
 #include <map>
 #include <unordered_map>
+#include <unordered_set>
 #include <memory>
+#include <fstream>
 #include "basePipe.hpp"
 #include "kdTree.hpp"
 
@@ -70,4 +72,11 @@ public:
 	void outputData(pipePacket<nodeType> &);
 
 	void flood_fill(Strand& strand, std::shared_ptr<Simplex>& simplex, const std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq> &facelist);
+	//helper functions for visualization:
+	void collect_ids(const std::vector<Strand>& strands, std::unordered_map<const Face*, int>& face_ids, std::unordered_map<const Simplex*, int>& simplex_ids);
+	void write_faces_csv(const std::unordered_map<const Face*, int>& face_ids);
+	void write_simplices_csv(const std::vector<Strand>& strands, const std::unordered_map<const Face*, int>& face_ids, const std::unordered_map<const Simplex*, int>& simplex_ids);
+	void export_strands_to_csv(const std::vector<Strand>& strands);
+
+
 };

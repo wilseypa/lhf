@@ -45,23 +45,34 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	std::cout<<std::endl;
 	}
 */
-	std::ofstream outFile("../../python_tests/Polytopal_Development/betaMesh.txt");
-    
-    // Check if the file opened successfully
-    if (!outFile) {
-        std::cerr << "Error opening file." << std::endl;
-        return;
-    }
-    
-    // Write each row
-    for (const auto& row : dsimplexmesh) {
-        for (const auto& elem : row) {
-            outFile << elem << " "; // Write element followed by a space
-        }
-        outFile << "\n"; // New line after each row
-    }
-    
-    outFile.close(); // Close file
+	std::ofstream outFile("../../python_tests/Polytopal_Development/vertices.csv");
+
+// Check if the file opened successfully
+	if (!outFile) {
+		std::cerr << "Error opening vertices.csv." << std::endl;
+		return;
+	}
+
+	// Write CSV header
+	outFile << "vertex_id";
+	if (!dsimplexmesh.empty()) {
+		for (size_t d = 0; d < dsimplexmesh[0].size(); ++d) {
+			outFile << ",c" << d;
+		}
+	}
+	outFile << "\n";
+
+	// Write vertex rows
+	for (size_t vid = 0; vid < dsimplexmesh.size(); ++vid) {
+		outFile << vid;
+		for (const auto& coord : dsimplexmesh[vid]) {
+			outFile << "," << coord;
+		}
+		outFile << "\n";
+	}
+
+	outFile.close();
+
 	
 	std::cout<<"We will generate Polytopes here"<<std::endl;
 	
@@ -121,6 +132,8 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		}
 		std::cout << "\n";
 	}
+
+	export_strands_to_csv(strands);
 
 /*
 	std::cout << "print simplicies as face lists\n";
@@ -225,6 +238,75 @@ void betaPolytopes<nodeType>::flood_fill(Strand& strand, std::shared_ptr<Simplex
 		}
 	}
 	return;
+}
+
+template <typename nodeType>
+void betaPolytopes<nodeType>::collect_ids(const std::vector<Strand>& strands, std::unordered_map<const Face*, int>& face_ids, std::unordered_map<const Simplex*, int>& simplex_ids){
+	int next_face_id = 0;
+    int next_simplex_id = 0;
+
+    for (const auto& strand : strands) {
+        for (const auto& simplex : strand.simplicies) {
+
+            // Assign simplex ID if new
+            if (!simplex_ids.count(simplex.get())) {
+                simplex_ids[simplex.get()] = next_simplex_id++;
+            }
+
+            // Assign face IDs
+            for (const auto& face : simplex->faces) {
+                if (!face_ids.count(face.get())) {
+                    face_ids[face.get()] = next_face_id++;
+                }
+            }
+        }
+    }
+}
+
+template <typename nodeType>
+void betaPolytopes<nodeType>::write_faces_csv(const std::unordered_map<const Face*, int>& face_ids)
+	{
+    std::ofstream file("faces.csv");
+    file << "face_id,vertex_ids\n";
+
+    for (const auto& [face_ptr, face_id] : face_ids) {
+        file << face_id << ",\"";
+        for (const auto& v : face_ptr->verticies) {
+            file << v << " ";
+        }
+        file << "\"\n";
+    }
+}
+
+template <typename nodeType>
+void betaPolytopes<nodeType>::write_simplices_csv(const std::vector<Strand>& strands, const std::unordered_map<const Face*, int>& face_ids, const std::unordered_map<const Simplex*, int>& simplex_ids){
+	std::ofstream file("simplices.csv");
+    file << "simplex_id,face_ids,strand_id\n";
+
+    for (int strand_id = 0; strand_id < strands.size(); ++strand_id) {
+        for (const auto& simplex : strands[strand_id].simplicies) {
+
+            int sid = simplex_ids.at(simplex.get());
+            file << sid << ",\"";
+
+            for (const auto& face : simplex->faces) {
+                file << face_ids.at(face.get()) << " ";
+            }
+
+            file << "\"," << strand_id << "\n";
+        }
+    }
+}
+
+template <typename nodeType>
+void betaPolytopes<nodeType>::export_strands_to_csv(const std::vector<Strand>& strands){
+	std::unordered_map<const Face*, int> face_ids;
+    std::unordered_map<const Simplex*, int> simplex_ids;
+
+    collect_ids(strands, face_ids, simplex_ids);
+
+    write_faces_csv(face_ids);
+    write_simplices_csv(strands, face_ids, simplex_ids);
 }
 
 
