@@ -241,7 +241,7 @@ void betaPolytopes<nodeType>::flood_fill(Strand& strand, std::shared_ptr<Simplex
 }
 
 template <typename nodeType>
-void betaPolytopes<nodeType>::collect_ids(const std::vector<Strand>& strands, std::unordered_map<const Face*, int>& face_ids, std::unordered_map<const Simplex*, int>& simplex_ids){
+void betaPolytopes<nodeType>::collect_ids(const std::vector<Strand>& strands, std::unordered_map<std::vector<unsigned>, int, VectorHash>& face_ids, std::unordered_map<const Simplex*, int>& simplex_ids){
 	int next_face_id = 0;
     int next_simplex_id = 0;
 
@@ -255,8 +255,9 @@ void betaPolytopes<nodeType>::collect_ids(const std::vector<Strand>& strands, st
 
             // Assign face IDs
             for (const auto& face : simplex->faces) {
-                if (!face_ids.count(face.get())) {
-                    face_ids[face.get()] = next_face_id++;
+				std::vector<unsigned> key = face -> verticies;
+                if (!face_ids.count(key)) {
+                    face_ids[key] = next_face_id++;
                 }
             }
         }
@@ -264,14 +265,14 @@ void betaPolytopes<nodeType>::collect_ids(const std::vector<Strand>& strands, st
 }
 
 template <typename nodeType>
-void betaPolytopes<nodeType>::write_faces_csv(const std::unordered_map<const Face*, int>& face_ids)
+void betaPolytopes<nodeType>::write_faces_csv(const std::unordered_map<std::vector<unsigned>, int, VectorHash>& face_ids)
 	{
     std::ofstream file("faces.csv");
     file << "face_id,vertex_ids\n";
 
-    for (const auto& [face_ptr, face_id] : face_ids) {
+    for (const auto& [face, face_id] : face_ids) {
         file << face_id << ",\"";
-        for (const auto& v : face_ptr->verticies) {
+        for (const auto& v : face) {
             file << v << " ";
         }
         file << "\"\n";
@@ -279,7 +280,7 @@ void betaPolytopes<nodeType>::write_faces_csv(const std::unordered_map<const Fac
 }
 
 template <typename nodeType>
-void betaPolytopes<nodeType>::write_simplices_csv(const std::vector<Strand>& strands, const std::unordered_map<const Face*, int>& face_ids, const std::unordered_map<const Simplex*, int>& simplex_ids){
+void betaPolytopes<nodeType>::write_simplices_csv(const std::vector<Strand>& strands, std::unordered_map<std::vector<unsigned>, int, VectorHash>& face_ids, const std::unordered_map<const Simplex*, int>& simplex_ids){
 	std::ofstream file("simplices.csv");
     file << "simplex_id,face_ids,strand_id\n";
 
@@ -290,7 +291,7 @@ void betaPolytopes<nodeType>::write_simplices_csv(const std::vector<Strand>& str
             file << sid << ",\"";
 
             for (const auto& face : simplex->faces) {
-                file << face_ids.at(face.get()) << " ";
+				file << face_ids[face -> verticies] << " ";
             }
 
             file << "\"," << strand_id << "\n";
@@ -300,7 +301,7 @@ void betaPolytopes<nodeType>::write_simplices_csv(const std::vector<Strand>& str
 
 template <typename nodeType>
 void betaPolytopes<nodeType>::export_strands_to_csv(const std::vector<Strand>& strands){
-	std::unordered_map<const Face*, int> face_ids;
+	std::unordered_map<std::vector<unsigned>, int, VectorHash> face_ids;
     std::unordered_map<const Simplex*, int> simplex_ids;
 
     collect_ids(strands, face_ids, simplex_ids);

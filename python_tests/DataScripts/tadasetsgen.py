@@ -5,10 +5,10 @@ import pandas as pd
 import csv
 
 torus = tadasets.torus(n=50, c=2, a=1, ambient=4, noise=0.2)
-swiss_roll = tadasets.swiss_roll(n=50, r=4, ambient=10, noise=1.2)
-dsphere = tadasets.dsphere(n=50, d=12, r=3.14, ambient=14, noise=0.14)
+swiss_roll = tadasets.swiss_roll(n=50, r=4, ambient=4, noise=1.2)
+dsphere = tadasets.dsphere(n=50, d=3, r=3.14, ambient=5, noise=0.14)
 inf_sign = tadasets.infty_sign(n=50, noise=0.1)
-eyeglasses = tadasets.eyeglasses(n=50, r1=1, r2=2, neck_size=.5, noise=0.1, ambient=4)
+eyeglasses = tadasets.eyeglasses(n=25, r1=2, r2=4, neck_size=2, noise=0.4, ambient=3)
 theta = np.linspace(0, 8*np.pi, 50)
 x = np.cos(theta)
 y = np.sin(theta)

@@ -17,10 +17,20 @@ private:
 	int dim;
 	double epsilon;
 	struct FacePtrHash;
+	struct VectorHash;
 	struct Simplex;
 	struct Face;
 	struct Strand;
 	
+	struct VectorHash {
+    std::size_t operator()(const std::vector<unsigned>& v) const noexcept {
+        std::size_t h = 0;
+        for (unsigned x : v) {
+            h ^= std::hash<unsigned>{}(x) + 0x9e3779b9 + (h << 6) + (h >> 2);
+        }
+        return h;
+    }
+};
 
 	struct FacePtrHash {
     size_t operator()(const std::shared_ptr<Face>& f) const noexcept {
@@ -73,9 +83,9 @@ public:
 
 	void flood_fill(Strand& strand, std::shared_ptr<Simplex>& simplex, const std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq> &facelist);
 	//helper functions for visualization:
-	void collect_ids(const std::vector<Strand>& strands, std::unordered_map<const Face*, int>& face_ids, std::unordered_map<const Simplex*, int>& simplex_ids);
-	void write_faces_csv(const std::unordered_map<const Face*, int>& face_ids);
-	void write_simplices_csv(const std::vector<Strand>& strands, const std::unordered_map<const Face*, int>& face_ids, const std::unordered_map<const Simplex*, int>& simplex_ids);
+	void collect_ids(const std::vector<Strand>& strands, std::unordered_map<std::vector<unsigned>, int, VectorHash>& face_ids, std::unordered_map<const Simplex*, int>& simplex_ids);
+	void write_faces_csv(const std::unordered_map<std::vector<unsigned>, int, VectorHash>& face_ids);
+	void write_simplices_csv(const std::vector<Strand>& strands, std::unordered_map<std::vector<unsigned>, int, VectorHash>& face_ids, const std::unordered_map<const Simplex*, int>& simplex_ids);
 	void export_strands_to_csv(const std::vector<Strand>& strands);
 
 
