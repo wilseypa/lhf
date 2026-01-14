@@ -11,7 +11,7 @@ Need the vertices.csv, faces.csv, simplices.csv, and the point cloud being used 
 #parses the original point cloud data
 def read_pc():
     verts = {}
-    with open('klein_bottle.csv', newline='') as pc_file:
+    with open('torus.csv', newline='') as pc_file:
         reader = csv.reader(pc_file)
         for idx, row in enumerate(reader):
             verts[idx] = (float(row[0]), float(row[1]), float(row[2]))
@@ -51,6 +51,7 @@ for v1, v2 in edges:
 
     ax.plot(xline, yline, zline, linewidth=0.8)
 '''
+
 
 plt.tight_layout()
 plt.show()

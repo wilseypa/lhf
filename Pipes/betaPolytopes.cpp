@@ -267,7 +267,7 @@ void betaPolytopes<nodeType>::collect_ids(const std::vector<Strand>& strands, st
 template <typename nodeType>
 void betaPolytopes<nodeType>::write_faces_csv(const std::unordered_map<std::vector<unsigned>, int, VectorHash>& face_ids)
 	{
-    std::ofstream file("faces.csv");
+    std::ofstream file("../../python_tests/Polytopal_Development/faces.csv");
     file << "face_id,vertex_ids\n";
 
     for (const auto& [face, face_id] : face_ids) {
@@ -281,7 +281,7 @@ void betaPolytopes<nodeType>::write_faces_csv(const std::unordered_map<std::vect
 
 template <typename nodeType>
 void betaPolytopes<nodeType>::write_simplices_csv(const std::vector<Strand>& strands, std::unordered_map<std::vector<unsigned>, int, VectorHash>& face_ids, const std::unordered_map<const Simplex*, int>& simplex_ids){
-	std::ofstream file("simplices.csv");
+	std::ofstream file("../../python_tests/Polytopal_Development/simplices.csv");
     file << "simplex_id,face_ids,strand_id\n";
 
     for (int strand_id = 0; strand_id < strands.size(); ++strand_id) {
