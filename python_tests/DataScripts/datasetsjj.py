@@ -4,7 +4,7 @@ import numpy as np
 This file generates some of the topological structures specifically in 3-dimensions. Being developed for testing and plotting
 of the strand identification. Right now just does the klein bottle, I may add more.
 '''
-def pc_klein_bottle(n, s=1.0, noise=0.0):
+def pc_klein_bottle(n, noise=0.0):
     # Sample parameters uniformly
     u = np.random.uniform(0.0, 2.0 * np.pi, n)
     v = np.random.uniform(0.0, 2.0 * np.pi, n)
@@ -16,9 +16,7 @@ def pc_klein_bottle(n, s=1.0, noise=0.0):
                      + np.sin(u / 2.0) * np.sin(v))
     z = (-np.sin(u / 2.0) * (np.sqrt(2.0) + np.cos(v))
          + np.cos(u / 2.0) * np.sin(v))
-
-    # Stack and scale
-    points = s * np.column_stack((x, y, z))
+    points = np.column_stack((x, y, z))
 
     # Add noise if requested
     if noise > 0.0:
@@ -27,7 +25,7 @@ def pc_klein_bottle(n, s=1.0, noise=0.0):
     # Write CSV (no header)
     np.savetxt("klein_bottle.csv", points, delimiter=",")
 
-def pc_torus(n, s=1.0, noise=0.0, h=1):
+def pc_torus(n, noise=0.0, h=1):
     # Sample parameters
     u = np.random.uniform(0.0, 2.0 * np.pi, n)
     v = np.random.uniform(0.0, 2.0 * np.pi, n)
@@ -45,14 +43,14 @@ def pc_torus(n, s=1.0, noise=0.0, h=1):
     y = Ru * np.sin(angle)
     z = r * np.sin(v)
 
-    # Stack and scale
-    points = s * np.column_stack((x, y, z))
+    points = np.column_stack((x, y, z))
 
     # Add noise if requested
     if noise > 0.0:
         points += np.random.normal(scale=noise, size=points.shape)
 
     # Write CSV (no header)
-    np.savetxt("torus.csv", points, delimiter=",")
+    np.savetxt("../../build/LHFmain/torus.csv", points, delimiter=",")
+    np.savetxt("../Polytopal_Development/torus.csv", points, delimiter=",")
 
-pc_torus(10, 1, 0.5)
+pc_torus(300, 0, 1)
