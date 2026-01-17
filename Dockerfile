@@ -30,5 +30,5 @@ CMD ["bash"]
 
 #docker exec -it -w /lhf lhf-container bash
 
-#./LHF -i helix.csv -b 1 -bm betaHighCircle -e 100 -d 2 -complexType betaPoly -m beta
+#./LHF -i torus.csv -b 1 -bm betaHighCircle -e 100 -d 2 -complexType betaPoly -m beta
 

@@ -53,4 +53,4 @@ def pc_torus(n, noise=0.0, h=1):
     np.savetxt("../../build/LHFmain/torus.csv", points, delimiter=",")
     np.savetxt("../Polytopal_Development/torus.csv", points, delimiter=",")
 
-pc_torus(300, 0, 1)
+pc_torus(30, 0, 1)
