@@ -115,6 +115,7 @@ void betaSubSkeletonComplex<nodeType>::runPipe(pipePacket<nodeType> &inData)
 						dsimplexmesh.push_back(dsimplexIndexed1);
 						count++;
 					}
+					
 				}
 			}
 		}

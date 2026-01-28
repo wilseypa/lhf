@@ -1,4 +1,4 @@
-/*
+	/*
  * betaSubSkeletonComplexPipe hpp + cpp extend the basePipe class for calculating the
  * beta Skeleton Based Complex generation for data input
  *
@@ -37,7 +37,15 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	std::vector<std::shared_ptr<Simplex>> mesh_structs; //copy in here to have struct features in each simplex
 	std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq> facelist; //stores <face, #of incident simplex>
 	std::vector<Strand> strands;
+	std::cout << "Simplices in beta mesh::" << dsimplexmesh.size()<<std::endl;
 
+	std::ofstream out("betaMesh.csv");
+
+	for (auto& row : dsimplexmesh) {
+		for (auto col : row)
+			out << col << ',';
+		out << '\n';
+	}
 /*
 	for(auto x:dsimplexmesh){
 	  for(auto y:x)
