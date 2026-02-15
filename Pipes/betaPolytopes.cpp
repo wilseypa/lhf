@@ -47,7 +47,7 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 			out << col << ',';
 		out << '\n';
 	}
-/*
+
 	for(auto x:dsimplexmesh){
 		counter++;
 	}
