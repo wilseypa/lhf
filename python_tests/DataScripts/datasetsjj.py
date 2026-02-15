@@ -1,4 +1,6 @@
 import numpy as np
+import random
+import csv
 
 '''
 This file generates some of the topological structures specifically in 3-dimensions. Being developed for testing and plotting
@@ -53,4 +55,15 @@ def pc_torus(n, noise=0.0, h=1):
     np.savetxt("../../build/LHFmain/torus.csv", points, delimiter=",")
     np.savetxt("../Polytopal_Development/torus.csv", points, delimiter=",")
 
-pc_torus(30, 0, 1)
+def rand(n, filename="points.csv"):
+    with open(filename, "w", newline="") as f:
+        writer = csv.writer(f)
+        for _ in range(n):
+            x = random.random()
+            y = random.random()
+            z = random.random()
+            writer.writerow([x, y, z])
+
+
+
+rand(100, "../../build/LHFmain/pc.csv")   

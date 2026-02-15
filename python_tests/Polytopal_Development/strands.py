@@ -12,7 +12,7 @@ Need the vertices.csv, faces.csv, simplices.csv, and the point cloud being used 
 #parses the original point cloud data
 def read_pc():
     verts = {}
-    with open('torus.csv', newline='') as pc_file:
+    with open('swiss_roll.csv', newline='') as pc_file:
         reader = csv.reader(pc_file)
         for idx, row in enumerate(reader):
             verts[idx] = (float(row[0]), float(row[1]), float(row[2]))
@@ -58,16 +58,11 @@ for strands in face_to_strands.values():
     for s in strands:
         strand_adj[s].update(strands - {s})
 
-palette = [
-    "tab:blue", "tab:orange", "tab:green", "tab:red",
-    "tab:purple", "tab:brown", "tab:pink", "tab:gray",
-    "cyan", "magenta", "yellow", "lime", "navy",
-    "teal", "gold", "salmon", "khaki", "coral",
-    "orchid", "turquoise", "violet", "wheat", "plum",
-    "darkorange", "lightgreen", "royalblue", "crimson", "darkcyan",
-    "limegreen", "deeppink", "darkviolet", "lightcoral", "mediumslateblue",
-    "darkgoldenrod", "hotpink"
-]
+def generate_colors(n):
+    cmap = plt.get_cmap("hsv")
+    return [cmap(i / n) for i in range(n)]
+
+palette = generate_colors(200) 
 
 strand_color = {}
 
@@ -101,17 +96,23 @@ triangles = []
 colors = []
 
 for _, (f1, f2, f3), strand in simplices:
-    vset = set()
-    vset.update(face_to_verts[f1])
-    vset.update(face_to_verts[f2])
-    vset.update(face_to_verts[f3])
+    # Collect all vertex IDs from the three faces
+    v1 = face_to_verts[f1]
+    v2 = face_to_verts[f2]
+    v3 = face_to_verts[f3]
 
-    if len(vset) != 3:
+    # Combine and remove duplicates while preserving deterministic order
+    vertex_ids = []
+    for vid in (*v1, *v2, *v3):
+        if vid not in vertex_ids:
+            vertex_ids.append(vid)
+
+    if len(vertex_ids) != 3:
         raise ValueError("Invalid simplex, not triangular")
 
-    a, b, c = vset
-    triangles.append([verts[a], verts[b], verts[c]])
+    triangles.append([verts[vid] for vid in vertex_ids])
     colors.append(strand_color[strand])
+
 
 surf = Poly3DCollection(triangles, alpha=0.75)
 surf.set_facecolor(colors)

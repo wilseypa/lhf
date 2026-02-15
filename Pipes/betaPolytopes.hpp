@@ -6,6 +6,9 @@
 #include <unordered_set>
 #include <memory>
 #include <fstream>
+#include <vector>
+#include <queue>
+#include <Eigen/Dense>
 #include "basePipe.hpp"
 #include "kdTree.hpp"
 
@@ -36,7 +39,7 @@ private:
     size_t operator()(const std::shared_ptr<Face>& f) const noexcept {
         std::hash<unsigned> hasher;
         size_t seed = 0;
-        for (auto v : f->verticies) {
+        for (auto v : f->vertices) {
             seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
         }
         return seed;
@@ -46,7 +49,7 @@ private:
 	struct FacePtrEq {
 		bool operator()(const std::shared_ptr<Face>& a,
 						const std::shared_ptr<Face>& b) const noexcept {
-			return a->verticies == b->verticies;
+			return a->vertices == b->vertices;
 		}
 	};
 
@@ -59,20 +62,51 @@ private:
 	};
 
 	struct Face {
-		std::vector<unsigned> verticies;
-		std::vector<std::shared_ptr<Simplex>> adjacent_simplicies;
+		std::vector<unsigned> vertices;
+		std::vector<std::shared_ptr<Simplex>> adjacent_simplices;
 
 		bool operator==(const Face& other) const noexcept {
-        return verticies == other.verticies;
+        return vertices == other.vertices;
 		}
 
 		Face() = default;
 	};
 	
 	struct Strand {
-		std::vector<std::shared_ptr<Simplex>> simplicies;
+		std::vector<std::shared_ptr<Simplex>> simplices;
+    	std::vector<typename betaPolytopes<nodeType>::Chart> atlas;
 
 		Strand() = default;
+	};
+
+	struct Chart {
+		int intrinsic_dim; //intrinsic dim
+		int d; //ambient dim
+		size_t num_points; //num of point accumulated
+		double distortion_threshold;
+
+		//running PCA state
+		Eigen::VectorXd mean; //dx1
+		Eigen::MatrixXd M2; //dxd
+
+		//current basis
+		Eigen::MatrixXd basis;
+
+		//assigned simplices
+		std::vector<std::shared_ptr<Simplex>> simplices;
+
+		Chart(int intrinsic_dim, int ambient_dim, double threshold)
+			: intrinsic_dim(intrinsic_dim),
+			  d(ambient_dim),
+			  num_points(0),
+			  distortion_threshold(threshold),
+			  mean(Eigen::VectorXd::Zero(ambient_dim)),
+			  M2(Eigen::MatrixXd::Zero(ambient_dim, ambient_dim)),
+			  basis(Eigen::MatrixXd::Zero(ambient_dim, intrinsic_dim))
+		{}	
+
+		bool tryAddSimplex(const std::shared_ptr<Simplex>& simplex, const std::vector<Eigen::VectorXd>& cloud_points);
+
 	};
 
 public:	
@@ -81,7 +115,9 @@ public:
 	bool configPipe(std::map<std::string, std::string> &configMap);
 	void outputData(pipePacket<nodeType> &);
 
-	void flood_fill(Strand& strand, std::shared_ptr<Simplex>& simplex, const std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq> &facelist);
+	void flood_fill(Strand& strand, std::shared_ptr<Simplex>& simplex, const std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq> &facelist);	
+	void generateAtlasForStrand(Strand& strand, const std::vector<Eigen::VectorXd>& cloud_points, int intrinsic_dim, double distortion_threshold, const std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq> &facelist);
+
 	//helper functions for visualization:
 	void collect_ids(const std::vector<Strand>& strands, std::unordered_map<std::vector<unsigned>, int, VectorHash>& face_ids, std::unordered_map<const Simplex*, int>& simplex_ids);
 	void write_faces_csv(const std::unordered_map<std::vector<unsigned>, int, VectorHash>& face_ids);
