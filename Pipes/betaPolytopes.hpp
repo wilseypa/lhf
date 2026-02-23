@@ -8,7 +8,13 @@
 #include <fstream>
 #include <vector>
 #include <queue>
+#include <set>
 #include <Eigen/Dense>
+#include "libqhullcpp/Qhull.h"
+#include "libqhullcpp/Qhullfacet.h"
+#include "libqhullcpp/QhullFacetList.h"
+#include "libqhullcpp/QhullVertex.h"
+#include "libqhullcpp/QhullVertexSet.h"
 #include "basePipe.hpp"
 #include "kdTree.hpp"
 
@@ -79,11 +85,20 @@ private:
 		Strand() = default;
 	};
 
+	struct Polytope {
+		std::vector<Eigen::VectorXd> vertices;
+		std::vector<std::vector<int>> faces;
+	};
+
 	struct Chart {
 		int intrinsic_dim; //intrinsic dim
 		int d; //ambient dim
 		size_t num_points; //num of point accumulated
 		double distortion_threshold;
+		Polytope polytope;
+
+		int global_id = -1;
+		int strand_id = -1;
 
 		//running PCA state
 		Eigen::VectorXd mean; //dx1
@@ -117,6 +132,10 @@ public:
 
 	void flood_fill(Strand& strand, std::shared_ptr<Simplex>& simplex, const std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq> &facelist);	
 	void generateAtlasForStrand(Strand& strand, const std::vector<Eigen::VectorXd>& cloud_points, int intrinsic_dim, double distortion_threshold, const std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq> &facelist);
+	void assignChartIds(std::vector<Strand>& strands);
+	std::vector<int> collectChartVertexIndices(const Chart& chart);
+	Polytope computeConvexHull(const std::vector<Eigen::VectorXd>& cloud_points, const std::vector<int>& vertex_indices);
+	void computeHullForChart(Chart& chart, const std::vector<Eigen::VectorXd>& cloud_points);
 
 	//helper functions for visualization:
 	void collect_ids(const std::vector<Strand>& strands, std::unordered_map<std::vector<unsigned>, int, VectorHash>& face_ids, std::unordered_map<const Simplex*, int>& simplex_ids);

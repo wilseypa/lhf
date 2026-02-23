@@ -20,6 +20,12 @@
 #include "utils.hpp"
 #include "readInput.hpp"
 
+using orgQhull::Qhull;
+using orgQhull::QhullFacet;
+using orgQhull::QhullFacetList;
+using orgQhull::QhullVertex;
+using orgQhull::QhullVertexSet;
+
 // basePipe constructor
 template <typename nodeType>
 betaPolytopes<nodeType>::betaPolytopes()
@@ -132,10 +138,13 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	//Will want to make ambient dim = ambient dim of structure.
 	//can consider making distortion factor configurable from cmd line.
 	for(auto& strand : strands) {
-		generateAtlasForStrand(strand, cloud_points, 2, 0.001, facelist);
+		generateAtlasForStrand(strand, cloud_points, 2, 0.1, facelist);
 	}
 
 	//assigning ids and exporting atlases to files
+	assignChartIds(strands);
+
+	// build simplex -> id map
 	std::unordered_map<const Simplex*, int> simplex_ids;
 	int next_simplex_id = 0;
 
@@ -153,15 +162,11 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	for (size_t strand_id = 0; strand_id < strands.size(); ++strand_id) {
 		const auto& strand = strands[strand_id];
 
-		for (size_t chart_id = 0; chart_id < strand.atlas.size(); ++chart_id) {
-			const auto& chart = strand.atlas[chart_id];
-
+		for (const auto& chart : strand.atlas) {
 			for (const auto& simplex : chart.simplices) {
-				atlasFile
-					<< strand_id << ","
-					<< chart_id << ","
-					<< simplex_ids[simplex.get()]
-					<< "\n";
+				int sid = simplex_ids[simplex.get()];
+
+				atlasFile << chart.strand_id << "," << chart.global_id << "," << sid << "\n";
 			}
 		}
 	}
@@ -229,6 +234,10 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 
 	I will implement this soon + python scripts to visualize, we can then begin computing homologies and ironing out potential issues.
 		
+	The strands seem to be nearly 1:1 with simplices in the case of a 2d mesh. What's interesting is I noticed it grows
+	quite a bit with higher dimensional meshes. When we utilize higher d meshes, we gain accuracy with cost 
+	of higher complexity. The strand -> chart -> poly pipeline might be better served for higher d mesh cases
+	wondering if we should configure such that we jump from mesh -> convex hull calculations in the 2d mesh case
 	*/
 	
 }
@@ -324,6 +333,7 @@ bool betaPolytopes<nodeType>::Chart::tryAddSimplex(const std::shared_ptr<Simplex
 		Eigen::VectorXd x_c = x - mean;
 		Eigen::VectorXd proj = basis * basis.transpose() * x_c;
 		double dist = (x_c - proj).norm();
+		std::cout << "distortion " << dist << "\n";
 
 		if (dist > distortion_threshold) {
 			return false; //reject simplex
@@ -414,6 +424,101 @@ void betaPolytopes<nodeType>::generateAtlasForStrand(Strand& strand, const std::
 		strand.atlas.push_back(chart);
 	}
 }
+
+template <typename nodeType>
+void betaPolytopes<nodeType>::assignChartIds(std::vector<Strand>& strands) {
+	int next_id = 0;
+
+	for (int s = 0; s < strands.size(); ++s) {
+		Strand& strand = strands[s];
+
+		for (Chart& chart : strand.atlas) {
+			chart.global_id = next_id;
+			chart.strand_id = s;
+			next_id++;
+		}
+	}
+}
+
+template <typename nodeType>
+std::vector<int> betaPolytopes<nodeType>::collectChartVertexIndices(const Chart& chart) {
+	std::unordered_set<int> unique_ids;
+
+	for (const std::shared_ptr<Simplex>& simplex : chart.simplices) {
+		for (const std::shared_ptr<Face>& face : simplex->faces) {
+			for (int vid : face->vertices) {
+				unique_ids.insert(vid);
+			}
+		}
+	}
+	return std::vector<int>(unique_ids.begin(), unique_ids.end());
+}
+
+template <typename nodeType>
+typename betaPolytopes<nodeType>::Polytope betaPolytopes<nodeType>::computeConvexHull(const std::vector<Eigen::VectorXd>& cloud_points, const std::vector<int>& vertex_indices) {
+	Polytope poly;
+
+	if (vertex_indices.empty())
+		return poly;
+	
+	const int dim = cloud_points[0].size();
+	const int num_points = vertex_indices.size();
+
+	// flatten points into contigous buffer for Qhull
+	std::vector<double> coords;
+	coords.reserve(num_points * dim);
+
+	for (int vid : vertex_indices) {
+		for (int d = 0; d < dim; ++d) {
+			coords.push_back(cloud_points[vid](d)); //ensure correctness here
+		}
+	}
+
+	Qhull qhull;
+	qhull.runQhull("", dim, num_points, coords.data(), "Qt");
+
+	// extract verts
+	std::unordered_map<int, int> qhullIndexToLocalIndex;
+
+	int localIndex = 0;
+	for (auto v = qhull.vertexList().begin(); v != qhull.vertexList().end(); ++v) {
+		QhullVertex vertex = *v;
+
+		const double* pt = vertex.point().coordinates();
+
+		Eigen::VectorXd p(dim);
+		for (int d = 0; d < dim; ++d)
+			p(d) = pt[d];
+		
+		poly.vertices.push_back(p);
+		qhullIndexToLocalIndex[vertex.point().id()] = localIndex++;
+	}
+
+	//extract faces
+	for (QhullFacet facet : qhull.facetList()) {
+		if (!facet.isGood())
+			continue;
+		
+		std::vector<int> face;
+
+		QhullVertexSet vs = facet.vertices();
+		for (auto vit = vs.begin(); vit != vs.end(); ++vit) {
+			int qh_id = (*vit).point().id();
+			face.push_back(qhullIndexToLocalIndex[qh_id]);
+		}
+
+		if (!face.empty())
+			poly.faces.push_back(face);
+	}
+	return poly;
+}
+
+template <typename nodeType>
+void betaPolytopes<nodeType>::computeHullForChart(Chart& chart, const std::vector<Eigen::VectorXd>& cloud_points) {
+	std::vector<int> vertex_ids = collectChartVertexIndices(chart);
+	chart.polytope = computeConvexHull(cloud_points, vertex_ids);
+}
+
 
 
 
