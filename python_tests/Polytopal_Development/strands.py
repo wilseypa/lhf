@@ -62,7 +62,18 @@ def generate_colors(n):
     cmap = plt.get_cmap("hsv")
     return [cmap(i / n) for i in range(n)]
 
-palette = generate_colors(200) 
+palette = [
+    "#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231",
+    "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe",
+    "#008080", "#e6beff", "#9a6324", "#fffac8", "#800000",
+    "#aaffc3", "#808000", "#ffd8b1", "#000075", "#808080",
+
+    "#ff4500", "#2e8b57", "#1e90ff", "#ff1493", "#00ced1",
+    "#ff8c00", "#6a5acd", "#20b2aa", "#ff69b4", "#cd5c5c",
+
+    "#7fff00", "#dc143c", "#00bfff", "#ff00ff", "#b8860b"
+]
+
 
 strand_color = {}
 
@@ -83,6 +94,7 @@ x = [v[0] for v in verts.values()]
 y = [v[1] for v in verts.values()]
 z = [v[2] for v in verts.values()]
 ax.scatter(x, y, z)
+
 #plot faces (edges in 3D case)
 
 for v1, v2 in edges:
