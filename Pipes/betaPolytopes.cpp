@@ -113,6 +113,21 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		mesh_structs.push_back(current_simplex);
 	}
 
+	//convert input data to eigenvecs	
+	std::vector<Eigen::VectorXd> cloud_points;
+	cloud_points.reserve(inData.inputData.size());
+
+	for (const auto& row : inData.inputData) {
+		Eigen::VectorXd vec = Eigen::Map<const Eigen::VectorXd>(row.data(), row.size());
+		cloud_points.push_back(vec);
+	}
+
+	std::vector<typename betaPolytopes<nodeType>::Chart> atlas = generateAtlasForStrand(mesh_structs, cloud_points, 2, 0.05, facelist);
+
+	exportAtlasStructure(atlas);
+	/*
+	//We will still leverage this section to identify the structure of the manifolds in the mesh
+	// strand enumeration code, reviewing necessity in algorithm
 	for(auto simplex:mesh_structs) {
 		if(simplex -> visited == false) {
 			Strand strand; //whenever last recursion ends (last strand fully enumerated), find a new unvisited simplex to enumerate new strand
@@ -120,11 +135,14 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 			strands.push_back(strand);
 		}
 	}
+	
 
 	export_strands_to_csv(strands);
 
-	std::cout << "Generating atlases from strands..." << std::endl;
+	*/
 
+	//std::cout << "Generating atlases from strands..." << std::endl;
+/*
 	//convert input data to eigenvecs	
 	std::vector<Eigen::VectorXd> cloud_points;
 	cloud_points.reserve(inData.inputData.size());
@@ -137,6 +155,7 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	//iterate over each strand and build atlas of non-overlapping charts
 	//Will want to make ambient dim = ambient dim of structure.
 	//can consider making distortion factor configurable from cmd line.
+	
 	for(auto& strand : strands) {
 		generateAtlasForStrand(strand, cloud_points, 2, 0.1, facelist);
 	}
@@ -155,6 +174,7 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 			}
 		}
 	}
+	
 
 	std::ofstream atlasFile("../../python_tests/Polytopal_Development/atlases.csv");
 	atlasFile << "strand_id,chart_id,simplex_id\n";
@@ -174,6 +194,58 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	atlasFile.close();
 
 	std::cout << "Atlas CSV written successfully." << std::endl;
+
+	//build mapping of which simplex each chart belongs to
+	//O(n) step with respect to num simplices in mesh
+	std::unordered_map<const Simplex*, int> simplexToChart;
+
+	for (const auto& strand : strands) {
+		for (const auto& chart : strand.atlas) {
+			for (const auto& simplex : chart.simplices) {
+				simplexToChart[simplex.get()] = chart.global_id;
+			}
+		}
+	}
+
+	//build chart adjacency graph (only across strands)
+	std::unordered_map<int, std::unordered_set<int>> chartAdj;
+
+	std::unordered_map<int, int> chartToStrand; //chart to strand mapping
+	for (const auto& strand : strands) {
+		for (const auto& chart : strand.atlas) {
+			chartToStrand[chart.global_id] = chart.strand_id;
+		}
+	}
+
+	//O(Num of simplices * faces per simplex) linear behavior for mesh
+	for (const auto& strand : strands) {
+		for (const auto& chart : strand.atlas) {
+			int chart_id = chart.global_id;
+
+			for (const auto& simplex : chart.simplices) {
+				for (const auto& face : simplex -> faces) {
+					for (const auto& neighbor_simplex : face -> adjacent_simplices) {
+						const Simplex* neighbor_ptr = neighbor_simplex.get();
+						if (neighbor_ptr == simplex.get()) continue; //skip self
+
+						int neighbor_chart_id = simplexToChart[neighbor_ptr];
+
+						//only consider different charts
+						if (neighbor_chart_id == chart_id) continue;
+
+						//only across strands
+						if (chartToStrand[neighbor_chart_id] == chartToStrand[chart_id]) continue;
+
+						//add adjacency
+						chartAdj[chart_id].insert(neighbor_chart_id);
+						chartAdj[neighbor_chart_id].insert(chart_id);
+					}
+				}
+			}
+		}
+	}
+
+	*/
 
 
 //TESTS
@@ -372,14 +444,16 @@ bool betaPolytopes<nodeType>::Chart::tryAddSimplex(const std::shared_ptr<Simplex
 //currently we measure distortion on a per simplex basis. If we have accuracy issues, one area to look
 //will be monitoring global distortion to avoid poorly conditioned charts for large strands
 template <typename nodeType>
-void betaPolytopes<nodeType>::generateAtlasForStrand(Strand& strand, const std::vector<Eigen::VectorXd>& cloud_points, int intrinsic_dim, double distortion_threshold, const std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq> &facelist) {
+std::vector<typename betaPolytopes<nodeType>::Chart> betaPolytopes<nodeType>::generateAtlasForStrand(std::vector<std::shared_ptr<Simplex>> mesh_structs, const std::vector<Eigen::VectorXd>& cloud_points, int intrinsic_dim, double distortion_threshold, const std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq> &facelist) {
+	std::vector<typename betaPolytopes<nodeType>::Chart> atlas;
+	
 	//reset simplices visited
-	for(auto& simplex: strand.simplices) {
+	for(auto& simplex : mesh_structs) {
 		simplex->visited = false;
 	}
 
 	//iterate through until all simplices in strand are assigned
-	for (auto& seed : strand.simplices) {
+	for (auto& seed : mesh_structs) {
 		if (seed -> visited) continue;
 
 		//create new chart
@@ -401,16 +475,14 @@ void betaPolytopes<nodeType>::generateAtlasForStrand(Strand& strand, const std::
 			auto current = q.front();
 			q.pop();
 
-			//get neighbors
+			//get neighbors. enforces enumeration on manifolds, we can actually remove strand enumeration just using this check instead.
 			for(const auto& face:current -> faces) {
-				if(facelist.at(face) != 2) continue;
+				//if(facelist.at(face) != 2) continue;
 
-				std::unordered_set<std::shared_ptr<Simplex>> unique_neighbors(
-					face->adjacent_simplices.begin(),
-					face->adjacent_simplices.end()
-				);
+				for(const auto& neighbor : face->adjacent_simplices) {
 
-				for(auto& neighbor : unique_neighbors) {
+					if(neighbor == current) continue;
+
 					if(neighbor->visited) continue;
 
 					if(chart.tryAddSimplex(neighbor, cloud_points)) {
@@ -421,8 +493,9 @@ void betaPolytopes<nodeType>::generateAtlasForStrand(Strand& strand, const std::
 			}
 		}
 		//store chart in atlas
-		strand.atlas.push_back(chart);
+		atlas.push_back(chart);
 	}
+	return atlas;
 }
 
 template <typename nodeType>
@@ -519,7 +592,29 @@ void betaPolytopes<nodeType>::computeHullForChart(Chart& chart, const std::vecto
 	chart.polytope = computeConvexHull(cloud_points, vertex_ids);
 }
 
+template <typename nodeType>
+bool betaPolytopes<nodeType>::canMerge(Chart& A, Chart& B, const std::vector<Eigen::VectorXd>& cloud_points) {
+	//collect vertices of the union of the charts
+	std::unordered_set<int> union_vertex_set;
 
+	auto addVertices = [&](Chart& C) {
+		std::vector<int> vids = collectChartVertexIndices(C);
+		for (int v : vids) union_vertex_set.insert(v);
+	};
+
+	addVertices(A);
+	addVertices(B);
+
+	std::vector<int> union_vertices(union_vertex_set.begin(), union_vertex_set.end());
+
+	//compute hull of union
+	Polytope union_hull = computeConvexHull(cloud_points, union_vertices);
+
+	//convexity test (must contain exactly all union verts)
+	if (union_hull.vertices.size() != union_vertex_set.size()) return false;
+
+	return true;
+}
 
 
 template <typename nodeType>
@@ -590,6 +685,54 @@ void betaPolytopes<nodeType>::export_strands_to_csv(const std::vector<Strand>& s
 
     write_faces_csv(face_ids);
     write_simplices_csv(strands, face_ids, simplex_ids);
+}
+
+template <typename nodeType>
+void betaPolytopes<nodeType>::exportAtlasStructure(const std::vector<Chart>& atlas) {
+	std::cout << "Atlas contains " << atlas.size() << " charts\n\n";
+
+	std::ofstream out("../../python_tests/Polytopal_Development/atlas.csv");
+
+	if (!out.is_open()) {
+		std::cerr << "Error: could not open file " << "atlas.csv" << "\n";
+		return;
+	}
+
+	//csv header
+	out << "chart_id,simplex_id,vertex_ids\n";
+
+	size_t simplex_counter = 0;
+
+	for (size_t c = 0; c < atlas.size(); ++c) {
+		const Chart& chart = atlas[c];
+
+		for (const auto& simplex : chart.simplices) {
+
+			std::unordered_set<unsigned> vertex_ids;
+
+			for (const auto& face : simplex -> faces) {
+				for (unsigned vid : face -> vertices) {
+					vertex_ids.insert(vid);
+				}
+			}
+
+			out << c << "," << simplex_counter << ",";
+
+			bool first = true;
+			for (auto vid : vertex_ids) {
+				if(!first) out << " ";
+				out << vid;
+				first = false;
+			}
+
+			out << "\n";
+
+			simplex_counter++;
+		}
+	}
+
+	out.close();
+	std::cout << "atlas structure written\n";
 }
 
 

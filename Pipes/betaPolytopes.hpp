@@ -131,13 +131,15 @@ public:
 	void outputData(pipePacket<nodeType> &);
 
 	void flood_fill(Strand& strand, std::shared_ptr<Simplex>& simplex, const std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq> &facelist);	
-	void generateAtlasForStrand(Strand& strand, const std::vector<Eigen::VectorXd>& cloud_points, int intrinsic_dim, double distortion_threshold, const std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq> &facelist);
+	std::vector<typename betaPolytopes<nodeType>::Chart> generateAtlasForStrand(std::vector<std::shared_ptr<Simplex>> mesh_structs, const std::vector<Eigen::VectorXd>& cloud_points, int intrinsic_dim, double distortion_threshold, const std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq> &facelist);
 	void assignChartIds(std::vector<Strand>& strands);
 	std::vector<int> collectChartVertexIndices(const Chart& chart);
+	bool canMerge(Chart& A, Chart& B, const std::vector<Eigen::VectorXd>& cloud_points);
 	Polytope computeConvexHull(const std::vector<Eigen::VectorXd>& cloud_points, const std::vector<int>& vertex_indices);
 	void computeHullForChart(Chart& chart, const std::vector<Eigen::VectorXd>& cloud_points);
 
 	//helper functions for visualization:
+	void exportAtlasStructure(const std::vector<Chart>& atlas);
 	void collect_ids(const std::vector<Strand>& strands, std::unordered_map<std::vector<unsigned>, int, VectorHash>& face_ids, std::unordered_map<const Simplex*, int>& simplex_ids);
 	void write_faces_csv(const std::unordered_map<std::vector<unsigned>, int, VectorHash>& face_ids);
 	void write_simplices_csv(const std::vector<Strand>& strands, std::unordered_map<std::vector<unsigned>, int, VectorHash>& face_ids, const std::unordered_map<const Simplex*, int>& simplex_ids);
