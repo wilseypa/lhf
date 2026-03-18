@@ -32,10 +32,11 @@ private:
 	struct Strand;
 	
 	struct VectorHash {
-    std::size_t operator()(const std::vector<unsigned>& v) const noexcept {
+	template <typename T>
+    std::size_t operator()(const std::vector<T>& v) const noexcept {
         std::size_t h = 0;
-        for (unsigned x : v) {
-            h ^= std::hash<unsigned>{}(x) + 0x9e3779b9 + (h << 6) + (h >> 2);
+        for (const T& x : v) {
+            h ^= std::hash<T>{}(x) + 0x9e3779b9 + (h << 6) + (h >> 2);
         }
         return h;
     }
@@ -109,6 +110,7 @@ private:
 
 		//assigned simplices
 		std::vector<std::shared_ptr<Simplex>> simplices;
+		std::unordered_set<unsigned> chart_vertex_ids;
 
 		Chart(int intrinsic_dim, int ambient_dim, double threshold)
 			: intrinsic_dim(intrinsic_dim),
@@ -121,7 +123,12 @@ private:
 		{}	
 
 		bool tryAddSimplex(const std::shared_ptr<Simplex>& simplex, const std::vector<Eigen::VectorXd>& cloud_points);
+		bool checkGlobalDistortion(const std::vector<Eigen::VectorXd>& cloud_points);
+	};
 
+	struct PolytopalComplex {
+		std::vector<Eigen::VectorXd> vertices; //global vertex list
+		std::vector<std::vector<int>> faces; //indices to vertices
 	};
 
 public:	
@@ -135,8 +142,11 @@ public:
 	void assignChartIds(std::vector<Strand>& strands);
 	std::vector<int> collectChartVertexIndices(const Chart& chart);
 	bool canMerge(Chart& A, Chart& B, const std::vector<Eigen::VectorXd>& cloud_points);
-	Polytope computeConvexHull(const std::vector<Eigen::VectorXd>& cloud_points, const std::vector<int>& vertex_indices);
+	Polytope computeConvexHull(const std::vector<Eigen::VectorXd>& points, const std::vector<int>& vertex_indices);
 	void computeHullForChart(Chart& chart, const std::vector<Eigen::VectorXd>& cloud_points);
+	void liftPolytopeToAmbient(Chart& chart);
+	std::vector<int> quantize(const Eigen::VectorXd& v, double eps);
+	PolytopalComplex buildGlobalComplex(const std::vector<Chart>& atlas, double eps);
 
 	//helper functions for visualization:
 	void exportAtlasStructure(const std::vector<Chart>& atlas);
@@ -144,6 +154,7 @@ public:
 	void write_faces_csv(const std::unordered_map<std::vector<unsigned>, int, VectorHash>& face_ids);
 	void write_simplices_csv(const std::vector<Strand>& strands, std::unordered_map<std::vector<unsigned>, int, VectorHash>& face_ids, const std::unordered_map<const Simplex*, int>& simplex_ids);
 	void export_strands_to_csv(const std::vector<Strand>& strands);
+	void exportPolytopalComplexCSV(const typename betaPolytopes<nodeType>::PolytopalComplex& complex);
 
 
 };

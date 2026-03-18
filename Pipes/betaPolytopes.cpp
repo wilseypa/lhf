@@ -122,9 +122,17 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		cloud_points.push_back(vec);
 	}
 
-	std::vector<typename betaPolytopes<nodeType>::Chart> atlas = generateAtlasForStrand(mesh_structs, cloud_points, 2, 0.05, facelist);
+	std::vector<typename betaPolytopes<nodeType>::Chart> atlas = generateAtlasForStrand(mesh_structs, cloud_points, 2, 0.1, facelist);
 
 	exportAtlasStructure(atlas);
+
+	for (auto& chart : atlas) {
+		computeHullForChart(chart, cloud_points);
+	}
+
+	typename betaPolytopes<nodeType>::PolytopalComplex complex = buildGlobalComplex(atlas, 0.00001);
+
+	exportPolytopalComplexCSV(complex);
 	/*
 	//We will still leverage this section to identify the structure of the manifolds in the mesh
 	// strand enumeration code, reviewing necessity in algorithm
@@ -374,6 +382,20 @@ void betaPolytopes<nodeType>::flood_fill(Strand& strand, std::shared_ptr<Simplex
 }
 
 template <typename nodeType>
+bool betaPolytopes<nodeType>::Chart::checkGlobalDistortion(const std::vector<Eigen::VectorXd>& cloud_points) {
+	double max_dist = 0.0;
+
+	for (auto vid : chart_vertex_ids) {
+		Eigen::VectorXd x_c = cloud_points[vid] - mean;
+		Eigen::VectorXd proj = basis * basis.transpose() * x_c;
+		double dist = (x_c - proj).norm();
+		max_dist = std::max(max_dist, dist);
+	}
+
+	return max_dist <= distortion_threshold;
+}
+
+template <typename nodeType>
 bool betaPolytopes<nodeType>::Chart::tryAddSimplex(const std::shared_ptr<Simplex>& simplex, const std::vector<Eigen::VectorXd>& cloud_points) {
 	//collect simplex points
 	std::unordered_set<unsigned> vertex_ids;
@@ -397,6 +419,20 @@ bool betaPolytopes<nodeType>::Chart::tryAddSimplex(const std::shared_ptr<Simplex
 			Eigen::VectorXd delta2 = x - mean;
 			M2 += delta * delta2.transpose();
 		}
+
+		//set basis for first simplex
+		if (num_points > intrinsic_dim) {
+			Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver(M2 / (num_points - 1));
+			Eigen::MatrixXd U = solver.eigenvectors().rightCols(intrinsic_dim);
+			if (U.norm() > 1e-12)
+				basis = U;
+			else
+				basis = Eigen::MatrixXd::Identity(d, intrinsic_dim);  // fallback
+		} 
+		else 
+		{
+			basis = Eigen::MatrixXd::Identity(d, intrinsic_dim);  // fallback for small charts
+		}
 		return true;
 	}
 
@@ -405,7 +441,7 @@ bool betaPolytopes<nodeType>::Chart::tryAddSimplex(const std::shared_ptr<Simplex
 		Eigen::VectorXd x_c = x - mean;
 		Eigen::VectorXd proj = basis * basis.transpose() * x_c;
 		double dist = (x_c - proj).norm();
-		std::cout << "distortion " << dist << "\n";
+		//std::cout << "distortion " << dist << "\n";
 
 		if (dist > distortion_threshold) {
 			return false; //reject simplex
@@ -430,6 +466,7 @@ bool betaPolytopes<nodeType>::Chart::tryAddSimplex(const std::shared_ptr<Simplex
 	//recompute PCA basis
 	Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver(M2_new / (total_points - 1));
 	Eigen::MatrixXd U = solver.eigenvectors().rightCols(intrinsic_dim);
+	//std::cout << "basis: " << U << endl;
 
 	//accept simplex
 	simplices.push_back(simplex);
@@ -437,6 +474,10 @@ bool betaPolytopes<nodeType>::Chart::tryAddSimplex(const std::shared_ptr<Simplex
 	M2 = M2_new;
 	basis = U;
 	num_points = total_points;
+
+	for (auto vid : vertex_ids) {
+		chart_vertex_ids.insert(vid);
+	}
 
 	return true;
 }
@@ -446,6 +487,7 @@ bool betaPolytopes<nodeType>::Chart::tryAddSimplex(const std::shared_ptr<Simplex
 template <typename nodeType>
 std::vector<typename betaPolytopes<nodeType>::Chart> betaPolytopes<nodeType>::generateAtlasForStrand(std::vector<std::shared_ptr<Simplex>> mesh_structs, const std::vector<Eigen::VectorXd>& cloud_points, int intrinsic_dim, double distortion_threshold, const std::unordered_map<std::shared_ptr<Face>, unsigned, FacePtrHash, FacePtrEq> &facelist) {
 	std::vector<typename betaPolytopes<nodeType>::Chart> atlas;
+	const size_t global_check_interval = 10; //make configurable
 	
 	//reset simplices visited
 	for(auto& simplex : mesh_structs) {
@@ -454,6 +496,8 @@ std::vector<typename betaPolytopes<nodeType>::Chart> betaPolytopes<nodeType>::ge
 
 	//iterate through until all simplices in strand are assigned
 	for (auto& seed : mesh_structs) {
+		size_t simplex_counter = 0;
+
 		if (seed -> visited) continue;
 
 		//create new chart
@@ -470,7 +514,17 @@ std::vector<typename betaPolytopes<nodeType>::Chart> betaPolytopes<nodeType>::ge
 		//bfs queue
 		std::queue<std::shared_ptr<Simplex>> q;
 		q.push(seed);
+		simplex_counter++;
 
+		if (simplex_counter % global_check_interval == 0) {
+			if (!chart.checkGlobalDistortion(cloud_points)) {
+				q = std::queue<std::shared_ptr<Simplex>>(); //stop chart growth
+				break;
+			}
+		}
+			
+			
+			
 		while(!q.empty()) {
 			auto current = q.front();
 			q.pop();
@@ -528,13 +582,13 @@ std::vector<int> betaPolytopes<nodeType>::collectChartVertexIndices(const Chart&
 }
 
 template <typename nodeType>
-typename betaPolytopes<nodeType>::Polytope betaPolytopes<nodeType>::computeConvexHull(const std::vector<Eigen::VectorXd>& cloud_points, const std::vector<int>& vertex_indices) {
+typename betaPolytopes<nodeType>::Polytope betaPolytopes<nodeType>::computeConvexHull(const std::vector<Eigen::VectorXd>& points, const std::vector<int>& vertex_indices) {
 	Polytope poly;
 
 	if (vertex_indices.empty())
 		return poly;
 	
-	const int dim = cloud_points[0].size();
+	const int dim = points[0].size();
 	const int num_points = vertex_indices.size();
 
 	// flatten points into contigous buffer for Qhull
@@ -543,7 +597,7 @@ typename betaPolytopes<nodeType>::Polytope betaPolytopes<nodeType>::computeConve
 
 	for (int vid : vertex_indices) {
 		for (int d = 0; d < dim; ++d) {
-			coords.push_back(cloud_points[vid](d)); //ensure correctness here
+			coords.push_back(points[vid](d)); //ensure correctness here
 		}
 	}
 
@@ -588,9 +642,110 @@ typename betaPolytopes<nodeType>::Polytope betaPolytopes<nodeType>::computeConve
 
 template <typename nodeType>
 void betaPolytopes<nodeType>::computeHullForChart(Chart& chart, const std::vector<Eigen::VectorXd>& cloud_points) {
+	//collect vertex id's
+	std::vector<int> vertex_ids = collectChartVertexIndices(chart);
+
+	if (vertex_ids.empty())
+		return;
+
+	const int intrinsic_dim = chart.intrinsic_dim;
+
+	//build intrinsic pc
+	std::vector<Eigen::VectorXd> intrinsic_points;
+	intrinsic_points.reserve(vertex_ids.size());
+
+	for (int vid : vertex_ids) {
+		Eigen::VectorXd centered = cloud_points[vid] - chart.mean;
+		Eigen::VectorXd intrinsic = chart.basis.transpose() * centered;
+		intrinsic_points.push_back(intrinsic);
+		//std::cout << "chart.mean = " << chart.mean.transpose() << "\n";
+		//std::cout << "chart.basis = \n" << chart.basis << "\n";
+	}
+
+	//compute convex hull in intrinsic space
+	std::vector<int> indices(intrinsic_points.size());
+	for (int i = 0; i < indices.size(); ++i)
+		indices[i] = i;
+
+	chart.polytope = computeConvexHull(intrinsic_points, indices);
+
+	liftPolytopeToAmbient(chart); 
+}
+
+template <typename nodeType>
+void betaPolytopes<nodeType>::liftPolytopeToAmbient(Chart& chart) {
+	for (auto& v : chart.polytope.vertices) {
+		v = chart.basis * v + chart.mean;
+	}
+}
+
+template <typename nodeType>
+std::vector<int> betaPolytopes<nodeType>::quantize(const Eigen::VectorXd& v, double eps) {
+	std::vector<int> key(v.size());
+	for (int i = 0; i < v.size(); ++i) {
+		key[i] = static_cast<int>(std::round(v[i] / eps));
+	}
+	return key;
+}
+
+template <typename nodeType>
+typename betaPolytopes<nodeType>::PolytopalComplex betaPolytopes<nodeType>::buildGlobalComplex(const std::vector<Chart>& atlas, double eps) {
+	PolytopalComplex complex;
+
+	//hash: quantized coordinate -> global vertex index
+	std::unordered_map<std::vector<int>, int, VectorHash> vertex_map;
+
+	//helper
+	auto findOrInsert = [&](const Eigen::VectorXd& v) -> int {
+		std::vector<int> key = quantize(v, eps);
+
+		auto it = vertex_map.find(key);
+		if (it != vertex_map.end()) {
+			return it -> second;
+		}
+		int new_id = complex.vertices.size();
+		complex.vertices.push_back(v);
+		vertex_map[key] = new_id;
+
+		return new_id;
+	};
+
+	//iterate over charts
+	for (const auto& chart : atlas) {
+		const auto& poly = chart.polytope;
+
+		if (poly.vertices.empty()) continue;
+
+		//local -> global index map
+		std::vector<int> local_to_global(poly.vertices.size());
+
+		for (size_t i = 0; i < poly.vertices.size(); ++i) {
+			local_to_global[i] = findOrInsert(poly.vertices[i]);
+		}
+
+		//rebuild faces
+		for (const auto& face : poly.faces) {
+			std::vector<int> global_face;
+			global_face.reserve(face.size());
+
+			for (int local_vid : face) {
+				global_face.push_back(local_to_global[local_vid]);
+			}
+
+			complex.faces.push_back(global_face);
+		}
+	}
+
+	return complex;
+}
+
+/*
+template <typename nodeType>
+void betaPolytopes<nodeType>::computeHullForChart(Chart& chart, const std::vector<Eigen::VectorXd>& cloud_points) {
 	std::vector<int> vertex_ids = collectChartVertexIndices(chart);
 	chart.polytope = computeConvexHull(cloud_points, vertex_ids);
 }
+*/
 
 template <typename nodeType>
 bool betaPolytopes<nodeType>::canMerge(Chart& A, Chart& B, const std::vector<Eigen::VectorXd>& cloud_points) {
@@ -733,6 +888,61 @@ void betaPolytopes<nodeType>::exportAtlasStructure(const std::vector<Chart>& atl
 
 	out.close();
 	std::cout << "atlas structure written\n";
+}
+
+template <typename nodeType>
+void betaPolytopes<nodeType>::exportPolytopalComplexCSV(const PolytopalComplex& complex) {
+	std::ofstream v_out("../../python_tests/Polytopal_Development/pc_vertices.csv");
+	if (!v_out.is_open()) {
+		std::cerr << "Error: could not open pc_vertices.csv\n";
+		return;
+	}
+
+	v_out << "id";
+	if (!complex.vertices.empty()) {
+		int dim = complex.vertices[0].size();
+		for (int d = 0; d < dim; ++d) {
+			v_out << ",x" << d;
+		}
+	}
+	v_out << "\n";
+
+	for (size_t i = 0; i < complex.vertices.size(); ++i) {
+		v_out << i;
+		const auto& v = complex.vertices[i];
+		for (int d = 0; d < v.size(); ++d) {
+			v_out << "," << v(d);
+		}
+		v_out << "\n";
+	}
+	v_out.close();
+
+	std::ofstream c_out("../../python_tests/Polytopal_Development/pc_cells.csv");
+	if (!c_out.is_open()) {
+		std::cerr << "Error: could not open pc_cells.csv\n";
+		return;
+	}
+
+	c_out << "cell_id,vertex_indices\n";
+
+	for (size_t i = 0; i < complex.faces.size(); ++i) {
+		c_out << i << ",";
+
+		const auto& face = complex.faces[i];
+		for (size_t j = 0; j < face.size(); ++j) {
+			c_out << face[j];
+			if (j + 1 < face.size()) {
+				c_out << " ";
+			}
+		}
+		c_out << "\n";
+	}
+
+	c_out.close();
+
+	 std::cout << "Exported Polytopal Complex:\n";
+    std::cout << "  Vertices: " << complex.vertices.size() << "\n";
+    std::cout << "  Cells:    " << complex.faces.size() << "\n";
 }
 
 
