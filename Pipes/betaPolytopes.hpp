@@ -89,6 +89,8 @@ private:
 	struct Polytope {
 		std::vector<Eigen::VectorXd> vertices;
 		std::vector<std::vector<int>> faces;
+
+		std::vector<int> original_vertex_ids;
 	};
 
 	struct Chart {
@@ -146,7 +148,7 @@ public:
 	bool canMerge(Chart& A, Chart& B, const std::vector<Eigen::VectorXd>& cloud_points);
 	Polytope computeConvexHull(const std::vector<Eigen::VectorXd>& points, const std::vector<int>& vertex_indices);
 	void computeHullForChart(Chart& chart, const std::vector<Eigen::VectorXd>& cloud_points);
-	void liftPolytopeToAmbient(Chart& chart);
+	void liftPolytopeToAmbient(Chart& chart, const std::vector<Eigen::VectorXd>& cloud_points);
 	std::vector<int> quantize(const Eigen::VectorXd& v, double eps);
 	PolytopalComplex buildGlobalComplex(const std::vector<Chart>& atlas, double eps);
 

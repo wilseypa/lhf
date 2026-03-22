@@ -17,7 +17,7 @@ Requires:
 # -----------------------------
 def read_pc():
     verts = {}
-    with open('swiss_roll.csv', newline='') as pc_file:
+    with open('torus.csv', newline='') as pc_file:
         reader = csv.reader(pc_file)
         for idx, row in enumerate(reader):
             verts[idx] = (float(row[0]), float(row[1]), float(row[2]))

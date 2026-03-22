@@ -122,7 +122,7 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 		cloud_points.push_back(vec);
 	}
 
-	std::vector<typename betaPolytopes<nodeType>::Chart> atlas = generateAtlasForStrand(mesh_structs, cloud_points, 2, 0.1, facelist);
+	std::vector<typename betaPolytopes<nodeType>::Chart> atlas = generateAtlasForStrand(mesh_structs, cloud_points, 2, 0.001, facelist);
 
 	exportAtlasStructure(atlas);
 
@@ -396,7 +396,7 @@ bool betaPolytopes<nodeType>::Chart::checkGlobalDistortion(const std::vector<Eig
 		max_dist = std::max(max_dist, dist);
 	}
 
-	return max_dist <= distortion_threshold; //slightly higher tolerance when checking globally
+	return max_dist <= distortion_threshold; 
 }
 
 template <typename nodeType>
@@ -540,19 +540,18 @@ std::vector<typename betaPolytopes<nodeType>::Chart> betaPolytopes<nodeType>::ge
 		std::queue<std::shared_ptr<Simplex>> q;
 		q.push(seed);
 		simplex_counter++;
-
-		if (simplex_counter % global_check_interval == 0) {
-			if (!chart.checkGlobalDistortion(cloud_points)) {
-				q = std::queue<std::shared_ptr<Simplex>>(); //stop chart growth
-				break;
-			}
-		}
-			
-			
-			
+					
 		while(!q.empty()) {
 			auto current = q.front();
 			q.pop();
+
+			//check global distortion periodically
+			if (simplex_counter % global_check_interval == 0) {
+				if (!chart.checkGlobalDistortion(cloud_points)) {
+					q = std::queue<std::shared_ptr<Simplex>>(); //stop chart growth
+					break;
+				}
+			}
 
 			//get neighbors. enforces enumeration on manifolds, we can actually remove strand enumeration just using this check instead.
 			for(const auto& face:current -> faces) {
@@ -621,15 +620,18 @@ typename betaPolytopes<nodeType>::Polytope betaPolytopes<nodeType>::computeConve
 	std::vector<double> coords;
 	coords.reserve(num_points * dim);
 
-	for (int vid : vertex_indices) {
+	for (int i = 0; i < num_points; ++i) {
 		for (int d = 0; d < dim; ++d) {
-			coords.push_back(points[vid](d)); //ensure correctness here
+			coords.push_back(points[i](d)); //ensure correctness here
 		}
 	}
 
 	//skip qhull if one simplex in chart
 	if (num_points <= dim || dim <= 1) {
-		poly.vertices = points;
+		for (int i = 0; i < num_points; ++i) {
+			poly.vertices.push_back(points[i]);
+			poly.original_vertex_ids.push_back(vertex_indices[i]);
+		}
 
 		std::vector<int> face;
 		for (int i = 0; i < num_points; ++i)
@@ -655,7 +657,13 @@ typename betaPolytopes<nodeType>::Polytope betaPolytopes<nodeType>::computeConve
 		for (int d = 0; d < dim; ++d)
 			p(d) = pt[d];
 		
+		//poly.vertices.push_back(p);
+		int qh_id = vertex.point().id();
+		int original_vid = vertex_indices[qh_id];
+
 		poly.vertices.push_back(p);
+		poly.original_vertex_ids.push_back(original_vid);
+
 		qhullIndexToLocalIndex[vertex.point().id()] = localIndex++;
 	}
 
@@ -700,21 +708,19 @@ void betaPolytopes<nodeType>::computeHullForChart(Chart& chart, const std::vecto
 		//std::cout << "chart.basis = \n" << chart.basis << "\n";
 	}
 
-	//compute convex hull in intrinsic space
-	std::vector<int> indices(intrinsic_points.size());
-	for (int i = 0; i < indices.size(); ++i)
-		indices[i] = i;
+	chart.polytope = computeConvexHull(intrinsic_points, vertex_ids);
 
-	chart.polytope = computeConvexHull(intrinsic_points, indices);
-
-	liftPolytopeToAmbient(chart); 
+	liftPolytopeToAmbient(chart, cloud_points); 
 }
 
 template <typename nodeType>
-void betaPolytopes<nodeType>::liftPolytopeToAmbient(Chart& chart) {
-	for (auto& v : chart.polytope.vertices) {
-		v = chart.basis * v + chart.mean;
-	}
+void betaPolytopes<nodeType>::liftPolytopeToAmbient(Chart& chart, const std::vector<Eigen::VectorXd>& cloud_points) {
+	auto& poly = chart.polytope;
+
+    for (size_t i = 0; i < poly.vertices.size(); ++i) {
+        int original_vid = poly.original_vertex_ids[i];
+        poly.vertices[i] = cloud_points[original_vid];
+    }
 }
 
 template <typename nodeType>
