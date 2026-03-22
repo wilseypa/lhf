@@ -318,6 +318,10 @@ void betaPolytopes<nodeType>::runPipe(pipePacket<nodeType> &inData)
 	quite a bit with higher dimensional meshes. When we utilize higher d meshes, we gain accuracy with cost 
 	of higher complexity. The strand -> chart -> poly pipeline might be better served for higher d mesh cases
 	wondering if we should configure such that we jump from mesh -> convex hull calculations in the 2d mesh case
+
+	keeping tabs on parameter adjustments to make:
+	-When calling generateAtlasForStrand, modify distortion to increase/decrease flatness constraint on chart enumeration
+
 	*/
 	
 }
@@ -392,7 +396,7 @@ bool betaPolytopes<nodeType>::Chart::checkGlobalDistortion(const std::vector<Eig
 		max_dist = std::max(max_dist, dist);
 	}
 
-	return max_dist <= distortion_threshold;
+	return max_dist <= distortion_threshold; //slightly higher tolerance when checking globally
 }
 
 template <typename nodeType>
@@ -465,14 +469,35 @@ bool betaPolytopes<nodeType>::Chart::tryAddSimplex(const std::shared_ptr<Simplex
 
 	//recompute PCA basis
 	Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver(M2_new / (total_points - 1));
-	Eigen::MatrixXd U = solver.eigenvectors().rightCols(intrinsic_dim);
+
+	//Eigen::MatrixXd U = solver.eigenvectors().rightCols(intrinsic_dim);
+	//new method to compute
+	Eigen::VectorXd evals = solver.eigenvalues();
+	Eigen::MatrixXd evecs = solver.eigenvectors();
+
+	double tolerance = 1e-8;
+	int effective_dim = 0;
+
+	//count meaningful dimensions
+	for (int i = evals.size() - 1; i >= 0; --i) {
+		if (evals[i] > tolerance) {
+			effective_dim++;
+		}
+	}
+
+	int use_dim = std::min(intrinsic_dim, effective_dim);
+
+	if (use_dim == 0) {
+		use_dim = 1;
+	}
+
 	//std::cout << "basis: " << U << endl;
 
 	//accept simplex
 	simplices.push_back(simplex);
 	mean = new_mean;
 	M2 = M2_new;
-	basis = U;
+	basis = evecs.rightCols(use_dim);
 	num_points = total_points;
 
 	for (auto vid : vertex_ids) {
@@ -589,6 +614,7 @@ typename betaPolytopes<nodeType>::Polytope betaPolytopes<nodeType>::computeConve
 		return poly;
 	
 	const int dim = points[0].size();
+	//std::cout << dim << "\n";
 	const int num_points = vertex_indices.size();
 
 	// flatten points into contigous buffer for Qhull
@@ -601,8 +627,20 @@ typename betaPolytopes<nodeType>::Polytope betaPolytopes<nodeType>::computeConve
 		}
 	}
 
+	//skip qhull if one simplex in chart
+	if (num_points <= dim || dim <= 1) {
+		poly.vertices = points;
+
+		std::vector<int> face;
+		for (int i = 0; i < num_points; ++i)
+			face.push_back(i);
+
+		poly.faces.push_back(face);
+		return poly;
+	}
+
 	Qhull qhull;
-	qhull.runQhull("", dim, num_points, coords.data(), "Qt");
+	qhull.runQhull("", dim, num_points, coords.data(), "QJ");
 
 	// extract verts
 	std::unordered_map<int, int> qhullIndexToLocalIndex;
@@ -713,6 +751,7 @@ typename betaPolytopes<nodeType>::PolytopalComplex betaPolytopes<nodeType>::buil
 	//iterate over charts
 	for (const auto& chart : atlas) {
 		const auto& poly = chart.polytope;
+		complex.polytopes.push_back(poly);
 
 		if (poly.vertices.empty()) continue;
 
@@ -746,7 +785,7 @@ void betaPolytopes<nodeType>::computeHullForChart(Chart& chart, const std::vecto
 	chart.polytope = computeConvexHull(cloud_points, vertex_ids);
 }
 */
-
+/*
 template <typename nodeType>
 bool betaPolytopes<nodeType>::canMerge(Chart& A, Chart& B, const std::vector<Eigen::VectorXd>& cloud_points) {
 	//collect vertices of the union of the charts
@@ -770,6 +809,7 @@ bool betaPolytopes<nodeType>::canMerge(Chart& A, Chart& B, const std::vector<Eig
 
 	return true;
 }
+	*/
 
 
 template <typename nodeType>
@@ -940,9 +980,56 @@ void betaPolytopes<nodeType>::exportPolytopalComplexCSV(const PolytopalComplex& 
 
 	c_out.close();
 
-	 std::cout << "Exported Polytopal Complex:\n";
+	std::ofstream p_out("../../python_tests/Polytopal_Development/pc_polytopes.csv");
+    if (!p_out.is_open()) {
+        std::cerr << "Error: could not open pc_polytopes.csv\n";
+        return;
+    }
+
+    p_out << "polytope_id,vertices,faces\n";
+
+    for (size_t pid = 0; pid < complex.polytopes.size(); ++pid) {
+        const auto& poly = complex.polytopes[pid];
+
+        p_out << pid << ",";
+
+        // ---- vertices (just indices 0..n-1 for local polytope) ----
+        for (size_t i = 0; i < poly.vertices.size(); ++i) {
+            p_out << i;
+            if (i + 1 < poly.vertices.size()) {
+                p_out << " ";
+            }
+        }
+
+        p_out << ",";
+
+        // ---- faces ----
+        for (size_t f = 0; f < poly.faces.size(); ++f) {
+            const auto& face = poly.faces[f];
+
+            for (size_t j = 0; j < face.size(); ++j) {
+                p_out << face[j];
+                if (j + 1 < face.size()) {
+                    p_out << " ";
+                }
+            }
+
+            if (f + 1 < poly.faces.size()) {
+                p_out << "|"; // separate faces
+            }
+        }
+
+        p_out << "\n";
+    }
+
+    p_out.close();
+
+
+	std::cout << "Exported Polytopal Complex:\n";
     std::cout << "  Vertices: " << complex.vertices.size() << "\n";
     std::cout << "  Cells:    " << complex.faces.size() << "\n";
+	std::cout << "  Polytopes: " << complex.polytopes.size() << "\n";
+
 }
 
 

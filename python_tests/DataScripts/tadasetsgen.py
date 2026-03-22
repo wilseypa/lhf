@@ -9,8 +9,8 @@ def normalize(data):
     maxs = data.max(axis=0)
     return (data - mins) / (maxs - mins)
 
-torus = tadasets.torus(n=100, c=4, a=1, noise=0.2)
-swiss_roll = tadasets.swiss_roll(n=150, r=10, ambient = 4, noise=0.05)
+torus = tadasets.torus(n=200, c=4, a=1, noise=0.2)
+swiss_roll = tadasets.swiss_roll(n=500, r=10, noise=0.0005)
 dsphere = tadasets.dsphere(n=50, d=3, r=3.14, ambient=5, noise=0.14)
 inf_sign = tadasets.infty_sign(n=50, noise=0.1)
 #eyeglasses = tadasets.eyeglasses(n=25, r1=2, r2=4, neck_size=2, noise=0.4, ambient=3)

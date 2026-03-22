@@ -129,6 +129,8 @@ private:
 	struct PolytopalComplex {
 		std::vector<Eigen::VectorXd> vertices; //global vertex list
 		std::vector<std::vector<int>> faces; //indices to vertices
+
+		std::vector<Polytope> polytopes;
 	};
 
 public:	
