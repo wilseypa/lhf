@@ -24,6 +24,7 @@
 #include "delaunayPipe.hpp"
 #include "helixPipe.hpp"
 #include "helixDistPipe.hpp"
+#include "directPolytopal.hpp"
 
 template <typename nodeType>
 basePipe<nodeType> *basePipe<nodeType>::newPipe(const std::string &pipeType, const std::string &complexType)

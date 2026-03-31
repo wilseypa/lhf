@@ -433,7 +433,7 @@ void argParser::setPipeline(std::map<std::string, std::string> &args)
 			args["pipeline"] = "distMatrix.neighGraph.incrementalPersistence";
 		}
 	}
-	else if(arg["mode"]=="evolutionary")
+	else if(args["mode"]=="evolutionary")
 	{
 		args["pipeline"] = "distMatrix.directPolytopal";
 	}

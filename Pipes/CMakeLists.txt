@@ -59,7 +59,7 @@ add_library(basePipe STATIC basePipe.cpp)
 target_link_libraries(basePipe PUBLIC
  distMatrixPipe neighGraphPipe 
  ripsPipe betaSkeletonBasedComplex betaSubSkeletonComplex
- upscalePipe slidingWindow fastPersistence 
+ upscalePipe slidingWindow fastPersistence directPolytopal
  incrementalPersistence naiveWindow qhullPipe delaunayPipe helixPipe helixDistPipe)
 target_include_directories(basePipe PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -82,6 +82,10 @@ target_include_directories(betaSkeletonBasedComplex PUBLIC ${CMAKE_CURRENT_SOURC
 add_library(betaSubSkeletonComplex STATIC betaSubSkeletonComplex.cpp)
 target_link_libraries(betaSubSkeletonComplex PUBLIC basePipe alphaComplex readInput utils kdTree)
 target_include_directories(betaSubSkeletonComplex PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_library(directPolytopal STATIC directPolytopal.cpp)
+target_link_libraries(directPolytopal PUBLIC basePipe utils)
+target_include_directories(directPolytopal PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(upscalePipe STATIC upscalePipe.cpp)
 target_link_libraries(upscalePipe PUBLIC basePipe utils)
