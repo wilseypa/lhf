@@ -76,6 +76,10 @@ basePipe<nodeType> *basePipe<nodeType>::newPipe(const std::string &pipeType, con
 	{
 		return new betaSubSkeletonComplex<nodeType>();
 	}
+	else if(pipeType == "directPolytopal")
+	{
+		return new directPolytopal<nodeType>();
+	}
 	else if (pipeType == "qhullPipe" || pipeType == "qhull" || pipeType == "alpha")
 	{
 		return new qhullPipe<nodeType>();
