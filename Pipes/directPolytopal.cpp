@@ -1,6 +1,7 @@
 #include "directPolytopal.hpp"
 #include "utils.hpp"
-
+#include <bits/stdc++.h>
+#include <iostream>
 // basePipe constructor
 template <typename nodeType>
 directPolytopal<nodeType>::directPolytopal()
@@ -12,6 +13,9 @@ directPolytopal<nodeType>::directPolytopal()
 template <typename nodeType>
 void directPolytopal<nodeType>::runPipe(pipePacket<nodeType> &inData)
 {
+  double mini=DBL_MAX;
+  double maxi=DBL_MIN;
+
   std::vector<std::vector <double>> data = inData.workData;
   for (auto x : data) {
       for (auto y : x) {
@@ -20,6 +24,110 @@ void directPolytopal<nodeType>::runPipe(pipePacket<nodeType> &inData)
       std::cout << std::endl;
   }
   std::cout<<"Yogesh will write evolutionary algorithm here"<<std::endl;
+
+  std::vector<std::pair<double, double>> range_min_max;
+
+
+  for(int i=0;i<data.size();i++)
+  {
+    for(int j=0;j<data[i].size();j++)
+    {
+      mini=std::min(mini,data[i][j]);
+      maxi=std::max(maxi,data[i][j]);
+    }
+    range_min_max.push_back({mini,maxi});
+  }
+
+
+  std::vector<std::vector<double>> random_points;
+    int m;
+    std::cout << "Enter the number of random points to insert: ";
+    std::cin >> m;
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dist;
+
+    for (int i = 0; i < m ; i++)
+    {
+      std::vector<double> rpoint;
+      for(int j=0;j<data[0].size();j++)
+      {
+        dist = std::uniform_int_distribution<>(range_min_max[j].first, range_min_max[j].second);
+        rpoint.push_back(dist(gen));
+      }
+      
+      random_points.push_back(rpoint);
+    }
+
+
+
+    std::cout << "Generated points:\n";
+    for (auto p : data)
+    {
+      // std::cout << "(" << p.first << ", " << p.second << ")\n";
+      for(int i=0;i<p.size();i++)
+      {
+        std::cout << p[i] << ",";
+      }
+      std::cout << std::endl;
+    }
+    std::cout << "Random points to insert:\n";
+    for (auto p : random_points)
+    {
+      for(int i=0;i<p.size();i++)
+      {
+        std::cout << p[i] << ",";
+      }
+      std::cout << std::endl;
+    }
+
+    // ------------------ FIND NEAREST POINT ------------------
+    double radius = maxi;
+    for (auto p : data)
+    {
+      double d = utils::vectors_distance(p, random_points[0]); 
+      if (d < radius)
+      {
+        radius = d;
+      }
+    }
+
+    // ------------------ INVERSION ------------------
+    std::vector<std::vector<double>> inverted_points;
+
+    for (auto p : data)
+    {
+      double dist_project_point = utils::vectors_distance(p, random_points[0]);
+
+      double factor = (radius * radius) / (dist_project_point * dist_project_point);
+      std::vector<double> proj_point;
+      for(int i=0;i<p.size();i++)      {
+        proj_point.push_back(random_points[0][i] + factor * (p[i] - random_points[0][i]));
+      } 
+      
+      inverted_points.push_back(proj_point);
+    }
+
+    std::cout<<"Radius of inversion: "<<radius<<std::endl; 
+    std::cout<<"random point: ";
+    for(int i=0;i<random_points[0].size();i++)    {
+      std::cout << random_points[0][i] << ",";
+    }
+    std::cout << std::endl;
+
+    std::cout<<"Inverted points:\n";
+
+    for(auto p : inverted_points)
+    {
+      for(int i=0;i<p.size();i++)
+      {
+        std::cout << p[i] << ",";
+      }
+      std::cout << std::endl;
+    }
+
+
+
 
   /*Tentative algorithm
  A) Generate initial population using following procedure to generate all N of them:
