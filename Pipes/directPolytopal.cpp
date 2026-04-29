@@ -2,6 +2,13 @@
 #include "utils.hpp"
 #include <bits/stdc++.h>
 #include <iostream>
+#include "libqhullcpp/Qhull.h"
+#include "libqhullcpp/QhullFacet.h"
+#include "libqhullcpp/QhullFacetList.h"
+#include "libqhullcpp/QhullVertex.h"
+#include "libqhullcpp/QhullVertexSet.h"
+#include "libqhullcpp/QhullPoint.h"
+#include "libqhullcpp/PointCoordinates.h"
 // basePipe constructor
 template <typename nodeType>
 directPolytopal<nodeType>::directPolytopal()
@@ -45,14 +52,14 @@ void directPolytopal<nodeType>::runPipe(pipePacket<nodeType> &inData)
     std::cin >> m;
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dist;
+    std::uniform_real_distribution<double> dist;
 
     for (int i = 0; i < m ; i++)
     {
       std::vector<double> rpoint;
       for(int j=0;j<data[0].size();j++)
       {
-        dist = std::uniform_int_distribution<>(range_min_max[j].first, range_min_max[j].second);
+        dist = std::uniform_real_distribution<>(range_min_max[j].first, range_min_max[j].second);
         rpoint.push_back(dist(gen));
       }
       
@@ -126,8 +133,48 @@ void directPolytopal<nodeType>::runPipe(pipePacket<nodeType> &inData)
       std::cout << std::endl;
     }
 
+    // ------------------ CONVEX HULL OF INVERTED POINTS ------------------
+    std::cout << "Computing Convex Hull..." << std::endl;
+    orgQhull::Qhull qh;
+    std::vector<double> sdata;
+    for (auto& pt : inverted_points)
+        for (auto& coord : pt)
+            sdata.push_back(coord);
 
+    orgQhull::PointCoordinates pts(qh, data[0].size(), "Inverted Points");
+    pts.append(sdata);
+    std::cout<<"  pts.comment(): "<<pts.comment().c_str()<<std::endl;
+    std::cout<<"  pts.dimension(): "<<pts.dimension()<<std::endl;
+    std::cout<<"  pts.count(): "<<pts.count()<<std::endl;
 
+    qh.runQhull(pts.comment().c_str(), pts.dimension(), pts.count(),&*pts.coordinates(), "Qt");
+
+    // Extract hull boundary vertices and facets
+    std::set<unsigned> hull_vertex_ids;
+    std::vector<std::vector<unsigned>> hull_facets;
+
+    for (orgQhull::QhullFacet f : qh.facetList()) {
+        std::vector<unsigned> facet_vertices;
+        for (orgQhull::QhullVertex v : f.vertices()) {
+            unsigned id = v.point().id();
+            hull_vertex_ids.insert(id);
+            facet_vertices.push_back(id);
+        }
+        hull_facets.push_back(facet_vertices);
+    }
+    // Print hull results
+    std::cout << "Convex Hull: " << hull_vertex_ids.size()<< " vertices, " << hull_facets.size() << " facets" << std::endl;
+    std::cout << "Hull vertex indices: ";
+    for (auto id : hull_vertex_ids)
+        std::cout << id << " ";
+    std::cout << std::endl;
+
+    std::cout << "Hull boundary points (original data):" << std::endl;
+    for (auto id : hull_vertex_ids) {
+        for (int i = 0; i < data[id].size(); i++)
+            std::cout << data[id][i] << ",";
+        std::cout << std::endl;
+    }
 
   /*Tentative algorithm
  A) Generate initial population using following procedure to generate all N of them:

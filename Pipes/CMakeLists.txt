@@ -84,8 +84,8 @@ target_link_libraries(betaSubSkeletonComplex PUBLIC basePipe alphaComplex readIn
 target_include_directories(betaSubSkeletonComplex PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(directPolytopal STATIC directPolytopal.cpp)
-target_link_libraries(directPolytopal PUBLIC basePipe utils)
-target_include_directories(directPolytopal PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(directPolytopal PUBLIC basePipe utils qhullcpp qhull_r)
+target_include_directories(directPolytopal PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${qhullext_SOURCE_DIR}/src)
 
 add_library(upscalePipe STATIC upscalePipe.cpp)
 target_link_libraries(upscalePipe PUBLIC basePipe utils)
