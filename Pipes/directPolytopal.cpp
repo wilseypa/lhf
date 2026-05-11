@@ -9,6 +9,7 @@
 #include "libqhullcpp/QhullVertexSet.h"
 #include "libqhullcpp/QhullPoint.h"
 #include "libqhullcpp/PointCoordinates.h"
+
 // basePipe constructor
 template <typename nodeType>
 directPolytopal<nodeType>::directPolytopal()
@@ -16,165 +17,175 @@ directPolytopal<nodeType>::directPolytopal()
   this->pipeType = "directPolytopal";
   return;
 }
+
 // runPipe -> Run the configured functions of this pipeline segment
 template <typename nodeType>
 void directPolytopal<nodeType>::runPipe(pipePacket<nodeType> &inData)
 {
-  double mini=DBL_MAX;
-  double maxi=DBL_MIN;
-
-  std::vector<std::vector <double>> data = inData.workData;
+  std::vector<std::vector<double>> data = inData.workData;
   for (auto x : data) {
-      for (auto y : x) {
-          std::cout << y << ",";
-      }
-      std::cout << std::endl;
-  }
-  std::cout<<"Yogesh will write evolutionary algorithm here"<<std::endl;
-
-  std::vector<std::pair<double, double>> range_min_max;
-
-
-  for(int i=0;i<data.size();i++)
-  {
-    for(int j=0;j<data[i].size();j++)
-    {
-      mini=std::min(mini,data[i][j]);
-      maxi=std::max(maxi,data[i][j]);
+    for (auto y : x) {
+      std::cout << y << ",";
     }
-    range_min_max.push_back({mini,maxi});
+    std::cout << std::endl;
+  }
+  std::cout << "Yogesh will write evolutionary algorithm here" << std::endl;
+
+  // ------------------ PER-DIMENSION BOUNDING BOX ------------------
+  // One {min, max} pair per dimension, initialised to extreme values.
+  int dim = data[0].size();
+  std::vector<std::pair<double, double>> range_min_max(
+      dim, {DBL_MAX, -DBL_MAX});   // NOTE: -DBL_MAX, not DBL_MIN
+
+  for (int i = 0; i < data.size(); i++) {
+    for (int j = 0; j < dim; j++) {
+      range_min_max[j].first  = std::min(range_min_max[j].first,  data[i][j]);
+      range_min_max[j].second = std::max(range_min_max[j].second, data[i][j]);
+    }
   }
 
-
+  // ------------------ GENERATE RANDOM POINTS ------------------
   std::vector<std::vector<double>> random_points;
-    int m;
-    std::cout << "Enter the number of random points to insert: ";
-    std::cin >> m;
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<double> dist;
+  int m;
+  std::cout << "Enter the number of random points to insert: ";
+  std::cin >> m;
 
-    for (int i = 0; i < m ; i++)
-    {
-      std::vector<double> rpoint;
-      for(int j=0;j<data[0].size();j++)
-      {
-        dist = std::uniform_real_distribution<>(range_min_max[j].first, range_min_max[j].second);
-        rpoint.push_back(dist(gen));
-      }
-      
-      random_points.push_back(rpoint);
+  // Use std::random_device for a real entropy-based seed so re-runs differ.
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_real_distribution<double> dist;
+
+  for (int i = 0; i < m; i++) {
+    std::vector<double> rpoint;
+    for (int j = 0; j < dim; j++) {
+      dist = std::uniform_real_distribution<>(range_min_max[j].first,
+                                              range_min_max[j].second);
+      rpoint.push_back(dist(gen));
     }
+    random_points.push_back(rpoint);
+  }
 
-
-
-    std::cout << "Generated points:\n";
-    for (auto p : data)
-    {
-      // std::cout << "(" << p.first << ", " << p.second << ")\n";
-      for(int i=0;i<p.size();i++)
-      {
-        std::cout << p[i] << ",";
-      }
-      std::cout << std::endl;
+  std::cout << "Generated points:\n";
+  for (auto p : data) {
+    for (int i = 0; i < p.size(); i++) {
+      std::cout << p[i] << ",";
     }
-    std::cout << "Random points to insert:\n";
-    for (auto p : random_points)
-    {
-      for(int i=0;i<p.size();i++)
-      {
-        std::cout << p[i] << ",";
-      }
-      std::cout << std::endl;
+    std::cout << std::endl;
+  }
+
+  std::cout << "Random points to insert:\n";
+  for (auto p : random_points) {
+    for (int i = 0; i < p.size(); i++) {
+      std::cout << p[i] << ",";
     }
+    std::cout << std::endl;
+  }
+
+  // Store valid hull results (filtered)
+  std::vector<std::set<unsigned>> valid_hulls;
+
+  for (int k = 0; k < m; k++) {
+    std::cout << "\n========== Random Point " << k << " ==========" << std::endl;
+    std::cout << "Random point: ";
+    for (int i = 0; i < random_points[k].size(); i++)
+      std::cout << random_points[k][i] << ",";
+    std::cout << std::endl;
 
     // ------------------ FIND NEAREST POINT ------------------
-    double radius = maxi;
-    for (auto p : data)
-    {
-      double d = utils::vectors_distance(p, random_points[0]); 
-      if (d < radius)
-      {
+    double radius = DBL_MAX;
+    unsigned nearest_index = 0;
+    for (unsigned idx = 0; idx < data.size(); idx++) {
+      double d = utils::vectors_distance(data[idx], random_points[k]);
+      if (d < radius) {
         radius = d;
+        nearest_index = idx;
       }
     }
+    std::cout << "Radius of inversion: " << radius << std::endl;
+    std::cout << "Nearest data point index: " << nearest_index << std::endl;
 
     // ------------------ INVERSION ------------------
     std::vector<std::vector<double>> inverted_points;
 
-    for (auto p : data)
-    {
-      double dist_project_point = utils::vectors_distance(p, random_points[0]);
-
+    for (auto p : data) {
+      double dist_project_point = utils::vectors_distance(p, random_points[k]);
       double factor = (radius * radius) / (dist_project_point * dist_project_point);
       std::vector<double> proj_point;
-      for(int i=0;i<p.size();i++)      {
-        proj_point.push_back(random_points[0][i] + factor * (p[i] - random_points[0][i]));
-      } 
-      
+      for (int i = 0; i < p.size(); i++) {
+        proj_point.push_back(random_points[k][i] + factor * (p[i] - random_points[k][i]));
+      }
       inverted_points.push_back(proj_point);
     }
 
-    std::cout<<"Radius of inversion: "<<radius<<std::endl; 
-    std::cout<<"random point: ";
-    for(int i=0;i<random_points[0].size();i++)    {
-      std::cout << random_points[0][i] << ",";
-    }
-    std::cout << std::endl;
+    // ------------------ CONVEX HULL (data + random point) ------------------
+    // Add the random point to inverted_points as the last point
+    inverted_points.push_back(random_points[k]);
+    unsigned random_point_index = inverted_points.size() - 1;  // last index
 
-    std::cout<<"Inverted points:\n";
-
-    for(auto p : inverted_points)
-    {
-      for(int i=0;i<p.size();i++)
-      {
-        std::cout << p[i] << ",";
-      }
-      std::cout << std::endl;
-    }
-
-    // ------------------ CONVEX HULL OF INVERTED POINTS ------------------
-    std::cout << "Computing Convex Hull..." << std::endl;
     orgQhull::Qhull qh;
     std::vector<double> sdata;
     for (auto& pt : inverted_points)
-        for (auto& coord : pt)
-            sdata.push_back(coord);
+      for (auto& coord : pt)
+        sdata.push_back(coord);
 
-    orgQhull::PointCoordinates pts(qh, data[0].size(), "Inverted Points");
+    orgQhull::PointCoordinates pts(qh, data[0].size(), "Points with random");
     pts.append(sdata);
-    std::cout<<"  pts.comment(): "<<pts.comment().c_str()<<std::endl;
-    std::cout<<"  pts.dimension(): "<<pts.dimension()<<std::endl;
-    std::cout<<"  pts.count(): "<<pts.count()<<std::endl;
 
-    qh.runQhull(pts.comment().c_str(), pts.dimension(), pts.count(),&*pts.coordinates(), "Qt");
+    qh.runQhull(pts.comment().c_str(), pts.dimension(), pts.count(), &*pts.coordinates(), "Qt");
 
-    // Extract hull boundary vertices and facets
+    // Extract hull boundary vertices
     std::set<unsigned> hull_vertex_ids;
     std::vector<std::vector<unsigned>> hull_facets;
 
     for (orgQhull::QhullFacet f : qh.facetList()) {
-        std::vector<unsigned> facet_vertices;
-        for (orgQhull::QhullVertex v : f.vertices()) {
-            unsigned id = v.point().id();
-            hull_vertex_ids.insert(id);
-            facet_vertices.push_back(id);
-        }
-        hull_facets.push_back(facet_vertices);
+      std::vector<unsigned> facet_vertices;
+      for (orgQhull::QhullVertex v : f.vertices()) {
+        unsigned id = v.point().id();
+        hull_vertex_ids.insert(id);
+        facet_vertices.push_back(id);
+      }
+      hull_facets.push_back(facet_vertices);
     }
-    // Print hull results
-    std::cout << "Convex Hull: " << hull_vertex_ids.size()<< " vertices, " << hull_facets.size() << " facets" << std::endl;
+
+    std::cout << "Convex Hull: " << hull_vertex_ids.size() << " vertices, "
+              << hull_facets.size() << " facets" << std::endl;
     std::cout << "Hull vertex indices: ";
     for (auto id : hull_vertex_ids)
-        std::cout << id << " ";
+      std::cout << id << " ";
     std::cout << std::endl;
 
+    // ------------------ FILTER: Skip if random point is on hull boundary ------------------
+    if (hull_vertex_ids.count(random_point_index) > 0) {
+      std::cout << "DISCARDED: random point (index " << random_point_index
+                << ") is on the hull boundary" << std::endl;
+      continue;
+    }
+
+    // Remove the random point index from hull results (keep only data point indices)
+    hull_vertex_ids.erase(random_point_index);
+
+    std::cout << "KEPT: random point is INSIDE the hull (not on boundary)" << std::endl;
     std::cout << "Hull boundary points (original data):" << std::endl;
     for (auto id : hull_vertex_ids) {
-        for (int i = 0; i < data[id].size(); i++)
-            std::cout << data[id][i] << ",";
-        std::cout << std::endl;
+      for (int i = 0; i < data[id].size(); i++)
+        std::cout << data[id][i] << ",";
+      std::cout << std::endl;
     }
+
+    valid_hulls.push_back(hull_vertex_ids);
+  }
+
+  // ------------------ SUMMARY ------------------
+  std::cout << "\n========== SUMMARY ==========" << std::endl;
+  std::cout << "Total random points: " << m << std::endl;
+  std::cout << "Valid hulls (kept): " << valid_hulls.size() << std::endl;
+  std::cout << "Discarded hulls: " << (m - valid_hulls.size()) << std::endl;
+  for (int i = 0; i < valid_hulls.size(); i++) {
+    std::cout << "Valid hull " << i << " (" << valid_hulls[i].size() << " vertices): ";
+    for (auto id : valid_hulls[i])
+      std::cout << id << " ";
+    std::cout << std::endl;
+  }
 
   /*Tentative algorithm
  A) Generate initial population using following procedure to generate all N of them:
@@ -203,8 +214,7 @@ bool directPolytopal<nodeType>::configPipe(std::map<std::string, std::string> &c
   std::string strDebug;
 
   auto pipe = configMap.find("debug");
-  if (pipe != configMap.end())
-  {
+  if (pipe != configMap.end()) {
     this->debug = std::atoi(configMap["debug"].c_str());
     strDebug = configMap["debug"];
   }
@@ -219,12 +229,13 @@ bool directPolytopal<nodeType>::configPipe(std::map<std::string, std::string> &c
 
   return true;
 }
+
 // outputData -> used for tracking each stage of the pipeline's data output without runtime
 template <typename nodeType>
 void directPolytopal<nodeType>::outputData(pipePacket<nodeType>& inData)
 {
-    // Output related to betaSubSkeletonComplex
-    return;
+  // Output related to betaSubSkeletonComplex
+  return;
 }
 template class directPolytopal<simplexNode>;
 template class directPolytopal<alphaNode>;
